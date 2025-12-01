@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, QrCode, Clock } from "lucide-react";
+import { Copy, Clock, Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface PixQRCodeProps {
@@ -12,7 +12,7 @@ interface PixQRCodeProps {
 
 export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }: PixQRCodeProps) => {
   const [copied, setCopied] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60); // in seconds
+  const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -37,7 +37,7 @@ export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }:
   };
 
   const isExpired = timeLeft <= 0;
-  const isLowTime = timeLeft <= 60; // last minute
+  const isLowTime = timeLeft <= 60;
 
   const formattedAmount = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -73,70 +73,75 @@ export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }:
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4 animate-fade-in">
+    <div className="flex flex-col items-center gap-4 py-2 animate-fade-in">
+      {/* Title */}
+      <div className="text-center">
+        <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2">
+          Faça Sua Doação <Heart className="w-5 h-5 text-primary fill-primary" />
+        </h2>
+        <p className="text-2xl font-bold text-primary mt-1">{formattedAmount}</p>
+      </div>
+
       {/* Countdown Timer */}
-      <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${
         isExpired 
           ? "bg-destructive/10 text-destructive" 
           : isLowTime 
             ? "bg-orange-500/10 text-orange-500" 
-            : "bg-primary/10 text-primary"
+            : "bg-muted text-muted-foreground"
       }`}>
-        <Clock className="w-4 h-4" />
-        <span className="font-mono font-bold text-lg">
+        <Clock className="w-3.5 h-3.5" />
+        <span className="font-mono font-medium">
           {isExpired ? "Expirado" : formatTime(timeLeft)}
         </span>
       </div>
 
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-1">Valor da doação</p>
-        <p className="text-3xl font-bold text-foreground">{formattedAmount}</p>
-      </div>
-
+      {/* QR Code */}
       <div className="flex flex-col items-center gap-3">
-        {qrCodeUrl ? (
-          <img
-            src={qrCodeUrl}
-            alt="QR Code PIX"
-            className={`w-44 h-44 rounded-lg border-4 border-border shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}
-          />
-        ) : (
-          <div className="w-44 h-44 rounded-lg border-4 border-border bg-secondary flex items-center justify-center">
-            <QrCode className="w-20 h-20 text-muted-foreground" />
-          </div>
-        )}
-        <p className="text-sm text-muted-foreground text-center">
-          {isExpired ? "Código expirado - gere um novo" : "Escaneie o QR Code com o app do seu banco"}
+        <div className={`p-3 rounded-2xl bg-gradient-to-br from-amber-100/50 to-amber-200/30 border-2 border-amber-200/50 shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
+          {qrCodeUrl ? (
+            <img
+              src={qrCodeUrl}
+              alt="QR Code PIX"
+              className="w-44 h-44 rounded-xl"
+            />
+          ) : (
+            <div className="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center">
+              <span className="text-muted-foreground">QR Code</span>
+            </div>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground text-center flex items-center gap-1.5">
+          📱 {isExpired ? "Código expirado" : "Escaneie o QR Code no app do seu banco"}
         </p>
       </div>
 
-      <div className="w-full space-y-3">
-        <div className="relative">
-          <p className="text-xs text-muted-foreground mb-1.5">Código PIX Copia e Cola:</p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={pixCode}
-              readOnly
-              className={`flex-1 h-10 rounded-lg border-2 border-border bg-secondary px-3 text-sm text-foreground font-mono truncate ${isExpired ? "opacity-50" : ""}`}
-            />
-            <Button
-              variant={copied ? "default" : "outline"}
-              size="icon"
-              onClick={handleCopyCode}
-              className="shrink-0 h-10 w-10"
-              disabled={isExpired}
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </Button>
-          </div>
-        </div>
+      {/* Divider */}
+      <div className="flex items-center gap-3 w-full">
+        <div className="flex-1 h-px bg-border"></div>
+        <span className="text-xs text-muted-foreground">ou copie o código PIX</span>
+        <div className="flex-1 h-px bg-border"></div>
       </div>
 
+      {/* Copy Button */}
+      <Button
+        onClick={handleCopyCode}
+        disabled={isExpired}
+        className={`w-full h-14 text-base font-semibold rounded-xl transition-all ${
+          copied 
+            ? "bg-green-500 hover:bg-green-600" 
+            : "bg-gradient-to-r from-red-500 via-red-400 to-green-500 hover:from-red-600 hover:via-red-500 hover:to-green-600"
+        } text-white shadow-lg`}
+      >
+        <Copy className="w-5 h-5 mr-2" />
+        {copied ? "Código Copiado!" : "Copiar Código PIX"}
+      </Button>
+
+      {/* Footer */}
       <p className="text-xs text-muted-foreground text-center max-w-xs">
         {isExpired 
           ? "O tempo expirou. Volte e gere um novo código PIX." 
-          : "Após o pagamento, a confirmação será automática em alguns segundos."}
+          : "Após o pagamento, a confirmação será automática."}
       </p>
     </div>
   );
