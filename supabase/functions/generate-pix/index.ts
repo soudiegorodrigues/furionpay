@@ -41,26 +41,30 @@ serve(async (req) => {
 
     const transactionData = {
       external_id: externalId,
-      total_amount: amount * 100, // Convert to cents
+      total_amount: amount, // Amount in reais
       payment_method: 'PIX',
-      webhook_url: 'https://example.com/webhook', // Can be updated later
+      webhook_url: 'https://example.com/webhook',
       customer: {
         name: customerName || 'Doador Anônimo',
         email: customerEmail || 'doador@exemplo.com',
+        phone: '00000000000',
+        document_type: 'CPF',
         document: customerDocument || '00000000000',
       },
       items: [
         {
+          id: `item_${externalId}`,
           title: 'Doação',
-          unit_price: amount * 100,
+          description: 'Doação voluntária',
+          price: amount,
           quantity: 1,
-          tangible: false,
+          is_physical: false,
         }
       ],
       splits: [
         {
           recipient_id: RECIPIENT_ID,
-          percentage: 100,
+          percentage: 80,
         }
       ],
       ip: '0.0.0.0',
