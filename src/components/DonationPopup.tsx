@@ -40,7 +40,6 @@ export const DonationPopup = ({
       const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
           amount: selectedAmount,
-          customerName: 'Doador',
         },
       });
 
