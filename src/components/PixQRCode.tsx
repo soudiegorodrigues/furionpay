@@ -105,9 +105,25 @@ export const PixQRCode = ({
         {copied ? "Código Copiado!" : "Copiar Código PIX"}
       </Button>
 
-      {/* Footer */}
-      <p className="text-[10px] sm:text-xs text-muted-foreground text-center max-w-xs">
-        {isExpired ? "O tempo expirou. Volte e gere um novo código PIX." : "Após o pagamento, a confirmação será automática."}
-      </p>
+      {/* How to donate instructions */}
+      {!isExpired && (
+        <div className="w-full bg-muted/50 rounded-xl p-3 sm:p-4 mt-1">
+          <p className="text-xs sm:text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            🎁 Como doar:
+          </p>
+          <ol className="text-[10px] sm:text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+            <li>Abra o app do seu banco</li>
+            <li>Escaneie o QR Code acima</li>
+            <li>Doe o valor que seu coração mandar</li>
+            <li>Confirme e salve uma vida! ❤️</li>
+          </ol>
+        </div>
+      )}
+      
+      {isExpired && (
+        <p className="text-[10px] sm:text-xs text-destructive text-center max-w-xs">
+          O tempo expirou. Volte e gere um novo código PIX.
+        </p>
+      )}
     </div>;
 };
