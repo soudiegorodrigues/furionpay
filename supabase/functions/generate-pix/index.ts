@@ -6,7 +6,15 @@ const corsHeaders = {
 };
 
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
-const RECIPIENT_ID = 'rcpt_98278214-f429-4196-a131-417f23d7a5fd';
+
+// Random names for anonymous donations
+const RANDOM_NAMES = [
+  'João Silva', 'Maria Santos', 'Pedro Oliveira', 'Ana Costa', 
+  'Carlos Souza', 'Juliana Lima', 'Fernando Alves', 'Camila Rocha',
+  'Lucas Ferreira', 'Beatriz Gomes', 'Rafael Martins', 'Larissa Barbosa'
+];
+
+const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
 
 interface GeneratePixRequest {
   amount: number;
@@ -45,7 +53,7 @@ serve(async (req) => {
       payment_method: 'PIX',
       webhook_url: 'https://example.com/webhook',
       customer: {
-        name: customerName || 'Doador Anônimo',
+        name: customerName || getRandomName(),
         email: customerEmail || 'doador@exemplo.com',
         phone: '11999999999',
         document_type: 'CPF',
@@ -54,8 +62,8 @@ serve(async (req) => {
       items: [
         {
           id: `item_${externalId}`,
-          title: 'Doação',
-          description: 'Doação voluntária',
+          title: 'Anônimo',
+          description: 'Doação anônima',
           price: amount,
           quantity: 1,
           is_physical: false,
