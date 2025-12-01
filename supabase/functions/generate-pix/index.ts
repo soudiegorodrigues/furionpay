@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SPEDPAY_API_URL = 'https://api.spedpay.com.br';
+const SPEDPAY_API_URL = 'https://api.spedpay.space';
 const RECIPIENT_ID = 'rcpt_98278214-f429-4196-a131-417f23d7a5fd';
 
 interface GeneratePixRequest {
