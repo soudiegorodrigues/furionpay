@@ -66,48 +66,47 @@ export const PixQRCode = ({
       });
     }
   };
-  return <div className="flex flex-col items-center gap-4 py-2 animate-fade-in">
+  return <div className="flex flex-col items-center gap-3 sm:gap-4 py-1 sm:py-2 animate-fade-in">
       {/* Title */}
       <div className="text-center">
-        
-        <p className="text-2xl font-bold text-primary mt-1">{formattedAmount}</p>
+        <p className="text-xl sm:text-2xl font-bold text-primary mt-1">{formattedAmount}</p>
       </div>
 
       {/* Countdown Timer */}
-      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${isExpired ? "bg-destructive/10 text-destructive" : isLowTime ? "bg-orange-500/10 text-orange-500" : "bg-muted text-muted-foreground"}`}>
-        <Clock className="w-3.5 h-3.5" />
+      <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm ${isExpired ? "bg-destructive/10 text-destructive" : isLowTime ? "bg-orange-500/10 text-orange-500" : "bg-muted text-muted-foreground"}`}>
+        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         <span className="font-mono font-medium">
           {isExpired ? "Expirado" : formatTime(timeLeft)}
         </span>
       </div>
 
       {/* QR Code */}
-      <div className="flex flex-col items-center gap-3">
-        <div className={`p-3 rounded-2xl bg-gradient-to-br from-amber-100/50 to-amber-200/30 border-2 border-amber-200/50 shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
-          {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code PIX" className="w-44 h-44 rounded-xl" /> : <div className="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center">
-              <span className="text-muted-foreground">QR Code</span>
+      <div className="flex flex-col items-center gap-2 sm:gap-3">
+        <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-100/50 to-amber-200/30 border-2 border-amber-200/50 shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
+          {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code PIX" className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl" loading="eager" /> : <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl bg-secondary flex items-center justify-center">
+              <span className="text-muted-foreground text-sm">QR Code</span>
             </div>}
         </div>
-        <p className="text-sm text-muted-foreground text-center flex items-center gap-1.5">
+        <p className="text-xs sm:text-sm text-muted-foreground text-center flex items-center gap-1 sm:gap-1.5">
           📱 {isExpired ? "Código expirado" : "Escaneie o QR Code no app do seu banco"}
         </p>
       </div>
 
       {/* Divider */}
-      <div className="flex items-center gap-3 w-full">
+      <div className="flex items-center gap-2 sm:gap-3 w-full">
         <div className="flex-1 h-px bg-border"></div>
-        <span className="text-xs text-muted-foreground">ou copie o código PIX</span>
+        <span className="text-[10px] sm:text-xs text-muted-foreground">ou copie o código PIX</span>
         <div className="flex-1 h-px bg-border"></div>
       </div>
 
       {/* Copy Button */}
-      <Button variant="donationCta" size="xl" onClick={handleCopyCode} disabled={isExpired} className="w-full">
-        <Copy className="w-5 h-5 mr-2" />
+      <Button variant="donationCta" size="xl" onClick={handleCopyCode} disabled={isExpired} className="w-full text-sm sm:text-base py-3 sm:py-4">
+        <Copy className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
         {copied ? "Código Copiado!" : "Copiar Código PIX"}
       </Button>
 
       {/* Footer */}
-      <p className="text-xs text-muted-foreground text-center max-w-xs">
+      <p className="text-[10px] sm:text-xs text-muted-foreground text-center max-w-xs">
         {isExpired ? "O tempo expirou. Volte e gere um novo código PIX." : "Após o pagamento, a confirmação será automática."}
       </p>
     </div>;
