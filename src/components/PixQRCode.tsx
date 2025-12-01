@@ -95,7 +95,7 @@ export const PixQRCode = ({
       {/* Divider */}
       <div className="flex items-center gap-2 sm:gap-3 w-full">
         <div className="flex-1 h-px bg-border"></div>
-        <span className="text-[10px] sm:text-xs text-muted-foreground">ou copie o código PIX</span>
+        <span className="text-xs sm:text-sm text-muted-foreground font-medium">ou copie o código PIX</span>
         <div className="flex-1 h-px bg-border"></div>
       </div>
 
