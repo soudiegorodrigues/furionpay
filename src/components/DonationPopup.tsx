@@ -3,7 +3,8 @@ import { X, Heart, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DonationAmountButton } from "./DonationAmountButton";
 import { PixQRCode } from "./PixQRCode";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 interface DonationPopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,6 +25,7 @@ export const DonationPopup = ({
     code: string;
     qrCodeUrl?: string;
   } | null>(null);
+  const { toast } = useToast();
   useEffect(() => {
     if (!isOpen) {
       setStep("select");
@@ -34,18 +36,39 @@ export const DonationPopup = ({
   const handleGeneratePix = async () => {
     setStep("loading");
 
-    // Simulating API call to /payments/pix
-    // In production, replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pix', {
+        body: {
+          amount: selectedAmount,
+          customerName: 'Doador',
+        },
+      });
 
-    // Mock PIX data - in production this would come from the API
-    const mockPixCode = `00020126580014br.gov.bcb.pix0136${crypto.randomUUID()}5204000053039865404${selectedAmount.toFixed(2)}5802BR5913${recipientName}6008Brasilia62070503***6304`;
-    setPixData({
-      code: mockPixCode,
-      // In production, qrCodeUrl would be returned from the API
-      qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mockPixCode)}`
-    });
-    setStep("pix");
+      if (error) {
+        console.error('Error generating PIX:', error);
+        toast({
+          title: "Erro ao gerar PIX",
+          description: "Tente novamente em alguns instantes.",
+          variant: "destructive",
+        });
+        setStep("select");
+        return;
+      }
+
+      setPixData({
+        code: data.pixCode,
+        qrCodeUrl: data.qrCodeUrl,
+      });
+      setStep("pix");
+    } catch (err) {
+      console.error('Error:', err);
+      toast({
+        title: "Erro ao gerar PIX",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
+      setStep("select");
+    }
   };
   const handleBack = () => {
     setStep("select");
