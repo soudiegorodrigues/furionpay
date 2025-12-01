@@ -2,23 +2,24 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Clock, Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
 interface PixQRCodeProps {
   amount: number;
   pixCode: string;
   qrCodeUrl?: string;
   expirationMinutes?: number;
 }
-
-export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }: PixQRCodeProps) => {
+export const PixQRCode = ({
+  amount,
+  pixCode,
+  qrCodeUrl,
+  expirationMinutes = 7
+}: PixQRCodeProps) => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60);
-
   useEffect(() => {
     if (timeLeft <= 0) return;
-
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
           return 0;
@@ -26,70 +27,54 @@ export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }:
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
-
   const isExpired = timeLeft <= 0;
   const isLowTime = timeLeft <= 60;
-
   const formattedAmount = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 2
   }).format(amount);
-
   const handleCopyCode = async () => {
     if (isExpired) {
       toast({
         title: "PIX expirado",
         description: "Gere um novo código PIX para continuar.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     try {
       await navigator.clipboard.writeText(pixCode);
       setCopied(true);
       toast({
         title: "Código PIX copiado!",
-        description: "Cole no app do seu banco para completar a doação.",
+        description: "Cole no app do seu banco para completar a doação."
       });
       setTimeout(() => setCopied(false), 3000);
     } catch (err) {
       toast({
         title: "Erro ao copiar",
         description: "Por favor, copie o código manualmente.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
-  return (
-    <div className="flex flex-col items-center gap-4 py-2 animate-fade-in">
+  return <div className="flex flex-col items-center gap-4 py-2 animate-fade-in">
       {/* Title */}
       <div className="text-center">
-        <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2">
-          Faça Sua Doação <Heart className="w-5 h-5 text-primary fill-primary" />
-        </h2>
+        
         <p className="text-2xl font-bold text-primary mt-1">{formattedAmount}</p>
       </div>
 
       {/* Countdown Timer */}
-      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${
-        isExpired 
-          ? "bg-destructive/10 text-destructive" 
-          : isLowTime 
-            ? "bg-orange-500/10 text-orange-500" 
-            : "bg-muted text-muted-foreground"
-      }`}>
+      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${isExpired ? "bg-destructive/10 text-destructive" : isLowTime ? "bg-orange-500/10 text-orange-500" : "bg-muted text-muted-foreground"}`}>
         <Clock className="w-3.5 h-3.5" />
         <span className="font-mono font-medium">
           {isExpired ? "Expirado" : formatTime(timeLeft)}
@@ -99,17 +84,9 @@ export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }:
       {/* QR Code */}
       <div className="flex flex-col items-center gap-3">
         <div className={`p-3 rounded-2xl bg-gradient-to-br from-amber-100/50 to-amber-200/30 border-2 border-amber-200/50 shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
-          {qrCodeUrl ? (
-            <img
-              src={qrCodeUrl}
-              alt="QR Code PIX"
-              className="w-44 h-44 rounded-xl"
-            />
-          ) : (
-            <div className="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center">
+          {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code PIX" className="w-44 h-44 rounded-xl" /> : <div className="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center">
               <span className="text-muted-foreground">QR Code</span>
-            </div>
-          )}
+            </div>}
         </div>
         <p className="text-sm text-muted-foreground text-center flex items-center gap-1.5">
           📱 {isExpired ? "Código expirado" : "Escaneie o QR Code no app do seu banco"}
@@ -124,23 +101,14 @@ export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }:
       </div>
 
       {/* Copy Button */}
-      <Button
-        variant="donationCta"
-        size="xl"
-        onClick={handleCopyCode}
-        disabled={isExpired}
-        className="w-full"
-      >
+      <Button variant="donationCta" size="xl" onClick={handleCopyCode} disabled={isExpired} className="w-full">
         <Copy className="w-5 h-5 mr-2" />
         {copied ? "Código Copiado!" : "Copiar Código PIX"}
       </Button>
 
       {/* Footer */}
       <p className="text-xs text-muted-foreground text-center max-w-xs">
-        {isExpired 
-          ? "O tempo expirou. Volte e gere um novo código PIX." 
-          : "Após o pagamento, a confirmação será automática."}
+        {isExpired ? "O tempo expirou. Volte e gere um novo código PIX." : "Após o pagamento, a confirmação será automática."}
       </p>
-    </div>
-  );
+    </div>;
 };
