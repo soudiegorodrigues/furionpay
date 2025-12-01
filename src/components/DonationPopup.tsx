@@ -74,51 +74,51 @@ export const DonationPopup = ({
     setPixData(null);
   };
   if (!isOpen) return null;
-  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Overlay */}
       <div className="absolute inset-0 bg-overlay/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-2xl animate-scale-in overflow-hidden">
+      <div className="relative w-full max-w-md bg-card rounded-2xl shadow-2xl animate-scale-in overflow-hidden max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-4">
-          {step === "pix" && <button onClick={handleBack} className="absolute left-4 top-4 p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Voltar">
-              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        <div className="relative px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+          {step === "pix" && <button onClick={handleBack} className="absolute left-3 sm:left-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Voltar">
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
             </button>}
-          <button onClick={onClose} className="absolute right-4 top-4 p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Fechar">
-            <X className="w-5 h-5 text-muted-foreground" />
+          <button onClick={onClose} className="absolute right-3 sm:right-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Fechar">
+            <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
           </button>
           
-          <h2 className="text-xl font-bold text-foreground text-center uppercase tracking-wide pt-2">
+          <h2 className="text-lg sm:text-xl font-bold text-foreground text-center uppercase tracking-wide pt-2">
             {step === "select" ? <>
                 Escolha o valor que{" "}
                 <br />
                 deseja doar{" "}
-                <Heart className="inline w-5 h-5 text-primary fill-primary" />
+                <Heart className="inline w-4 h-4 sm:w-5 sm:h-5 text-primary fill-primary" />
               </> : step === "loading" ? "Gerando PIX..." : "🎄 Faça Sua Doação"}
           </h2>
         </div>
 
         {/* Content */}
-        <div className="px-6 pb-6">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
           {step === "select" && <>
               {/* Amount Grid */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
                 {DONATION_AMOUNTS.map(amount => <DonationAmountButton key={amount} amount={amount} isSelected={selectedAmount === amount} isMostChosen={amount === MOST_CHOSEN_AMOUNT} onClick={() => setSelectedAmount(amount)} />)}
               </div>
 
               {/* CTA Button */}
-              <Button variant="donationCta" size="xl" className="w-full" onClick={handleGeneratePix}>
+              <Button variant="donationCta" size="xl" className="w-full text-base sm:text-lg" onClick={handleGeneratePix}>
                 Doar Agora
               </Button>
 
               {/* Footer text */}
-              <p className="text-xs text-muted-foreground text-center mt-4">Cada doação transforma vidas obrigado por fazer parte dessa corrente do bem.</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground text-center mt-3 sm:mt-4">Cada doação transforma vidas obrigado por fazer parte dessa corrente do bem.</p>
             </>}
 
-          {step === "loading" && <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
-              <p className="text-muted-foreground">Gerando código PIX...</p>
+          {step === "loading" && <div className="flex flex-col items-center justify-center py-12 sm:py-16 gap-3 sm:gap-4">
+              <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin" />
+              <p className="text-sm sm:text-base text-muted-foreground">Gerando código PIX...</p>
             </div>}
 
           {step === "pix" && pixData && <PixQRCode amount={selectedAmount} pixCode={pixData.code} qrCodeUrl={pixData.qrCodeUrl} />}

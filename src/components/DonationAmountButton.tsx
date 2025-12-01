@@ -23,7 +23,7 @@ export const DonationAmountButton = ({
   return (
     <div className="relative">
       {isMostChosen && (
-        <span className="absolute -top-2 left-2 z-10 rounded-md bg-badge px-2 py-0.5 text-xs font-semibold text-badge-foreground shadow-sm">
+        <span className="absolute -top-2 left-1.5 sm:left-2 z-10 rounded-md bg-badge px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-badge-foreground shadow-sm">
           Mais escolhido
         </span>
       )}
@@ -32,7 +32,7 @@ export const DonationAmountButton = ({
         size="donation"
         onClick={onClick}
         className={cn(
-          "w-full text-base",
+          "w-full text-sm sm:text-base py-2.5 sm:py-3",
           isMostChosen && !isSelected && "border-primary/50"
         )}
       >
