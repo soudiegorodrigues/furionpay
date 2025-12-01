@@ -61,12 +61,6 @@ serve(async (req) => {
           is_physical: false,
         }
       ],
-      splits: [
-        {
-          recipient_id: RECIPIENT_ID,
-          percentage: 80,
-        }
-      ],
       ip: '0.0.0.0',
     };
 
