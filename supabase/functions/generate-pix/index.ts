@@ -9,9 +9,18 @@ const SPEDPAY_API_URL = 'https://api.spedpay.space';
 
 // Random names for anonymous donations
 const RANDOM_NAMES = [
-  'João Silva', 'Maria Santos', 'Pedro Oliveira', 'Ana Costa', 
-  'Carlos Souza', 'Juliana Lima', 'Fernando Alves', 'Camila Rocha',
-  'Lucas Ferreira', 'Beatriz Gomes', 'Rafael Martins', 'Larissa Barbosa'
+  // Homens
+  'João Pedro Silva', 'Carlos Eduardo Santos', 'Rafael Henrique Oliveira', 
+  'Lucas Gabriel Costa', 'Fernando Augusto Souza', 'Marcos Vinicius Lima',
+  'Bruno Felipe Alves', 'Gustavo Henrique Rocha', 'Diego Rodrigues Ferreira',
+  'André Luis Gomes', 'Thiago Martins Barbosa', 'Ricardo Almeida Pereira',
+  'Paulo Roberto Nascimento', 'Matheus Henrique Carvalho', 'Leonardo Silva Ribeiro',
+  // Mulheres
+  'Maria Eduarda Santos', 'Ana Carolina Oliveira', 'Juliana Cristina Costa',
+  'Camila Fernanda Souza', 'Beatriz Helena Lima', 'Larissa Cristiane Alves',
+  'Patricia Regina Rocha', 'Fernanda Aparecida Ferreira', 'Amanda Cristina Gomes',
+  'Gabriela Santos Martins', 'Mariana Silva Barbosa', 'Carolina Almeida Pereira',
+  'Isabela Nascimento Costa', 'Leticia Carvalho Ribeiro', 'Vanessa Lima Santos'
 ];
 
 const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
