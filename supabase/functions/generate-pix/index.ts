@@ -47,9 +47,9 @@ serve(async (req) => {
       customer: {
         name: customerName || 'Doador Anônimo',
         email: customerEmail || 'doador@exemplo.com',
-        phone: '00000000000',
+        phone: '11999999999',
         document_type: 'CPF',
-        document: customerDocument || '00000000000',
+        document: customerDocument || '12345678909',
       },
       items: [
         {
