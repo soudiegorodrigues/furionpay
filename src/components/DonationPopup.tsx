@@ -95,7 +95,7 @@ export const DonationPopup = ({
                 <br />
                 deseja doar{" "}
                 <Heart className="inline w-5 h-5 text-primary fill-primary" />
-              </> : step === "loading" ? "Gerando PIX..." : "Pague via PIX"}
+              </> : step === "loading" ? "Gerando PIX..." : "🎄 Faça Sua Doação"}
           </h2>
         </div>
 
