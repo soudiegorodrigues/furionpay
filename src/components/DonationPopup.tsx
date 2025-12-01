@@ -137,7 +137,7 @@ export const DonationPopup = ({
 
               {/* Footer text */}
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Sua doação é muito importante e vai direto para o {recipientName}.
+                Cada doação transforma vidas — obrigado por fazer parte dessa corrente do bem.
               </p>
             </>
           )}
