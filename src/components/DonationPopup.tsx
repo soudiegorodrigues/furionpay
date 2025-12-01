@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { X, Heart, ArrowLeft, Loader2 } from "lucide-react";
+import { X, Heart, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DonationAmountButton } from "./DonationAmountButton";
 import { PixQRCode } from "./PixQRCode";
+import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 interface DonationPopupProps {
@@ -116,10 +117,7 @@ export const DonationPopup = ({
               <p className="text-[10px] sm:text-xs text-muted-foreground text-center mt-3 sm:mt-4">Cada doação transforma vidas obrigado por fazer parte dessa corrente do bem.</p>
             </>}
 
-          {step === "loading" && <div className="flex flex-col items-center justify-center py-12 sm:py-16 gap-3 sm:gap-4">
-              <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin" />
-              <p className="text-sm sm:text-base text-muted-foreground">Gerando código PIX...</p>
-            </div>}
+          {step === "loading" && <PixLoadingSkeleton />}
 
           {step === "pix" && pixData && <PixQRCode amount={selectedAmount} pixCode={pixData.code} qrCodeUrl={pixData.qrCodeUrl} />}
         </div>
