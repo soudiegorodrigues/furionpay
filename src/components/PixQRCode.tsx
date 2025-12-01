@@ -125,13 +125,11 @@ export const PixQRCode = ({ amount, pixCode, qrCodeUrl, expirationMinutes = 7 }:
 
       {/* Copy Button */}
       <Button
+        variant="donationCta"
+        size="xl"
         onClick={handleCopyCode}
         disabled={isExpired}
-        className={`w-full h-14 text-base font-semibold rounded-xl transition-all ${
-          copied 
-            ? "bg-green-500 hover:bg-green-600" 
-            : "bg-gradient-to-r from-red-500 via-red-400 to-green-500 hover:from-red-600 hover:via-red-500 hover:to-green-600"
-        } text-white shadow-lg`}
+        className="w-full"
       >
         <Copy className="w-5 h-5 mr-2" />
         {copied ? "Código Copiado!" : "Copiar Código PIX"}
