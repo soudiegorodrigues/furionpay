@@ -41,7 +41,7 @@ export const DonationPopup = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
-  const { trackEvent } = usePixel();
+  const { trackEvent, utmParams } = usePixel();
 
   useEffect(() => {
     if (!isOpen) {
@@ -104,6 +104,7 @@ export const DonationPopup = ({
       const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
           amount: totalAmount,
+          utmParams: utmParams,
         },
       });
 

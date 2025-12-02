@@ -1,5 +1,6 @@
 import { useEffect, createContext, useContext, ReactNode, useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getUTMParams, UTMParams } from "@/lib/utm";
 
 declare global {
   interface Window {
@@ -12,12 +13,14 @@ interface MetaPixelContextType {
   trackEvent: (eventName: string, params?: Record<string, any>) => void;
   trackCustomEvent: (eventName: string, params?: Record<string, any>) => void;
   isLoaded: boolean;
+  utmParams: UTMParams;
 }
 
 const MetaPixelContext = createContext<MetaPixelContextType>({
   trackEvent: () => {},
   trackCustomEvent: () => {},
   isLoaded: false,
+  utmParams: {},
 });
 
 export const usePixel = () => useContext(MetaPixelContext);
@@ -33,6 +36,14 @@ interface PixelConfig {
 
 export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [utmParams, setUtmParams] = useState<UTMParams>({});
+
+  // Capture UTM params on mount
+  useEffect(() => {
+    const params = getUTMParams();
+    setUtmParams(params);
+    console.log('UTM params captured:', params);
+  }, []);
 
   useEffect(() => {
     const loadPixelConfig = async () => {
@@ -95,18 +106,24 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
 
   const trackEvent = useCallback((eventName: string, params?: Record<string, any>) => {
     if (typeof window !== 'undefined' && window.fbq) {
-      window.fbq('track', eventName, params);
+      // Include UTM params in all events
+      const eventParams = { ...params, ...utmParams };
+      window.fbq('track', eventName, eventParams);
+      console.log(`Pixel Event: ${eventName}`, eventParams);
     }
-  }, []);
+  }, [utmParams]);
 
   const trackCustomEvent = useCallback((eventName: string, params?: Record<string, any>) => {
     if (typeof window !== 'undefined' && window.fbq) {
-      window.fbq('trackCustom', eventName, params);
+      // Include UTM params in all events
+      const eventParams = { ...params, ...utmParams };
+      window.fbq('trackCustom', eventName, eventParams);
+      console.log(`Pixel Custom Event: ${eventName}`, eventParams);
     }
-  }, []);
+  }, [utmParams]);
 
   return (
-    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded }}>
+    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams }}>
       {children}
     </MetaPixelContext.Provider>
   );
