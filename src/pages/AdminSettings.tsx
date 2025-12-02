@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle } from "lucide-react";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,6 +22,7 @@ interface AdminSettingsData {
   recipient_id: string;
   product_name: string;
   meta_pixels: string;
+  popup_model: string;
 }
 
 const AdminSettings = () => {
@@ -30,6 +31,7 @@ const AdminSettings = () => {
     recipient_id: "",
     product_name: "",
     meta_pixels: "[]",
+    popup_model: "boost",
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,6 +61,7 @@ const AdminSettings = () => {
         recipient_id: "",
         product_name: "",
         meta_pixels: "[]",
+        popup_model: "boost",
       };
 
       if (data) {
@@ -71,6 +74,8 @@ const AdminSettings = () => {
             settingsMap.product_name = item.value || "";
           } else if (item.key === 'meta_pixels') {
             settingsMap.meta_pixels = item.value || "[]";
+          } else if (item.key === 'popup_model') {
+            settingsMap.popup_model = item.value || "boost";
           } else if (item.key === 'meta_pixel_id' && item.value) {
             const oldToken = (data as { key: string; value: string }[]).find((d) => d.key === 'meta_pixel_token')?.value || "";
             settingsMap.meta_pixels = JSON.stringify([{
@@ -144,6 +149,10 @@ const AdminSettings = () => {
         supabase.rpc('update_admin_setting_auth', {
           setting_key: 'meta_pixels',
           setting_value: pixelsJson,
+        }),
+        supabase.rpc('update_admin_setting_auth', {
+          setting_key: 'popup_model',
+          setting_value: settings.popup_model,
         }),
       ];
 
@@ -272,6 +281,51 @@ const AdminSettings = () => {
               <p className="text-xs text-muted-foreground">
                 Nome que aparecerá no gateway de pagamento
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Popup Model Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Layout className="w-5 h-5" />
+              Modelo do Popup
+            </CardTitle>
+            <CardDescription>
+              Escolha qual modelo de popup será exibido para os visitantes
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setSettings(s => ({ ...s, popup_model: 'boost' }))}
+                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  settings.popup_model === 'boost'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="text-2xl mb-2">🚀</div>
+                <p className="font-medium text-sm">Modelo Boost</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Valor livre + opções de turbinar
+                </p>
+              </button>
+              <button
+                onClick={() => setSettings(s => ({ ...s, popup_model: 'simple' }))}
+                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  settings.popup_model === 'simple'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="text-2xl mb-2">💰</div>
+                <p className="font-medium text-sm">Modelo Simples</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Valores pré-definidos (R$15, R$25, R$50, R$100)
+                </p>
+              </button>
             </div>
           </CardContent>
         </Card>
