@@ -54,6 +54,23 @@ async function getApiKeyFromDatabase(): Promise<string | null> {
   return data?.value || null;
 }
 
+async function getProductNameFromDatabase(): Promise<string> {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'product_name')
+    .single();
+  
+  if (error) {
+    console.error('Error fetching product name from database:', error);
+    return 'Doação';
+  }
+  
+  return data?.value || 'Doação';
+}
+
 async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string) {
   try {
     const supabase = getSupabaseClient();
@@ -98,6 +115,10 @@ serve(async (req) => {
 
     console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
 
+    // Get product name from database
+    const productName = await getProductNameFromDatabase();
+    console.log('Product name:', productName);
+
     const { amount, customerName, customerEmail, customerDocument }: GeneratePixRequest = await req.json();
 
     if (!amount || amount <= 0) {
@@ -125,8 +146,8 @@ serve(async (req) => {
       items: [
         {
           id: `item_${externalId}`,
-          title: 'Anônimo',
-          description: 'Doação anônima',
+          title: productName,
+          description: productName,
           price: amount,
           quantity: 1,
           is_physical: false,
