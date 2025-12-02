@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DonationAmountButton } from "./DonationAmountButton";
 import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { ExitIntentPopup } from "./ExitIntentPopup";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
+import { cn } from "@/lib/utils";
 
 interface DonationPopupSimpleProps {
   isOpen: boolean;
@@ -16,10 +16,20 @@ interface DonationPopupSimpleProps {
 }
 
 const DONATION_AMOUNTS = [
-  { amount: 15, mostChosen: false },
-  { amount: 25, mostChosen: true },
+  { amount: 20, mostChosen: false },
+  { amount: 25, mostChosen: false },
+  { amount: 30, mostChosen: false },
   { amount: 50, mostChosen: false },
-  { amount: 100, mostChosen: false },
+  { amount: 60, mostChosen: false },
+  { amount: 75, mostChosen: false },
+  { amount: 100, mostChosen: true },
+  { amount: 150, mostChosen: false },
+  { amount: 200, mostChosen: false },
+  { amount: 300, mostChosen: false },
+  { amount: 400, mostChosen: false },
+  { amount: 500, mostChosen: false },
+  { amount: 750, mostChosen: false },
+  { amount: 1000, mostChosen: false },
 ];
 
 type Step = "select" | "loading" | "pix";
@@ -29,7 +39,7 @@ export const DonationPopupSimple = ({
   onClose,
   recipientName = "Davizinho"
 }: DonationPopupSimpleProps) => {
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(25);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [step, setStep] = useState<Step>("select");
   const [pixData, setPixData] = useState<{
     code: string;
@@ -43,7 +53,7 @@ export const DonationPopupSimple = ({
     if (!isOpen) {
       setStep("select");
       setPixData(null);
-      setSelectedAmount(25);
+      setSelectedAmount(100);
     } else {
       trackEvent('InitiateCheckout', {
         content_name: 'Donation Popup Simple',
@@ -146,64 +156,50 @@ export const DonationPopupSimple = ({
         <div className="px-4 sm:px-6 pb-4 sm:pb-6">
           {step === "select" && (
             <>
-              {/* Emotional Title */}
-              <div className="mb-6">
-                <h2 className="text-lg sm:text-xl font-bold text-foreground leading-tight">
-                  🚨 Cada dia sem ajuda significa mais sofrimento.💔
+              {/* Title */}
+              <div className="text-center mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-foreground leading-tight uppercase">
+                  ESCOLHA O VALOR QUE DESEJA DOAR 💚
                 </h2>
-                <p className="text-base sm:text-lg font-bold text-foreground mt-1 uppercase">
-                  ELES PRECISAM DE VOCÊ: DOE E SALVE ESSES ANJOS DE 4 PATAS!!!
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">ID: 53823</p>
               </div>
 
-              {/* Amount Selection */}
-              <div className="mb-5">
-                <p className="text-sm font-medium text-foreground mb-3">Escolha o valor da doação</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {DONATION_AMOUNTS.map((item) => (
-                    <DonationAmountButton
-                      key={item.amount}
-                      amount={item.amount}
-                      isSelected={selectedAmount === item.amount}
-                      isMostChosen={item.mostChosen}
-                      onClick={() => setSelectedAmount(item.amount)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Payment Method */}
-              <div className="mb-5">
-                <p className="text-sm font-medium text-foreground mb-2">Forma de pagamento</p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E8FFF3] text-[#32BCAD] rounded-md text-xs font-semibold">
-                  <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
-                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#32BCAD"/>
-                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#32BCAD"/>
-                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#32BCAD"/>
-                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#32BCAD"/>
-                  </svg>
-                  PIX
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div className="space-y-2 mb-5 border-t border-border pt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total:</span>
-                  <span className="font-bold text-foreground">{formatCurrency(selectedAmount || 0)}</span>
-                </div>
+              {/* Amount Grid */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-6">
+                {DONATION_AMOUNTS.map((item) => (
+                  <button
+                    key={item.amount}
+                    onClick={() => setSelectedAmount(item.amount)}
+                    className={cn(
+                      "relative py-3 px-4 rounded-lg border-2 transition-all font-medium text-sm sm:text-base",
+                      selectedAmount === item.amount
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-foreground hover:border-primary/50"
+                    )}
+                  >
+                    {item.mostChosen && (
+                      <span className="absolute -top-2 left-2 text-[10px] sm:text-xs font-semibold text-primary bg-card px-1">
+                        Mais escolhido
+                      </span>
+                    )}
+                    {formatCurrency(item.amount)}
+                  </button>
+                ))}
               </div>
 
               {/* CTA Button */}
               <Button 
                 variant="donationCta" 
                 size="xl" 
-                className="w-full text-base sm:text-lg uppercase tracking-wide" 
+                className="w-full text-base sm:text-lg" 
                 onClick={handleGeneratePix}
               >
-                Contribuir
+                Doar Agora
               </Button>
+
+              {/* Footer Text */}
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                Cada doação transforma vidas obrigado por fazer parte dessa corrente do bem.
+              </p>
             </>
           )}
 
