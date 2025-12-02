@@ -124,6 +124,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
       get_admin_settings: {
         Args: { input_token: string }
         Returns: {
