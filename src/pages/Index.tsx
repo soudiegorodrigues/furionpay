@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
+import { DonationPopupClean } from "@/components/DonationPopupClean";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,6 +38,13 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {popupModel === 'simple' ? (
         <DonationPopupSimple
+          isOpen={true}
+          onClose={() => {}}
+          recipientName="Davizinho"
+          userId={userId || undefined}
+        />
+      ) : popupModel === 'clean' ? (
+        <DonationPopupClean
           isOpen={true}
           onClose={() => {}}
           recipientName="Davizinho"

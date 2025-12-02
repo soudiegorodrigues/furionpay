@@ -354,7 +354,7 @@ const AdminSettings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setSettings(s => ({ ...s, popup_model: 'boost' }))}
                 className={`p-4 rounded-lg border-2 transition-all text-left ${
@@ -380,7 +380,7 @@ const AdminSettings = () => {
                 </div>
                 <p className="font-medium text-sm">Modelo Boost</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Valor livre + opções de turbinar
+                  Valor livre + turbinar
                 </p>
               </button>
               <button
@@ -399,14 +399,33 @@ const AdminSettings = () => {
                     <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$25</div>
                     <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$50</div>
                     <div className="h-2.5 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center">R$100</div>
-                    <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$200</div>
-                    <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$500</div>
                   </div>
-                  <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Doar Agora</div>
+                  <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Doar</div>
                 </div>
                 <p className="font-medium text-sm">Modelo Simples</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Grade de valores pré-definidos
+                  Grade de valores
+                </p>
+              </button>
+              <button
+                onClick={() => setSettings(s => ({ ...s, popup_model: 'clean' }))}
+                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  settings.popup_model === 'clean'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                {/* Mini Preview - Clean Model */}
+                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+                  <div className="text-[6px] font-bold text-center mb-1">❤️ Salvando vidas</div>
+                  <div className="w-8 h-8 mx-auto bg-secondary rounded border border-border mb-1 flex items-center justify-center">
+                    <span className="text-[6px]">QR</span>
+                  </div>
+                  <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">COPIAR</div>
+                </div>
+                <p className="font-medium text-sm">Modelo Limpo</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Design minimalista
                 </p>
               </button>
             </div>
