@@ -21,7 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  LogOut
+  LogOut,
+  Users
 } from "lucide-react";
 
 interface DashboardStats {
@@ -257,6 +258,10 @@ const AdminDashboard = () => {
             <Button variant="outline" size="sm" onClick={loadData}>
               <RefreshCw className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Atualizar</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')}>
+              <Users className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Usuários</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/admin/settings')}>
               <Settings className="h-4 w-4 sm:mr-2" />

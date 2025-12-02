@@ -139,6 +139,16 @@ export type Database = {
           value: string
         }[]
       }
+      get_all_users_auth: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          is_admin: boolean
+          last_sign_in_at: string
+        }[]
+      }
       get_pix_dashboard: { Args: { input_token: string }; Returns: Json }
       get_pix_dashboard_auth: { Args: never; Returns: Json }
       get_pix_transactions: {
@@ -212,6 +222,7 @@ export type Database = {
         Returns: boolean
       }
       reset_pix_transactions_auth: { Args: never; Returns: boolean }
+      revoke_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       update_admin_setting: {
         Args: {
           input_token: string
