@@ -31,11 +31,14 @@ interface GeneratePixRequest {
   customerDocument?: string;
 }
 
-async function getApiKeyFromDatabase(): Promise<string | null> {
+function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
+
+async function getApiKeyFromDatabase(): Promise<string | null> {
+  const supabase = getSupabaseClient();
   
   const { data, error } = await supabase
     .from('admin_settings')
@@ -49,6 +52,26 @@ async function getApiKeyFromDatabase(): Promise<string | null> {
   }
   
   return data?.value || null;
+}
+
+async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string) {
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc('log_pix_generated', {
+      p_amount: amount,
+      p_txid: txid,
+      p_pix_code: pixCode,
+      p_donor_name: donorName
+    });
+    
+    if (error) {
+      console.error('Error logging PIX transaction:', error);
+    } else {
+      console.log('PIX transaction logged with ID:', data);
+    }
+  } catch (err) {
+    console.error('Error in logPixGenerated:', err);
+  }
 }
 
 serve(async (req) => {
@@ -85,6 +108,7 @@ serve(async (req) => {
     }
 
     const externalId = `donation_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const donorName = customerName || getRandomName();
 
     const transactionData = {
       external_id: externalId,
@@ -92,7 +116,7 @@ serve(async (req) => {
       payment_method: 'PIX',
       webhook_url: 'https://example.com/webhook',
       customer: {
-        name: customerName || getRandomName(),
+        name: donorName,
         email: customerEmail || 'doador@exemplo.com',
         phone: '11999999999',
         document_type: 'CPF',
@@ -138,6 +162,7 @@ serve(async (req) => {
     
     const pixCode = data.pix?.payload || data.pixCode || data.qr_code;
     const qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
+    const transactionId = data.id || externalId;
 
     if (!pixCode) {
       console.error('PIX code not found in response:', data);
@@ -147,11 +172,14 @@ serve(async (req) => {
       );
     }
 
+    // Log the PIX generation to database
+    await logPixGenerated(amount, transactionId, pixCode, donorName);
+
     return new Response(
       JSON.stringify({
         pixCode,
         qrCodeUrl: qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCode)}`,
-        transactionId: data.id || externalId,
+        transactionId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

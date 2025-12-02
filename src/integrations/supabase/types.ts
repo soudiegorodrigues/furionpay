@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pix_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          donor_name: string | null
+          expired_at: string | null
+          id: string
+          paid_at: string | null
+          pix_code: string | null
+          status: Database["public"]["Enums"]["pix_status"]
+          txid: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          donor_name?: string | null
+          expired_at?: string | null
+          id?: string
+          paid_at?: string | null
+          pix_code?: string | null
+          status?: Database["public"]["Enums"]["pix_status"]
+          txid?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          donor_name?: string | null
+          expired_at?: string | null
+          id?: string
+          paid_at?: string | null
+          pix_code?: string | null
+          status?: Database["public"]["Enums"]["pix_status"]
+          txid?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -68,6 +104,29 @@ export type Database = {
           value: string
         }[]
       }
+      get_pix_dashboard: { Args: { input_token: string }; Returns: Json }
+      get_pix_transactions: {
+        Args: { input_token: string; p_limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          donor_name: string
+          id: string
+          paid_at: string
+          status: Database["public"]["Enums"]["pix_status"]
+          txid: string
+        }[]
+      }
+      log_pix_generated: {
+        Args: {
+          p_amount: number
+          p_donor_name: string
+          p_pix_code: string
+          p_txid: string
+        }
+        Returns: string
+      }
+      mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
       update_admin_setting: {
         Args: {
           input_token: string
@@ -79,7 +138,7 @@ export type Database = {
       validate_admin_token: { Args: { input_token: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      pix_status: "generated" | "paid" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -206,6 +265,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      pix_status: ["generated", "paid", "expired"],
+    },
   },
 } as const
