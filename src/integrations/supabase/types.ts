@@ -98,6 +98,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -143,6 +164,14 @@ export type Database = {
           status: Database["public"]["Enums"]["pix_status"]
           txid: string
         }[]
+      }
+      grant_admin_role: { Args: { target_user_id: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_admin_authenticated: { Args: never; Returns: boolean }
       log_pix_generated:
@@ -197,6 +226,7 @@ export type Database = {
       validate_admin_token: { Args: { input_token: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "admin" | "user"
       pix_status: "generated" | "paid" | "expired"
     }
     CompositeTypes: {
@@ -325,6 +355,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       pix_status: ["generated", "paid", "expired"],
     },
   },
