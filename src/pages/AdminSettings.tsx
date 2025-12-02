@@ -18,6 +18,7 @@ interface MetaPixel {
 interface AdminSettingsData {
   spedpay_api_key: string;
   recipient_id: string;
+  product_name: string;
   meta_pixels: string; // JSON array
 }
 
@@ -25,6 +26,7 @@ const AdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettingsData>({
     spedpay_api_key: "",
     recipient_id: "",
+    product_name: "",
     meta_pixels: "[]",
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
@@ -53,6 +55,7 @@ const AdminSettings = () => {
       const settingsMap: AdminSettingsData = {
         spedpay_api_key: "",
         recipient_id: "",
+        product_name: "",
         meta_pixels: "[]",
       };
 
@@ -62,6 +65,8 @@ const AdminSettings = () => {
             settingsMap.spedpay_api_key = item.value || "";
           } else if (item.key === 'recipient_id') {
             settingsMap.recipient_id = item.value || "";
+          } else if (item.key === 'product_name') {
+            settingsMap.product_name = item.value || "";
           } else if (item.key === 'meta_pixels') {
             settingsMap.meta_pixels = item.value || "[]";
           } else if (item.key === 'meta_pixel_id' && item.value) {
@@ -134,6 +139,11 @@ const AdminSettings = () => {
           input_token: adminToken,
           setting_key: 'recipient_id',
           setting_value: settings.recipient_id,
+        }),
+        supabase.rpc('update_admin_setting', {
+          input_token: adminToken,
+          setting_key: 'product_name',
+          setting_value: settings.product_name,
         }),
         supabase.rpc('update_admin_setting', {
           input_token: adminToken,
@@ -230,6 +240,19 @@ const AdminSettings = () => {
                 value={settings.recipient_id}
                 onChange={(e) => setSettings(s => ({ ...s, recipient_id: e.target.value }))}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="product_name">Nome do Produto</Label>
+              <Input
+                id="product_name"
+                type="text"
+                placeholder="Ex: Doação, Contribuição..."
+                value={settings.product_name}
+                onChange={(e) => setSettings(s => ({ ...s, product_name: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nome que aparecerá no gateway de pagamento
+              </p>
             </div>
           </CardContent>
         </Card>
