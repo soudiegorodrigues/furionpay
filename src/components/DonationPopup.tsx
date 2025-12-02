@@ -37,6 +37,7 @@ export const DonationPopup = ({
   const [pixData, setPixData] = useState<{
     code: string;
     qrCodeUrl?: string;
+    transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
   const { trackEvent } = usePixel();
@@ -110,6 +111,7 @@ export const DonationPopup = ({
       setPixData({
         code: data.pixCode,
         qrCodeUrl: data.qrCodeUrl,
+        transactionId: data.transactionId,
       });
       setStep("pix");
     } catch (err) {
@@ -257,6 +259,7 @@ export const DonationPopup = ({
               amount={totalAmount} 
               pixCode={pixData.code} 
               qrCodeUrl={pixData.qrCodeUrl}
+              transactionId={pixData.transactionId}
               onRegenerate={handleBack}
             />
           )}
