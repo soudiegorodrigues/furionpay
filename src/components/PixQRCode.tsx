@@ -79,6 +79,11 @@ export const PixQRCode = ({
           {isExpired ? "Expirado" : formatTime(timeLeft)}
         </span>
       </div>
+      {!isExpired && (
+        <p className={`text-[10px] sm:text-xs text-center ${isLowTime ? "text-orange-500" : "text-muted-foreground"}`}>
+          ⏳ QR Code expira em <span className="font-semibold font-mono">{formatTime(timeLeft)}</span> — finalize antes que fique indisponível
+        </p>
+      )}
 
       {/* QR Code */}
       <div className="flex flex-col items-center gap-2 sm:gap-3">
