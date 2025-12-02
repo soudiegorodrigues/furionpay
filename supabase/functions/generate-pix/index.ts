@@ -68,44 +68,70 @@ function getSupabaseClient() {
 async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
   const supabase = getSupabaseClient();
   
-  let query = supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'spedpay_api_key');
-  
+  // First try user-specific settings
   if (userId) {
-    query = query.eq('user_id', userId);
+    const { data: userData, error: userError } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'spedpay_api_key')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!userError && userData?.value) {
+      console.log('Using user-specific API key');
+      return userData.value;
+    }
   }
   
-  const { data, error } = await query.single();
+  // Fall back to global settings (without user_id)
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'spedpay_api_key')
+    .is('user_id', null)
+    .single();
   
   if (error) {
     console.error('Error fetching API key from database:', error);
     return null;
   }
   
+  console.log('Using global API key');
   return data?.value || null;
 }
 
 async function getProductNameFromDatabase(userId?: string): Promise<string> {
   const supabase = getSupabaseClient();
   
-  let query = supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'product_name');
-  
+  // First try user-specific settings
   if (userId) {
-    query = query.eq('user_id', userId);
+    const { data: userData, error: userError } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'product_name')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!userError && userData?.value) {
+      console.log('Using user-specific product name:', userData.value);
+      return userData.value;
+    }
   }
   
-  const { data, error } = await query.single();
+  // Fall back to global settings
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'product_name')
+    .is('user_id', null)
+    .single();
   
   if (error) {
     console.error('Error fetching product name from database:', error);
     return 'Doação';
   }
   
+  console.log('Using global product name:', data?.value);
   return data?.value || 'Doação';
 }
 

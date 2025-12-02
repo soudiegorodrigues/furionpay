@@ -22,34 +22,51 @@ serve(async (req) => {
     try {
       const body = await req.json();
       userId = body.userId || null;
+      console.log("Received userId:", userId);
     } catch {
-      // No body or invalid JSON, use default
-    }
-
-    let query = supabase
-      .from("admin_settings")
-      .select("key, value")
-      .in("key", ["popup_model", "social_proof_enabled"]);
-
-    if (userId) {
-      query = query.eq("user_id", userId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Error fetching settings:", error);
-      return new Response(
-        JSON.stringify({ model: "boost", socialProofEnabled: false }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log("No body or invalid JSON");
     }
 
     let model = "boost";
     let socialProofEnabled = false;
 
-    if (data) {
-      for (const item of data) {
+    // First try to get user-specific settings
+    if (userId) {
+      const { data: userSettings, error: userError } = await supabase
+        .from("admin_settings")
+        .select("key, value")
+        .eq("user_id", userId)
+        .in("key", ["popup_model", "social_proof_enabled"]);
+
+      console.log("User settings query result:", userSettings, userError);
+
+      if (userSettings && userSettings.length > 0) {
+        for (const item of userSettings) {
+          if (item.key === "popup_model") {
+            model = item.value || "boost";
+          } else if (item.key === "social_proof_enabled") {
+            socialProofEnabled = item.value === "true";
+          }
+        }
+        console.log("Using user-specific settings:", { model, socialProofEnabled });
+        return new Response(
+          JSON.stringify({ model, socialProofEnabled }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Fall back to global settings (those without user_id)
+    const { data: globalSettings, error: globalError } = await supabase
+      .from("admin_settings")
+      .select("key, value")
+      .is("user_id", null)
+      .in("key", ["popup_model", "social_proof_enabled"]);
+
+    console.log("Global settings query result:", globalSettings, globalError);
+
+    if (globalSettings && globalSettings.length > 0) {
+      for (const item of globalSettings) {
         if (item.key === "popup_model") {
           model = item.value || "boost";
         } else if (item.key === "social_proof_enabled") {
@@ -57,6 +74,8 @@ serve(async (req) => {
         }
       }
     }
+
+    console.log("Final settings:", { model, socialProofEnabled });
 
     return new Response(
       JSON.stringify({ model, socialProofEnabled }),
