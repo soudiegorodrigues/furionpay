@@ -306,7 +306,21 @@ const AdminSettings = () => {
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                <div className="text-2xl mb-2">🚀</div>
+                {/* Mini Preview - Boost Model */}
+                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+                  <div className="text-[6px] font-bold text-center mb-1">🚨 Doe agora!</div>
+                  <div className="flex gap-1 mb-1">
+                    <div className="flex-1 h-4 bg-secondary rounded border border-border flex items-center px-1">
+                      <span className="text-[5px] text-muted-foreground">R$</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-0.5 mb-1">
+                    <div className="h-3 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">🏠</div>
+                    <div className="h-3 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">🍖</div>
+                    <div className="h-3 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">💉</div>
+                  </div>
+                  <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Contribuir</div>
+                </div>
                 <p className="font-medium text-sm">Modelo Boost</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Valor livre + opções de turbinar
@@ -320,10 +334,22 @@ const AdminSettings = () => {
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                <div className="text-2xl mb-2">💰</div>
+                {/* Mini Preview - Simple Model */}
+                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+                  <div className="text-[6px] font-bold text-center mb-1">💚 Escolha o valor</div>
+                  <div className="grid grid-cols-2 gap-0.5 mb-1">
+                    <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$20</div>
+                    <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$25</div>
+                    <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$50</div>
+                    <div className="h-2.5 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center">R$100</div>
+                    <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$200</div>
+                    <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$500</div>
+                  </div>
+                  <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Doar Agora</div>
+                </div>
                 <p className="font-medium text-sm">Modelo Simples</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Valores pré-definidos (R$15, R$25, R$50, R$100)
+                  Grade de valores pré-definidos
                 </p>
               </button>
             </div>
