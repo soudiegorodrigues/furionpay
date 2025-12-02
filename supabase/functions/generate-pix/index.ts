@@ -102,6 +102,7 @@ async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
 
 async function getProductNameFromDatabase(userId?: string): Promise<string> {
   const supabase = getSupabaseClient();
+  const DEFAULT_PRODUCT_NAME = 'Anônimo';
   
   // First try user-specific settings
   if (userId) {
@@ -112,7 +113,8 @@ async function getProductNameFromDatabase(userId?: string): Promise<string> {
       .eq('user_id', userId)
       .single();
     
-    if (!userError && userData?.value) {
+    // Only use if value exists and is not empty
+    if (!userError && userData?.value && userData.value.trim() !== '') {
       console.log('Using user-specific product name:', userData.value);
       return userData.value;
     }
@@ -126,13 +128,14 @@ async function getProductNameFromDatabase(userId?: string): Promise<string> {
     .is('user_id', null)
     .single();
   
-  if (error) {
-    console.error('Error fetching product name from database:', error);
-    return 'Doação';
+  // Only use global if value exists and is not empty
+  if (!error && data?.value && data.value.trim() !== '') {
+    console.log('Using global product name:', data.value);
+    return data.value;
   }
   
-  console.log('Using global product name:', data?.value);
-  return data?.value || 'Doação';
+  console.log('Using default product name:', DEFAULT_PRODUCT_NAME);
+  return DEFAULT_PRODUCT_NAME;
 }
 
 async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string): Promise<string | null> {
