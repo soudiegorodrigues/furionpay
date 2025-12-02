@@ -18,8 +18,9 @@ const AdminAuth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, signUp, isAuthenticated, loading } = useAdminAuth();
+  const { signIn, signUp, resetPassword, isAuthenticated, loading } = useAdminAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,6 +33,40 @@ const AdminAuth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isResetPassword) {
+      // Only validate email for password reset
+      const emailValidation = z.string().trim().email({ message: "Email inválido" }).safeParse(email);
+      if (!emailValidation.success) {
+        toast({
+          variant: "destructive",
+          title: "Erro de validação",
+          description: emailValidation.error.errors[0].message
+        });
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: error.message
+          });
+        } else {
+          toast({
+            title: "Email enviado!",
+            description: "Verifique sua caixa de entrada para redefinir a senha"
+          });
+          setIsResetPassword(false);
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     // Validate input
     const validation = authSchema.safeParse({ email, password });
     if (!validation.success) {
@@ -100,12 +135,14 @@ const AdminAuth = () => {
             <Lock className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl">
-            {isLogin ? 'Acessar Painel' : 'Criar Conta'}
+            {isResetPassword ? 'Recuperar Senha' : isLogin ? 'Acessar Painel' : 'Criar Conta'}
           </CardTitle>
           <CardDescription>
-            {isLogin 
-              ? 'Entre com suas credenciais de administrador' 
-              : 'Crie uma conta de administrador'}
+            {isResetPassword
+              ? 'Digite seu email para receber o link de recuperação'
+              : isLogin 
+                ? 'Entre com suas credenciais de administrador' 
+                : 'Crie uma conta de administrador'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -125,43 +162,61 @@ const AdminAuth = () => {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                  minLength={6}
-                />
+            {!isResetPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : isResetPassword ? (
+                <Mail className="h-4 w-4 mr-2" />
               ) : isLogin ? (
                 <LogIn className="h-4 w-4 mr-2" />
               ) : (
                 <UserPlus className="h-4 w-4 mr-2" />
               )}
-              {isLogin ? 'Entrar' : 'Criar Conta'}
+              {isResetPassword ? 'Enviar Link' : isLogin ? 'Entrar' : 'Criar Conta'}
             </Button>
           </form>
           
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-2">
+            {isLogin && !isResetPassword && (
+              <button
+                type="button"
+                onClick={() => setIsResetPassword(true)}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors block w-full"
+              >
+                Esqueceu a senha?
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsResetPassword(false);
+                setIsLogin(!isLogin);
+              }}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              {isLogin 
-                ? 'Não tem conta? Criar conta' 
-                : 'Já tem conta? Fazer login'}
+              {isResetPassword 
+                ? 'Voltar ao login'
+                : isLogin 
+                  ? 'Não tem conta? Criar conta' 
+                  : 'Já tem conta? Fazer login'}
             </button>
           </div>
         </CardContent>
