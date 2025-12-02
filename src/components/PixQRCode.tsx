@@ -1,34 +1,49 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Clock, Heart } from "lucide-react";
+import { Copy, Clock, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 interface PixQRCodeProps {
   amount: number;
   pixCode: string;
   qrCodeUrl?: string;
   expirationMinutes?: number;
+  onRegenerate?: () => void;
 }
 export const PixQRCode = ({
   amount,
   pixCode,
   qrCodeUrl,
-  expirationMinutes = 7
+  expirationMinutes = 7,
+  onRegenerate
 }: PixQRCodeProps) => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60);
+  const [showExpiredDialog, setShowExpiredDialog] = useState(false);
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0) {
+      setShowExpiredDialog(true);
+      return;
+    }
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
+          setShowExpiredDialog(true);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [timeLeft]);
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -129,5 +144,33 @@ export const PixQRCode = ({
       {isExpired && <p className="text-[10px] sm:text-xs text-destructive text-center max-w-xs">
           O tempo expirou. Volte e gere um novo código PIX.
         </p>}
+
+      {/* Expired Dialog */}
+      <Dialog open={showExpiredDialog} onOpenChange={setShowExpiredDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">
+              ⏰ Tempo Expirado
+            </DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              O código PIX expirou. Gere um novo código para continuar sua doação e ajudar a transformar vidas!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-4">
+            <Button 
+              variant="donationCta" 
+              size="lg" 
+              onClick={() => {
+                setShowExpiredDialog(false);
+                onRegenerate?.();
+              }}
+              className="w-full"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Gerar Novo Código PIX
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
