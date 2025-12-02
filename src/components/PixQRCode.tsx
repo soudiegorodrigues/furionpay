@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Clock, RefreshCw } from "lucide-react";
+import { Copy, Clock, RefreshCw, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -10,12 +10,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePixel } from "./MetaPixelProvider";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PixQRCodeProps {
   amount: number;
   pixCode: string;
   qrCodeUrl?: string;
   expirationMinutes?: number;
+  transactionId?: string;
   onRegenerate?: () => void;
 }
 export const PixQRCode = ({
@@ -23,12 +25,14 @@ export const PixQRCode = ({
   pixCode,
   qrCodeUrl,
   expirationMinutes = 7,
+  transactionId,
   onRegenerate
 }: PixQRCodeProps) => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60);
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
-  const { trackCustomEvent } = usePixel();
+  const [isPaid, setIsPaid] = useState(false);
+  const { trackEvent, trackCustomEvent } = usePixel();
 
   // Track PixGenerated when component mounts
   useEffect(() => {
@@ -37,6 +41,45 @@ export const PixQRCode = ({
       currency: 'BRL',
     });
   }, [amount, trackCustomEvent]);
+
+  // Listen for payment confirmation via Realtime
+  useEffect(() => {
+    if (!transactionId || isPaid) return;
+
+    const channel = supabase
+      .channel(`pix-payment-${transactionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pix_transactions',
+          filter: `id=eq.${transactionId}`,
+        },
+        (payload) => {
+          if (payload.new && payload.new.status === 'paid') {
+            setIsPaid(true);
+            // Fire Purchase event
+            trackEvent('Purchase', {
+              value: amount,
+              currency: 'BRL',
+              content_name: 'Doação PIX',
+              content_type: 'donation',
+              transaction_id: transactionId,
+            });
+            toast({
+              title: "🎉 Pagamento confirmado!",
+              description: "Obrigado pela sua doação! Você transformou uma vida.",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [transactionId, amount, isPaid, trackEvent]);
 
   useEffect(() => {
     if (timeLeft <= 0) {

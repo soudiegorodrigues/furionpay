@@ -91,7 +91,7 @@ async function getProductNameFromDatabase(): Promise<string> {
   return data?.value || 'Doação';
 }
 
-async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string) {
+async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.rpc('log_pix_generated', {
@@ -103,11 +103,14 @@ async function logPixGenerated(amount: number, txid: string, pixCode: string, do
     
     if (error) {
       console.error('Error logging PIX transaction:', error);
+      return null;
     } else {
       console.log('PIX transaction logged with ID:', data);
+      return data as string;
     }
   } catch (err) {
     console.error('Error in logPixGenerated:', err);
+    return null;
   }
 }
 
@@ -215,14 +218,14 @@ serve(async (req) => {
       );
     }
 
-    // Log the PIX generation to database
-    await logPixGenerated(amount, transactionId, pixCode, donorName);
+    // Log the PIX generation to database and get the database ID
+    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName);
 
     return new Response(
       JSON.stringify({
         pixCode,
         qrCodeUrl: qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCode)}`,
-        transactionId,
+        transactionId: dbTransactionId || transactionId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
