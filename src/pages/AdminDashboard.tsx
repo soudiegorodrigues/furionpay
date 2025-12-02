@@ -41,6 +41,7 @@ interface Transaction {
   status: 'generated' | 'paid' | 'expired';
   txid: string;
   donor_name: string;
+  product_name: string | null;
   created_at: string;
   paid_at: string | null;
 }
@@ -384,8 +385,9 @@ const AdminDashboard = () => {
                         <TableHead className="text-xs sm:text-sm whitespace-nowrap">Data</TableHead>
                         <TableHead className="text-xs sm:text-sm whitespace-nowrap">Valor</TableHead>
                         <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
-                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden sm:table-cell">Doador</TableHead>
-                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Pago em</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden sm:table-cell">Produto</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Doador</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden lg:table-cell">Pago em</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -401,9 +403,12 @@ const AdminDashboard = () => {
                             {getStatusBadge(tx.status)}
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm text-muted-foreground hidden sm:table-cell">
-                            {tx.donor_name || '-'}
+                            {tx.product_name || '-'}
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm text-muted-foreground hidden md:table-cell">
+                            {tx.donor_name || '-'}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
                             {tx.paid_at ? formatDate(tx.paid_at) : '-'}
                           </TableCell>
                         </TableRow>
