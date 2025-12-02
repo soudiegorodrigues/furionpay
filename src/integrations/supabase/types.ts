@@ -65,6 +65,7 @@ export type Database = {
           id: string
           paid_at: string | null
           pix_code: string | null
+          product_name: string | null
           status: Database["public"]["Enums"]["pix_status"]
           txid: string | null
           utm_data: Json | null
@@ -77,6 +78,7 @@ export type Database = {
           id?: string
           paid_at?: string | null
           pix_code?: string | null
+          product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
           utm_data?: Json | null
@@ -89,6 +91,7 @@ export type Database = {
           id?: string
           paid_at?: string | null
           pix_code?: string | null
+          product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
           utm_data?: Json | null
