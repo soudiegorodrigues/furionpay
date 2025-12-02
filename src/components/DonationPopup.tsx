@@ -209,8 +209,8 @@ export const DonationPopup = ({
               {/* Payment Method */}
               <div className="mb-5">
                 <p className="text-sm font-medium text-foreground mb-2">Forma de pagamento</p>
-                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E8FFF3] text-[#32BCAD] rounded-lg text-sm font-semibold">
-                  <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E8FFF3] text-[#32BCAD] rounded-md text-xs font-semibold">
+                  <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
                     <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#32BCAD"/>
                     <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#32BCAD"/>
                     <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#32BCAD"/>
