@@ -15,7 +15,9 @@ import {
   Clock,
   Settings,
   RefreshCw,
-  ArrowLeft
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 interface DashboardStats {
@@ -39,10 +41,13 @@ interface Transaction {
   paid_at: string | null;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -120,6 +125,11 @@ const AdminDashboard = () => {
   const conversionRate = stats && stats.total_generated > 0 
     ? ((stats.total_paid / stats.total_generated) * 100).toFixed(1) 
     : '0';
+
+  // Pagination logic
+  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedTransactions = transactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   if (isLoading) {
     return (
@@ -264,40 +274,72 @@ const AdminDashboard = () => {
                 Nenhuma transação encontrada
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Doador</TableHead>
-                      <TableHead>Pago em</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((tx) => (
-                      <TableRow key={tx.id}>
-                        <TableCell className="text-sm">
-                          {formatDate(tx.created_at)}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(tx.amount)}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(tx.status)}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {tx.donor_name || '-'}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {tx.paid_at ? formatDate(tx.paid_at) : '-'}
-                        </TableCell>
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Doador</TableHead>
+                        <TableHead>Pago em</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedTransactions.map((tx) => (
+                        <TableRow key={tx.id}>
+                          <TableCell className="text-sm">
+                            {formatDate(tx.created_at)}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {formatCurrency(tx.amount)}
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(tx.status)}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {tx.donor_name || '-'}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {tx.paid_at ? formatDate(tx.paid_at) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, transactions.length)} de {transactions.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-muted-foreground px-2">
+                        Página {currentPage} de {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
