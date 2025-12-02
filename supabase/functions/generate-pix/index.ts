@@ -98,7 +98,7 @@ async function getProductNameFromDatabase(): Promise<string> {
   return data?.value || 'Doação';
 }
 
-async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>): Promise<string | null> {
+async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.rpc('log_pix_generated', {
@@ -106,7 +106,8 @@ async function logPixGenerated(amount: number, txid: string, pixCode: string, do
       p_txid: txid,
       p_pix_code: pixCode,
       p_donor_name: donorName,
-      p_utm_data: utmData || null
+      p_utm_data: utmData || null,
+      p_product_name: productName || null
     });
     
     if (error) {
@@ -245,7 +246,7 @@ serve(async (req) => {
     }
 
     // Log the PIX generation to database and get the database ID
-    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams);
+    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName);
 
     return new Response(
       JSON.stringify({

@@ -136,6 +136,7 @@ export type Database = {
           donor_name: string
           id: string
           paid_at: string
+          product_name: string
           status: Database["public"]["Enums"]["pix_status"]
           txid: string
         }[]
@@ -156,6 +157,17 @@ export type Database = {
               p_amount: number
               p_donor_name: string
               p_pix_code: string
+              p_txid: string
+              p_utm_data?: Json
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_donor_name: string
+              p_pix_code: string
+              p_product_name?: string
               p_txid: string
               p_utm_data?: Json
             }
