@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { usePixel } from "./MetaPixelProvider";
 
 interface PixQRCodeProps {
   amount: number;
@@ -27,6 +28,16 @@ export const PixQRCode = ({
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60);
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
+  const { trackCustomEvent } = usePixel();
+
+  // Track PixGenerated when component mounts
+  useEffect(() => {
+    trackCustomEvent('PixGenerated', {
+      value: amount,
+      currency: 'BRL',
+    });
+  }, [amount, trackCustomEvent]);
+
   useEffect(() => {
     if (timeLeft <= 0) {
       setShowExpiredDialog(true);

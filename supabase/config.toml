@@ -1,1 +1,7 @@
 project_id = "ulwootribnudwlwborfm"
+
+[functions.generate-pix]
+verify_jwt = false
+
+[functions.get-pixel-config]
+verify_jwt = false

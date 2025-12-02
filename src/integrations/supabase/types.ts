@@ -14,13 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
+      admin_tokens: {
+        Row: {
+          created_at: string | null
+          id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_admin_settings: {
+        Args: { input_token: string }
+        Returns: {
+          key: string
+          value: string
+        }[]
+      }
+      update_admin_setting: {
+        Args: {
+          input_token: string
+          setting_key: string
+          setting_value: string
+        }
+        Returns: boolean
+      }
+      validate_admin_token: { Args: { input_token: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
