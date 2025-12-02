@@ -11,17 +11,13 @@ const Index = () => {
   useEffect(() => {
     const fetchPopupModel = async () => {
       try {
-        const { data, error } = await supabase
-          .from('admin_settings')
-          .select('value')
-          .eq('key', 'popup_model')
-          .maybeSingle();
+        const { data, error } = await supabase.functions.invoke('get-popup-model');
 
         if (error) {
           console.error('Error fetching popup model:', error);
           setPopupModel('boost');
         } else {
-          setPopupModel(data?.value || 'boost');
+          setPopupModel(data?.model || 'boost');
         }
       } catch (err) {
         console.error('Error:', err);
