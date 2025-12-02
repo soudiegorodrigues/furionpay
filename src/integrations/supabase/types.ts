@@ -141,6 +141,10 @@ export type Database = {
             Returns: string
           }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
+      reset_pix_transactions: {
+        Args: { input_token: string }
+        Returns: boolean
+      }
       update_admin_setting: {
         Args: {
           input_token: string
