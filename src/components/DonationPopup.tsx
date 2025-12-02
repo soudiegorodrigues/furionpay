@@ -248,7 +248,8 @@ export const DonationPopup = ({
             <PixQRCode 
               amount={totalAmount} 
               pixCode={pixData.code} 
-              qrCodeUrl={pixData.qrCodeUrl} 
+              qrCodeUrl={pixData.qrCodeUrl}
+              onRegenerate={handleBack}
             />
           )}
         </div>
