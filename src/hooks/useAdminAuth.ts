@@ -53,6 +53,15 @@ export const useAdminAuth = () => {
     return { error };
   };
 
+  const resetPassword = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/admin`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+    return { error };
+  };
+
   return {
     user,
     session,
@@ -60,6 +69,7 @@ export const useAdminAuth = () => {
     signIn,
     signUp,
     signOut,
+    resetPassword,
     isAuthenticated: !!session
   };
 };
