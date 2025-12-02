@@ -195,30 +195,31 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-3 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button 
               variant="ghost" 
               size="icon"
+              className="shrink-0"
               onClick={() => navigate('/admin/settings')}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <BarChart3 className="h-7 w-7 text-primary" />
-                Dashboard Financeiro
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
+                <span className="truncate">Dashboard Financeiro</span>
               </h1>
-              <p className="text-muted-foreground text-sm">Acompanhe as transações PIX</p>
+              <p className="text-muted-foreground text-xs sm:text-sm">Acompanhe as transações PIX</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-              <SelectTrigger className="w-[140px]">
-                <Calendar className="h-4 w-4 mr-2" />
+              <SelectTrigger className="w-[120px] sm:w-[140px] text-sm">
+                <Calendar className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
@@ -229,80 +230,80 @@ const AdminDashboard = () => {
                 <SelectItem value="year">Este ano</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={loadData}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Atualizar
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Atualizar</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/admin/settings')}>
-              <Settings className="h-4 w-4 mr-2" />
-              Configurações
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/settings')}>
+              <Settings className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Configurações</span>
             </Button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 Total Gerado
               </CardTitle>
-              <QrCode className="h-5 w-5 text-blue-400" />
+              <QrCode className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">
                 {dateFilter === 'all' ? stats?.total_generated || 0 : filteredStats.generated}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 {formatCurrency(dateFilter === 'all' ? stats?.total_amount_generated || 0 : filteredStats.amountGenerated)}
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 Total Pago
               </CardTitle>
-              <CheckCircle className="h-5 w-5 text-green-400" />
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-400">
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-green-400">
                 {dateFilter === 'all' ? stats?.total_paid || 0 : filteredStats.paid}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 {formatCurrency(dateFilter === 'all' ? stats?.total_amount_paid || 0 : filteredStats.amountPaid)}
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taxa de Conversão
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Conversão
               </CardTitle>
-              <TrendingUp className="h-5 w-5 text-purple-400" />
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">
                 {dateFilter === 'all' ? conversionRate : filteredStats.conversionRate}%
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 Gerado → Pago
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 Hoje
               </CardTitle>
-              <DollarSign className="h-5 w-5 text-yellow-400" />
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats?.today_paid || 0}</div>
-              <p className="text-xs text-muted-foreground">
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">{stats?.today_paid || 0}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 {formatCurrency(stats?.today_amount_paid || 0)} recebido
               </p>
             </CardContent>
@@ -311,31 +312,31 @@ const AdminDashboard = () => {
 
         {/* Period Summary */}
         <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               {dateFilter === 'all' ? 'Resumo de Hoje' : `Resumo do Período`}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-muted/30 rounded-lg">
-                <div className="text-3xl font-bold text-blue-400">
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="text-center p-2 sm:p-4 bg-muted/30 rounded-lg">
+                <div className="text-xl sm:text-3xl font-bold text-blue-400">
                   {dateFilter === 'all' ? stats?.today_generated || 0 : filteredStats.generated}
                 </div>
-                <p className="text-sm text-muted-foreground">PIX Gerados</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Gerados</p>
               </div>
-              <div className="text-center p-4 bg-muted/30 rounded-lg">
-                <div className="text-3xl font-bold text-green-400">
+              <div className="text-center p-2 sm:p-4 bg-muted/30 rounded-lg">
+                <div className="text-xl sm:text-3xl font-bold text-green-400">
                   {dateFilter === 'all' ? stats?.today_paid || 0 : filteredStats.paid}
                 </div>
-                <p className="text-sm text-muted-foreground">PIX Pagos</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Pagos</p>
               </div>
-              <div className="text-center p-4 bg-muted/30 rounded-lg">
-                <div className="text-3xl font-bold text-yellow-400">
+              <div className="text-center p-2 sm:p-4 bg-muted/30 rounded-lg">
+                <div className="text-lg sm:text-3xl font-bold text-yellow-400">
                   {formatCurrency(dateFilter === 'all' ? stats?.today_amount_paid || 0 : filteredStats.amountPaid)}
                 </div>
-                <p className="text-sm text-muted-foreground">Total Recebido</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Total Recebido</p>
               </div>
             </div>
           </CardContent>
@@ -343,43 +344,43 @@ const AdminDashboard = () => {
 
         {/* Transactions Table */}
         <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-lg">Transações Recentes</CardTitle>
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Transações Recentes</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             {filteredTransactions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground text-sm">
                 Nenhuma transação encontrada
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto -mx-3 sm:mx-0">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Doador</TableHead>
-                        <TableHead>Pago em</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Data</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Valor</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden sm:table-cell">Doador</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Pago em</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedTransactions.map((tx) => (
                         <TableRow key={tx.id}>
-                          <TableCell className="text-sm">
+                          <TableCell className="text-xs sm:text-sm whitespace-nowrap">
                             {formatDate(tx.created_at)}
                           </TableCell>
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
                             {formatCurrency(tx.amount)}
                           </TableCell>
                           <TableCell>
                             {getStatusBadge(tx.status)}
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="text-xs sm:text-sm text-muted-foreground hidden sm:table-cell">
                             {tx.donor_name || '-'}
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="text-xs sm:text-sm text-muted-foreground hidden md:table-cell">
                             {tx.paid_at ? formatDate(tx.paid_at) : '-'}
                           </TableCell>
                         </TableRow>
@@ -390,9 +391,9 @@ const AdminDashboard = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                    <p className="text-sm text-muted-foreground">
-                      Mostrando {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
+                  <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-border gap-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
@@ -403,8 +404,8 @@ const AdminDashboard = () => {
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
-                      <span className="text-sm text-muted-foreground px-2">
-                        Página {currentPage} de {totalPages}
+                      <span className="text-xs sm:text-sm text-muted-foreground px-2">
+                        {currentPage}/{totalPages}
                       </span>
                       <Button
                         variant="outline"
