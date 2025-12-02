@@ -107,7 +107,15 @@ export type Database = {
           value: string
         }[]
       }
+      get_admin_settings_auth: {
+        Args: never
+        Returns: {
+          key: string
+          value: string
+        }[]
+      }
       get_pix_dashboard: { Args: { input_token: string }; Returns: Json }
+      get_pix_dashboard_auth: { Args: never; Returns: Json }
       get_pix_transactions: {
         Args: { input_token: string; p_limit?: number }
         Returns: {
@@ -120,6 +128,19 @@ export type Database = {
           txid: string
         }[]
       }
+      get_pix_transactions_auth: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          donor_name: string
+          id: string
+          paid_at: string
+          status: Database["public"]["Enums"]["pix_status"]
+          txid: string
+        }[]
+      }
+      is_admin_authenticated: { Args: never; Returns: boolean }
       log_pix_generated:
         | {
             Args: {
@@ -145,12 +166,17 @@ export type Database = {
         Args: { input_token: string }
         Returns: boolean
       }
+      reset_pix_transactions_auth: { Args: never; Returns: boolean }
       update_admin_setting: {
         Args: {
           input_token: string
           setting_key: string
           setting_value: string
         }
+        Returns: boolean
+      }
+      update_admin_setting_auth: {
+        Args: { setting_key: string; setting_value: string }
         Returns: boolean
       }
       validate_admin_token: { Args: { input_token: string }; Returns: boolean }
