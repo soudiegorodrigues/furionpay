@@ -67,6 +67,7 @@ export type Database = {
           pix_code: string | null
           status: Database["public"]["Enums"]["pix_status"]
           txid: string | null
+          utm_data: Json | null
         }
         Insert: {
           amount: number
@@ -78,6 +79,7 @@ export type Database = {
           pix_code?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
+          utm_data?: Json | null
         }
         Update: {
           amount?: number
@@ -89,6 +91,7 @@ export type Database = {
           pix_code?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
+          utm_data?: Json | null
         }
         Relationships: []
       }
@@ -117,15 +120,26 @@ export type Database = {
           txid: string
         }[]
       }
-      log_pix_generated: {
-        Args: {
-          p_amount: number
-          p_donor_name: string
-          p_pix_code: string
-          p_txid: string
-        }
-        Returns: string
-      }
+      log_pix_generated:
+        | {
+            Args: {
+              p_amount: number
+              p_donor_name: string
+              p_pix_code: string
+              p_txid: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_donor_name: string
+              p_pix_code: string
+              p_txid: string
+              p_utm_data?: Json
+            }
+            Returns: string
+          }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
       update_admin_setting: {
         Args: {
