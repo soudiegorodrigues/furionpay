@@ -107,17 +107,22 @@ export const PixQRCode = ({
 
       {/* How to donate instructions */}
       {!isExpired && (
-        <div className="w-full bg-muted/50 rounded-xl p-3 sm:p-4 mt-1">
-          <p className="text-xs sm:text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
-            🎁 Como doar:
+        <>
+          <div className="w-full bg-muted/50 rounded-xl p-3 sm:p-4 mt-1">
+            <p className="text-xs sm:text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+              🎁 Como doar:
+            </p>
+            <ol className="text-[10px] sm:text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Abra o app do seu banco</li>
+              <li>Escaneie o QR Code acima</li>
+              <li>Doe o valor que seu coração mandar</li>
+              <li>Confirme e salve uma vida! ❤️</li>
+            </ol>
+          </div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+            🔒 Pagamento 100% seguro via PIX
           </p>
-          <ol className="text-[10px] sm:text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Abra o app do seu banco</li>
-            <li>Escaneie o QR Code acima</li>
-            <li>Doe o valor que seu coração mandar</li>
-            <li>Confirme e salve uma vida! ❤️</li>
-          </ol>
-        </div>
+        </>
       )}
       
       {isExpired && (
