@@ -22,7 +22,27 @@ const RANDOM_NAMES = [
   'Isabela Nascimento Costa', 'Leticia Carvalho Ribeiro', 'Vanessa Lima Santos'
 ];
 
+// Random email domains
+const EMAIL_DOMAINS = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'uol.com.br'];
+
 const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
+
+const getRandomEmail = (name: string) => {
+  const domain = EMAIL_DOMAINS[Math.floor(Math.random() * EMAIL_DOMAINS.length)];
+  const cleanName = name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/\s+/g, '.')
+    .replace(/[^a-z.]/g, '');
+  const randomNum = Math.floor(Math.random() * 999) + 1;
+  return `${cleanName}${randomNum}@${domain}`;
+};
+
+const getRandomPhone = () => {
+  const ddds = ['11', '21', '31', '41', '51', '61', '71', '81', '85', '62', '27', '48'];
+  const ddd = ddds[Math.floor(Math.random() * ddds.length)];
+  const number = Math.floor(Math.random() * 900000000) + 100000000;
+  return `${ddd}9${number.toString().slice(0, 8)}`;
+};
 
 interface GeneratePixRequest {
   amount: number;
@@ -130,6 +150,8 @@ serve(async (req) => {
 
     const externalId = `donation_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const donorName = customerName || getRandomName();
+    const donorEmail = customerEmail || getRandomEmail(donorName);
+    const donorPhone = getRandomPhone();
 
     const transactionData = {
       external_id: externalId,
@@ -138,8 +160,8 @@ serve(async (req) => {
       webhook_url: 'https://example.com/webhook',
       customer: {
         name: donorName,
-        email: customerEmail || 'doador@exemplo.com',
-        phone: '11999999999',
+        email: donorEmail,
+        phone: donorPhone,
         document_type: 'CPF',
         document: customerDocument || '12345678909',
       },
