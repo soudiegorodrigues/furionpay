@@ -36,8 +36,8 @@ serve(async (req) => {
 
     console.log(`Processing webhook for transaction: ${transactionId}, status: ${status}`);
 
-    // Check if payment was successful
-    const isPaid = status === 'paid' || status === 'PAID' || status === 'approved' || status === 'APPROVED' || status === 'completed' || status === 'COMPLETED';
+    // Check if payment was successful (SpedPay sends AUTHORIZED for successful PIX payments)
+    const isPaid = status === 'paid' || status === 'PAID' || status === 'approved' || status === 'APPROVED' || status === 'completed' || status === 'COMPLETED' || status === 'authorized' || status === 'AUTHORIZED';
 
     if (isPaid) {
       const supabase = getSupabaseClient();
