@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DonationAmountButton } from "./DonationAmountButton";
 import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
+import { ExitIntentPopup } from "./ExitIntentPopup";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 interface DonationPopupProps {
@@ -122,5 +123,12 @@ export const DonationPopup = ({
           {step === "pix" && pixData && <PixQRCode amount={selectedAmount} pixCode={pixData.code} qrCodeUrl={pixData.qrCodeUrl} />}
         </div>
       </div>
+
+      {/* Exit Intent Popup */}
+      <ExitIntentPopup 
+        pixCode={pixData?.code || ""} 
+        isActive={step === "pix" && !!pixData} 
+        amount={selectedAmount}
+      />
     </div>;
 };
