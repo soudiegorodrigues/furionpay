@@ -328,6 +328,7 @@ const AdminSettings = () => {
               <ul className="list-disc list-inside ml-2">
                 <li><code>PageView</code> - Quando abre o popup de doação</li>
                 <li><code>PixGenerated</code> - Quando o QR Code PIX é gerado</li>
+                <li><code>Purchase</code> - Quando o pagamento PIX é confirmado</li>
               </ul>
             </div>
           </CardContent>
