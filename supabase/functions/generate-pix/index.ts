@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,13 +10,11 @@ const SPEDPAY_API_URL = 'https://api.spedpay.space';
 
 // Random names for anonymous donations
 const RANDOM_NAMES = [
-  // Homens
   'João Pedro Silva', 'Carlos Eduardo Santos', 'Rafael Henrique Oliveira', 
   'Lucas Gabriel Costa', 'Fernando Augusto Souza', 'Marcos Vinicius Lima',
   'Bruno Felipe Alves', 'Gustavo Henrique Rocha', 'Diego Rodrigues Ferreira',
   'André Luis Gomes', 'Thiago Martins Barbosa', 'Ricardo Almeida Pereira',
   'Paulo Roberto Nascimento', 'Matheus Henrique Carvalho', 'Leonardo Silva Ribeiro',
-  // Mulheres
   'Maria Eduarda Santos', 'Ana Carolina Oliveira', 'Juliana Cristina Costa',
   'Camila Fernanda Souza', 'Beatriz Helena Lima', 'Larissa Cristiane Alves',
   'Patricia Regina Rocha', 'Fernanda Aparecida Ferreira', 'Amanda Cristina Gomes',
@@ -32,18 +31,49 @@ interface GeneratePixRequest {
   customerDocument?: string;
 }
 
+async function getApiKeyFromDatabase(): Promise<string | null> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'spedpay_api_key')
+    .single();
+  
+  if (error) {
+    console.error('Error fetching API key from database:', error);
+    return null;
+  }
+  
+  return data?.value || null;
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const apiKey = Deno.env.get('SPEDPAY_API_KEY');
+    // Get API key from database (configured in admin panel)
+    let apiKey = await getApiKeyFromDatabase();
+    
+    // Fallback to env variable if not in database
+    if (!apiKey) {
+      apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
+    }
+    
     if (!apiKey) {
       console.error('SPEDPAY_API_KEY not configured');
-      throw new Error('API key not configured');
+      return new Response(
+        JSON.stringify({ error: 'API key not configured. Please configure it in the admin panel (/admin).' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
 
     const { amount, customerName, customerEmail, customerDocument }: GeneratePixRequest = await req.json();
 
@@ -58,7 +88,7 @@ serve(async (req) => {
 
     const transactionData = {
       external_id: externalId,
-      total_amount: amount, // Amount in reais
+      total_amount: amount,
       payment_method: 'PIX',
       webhook_url: 'https://example.com/webhook',
       customer: {
@@ -106,7 +136,6 @@ serve(async (req) => {
 
     const data = JSON.parse(responseText);
     
-    // Extract PIX payload from response
     const pixCode = data.pix?.payload || data.pixCode || data.qr_code;
     const qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
 
