@@ -170,18 +170,30 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
 
+    // Build customer object with UTM params
+    const customerData: Record<string, any> = {
+      name: donorName,
+      email: donorEmail,
+      phone: donorPhone,
+      document_type: 'CPF',
+      document: customerDocument || '12345678909',
+    };
+
+    // Add UTM params to customer object if available
+    if (utmParams) {
+      if (utmParams.utm_source) customerData.utm_source = utmParams.utm_source;
+      if (utmParams.utm_medium) customerData.utm_medium = utmParams.utm_medium;
+      if (utmParams.utm_campaign) customerData.utm_campaign = utmParams.utm_campaign;
+      if (utmParams.utm_content) customerData.utm_content = utmParams.utm_content;
+      if (utmParams.utm_term) customerData.utm_term = utmParams.utm_term;
+    }
+
     const transactionData = {
       external_id: externalId,
       total_amount: amount,
       payment_method: 'PIX',
       webhook_url: webhookUrl,
-      customer: {
-        name: donorName,
-        email: donorEmail,
-        phone: donorPhone,
-        document_type: 'CPF',
-        document: customerDocument || '12345678909',
-      },
+      customer: customerData,
       items: [
         {
           id: `item_${externalId}`,
