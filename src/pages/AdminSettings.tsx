@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +33,7 @@ const AdminSettings = () => {
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const navigate = useNavigate();
 
   const adminToken = sessionStorage.getItem('admin_token');
@@ -173,6 +175,34 @@ const AdminSettings = () => {
   const handleLogout = () => {
     sessionStorage.removeItem('admin_token');
     navigate('/admin');
+  };
+
+  const handleResetDashboard = async () => {
+    if (!adminToken) return;
+
+    setIsResetting(true);
+
+    try {
+      const { error } = await supabase.rpc('reset_pix_transactions', {
+        input_token: adminToken
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Todas as transações foram apagadas!",
+      });
+    } catch (error) {
+      console.error('Error resetting transactions:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao resetar transações",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   if (isLoading) {
@@ -348,6 +378,59 @@ const AdminSettings = () => {
             </>
           )}
         </Button>
+
+        {/* Reset Dashboard */}
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Zona de Perigo
+            </CardTitle>
+            <CardDescription>
+              Ações irreversíveis que afetam permanentemente seus dados
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full" disabled={isResetting}>
+                  {isResetting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Resetando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Resetar Dashboard (Apagar Transações)
+                    </>
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. Isso irá apagar permanentemente
+                    todas as transações PIX do dashboard, incluindo histórico de pagamentos.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleResetDashboard}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Sim, apagar tudo
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <p className="text-xs text-muted-foreground mt-2">
+              Isso irá zerar todos os contadores e remover o histórico de transações.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
