@@ -114,10 +114,11 @@ export const PixQRCode = ({
               🎁 Como doar:
             </p>
             <ol className="text-[10px] sm:text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Abra o app do seu banco</li>
-              <li>Escaneie o QR Code acima</li>
-              <li>Doe o valor que seu coração mandar</li>
-              <li>Confirme e salve uma vida! ❤️</li>
+              <li>Toque em Copiar Código PIX</li>
+              <li>Abra seu app do banco</li>
+              <li>Vá em PIX → Copia e Cola</li>
+              <li>Cole o código e confirme 💚</li>
+              <li>Você acabou de transformar uma vida! ❤️</li>
             </ol>
           </div>
           <p className="text-[10px] sm:text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
