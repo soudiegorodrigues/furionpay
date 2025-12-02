@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface MetaPixel {
   id: string;
+  name: string;
   pixelId: string;
   accessToken: string;
 }
@@ -117,6 +118,7 @@ const AdminSettings = () => {
   const addPixel = () => {
     const newPixel: MetaPixel = {
       id: crypto.randomUUID(),
+      name: "",
       pixelId: "",
       accessToken: "",
     };
@@ -127,7 +129,7 @@ const AdminSettings = () => {
     setPixels(pixels.filter(p => p.id !== id));
   };
 
-  const updatePixel = (id: string, field: 'pixelId' | 'accessToken', value: string) => {
+  const updatePixel = (id: string, field: 'name' | 'pixelId' | 'accessToken', value: string) => {
     setPixels(pixels.map(p => 
       p.id === id ? { ...p, [field]: value } : p
     ));
@@ -435,7 +437,7 @@ const AdminSettings = () => {
                 <div key={pixel.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-muted-foreground">
-                      Pixel #{index + 1}
+                      Pixel #{index + 1}{pixel.name && ` - ${pixel.name}`}
                     </span>
                     <Button
                       variant="ghost"
@@ -445,6 +447,16 @@ const AdminSettings = () => {
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`pixel_name_${pixel.id}`}>Nome (BM/Perfil)</Label>
+                    <Input
+                      id={`pixel_name_${pixel.id}`}
+                      type="text"
+                      placeholder="Ex: BM Principal, Perfil João..."
+                      value={pixel.name || ""}
+                      onChange={(e) => updatePixel(pixel.id, 'name', e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor={`pixel_id_${pixel.id}`}>Pixel ID</Label>
