@@ -170,7 +170,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
 
-    const transactionData = {
+    const transactionData: Record<string, any> = {
       external_id: externalId,
       total_amount: amount,
       payment_method: 'PIX',
@@ -194,6 +194,15 @@ serve(async (req) => {
       ],
       ip: '0.0.0.0',
     };
+
+    // Add UTM params to SpedPay request if available
+    if (utmParams && Object.keys(utmParams).length > 0) {
+      transactionData.utm_source = utmParams.utm_source || null;
+      transactionData.utm_medium = utmParams.utm_medium || null;
+      transactionData.utm_campaign = utmParams.utm_campaign || null;
+      transactionData.utm_content = utmParams.utm_content || null;
+      transactionData.utm_term = utmParams.utm_term || null;
+    }
 
     console.log('Creating SpedPay transaction:', JSON.stringify(transactionData, null, 2));
 
