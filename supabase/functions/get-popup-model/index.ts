@@ -19,26 +19,38 @@ serve(async (req) => {
 
     const { data, error } = await supabase
       .from("admin_settings")
-      .select("value")
-      .eq("key", "popup_model")
-      .maybeSingle();
+      .select("key, value")
+      .in("key", ["popup_model", "social_proof_enabled"]);
 
     if (error) {
-      console.error("Error fetching popup model:", error);
+      console.error("Error fetching settings:", error);
       return new Response(
-        JSON.stringify({ model: "boost" }),
+        JSON.stringify({ model: "boost", socialProofEnabled: false }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    let model = "boost";
+    let socialProofEnabled = false;
+
+    if (data) {
+      for (const item of data) {
+        if (item.key === "popup_model") {
+          model = item.value || "boost";
+        } else if (item.key === "social_proof_enabled") {
+          socialProofEnabled = item.value === "true";
+        }
+      }
+    }
+
     return new Response(
-      JSON.stringify({ model: data?.value || "boost" }),
+      JSON.stringify({ model, socialProofEnabled }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ model: "boost" }),
+      JSON.stringify({ model: "boost", socialProofEnabled: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
