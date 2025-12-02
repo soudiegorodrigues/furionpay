@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell } from "lucide-react";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +38,7 @@ const AdminSettings = () => {
     social_proof_enabled: false,
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
+  const [editingPixelId, setEditingPixelId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -433,53 +434,80 @@ const AdminSettings = () => {
                 Nenhum pixel configurado. Clique em "Adicionar Pixel" para começar.
               </p>
             ) : (
-              pixels.map((pixel, index) => (
-                <div key={pixel.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Pixel #{index + 1}{pixel.name && ` - ${pixel.name}`}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removePixel(pixel.id)}
-                      className="text-destructive hover:text-destructive"
+              pixels.map((pixel, index) => {
+                const isEditing = editingPixelId === pixel.id;
+                return (
+                  <div key={pixel.id} className="border rounded-lg overflow-hidden">
+                    <div 
+                      className="flex items-center justify-between p-3 cursor-pointer hover:bg-secondary/50 transition-colors"
+                      onClick={() => setEditingPixelId(isEditing ? null : pixel.id)}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      <div className="flex items-center gap-2">
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isEditing ? 'rotate-180' : ''}`} />
+                        <span className="text-sm font-medium">
+                          {pixel.name || `Pixel #${index + 1}`}
+                        </span>
+                        {pixel.pixelId && (
+                          <span className="text-xs text-muted-foreground">
+                            ({pixel.pixelId.slice(0, 8)}...)
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); setEditingPixelId(isEditing ? null : pixel.id); }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); removePixel(pixel.id); }}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {isEditing && (
+                      <div className="p-4 pt-0 space-y-3 border-t bg-secondary/20">
+                        <div className="space-y-2">
+                          <Label htmlFor={`pixel_name_${pixel.id}`}>Nome (BM/Perfil)</Label>
+                          <Input
+                            id={`pixel_name_${pixel.id}`}
+                            type="text"
+                            placeholder="Ex: BM Principal, Perfil João..."
+                            value={pixel.name || ""}
+                            onChange={(e) => updatePixel(pixel.id, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`pixel_id_${pixel.id}`}>Pixel ID</Label>
+                          <Input
+                            id={`pixel_id_${pixel.id}`}
+                            type="text"
+                            placeholder="Digite o ID do Pixel"
+                            value={pixel.pixelId}
+                            onChange={(e) => updatePixel(pixel.id, 'pixelId', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`pixel_token_${pixel.id}`}>Access Token (opcional)</Label>
+                          <Input
+                            id={`pixel_token_${pixel.id}`}
+                            type="password"
+                            placeholder="Digite o token de acesso"
+                            value={pixel.accessToken}
+                            onChange={(e) => updatePixel(pixel.id, 'accessToken', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`pixel_name_${pixel.id}`}>Nome (BM/Perfil)</Label>
-                    <Input
-                      id={`pixel_name_${pixel.id}`}
-                      type="text"
-                      placeholder="Ex: BM Principal, Perfil João..."
-                      value={pixel.name || ""}
-                      onChange={(e) => updatePixel(pixel.id, 'name', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`pixel_id_${pixel.id}`}>Pixel ID</Label>
-                    <Input
-                      id={`pixel_id_${pixel.id}`}
-                      type="text"
-                      placeholder="Digite o ID do Pixel"
-                      value={pixel.pixelId}
-                      onChange={(e) => updatePixel(pixel.id, 'pixelId', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`pixel_token_${pixel.id}`}>Access Token (opcional)</Label>
-                    <Input
-                      id={`pixel_token_${pixel.id}`}
-                      type="password"
-                      placeholder="Digite o token de acesso"
-                      value={pixel.accessToken}
-                      onChange={(e) => updatePixel(pixel.id, 'accessToken', e.target.value)}
-                    />
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
             
             <Button
