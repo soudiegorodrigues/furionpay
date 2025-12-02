@@ -386,7 +386,7 @@ const AdminDashboard = () => {
                         <TableHead className="text-xs sm:text-sm whitespace-nowrap">Valor</TableHead>
                         <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
                         <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden sm:table-cell">Produto</TableHead>
-                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Doador</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Clientes</TableHead>
                         <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden lg:table-cell">Pago em</TableHead>
                       </TableRow>
                     </TableHeader>
