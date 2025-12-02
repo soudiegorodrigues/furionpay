@@ -331,7 +331,7 @@ const AdminSettings = () => {
               <Input
                 id="product_name"
                 type="text"
-                placeholder="Anônimo"
+                placeholder="Ex: Nome do produto"
                 value={settings.product_name}
                 onChange={(e) => setSettings(s => ({ ...s, product_name: e.target.value }))}
               />
