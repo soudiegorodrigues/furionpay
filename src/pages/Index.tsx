@@ -1,23 +1,26 @@
 import { useState, useEffect } from "react";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
+import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const [popupModel, setPopupModel] = useState<string | null>(null);
+  const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPopupModel = async () => {
+    const fetchSettings = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-popup-model');
 
         if (error) {
-          console.error('Error fetching popup model:', error);
+          console.error('Error fetching settings:', error);
           setPopupModel('boost');
         } else {
           setPopupModel(data?.model || 'boost');
+          setSocialProofEnabled(data?.socialProofEnabled || false);
         }
       } catch (err) {
         console.error('Error:', err);
@@ -27,7 +30,7 @@ const Index = () => {
       }
     };
 
-    fetchPopupModel();
+    fetchSettings();
   }, []);
 
   if (loading) {
@@ -53,6 +56,8 @@ const Index = () => {
           recipientName="Davizinho"
         />
       )}
+      
+      <SocialProofNotification enabled={socialProofEnabled} />
     </div>
   );
 };
