@@ -22,7 +22,8 @@ const BOOST_OPTIONS = [
   { id: 3, label: "Vacina", price: 79.99, icon: "💉" },
 ];
 
-const MIN_DONATION = 20;
+const MIN_DONATION = 10;
+const MAX_DONATION = 1000;
 
 type Step = "select" | "loading" | "pix";
 
@@ -83,6 +84,15 @@ export const DonationPopup = ({
       toast({
         title: "Valor mínimo",
         description: `O valor mínimo para doação é de ${formatCurrency(MIN_DONATION)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (totalAmount > MAX_DONATION) {
+      toast({
+        title: "Valor máximo",
+        description: `O valor máximo para doação é de ${formatCurrency(MAX_DONATION)}`,
         variant: "destructive",
       });
       return;
@@ -191,7 +201,7 @@ export const DonationPopup = ({
                   />
                 </div>
                 <p className="text-xs text-destructive mt-1">
-                  Valor mínimo da doação é de R$ {MIN_DONATION},00
+                  Valor mínimo R$ {MIN_DONATION},00 | Máximo R$ {MAX_DONATION},00
                 </p>
               </div>
 
