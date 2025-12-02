@@ -7,6 +7,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { ExitIntentPopup } from "./ExitIntentPopup";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePixel } from "./MetaPixelProvider";
 
 interface DonationPopupProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const DonationPopup = ({
     qrCodeUrl?: string;
   } | null>(null);
   const { toast } = useToast();
+  const { trackEvent } = usePixel();
 
   useEffect(() => {
     if (!isOpen) {
@@ -45,8 +47,14 @@ export const DonationPopup = ({
       setPixData(null);
       setCustomAmount("");
       setSelectedBoosts([]);
+    } else {
+      // Track InitiateCheckout when popup opens
+      trackEvent('InitiateCheckout', {
+        content_name: 'Donation Popup',
+        currency: 'BRL',
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, trackEvent]);
 
   const baseAmount = parseFloat(customAmount) || 0;
   const boostsTotal = selectedBoosts.reduce((sum, id) => {
