@@ -69,7 +69,7 @@ export const PixQRCode = ({
   return <div className="flex flex-col items-center gap-3 sm:gap-4 py-1 sm:py-2 animate-fade-in">
       {/* Title */}
       <div className="text-center">
-        <p className="text-base sm:text-lg font-bold text-foreground">💚 Doe {formattedAmount} e ajude a transformar vidas</p>
+        <p className="text-lg sm:text-xl font-bold text-foreground">💚 Doe {formattedAmount} e ajude a transformar vidas</p>
         
       </div>
 
