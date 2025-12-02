@@ -76,8 +76,8 @@ export const PixQRCode = ({
       {/* Countdown Timer */}
       <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm ${isExpired ? "bg-destructive/10 text-destructive" : isLowTime ? "bg-orange-500/10 text-orange-500" : "bg-muted text-muted-foreground"}`}>
         <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-        <span className="font-mono font-medium">
-          {isExpired ? "Expirado" : formatTime(timeLeft)}
+        <span className="font-medium">
+          {isExpired ? "Expirado" : <>QR Code expira em: <span className="font-mono">{formatTime(timeLeft)}</span></>}
         </span>
       </div>
       {!isExpired}
