@@ -156,11 +156,15 @@ serve(async (req) => {
     const donorEmail = customerEmail || getRandomEmail(donorName);
     const donorPhone = getRandomPhone();
 
+    // Build webhook URL
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
+
     const transactionData = {
       external_id: externalId,
       total_amount: amount,
       payment_method: 'PIX',
-      webhook_url: 'https://example.com/webhook',
+      webhook_url: webhookUrl,
       customer: {
         name: donorName,
         email: donorEmail,
