@@ -209,11 +209,14 @@ export const DonationPopup = ({
               {/* Payment Method */}
               <div className="mb-5">
                 <p className="text-sm font-medium text-foreground mb-2">Forma de pagamento</p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-card rounded-full text-sm font-medium">
-                  <span className="w-4 h-4 bg-card rounded-full flex items-center justify-center">
-                    <span className="w-2 h-2 bg-foreground rounded-full"></span>
-                  </span>
-                  Pix
+                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E8FFF3] text-[#32BCAD] rounded-lg text-sm font-semibold">
+                  <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#32BCAD"/>
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#32BCAD"/>
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#32BCAD"/>
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#32BCAD"/>
+                  </svg>
+                  PIX
                 </div>
               </div>
 
