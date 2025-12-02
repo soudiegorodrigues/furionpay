@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,7 +20,8 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Calendar
+  Calendar,
+  LogOut
 } from "lucide-react";
 
 interface DashboardStats {
@@ -55,33 +57,29 @@ const AdminDashboard = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const token = sessionStorage.getItem('admin_token');
+  const { isAuthenticated, loading, signOut, user } = useAdminAuth();
 
   useEffect(() => {
-    if (!token) {
+    if (!loading && !isAuthenticated) {
       navigate('/admin');
       return;
     }
-    loadData();
-  }, [token, navigate]);
+    if (isAuthenticated) {
+      loadData();
+    }
+  }, [isAuthenticated, loading, navigate]);
 
   const loadData = async () => {
-    if (!token) return;
-    
     setIsLoading(true);
     try {
       // Load dashboard stats
-      const { data: statsData, error: statsError } = await supabase.rpc('get_pix_dashboard', {
-        input_token: token
-      });
+      const { data: statsData, error: statsError } = await supabase.rpc('get_pix_dashboard_auth');
 
       if (statsError) throw statsError;
       setStats(statsData as unknown as DashboardStats);
 
       // Load transactions
-      const { data: txData, error: txError } = await supabase.rpc('get_pix_transactions', {
-        input_token: token,
+      const { data: txData, error: txError } = await supabase.rpc('get_pix_transactions_auth', {
         p_limit: 50
       });
 
@@ -90,8 +88,8 @@ const AdminDashboard = () => {
 
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
-      if (error.message?.includes('Invalid admin token')) {
-        sessionStorage.removeItem('admin_token');
+      if (error.message?.includes('Not authenticated')) {
+        await signOut();
         navigate('/admin');
       } else {
         toast({
@@ -103,6 +101,11 @@ const AdminDashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/admin');
   };
 
   const formatCurrency = (value: number) => {
@@ -186,7 +189,7 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   }, [dateFilter]);
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
@@ -199,22 +202,31 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="shrink-0"
-              onClick={() => navigate('/admin/settings')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
-                <span className="truncate">Dashboard Financeiro</span>
-              </h1>
-              <p className="text-muted-foreground text-xs sm:text-sm">Acompanhe as transações PIX</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="shrink-0"
+                onClick={() => navigate('/')}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
+                  <span className="truncate">Dashboard Financeiro</span>
+                </h1>
+                <p className="text-muted-foreground text-xs sm:text-sm">
+                  {user?.email && <span className="hidden sm:inline">{user.email} • </span>}
+                  Acompanhe as transações PIX
+                </p>
+              </div>
             </div>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
           </div>
           <div className="flex flex-wrap gap-2">
             <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>

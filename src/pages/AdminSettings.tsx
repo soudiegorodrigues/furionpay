@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,7 @@ interface AdminSettingsData {
   spedpay_api_key: string;
   recipient_id: string;
   product_name: string;
-  meta_pixels: string; // JSON array
+  meta_pixels: string;
 }
 
 const AdminSettings = () => {
@@ -35,22 +36,21 @@ const AdminSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const navigate = useNavigate();
-
-  const adminToken = sessionStorage.getItem('admin_token');
+  const { isAuthenticated, loading, signOut } = useAdminAuth();
 
   useEffect(() => {
-    if (!adminToken) {
+    if (!loading && !isAuthenticated) {
       navigate('/admin');
       return;
     }
-    loadSettings();
-  }, [adminToken, navigate]);
+    if (isAuthenticated) {
+      loadSettings();
+    }
+  }, [isAuthenticated, loading, navigate]);
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_admin_settings', {
-        input_token: adminToken
-      });
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
 
       if (error) throw error;
 
@@ -62,7 +62,7 @@ const AdminSettings = () => {
       };
 
       if (data) {
-        data.forEach((item: { key: string; value: string }) => {
+        (data as { key: string; value: string }[]).forEach((item) => {
           if (item.key === 'spedpay_api_key') {
             settingsMap.spedpay_api_key = item.value || "";
           } else if (item.key === 'recipient_id') {
@@ -72,8 +72,7 @@ const AdminSettings = () => {
           } else if (item.key === 'meta_pixels') {
             settingsMap.meta_pixels = item.value || "[]";
           } else if (item.key === 'meta_pixel_id' && item.value) {
-            // Migration: convert old single pixel to new format
-            const oldToken = data.find((d: { key: string }) => d.key === 'meta_pixel_token')?.value || "";
+            const oldToken = (data as { key: string; value: string }[]).find((d) => d.key === 'meta_pixel_token')?.value || "";
             settingsMap.meta_pixels = JSON.stringify([{
               id: crypto.randomUUID(),
               pixelId: item.value,
@@ -124,31 +123,25 @@ const AdminSettings = () => {
   };
 
   const handleSave = async () => {
-    if (!adminToken) return;
-
     setIsSaving(true);
 
     try {
       const pixelsJson = JSON.stringify(pixels);
       
       const updates = [
-        supabase.rpc('update_admin_setting', {
-          input_token: adminToken,
+        supabase.rpc('update_admin_setting_auth', {
           setting_key: 'spedpay_api_key',
           setting_value: settings.spedpay_api_key,
         }),
-        supabase.rpc('update_admin_setting', {
-          input_token: adminToken,
+        supabase.rpc('update_admin_setting_auth', {
           setting_key: 'recipient_id',
           setting_value: settings.recipient_id,
         }),
-        supabase.rpc('update_admin_setting', {
-          input_token: adminToken,
+        supabase.rpc('update_admin_setting_auth', {
           setting_key: 'product_name',
           setting_value: settings.product_name,
         }),
-        supabase.rpc('update_admin_setting', {
-          input_token: adminToken,
+        supabase.rpc('update_admin_setting_auth', {
           setting_key: 'meta_pixels',
           setting_value: pixelsJson,
         }),
@@ -172,20 +165,16 @@ const AdminSettings = () => {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('admin_token');
+  const handleLogout = async () => {
+    await signOut();
     navigate('/admin');
   };
 
   const handleResetDashboard = async () => {
-    if (!adminToken) return;
-
     setIsResetting(true);
 
     try {
-      const { error } = await supabase.rpc('reset_pix_transactions', {
-        input_token: adminToken
-      });
+      const { error } = await supabase.rpc('reset_pix_transactions_auth');
 
       if (error) throw error;
 
@@ -205,7 +194,7 @@ const AdminSettings = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
