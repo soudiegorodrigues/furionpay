@@ -397,7 +397,10 @@ const AdminDashboard = () => {
                             {formatDate(tx.created_at)}
                           </TableCell>
                           <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
-                            {formatCurrency(tx.amount)}
+                            <div className="flex items-center gap-1.5">
+                              <QrCode className="h-3.5 w-3.5 text-emerald-500" />
+                              {formatCurrency(tx.amount)}
+                            </div>
                           </TableCell>
                           <TableCell>
                             {getStatusBadge(tx.status)}
