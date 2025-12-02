@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -17,7 +18,8 @@ import {
   RefreshCw,
   ArrowLeft,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calendar
 } from "lucide-react";
 
 interface DashboardStats {
@@ -43,11 +45,14 @@ interface Transaction {
 
 const ITEMS_PER_PAGE = 10;
 
+type DateFilter = 'today' | '7days' | 'month' | 'year' | 'all';
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -126,10 +131,60 @@ const AdminDashboard = () => {
     ? ((stats.total_paid / stats.total_generated) * 100).toFixed(1) 
     : '0';
 
+  // Filter transactions by date
+  const filteredTransactions = useMemo(() => {
+    if (dateFilter === 'all') return transactions;
+
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    return transactions.filter(tx => {
+      const txDate = new Date(tx.created_at);
+      
+      switch (dateFilter) {
+        case 'today':
+          return txDate >= startOfDay;
+        case '7days':
+          const sevenDaysAgo = new Date(startOfDay);
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          return txDate >= sevenDaysAgo;
+        case 'month':
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          return txDate >= startOfMonth;
+        case 'year':
+          const startOfYear = new Date(now.getFullYear(), 0, 1);
+          return txDate >= startOfYear;
+        default:
+          return true;
+      }
+    });
+  }, [transactions, dateFilter]);
+
+  // Calculate filtered stats
+  const filteredStats = useMemo(() => {
+    const generated = filteredTransactions.length;
+    const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
+    const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const amountPaid = filteredTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+    
+    return {
+      generated,
+      paid,
+      amountGenerated,
+      amountPaid,
+      conversionRate: generated > 0 ? ((paid / generated) * 100).toFixed(1) : '0'
+    };
+  }, [filteredTransactions]);
+
   // Pagination logic
-  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedTransactions = transactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilter]);
 
   if (isLoading) {
     return (
@@ -160,7 +215,20 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground text-sm">Acompanhe as transações PIX</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
+              <SelectTrigger className="w-[140px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                <SelectItem value="month">Este mês</SelectItem>
+                <SelectItem value="year">Este ano</SelectItem>
+              </SelectContent>
+            </Select>
             <Button variant="outline" onClick={loadData}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar
@@ -182,9 +250,11 @@ const AdminDashboard = () => {
               <QrCode className="h-5 w-5 text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats?.total_generated || 0}</div>
+              <div className="text-2xl font-bold text-foreground">
+                {dateFilter === 'all' ? stats?.total_generated || 0 : filteredStats.generated}
+              </div>
               <p className="text-xs text-muted-foreground">
-                {formatCurrency(stats?.total_amount_generated || 0)}
+                {formatCurrency(dateFilter === 'all' ? stats?.total_amount_generated || 0 : filteredStats.amountGenerated)}
               </p>
             </CardContent>
           </Card>
@@ -197,9 +267,11 @@ const AdminDashboard = () => {
               <CheckCircle className="h-5 w-5 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-400">{stats?.total_paid || 0}</div>
+              <div className="text-2xl font-bold text-green-400">
+                {dateFilter === 'all' ? stats?.total_paid || 0 : filteredStats.paid}
+              </div>
               <p className="text-xs text-muted-foreground">
-                {formatCurrency(stats?.total_amount_paid || 0)}
+                {formatCurrency(dateFilter === 'all' ? stats?.total_amount_paid || 0 : filteredStats.amountPaid)}
               </p>
             </CardContent>
           </Card>
@@ -212,7 +284,9 @@ const AdminDashboard = () => {
               <TrendingUp className="h-5 w-5 text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{conversionRate}%</div>
+              <div className="text-2xl font-bold text-foreground">
+                {dateFilter === 'all' ? conversionRate : filteredStats.conversionRate}%
+              </div>
               <p className="text-xs text-muted-foreground">
                 Gerado → Pago
               </p>
@@ -235,27 +309,31 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Today Summary */}
+        {/* Period Summary */}
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" />
-              Resumo de Hoje
+              {dateFilter === 'all' ? 'Resumo de Hoje' : `Resumo do Período`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-muted/30 rounded-lg">
-                <div className="text-3xl font-bold text-blue-400">{stats?.today_generated || 0}</div>
+                <div className="text-3xl font-bold text-blue-400">
+                  {dateFilter === 'all' ? stats?.today_generated || 0 : filteredStats.generated}
+                </div>
                 <p className="text-sm text-muted-foreground">PIX Gerados</p>
               </div>
               <div className="text-center p-4 bg-muted/30 rounded-lg">
-                <div className="text-3xl font-bold text-green-400">{stats?.today_paid || 0}</div>
+                <div className="text-3xl font-bold text-green-400">
+                  {dateFilter === 'all' ? stats?.today_paid || 0 : filteredStats.paid}
+                </div>
                 <p className="text-sm text-muted-foreground">PIX Pagos</p>
               </div>
               <div className="text-center p-4 bg-muted/30 rounded-lg">
                 <div className="text-3xl font-bold text-yellow-400">
-                  {formatCurrency(stats?.today_amount_paid || 0)}
+                  {formatCurrency(dateFilter === 'all' ? stats?.today_amount_paid || 0 : filteredStats.amountPaid)}
                 </div>
                 <p className="text-sm text-muted-foreground">Total Recebido</p>
               </div>
@@ -269,7 +347,7 @@ const AdminDashboard = () => {
             <CardTitle className="text-lg">Transações Recentes</CardTitle>
           </CardHeader>
           <CardContent>
-            {transactions.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Nenhuma transação encontrada
               </div>
@@ -314,7 +392,7 @@ const AdminDashboard = () => {
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
                     <p className="text-sm text-muted-foreground">
-                      Mostrando {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, transactions.length)} de {transactions.length}
+                      Mostrando {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
