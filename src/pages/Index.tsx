@@ -1,23 +1,12 @@
-import { useEffect } from "react";
 import { DonationPopup } from "@/components/DonationPopup";
-import { useDonationPopup } from "@/hooks/useDonationPopup";
 
 const Index = () => {
-  const { isOpen, openPopup, closePopup } = useDonationPopup({
-    autoShowDelay: 500, // Abre quase imediatamente
-    showOncePerSession: false, // Sempre mostra
-  });
-
-  // Abre automaticamente ao carregar
-  useEffect(() => {
-    openPopup();
-  }, [openPopup]);
-
+  // Popup sempre aberto - é a única interface da página
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <DonationPopup
-        isOpen={isOpen}
-        onClose={closePopup}
+        isOpen={true}
+        onClose={() => {}} // Não fecha - é a página principal
         recipientName="Davizinho"
       />
     </div>
