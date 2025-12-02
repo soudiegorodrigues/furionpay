@@ -69,6 +69,17 @@ const AdminDashboard = () => {
     }
   }, [isAuthenticated, loading, navigate]);
 
+  // Auto-refresh every 1 minute
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const interval = setInterval(() => {
+      loadData();
+    }, 60000); // 60 seconds
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
