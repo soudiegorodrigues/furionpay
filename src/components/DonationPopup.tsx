@@ -14,6 +14,7 @@ interface DonationPopupProps {
   onClose: () => void;
   recipientName?: string;
   autoShowDelay?: number;
+  userId?: string;
 }
 
 const BOOST_OPTIONS = [
@@ -30,7 +31,8 @@ type Step = "select" | "loading" | "pix";
 export const DonationPopup = ({
   isOpen,
   onClose,
-  recipientName = "Davizinho"
+  recipientName = "Davizinho",
+  userId
 }: DonationPopupProps) => {
   const [customAmount, setCustomAmount] = useState<string>("");
   const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
@@ -105,6 +107,7 @@ export const DonationPopup = ({
         body: {
           amount: totalAmount,
           utmParams: utmParams,
+          userId: userId,
         },
       });
 

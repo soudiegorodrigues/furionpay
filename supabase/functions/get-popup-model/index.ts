@@ -17,10 +17,25 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data, error } = await supabase
+    // Get userId from request body if provided
+    let userId: string | null = null;
+    try {
+      const body = await req.json();
+      userId = body.userId || null;
+    } catch {
+      // No body or invalid JSON, use default
+    }
+
+    let query = supabase
       .from("admin_settings")
       .select("key, value")
       .in("key", ["popup_model", "social_proof_enabled"]);
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error fetching settings:", error);

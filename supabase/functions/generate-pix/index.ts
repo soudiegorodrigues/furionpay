@@ -49,6 +49,7 @@ interface GeneratePixRequest {
   customerName?: string;
   customerEmail?: string;
   customerDocument?: string;
+  userId?: string;
   utmParams?: {
     utm_source?: string;
     utm_medium?: string;
@@ -64,14 +65,19 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-async function getApiKeyFromDatabase(): Promise<string | null> {
+async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
   const supabase = getSupabaseClient();
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('admin_settings')
     .select('value')
-    .eq('key', 'spedpay_api_key')
-    .single();
+    .eq('key', 'spedpay_api_key');
+  
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  
+  const { data, error } = await query.single();
   
   if (error) {
     console.error('Error fetching API key from database:', error);
@@ -81,14 +87,19 @@ async function getApiKeyFromDatabase(): Promise<string | null> {
   return data?.value || null;
 }
 
-async function getProductNameFromDatabase(): Promise<string> {
+async function getProductNameFromDatabase(userId?: string): Promise<string> {
   const supabase = getSupabaseClient();
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('admin_settings')
     .select('value')
-    .eq('key', 'product_name')
-    .single();
+    .eq('key', 'product_name');
+  
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  
+  const { data, error } = await query.single();
   
   if (error) {
     console.error('Error fetching product name from database:', error);
@@ -98,16 +109,17 @@ async function getProductNameFromDatabase(): Promise<string> {
   return data?.value || 'Doação';
 }
 
-async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string): Promise<string | null> {
+async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.rpc('log_pix_generated', {
+    const { data, error } = await supabase.rpc('log_pix_generated_user', {
       p_amount: amount,
       p_txid: txid,
       p_pix_code: pixCode,
       p_donor_name: donorName,
       p_utm_data: utmData || null,
-      p_product_name: productName || null
+      p_product_name: productName || null,
+      p_user_id: userId || null
     });
     
     if (error) {
@@ -129,8 +141,13 @@ serve(async (req) => {
   }
 
   try {
-    // Get API key from database (configured in admin panel)
-    let apiKey = await getApiKeyFromDatabase();
+    const { amount, customerName, customerEmail, customerDocument, utmParams, userId }: GeneratePixRequest = await req.json();
+
+    console.log('User ID:', userId);
+    console.log('UTM params received:', utmParams);
+
+    // Get API key from database (user-specific if userId provided)
+    let apiKey = await getApiKeyFromDatabase(userId);
     
     // Fallback to env variable if not in database
     if (!apiKey) {
@@ -147,13 +164,9 @@ serve(async (req) => {
 
     console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
 
-    // Get product name from database
-    const productName = await getProductNameFromDatabase();
+    // Get product name from database (user-specific)
+    const productName = await getProductNameFromDatabase(userId);
     console.log('Product name:', productName);
-
-    const { amount, customerName, customerEmail, customerDocument, utmParams }: GeneratePixRequest = await req.json();
-
-    console.log('UTM params received:', utmParams);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -246,7 +259,7 @@ serve(async (req) => {
     }
 
     // Log the PIX generation to database and get the database ID
-    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName);
+    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName, userId);
 
     return new Response(
       JSON.stringify({

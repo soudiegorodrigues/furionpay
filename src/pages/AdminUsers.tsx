@@ -24,6 +24,7 @@ const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -32,10 +33,44 @@ const AdminUsers = () => {
   }, [authLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadUsers();
+    if (isAuthenticated && user) {
+      checkAdminAndLoadUsers();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
+
+  const checkAdminAndLoadUsers = async () => {
+    try {
+      setLoading(true);
+      // Check if current user is admin
+      const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', { 
+        _user_id: user?.id, 
+        _role: 'admin' 
+      });
+      
+      if (roleError) throw roleError;
+      
+      if (!hasAdminRole) {
+        setIsAdmin(false);
+        toast({
+          title: 'Acesso Negado',
+          description: 'Você não tem permissão para acessar esta página',
+          variant: 'destructive'
+        });
+        navigate('/admin/dashboard');
+        return;
+      }
+      
+      setIsAdmin(true);
+      await loadUsers();
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao verificar permissões',
+        variant: 'destructive'
+      });
+      navigate('/admin/dashboard');
+    }
+  };
 
   const loadUsers = async () => {
     try {

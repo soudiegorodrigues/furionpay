@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
+  const userId = searchParams.get('u') || searchParams.get('user');
+  
   // Inicia com valores padrão para renderização instantânea
   const [popupModel, setPopupModel] = useState<string>('boost');
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
@@ -13,7 +17,9 @@ const Index = () => {
     // Busca configurações em background sem bloquear a renderização
     const fetchSettings = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-popup-model');
+        const { data, error } = await supabase.functions.invoke('get-popup-model', {
+          body: { userId }
+        });
 
         if (!error && data) {
           setPopupModel(data.model || 'boost');
@@ -25,7 +31,7 @@ const Index = () => {
     };
 
     fetchSettings();
-  }, []);
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -34,12 +40,14 @@ const Index = () => {
           isOpen={true}
           onClose={() => {}}
           recipientName="Davizinho"
+          userId={userId || undefined}
         />
       ) : (
         <DonationPopup
           isOpen={true}
           onClose={() => {}}
           recipientName="Davizinho"
+          userId={userId || undefined}
         />
       )}
       
