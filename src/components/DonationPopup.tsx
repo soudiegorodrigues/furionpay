@@ -201,7 +201,7 @@ export const DonationPopup = ({
                   />
                 </div>
                 <p className="text-xs text-destructive mt-1">
-                  Valor mínimo R$ {MIN_DONATION},00 | Máximo R$ {MAX_DONATION},00
+                  Valor mínimo da doação é de R$ {MIN_DONATION},00
                 </p>
               </div>
 
