@@ -1,47 +1,90 @@
 import { useState, useEffect } from "react";
-import { X, Heart, ArrowLeft } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DonationAmountButton } from "./DonationAmountButton";
+import { Input } from "@/components/ui/input";
 import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { ExitIntentPopup } from "./ExitIntentPopup";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
 interface DonationPopupProps {
   isOpen: boolean;
   onClose: () => void;
   recipientName?: string;
   autoShowDelay?: number;
 }
-const DONATION_AMOUNTS = [20, 25, 30, 50, 60, 75, 100, 150, 200, 300, 400, 500, 750, 1000];
-const MOST_CHOSEN_AMOUNT = 100;
+
+const BOOST_OPTIONS = [
+  { id: 1, label: "Reforma Ong", price: 29.99, icon: "🏠" },
+  { id: 2, label: "Ração 1kg", price: 50.00, icon: "🍖" },
+  { id: 3, label: "Vacina", price: 79.99, icon: "💉" },
+];
+
+const MIN_DONATION = 20;
+
 type Step = "select" | "loading" | "pix";
+
 export const DonationPopup = ({
   isOpen,
   onClose,
   recipientName = "Davizinho"
 }: DonationPopupProps) => {
-  const [selectedAmount, setSelectedAmount] = useState<number>(MOST_CHOSEN_AMOUNT);
+  const [customAmount, setCustomAmount] = useState<string>("");
+  const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
   const [step, setStep] = useState<Step>("select");
   const [pixData, setPixData] = useState<{
     code: string;
     qrCodeUrl?: string;
   } | null>(null);
   const { toast } = useToast();
+
   useEffect(() => {
     if (!isOpen) {
       setStep("select");
       setPixData(null);
-      setSelectedAmount(MOST_CHOSEN_AMOUNT);
+      setCustomAmount("");
+      setSelectedBoosts([]);
     }
   }, [isOpen]);
+
+  const baseAmount = parseFloat(customAmount) || 0;
+  const boostsTotal = selectedBoosts.reduce((sum, id) => {
+    const boost = BOOST_OPTIONS.find(b => b.id === id);
+    return sum + (boost?.price || 0);
+  }, 0);
+  const totalAmount = baseAmount + boostsTotal;
+
+  const toggleBoost = (id: number) => {
+    setSelectedBoosts(prev => 
+      prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]
+    );
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+    }).format(value);
+  };
+
   const handleGeneratePix = async () => {
+    if (totalAmount < MIN_DONATION) {
+      toast({
+        title: "Valor mínimo",
+        description: `O valor mínimo para doação é de ${formatCurrency(MIN_DONATION)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setStep("loading");
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
-          amount: selectedAmount,
+          amount: totalAmount,
         },
       });
 
@@ -71,12 +114,16 @@ export const DonationPopup = ({
       setStep("select");
     }
   };
+
   const handleBack = () => {
     setStep("select");
     setPixData(null);
   };
+
   if (!isOpen) return null;
-  return <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Overlay */}
       <div className="absolute inset-0 bg-overlay/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
 
@@ -84,43 +131,126 @@ export const DonationPopup = ({
       <div className="relative w-full max-w-md bg-card rounded-2xl shadow-2xl animate-scale-in overflow-hidden max-h-[95vh] overflow-y-auto">
         {/* Header */}
         <div className="relative px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
-          {step === "pix" && <button onClick={handleBack} className="absolute left-3 sm:left-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Voltar">
+          {step === "pix" && (
+            <button 
+              onClick={handleBack} 
+              className="absolute left-3 sm:left-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" 
+              aria-label="Voltar"
+            >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-            </button>}
-          <button onClick={onClose} className="absolute right-3 sm:right-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Fechar">
+            </button>
+          )}
+          <button 
+            onClick={onClose} 
+            className="absolute right-3 sm:right-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" 
+            aria-label="Fechar"
+          >
             <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
           </button>
-          
-          <h2 className="text-lg sm:text-xl font-bold text-foreground text-center uppercase tracking-wide pt-2">
-            {step === "select" ? <>
-                Escolha o valor que{" "}
-                <br />
-                deseja doar{" "}
-                <Heart className="inline w-4 h-4 sm:w-5 sm:h-5 text-primary fill-primary" />
-              </> : step === "loading" ? "Gerando PIX..." : "🎄 Faça Sua Doação"}
-          </h2>
         </div>
 
         {/* Content */}
         <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-          {step === "select" && <>
-              {/* Amount Grid */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
-                {DONATION_AMOUNTS.map(amount => <DonationAmountButton key={amount} amount={amount} isSelected={selectedAmount === amount} isMostChosen={amount === MOST_CHOSEN_AMOUNT} onClick={() => setSelectedAmount(amount)} />)}
+          {step === "select" && (
+            <>
+              {/* Emotional Title */}
+              <div className="mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-foreground leading-tight">
+                  🚨 Cada dia sem ajuda significa mais sofrimento.💔
+                </h2>
+                <p className="text-base sm:text-lg font-bold text-foreground mt-1 uppercase">
+                  ELES PRECISAM DE VOCÊ: DOE E SALVE ESSES ANJOS DE 4 PATAS!!!
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">ID: 53823</p>
+              </div>
+
+              {/* Custom Amount Input */}
+              <div className="mb-4">
+                <div className="flex border border-input rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-center px-4 bg-secondary text-foreground font-medium border-r border-input">
+                    R$
+                  </div>
+                  <Input
+                    type="number"
+                    placeholder="0,00"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    className="border-0 text-lg font-medium focus-visible:ring-0 focus-visible:ring-offset-0"
+                    min={0}
+                    step={0.01}
+                  />
+                </div>
+                <p className="text-xs text-destructive mt-1">
+                  Valor mínimo da doação é de R$ {MIN_DONATION},00
+                </p>
+              </div>
+
+              {/* Payment Method */}
+              <div className="mb-5">
+                <p className="text-sm font-medium text-foreground mb-2">Forma de pagamento</p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-card rounded-full text-sm font-medium">
+                  <span className="w-4 h-4 bg-card rounded-full flex items-center justify-center">
+                    <span className="w-2 h-2 bg-foreground rounded-full"></span>
+                  </span>
+                  Pix
+                </div>
+              </div>
+
+              {/* Boost Options */}
+              <div className="mb-5">
+                <p className="text-sm font-medium text-foreground mb-3">Turbine sua doação</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {BOOST_OPTIONS.map((boost) => (
+                    <button
+                      key={boost.id}
+                      onClick={() => toggleBoost(boost.id)}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        selectedBoosts.includes(boost.id)
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="text-2xl mb-1">{boost.icon}</div>
+                      <p className="text-xs font-medium text-foreground">{boost.label}</p>
+                      <p className="text-xs text-muted-foreground">{formatCurrency(boost.price)}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="space-y-2 mb-5 border-t border-border pt-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Contribuição:</span>
+                  <span className="font-medium text-foreground">{formatCurrency(baseAmount)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total:</span>
+                  <span className="font-bold text-foreground">{formatCurrency(totalAmount)}</span>
+                </div>
               </div>
 
               {/* CTA Button */}
-              <Button variant="donationCta" size="xl" className="w-full text-base sm:text-lg" onClick={handleGeneratePix}>
-                Doar Agora
+              <Button 
+                variant="donationCta" 
+                size="xl" 
+                className="w-full text-base sm:text-lg uppercase tracking-wide" 
+                onClick={handleGeneratePix}
+              >
+                Contribuir
               </Button>
-
-              {/* Footer text */}
-              <p className="text-[10px] sm:text-xs text-muted-foreground text-center mt-3 sm:mt-4">Cada doação transforma vidas obrigado por fazer parte dessa corrente do bem.</p>
-            </>}
+            </>
+          )}
 
           {step === "loading" && <PixLoadingSkeleton />}
 
-          {step === "pix" && pixData && <PixQRCode amount={selectedAmount} pixCode={pixData.code} qrCodeUrl={pixData.qrCodeUrl} />}
+          {step === "pix" && pixData && (
+            <PixQRCode 
+              amount={totalAmount} 
+              pixCode={pixData.code} 
+              qrCodeUrl={pixData.qrCodeUrl} 
+            />
+          )}
         </div>
       </div>
 
@@ -128,7 +258,8 @@ export const DonationPopup = ({
       <ExitIntentPopup 
         pixCode={pixData?.code || ""} 
         isActive={step === "pix" && !!pixData} 
-        amount={selectedAmount}
+        amount={totalAmount}
       />
-    </div>;
+    </div>
+  );
 };
