@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown } from "lucide-react";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,8 +42,9 @@ const AdminSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, loading, signOut } = useAdminAuth();
+  const { isAuthenticated, loading, signOut, user } = useAdminAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -57,7 +58,7 @@ const AdminSettings = () => {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      const { data, error } = await supabase.rpc('get_user_settings');
 
       if (error) throw error;
 
@@ -143,27 +144,27 @@ const AdminSettings = () => {
       const pixelsJson = JSON.stringify(pixels);
       
       const updates = [
-        supabase.rpc('update_admin_setting_auth', {
+        supabase.rpc('update_user_setting', {
           setting_key: 'spedpay_api_key',
           setting_value: settings.spedpay_api_key,
         }),
-        supabase.rpc('update_admin_setting_auth', {
+        supabase.rpc('update_user_setting', {
           setting_key: 'recipient_id',
           setting_value: settings.recipient_id,
         }),
-        supabase.rpc('update_admin_setting_auth', {
+        supabase.rpc('update_user_setting', {
           setting_key: 'product_name',
           setting_value: settings.product_name,
         }),
-        supabase.rpc('update_admin_setting_auth', {
+        supabase.rpc('update_user_setting', {
           setting_key: 'meta_pixels',
           setting_value: pixelsJson,
         }),
-        supabase.rpc('update_admin_setting_auth', {
+        supabase.rpc('update_user_setting', {
           setting_key: 'popup_model',
           setting_value: settings.popup_model,
         }),
-        supabase.rpc('update_admin_setting_auth', {
+        supabase.rpc('update_user_setting', {
           setting_key: 'social_proof_enabled',
           setting_value: settings.social_proof_enabled.toString(),
         }),
@@ -196,7 +197,7 @@ const AdminSettings = () => {
     setIsResetting(true);
 
     try {
-      const { error } = await supabase.rpc('reset_pix_transactions_auth');
+      const { error } = await supabase.rpc('reset_user_transactions');
 
       if (error) throw error;
 
@@ -249,6 +250,49 @@ const AdminSettings = () => {
             </Button>
           </div>
         </div>
+
+        {/* Shareable Link */}
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link className="w-5 h-5" />
+              Seu Link de Doação
+            </CardTitle>
+            <CardDescription>
+              Compartilhe este link para receber doações com suas configurações
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input
+                value={`${window.location.origin}/?u=${user?.id || ''}`}
+                readOnly
+                className="font-mono text-sm"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/?u=${user?.id || ''}`);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                  toast({
+                    title: "Link copiado!",
+                    description: "O link foi copiado para sua área de transferência",
+                  });
+                }}
+              >
+                {linkCopied ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Todas as doações feitas através deste link usarão suas configurações e aparecerão no seu dashboard.
+            </p>
+          </CardContent>
+        </Card>
 
         {/* API Settings */}
         <Card>

@@ -13,6 +13,7 @@ interface DonationPopupSimpleProps {
   isOpen: boolean;
   onClose: () => void;
   recipientName?: string;
+  userId?: string;
 }
 
 const DONATION_AMOUNTS = [
@@ -37,7 +38,8 @@ type Step = "select" | "loading" | "pix";
 export const DonationPopupSimple = ({
   isOpen,
   onClose,
-  recipientName = "Davizinho"
+  recipientName = "Davizinho",
+  userId
 }: DonationPopupSimpleProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [step, setStep] = useState<Step>("select");
@@ -87,6 +89,7 @@ export const DonationPopupSimple = ({
         body: {
           amount: selectedAmount,
           utmParams: utmParams,
+          userId: userId,
         },
       });
 

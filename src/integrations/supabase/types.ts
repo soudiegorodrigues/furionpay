@@ -20,6 +20,7 @@ export type Database = {
           id: string
           key: string
           updated_at: string | null
+          user_id: string | null
           value: string | null
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           id?: string
           key: string
           updated_at?: string | null
+          user_id?: string | null
           value?: string | null
         }
         Update: {
@@ -34,6 +36,7 @@ export type Database = {
           id?: string
           key?: string
           updated_at?: string | null
+          user_id?: string | null
           value?: string | null
         }
         Relationships: []
@@ -68,6 +71,7 @@ export type Database = {
           product_name: string | null
           status: Database["public"]["Enums"]["pix_status"]
           txid: string | null
+          user_id: string | null
           utm_data: Json | null
         }
         Insert: {
@@ -81,6 +85,7 @@ export type Database = {
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
+          user_id?: string | null
           utm_data?: Json | null
         }
         Update: {
@@ -94,6 +99,7 @@ export type Database = {
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
+          user_id?: string | null
           utm_data?: Json | null
         }
         Relationships: []
@@ -176,6 +182,27 @@ export type Database = {
           txid: string
         }[]
       }
+      get_user_dashboard: { Args: never; Returns: Json }
+      get_user_settings: {
+        Args: never
+        Returns: {
+          key: string
+          value: string
+        }[]
+      }
+      get_user_transactions: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          donor_name: string
+          id: string
+          paid_at: string
+          product_name: string
+          status: Database["public"]["Enums"]["pix_status"]
+          txid: string
+        }[]
+      }
       grant_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -185,6 +212,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_authenticated: { Args: never; Returns: boolean }
+      is_user_authenticated: { Args: never; Returns: boolean }
       log_pix_generated:
         | {
             Args: {
@@ -216,12 +244,25 @@ export type Database = {
             }
             Returns: string
           }
+      log_pix_generated_user: {
+        Args: {
+          p_amount: number
+          p_donor_name: string
+          p_pix_code: string
+          p_product_name?: string
+          p_txid: string
+          p_user_id?: string
+          p_utm_data?: Json
+        }
+        Returns: string
+      }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
       reset_pix_transactions: {
         Args: { input_token: string }
         Returns: boolean
       }
       reset_pix_transactions_auth: { Args: never; Returns: boolean }
+      reset_user_transactions: { Args: never; Returns: boolean }
       revoke_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       update_admin_setting: {
         Args: {
@@ -232,6 +273,10 @@ export type Database = {
         Returns: boolean
       }
       update_admin_setting_auth: {
+        Args: { setting_key: string; setting_value: string }
+        Returns: boolean
+      }
+      update_user_setting: {
         Args: { setting_key: string; setting_value: string }
         Returns: boolean
       }

@@ -21,8 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  LogOut,
-  Users
+  LogOut
 } from "lucide-react";
 
 interface DashboardStats {
@@ -85,14 +84,14 @@ const AdminDashboard = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Load dashboard stats
-      const { data: statsData, error: statsError } = await supabase.rpc('get_pix_dashboard_auth');
+      // Load dashboard stats (user-scoped)
+      const { data: statsData, error: statsError } = await supabase.rpc('get_user_dashboard');
 
       if (statsError) throw statsError;
       setStats(statsData as unknown as DashboardStats);
 
-      // Load transactions
-      const { data: txData, error: txError } = await supabase.rpc('get_pix_transactions_auth', {
+      // Load transactions (user-scoped)
+      const { data: txData, error: txError } = await supabase.rpc('get_user_transactions', {
         p_limit: 50
       });
 
@@ -258,10 +257,6 @@ const AdminDashboard = () => {
             <Button variant="outline" size="sm" onClick={loadData}>
               <RefreshCw className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Atualizar</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')}>
-              <Users className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Usuários</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/admin/settings')}>
               <Settings className="h-4 w-4 sm:mr-2" />
