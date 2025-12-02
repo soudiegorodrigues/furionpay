@@ -49,6 +49,13 @@ interface GeneratePixRequest {
   customerName?: string;
   customerEmail?: string;
   customerDocument?: string;
+  utmParams?: {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+    utm_term?: string;
+  };
 }
 
 function getSupabaseClient() {
@@ -91,14 +98,15 @@ async function getProductNameFromDatabase(): Promise<string> {
   return data?.value || 'Doação';
 }
 
-async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string): Promise<string | null> {
+async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.rpc('log_pix_generated', {
       p_amount: amount,
       p_txid: txid,
       p_pix_code: pixCode,
-      p_donor_name: donorName
+      p_donor_name: donorName,
+      p_utm_data: utmData || null
     });
     
     if (error) {
@@ -142,7 +150,9 @@ serve(async (req) => {
     const productName = await getProductNameFromDatabase();
     console.log('Product name:', productName);
 
-    const { amount, customerName, customerEmail, customerDocument }: GeneratePixRequest = await req.json();
+    const { amount, customerName, customerEmail, customerDocument, utmParams }: GeneratePixRequest = await req.json();
+
+    console.log('UTM params received:', utmParams);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -223,7 +233,7 @@ serve(async (req) => {
     }
 
     // Log the PIX generation to database and get the database ID
-    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName);
+    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams);
 
     return new Response(
       JSON.stringify({
