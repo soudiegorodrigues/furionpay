@@ -79,11 +79,7 @@ export const PixQRCode = ({
           {isExpired ? "Expirado" : formatTime(timeLeft)}
         </span>
       </div>
-      {!isExpired && (
-        <p className={`text-[10px] sm:text-xs text-center ${isLowTime ? "text-orange-500" : "text-muted-foreground"}`}>
-          ⏳ QR Code expira em <span className="font-semibold font-mono">{formatTime(timeLeft)}</span> — finalize antes que fique indisponível
-        </p>
-      )}
+      {!isExpired}
 
       {/* QR Code */}
       <div className="flex flex-col items-center gap-2 sm:gap-3">
@@ -111,8 +107,7 @@ export const PixQRCode = ({
       </Button>
 
       {/* How to donate instructions */}
-      {!isExpired && (
-        <>
+      {!isExpired && <>
           <div className="w-full bg-muted/50 rounded-xl p-3 sm:p-4 mt-1">
             <p className="text-xs sm:text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
               🎁 Como doar:
@@ -127,13 +122,10 @@ export const PixQRCode = ({
           <p className="text-[10px] sm:text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
             🔒 Pagamento 100% seguro via PIX
           </p>
-        </>
-      )}
+        </>}
       
-      {isExpired && (
-        <p className="text-[10px] sm:text-xs text-destructive text-center max-w-xs">
+      {isExpired && <p className="text-[10px] sm:text-xs text-destructive text-center max-w-xs">
           O tempo expirou. Volte e gere um novo código PIX.
-        </p>
-      )}
+        </p>}
     </div>;
 };
