@@ -70,7 +70,7 @@ export const PixQRCode = ({
       {/* Title */}
       <div className="text-center">
         <p className="text-base sm:text-lg font-bold text-foreground">💚 Doe {formattedAmount} e ajude a transformar vidas</p>
-        <p className="text-xl sm:text-2xl font-bold text-primary mt-1">{formattedAmount}</p>
+        
       </div>
 
       {/* Countdown Timer */}
