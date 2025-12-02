@@ -136,68 +136,86 @@ export const PixQRCode = ({
     }
   };
   return <div className="flex flex-col items-center gap-3 sm:gap-4 py-1 sm:py-2 animate-fade-in">
-      {/* Title */}
-      <div className="text-center">
-        <p className="text-xl sm:text-2xl font-bold text-foreground">💚 Doe {formattedAmount} e ajude a transformar vidas</p>
-        
-      </div>
-
-      {/* Countdown Timer */}
-      <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm ${isExpired ? "bg-destructive/10 text-destructive" : isLowTime ? "bg-orange-500/10 text-orange-500" : "bg-muted text-muted-foreground"}`}>
-        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-        <span className="font-medium">
-          {isExpired ? "Expirado" : <>QR Code expira em: <span className="font-mono">{formatTime(timeLeft)}</span></>}
-        </span>
-      </div>
-      {!isExpired}
-
-      {/* QR Code */}
-      <div className="flex flex-col items-center gap-2 sm:gap-3">
-        <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-100/50 to-amber-200/30 border-2 border-amber-200/50 shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
-          {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code PIX" className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl" loading="eager" /> : <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl bg-secondary flex items-center justify-center">
-              <span className="text-muted-foreground text-sm">QR Code</span>
-            </div>}
-        </div>
-        <p className="text-xs sm:text-sm text-muted-foreground text-center flex items-center gap-1 sm:gap-1.5">
-          📱 {isExpired ? "Código expirado" : "Escaneie o QR Code no app do seu banco"}
-        </p>
-      </div>
-
-      {/* Divider */}
-      <div className="flex items-center gap-2 sm:gap-3 w-full">
-        <div className="flex-1 h-px bg-border"></div>
-        <span className="text-xs sm:text-sm text-muted-foreground font-medium">ou copie o código PIX</span>
-        <div className="flex-1 h-px bg-border"></div>
-      </div>
-
-      {/* Copy Button */}
-      <Button variant="donationCta" size="xl" onClick={handleCopyCode} disabled={isExpired} className="w-full text-sm sm:text-base py-3 sm:py-4">
-        <Copy className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-        {copied ? "Código Copiado!" : "Copiar Código PIX"}
-      </Button>
-
-      {/* How to donate instructions */}
-      {!isExpired && <>
-          <div className="w-full bg-muted/50 rounded-xl p-3 sm:p-4 mt-1">
-            <p className="text-xs sm:text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
-              🎁 Como doar:
-            </p>
-            <ol className="text-[10px] sm:text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Toque em Copiar Código PIX</li>
-              <li>Abra seu app do banco</li>
-              <li>Vá em PIX → Copia e Cola</li>
-              <li>Cole o código e confirme 💚</li>
-              <li>Você acabou de transformar uma vida! ❤️</li>
-            </ol>
+      {/* Payment Confirmed State */}
+      {isPaid ? (
+        <div className="flex flex-col items-center gap-4 py-8 animate-fade-in">
+          <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center">
+            <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
-            🔒 Pagamento 100% seguro via PIX
+          <h2 className="text-2xl font-bold text-foreground text-center">
+            🎉 Pagamento Confirmado!
+          </h2>
+          <p className="text-muted-foreground text-center max-w-xs">
+            Obrigado pela sua doação de {formattedAmount}. Você acabou de transformar uma vida! ❤️
           </p>
-        </>}
-      
-      {isExpired && <p className="text-[10px] sm:text-xs text-destructive text-center max-w-xs">
-          O tempo expirou. Volte e gere um novo código PIX.
-        </p>}
+          <div className="bg-green-500/10 text-green-600 px-4 py-2 rounded-full text-sm font-medium">
+            Doação recebida com sucesso
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Title */}
+          <div className="text-center">
+            <p className="text-xl sm:text-2xl font-bold text-foreground">💚 Doe {formattedAmount} e ajude a transformar vidas</p>
+          </div>
+
+          {/* Countdown Timer */}
+          <div className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm ${isExpired ? "bg-destructive/10 text-destructive" : isLowTime ? "bg-orange-500/10 text-orange-500" : "bg-muted text-muted-foreground"}`}>
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="font-medium">
+              {isExpired ? "Expirado" : <>QR Code expira em: <span className="font-mono">{formatTime(timeLeft)}</span></>}
+            </span>
+          </div>
+
+          {/* QR Code */}
+          <div className="flex flex-col items-center gap-2 sm:gap-3">
+            <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-100/50 to-amber-200/30 border-2 border-amber-200/50 shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
+              {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code PIX" className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl" loading="eager" /> : <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl bg-secondary flex items-center justify-center">
+                  <span className="text-muted-foreground text-sm">QR Code</span>
+                </div>}
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground text-center flex items-center gap-1 sm:gap-1.5">
+              📱 {isExpired ? "Código expirado" : "Escaneie o QR Code no app do seu banco"}
+            </p>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-2 sm:gap-3 w-full">
+            <div className="flex-1 h-px bg-border"></div>
+            <span className="text-xs sm:text-sm text-muted-foreground font-medium">ou copie o código PIX</span>
+            <div className="flex-1 h-px bg-border"></div>
+          </div>
+
+          {/* Copy Button */}
+          <Button variant="donationCta" size="xl" onClick={handleCopyCode} disabled={isExpired} className="w-full text-sm sm:text-base py-3 sm:py-4">
+            <Copy className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            {copied ? "Código Copiado!" : "Copiar Código PIX"}
+          </Button>
+
+          {/* How to donate instructions */}
+          {!isExpired && <>
+              <div className="w-full bg-muted/50 rounded-xl p-3 sm:p-4 mt-1">
+                <p className="text-xs sm:text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                  🎁 Como doar:
+                </p>
+                <ol className="text-[10px] sm:text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Toque em Copiar Código PIX</li>
+                  <li>Abra seu app do banco</li>
+                  <li>Vá em PIX → Copia e Cola</li>
+                  <li>Cole o código e confirme 💚</li>
+                  <li>Você acabou de transformar uma vida! ❤️</li>
+                </ol>
+              </div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+                🔒 Pagamento 100% seguro via PIX
+              </p>
+            </>}
+          
+          {isExpired && <p className="text-[10px] sm:text-xs text-destructive text-center max-w-xs">
+              O tempo expirou. Volte e gere um novo código PIX.
+            </p>}
+        </>
+      )}
 
       {/* Expired Dialog */}
       <Dialog open={showExpiredDialog} onOpenChange={setShowExpiredDialog}>
