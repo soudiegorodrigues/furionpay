@@ -95,26 +95,26 @@ export const SocialProofNotification = ({
   return (
     <div
       className={cn(
-        "fixed bottom-4 left-4 z-40 transition-all duration-500 ease-out",
+        "fixed bottom-4 right-4 z-50 transition-all duration-500 ease-out",
         notification.visible 
           ? "translate-x-0 opacity-100" 
-          : "-translate-x-full opacity-0"
+          : "translate-x-full opacity-0"
       )}
     >
-      <div className="flex items-center gap-3 bg-card rounded-xl shadow-lg border border-border px-4 py-3 max-w-xs">
+      <div className="flex items-center gap-3 bg-white rounded-xl shadow-2xl border border-gray-200 px-4 py-3 max-w-xs">
         <div className="flex-shrink-0">
-          <CheckCircle className="w-10 h-10 text-primary fill-primary/20" />
+          <CheckCircle className="w-10 h-10 text-green-500 fill-green-100" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm text-foreground truncate">
+            <span className="font-semibold text-sm text-gray-900 truncate">
               {notification.name}
             </span>
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
+            <span className="text-xs text-gray-500 whitespace-nowrap">
               {notification.time}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-600">
             Doou no pix
           </p>
         </div>
