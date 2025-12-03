@@ -263,6 +263,7 @@ export const DonationPopup = ({
                 size="xl" 
                 className="w-full text-base sm:text-lg uppercase tracking-wide" 
                 onClick={handleGeneratePix}
+                disabled={totalAmount < MIN_DONATION}
               >
                 Contribuir
               </Button>
