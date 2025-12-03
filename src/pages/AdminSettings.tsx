@@ -493,7 +493,7 @@ const AdminSettings = () => {
             <div className="text-sm text-muted-foreground space-y-1">
               <p><strong>Eventos rastreados:</strong></p>
               <ul className="list-disc list-inside ml-2">
-                <li><code>PageView</code> - Quando abre o popup de doação</li>
+                <li><code>PageView</code> - Quando abre o popup de Checkout</li>
                 <li><code>PixGenerated</code> - Quando o QR Code PIX é gerado</li>
                 <li><code>Purchase</code> - Quando o pagamento PIX é confirmado</li>
               </ul>
