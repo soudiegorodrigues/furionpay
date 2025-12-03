@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check } from "lucide-react";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { DonationPopup } from "@/components/DonationPopup";
+import { DonationPopupSimple } from "@/components/DonationPopupSimple";
+import { DonationPopupClean } from "@/components/DonationPopupClean";
 interface MetaPixel {
   id: string;
   name: string;
@@ -40,6 +43,7 @@ const AdminSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showPopupPreview, setShowPopupPreview] = useState(false);
   const navigate = useNavigate();
   const {
     isAuthenticated,
@@ -377,6 +381,12 @@ const AdminSettings = () => {
                 </p>
               </button>
             </div>
+            <div className="pt-2">
+              <Button variant="outline" onClick={() => setShowPopupPreview(true)} className="w-full">
+                <Eye className="w-4 h-4 mr-2" />
+                Visualizar Popup
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -558,6 +568,29 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Popup Preview */}
+      {settings.popup_model === 'boost' && (
+        <DonationPopup 
+          isOpen={showPopupPreview} 
+          onClose={() => setShowPopupPreview(false)} 
+          userId={user?.id}
+        />
+      )}
+      {settings.popup_model === 'simple' && (
+        <DonationPopupSimple 
+          isOpen={showPopupPreview} 
+          onClose={() => setShowPopupPreview(false)} 
+          userId={user?.id}
+        />
+      )}
+      {settings.popup_model === 'clean' && (
+        <DonationPopupClean 
+          isOpen={showPopupPreview} 
+          onClose={() => setShowPopupPreview(false)} 
+          userId={user?.id}
+        />
+      )}
     </div>;
 };
 export default AdminSettings;
