@@ -163,19 +163,21 @@ export const DonationPopupClean = ({
   if (!isOpen) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="w-full max-w-md relative">
-          {/* Close Button */}
-          <button 
-            onClick={onClose}
-            className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
-            aria-label="Fechar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative w-full max-w-md">
+        {/* Close Button */}
+        <button 
+          onClick={onClose}
+          className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+          aria-label="Fechar"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-          {step === "select" && (
+        {step === "select" && (
             <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6 animate-fade-in">
               {/* Header */}
               <div className="text-center space-y-2">
@@ -372,9 +374,8 @@ export const DonationPopupClean = ({
               )}
             </div>
           )}
-        </div>
       </div>
-    </>
+    </div>
   );
 };
 
