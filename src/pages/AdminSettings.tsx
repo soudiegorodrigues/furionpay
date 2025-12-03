@@ -259,7 +259,7 @@ const AdminSettings = () => {
               Seu Link de Checkout
             </CardTitle>
             <CardDescription>
-              Compartilhe este link para receber doações com suas configurações
+              Compartilhe este link para receber, com suas configurações de API.
             </CardDescription>
           </CardHeader>
           <CardContent>
