@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from '@/components/ui/alert-dialog';
-import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, ShieldCheck, Ban } from 'lucide-react';
+import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, ShieldCheck, Ban, KeyRound } from 'lucide-react';
 import { z } from 'zod';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+
 const authSchema = z.object({
   email: z.string().trim().email({
     message: "Email inválido"
@@ -17,6 +19,7 @@ const authSchema = z.object({
     message: "Senha deve ter no mínimo 6 caracteres"
   })
 });
+
 const signUpSchema = authSchema.extend({
   name: z.string().min(2, {
     message: "Nome deve ter no mínimo 2 caracteres"
@@ -26,40 +29,50 @@ const signUpSchema = authSchema.extend({
   message: "As senhas não coincidem",
   path: ["confirmPassword"]
 });
-type AuthMode = 'login' | 'signup' | 'reset';
+
+type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password';
+
 const AdminAuth = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [mode, setMode] = useState<AuthMode>('login');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+
   const {
     signIn,
     signUp,
-    resetPassword,
+    sendOtpCode,
+    verifyOtpCode,
+    updatePassword,
     isAuthenticated,
     loading
   } = useAdminAuth();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isAuthenticated && !loading && mode !== 'reset-password') {
       navigate('/admin/dashboard');
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, mode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'reset') {
+
+    // Handle sending OTP code
+    if (mode === 'reset-email') {
       const emailValidation = z.string().trim().email({
         message: "Email inválido"
       }).safeParse(email);
+
       if (!emailValidation.success) {
         toast({
           variant: "destructive",
@@ -68,11 +81,87 @@ const AdminAuth = () => {
         });
         return;
       }
+
       setIsSubmitting(true);
       try {
-        const {
-          error
-        } = await resetPassword(email);
+        const { error } = await sendOtpCode(email);
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: error.message.includes("Signups not allowed") 
+              ? "Email não encontrado no sistema" 
+              : error.message
+          });
+        } else {
+          setResetEmail(email);
+          setMode('reset-code');
+          toast({
+            title: "Código enviado!",
+            description: "Verifique sua caixa de entrada e copie o código"
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Handle OTP verification
+    if (mode === 'reset-code') {
+      if (otpCode.length !== 6) {
+        toast({
+          variant: "destructive",
+          title: "Erro de validação",
+          description: "Digite o código de 6 dígitos"
+        });
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        const { error } = await verifyOtpCode(resetEmail, otpCode);
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Código inválido",
+            description: "O código está incorreto ou expirou. Tente novamente."
+          });
+        } else {
+          setMode('reset-password');
+          toast({
+            title: "Código verificado!",
+            description: "Agora crie sua nova senha"
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Handle new password creation
+    if (mode === 'reset-password') {
+      const passwordValidation = z.object({
+        password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
+        confirmPassword: z.string()
+      }).refine(data => data.password === data.confirmPassword, {
+        message: "As senhas não coincidem",
+        path: ["confirmPassword"]
+      }).safeParse({ password, confirmPassword });
+
+      if (!passwordValidation.success) {
+        toast({
+          variant: "destructive",
+          title: "Erro de validação",
+          description: passwordValidation.error.errors[0].message
+        });
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        const { error } = await updatePassword(password);
         if (error) {
           toast({
             variant: "destructive",
@@ -81,16 +170,17 @@ const AdminAuth = () => {
           });
         } else {
           toast({
-            title: "Email enviado!",
-            description: "Verifique sua caixa de entrada para redefinir a senha"
+            title: "Senha alterada!",
+            description: "Sua senha foi atualizada com sucesso"
           });
-          setMode('login');
+          navigate('/admin/dashboard');
         }
       } finally {
         setIsSubmitting(false);
       }
       return;
     }
+
     if (mode === 'signup') {
       const validation = signUpSchema.safeParse({
         email,
@@ -120,12 +210,11 @@ const AdminAuth = () => {
         return;
       }
     }
+
     setIsSubmitting(true);
     try {
       if (mode === 'login') {
-        const {
-          error
-        } = await signIn(email, password);
+        const { error } = await signIn(email, password);
         if (error) {
           if (error.message === "User is banned" || error.message?.includes("banned")) {
             setShowBlockedDialog(true);
@@ -143,9 +232,7 @@ const AdminAuth = () => {
           });
         }
       } else {
-        const {
-          error
-        } = await signUp(email, password);
+        const { error } = await signUp(email, password);
         if (error) {
           toast({
             variant: "destructive",
@@ -163,128 +250,333 @@ const AdminAuth = () => {
       setIsSubmitting(false);
     }
   };
+
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setPassword('');
     setConfirmPassword('');
+    setOtpCode('');
+    if (newMode === 'login' || newMode === 'signup') {
+      setResetEmail('');
+    }
   };
+
+  const getTitle = () => {
+    switch (mode) {
+      case 'reset-email': return 'Recuperar Senha';
+      case 'reset-code': return 'Verificar Código';
+      case 'reset-password': return 'Nova Senha';
+      case 'signup': return 'Criar Conta';
+      default: return 'Acessar Painel';
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case 'reset-email': return 'Digite seu email para receber o código de recuperação';
+      case 'reset-code': return `Enviamos um código de 6 dígitos para ${resetEmail}`;
+      case 'reset-password': return 'Crie sua nova senha de acesso';
+      case 'signup': return 'Preencha os dados para criar sua conta';
+      default: return 'Entre com suas credenciais para continuar';
+    }
+  };
+
+  const getButtonText = () => {
+    switch (mode) {
+      case 'reset-email': return 'Enviar Código';
+      case 'reset-code': return 'Verificar';
+      case 'reset-password': return 'Salvar Senha';
+      case 'signup': return 'Criar Conta';
+      default: return 'Entrar';
+    }
+  };
+
+  const getIcon = () => {
+    if (mode.startsWith('reset')) {
+      return <KeyRound className="h-7 w-7 text-primary" />;
+    }
+    return <ShieldCheck className="h-7 w-7 text-primary" />;
+  };
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F8FAFC] to-[#FFFFFF]">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F8FAFC] to-[#FFFFFF]">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="text-sm text-muted-foreground">Carregando...</span>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F8FAFC] to-[#FFFFFF] p-4">
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F8FAFC] to-[#FFFFFF] p-4">
       <div className="w-full max-w-[400px] animate-fade-in">
         {/* Card */}
         <div className="bg-card rounded-[18px] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)] border border-border/50 p-8 md:p-10">
           {/* Icon */}
           <div className="flex justify-center mb-6">
             <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-[0_0_24px_-4px_rgba(34,197,94,0.3)]">
-              <ShieldCheck className="h-7 w-7 text-primary" />
+              {getIcon()}
             </div>
           </div>
 
           {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-[22px] font-semibold text-foreground tracking-tight mb-2">
-              {mode === 'reset' ? 'Recuperar Senha' : mode === 'login' ? 'Acessar Painel' : 'Criar Conta'}
+              {getTitle()}
             </h1>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {mode === 'reset' ? 'Digite seu email para receber o link de recuperação' : mode === 'login' ? 'Entre com suas credenciais para continuar' : 'Preencha os dados para criar sua conta'}
+              {getDescription()}
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {mode === 'signup' && <div className="space-y-2">
+            {mode === 'signup' && (
+              <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium text-foreground">
                   Nome completo
                 </Label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
-                  <Input id="name" type="text" placeholder="Seu nome" value={name} onChange={e => setName(e.target.value)} className="h-[52px] pl-11 pr-4 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50" required />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Seu nome"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="h-[52px] pl-11 pr-4 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    required
+                  />
                 </div>
-              </div>}
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
-                <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} className="h-[52px] pl-11 pr-4 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50" required />
               </div>
-            </div>
+            )}
 
-            {mode !== 'reset' && <div className="space-y-2">
+            {(mode === 'login' || mode === 'signup' || mode === 'reset-email') && (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="h-[52px] pl-11 pr-4 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            {mode === 'reset-code' && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">
+                  Código de verificação
+                </Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={setOtpCode}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={1} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={2} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={3} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={4} className="h-12 w-12 text-lg" />
+                      <InputOTPSlot index={5} className="h-12 w-12 text-lg" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Não recebeu?{' '}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsSubmitting(true);
+                      const { error } = await sendOtpCode(resetEmail);
+                      setIsSubmitting(false);
+                      if (!error) {
+                        toast({
+                          title: "Código reenviado!",
+                          description: "Verifique sua caixa de entrada"
+                        });
+                      }
+                    }}
+                    className="text-primary hover:text-primary/80 font-medium"
+                    disabled={isSubmitting}
+                  >
+                    Reenviar código
+                  </button>
+                </p>
+              </div>
+            )}
+
+            {(mode === 'login' || mode === 'signup') && (
+              <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Senha
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
-                  <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50" required minLength={6} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                  >
                     {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                   </button>
                 </div>
-              </div>}
+              </div>
+            )}
 
-            {mode === 'signup' && <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
-                  Confirmar senha
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
-                  <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50" required minLength={6} />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors">
-                    {showConfirmPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
-                  </button>
+            {(mode === 'signup' || mode === 'reset-password') && (
+              <>
+                {mode === 'reset-password' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword" className="text-sm font-medium text-foreground">
+                      Nova senha
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                      <Input
+                        id="newPassword"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+                    Confirmar senha
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                    </button>
+                  </div>
                 </div>
-              </div>}
+              </>
+            )}
 
-            {mode === 'login' && <div className="flex items-center justify-between">
+            {mode === 'login' && (
+              <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked as boolean)} className="h-4 w-4 rounded border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={checked => setRememberMe(checked as boolean)}
+                    className="h-4 w-4 rounded border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
                   <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                     Lembrar-me
                   </Label>
                 </div>
-                <button type="button" onClick={() => switchMode('reset')} className="text-sm text-primary hover:text-primary/80 font-medium transition-colors">
+                <button
+                  type="button"
+                  onClick={() => switchMode('reset-email')}
+                  className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                >
                   Esqueceu a senha?
                 </button>
-              </div>}
+              </div>
+            )}
 
-            <Button type="submit" className="w-full h-[52px] text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-[hsl(152,71%,40%)] hover:from-primary/90 hover:to-[hsl(152,71%,35%)] shadow-[0_4px_14px_-2px_rgba(34,197,94,0.4)] hover:shadow-[0_6px_20px_-2px_rgba(34,197,94,0.5)] transition-all duration-200 active:scale-[0.98]" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <>
-                  {mode === 'reset' ? 'Enviar Link' : mode === 'login' ? 'Entrar' : 'Criar Conta'}
+            <Button
+              type="submit"
+              className="w-full h-[52px] text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-[hsl(152,71%,40%)] hover:from-primary/90 hover:to-[hsl(152,71%,35%)] shadow-[0_4px_14px_-2px_rgba(34,197,94,0.4)] hover:shadow-[0_6px_20px_-2px_rgba(34,197,94,0.5)] transition-all duration-200 active:scale-[0.98]"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  {getButtonText()}
                   <ArrowRight className="h-4 w-4 ml-2" />
-                </>}
+                </>
+              )}
             </Button>
           </form>
 
           {/* Footer Links */}
           <div className="mt-6 pt-6 border-t border-border/50 text-center">
-            {mode === 'reset' ? <button type="button" onClick={() => switchMode('login')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            {mode.startsWith('reset') ? (
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 ← Voltar ao login
-              </button> : mode === 'login' ? <p className="text-sm text-muted-foreground">
+              </button>
+            ) : mode === 'login' ? (
+              <p className="text-sm text-muted-foreground">
                 Não tem uma conta?{' '}
-                <button type="button" onClick={() => switchMode('signup')} className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                <button
+                  type="button"
+                  onClick={() => switchMode('signup')}
+                  className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                >
                   Criar conta
                 </button>
-              </p> : <p className="text-sm text-muted-foreground">
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
                 Já tem uma conta?{' '}
-                <button type="button" onClick={() => switchMode('login')} className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                <button
+                  type="button"
+                  onClick={() => switchMode('login')}
+                  className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                >
                   Fazer login
                 </button>
-              </p>}
+              </p>
+            )}
           </div>
         </div>
-
-        {/* Brand */}
-        
       </div>
 
       {/* Blocked User Dialog */}
@@ -308,6 +600,8 @@ const AdminAuth = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>;
+    </div>
+  );
 };
+
 export default AdminAuth;
