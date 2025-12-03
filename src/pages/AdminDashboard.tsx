@@ -311,6 +311,55 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Global Stats Card - Admin Only */}
+        {isAdmin && globalStats && (
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <CardHeader className="p-3 sm:p-6">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                Faturamento Global da Plataforma
+                <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-xl sm:text-3xl font-bold text-blue-400">
+                    {globalStats.total_generated}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Gerados</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-xl sm:text-3xl font-bold text-green-400">
+                    {globalStats.total_paid}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Pagos</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-xl sm:text-3xl font-bold text-yellow-400">
+                    {globalStats.total_generated > 0 
+                      ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1)
+                      : '0'}%
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Conversão</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-muted-foreground">
+                    {formatCurrency(globalStats.total_amount_generated)}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Total Gerado</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-primary">
+                    {formatCurrency(globalStats.total_amount_paid)}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Total Recebido</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           <Card className="bg-card border-border">
@@ -379,55 +428,6 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Global Stats Card - Admin Only */}
-        {isAdmin && globalStats && (
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-            <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                Faturamento Global da Plataforma
-                <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
-                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
-                  <div className="text-xl sm:text-3xl font-bold text-blue-400">
-                    {globalStats.total_generated}
-                  </div>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Gerados</p>
-                </div>
-                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
-                  <div className="text-xl sm:text-3xl font-bold text-green-400">
-                    {globalStats.total_paid}
-                  </div>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Pagos</p>
-                </div>
-                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
-                  <div className="text-xl sm:text-3xl font-bold text-yellow-400">
-                    {globalStats.total_generated > 0 
-                      ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1)
-                      : '0'}%
-                  </div>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground">Conversão</p>
-                </div>
-                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
-                  <div className="text-lg sm:text-2xl font-bold text-muted-foreground">
-                    {formatCurrency(globalStats.total_amount_generated)}
-                  </div>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground">Total Gerado</p>
-                </div>
-                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
-                  <div className="text-lg sm:text-2xl font-bold text-primary">
-                    {formatCurrency(globalStats.total_amount_paid)}
-                  </div>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground">Total Recebido</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Ranking Card - Admin Only */}
         {isAdmin && (
