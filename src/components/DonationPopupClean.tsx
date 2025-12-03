@@ -171,7 +171,7 @@ export const DonationPopupClean = ({
         {/* Close Button */}
         <button 
           onClick={onClose}
-          className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+          className="absolute top-3 right-3 z-10 w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
           aria-label="Fechar"
         >
           <X className="w-5 h-5" />
