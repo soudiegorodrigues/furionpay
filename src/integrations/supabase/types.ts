@@ -59,6 +59,33 @@ export type Database = {
         }
         Relationships: []
       }
+      available_domains: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain: string
+          id: string
+          is_active: boolean
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain?: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+        }
+        Relationships: []
+      }
       password_reset_codes: {
         Row: {
           code: string
