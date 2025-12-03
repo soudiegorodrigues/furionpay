@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
@@ -8,7 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const userId = searchParams.get('u') || searchParams.get('user');
+  
+  // Redireciona para admin se não houver userId
+  useEffect(() => {
+    if (!userId) {
+      navigate('/admin', { replace: true });
+    }
+  }, [userId, navigate]);
   
   // Inicia com valores padrão para renderização instantânea
   const [popupModel, setPopupModel] = useState<string>('boost');
@@ -33,6 +41,11 @@ const Index = () => {
 
     fetchSettings();
   }, [userId]);
+
+  // Não renderiza nada se não houver userId (vai redirecionar)
+  if (!userId) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
