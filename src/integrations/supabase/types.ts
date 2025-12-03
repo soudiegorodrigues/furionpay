@@ -262,18 +262,35 @@ export type Database = {
         }[]
       }
       get_users_count: { Args: never; Returns: number }
-      get_users_revenue_ranking: {
-        Args: { p_limit?: number; p_offset?: number }
-        Returns: {
-          conversion_rate: number
-          total_amount_generated: number
-          total_amount_paid: number
-          total_generated: number
-          total_paid: number
-          user_email: string
-          user_id: string
-        }[]
-      }
+      get_users_revenue_ranking:
+        | {
+            Args: {
+              p_date_filter?: string
+              p_limit?: number
+              p_offset?: number
+            }
+            Returns: {
+              conversion_rate: number
+              total_amount_generated: number
+              total_amount_paid: number
+              total_generated: number
+              total_paid: number
+              user_email: string
+              user_id: string
+            }[]
+          }
+        | {
+            Args: { p_limit?: number; p_offset?: number }
+            Returns: {
+              conversion_rate: number
+              total_amount_generated: number
+              total_amount_paid: number
+              total_generated: number
+              total_paid: number
+              user_email: string
+              user_id: string
+            }[]
+          }
       grant_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       has_role: {
         Args: {

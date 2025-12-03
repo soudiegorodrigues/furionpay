@@ -74,6 +74,7 @@ const AdminDashboard = () => {
   const [rankingUsers, setRankingUsers] = useState<RankingUser[]>([]);
   const [rankingPage, setRankingPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [rankingDateFilter, setRankingDateFilter] = useState<DateFilter>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, loading, signOut, user, isBlocked } = useAdminAuth();
@@ -129,7 +130,8 @@ const AdminDashboard = () => {
         // Load ranking data
         const { data: rankingData } = await supabase.rpc('get_users_revenue_ranking', {
           p_limit: RANKING_PER_PAGE,
-          p_offset: (rankingPage - 1) * RANKING_PER_PAGE
+          p_offset: (rankingPage - 1) * RANKING_PER_PAGE,
+          p_date_filter: rankingDateFilter
         });
         if (rankingData) {
           setRankingUsers(rankingData as unknown as RankingUser[]);
@@ -431,11 +433,38 @@ const AdminDashboard = () => {
         {isAdmin && (
           <Card className="bg-card border-border">
             <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
-                Ranking de Faturamentos
-                <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
-              </CardTitle>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
+                  Ranking de Faturamentos
+                  <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
+                </CardTitle>
+                <Select 
+                  value={rankingDateFilter} 
+                  onValueChange={async (value: DateFilter) => {
+                    setRankingDateFilter(value);
+                    setRankingPage(1);
+                    const { data } = await supabase.rpc('get_users_revenue_ranking', {
+                      p_limit: RANKING_PER_PAGE,
+                      p_offset: 0,
+                      p_date_filter: value
+                    });
+                    if (data) setRankingUsers(data as unknown as RankingUser[]);
+                  }}
+                >
+                  <SelectTrigger className="w-[130px] sm:w-[150px] text-sm">
+                    <Calendar className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
+                    <SelectValue placeholder="Período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="today">Hoje</SelectItem>
+                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                    <SelectItem value="month">Este mês</SelectItem>
+                    <SelectItem value="year">Este ano</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               {rankingUsers.length === 0 ? (
@@ -493,12 +522,13 @@ const AdminDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={async () => {
+                        onClick={async () => {
                             const newPage = rankingPage - 1;
                             setRankingPage(newPage);
                             const { data } = await supabase.rpc('get_users_revenue_ranking', {
                               p_limit: RANKING_PER_PAGE,
-                              p_offset: (newPage - 1) * RANKING_PER_PAGE
+                              p_offset: (newPage - 1) * RANKING_PER_PAGE,
+                              p_date_filter: rankingDateFilter
                             });
                             if (data) setRankingUsers(data as unknown as RankingUser[]);
                           }}
@@ -509,12 +539,13 @@ const AdminDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={async () => {
+                        onClick={async () => {
                             const newPage = rankingPage + 1;
                             setRankingPage(newPage);
                             const { data } = await supabase.rpc('get_users_revenue_ranking', {
                               p_limit: RANKING_PER_PAGE,
-                              p_offset: (newPage - 1) * RANKING_PER_PAGE
+                              p_offset: (newPage - 1) * RANKING_PER_PAGE,
+                              p_date_filter: rankingDateFilter
                             });
                             if (data) setRankingUsers(data as unknown as RankingUser[]);
                           }}
