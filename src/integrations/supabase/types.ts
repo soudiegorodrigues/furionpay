@@ -132,6 +132,7 @@ export type Database = {
     Functions: {
       block_user: { Args: { target_user_id: string }; Returns: boolean }
       bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
+      check_user_blocked: { Args: never; Returns: boolean }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
       get_admin_settings: {
         Args: { input_token: string }

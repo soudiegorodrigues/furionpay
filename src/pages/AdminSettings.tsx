@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +50,8 @@ const AdminSettings = () => {
     isAuthenticated,
     loading,
     signOut,
-    user
+    user,
+    isBlocked
   } = useAdminAuth();
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -213,6 +215,7 @@ const AdminSettings = () => {
       </div>;
   }
   return <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <BlockedUserAlert isBlocked={isBlocked} />
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

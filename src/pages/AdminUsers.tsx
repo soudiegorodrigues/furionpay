@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import BlockedUserAlert from '@/components/BlockedUserAlert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ interface User {
 
 const AdminUsers = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading: authLoading } = useAdminAuth();
+  const { user, isAuthenticated, loading: authLoading, isBlocked } = useAdminAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -255,6 +256,7 @@ const AdminUsers = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <BlockedUserAlert isBlocked={isBlocked} />
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
