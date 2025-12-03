@@ -53,10 +53,12 @@ type DateFilter = 'today' | '7days' | 'month' | 'year' | 'all';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [globalStats, setGlobalStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, loading, signOut, user, isBlocked } = useAdminAuth();
@@ -98,6 +100,17 @@ const AdminDashboard = () => {
 
       if (txError) throw txError;
       setTransactions((txData as unknown as Transaction[]) || []);
+
+      // Check if user is admin and load global stats
+      const { data: adminCheck } = await supabase.rpc('is_admin_authenticated');
+      setIsAdmin(!!adminCheck);
+      
+      if (adminCheck) {
+        const { data: globalData } = await supabase.rpc('get_pix_dashboard_auth');
+        if (globalData) {
+          setGlobalStats(globalData as unknown as DashboardStats);
+        }
+      }
 
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
@@ -335,6 +348,47 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Global Stats Card - Admin Only */}
+        {isAdmin && globalStats && (
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <CardHeader className="p-3 sm:p-6">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                Faturamento Global da Plataforma
+                <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-xl sm:text-3xl font-bold text-blue-400">
+                    {globalStats.total_generated}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Gerados</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-xl sm:text-3xl font-bold text-green-400">
+                    {globalStats.total_paid}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Pagos</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-muted-foreground">
+                    {formatCurrency(globalStats.total_amount_generated)}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Total Gerado</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-primary">
+                    {formatCurrency(globalStats.total_amount_paid)}
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Total Recebido</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Period Summary */}
         <Card className="bg-card border-border">
