@@ -388,7 +388,7 @@ const AdminSettings = () => {
               Notificações de Prova Social
             </CardTitle>
             <CardDescription>
-              Exibe notificações de doações recentes para incentivar novos doadores
+              Exibe notificações de doações recentes para incentivar novos clientes
             </CardDescription>
           </CardHeader>
           <CardContent>
