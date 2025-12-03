@@ -53,6 +53,7 @@ const AdminSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isResettingGlobal, setIsResettingGlobal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showPopupPreview, setShowPopupPreview] = useState(false);
   const navigate = useNavigate();
@@ -250,6 +251,26 @@ const AdminSettings = () => {
       });
     } finally {
       setIsResetting(false);
+    }
+  };
+  const handleResetGlobalDashboard = async () => {
+    setIsResettingGlobal(true);
+    try {
+      const { error } = await supabase.rpc('reset_pix_transactions_auth');
+      if (error) throw error;
+      toast({
+        title: "Sucesso",
+        description: "Todas as transações da plataforma foram apagadas!"
+      });
+    } catch (error) {
+      console.error('Error resetting global transactions:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao resetar transações globais",
+        variant: "destructive"
+      });
+    } finally {
+      setIsResettingGlobal(false);
     }
   };
   if (loading || isLoading) {
@@ -628,7 +649,7 @@ const AdminSettings = () => {
               Ações irreversíveis que afetam permanentemente seus dados
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full" disabled={isResetting}>
@@ -637,7 +658,7 @@ const AdminSettings = () => {
                       Resetando...
                     </> : <>
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Resetar Dashboard (Apagar Transações)
+                      Resetar Meu Dashboard (Apagar Minhas Transações)
                     </>}
                 </Button>
               </AlertDialogTrigger>
@@ -646,7 +667,7 @@ const AdminSettings = () => {
                   <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Esta ação não pode ser desfeita. Isso irá apagar permanentemente
-                    todas as transações PIX do dashboard, incluindo histórico de pagamentos.
+                    todas as suas transações PIX do dashboard, incluindo histórico de pagamentos.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -657,9 +678,48 @@ const AdminSettings = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <p className="text-xs text-muted-foreground mt-2">
-              Isso irá zerar todos os contadores e remover o histórico de transações.
+            <p className="text-xs text-muted-foreground">
+              Isso irá zerar todos os seus contadores e remover seu histórico de transações.
             </p>
+
+            {/* Global Reset - Admin Only */}
+            {isAdmin && (
+              <>
+                <Separator className="my-4" />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full" disabled={isResettingGlobal}>
+                      {isResettingGlobal ? <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Resetando Global...
+                        </> : <>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Resetar Faturamento Global (Todas as Contas)
+                        </>}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>⚠️ ATENÇÃO: Ação Crítica!</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação irá apagar TODAS as transações de TODOS os usuários da plataforma.
+                        Isso inclui o histórico completo de pagamentos de todas as contas.
+                        Esta ação NÃO pode ser desfeita!
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleResetGlobalDashboard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Sim, apagar TUDO da plataforma
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <p className="text-xs text-muted-foreground">
+                  Isso irá apagar todas as transações de todos os usuários da plataforma.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
