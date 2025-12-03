@@ -330,9 +330,9 @@ const AdminDashboard = () => {
         {/* Global Stats Card - Admin Only */}
         {isAdmin && globalStats && <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">Faturamento Global 
-Admin<DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                Faturamento Global da Plataforma
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                Faturamento Global
                 <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
               </CardTitle>
             </CardHeader>
