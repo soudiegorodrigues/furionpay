@@ -11,14 +11,12 @@ import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
 interface MetaPixel {
   id: string;
   name: string;
   pixelId: string;
   accessToken: string;
 }
-
 interface AdminSettingsData {
   spedpay_api_key: string;
   recipient_id: string;
@@ -27,7 +25,6 @@ interface AdminSettingsData {
   popup_model: string;
   social_proof_enabled: boolean;
 }
-
 const AdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettingsData>({
     spedpay_api_key: "",
@@ -35,7 +32,7 @@ const AdminSettings = () => {
     product_name: "",
     meta_pixels: "[]",
     popup_model: "boost",
-    social_proof_enabled: false,
+    social_proof_enabled: false
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
   const [editingPixelId, setEditingPixelId] = useState<string | null>(null);
@@ -44,8 +41,12 @@ const AdminSettings = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, loading, signOut, user } = useAdminAuth();
-
+  const {
+    isAuthenticated,
+    loading,
+    signOut,
+    user
+  } = useAdminAuth();
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate('/admin');
@@ -55,24 +56,26 @@ const AdminSettings = () => {
       loadSettings();
     }
   }, [isAuthenticated, loading, navigate]);
-
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_settings');
-
+      const {
+        data,
+        error
+      } = await supabase.rpc('get_user_settings');
       if (error) throw error;
-
       const settingsMap: AdminSettingsData = {
         spedpay_api_key: "",
         recipient_id: "",
         product_name: "",
         meta_pixels: "[]",
         popup_model: "boost",
-        social_proof_enabled: false,
+        social_proof_enabled: false
       };
-
       if (data) {
-        (data as { key: string; value: string }[]).forEach((item) => {
+        (data as {
+          key: string;
+          value: string;
+        }[]).forEach(item => {
           if (item.key === 'spedpay_api_key') {
             settingsMap.spedpay_api_key = item.value || "";
           } else if (item.key === 'recipient_id') {
@@ -86,7 +89,10 @@ const AdminSettings = () => {
           } else if (item.key === 'social_proof_enabled') {
             settingsMap.social_proof_enabled = item.value === "true";
           } else if (item.key === 'meta_pixel_id' && item.value) {
-            const oldToken = (data as { key: string; value: string }[]).find((d) => d.key === 'meta_pixel_token')?.value || "";
+            const oldToken = (data as {
+              key: string;
+              value: string;
+            }[]).find(d => d.key === 'meta_pixel_token')?.value || "";
             settingsMap.meta_pixels = JSON.stringify([{
               id: crypto.randomUUID(),
               pixelId: item.value,
@@ -95,9 +101,7 @@ const AdminSettings = () => {
           }
         });
       }
-
       setSettings(settingsMap);
-      
       try {
         const parsedPixels = JSON.parse(settingsMap.meta_pixels);
         setPixels(Array.isArray(parsedPixels) ? parsedPixels : []);
@@ -109,124 +113,102 @@ const AdminSettings = () => {
       toast({
         title: "Erro",
         description: "Falha ao carregar configurações",
-        variant: "destructive",
+        variant: "destructive"
       });
       navigate('/admin');
     } finally {
       setIsLoading(false);
     }
   };
-
   const addPixel = () => {
     const newPixel: MetaPixel = {
       id: crypto.randomUUID(),
       name: "",
       pixelId: "",
-      accessToken: "",
+      accessToken: ""
     };
     setPixels([...pixels, newPixel]);
   };
-
   const removePixel = (id: string) => {
     setPixels(pixels.filter(p => p.id !== id));
   };
-
   const updatePixel = (id: string, field: 'name' | 'pixelId' | 'accessToken', value: string) => {
-    setPixels(pixels.map(p => 
-      p.id === id ? { ...p, [field]: value } : p
-    ));
+    setPixels(pixels.map(p => p.id === id ? {
+      ...p,
+      [field]: value
+    } : p));
   };
-
   const handleSave = async () => {
     setIsSaving(true);
-
     try {
       const pixelsJson = JSON.stringify(pixels);
-      
-      const updates = [
-        supabase.rpc('update_user_setting', {
-          setting_key: 'spedpay_api_key',
-          setting_value: settings.spedpay_api_key,
-        }),
-        supabase.rpc('update_user_setting', {
-          setting_key: 'recipient_id',
-          setting_value: settings.recipient_id,
-        }),
-        supabase.rpc('update_user_setting', {
-          setting_key: 'product_name',
-          setting_value: settings.product_name,
-        }),
-        supabase.rpc('update_user_setting', {
-          setting_key: 'meta_pixels',
-          setting_value: pixelsJson,
-        }),
-        supabase.rpc('update_user_setting', {
-          setting_key: 'popup_model',
-          setting_value: settings.popup_model,
-        }),
-        supabase.rpc('update_user_setting', {
-          setting_key: 'social_proof_enabled',
-          setting_value: settings.social_proof_enabled.toString(),
-        }),
-      ];
-
+      const updates = [supabase.rpc('update_user_setting', {
+        setting_key: 'spedpay_api_key',
+        setting_value: settings.spedpay_api_key
+      }), supabase.rpc('update_user_setting', {
+        setting_key: 'recipient_id',
+        setting_value: settings.recipient_id
+      }), supabase.rpc('update_user_setting', {
+        setting_key: 'product_name',
+        setting_value: settings.product_name
+      }), supabase.rpc('update_user_setting', {
+        setting_key: 'meta_pixels',
+        setting_value: pixelsJson
+      }), supabase.rpc('update_user_setting', {
+        setting_key: 'popup_model',
+        setting_value: settings.popup_model
+      }), supabase.rpc('update_user_setting', {
+        setting_key: 'social_proof_enabled',
+        setting_value: settings.social_proof_enabled.toString()
+      })];
       await Promise.all(updates);
-
       toast({
         title: "Sucesso",
-        description: "Configurações salvas com sucesso!",
+        description: "Configurações salvas com sucesso!"
       });
     } catch (error) {
       console.error('Error saving settings:', error);
       toast({
         title: "Erro",
         description: "Falha ao salvar configurações",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSaving(false);
     }
   };
-
   const handleLogout = async () => {
     await signOut();
     navigate('/admin');
   };
-
   const handleResetDashboard = async () => {
     setIsResetting(true);
-
     try {
-      const { error } = await supabase.rpc('reset_user_transactions');
-
+      const {
+        error
+      } = await supabase.rpc('reset_user_transactions');
       if (error) throw error;
-
       toast({
         title: "Sucesso",
-        description: "Todas as transações foram apagadas!",
+        description: "Todas as transações foram apagadas!"
       });
     } catch (error) {
       console.error('Error resetting transactions:', error);
       toast({
         title: "Erro",
         description: "Falha ao resetar transações",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsResetting(false);
     }
   };
-
   if (loading || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+  return <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -264,33 +246,20 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
-              <Input
-                value={`${window.location.origin}/?u=${user?.id || ''}`}
-                readOnly
-                className="font-mono text-sm"
-              />
-              <Button
-                variant="outline"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/?u=${user?.id || ''}`);
-                  setLinkCopied(true);
-                  setTimeout(() => setLinkCopied(false), 2000);
-                  toast({
-                    title: "Link copiado!",
-                    description: "O link foi copiado para sua área de transferência",
-                  });
-                }}
-              >
-                {linkCopied ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
+              <Input value={`${window.location.origin}/?u=${user?.id || ''}`} readOnly className="font-mono text-sm" />
+              <Button variant="outline" onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/?u=${user?.id || ''}`);
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2000);
+              toast({
+                title: "Link copiado!",
+                description: "O link foi copiado para sua área de transferência"
+              });
+            }}>
+                {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Todas as doações feitas através deste link usarão suas configurações e aparecerão no seu dashboard.
-            </p>
+            
           </CardContent>
         </Card>
 
@@ -308,33 +277,24 @@ const AdminSettings = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="api_key">Chave de API (SpedPay)</Label>
-              <Input
-                id="api_key"
-                type="password"
-                placeholder="Digite a chave de API"
-                value={settings.spedpay_api_key}
-                onChange={(e) => setSettings(s => ({ ...s, spedpay_api_key: e.target.value }))}
-              />
+              <Input id="api_key" type="password" placeholder="Digite a chave de API" value={settings.spedpay_api_key} onChange={e => setSettings(s => ({
+              ...s,
+              spedpay_api_key: e.target.value
+            }))} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="recipient_id">Recipient ID</Label>
-              <Input
-                id="recipient_id"
-                type="text"
-                placeholder="Digite o ID do recebedor"
-                value={settings.recipient_id}
-                onChange={(e) => setSettings(s => ({ ...s, recipient_id: e.target.value }))}
-              />
+              <Input id="recipient_id" type="text" placeholder="Digite o ID do recebedor" value={settings.recipient_id} onChange={e => setSettings(s => ({
+              ...s,
+              recipient_id: e.target.value
+            }))} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="product_name">Nome do Produto</Label>
-              <Input
-                id="product_name"
-                type="text"
-                placeholder="Ex: Nome do produto"
-                value={settings.product_name}
-                onChange={(e) => setSettings(s => ({ ...s, product_name: e.target.value }))}
-              />
+              <Input id="product_name" type="text" placeholder="Ex: Nome do produto" value={settings.product_name} onChange={e => setSettings(s => ({
+              ...s,
+              product_name: e.target.value
+            }))} />
               <p className="text-xs text-muted-foreground">
                 Nome que aparecerá no gateway de pagamento
               </p>
@@ -355,14 +315,10 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <button
-                onClick={() => setSettings(s => ({ ...s, popup_model: 'boost' }))}
-                className={`p-4 rounded-lg border-2 transition-all text-left ${
-                  settings.popup_model === 'boost'
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
+              <button onClick={() => setSettings(s => ({
+              ...s,
+              popup_model: 'boost'
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'boost' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Boost Model */}
                 <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">🚨 Doe agora!</div>
@@ -383,14 +339,10 @@ const AdminSettings = () => {
                   Valor livre + turbinar
                 </p>
               </button>
-              <button
-                onClick={() => setSettings(s => ({ ...s, popup_model: 'simple' }))}
-                className={`p-4 rounded-lg border-2 transition-all text-left ${
-                  settings.popup_model === 'simple'
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
+              <button onClick={() => setSettings(s => ({
+              ...s,
+              popup_model: 'simple'
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'simple' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Simple Model */}
                 <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">💚 Escolha o valor</div>
@@ -407,14 +359,10 @@ const AdminSettings = () => {
                   Grade de valores
                 </p>
               </button>
-              <button
-                onClick={() => setSettings(s => ({ ...s, popup_model: 'clean' }))}
-                className={`p-4 rounded-lg border-2 transition-all text-left ${
-                  settings.popup_model === 'clean'
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
+              <button onClick={() => setSettings(s => ({
+              ...s,
+              popup_model: 'clean'
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'clean' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Clean Model */}
                 <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">❤️ Salvando vidas</div>
@@ -451,15 +399,13 @@ const AdminSettings = () => {
                   Mostra notificações como "Vanessa R. doou há 45 minutos"
                 </p>
               </div>
-              <Switch
-                id="social-proof"
-                checked={settings.social_proof_enabled}
-                onCheckedChange={(checked) => setSettings(s => ({ ...s, social_proof_enabled: checked }))}
-              />
+              <Switch id="social-proof" checked={settings.social_proof_enabled} onCheckedChange={checked => setSettings(s => ({
+              ...s,
+              social_proof_enabled: checked
+            }))} />
             </div>
             {/* Preview */}
-            {settings.social_proof_enabled && (
-              <div className="mt-4 p-3 bg-secondary/50 rounded-lg">
+            {settings.social_proof_enabled && <div className="mt-4 p-3 bg-secondary/50 rounded-lg">
                 <p className="text-xs text-muted-foreground mb-2">Prévia:</p>
                 <div className="flex items-center gap-3 bg-card rounded-xl shadow-sm border border-border px-3 py-2">
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
@@ -475,8 +421,7 @@ const AdminSettings = () => {
                     <p className="text-xs text-muted-foreground">Doou no pix</p>
                   </div>
                 </div>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
 
@@ -492,92 +437,54 @@ const AdminSettings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {pixels.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
+            {pixels.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">
                 Nenhum pixel configurado. Clique em "Adicionar Pixel" para começar.
-              </p>
-            ) : (
-              pixels.map((pixel, index) => {
-                const isEditing = editingPixelId === pixel.id;
-                return (
-                  <div key={pixel.id} className="border rounded-lg overflow-hidden">
-                    <div 
-                      className="flex items-center justify-between p-3 cursor-pointer hover:bg-secondary/50 transition-colors"
-                      onClick={() => setEditingPixelId(isEditing ? null : pixel.id)}
-                    >
+              </p> : pixels.map((pixel, index) => {
+            const isEditing = editingPixelId === pixel.id;
+            return <div key={pixel.id} className="border rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setEditingPixelId(isEditing ? null : pixel.id)}>
                       <div className="flex items-center gap-2">
                         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isEditing ? 'rotate-180' : ''}`} />
                         <span className="text-sm font-medium">
                           {pixel.name || `Pixel #${index + 1}`}
                         </span>
-                        {pixel.pixelId && (
-                          <span className="text-xs text-muted-foreground">
+                        {pixel.pixelId && <span className="text-xs text-muted-foreground">
                             ({pixel.pixelId.slice(0, 8)}...)
-                          </span>
-                        )}
+                          </span>}
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); setEditingPixelId(isEditing ? null : pixel.id); }}
-                        >
+                        <Button variant="ghost" size="sm" onClick={e => {
+                    e.stopPropagation();
+                    setEditingPixelId(isEditing ? null : pixel.id);
+                  }}>
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); removePixel(pixel.id); }}
-                          className="text-destructive hover:text-destructive"
-                        >
+                        <Button variant="ghost" size="sm" onClick={e => {
+                    e.stopPropagation();
+                    removePixel(pixel.id);
+                  }} className="text-destructive hover:text-destructive">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
-                    {isEditing && (
-                      <div className="p-4 pt-0 space-y-3 border-t bg-secondary/20">
+                    {isEditing && <div className="p-4 pt-0 space-y-3 border-t bg-secondary/20">
                         <div className="space-y-2">
                           <Label htmlFor={`pixel_name_${pixel.id}`}>Nome (BM/Perfil)</Label>
-                          <Input
-                            id={`pixel_name_${pixel.id}`}
-                            type="text"
-                            placeholder="Ex: BM Principal, Perfil João..."
-                            value={pixel.name || ""}
-                            onChange={(e) => updatePixel(pixel.id, 'name', e.target.value)}
-                          />
+                          <Input id={`pixel_name_${pixel.id}`} type="text" placeholder="Ex: BM Principal, Perfil João..." value={pixel.name || ""} onChange={e => updatePixel(pixel.id, 'name', e.target.value)} />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor={`pixel_id_${pixel.id}`}>Pixel ID</Label>
-                          <Input
-                            id={`pixel_id_${pixel.id}`}
-                            type="text"
-                            placeholder="Digite o ID do Pixel"
-                            value={pixel.pixelId}
-                            onChange={(e) => updatePixel(pixel.id, 'pixelId', e.target.value)}
-                          />
+                          <Input id={`pixel_id_${pixel.id}`} type="text" placeholder="Digite o ID do Pixel" value={pixel.pixelId} onChange={e => updatePixel(pixel.id, 'pixelId', e.target.value)} />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor={`pixel_token_${pixel.id}`}>Access Token (opcional)</Label>
-                          <Input
-                            id={`pixel_token_${pixel.id}`}
-                            type="password"
-                            placeholder="Digite o token de acesso"
-                            value={pixel.accessToken}
-                            onChange={(e) => updatePixel(pixel.id, 'accessToken', e.target.value)}
-                          />
+                          <Input id={`pixel_token_${pixel.id}`} type="password" placeholder="Digite o token de acesso" value={pixel.accessToken} onChange={e => updatePixel(pixel.id, 'accessToken', e.target.value)} />
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                      </div>}
+                  </div>;
+          })}
             
-            <Button
-              variant="outline"
-              onClick={addPixel}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={addPixel} className="w-full">
               <Plus className="w-4 h-4 mr-2" />
               Adicionar Pixel
             </Button>
@@ -596,17 +503,13 @@ const AdminSettings = () => {
 
         {/* Save Button */}
         <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
-          {isSaving ? (
-            <>
+          {isSaving ? <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Salvando...
-            </>
-          ) : (
-            <>
+            </> : <>
               <Save className="w-4 h-4 mr-2" />
               Salvar Configurações
-            </>
-          )}
+            </>}
         </Button>
 
         {/* Reset Dashboard */}
@@ -624,17 +527,13 @@ const AdminSettings = () => {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full" disabled={isResetting}>
-                  {isResetting ? (
-                    <>
+                  {isResetting ? <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Resetando...
-                    </>
-                  ) : (
-                    <>
+                    </> : <>
                       <Trash2 className="w-4 h-4 mr-2" />
                       Resetar Dashboard (Apagar Transações)
-                    </>
-                  )}
+                    </>}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -647,10 +546,7 @@ const AdminSettings = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleResetDashboard}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
+                  <AlertDialogAction onClick={handleResetDashboard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                     Sim, apagar tudo
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -662,8 +558,6 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default AdminSettings;
