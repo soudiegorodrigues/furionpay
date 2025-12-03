@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Copy, Check, Smartphone, CheckCircle, ArrowLeft } from "lucide-react";
+import { Heart, Copy, Check, Smartphone, CheckCircle, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
@@ -165,7 +165,16 @@ export const DonationPopupClean = ({
   return (
     <>
       <div className="fixed inset-0 flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md relative">
+          {/* Close Button */}
+          <button 
+            onClick={onClose}
+            className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           {step === "select" && (
             <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6 animate-fade-in">
               {/* Header */}
