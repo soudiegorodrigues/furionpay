@@ -53,21 +53,18 @@ const Index = () => {
         <DonationPopupSimple
           isOpen={true}
           onClose={() => {}}
-          recipientName="Davizinho"
           userId={userId || undefined}
         />
       ) : popupModel === 'clean' ? (
         <DonationPopupClean
           isOpen={true}
           onClose={() => {}}
-          recipientName="Davizinho"
           userId={userId || undefined}
         />
       ) : (
         <DonationPopup
           isOpen={true}
           onClose={() => {}}
-          recipientName="Davizinho"
           userId={userId || undefined}
         />
       )}
