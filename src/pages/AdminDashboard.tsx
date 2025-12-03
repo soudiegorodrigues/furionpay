@@ -360,75 +360,6 @@ const AdminDashboard = () => {
           </Card>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                Total Gerado
-              </CardTitle>
-              <QrCode className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="text-xl sm:text-2xl font-bold text-foreground">
-                {dateFilter === 'all' ? stats?.total_generated || 0 : filteredStats.generated}
-              </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                {formatCurrency(dateFilter === 'all' ? stats?.total_amount_generated || 0 : filteredStats.amountGenerated)}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                Total Pago
-              </CardTitle>
-              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="text-xl sm:text-2xl font-bold text-green-400">
-                {dateFilter === 'all' ? stats?.total_paid || 0 : filteredStats.paid}
-              </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                {formatCurrency(dateFilter === 'all' ? stats?.total_amount_paid || 0 : filteredStats.amountPaid)}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                Conversão
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="text-xl sm:text-2xl font-bold text-foreground">
-                {dateFilter === 'all' ? conversionRate : filteredStats.conversionRate}%
-              </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">
-                Gerado → Pago
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                Hoje
-              </CardTitle>
-              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="text-xl sm:text-2xl font-bold text-foreground">{stats?.today_paid || 0}</div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                {formatCurrency(stats?.today_amount_paid || 0)} recebido
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Ranking Card - Admin Only */}
         {isAdmin && (
           <Card className="bg-card border-border">
@@ -561,6 +492,75 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Total Gerado
+              </CardTitle>
+              <QrCode className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+            </CardHeader>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">
+                {dateFilter === 'all' ? stats?.total_generated || 0 : filteredStats.generated}
+              </div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                {formatCurrency(dateFilter === 'all' ? stats?.total_amount_generated || 0 : filteredStats.amountGenerated)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Total Pago
+              </CardTitle>
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
+            </CardHeader>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-green-400">
+                {dateFilter === 'all' ? stats?.total_paid || 0 : filteredStats.paid}
+              </div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                {formatCurrency(dateFilter === 'all' ? stats?.total_amount_paid || 0 : filteredStats.amountPaid)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Conversão
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
+            </CardHeader>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">
+                {dateFilter === 'all' ? conversionRate : filteredStats.conversionRate}%
+              </div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                Gerado → Pago
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Hoje
+              </CardTitle>
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
+            </CardHeader>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">{stats?.today_paid || 0}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                {formatCurrency(stats?.today_amount_paid || 0)} recebido
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Period Summary */}
         <Card className="bg-card border-border">
