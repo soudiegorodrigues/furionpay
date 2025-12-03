@@ -6,7 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Lock, Mail, UserPlus, LogIn } from 'lucide-react';
+import { 
+  AlertDialog, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle,
+  AlertDialogAction
+} from '@/components/ui/alert-dialog';
+import { Loader2, Lock, Mail, UserPlus, LogIn, Ban } from 'lucide-react';
 import { z } from 'zod';
 
 const authSchema = z.object({
@@ -20,6 +29,7 @@ const AdminAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const { signIn, signUp, resetPassword, isAuthenticated, loading } = useAdminAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -34,7 +44,6 @@ const AdminAuth = () => {
     e.preventDefault();
     
     if (isResetPassword) {
-      // Only validate email for password reset
       const emailValidation = z.string().trim().email({ message: "Email inválido" }).safeParse(email);
       if (!emailValidation.success) {
         toast({
@@ -67,7 +76,6 @@ const AdminAuth = () => {
       return;
     }
 
-    // Validate input
     const validation = authSchema.safeParse({ email, password });
     if (!validation.success) {
       toast({
@@ -84,13 +92,18 @@ const AdminAuth = () => {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          toast({
-            variant: "destructive",
-            title: "Erro ao entrar",
-            description: error.message === "Invalid login credentials" 
-              ? "Email ou senha incorretos" 
-              : error.message
-          });
+          // Check if user is banned
+          if (error.message === "User is banned" || error.message?.includes("banned")) {
+            setShowBlockedDialog(true);
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Erro ao entrar",
+              description: error.message === "Invalid login credentials" 
+                ? "Email ou senha incorretos" 
+                : error.message
+            });
+          }
         } else {
           toast({
             title: "Bem-vindo!",
@@ -221,6 +234,28 @@ const AdminAuth = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Blocked User Dialog */}
+      <AlertDialog open={showBlockedDialog} onOpenChange={setShowBlockedDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <Ban className="h-8 w-8 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl">
+              Usuário Bloqueado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Sua conta foi bloqueada pelo administrador. Entre em contato com o suporte para mais informações.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction onClick={() => setShowBlockedDialog(false)}>
+              Entendi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
