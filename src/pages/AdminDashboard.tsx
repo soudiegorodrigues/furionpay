@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -58,7 +59,7 @@ const AdminDashboard = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, loading, signOut, user } = useAdminAuth();
+  const { isAuthenticated, loading, signOut, user, isBlocked } = useAdminAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -211,6 +212,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background p-3 sm:p-6">
+      <BlockedUserAlert isBlocked={isBlocked} />
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
