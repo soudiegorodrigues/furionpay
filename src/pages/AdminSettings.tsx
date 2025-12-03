@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check, Eye } from "lucide-react";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check, Eye, Globe } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -21,6 +22,11 @@ interface MetaPixel {
   pixelId: string;
   accessToken: string;
 }
+interface AvailableDomain {
+  id: string;
+  domain: string;
+  name: string | null;
+}
 interface AdminSettingsData {
   spedpay_api_key: string;
   recipient_id: string;
@@ -28,6 +34,7 @@ interface AdminSettingsData {
   meta_pixels: string;
   popup_model: string;
   social_proof_enabled: boolean;
+  selected_domain: string;
 }
 const AdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettingsData>({
@@ -36,10 +43,13 @@ const AdminSettings = () => {
     product_name: "",
     meta_pixels: "[]",
     popup_model: "boost",
-    social_proof_enabled: false
+    social_proof_enabled: false,
+    selected_domain: ""
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
+  const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
   const [editingPixelId, setEditingPixelId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -60,8 +70,35 @@ const AdminSettings = () => {
     }
     if (isAuthenticated) {
       loadSettings();
+      loadAvailableDomains();
+      checkAdminRole();
     }
   }, [isAuthenticated, loading, navigate]);
+
+  const checkAdminRole = async () => {
+    try {
+      const { data, error } = await supabase.rpc('is_admin_authenticated');
+      if (error) throw error;
+      setIsAdmin(data === true);
+    } catch (error) {
+      console.error('Error checking admin role:', error);
+    }
+  };
+
+  const loadAvailableDomains = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('available_domains')
+        .select('id, domain, name')
+        .eq('is_active', true)
+        .order('domain');
+      
+      if (error) throw error;
+      setAvailableDomains(data || []);
+    } catch (error) {
+      console.error('Error loading domains:', error);
+    }
+  };
   const loadSettings = async () => {
     try {
       const {
@@ -75,7 +112,8 @@ const AdminSettings = () => {
         product_name: "",
         meta_pixels: "[]",
         popup_model: "boost",
-        social_proof_enabled: false
+        social_proof_enabled: false,
+        selected_domain: ""
       };
       if (data) {
         (data as {
@@ -94,6 +132,8 @@ const AdminSettings = () => {
             settingsMap.popup_model = item.value || "boost";
           } else if (item.key === 'social_proof_enabled') {
             settingsMap.social_proof_enabled = item.value === "true";
+          } else if (item.key === 'selected_domain') {
+            settingsMap.selected_domain = item.value || "";
           } else if (item.key === 'meta_pixel_id' && item.value) {
             const oldToken = (data as {
               key: string;
@@ -166,6 +206,9 @@ const AdminSettings = () => {
       }), supabase.rpc('update_user_setting', {
         setting_key: 'social_proof_enabled',
         setting_value: settings.social_proof_enabled.toString()
+      }), supabase.rpc('update_user_setting', {
+        setting_key: 'selected_domain',
+        setting_value: settings.selected_domain
       })];
       await Promise.all(updates);
       toast({
@@ -228,7 +271,13 @@ const AdminSettings = () => {
               <p className="text-sm text-muted-foreground">Painel Administrativo</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
+                <Globe className="w-4 h-4 mr-2" />
+                Domínios
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => navigate('/admin/dashboard')}>
               <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard
@@ -248,25 +297,68 @@ const AdminSettings = () => {
               Seu Link de Checkout
             </CardTitle>
             <CardDescription>
-              Compartilhe este link para receber, com suas configurações de API.
+              Escolha o domínio e compartilhe o link para receber pagamentos.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Input value={`${window.location.origin}/?u=${user?.id || ''}`} readOnly className="font-mono text-sm" />
-              <Button variant="outline" onClick={() => {
-              navigator.clipboard.writeText(`${window.location.origin}/?u=${user?.id || ''}`);
-              setLinkCopied(true);
-              setTimeout(() => setLinkCopied(false), 2000);
-              toast({
-                title: "Link copiado!",
-                description: "O link foi copiado para sua área de transferência"
-              });
-            }}>
-                {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </Button>
-            </div>
+          <CardContent className="space-y-4">
+            {/* Domain Selector */}
+            {availableDomains.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Domínio
+                </Label>
+                <Select
+                  value={settings.selected_domain || ""}
+                  onValueChange={(value) => setSettings(s => ({ ...s, selected_domain: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um domínio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableDomains.map((domain) => (
+                      <SelectItem key={domain.id} value={domain.domain}>
+                        {domain.name ? `${domain.name} (${domain.domain})` : domain.domain}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
+            {/* Generated Link */}
+            <div className="space-y-2">
+              <Label>Seu link</Label>
+              <div className="flex gap-2">
+                <Input 
+                  value={settings.selected_domain 
+                    ? `https://www.${settings.selected_domain}/?u=${user?.id || ''}` 
+                    : `${window.location.origin}/?u=${user?.id || ''}`
+                  } 
+                  readOnly 
+                  className="font-mono text-sm" 
+                />
+                <Button variant="outline" onClick={() => {
+                  const link = settings.selected_domain 
+                    ? `https://www.${settings.selected_domain}/?u=${user?.id || ''}` 
+                    : `${window.location.origin}/?u=${user?.id || ''}`;
+                  navigator.clipboard.writeText(link);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                  toast({
+                    title: "Link copiado!",
+                    description: "O link foi copiado para sua área de transferência"
+                  });
+                }}>
+                  {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+              {!settings.selected_domain && availableDomains.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Selecione um domínio acima para gerar seu link personalizado
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
