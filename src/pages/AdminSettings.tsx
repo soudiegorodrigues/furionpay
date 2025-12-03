@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check, Eye, Globe } from "lucide-react";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check, Eye, Globe, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -294,10 +294,16 @@ const AdminSettings = () => {
           </div>
           <div className="flex gap-2 flex-wrap">
             {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
-                <Globe className="w-4 h-4 mr-2" />
-                Domínios
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
+                  <Globe className="w-4 h-4 mr-2" />
+                  Domínios
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')}>
+                  <Users className="w-4 h-4 mr-2" />
+                  Usuários
+                </Button>
+              </>
             )}
             <Button variant="outline" size="sm" onClick={() => navigate('/admin/dashboard')}>
               <BarChart3 className="w-4 h-4 mr-2" />
