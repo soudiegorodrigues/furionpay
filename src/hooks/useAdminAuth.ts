@@ -101,6 +101,32 @@ export const useAdminAuth = () => {
     return { error };
   };
 
+  const sendOtpCode = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+      }
+    });
+    return { error };
+  };
+
+  const verifyOtpCode = async (email: string, token: string) => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email'
+    });
+    return { data, error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    return { error };
+  };
+
   const resetPassword = async (email: string) => {
     const redirectUrl = `${window.location.origin}/admin`;
     
@@ -119,6 +145,9 @@ export const useAdminAuth = () => {
     signUp,
     signOut,
     resetPassword,
+    sendOtpCode,
+    verifyOtpCode,
+    updatePassword,
     checkIfBlocked,
     isAuthenticated: !!session
   };
