@@ -291,7 +291,7 @@ const AdminSettings = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="product_name">Nome do Produto</Label>
-              <Input id="product_name" type="text" placeholder="Ex: Nome do produto" value={settings.product_name} onChange={e => setSettings(s => ({
+              <Input id="product_name" type="text" placeholder="Anônimo (padrão)" value={settings.product_name} onChange={e => setSettings(s => ({
               ...s,
               product_name: e.target.value
             }))} />
