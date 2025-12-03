@@ -360,7 +360,7 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
                 <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
                   <div className="text-xl sm:text-3xl font-bold text-blue-400">
                     {globalStats.total_generated}
@@ -372,6 +372,14 @@ const AdminDashboard = () => {
                     {globalStats.total_paid}
                   </div>
                   <p className="text-[10px] sm:text-sm text-muted-foreground">PIX Pagos</p>
+                </div>
+                <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
+                  <div className="text-xl sm:text-3xl font-bold text-yellow-400">
+                    {globalStats.total_generated > 0 
+                      ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1)
+                      : '0'}%
+                  </div>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Conversão</p>
                 </div>
                 <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
                   <div className="text-lg sm:text-2xl font-bold text-muted-foreground">
