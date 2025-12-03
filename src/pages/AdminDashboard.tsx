@@ -9,23 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  DollarSign, 
-  QrCode, 
-  CheckCircle, 
-  Clock,
-  Settings,
-  RefreshCw,
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
-  LogOut,
-  Trophy
-} from "lucide-react";
-
+import { BarChart3, TrendingUp, DollarSign, QrCode, CheckCircle, Clock, Settings, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight, Calendar, LogOut, Trophy } from "lucide-react";
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -36,7 +20,6 @@ interface DashboardStats {
   today_paid: number;
   today_amount_paid: number;
 }
-
 interface Transaction {
   id: string;
   amount: number;
@@ -47,7 +30,6 @@ interface Transaction {
   created_at: string;
   paid_at: string | null;
 }
-
 interface RankingUser {
   user_id: string;
   user_email: string;
@@ -57,12 +39,9 @@ interface RankingUser {
   total_amount_paid: number;
   conversion_rate: number;
 }
-
 const ITEMS_PER_PAGE = 10;
 const RANKING_PER_PAGE = 5;
-
 type DateFilter = 'today' | '7days' | 'month' | 'year' | 'all';
-
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [globalStats, setGlobalStats] = useState<DashboardStats | null>(null);
@@ -76,9 +55,16 @@ const AdminDashboard = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [rankingDateFilter, setRankingDateFilter] = useState<DateFilter>('all');
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { isAuthenticated, loading, signOut, user, isBlocked } = useAdminAuth();
-
+  const {
+    toast
+  } = useToast();
+  const {
+    isAuthenticated,
+    loading,
+    signOut,
+    user,
+    isBlocked
+  } = useAdminAuth();
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate('/admin');
@@ -92,43 +78,50 @@ const AdminDashboard = () => {
   // Auto-refresh every 1 minute
   useEffect(() => {
     if (!isAuthenticated) return;
-    
     const interval = setInterval(() => {
       loadData();
     }, 60000); // 60 seconds
 
     return () => clearInterval(interval);
   }, [isAuthenticated]);
-
   const loadData = async () => {
     setIsLoading(true);
     try {
       // Load dashboard stats (user-scoped)
-      const { data: statsData, error: statsError } = await supabase.rpc('get_user_dashboard');
-
+      const {
+        data: statsData,
+        error: statsError
+      } = await supabase.rpc('get_user_dashboard');
       if (statsError) throw statsError;
       setStats(statsData as unknown as DashboardStats);
 
       // Load transactions (user-scoped)
-      const { data: txData, error: txError } = await supabase.rpc('get_user_transactions', {
+      const {
+        data: txData,
+        error: txError
+      } = await supabase.rpc('get_user_transactions', {
         p_limit: 50
       });
-
       if (txError) throw txError;
-      setTransactions((txData as unknown as Transaction[]) || []);
+      setTransactions(txData as unknown as Transaction[] || []);
 
       // Check if user is admin and load global stats
-      const { data: adminCheck } = await supabase.rpc('is_admin_authenticated');
+      const {
+        data: adminCheck
+      } = await supabase.rpc('is_admin_authenticated');
       setIsAdmin(!!adminCheck);
-      
       if (adminCheck) {
-        const { data: globalData } = await supabase.rpc('get_pix_dashboard_auth');
+        const {
+          data: globalData
+        } = await supabase.rpc('get_pix_dashboard_auth');
         if (globalData) {
           setGlobalStats(globalData as unknown as DashboardStats);
         }
-        
+
         // Load ranking data
-        const { data: rankingData } = await supabase.rpc('get_users_revenue_ranking', {
+        const {
+          data: rankingData
+        } = await supabase.rpc('get_users_revenue_ranking', {
           p_limit: RANKING_PER_PAGE,
           p_offset: (rankingPage - 1) * RANKING_PER_PAGE,
           p_date_filter: rankingDateFilter
@@ -136,13 +129,13 @@ const AdminDashboard = () => {
         if (rankingData) {
           setRankingUsers(rankingData as unknown as RankingUser[]);
         }
-        
-        const { data: countData } = await supabase.rpc('get_users_count');
+        const {
+          data: countData
+        } = await supabase.rpc('get_users_count');
         if (countData !== null) {
           setTotalUsers(countData as number);
         }
       }
-
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       if (error.message?.includes('Not authenticated')) {
@@ -159,23 +152,19 @@ const AdminDashboard = () => {
       setIsLoading(false);
     }
   };
-
   const handleLogout = async () => {
     await signOut();
     navigate('/admin');
   };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR');
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
@@ -186,21 +175,15 @@ const AdminDashboard = () => {
         return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Gerado</Badge>;
     }
   };
-
-  const conversionRate = stats && stats.total_generated > 0 
-    ? ((stats.total_paid / stats.total_generated) * 100).toFixed(1) 
-    : '0';
+  const conversionRate = stats && stats.total_generated > 0 ? (stats.total_paid / stats.total_generated * 100).toFixed(1) : '0';
 
   // Filter transactions by date
   const filteredTransactions = useMemo(() => {
     if (dateFilter === 'all') return transactions;
-
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
     return transactions.filter(tx => {
       const txDate = new Date(tx.created_at);
-      
       switch (dateFilter) {
         case 'today':
           return txDate >= startOfDay;
@@ -226,13 +209,12 @@ const AdminDashboard = () => {
     const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
     const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + tx.amount, 0);
     const amountPaid = filteredTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
-    
     return {
       generated,
       paid,
       amountGenerated,
       amountPaid,
-      conversionRate: generated > 0 ? ((paid / generated) * 100).toFixed(1) : '0'
+      conversionRate: generated > 0 ? (paid / generated * 100).toFixed(1) : '0'
     };
   }, [filteredTransactions]);
 
@@ -245,29 +227,19 @@ const AdminDashboard = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFilter]);
-
   if (loading || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background p-3 sm:p-6">
+  return <div className="min-h-screen bg-background p-3 sm:p-6">
       <BlockedUserAlert isBlocked={isBlocked} />
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="shrink-0"
-                onClick={() => navigate('/')}
-              >
+              <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/')}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="min-w-0">
@@ -356,11 +328,10 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Global Stats Card - Admin Only */}
-        {isAdmin && globalStats && (
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        {isAdmin && globalStats && <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">Faturamento Global 
+Admin<DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 Faturamento Global da Plataforma
                 <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
               </CardTitle>
@@ -381,9 +352,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="text-center p-2 sm:p-4 bg-background/50 rounded-lg">
                   <div className="text-xl sm:text-3xl font-bold text-yellow-400">
-                    {globalStats.total_generated > 0 
-                      ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1)
-                      : '0'}%
+                    {globalStats.total_generated > 0 ? (globalStats.total_paid / globalStats.total_generated * 100).toFixed(1) : '0'}%
                   </div>
                   <p className="text-[10px] sm:text-sm text-muted-foreground">Conversão</p>
                 </div>
@@ -401,8 +370,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Period Summary */}
         <Card className="bg-card border-border">
@@ -437,8 +405,7 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Ranking Card - Admin Only */}
-        {isAdmin && (
-          <Card className="bg-card border-border">
+        {isAdmin && <Card className="bg-card border-border">
             <CardHeader className="p-3 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
@@ -446,19 +413,18 @@ const AdminDashboard = () => {
                   Ranking de Faturamentos
                   <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
                 </CardTitle>
-                <Select 
-                  value={rankingDateFilter} 
-                  onValueChange={async (value: DateFilter) => {
-                    setRankingDateFilter(value);
-                    setRankingPage(1);
-                    const { data } = await supabase.rpc('get_users_revenue_ranking', {
-                      p_limit: RANKING_PER_PAGE,
-                      p_offset: 0,
-                      p_date_filter: value
-                    });
-                    if (data) setRankingUsers(data as unknown as RankingUser[]);
-                  }}
-                >
+                <Select value={rankingDateFilter} onValueChange={async (value: DateFilter) => {
+              setRankingDateFilter(value);
+              setRankingPage(1);
+              const {
+                data
+              } = await supabase.rpc('get_users_revenue_ranking', {
+                p_limit: RANKING_PER_PAGE,
+                p_offset: 0,
+                p_date_filter: value
+              });
+              if (data) setRankingUsers(data as unknown as RankingUser[]);
+            }}>
                   <SelectTrigger className="w-[130px] sm:w-[150px] text-sm">
                     <Calendar className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
                     <SelectValue placeholder="Período" />
@@ -474,12 +440,9 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              {rankingUsers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
+              {rankingUsers.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
                   Nenhum usuário encontrado
-                </div>
-              ) : (
-                <>
+                </div> : <>
                   <div className="overflow-x-auto -mx-3 sm:mx-0">
                     <Table>
                       <TableHeader>
@@ -493,8 +456,7 @@ const AdminDashboard = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {rankingUsers.map((user, index) => (
-                          <TableRow key={user.user_id}>
+                        {rankingUsers.map((user, index) => <TableRow key={user.user_id}>
                             <TableCell className="text-xs sm:text-sm font-bold">
                               {(rankingPage - 1) * RANKING_PER_PAGE + index + 1}º
                             </TableCell>
@@ -513,61 +475,50 @@ const AdminDashboard = () => {
                             <TableCell className="text-xs sm:text-sm text-right font-semibold text-primary">
                               {formatCurrency(user.total_amount_paid)}
                             </TableCell>
-                          </TableRow>
-                        ))}
+                          </TableRow>)}
                       </TableBody>
                     </Table>
                   </div>
                   
                   {/* Ranking Pagination */}
-                  {totalUsers > RANKING_PER_PAGE && (
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                  {totalUsers > RANKING_PER_PAGE && <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
                       <span className="text-xs sm:text-sm text-muted-foreground">
                         Página {rankingPage} de {Math.ceil(totalUsers / RANKING_PER_PAGE)}
                       </span>
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                        onClick={async () => {
-                            const newPage = rankingPage - 1;
-                            setRankingPage(newPage);
-                            const { data } = await supabase.rpc('get_users_revenue_ranking', {
-                              p_limit: RANKING_PER_PAGE,
-                              p_offset: (newPage - 1) * RANKING_PER_PAGE,
-                              p_date_filter: rankingDateFilter
-                            });
-                            if (data) setRankingUsers(data as unknown as RankingUser[]);
-                          }}
-                          disabled={rankingPage === 1}
-                        >
+                        <Button variant="outline" size="sm" onClick={async () => {
+                  const newPage = rankingPage - 1;
+                  setRankingPage(newPage);
+                  const {
+                    data
+                  } = await supabase.rpc('get_users_revenue_ranking', {
+                    p_limit: RANKING_PER_PAGE,
+                    p_offset: (newPage - 1) * RANKING_PER_PAGE,
+                    p_date_filter: rankingDateFilter
+                  });
+                  if (data) setRankingUsers(data as unknown as RankingUser[]);
+                }} disabled={rankingPage === 1}>
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                        onClick={async () => {
-                            const newPage = rankingPage + 1;
-                            setRankingPage(newPage);
-                            const { data } = await supabase.rpc('get_users_revenue_ranking', {
-                              p_limit: RANKING_PER_PAGE,
-                              p_offset: (newPage - 1) * RANKING_PER_PAGE,
-                              p_date_filter: rankingDateFilter
-                            });
-                            if (data) setRankingUsers(data as unknown as RankingUser[]);
-                          }}
-                          disabled={rankingPage >= Math.ceil(totalUsers / RANKING_PER_PAGE)}
-                        >
+                        <Button variant="outline" size="sm" onClick={async () => {
+                  const newPage = rankingPage + 1;
+                  setRankingPage(newPage);
+                  const {
+                    data
+                  } = await supabase.rpc('get_users_revenue_ranking', {
+                    p_limit: RANKING_PER_PAGE,
+                    p_offset: (newPage - 1) * RANKING_PER_PAGE,
+                    p_date_filter: rankingDateFilter
+                  });
+                  if (data) setRankingUsers(data as unknown as RankingUser[]);
+                }} disabled={rankingPage >= Math.ceil(totalUsers / RANKING_PER_PAGE)}>
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  )}
-                </>
-              )}
+                    </div>}
+                </>}
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Transactions Table */}
         <Card className="bg-card border-border">
@@ -575,12 +526,9 @@ const AdminDashboard = () => {
             <CardTitle className="text-base sm:text-lg">Transações Recentes</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-            {filteredTransactions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
+            {filteredTransactions.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
                 Nenhuma transação encontrada
-              </div>
-            ) : (
-              <>
+              </div> : <>
                 <div className="overflow-x-auto -mx-3 sm:mx-0">
                   <Table>
                     <TableHeader>
@@ -594,8 +542,7 @@ const AdminDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedTransactions.map((tx) => (
-                        <TableRow key={tx.id}>
+                      {paginatedTransactions.map(tx => <TableRow key={tx.id}>
                           <TableCell className="text-xs sm:text-sm whitespace-nowrap">
                             {formatDate(tx.created_at)}
                           </TableCell>
@@ -617,48 +564,32 @@ const AdminDashboard = () => {
                           <TableCell className="text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
                             {tx.paid_at ? formatDate(tx.paid_at) : '-'}
                           </TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow>)}
                     </TableBody>
                   </Table>
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-border gap-3">
+                {totalPages > 1 && <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-border gap-3">
                     <p className="text-xs sm:text-sm text-muted-foreground">
                       {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
                     </p>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       <span className="text-xs sm:text-sm text-muted-foreground px-2">
                         {currentPage}/{totalPages}
                       </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                )}
-              </>
-            )}
+                  </div>}
+              </>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default AdminDashboard;
