@@ -256,7 +256,7 @@ const AdminSettings = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Link className="w-5 h-5" />
-              Seu Link de Doação
+              Seu Link de Checkout
             </CardTitle>
             <CardDescription>
               Compartilhe este link para receber doações com suas configurações
