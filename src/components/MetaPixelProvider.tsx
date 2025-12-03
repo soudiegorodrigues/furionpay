@@ -48,12 +48,22 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   useEffect(() => {
     const loadPixelConfig = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-pixel-config');
+        // Get userId from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('u') || urlParams.get('user');
+        
+        console.log('MetaPixelProvider: Loading pixel config for userId:', userId);
+
+        const { data, error } = await supabase.functions.invoke('get-pixel-config', {
+          body: { userId }
+        });
         
         if (error) {
           console.log('Pixel config not available:', error);
           return;
         }
+
+        console.log('Pixel config response:', data);
 
         if (data?.pixels && Array.isArray(data.pixels) && data.pixels.length > 0) {
           initializePixels(data.pixels);
@@ -71,7 +81,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
 
     // Validate and sanitize pixel IDs
     const validPixels = pixels.filter(p => p.pixelId && /^\d+$/.test(p.pixelId));
-    if (validPixels.length === 0) return;
+    if (validPixels.length === 0) {
+      console.log('No valid pixels found');
+      return;
+    }
+
+    console.log('Initializing pixels:', validPixels);
 
     // Load Facebook Pixel base script
     const script = document.createElement('script');
@@ -92,12 +107,14 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       validPixels.forEach(pixel => {
         if (window.fbq) {
           window.fbq('init', pixel.pixelId);
+          console.log('Initialized pixel:', pixel.pixelId);
         }
       });
       
       // Track PageView for all pixels
       if (window.fbq) {
         window.fbq('track', 'PageView');
+        console.log('Tracked PageView');
       }
       
       setIsLoaded(true);

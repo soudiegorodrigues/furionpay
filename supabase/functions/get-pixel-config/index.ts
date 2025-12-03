@@ -17,12 +17,32 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Try to get multiple pixels first (new format)
-    const { data: multiplePixels, error: multiError } = await supabase
+    // Get userId from request body
+    let userId: string | null = null;
+    try {
+      const body = await req.json();
+      userId = body?.userId || null;
+    } catch {
+      // No body or invalid JSON
+    }
+
+    console.log('Received userId:', userId);
+
+    // Query based on whether we have a userId
+    let query = supabase
       .from('admin_settings')
       .select('key, value')
-      .eq('key', 'meta_pixels')
-      .single();
+      .eq('key', 'meta_pixels');
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    } else {
+      query = query.is('user_id', null);
+    }
+
+    const { data: multiplePixels, error: multiError } = await query.single();
+
+    console.log('Pixel config query result:', multiplePixels, multiError);
 
     if (!multiError && multiplePixels?.value) {
       try {
@@ -40,11 +60,18 @@ serve(async (req) => {
     }
 
     // Fallback to legacy single pixel format
-    const { data, error } = await supabase
+    let legacyQuery = supabase
       .from('admin_settings')
       .select('key, value')
-      .eq('key', 'meta_pixel_id')
-      .single();
+      .eq('key', 'meta_pixel_id');
+
+    if (userId) {
+      legacyQuery = legacyQuery.eq('user_id', userId);
+    } else {
+      legacyQuery = legacyQuery.is('user_id', null);
+    }
+
+    const { data, error } = await legacyQuery.single();
 
     if (error || !data?.value) {
       console.log('No pixel config found');
