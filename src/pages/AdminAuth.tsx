@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFoo
 import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, ShieldCheck, Ban, KeyRound } from 'lucide-react';
 import { z } from 'zod';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { supabase } from '@/integrations/supabase/client';
 
 const authSchema = z.object({
   email: z.string().trim().email({
@@ -49,9 +50,6 @@ const AdminAuth = () => {
   const {
     signIn,
     signUp,
-    sendOtpCode,
-    verifyOtpCode,
-    updatePassword,
     isAuthenticated,
     loading
   } = useAdminAuth();
@@ -67,7 +65,7 @@ const AdminAuth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Handle sending OTP code
+    // Handle sending OTP code via edge function
     if (mode === 'reset-email') {
       const emailValidation = z.string().trim().email({
         message: "Email inválido"
@@ -84,21 +82,22 @@ const AdminAuth = () => {
 
       setIsSubmitting(true);
       try {
-        const { error } = await sendOtpCode(email);
+        const { data, error } = await supabase.functions.invoke('send-password-reset', {
+          body: { email }
+        });
+        
         if (error) {
           toast({
             variant: "destructive",
             title: "Erro",
-            description: error.message.includes("Signups not allowed") 
-              ? "Email não encontrado no sistema" 
-              : error.message
+            description: "Não foi possível enviar o código. Tente novamente."
           });
         } else {
           setResetEmail(email);
           setMode('reset-code');
           toast({
             title: "Código enviado!",
-            description: "Verifique sua caixa de entrada e copie o código"
+            description: "Verifique sua caixa de entrada e copie o código de 6 dígitos"
           });
         }
       } finally {
@@ -107,7 +106,7 @@ const AdminAuth = () => {
       return;
     }
 
-    // Handle OTP verification
+    // Handle OTP code entry - just move to password screen
     if (mode === 'reset-code') {
       if (otpCode.length !== 6) {
         toast({
@@ -117,30 +116,13 @@ const AdminAuth = () => {
         });
         return;
       }
-
-      setIsSubmitting(true);
-      try {
-        const { error } = await verifyOtpCode(resetEmail, otpCode);
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Código inválido",
-            description: "O código está incorreto ou expirou. Tente novamente."
-          });
-        } else {
-          setMode('reset-password');
-          toast({
-            title: "Código verificado!",
-            description: "Agora crie sua nova senha"
-          });
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
+      
+      // Move to password screen - verification happens when submitting new password
+      setMode('reset-password');
       return;
     }
 
-    // Handle new password creation
+    // Handle new password creation with code verification
     if (mode === 'reset-password') {
       const passwordValidation = z.object({
         password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
@@ -161,19 +143,31 @@ const AdminAuth = () => {
 
       setIsSubmitting(true);
       try {
-        const { error } = await updatePassword(password);
-        if (error) {
+        const { data, error } = await supabase.functions.invoke('verify-reset-code', {
+          body: { 
+            email: resetEmail, 
+            code: otpCode,
+            newPassword: password 
+          }
+        });
+        
+        if (error || data?.error) {
           toast({
             variant: "destructive",
             title: "Erro",
-            description: error.message
+            description: data?.error || "Código inválido ou expirado. Tente novamente."
           });
+          // Go back to code entry if code is invalid
+          if (data?.error?.includes("inválido") || data?.error?.includes("expirado")) {
+            setMode('reset-code');
+            setOtpCode('');
+          }
         } else {
           toast({
             title: "Senha alterada!",
-            description: "Sua senha foi atualizada com sucesso"
+            description: "Sua senha foi atualizada com sucesso. Faça login."
           });
-          navigate('/admin/dashboard');
+          switchMode('login');
         }
       } finally {
         setIsSubmitting(false);
@@ -400,14 +394,14 @@ const AdminAuth = () => {
                     type="button"
                     onClick={async () => {
                       setIsSubmitting(true);
-                      const { error } = await sendOtpCode(resetEmail);
+                      await supabase.functions.invoke('send-password-reset', {
+                        body: { email: resetEmail }
+                      });
                       setIsSubmitting(false);
-                      if (!error) {
-                        toast({
-                          title: "Código reenviado!",
-                          description: "Verifique sua caixa de entrada"
-                        });
-                      }
+                      toast({
+                        title: "Código reenviado!",
+                        description: "Verifique sua caixa de entrada"
+                      });
                     }}
                     className="text-primary hover:text-primary/80 font-medium"
                     disabled={isSubmitting}
