@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Heart, X } from "lucide-react";
+import institutoLogo from "@/assets/instituto-logo.png";
 import { Button } from "@/components/ui/button";
 import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
@@ -167,6 +168,15 @@ export const DonationPopupInstituto = ({
       <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
+            {/* Logo */}
+            <div className="flex justify-center">
+              <img 
+                src={institutoLogo} 
+                alt="Instituto Amor de Criança" 
+                className="h-20 sm:h-24 object-contain"
+              />
+            </div>
+            
             {/* Progress Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
