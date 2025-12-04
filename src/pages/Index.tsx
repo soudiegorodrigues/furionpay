@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,17 +12,25 @@ import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 
+// Versão para debug - se você ver V6, o código novo está ativo
+const CODE_VERSION = "V6";
+
 const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const userId = searchParams.get('u') || searchParams.get('user');
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   
-  // Estado de loading - começa TRUE e só muda quando temos o modelo
-  const [isReady, setIsReady] = useState(false);
+  // Ref para garantir que o modelo foi carregado antes de renderizar qualquer popup
+  const modelLoadedRef = useRef(false);
+  
+  // Estado de loading - começa null para garantir que nada seja renderizado até ter dados
   const [popupModel, setPopupModel] = useState<string | null>(null);
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
+
+  // Log para debug
+  console.log(`[Index ${CODE_VERSION}] popupModel:`, popupModel, "modelLoaded:", modelLoadedRef.current);
 
   // Redireciona para admin se não houver userId
   useEffect(() => {
@@ -33,30 +41,37 @@ const Index = () => {
 
   // Busca configurações do usuário
   useEffect(() => {
+    // Reset ao montar
+    modelLoadedRef.current = false;
+    setPopupModel(null);
+    
     const fetchSettings = async () => {
       if (!userId) return;
+      
+      console.log(`[Index ${CODE_VERSION}] Fetching settings for userId:`, userId);
       
       try {
         const { data, error } = await supabase.functions.invoke('get-popup-model', {
           body: { userId }
         });
 
+        console.log(`[Index ${CODE_VERSION}] Response:`, data, error);
+
         if (!error && data && data.model) {
+          modelLoadedRef.current = true;
           setPopupModel(data.model);
           setSocialProofEnabled(data.socialProofEnabled || false);
           if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
           }
         } else {
-          // Fallback para boost se não houver modelo definido
+          modelLoadedRef.current = true;
           setPopupModel('boost');
         }
       } catch (err) {
-        console.error('Error fetching settings:', err);
+        console.error(`[Index ${CODE_VERSION}] Error:`, err);
+        modelLoadedRef.current = true;
         setPopupModel('boost');
-      } finally {
-        // Marca como pronto SOMENTE depois de ter o modelo
-        setIsReady(true);
       }
     };
 
@@ -68,20 +83,23 @@ const Index = () => {
     return null;
   }
 
-  // CRÍTICO: Não renderiza NADA até estar pronto
-  if (!isReady || !popupModel) {
+  // CRÍTICO: Mostra loading até o modelo ser carregado da API
+  // Verifica AMBOS: popupModel não ser null E ref confirmar que foi carregado
+  if (!popupModel || !modelLoadedRef.current) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-muted-foreground text-sm">Carregando...</div>
+          <div className="text-muted-foreground text-sm">Carregando... {CODE_VERSION}</div>
         </div>
       </div>
     );
   }
 
-  // Renderiza o popup correto SOMENTE quando isReady E popupModel estão definidos
+  // Renderiza o popup correto SOMENTE quando modelo foi carregado
   const renderPopup = () => {
+    console.log(`[Index ${CODE_VERSION}] Rendering popup:`, popupModel);
+    
     switch (popupModel) {
       case 'simple':
         return <DonationPopupSimple isOpen={true} onClose={() => {}} userId={userId} />;
