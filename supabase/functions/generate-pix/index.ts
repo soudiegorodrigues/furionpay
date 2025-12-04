@@ -232,10 +232,6 @@ serve(async (req) => {
     const productName = await getProductNameFromDatabase(userId);
     console.log('Product name:', productName);
 
-    // Get recipient_id from database (user-specific)
-    const recipientId = await getRecipientIdFromDatabase(userId);
-    console.log('Recipient ID:', recipientId || 'not configured');
-
     if (!amount || amount <= 0) {
       return new Response(
         JSON.stringify({ error: 'Invalid amount' }),
@@ -288,11 +284,6 @@ serve(async (req) => {
       ],
       ip: '0.0.0.0',
     };
-
-    // Add recipient_id if configured
-    if (recipientId) {
-      transactionData.recipient_id = recipientId;
-    }
 
     console.log('Creating SpedPay transaction:', JSON.stringify(transactionData, null, 2));
 
