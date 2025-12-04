@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
-import { ExitIntentPopup } from "./ExitIntentPopup";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
@@ -437,12 +437,6 @@ export const DonationPopupLanding = ({
         )}
       </div>
 
-      {/* Exit Intent Popup */}
-      <ExitIntentPopup 
-        pixCode={pixData?.code || ""} 
-        isActive={step === "pix" && !!pixData} 
-        amount={calculateTotal()}
-      />
     </div>
   );
 };
