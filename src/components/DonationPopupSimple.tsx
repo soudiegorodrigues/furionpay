@@ -14,6 +14,7 @@ interface DonationPopupSimpleProps {
   onClose: () => void;
   recipientName?: string;
   userId?: string;
+  showCloseButton?: boolean;
 }
 
 const DONATION_AMOUNTS = [
@@ -39,7 +40,8 @@ export const DonationPopupSimple = ({
   isOpen,
   onClose,
   recipientName = "Davizinho",
-  userId
+  userId,
+  showCloseButton = false
 }: DonationPopupSimpleProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [step, setStep] = useState<Step>("select");
@@ -146,13 +148,15 @@ export const DonationPopupSimple = ({
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
             </button>
           )}
-          <button 
-            onClick={onClose} 
-            className="absolute right-3 sm:right-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" 
-            aria-label="Fechar"
-          >
-            <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-          </button>
+          {showCloseButton && (
+            <button 
+              onClick={onClose} 
+              className="absolute right-3 sm:right-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" 
+              aria-label="Fechar"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+            </button>
+          )}
         </div>
 
         {/* Content */}
