@@ -203,7 +203,6 @@ export const DonationPopupDirect = ({
             {/* Header */}
             <div className="p-6 text-center space-y-2">
               <h2 className="text-2xl font-bold text-slate-800 flex items-center justify-center gap-2">
-                <span className="w-7" />
                 Pague via PIX
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" viewBox="0 0 48 48">
                   <path fill="#4db6ac" d="M11.9,12h-0.68l8.04-8.04c2.62-2.61,6.86-2.61,9.48,0L36.78,12H36.1c-1.6,0-3.11,0.62-4.24,1.76l-6.8,6.77c-0.59,0.59-1.53,0.59-2.12,0l-6.8-6.77C15.01,12.62,13.5,12,11.9,12z"/>
