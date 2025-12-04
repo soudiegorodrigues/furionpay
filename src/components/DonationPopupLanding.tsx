@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Sparkles, ShoppingBasket } from "lucide-react";
+import { Heart, Sprout, ShoppingBasket, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixQRCode } from "./PixQRCode";
@@ -32,9 +32,9 @@ const DONATION_AMOUNTS = [
 ];
 
 const BOOST_OPTIONS = [
-  { id: "hearts", label: "10 corações", price: 10.99, icon: Heart },
-  { id: "impact", label: "Multiplicador de impacto", price: 25, icon: Sparkles },
-  { id: "basket", label: "Doar cesta básica", price: 85, icon: ShoppingBasket },
+  { id: "hearts", label: "10 corações", price: 10.99, icon: Heart, color: "text-emerald-500", bgColor: "bg-emerald-100" },
+  { id: "impact", label: "Multiplicador de impacto", price: 25, icon: Sprout, color: "text-amber-600", bgColor: "bg-amber-100" },
+  { id: "basket", label: "Doar cesta básica", price: 85, icon: ShoppingBasket, color: "text-orange-500", bgColor: "bg-orange-100" },
 ];
 
 type Step = "select" | "loading" | "pix";
@@ -185,40 +185,46 @@ export const DonationPopupLanding = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background overflow-auto">
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:py-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white overflow-auto">
+      <div className="w-full max-w-lg mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
-          <div className="bg-card rounded-xl shadow-lg p-4 sm:p-8">
+          <div className="space-y-6">
             {/* Logo */}
-            <div className="flex items-center justify-center mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-[#00A651] rounded-lg flex items-center justify-center">
-                  <Heart className="w-6 h-6 text-white" fill="white" />
-                </div>
-                <span className="text-2xl font-bold text-[#00A651]">doarcomamor</span>
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-12 bg-[#00A651] rounded-xl flex items-center justify-center relative">
+                <svg viewBox="0 0 24 24" className="w-7 h-7 text-white" fill="currentColor">
+                  <circle cx="8" cy="8" r="2.5" />
+                  <circle cx="8" cy="16" r="2.5" />
+                  <circle cx="16" cy="12" r="2.5" />
+                  <line x1="10" y1="8" x2="14" y2="12" stroke="currentColor" strokeWidth="2" />
+                  <line x1="10" y1="16" x2="14" y2="12" stroke="currentColor" strokeWidth="2" />
+                </svg>
+                {/* Speech bubble tail */}
+                <div className="absolute -bottom-1 left-2 w-3 h-3 bg-[#00A651] rotate-45" />
               </div>
+              <span className="text-3xl font-bold text-[#00A651]">vakinha</span>
             </div>
 
             {/* Campaign Title */}
-            <div className="mb-6">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground">{campaignTitle}</h1>
-              <p className="text-muted-foreground text-sm">ID: {campaignId}</p>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#00A651]">{campaignTitle}</h1>
+              <p className="text-gray-500 text-sm">ID: {campaignId}</p>
             </div>
 
             {/* Contribution Value Section */}
-            <div className="mb-6">
-              <h2 className="text-base font-semibold text-foreground mb-3">Valor da contribuição</h2>
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-3">Valor da contribuição</h2>
               
               {/* Custom Amount Input */}
-              <div className="flex items-center border border-border rounded-lg overflow-hidden mb-4">
-                <span className="px-4 py-3 bg-muted text-muted-foreground font-medium border-r border-border">
+              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden mb-4">
+                <span className="px-4 py-3.5 bg-white text-gray-500 font-medium border-r border-gray-300">
                   R$
                 </span>
                 <Input
                   type="text"
                   value={customAmount}
                   onChange={handleCustomAmountChange}
-                  className="border-0 text-lg font-medium h-12 focus-visible:ring-0"
+                  className="border-0 text-lg font-medium h-12 focus-visible:ring-0 bg-white text-gray-900"
                   placeholder="0,00"
                 />
               </div>
@@ -230,10 +236,10 @@ export const DonationPopupLanding = ({
                     key={item.amount}
                     onClick={() => handleSelectAmount(item.amount)}
                     className={cn(
-                      "py-3 px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
+                      "py-3.5 px-4 rounded-lg border transition-all font-medium text-base",
                       selectedAmount === item.amount
-                        ? "border-[#00A651] bg-[#00A651]/10 text-[#00A651]"
-                        : "border-border bg-card text-foreground hover:border-[#00A651]/50"
+                        ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
                     )}
                   >
                     {formatCurrency(item.amount)}
@@ -243,22 +249,22 @@ export const DonationPopupLanding = ({
             </div>
 
             {/* Payment Method */}
-            <div className="mb-6">
-              <h2 className="text-base font-semibold text-foreground mb-3">Forma de pagamento</h2>
-              <div className="inline-flex items-center gap-2 bg-[#00A651] text-white px-4 py-2 rounded-lg">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-3">Forma de pagamento</h2>
+              <div className="inline-flex items-center gap-2 bg-[#00A651] text-white px-5 py-2.5 rounded-lg">
                 <img src={pixLogo} alt="PIX" className="w-5 h-5 brightness-0 invert" />
                 <span className="font-medium">Pix</span>
               </div>
             </div>
 
             {/* Boost Section */}
-            <div className="mb-6">
-              <h2 className="text-base font-semibold text-foreground mb-1">Turbine sua doação</h2>
-              <p className="text-muted-foreground text-sm mb-4">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 mb-1">Turbine sua doação</h2>
+              <p className="text-gray-500 text-sm mb-4">
                 Ajude MUITO MAIS turbinando sua doação 💚
               </p>
               
-              <div className="grid grid-cols-3 gap-3 p-4 border border-dashed border-border rounded-lg">
+              <div className="grid grid-cols-3 gap-2 p-4 border border-dashed border-gray-300 rounded-lg">
                 {BOOST_OPTIONS.map((boost) => {
                   const Icon = boost.icon;
                   const isSelected = selectedBoosts.includes(boost.id);
@@ -267,25 +273,22 @@ export const DonationPopupLanding = ({
                       key={boost.id}
                       onClick={() => toggleBoost(boost.id)}
                       className={cn(
-                        "flex flex-col items-center p-3 rounded-lg transition-all",
+                        "flex flex-col items-center p-2 sm:p-3 rounded-lg transition-all",
                         isSelected 
                           ? "bg-[#00A651]/10 ring-2 ring-[#00A651]" 
-                          : "hover:bg-muted"
+                          : "hover:bg-gray-50"
                       )}
                     >
                       <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center mb-2",
-                        isSelected ? "bg-[#00A651]/20" : "bg-muted"
+                        "w-12 h-12 rounded-full flex items-center justify-center mb-2",
+                        boost.bgColor
                       )}>
-                        <Icon className={cn(
-                          "w-5 h-5",
-                          isSelected ? "text-[#00A651]" : "text-muted-foreground"
-                        )} />
+                        <Icon className={cn("w-6 h-6", boost.color)} />
                       </div>
-                      <span className="text-xs sm:text-sm font-medium text-center text-foreground">
+                      <span className="text-xs sm:text-sm font-medium text-center text-gray-800 leading-tight">
                         {boost.label}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-500 mt-1">
                         {formatCurrency(boost.price)}
                       </span>
                     </button>
@@ -295,12 +298,12 @@ export const DonationPopupLanding = ({
             </div>
 
             {/* Summary */}
-            <div className="space-y-2 mb-6 text-sm sm:text-base">
-              <div className="flex justify-between text-foreground">
+            <div className="space-y-2 text-base">
+              <div className="flex justify-between text-gray-700">
                 <span>Contribuição:</span>
                 <span>{formatCurrency(getContributionAmount())}</span>
               </div>
-              <div className="flex justify-between text-foreground font-semibold">
+              <div className="flex justify-between text-gray-900 font-semibold">
                 <span>Total:</span>
                 <span>{formatCurrency(calculateTotal())}</span>
               </div>
@@ -309,38 +312,46 @@ export const DonationPopupLanding = ({
             {/* CTA Button */}
             <Button 
               onClick={handleGeneratePix}
-              className="w-full bg-[#00A651] hover:bg-[#008a44] text-white font-bold text-lg py-6 rounded-lg"
+              className="w-full bg-[#00A651] hover:bg-[#008a44] text-white font-bold text-lg py-7 rounded-lg"
             >
               CONTRIBUIR
             </Button>
 
             {/* Footer */}
-            <p className="text-center text-xs text-muted-foreground mt-4">
+            <p className="text-xs text-gray-500">
               Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os{" "}
-              <span className="font-medium text-foreground">Termos, Taxas e Prazos</span>.
+              <span className="font-semibold text-gray-700">Termos, Taxas e Prazos</span>.
             </p>
 
             {/* Security Badge */}
-            <div className="mt-4 bg-muted rounded-lg p-3 flex items-center gap-3">
-              <div className="bg-[#00A651] text-white text-xs font-bold px-2 py-1 rounded flex flex-col items-center">
-                <span>🔒 SELO DE</span>
-                <span>SEGURANÇA</span>
+            <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-3">
+              <div className="bg-[#00A651] text-white text-[10px] font-bold px-3 py-2 rounded flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4" />
+                <div className="flex flex-col leading-tight">
+                  <span>SELO DE</span>
+                  <span>SEGURANÇA</span>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Garantimos uma <span className="font-semibold text-foreground">experiência segura</span> para todos os nossos doadores.
+              <p className="text-sm text-gray-600">
+                Garantimos uma <span className="font-semibold text-gray-800">experiência segura</span> para todos os nossos doadores.
               </p>
             </div>
+
+            {/* Additional Info */}
+            <p className="text-[10px] text-gray-400 leading-relaxed">
+              Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação. Importante destacar a importância da adequação do seu cadastro, informando o <span className="font-medium text-gray-500">nome social</span>, caso o utilize.
+            </p>
           </div>
         )}
 
         {step === "loading" && (
-          <div className="bg-card rounded-xl shadow-lg p-4 sm:p-8">
+          <div className="bg-white rounded-xl p-4 sm:p-8">
             <PixLoadingSkeleton />
           </div>
         )}
 
         {step === "pix" && pixData && (
-          <div className="bg-card rounded-xl shadow-lg p-4 sm:p-8">
+          <div className="bg-white rounded-xl p-4 sm:p-8">
             <PixQRCode 
               amount={calculateTotal()} 
               pixCode={pixData.code} 
