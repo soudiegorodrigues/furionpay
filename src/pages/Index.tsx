@@ -1,70 +1,66 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { DonationPopup } from "@/components/DonationPopup";
-import { DonationPopupSimple } from "@/components/DonationPopupSimple";
-import { DonationPopupClean } from "@/components/DonationPopupClean";
-import { DonationPopupDirect } from "@/components/DonationPopupDirect";
-import { DonationPopupHot } from "@/components/DonationPopupHot";
-import { DonationPopupLanding } from "@/components/DonationPopupLanding";
-import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
+
+// Lazy load all popup components - they won't be loaded until needed
+const DonationPopup = lazy(() => import("@/components/DonationPopup").then(m => ({ default: m.DonationPopup })));
+const DonationPopupSimple = lazy(() => import("@/components/DonationPopupSimple").then(m => ({ default: m.DonationPopupSimple })));
+const DonationPopupClean = lazy(() => import("@/components/DonationPopupClean").then(m => ({ default: m.DonationPopupClean })));
+const DonationPopupDirect = lazy(() => import("@/components/DonationPopupDirect").then(m => ({ default: m.DonationPopupDirect })));
+const DonationPopupHot = lazy(() => import("@/components/DonationPopupHot").then(m => ({ default: m.DonationPopupHot })));
+const DonationPopupLanding = lazy(() => import("@/components/DonationPopupLanding").then(m => ({ default: m.DonationPopupLanding })));
+const DonationPopupInstituto = lazy(() => import("@/components/DonationPopupInstituto").then(m => ({ default: m.DonationPopupInstituto })));
+
+// Loading component
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
+    <div className="flex flex-col items-center gap-2">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="text-muted-foreground text-sm">Carregando...</div>
+    </div>
+  </div>
+);
+
 const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const userId = searchParams.get('u') || searchParams.get('user');
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   
-  // DEBUG: Log inicial
-  console.log('[DEBUG Index] Component mounted - userId:', userId, 'urlAmount:', urlAmount);
-  
   // Redireciona para admin se não houver userId
   useEffect(() => {
-    console.log('[DEBUG Index] Redirect useEffect - userId:', userId);
     if (!userId) {
-      console.log('[DEBUG Index] No userId, redirecting to /admin');
       navigate('/admin', { replace: true });
     }
   }, [userId, navigate]);
   
-  // Estado de loading até buscar as configurações - popupModel inicia como null para evitar flash
+  // Estado de loading até buscar as configurações
   const [isLoading, setIsLoading] = useState(true);
   const [popupModel, setPopupModel] = useState<string | null>(null);
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
-  // DEBUG: Log estado atual
-  console.log('[DEBUG Index] Current state - isLoading:', isLoading, 'popupModel:', popupModel);
-
   useEffect(() => {
-    console.log('[DEBUG Index] fetchSettings useEffect triggered - userId:', userId);
-    
     const fetchSettings = async () => {
-      console.log('[DEBUG Index] fetchSettings START');
       try {
-        console.log('[DEBUG Index] Calling get-popup-model function...');
         const { data, error } = await supabase.functions.invoke('get-popup-model', {
           body: { userId }
         });
 
-        console.log('[DEBUG Index] get-popup-model response - data:', data, 'error:', error);
-
         if (!error && data) {
-          console.log('[DEBUG Index] Setting popupModel to:', data.model || 'boost');
           setPopupModel(data.model || 'boost');
           setSocialProofEnabled(data.socialProofEnabled || false);
           if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
           }
         } else {
-          console.log('[DEBUG Index] No data or error, setting popupModel to boost');
           setPopupModel('boost');
         }
       } catch (err) {
-        console.error('[DEBUG Index] Error fetching settings:', err);
+        console.error('Error fetching settings:', err);
         setPopupModel('boost');
       } finally {
-        console.log('[DEBUG Index] fetchSettings COMPLETE, setting isLoading to false');
         setIsLoading(false);
       }
     };
@@ -72,81 +68,43 @@ const Index = () => {
     if (userId) {
       fetchSettings();
     }
-  }, [userId]);
-
-  // DEBUG: Log antes do render
-  console.log('[DEBUG Index] RENDER - userId:', userId, 'isLoading:', isLoading, 'popupModel:', popupModel);
+  }, [userId, urlAmount]);
 
   // Não renderiza nada se não houver userId (vai redirecionar)
   if (!userId) {
-    console.log('[DEBUG Index] RENDER: No userId, returning null');
     return null;
   }
 
-  // Mostra loading enquanto busca configurações ou popupModel ainda não foi definido
+  // Mostra loading enquanto busca configurações
   if (isLoading || !popupModel) {
-    console.log('[DEBUG Index] RENDER: Loading state - isLoading:', isLoading, 'popupModel:', popupModel);
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 p-8 bg-yellow-500 rounded-lg">
-          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-black font-bold text-xl">LOADING v4</div>
-          <div className="text-black text-sm">isLoading: {String(isLoading)} | popupModel: {String(popupModel)}</div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
-  console.log('[DEBUG Index] RENDER: Showing popup model:', popupModel);
+  // Renderiza o popup correto com Suspense para lazy loading
+  const renderPopup = () => {
+    switch (popupModel) {
+      case 'simple':
+        return <DonationPopupSimple isOpen={true} onClose={() => {}} userId={userId} />;
+      case 'clean':
+        return <DonationPopupClean isOpen={true} onClose={() => {}} userId={userId} />;
+      case 'direct':
+        return <DonationPopupDirect isOpen={true} onClose={() => {}} userId={userId} fixedAmount={fixedAmount} />;
+      case 'hot':
+        return <DonationPopupHot isOpen={true} onClose={() => {}} userId={userId} fixedAmount={fixedAmount} />;
+      case 'landing':
+        return <DonationPopupLanding isOpen={true} onClose={() => {}} userId={userId} />;
+      case 'instituto':
+        return <DonationPopupInstituto isOpen={true} onClose={() => {}} userId={userId} fixedAmount={fixedAmount} />;
+      default:
+        return <DonationPopup isOpen={true} onClose={() => {}} userId={userId} />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {popupModel === 'simple' ? (
-        <DonationPopupSimple
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId || undefined}
-        />
-      ) : popupModel === 'clean' ? (
-        <DonationPopupClean
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId || undefined}
-        />
-      ) : popupModel === 'direct' ? (
-        <DonationPopupDirect
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId || undefined}
-          fixedAmount={fixedAmount}
-        />
-      ) : popupModel === 'hot' ? (
-        <DonationPopupHot
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId || undefined}
-          fixedAmount={fixedAmount}
-        />
-      ) : popupModel === 'landing' ? (
-        <DonationPopupLanding
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId || undefined}
-        />
-      ) : popupModel === 'instituto' ? (
-        <DonationPopupInstituto
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId || undefined}
-          fixedAmount={fixedAmount}
-        />
-      ) : (
-        <DonationPopup
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId || undefined}
-        />
-      )}
-      
+      <Suspense fallback={<LoadingScreen />}>
+        {renderPopup()}
+      </Suspense>
       <SocialProofNotification enabled={socialProofEnabled} />
     </div>
   );
