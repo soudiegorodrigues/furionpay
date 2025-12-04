@@ -545,7 +545,7 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">CONTRIBUIR</div>
                 </div>
-                <p className="font-medium text-sm">Modelo Landing</p>
+                <p className="font-medium text-sm">Modelo Vakinha</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Estilo Vakinha
                 </p>
