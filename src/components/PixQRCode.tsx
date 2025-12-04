@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Copy, Clock, RefreshCw, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -184,6 +185,15 @@ export const PixQRCode = ({
             <div className="flex-1 h-px bg-border"></div>
             <span className="text-xs sm:text-sm text-muted-foreground font-medium">ou copie o código PIX</span>
             <div className="flex-1 h-px bg-border"></div>
+          </div>
+
+          {/* PIX Code Input */}
+          <div className="w-full">
+            <Input
+              value={pixCode}
+              readOnly
+              className="font-mono text-xs text-center bg-muted/50 border-border"
+            />
           </div>
 
           {/* Copy Button */}
