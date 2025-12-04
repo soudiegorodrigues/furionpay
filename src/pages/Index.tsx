@@ -68,7 +68,10 @@ const Index = () => {
   if (isLoading || !popupModel) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-muted-foreground text-sm">Carregando...</div>
+        </div>
       </div>
     );
   }
