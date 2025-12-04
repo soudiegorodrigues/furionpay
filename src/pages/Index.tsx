@@ -1,16 +1,7 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, ComponentType } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
-
-// LAZY LOAD - componentes SÓ carregam quando necessários
-const DonationPopup = lazy(() => import("@/components/DonationPopup").then(m => ({ default: m.DonationPopup })));
-const DonationPopupSimple = lazy(() => import("@/components/DonationPopupSimple").then(m => ({ default: m.DonationPopupSimple })));
-const DonationPopupClean = lazy(() => import("@/components/DonationPopupClean").then(m => ({ default: m.DonationPopupClean })));
-const DonationPopupDirect = lazy(() => import("@/components/DonationPopupDirect").then(m => ({ default: m.DonationPopupDirect })));
-const DonationPopupHot = lazy(() => import("@/components/DonationPopupHot").then(m => ({ default: m.DonationPopupHot })));
-const DonationPopupLanding = lazy(() => import("@/components/DonationPopupLanding").then(m => ({ default: m.DonationPopupLanding })));
-const DonationPopupInstituto = lazy(() => import("@/components/DonationPopupInstituto").then(m => ({ default: m.DonationPopupInstituto })));
 
 const LoadingScreen = () => (
   <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
@@ -24,6 +15,17 @@ const LoadingScreen = () => (
 // Modelos válidos
 const VALID_MODELS = ['boost', 'simple', 'clean', 'direct', 'hot', 'landing', 'instituto'];
 
+// Mapa de imports - cada modelo carrega APENAS seu componente
+const POPUP_IMPORTS: Record<string, () => Promise<{ default: ComponentType<any> }>> = {
+  boost: () => import("@/components/DonationPopup").then(m => ({ default: m.DonationPopup })),
+  simple: () => import("@/components/DonationPopupSimple").then(m => ({ default: m.DonationPopupSimple })),
+  clean: () => import("@/components/DonationPopupClean").then(m => ({ default: m.DonationPopupClean })),
+  direct: () => import("@/components/DonationPopupDirect").then(m => ({ default: m.DonationPopupDirect })),
+  hot: () => import("@/components/DonationPopupHot").then(m => ({ default: m.DonationPopupHot })),
+  landing: () => import("@/components/DonationPopupLanding").then(m => ({ default: m.DonationPopupLanding })),
+  instituto: () => import("@/components/DonationPopupInstituto").then(m => ({ default: m.DonationPopupInstituto })),
+};
+
 const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -33,14 +35,17 @@ const Index = () => {
   const urlModel = searchParams.get('m') || searchParams.get('model') || searchParams.get('popup');
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   
-  // Se o modelo vem da URL, usa diretamente (sem fetch)
-  // Se não vem, busca do banco (fallback para compatibilidade)
-  const [popupModel, setPopupModel] = useState<string | null>(
-    urlModel && VALID_MODELS.includes(urlModel) ? urlModel : null
-  );
-  const [isLoaded, setIsLoaded] = useState(!!urlModel && VALID_MODELS.includes(urlModel));
+  // Valida modelo da URL
+  const urlModelValid = urlModel && VALID_MODELS.includes(urlModel) ? urlModel : null;
+  
+  // Estados
+  const [popupModel, setPopupModel] = useState<string | null>(urlModelValid);
+  const [isLoaded, setIsLoaded] = useState(!!urlModelValid);
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
+  
+  // Componente lazy carregado dinamicamente - APENAS o modelo necessário
+  const [LazyPopup, setLazyPopup] = useState<ComponentType<any> | null>(null);
 
   // Redireciona para admin se não houver userId
   useEffect(() => {
@@ -49,11 +54,23 @@ const Index = () => {
     }
   }, [userId, navigate]);
 
+  // Carrega o componente lazy APENAS quando o modelo é definido
+  useEffect(() => {
+    if (!popupModel) return;
+    
+    const loadComponent = async () => {
+      const importFn = POPUP_IMPORTS[popupModel] || POPUP_IMPORTS.boost;
+      const module = await importFn();
+      setLazyPopup(() => module.default);
+    };
+    
+    loadComponent();
+  }, [popupModel]);
+
   // Busca configurações APENAS se não tiver modelo na URL
   useEffect(() => {
-    // Se já tem modelo da URL, não precisa buscar
-    if (urlModel && VALID_MODELS.includes(urlModel)) {
-      // Ainda busca social proof e fixed amount se necessário
+    // Se já tem modelo da URL, busca apenas extras
+    if (urlModelValid) {
       const fetchExtras = async () => {
         if (!userId) return;
         try {
@@ -109,44 +126,29 @@ const Index = () => {
     fetchSettings();
     
     return () => { isMounted = false; };
-  }, [userId, urlAmount, urlModel]);
+  }, [userId, urlAmount, urlModelValid]);
 
   // Sem userId = redireciona
   if (!userId) {
     return null;
   }
 
-  // NÃO carregou ainda = loading
-  if (!isLoaded || !popupModel) {
+  // Aguarda carregar modelo E componente
+  if (!isLoaded || !popupModel || !LazyPopup) {
     return <LoadingScreen />;
   }
 
-  // Renderiza o popup baseado no modelo
-  const PopupComponent = () => {
-    switch (popupModel) {
-      case 'simple':
-        return <DonationPopupSimple isOpen={true} onClose={() => {}} userId={userId} />;
-      case 'clean':
-        return <DonationPopupClean isOpen={true} onClose={() => {}} userId={userId} />;
-      case 'direct':
-        return <DonationPopupDirect isOpen={true} onClose={() => {}} userId={userId} fixedAmount={fixedAmount} />;
-      case 'hot':
-        return <DonationPopupHot isOpen={true} onClose={() => {}} userId={userId} fixedAmount={fixedAmount} />;
-      case 'landing':
-        return <DonationPopupLanding isOpen={true} onClose={() => {}} userId={userId} />;
-      case 'instituto':
-        return <DonationPopupInstituto isOpen={true} onClose={() => {}} userId={userId} fixedAmount={fixedAmount} />;
-      case 'boost':
-      default:
-        return <DonationPopup isOpen={true} onClose={() => {}} userId={userId} />;
-    }
+  // Props baseadas no modelo
+  const popupProps = {
+    isOpen: true,
+    onClose: () => {},
+    userId,
+    ...((['direct', 'hot', 'instituto'].includes(popupModel)) && { fixedAmount }),
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      <Suspense fallback={<LoadingScreen />}>
-        <PopupComponent />
-      </Suspense>
+      <LazyPopup {...popupProps} />
       <SocialProofNotification enabled={socialProofEnabled} />
     </div>
   );
