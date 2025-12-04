@@ -126,6 +126,14 @@ export const DonationPopupClean = ({
         qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
       });
+      
+      // Fire PixGenerated event
+      trackEvent('PixGenerated', {
+        value: selectedAmount,
+        currency: 'BRL',
+        content_name: 'Donation Clean',
+      });
+      
       setStep("pix");
     } catch (err) {
       console.error('Error:', err);
