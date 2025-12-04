@@ -110,6 +110,7 @@ export const DonationPopup = ({
           amount: totalAmount,
           utmParams: utmParams,
           userId: userId,
+          popupModel: 'boost',
         },
       });
 

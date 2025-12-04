@@ -92,6 +92,7 @@ export const DonationPopupSimple = ({
           amount: selectedAmount,
           utmParams: utmParams,
           userId: userId,
+          popupModel: 'simple',
         },
       });
 

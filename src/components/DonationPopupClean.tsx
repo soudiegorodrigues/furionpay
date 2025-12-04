@@ -109,6 +109,7 @@ export const DonationPopupClean = ({
           amount: selectedAmount,
           utmParams: utmParams,
           userId: userId,
+          popupModel: 'clean',
         },
       });
 

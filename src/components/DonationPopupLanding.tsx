@@ -152,6 +152,7 @@ export const DonationPopupLanding = ({
           amount: total,
           utmParams: utmParams,
           userId: userId,
+          popupModel: 'landing',
         },
       });
 

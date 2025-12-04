@@ -30,6 +30,12 @@ interface AvailableDomain {
   domain: string;
   name: string | null;
 }
+interface PopupModelStats {
+  popup_model: string;
+  total_generated: number;
+  total_paid: number;
+  conversion_rate: number;
+}
 interface AdminSettingsData {
   spedpay_api_key: string;
   product_name: string;
@@ -51,6 +57,7 @@ const AdminSettings = () => {
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
   const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
+  const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
   const [editingPixelId, setEditingPixelId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,6 +82,7 @@ const AdminSettings = () => {
     if (isAuthenticated) {
       loadSettings();
       loadAvailableDomains();
+      loadPopupStats();
       checkAdminRole();
     }
   }, [isAuthenticated, loading, navigate]);
@@ -102,6 +110,22 @@ const AdminSettings = () => {
     } catch (error) {
       console.error('Error loading domains:', error);
     }
+  };
+
+  const loadPopupStats = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_popup_model_stats');
+      if (error) throw error;
+      setPopupStats(data || []);
+    } catch (error) {
+      console.error('Error loading popup stats:', error);
+    }
+  };
+
+  const getConversionRate = (model: string): string => {
+    const stat = popupStats.find(s => s.popup_model === model);
+    if (!stat || stat.total_generated === 0) return '---';
+    return `${stat.conversion_rate}%`;
   };
   const loadSettings = async () => {
     try {
@@ -440,7 +464,7 @@ const AdminSettings = () => {
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'boost'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'boost' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'boost' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Boost Model */}
                 <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">🚨 Doe agora!</div>
@@ -456,15 +480,20 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Contribuir</div>
                 </div>
-                <p className="font-medium text-sm">Modelo Boost</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Valor livre + Order Bump
-                </p>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="font-medium text-sm">Modelo Boost</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Valor livre + Order Bump
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">{getConversionRate('boost')}</span>
+                </div>
               </button>
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'simple'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'simple' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'simple' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Simple Model */}
                 <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">💚 Escolha o valor</div>
@@ -476,15 +505,20 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Doar</div>
                 </div>
-                <p className="font-medium text-sm">Modelo Simples</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Grade de valores
-                </p>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="font-medium text-sm">Modelo Simples</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Grade de valores
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">{getConversionRate('simple')}</span>
+                </div>
               </button>
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'clean'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'clean' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'clean' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Clean Model */}
                 <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">❤️ Salvando vidas</div>
@@ -493,15 +527,20 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">COPIAR</div>
                 </div>
-                <p className="font-medium text-sm">Modelo Limpo</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Design minimalista
-                </p>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="font-medium text-sm">Modelo Limpo</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Design minimalista
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">{getConversionRate('clean')}</span>
+                </div>
               </button>
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'direct'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'direct' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'direct' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Direct Model */}
                 <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">💚 Doe R$100</div>
@@ -510,15 +549,20 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">Copiar PIX</div>
                 </div>
-                <p className="font-medium text-sm">Modelo Direto</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  PIX automático
-                </p>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="font-medium text-sm">Modelo Direto</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PIX automático
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">{getConversionRate('direct')}</span>
+                </div>
               </button>
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'hot'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'hot' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'hot' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Hot Model */}
                 <div className="bg-gradient-to-r from-rose-400 to-orange-300 rounded-md p-2 mb-3 scale-90">
                   <div className="text-[6px] font-bold text-center text-white mb-1">📧 Email</div>
@@ -527,15 +571,20 @@ const AdminSettings = () => {
                     <div className="h-3 bg-gradient-to-r from-rose-400 to-orange-300 rounded text-[4px] text-white flex items-center justify-center font-medium">Pagar</div>
                   </div>
                 </div>
-                <p className="font-medium text-sm">Modelo Hot</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Cadastro + PIX
-                </p>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="font-medium text-sm">Modelo Hot</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Cadastro + PIX
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">{getConversionRate('hot')}</span>
+                </div>
               </button>
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'landing'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'landing' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'landing' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
                 {/* Mini Preview - Landing Model */}
                 <div className="bg-gradient-to-b from-emerald-50 to-white rounded-md p-2 mb-3 scale-90 border border-slate-100">
                   <div className="text-[6px] font-bold text-emerald-600 mb-1">🏠 Landing</div>
@@ -545,10 +594,15 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">CONTRIBUIR</div>
                 </div>
-                <p className="font-medium text-sm">Modelo Vakinha</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Estilo Vakinha
-                </p>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="font-medium text-sm">Modelo Vakinha</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Estilo Vakinha
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">{getConversionRate('landing')}</span>
+                </div>
               </button>
             </div>
             
