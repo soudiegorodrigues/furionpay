@@ -17,6 +17,7 @@ import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
 import { DonationPopupDirect } from "@/components/DonationPopupDirect";
+import { DonationPopupHot } from "@/components/DonationPopupHot";
 interface MetaPixel {
   id: string;
   name: string;
@@ -513,10 +514,27 @@ const AdminSettings = () => {
                   PIX automático
                 </p>
               </button>
+              <button onClick={() => setSettings(s => ({
+              ...s,
+              popup_model: 'hot'
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'hot' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                {/* Mini Preview - Hot Model */}
+                <div className="bg-gradient-to-r from-rose-400 to-orange-300 rounded-md p-2 mb-3 scale-90">
+                  <div className="text-[6px] font-bold text-center text-white mb-1">📧 Email</div>
+                  <div className="bg-white rounded p-1">
+                    <div className="h-2 bg-slate-100 rounded mb-1"></div>
+                    <div className="h-3 bg-gradient-to-r from-rose-400 to-orange-300 rounded text-[4px] text-white flex items-center justify-center font-medium">Pagar</div>
+                  </div>
+                </div>
+                <p className="font-medium text-sm">Modelo Hot</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cadastro + PIX
+                </p>
+              </button>
             </div>
             
-            {/* Fixed Amount for Direct Model */}
-            {settings.popup_model === 'direct' && (
+            {/* Fixed Amount for Direct/Hot Model */}
+            {(settings.popup_model === 'direct' || settings.popup_model === 'hot') && (
               <div className="pt-4 border-t">
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
                   <p className="text-sm font-medium">💡 Valores dinâmicos via URL</p>
@@ -787,6 +805,14 @@ const AdminSettings = () => {
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
           fixedAmount={parseFloat(settings.fixed_amount) || 100}
+        />
+      )}
+      {settings.popup_model === 'hot' && (
+        <DonationPopupHot 
+          isOpen={showPopupPreview} 
+          onClose={() => setShowPopupPreview(false)} 
+          userId={user?.id}
+          fixedAmount={parseFloat(settings.fixed_amount) || 19.90}
         />
       )}
     </div>;
