@@ -124,7 +124,7 @@ const AdminSettings = () => {
 
   const getConversionRate = (model: string): string => {
     const stat = popupStats.find(s => s.popup_model === model);
-    if (!stat || stat.total_generated === 0) return '---';
+    if (!stat || stat.total_generated === 0) return '0%';
     return `${stat.conversion_rate}%`;
   };
   const loadSettings = async () => {
