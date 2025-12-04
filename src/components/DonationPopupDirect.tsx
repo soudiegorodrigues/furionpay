@@ -201,8 +201,7 @@ export const DonationPopupDirect = ({
             {/* Header */}
             <div className="p-6 text-center space-y-3">
               <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
-                <span className="text-2xl">💚</span>
-                Doe {formatCurrency(fixedAmount)} e ajude a transformar vidas
+                Pague {formatCurrency(fixedAmount)} via PIX
               </h2>
               
               {/* Timer */}
@@ -267,14 +266,13 @@ export const DonationPopupDirect = ({
             {/* Instructions */}
             <div className="bg-slate-50 px-6 py-4 space-y-2">
               <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                🎁 Como doar:
+                📋 Como pagar:
               </h3>
               <ol className="text-sm text-slate-600 space-y-1.5 list-decimal list-inside">
                 <li>Toque em Copiar Código PIX</li>
                 <li>Abra seu app do banco</li>
                 <li>Vá em PIX → Copia e Cola</li>
-                <li>Cole o código e confirme 💚</li>
-                <li>Você acabou de transformar uma vida! ❤️</li>
+                <li>Cole o código e confirme ✅</li>
               </ol>
             </div>
 
@@ -293,13 +291,13 @@ export const DonationPopupDirect = ({
               <Check className="w-10 h-10 text-emerald-600" />
             </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              Obrigado pela sua doação! 🎉
+              Pagamento confirmado! ✅
             </h2>
             <p className="text-slate-600 mb-4">
-              Seu pagamento de {formatCurrency(fixedAmount)} foi confirmado com sucesso.
+              Seu pagamento de {formatCurrency(fixedAmount)} foi processado com sucesso.
             </p>
             <p className="text-slate-500">
-              Sua contribuição faz toda a diferença! ❤️
+              Obrigado pela sua compra!
             </p>
           </div>
         )}
