@@ -138,6 +138,41 @@ async function getProductNameFromDatabase(userId?: string): Promise<string> {
   return DEFAULT_PRODUCT_NAME;
 }
 
+async function getRecipientIdFromDatabase(userId?: string): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  
+  // First try user-specific settings
+  if (userId) {
+    const { data: userData, error: userError } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'recipient_id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!userError && userData?.value && userData.value.trim() !== '') {
+      console.log('Using user-specific recipient_id:', userData.value);
+      return userData.value;
+    }
+  }
+  
+  // Fall back to global settings
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'recipient_id')
+    .is('user_id', null)
+    .single();
+  
+  if (!error && data?.value && data.value.trim() !== '') {
+    console.log('Using global recipient_id:', data.value);
+    return data.value;
+  }
+  
+  console.log('No recipient_id configured');
+  return null;
+}
+
 async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
@@ -197,6 +232,10 @@ serve(async (req) => {
     const productName = await getProductNameFromDatabase(userId);
     console.log('Product name:', productName);
 
+    // Get recipient_id from database (user-specific)
+    const recipientId = await getRecipientIdFromDatabase(userId);
+    console.log('Recipient ID:', recipientId || 'not configured');
+
     if (!amount || amount <= 0) {
       return new Response(
         JSON.stringify({ error: 'Invalid amount' }),
@@ -231,7 +270,7 @@ serve(async (req) => {
       if (utmParams.utm_term) customerData.utm_term = utmParams.utm_term;
     }
 
-    const transactionData = {
+    const transactionData: Record<string, any> = {
       external_id: externalId,
       total_amount: amount,
       payment_method: 'PIX',
@@ -249,6 +288,11 @@ serve(async (req) => {
       ],
       ip: '0.0.0.0',
     };
+
+    // Add recipient_id if configured
+    if (recipientId) {
+      transactionData.recipient_id = recipientId;
+    }
 
     console.log('Creating SpedPay transaction:', JSON.stringify(transactionData, null, 2));
 
