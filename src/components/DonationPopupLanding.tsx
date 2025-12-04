@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { cn } from "@/lib/utils";
 import pixLogo from "@/assets/pix-logo.png";
-
+import vakinhaLogo from "@/assets/vakinha-logo.png";
 interface DonationPopupLandingProps {
   isOpen: boolean;
   onClose: () => void;
@@ -190,19 +190,8 @@ export const DonationPopupLanding = ({
         {step === "select" && (
           <div className="space-y-6">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-12 h-12 bg-[#00A651] rounded-xl flex items-center justify-center relative">
-                <svg viewBox="0 0 24 24" className="w-7 h-7 text-white" fill="currentColor">
-                  <circle cx="8" cy="8" r="2.5" />
-                  <circle cx="8" cy="16" r="2.5" />
-                  <circle cx="16" cy="12" r="2.5" />
-                  <line x1="10" y1="8" x2="14" y2="12" stroke="currentColor" strokeWidth="2" />
-                  <line x1="10" y1="16" x2="14" y2="12" stroke="currentColor" strokeWidth="2" />
-                </svg>
-                {/* Speech bubble tail */}
-                <div className="absolute -bottom-1 left-2 w-3 h-3 bg-[#00A651] rotate-45" />
-              </div>
-              <span className="text-3xl font-bold text-[#00A651]">vakinha</span>
+            <div className="flex items-center">
+              <img src={vakinhaLogo} alt="Vakinha" className="h-12 sm:h-14" />
             </div>
 
             {/* Campaign Title */}
