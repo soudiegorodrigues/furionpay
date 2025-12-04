@@ -172,6 +172,14 @@ export const DonationPopupHot = ({
         qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
       });
+      
+      // Fire PixGenerated event
+      trackEvent('PixGenerated', {
+        value: fixedAmount,
+        currency: 'BRL',
+        content_name: 'Donation Hot',
+      });
+      
       setStep("pix");
     } catch (err) {
       console.error('Error:', err);
