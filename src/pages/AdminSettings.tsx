@@ -318,6 +318,38 @@ const AdminSettings = () => {
           </div>
         </div>
 
+        {/* API Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Configurações da API
+            </CardTitle>
+            <CardDescription>
+              Configure as credenciais do SpedPay para processar pagamentos PIX
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="api_key">Chave de API (SpedPay)</Label>
+              <Input id="api_key" type="password" placeholder="Digite a chave de API" value={settings.spedpay_api_key} onChange={e => setSettings(s => ({
+              ...s,
+              spedpay_api_key: e.target.value
+            }))} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="product_name">Nome do Produto</Label>
+              <Input id="product_name" type="text" placeholder="Anônimo (padrão)" value={settings.product_name} onChange={e => setSettings(s => ({
+              ...s,
+              product_name: e.target.value
+            }))} />
+              <p className="text-xs text-muted-foreground">
+                Nome que aparecerá no gateway de pagamento
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Shareable Link */}
         <Card className="border-primary/50 bg-primary/5">
           <CardHeader>
@@ -387,38 +419,6 @@ const AdminSettings = () => {
                   Selecione um domínio acima para gerar seu link personalizado
                 </p>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* API Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              Configurações da API
-            </CardTitle>
-            <CardDescription>
-              Configure as credenciais do SpedPay para processar pagamentos PIX
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="api_key">Chave de API (SpedPay)</Label>
-              <Input id="api_key" type="password" placeholder="Digite a chave de API" value={settings.spedpay_api_key} onChange={e => setSettings(s => ({
-              ...s,
-              spedpay_api_key: e.target.value
-            }))} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="product_name">Nome do Produto</Label>
-              <Input id="product_name" type="text" placeholder="Anônimo (padrão)" value={settings.product_name} onChange={e => setSettings(s => ({
-              ...s,
-              product_name: e.target.value
-            }))} />
-              <p className="text-xs text-muted-foreground">
-                Nome que aparecerá no gateway de pagamento
-              </p>
             </div>
           </CardContent>
         </Card>
