@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Sprout, ShoppingBasket, ShieldCheck, X } from "lucide-react";
+import { Heart, Sprout, ShoppingBasket, Lock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixQRCode } from "./PixQRCode";
@@ -312,21 +312,18 @@ export const DonationPopupLanding = ({
             </p>
 
             {/* Security Badge */}
-            <div className="bg-gray-100 rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Yellow circle with lock icon */}
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-400 border-2 border-[#00A651] flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#00A651]" />
+            <div className="flex justify-center">
+              <div className="inline-flex items-center bg-[#1a1a1a] rounded-full pl-1 pr-4 py-1 gap-2">
+                {/* Green circle with lock icon */}
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-400 border-2 border-[#00A651] flex items-center justify-center">
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
                 </div>
                 {/* Badge text */}
-                <div className="bg-[#1a3a2a] text-[#00A651] text-[9px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border border-[#00A651] leading-tight">
+                <div className="text-white text-[10px] sm:text-xs font-bold leading-tight">
                   <div>SELO DE</div>
                   <div>SEGURANÇA</div>
                 </div>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600">
-                Garantimos uma <span className="font-bold text-gray-900">experiência segura</span> para todos os nossos doadores.
-              </p>
             </div>
 
             {/* Additional Info */}
