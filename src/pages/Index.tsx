@@ -15,9 +15,14 @@ const Index = () => {
   const userId = searchParams.get('u') || searchParams.get('user');
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   
+  // DEBUG: Log inicial
+  console.log('[DEBUG Index] Component mounted - userId:', userId, 'urlAmount:', urlAmount);
+  
   // Redireciona para admin se não houver userId
   useEffect(() => {
+    console.log('[DEBUG Index] Redirect useEffect - userId:', userId);
     if (!userId) {
+      console.log('[DEBUG Index] No userId, redirecting to /admin');
       navigate('/admin', { replace: true });
     }
   }, [userId, navigate]);
@@ -28,28 +33,38 @@ const Index = () => {
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
+  // DEBUG: Log estado atual
+  console.log('[DEBUG Index] Current state - isLoading:', isLoading, 'popupModel:', popupModel);
+
   useEffect(() => {
+    console.log('[DEBUG Index] fetchSettings useEffect triggered - userId:', userId);
+    
     const fetchSettings = async () => {
+      console.log('[DEBUG Index] fetchSettings START');
       try {
+        console.log('[DEBUG Index] Calling get-popup-model function...');
         const { data, error } = await supabase.functions.invoke('get-popup-model', {
           body: { userId }
         });
 
+        console.log('[DEBUG Index] get-popup-model response - data:', data, 'error:', error);
+
         if (!error && data) {
+          console.log('[DEBUG Index] Setting popupModel to:', data.model || 'boost');
           setPopupModel(data.model || 'boost');
           setSocialProofEnabled(data.socialProofEnabled || false);
           if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
           }
         } else {
-          // Se não houver dados, usa boost como fallback
+          console.log('[DEBUG Index] No data or error, setting popupModel to boost');
           setPopupModel('boost');
         }
       } catch (err) {
-        console.error('Error fetching settings:', err);
-        // Em caso de erro, usa boost como fallback
+        console.error('[DEBUG Index] Error fetching settings:', err);
         setPopupModel('boost');
       } finally {
+        console.log('[DEBUG Index] fetchSettings COMPLETE, setting isLoading to false');
         setIsLoading(false);
       }
     };
@@ -59,13 +74,18 @@ const Index = () => {
     }
   }, [userId]);
 
+  // DEBUG: Log antes do render
+  console.log('[DEBUG Index] RENDER - userId:', userId, 'isLoading:', isLoading, 'popupModel:', popupModel);
+
   // Não renderiza nada se não houver userId (vai redirecionar)
   if (!userId) {
+    console.log('[DEBUG Index] RENDER: No userId, returning null');
     return null;
   }
 
   // Mostra loading enquanto busca configurações ou popupModel ainda não foi definido
   if (isLoading || !popupModel) {
+    console.log('[DEBUG Index] RENDER: Loading state - isLoading:', isLoading, 'popupModel:', popupModel);
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
@@ -76,6 +96,7 @@ const Index = () => {
     );
   }
 
+  console.log('[DEBUG Index] RENDER: Showing popup model:', popupModel);
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {popupModel === 'simple' ? (
