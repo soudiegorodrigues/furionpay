@@ -21,15 +21,24 @@ const LoadingScreen = () => (
   </div>
 );
 
+// Modelos válidos
+const VALID_MODELS = ['boost', 'simple', 'clean', 'direct', 'hot', 'landing', 'instituto'];
+
 const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  // Parâmetros da URL
   const userId = searchParams.get('u') || searchParams.get('user');
+  const urlModel = searchParams.get('m') || searchParams.get('model') || searchParams.get('popup');
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   
-  // IMPORTANTE: Começa como null - NÃO tem valor default
-  const [popupModel, setPopupModel] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  // Se o modelo vem da URL, usa diretamente (sem fetch)
+  // Se não vem, busca do banco (fallback para compatibilidade)
+  const [popupModel, setPopupModel] = useState<string | null>(
+    urlModel && VALID_MODELS.includes(urlModel) ? urlModel : null
+  );
+  const [isLoaded, setIsLoaded] = useState(!!urlModel && VALID_MODELS.includes(urlModel));
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
@@ -40,8 +49,32 @@ const Index = () => {
     }
   }, [userId, navigate]);
 
-  // Busca configurações - SEM FALLBACK PARA BOOST
+  // Busca configurações APENAS se não tiver modelo na URL
   useEffect(() => {
+    // Se já tem modelo da URL, não precisa buscar
+    if (urlModel && VALID_MODELS.includes(urlModel)) {
+      // Ainda busca social proof e fixed amount se necessário
+      const fetchExtras = async () => {
+        if (!userId) return;
+        try {
+          const { data, error } = await supabase.functions.invoke('get-popup-model', {
+            body: { userId }
+          });
+          if (!error && data) {
+            setSocialProofEnabled(data.socialProofEnabled || false);
+            if (!urlAmount && data.fixedAmount) {
+              setFixedAmount(data.fixedAmount);
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching extras:', err);
+        }
+      };
+      fetchExtras();
+      return;
+    }
+
+    // Se não tem modelo na URL, busca do banco
     let isMounted = true;
     
     const fetchSettings = async () => {
@@ -60,11 +93,12 @@ const Index = () => {
           if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
           }
+        } else {
+          setPopupModel('boost');
         }
-        // NÃO define fallback - se não tiver modelo, fica em loading
       } catch (err) {
         console.error('Error fetching settings:', err);
-        // NÃO define fallback
+        setPopupModel('boost');
       } finally {
         if (isMounted) {
           setIsLoaded(true);
@@ -75,7 +109,7 @@ const Index = () => {
     fetchSettings();
     
     return () => { isMounted = false; };
-  }, [userId, urlAmount]);
+  }, [userId, urlAmount, urlModel]);
 
   // Sem userId = redireciona
   if (!userId) {
@@ -83,16 +117,11 @@ const Index = () => {
   }
 
   // NÃO carregou ainda = loading
-  if (!isLoaded) {
+  if (!isLoaded || !popupModel) {
     return <LoadingScreen />;
   }
 
-  // Carregou mas sem modelo definido = loading (não vai para boost!)
-  if (!popupModel) {
-    return <LoadingScreen />;
-  }
-
-  // SOMENTE renderiza o popup quando temos modelo definido
+  // Renderiza o popup baseado no modelo
   const PopupComponent = () => {
     switch (popupModel) {
       case 'simple':
@@ -108,10 +137,8 @@ const Index = () => {
       case 'instituto':
         return <DonationPopupInstituto isOpen={true} onClose={() => {}} userId={userId} fixedAmount={fixedAmount} />;
       case 'boost':
-        return <DonationPopup isOpen={true} onClose={() => {}} userId={userId} />;
       default:
-        // Se modelo desconhecido, mostra simple como fallback seguro
-        return <DonationPopupSimple isOpen={true} onClose={() => {}} userId={userId} />;
+        return <DonationPopup isOpen={true} onClose={() => {}} userId={userId} />;
     }
   };
 
