@@ -22,6 +22,9 @@ const DONATION_AMOUNTS = [
   { amount: 100 },
   { amount: 200 },
   { amount: 500 },
+  { amount: 750 },
+  { amount: 850 },
+  { amount: 1000 },
 ];
 
 type Step = "select" | "loading" | "pix";
