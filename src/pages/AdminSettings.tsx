@@ -457,7 +457,7 @@ const AdminSettings = () => {
                 </div>
                 <p className="font-medium text-sm">Modelo Boost</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Valor livre + turbinar
+                  Valor livre + Order Bump
                 </p>
               </button>
               <button onClick={() => setSettings(s => ({
