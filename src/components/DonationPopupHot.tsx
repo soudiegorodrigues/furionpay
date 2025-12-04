@@ -22,7 +22,9 @@ export const DonationPopupHot = ({
   userId,
   fixedAmount = 19.90
 }: DonationPopupHotProps) => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [step, setStep] = useState<Step>("email");
   const [pixData, setPixData] = useState<{
     code: string;
@@ -39,7 +41,9 @@ export const DonationPopupHot = ({
     if (!isOpen) {
       setStep("email");
       setPixData(null);
+      setName("");
       setEmail("");
+      setPhone("");
       setIsPaid(false);
       setTimeLeft(15 * 60);
     } else {
@@ -111,10 +115,28 @@ export const DonationPopupHot = ({
   };
 
   const handleContinue = async () => {
+    if (!name.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Por favor, insira seu nome.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!email || !email.includes('@')) {
       toast({
         title: "Email inválido",
         description: "Por favor, insira um email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!phone || phone.length < 10) {
+      toast({
+        title: "Telefone inválido",
+        description: "Por favor, insira um telefone válido.",
         variant: "destructive",
       });
       return;
@@ -128,7 +150,9 @@ export const DonationPopupHot = ({
           amount: fixedAmount,
           utmParams: utmParams,
           userId: userId,
+          customerName: name,
           customerEmail: email,
+          customerPhone: phone,
         },
       });
 
@@ -213,7 +237,7 @@ export const DonationPopupHot = ({
         {/* Content */}
         <div className="p-6">
           {step === "email" && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Icon */}
               <div className="flex justify-center">
                 <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center">
@@ -223,32 +247,36 @@ export const DonationPopupHot = ({
 
               {/* Title */}
               <div className="text-center">
-                <h2 className="text-xl font-bold text-slate-800">Digite seu email</h2>
+                <h2 className="text-xl font-bold text-slate-800">Preencha seus dados</h2>
                 <p className="text-sm text-slate-500 mt-1">
-                  Insira seu email para receber acesso aos conteúdos exclusivos.
+                  Insira suas informações para receber acesso aos conteúdos exclusivos.
                 </p>
               </div>
 
-              {/* Plan Info */}
-              <div className="bg-slate-50 rounded-xl p-4 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Plano</span>
-                  <span className="font-semibold text-slate-800">1 Mês</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Valor</span>
-                  <span className="font-bold text-rose-500">{formatCurrency(fixedAmount)}</span>
-                </div>
+              {/* Form Inputs */}
+              <div className="space-y-3">
+                <Input
+                  type="text"
+                  placeholder="Seu nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="py-5 text-base border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-xl"
+                />
+                <Input
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="py-5 text-base border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-xl"
+                />
+                <Input
+                  type="tel"
+                  placeholder="(00) 00000-0000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="py-5 text-base border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-xl"
+                />
               </div>
-
-              {/* Email Input */}
-              <Input
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="py-6 text-base border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-xl"
-              />
 
               {/* Submit Button */}
               <Button
