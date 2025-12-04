@@ -128,6 +128,11 @@ const AdminSettings = () => {
     if (!stat || stat.total_generated === 0) return '0%';
     return `${stat.conversion_rate}%`;
   };
+
+  const getTotalPaid = (model: string): number => {
+    const stat = popupStats.find(s => s.popup_model === model);
+    return stat?.total_paid || 0;
+  };
   const loadSettings = async () => {
     try {
       const {
@@ -488,7 +493,10 @@ const AdminSettings = () => {
                       Order Bump
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('boost')}</span>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('boost')}</span>
+                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('boost')}</span>
+                  </div>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -513,7 +521,10 @@ const AdminSettings = () => {
                       Grade de valores
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('simple')}</span>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('simple')}</span>
+                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('simple')}</span>
+                  </div>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -535,7 +546,10 @@ const AdminSettings = () => {
                       Design minimalista
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('clean')}</span>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('clean')}</span>
+                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('clean')}</span>
+                  </div>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -557,7 +571,10 @@ const AdminSettings = () => {
                       PIX automático
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('direct')}</span>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('direct')}</span>
+                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('direct')}</span>
+                  </div>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -579,7 +596,10 @@ const AdminSettings = () => {
                       Cadastro + PIX
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('hot')}</span>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('hot')}</span>
+                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('hot')}</span>
+                  </div>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -602,7 +622,10 @@ const AdminSettings = () => {
                       Estilo Vakinha
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('landing')}</span>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('landing')}</span>
+                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('landing')}</span>
+                  </div>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -628,7 +651,10 @@ const AdminSettings = () => {
                       Barra de progresso
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('instituto')}</span>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('instituto')}</span>
+                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('instituto')}</span>
+                  </div>
                 </div>
               </button>
             </div>
