@@ -239,9 +239,9 @@ export const DonationPopupLanding = ({
             {/* Payment Method */}
             <div>
               <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3">Forma de pagamento</h2>
-              <div className="inline-flex items-center gap-2 bg-[#00A651] text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg">
-                <img src={pixLogo} alt="PIX" className="w-4 h-4 sm:w-5 sm:h-5 brightness-0 invert" />
-                <span className="font-medium text-sm sm:text-base">Pix</span>
+              <div className="inline-flex items-center gap-2 bg-[#E8F5F0] text-[#00A651] px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl">
+                <img src={pixLogo} alt="PIX" className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="font-semibold text-sm sm:text-base">PIX</span>
               </div>
             </div>
 
