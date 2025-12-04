@@ -409,13 +409,6 @@ const AdminSettings = () => {
             }))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="recipient_id">Recipient ID</Label>
-              <Input id="recipient_id" type="text" placeholder="Digite o ID do recebedor" value={settings.recipient_id} onChange={e => setSettings(s => ({
-              ...s,
-              recipient_id: e.target.value
-            }))} />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="product_name">Nome do Produto</Label>
               <Input id="product_name" type="text" placeholder="Anônimo (padrão)" value={settings.product_name} onChange={e => setSettings(s => ({
               ...s,
