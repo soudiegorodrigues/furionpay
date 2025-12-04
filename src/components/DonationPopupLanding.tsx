@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Sprout, ShoppingBasket, ShieldCheck } from "lucide-react";
+import { Heart, Sprout, ShoppingBasket, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixQRCode } from "./PixQRCode";
@@ -182,6 +182,15 @@ export const DonationPopupLanding = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-auto">
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+        aria-label="Fechar"
+      >
+        <X className="w-5 h-5 text-gray-600" />
+      </button>
+      
       <div className="w-full max-w-lg mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
