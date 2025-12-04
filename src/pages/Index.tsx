@@ -5,9 +5,9 @@ import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
 import { DonationPopupDirect } from "@/components/DonationPopupDirect";
 import { DonationPopupHot } from "@/components/DonationPopupHot";
+import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
-
 const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -82,6 +82,12 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           fixedAmount={fixedAmount}
+        />
+      ) : popupModel === 'landing' ? (
+        <DonationPopupLanding
+          isOpen={true}
+          onClose={() => {}}
+          userId={userId || undefined}
         />
       ) : (
         <DonationPopup

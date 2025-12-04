@@ -18,6 +18,7 @@ import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
 import { DonationPopupDirect } from "@/components/DonationPopupDirect";
 import { DonationPopupHot } from "@/components/DonationPopupHot";
+import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 interface MetaPixel {
   id: string;
   name: string;
@@ -531,6 +532,24 @@ const AdminSettings = () => {
                   Cadastro + PIX
                 </p>
               </button>
+              <button onClick={() => setSettings(s => ({
+              ...s,
+              popup_model: 'landing'
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'landing' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                {/* Mini Preview - Landing Model */}
+                <div className="bg-gradient-to-b from-emerald-50 to-white rounded-md p-2 mb-3 scale-90 border border-slate-100">
+                  <div className="text-[6px] font-bold text-emerald-600 mb-1">🏠 Landing</div>
+                  <div className="grid grid-cols-2 gap-0.5 mb-1">
+                    <div className="h-2 bg-slate-100 rounded text-[3px]"></div>
+                    <div className="h-2 bg-slate-100 rounded text-[3px]"></div>
+                  </div>
+                  <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">CONTRIBUIR</div>
+                </div>
+                <p className="font-medium text-sm">Modelo Landing</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Estilo Vakinha
+                </p>
+              </button>
             </div>
             
             {/* Fixed Amount for Direct/Hot Model */}
@@ -813,6 +832,13 @@ const AdminSettings = () => {
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
           fixedAmount={parseFloat(settings.fixed_amount) || 19.90}
+        />
+      )}
+      {settings.popup_model === 'landing' && (
+        <DonationPopupLanding 
+          isOpen={showPopupPreview} 
+          onClose={() => setShowPopupPreview(false)} 
+          userId={user?.id}
         />
       )}
     </div>;
