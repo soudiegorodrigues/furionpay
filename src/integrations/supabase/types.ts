@@ -311,6 +311,15 @@ export type Database = {
           txid: string
         }[]
       }
+      get_popup_model_stats: {
+        Args: never
+        Returns: {
+          conversion_rate: number
+          popup_model: string
+          total_generated: number
+          total_paid: number
+        }[]
+      }
       get_user_dashboard: { Args: never; Returns: Json }
       get_user_settings: {
         Args: never
@@ -403,18 +412,32 @@ export type Database = {
             }
             Returns: string
           }
-      log_pix_generated_user: {
-        Args: {
-          p_amount: number
-          p_donor_name: string
-          p_pix_code: string
-          p_product_name?: string
-          p_txid: string
-          p_user_id?: string
-          p_utm_data?: Json
-        }
-        Returns: string
-      }
+      log_pix_generated_user:
+        | {
+            Args: {
+              p_amount: number
+              p_donor_name: string
+              p_pix_code: string
+              p_product_name?: string
+              p_txid: string
+              p_user_id?: string
+              p_utm_data?: Json
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_donor_name: string
+              p_pix_code: string
+              p_popup_model?: string
+              p_product_name?: string
+              p_txid: string
+              p_user_id?: string
+              p_utm_data?: Json
+            }
+            Returns: string
+          }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
       reset_pix_transactions: {
         Args: { input_token: string }

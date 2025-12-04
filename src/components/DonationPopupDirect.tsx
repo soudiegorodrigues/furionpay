@@ -129,6 +129,7 @@ export const DonationPopupDirect = ({
           amount: fixedAmount,
           utmParams: utmParams,
           userId: userId,
+          popupModel: 'direct',
         },
       });
 

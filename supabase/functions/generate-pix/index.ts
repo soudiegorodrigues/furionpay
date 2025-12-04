@@ -50,6 +50,7 @@ interface GeneratePixRequest {
   customerEmail?: string;
   customerDocument?: string;
   userId?: string;
+  popupModel?: string;
   utmParams?: {
     utm_source?: string;
     utm_medium?: string;
@@ -128,7 +129,7 @@ async function getProductNameFromDatabase(userId?: string): Promise<string> {
   return DEFAULT_PRODUCT_NAME;
 }
 
-async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string): Promise<string | null> {
+async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string, popupModel?: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -138,7 +139,8 @@ async function logPixGenerated(amount: number, txid: string, pixCode: string, do
       p_donor_name: donorName,
       p_utm_data: utmData || null,
       p_product_name: productName || null,
-      p_user_id: userId || null
+      p_user_id: userId || null,
+      p_popup_model: popupModel || null
     });
     
     if (error) {
@@ -160,9 +162,10 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, customerName, customerEmail, customerDocument, utmParams, userId }: GeneratePixRequest = await req.json();
+    const { amount, customerName, customerEmail, customerDocument, utmParams, userId, popupModel }: GeneratePixRequest = await req.json();
 
     console.log('User ID:', userId);
+    console.log('Popup Model:', popupModel);
     console.log('UTM params received:', utmParams);
 
     // Get API key from database (user-specific if userId provided)
@@ -310,7 +313,7 @@ serve(async (req) => {
     }
 
     // Log the PIX generation to database and get the database ID
-    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName, userId);
+    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName, userId, popupModel);
 
     return new Response(
       JSON.stringify({

@@ -155,6 +155,7 @@ export const DonationPopupHot = ({
           customerName: name,
           customerEmail: email,
           customerPhone: phone,
+          popupModel: 'hot',
         },
       });
 
