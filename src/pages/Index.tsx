@@ -22,13 +22,13 @@ const Index = () => {
     }
   }, [userId, navigate]);
   
-  // Inicia com valores padrão para renderização instantânea
+  // Estado de loading até buscar as configurações
+  const [isLoading, setIsLoading] = useState(true);
   const [popupModel, setPopupModel] = useState<string>('boost');
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
   useEffect(() => {
-    // Busca configurações em background sem bloquear a renderização
     const fetchSettings = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-popup-model', {
@@ -38,21 +38,24 @@ const Index = () => {
         if (!error && data) {
           setPopupModel(data.model || 'boost');
           setSocialProofEnabled(data.socialProofEnabled || false);
-          // Só usa o valor das configurações se não tiver valor na URL
           if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
           }
         }
       } catch (err) {
         console.error('Error fetching settings:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchSettings();
+    if (userId) {
+      fetchSettings();
+    }
   }, [userId]);
 
-  // Não renderiza nada se não houver userId (vai redirecionar)
-  if (!userId) {
+  // Não renderiza nada se não houver userId (vai redirecionar) ou se ainda estiver carregando
+  if (!userId || isLoading) {
     return null;
   }
 
