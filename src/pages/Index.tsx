@@ -4,6 +4,7 @@ import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
 import { DonationPopupDirect } from "@/components/DonationPopupDirect";
+import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -70,6 +71,13 @@ const Index = () => {
         />
       ) : popupModel === 'direct' ? (
         <DonationPopupDirect
+          isOpen={true}
+          onClose={() => {}}
+          userId={userId || undefined}
+          fixedAmount={fixedAmount}
+        />
+      ) : popupModel === 'hot' ? (
+        <DonationPopupHot
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
