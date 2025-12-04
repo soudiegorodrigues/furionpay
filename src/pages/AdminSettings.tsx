@@ -424,16 +424,16 @@ const AdminSettings = () => {
               <div className="flex gap-2">
                 <Input 
                   value={settings.selected_domain 
-                    ? `https://www.${settings.selected_domain}/?u=${user?.id || ''}` 
-                    : `${window.location.origin}/?u=${user?.id || ''}`
+                    ? `https://www.${settings.selected_domain}/?u=${user?.id || ''}&m=${settings.popup_model}` 
+                    : `${window.location.origin}/?u=${user?.id || ''}&m=${settings.popup_model}`
                   } 
                   readOnly 
                   className="font-mono text-sm" 
                 />
                 <Button variant="outline" onClick={() => {
                   const link = settings.selected_domain 
-                    ? `https://www.${settings.selected_domain}/?u=${user?.id || ''}` 
-                    : `${window.location.origin}/?u=${user?.id || ''}`;
+                    ? `https://www.${settings.selected_domain}/?u=${user?.id || ''}&m=${settings.popup_model}` 
+                    : `${window.location.origin}/?u=${user?.id || ''}&m=${settings.popup_model}`;
                   navigator.clipboard.writeText(link);
                   setLinkCopied(true);
                   setTimeout(() => setLinkCopied(false), 2000);
