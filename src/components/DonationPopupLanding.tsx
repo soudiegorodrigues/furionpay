@@ -185,7 +185,7 @@ export const DonationPopupLanding = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white overflow-auto">
+    <div className="fixed inset-0 z-50 bg-white overflow-auto">
       <div className="w-full max-w-lg mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
