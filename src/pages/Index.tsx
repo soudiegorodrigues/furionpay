@@ -87,10 +87,11 @@ const Index = () => {
   if (isLoading || !popupModel) {
     console.log('[DEBUG Index] RENDER: Loading state - isLoading:', isLoading, 'popupModel:', popupModel);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-muted-foreground text-sm">Carregando...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 p-8 bg-yellow-500 rounded-lg">
+          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-black font-bold text-xl">LOADING v4</div>
+          <div className="text-black text-sm">isLoading: {String(isLoading)} | popupModel: {String(popupModel)}</div>
         </div>
       </div>
     );
