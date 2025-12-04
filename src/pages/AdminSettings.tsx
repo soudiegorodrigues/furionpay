@@ -539,7 +539,7 @@ const AdminSettings = () => {
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
                   <p className="text-sm font-medium">💡 Valores dinâmicos via URL</p>
                   <p className="text-xs text-muted-foreground">
-                    Adicione <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-bold">?amount=VALOR</code> ao link para definir valores diferentes em cada botão:
+                    Adicione <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-bold">&amount=VALOR</code> ao link para definir valores diferentes em cada botão:
                   </p>
                   <div className="text-xs font-mono bg-muted p-2 rounded space-y-1">
                     <div>Botão R$50: <span className="text-primary">...?u={user?.id}&amount=50</span></div>
