@@ -517,21 +517,35 @@ const AdminSettings = () => {
             
             {/* Fixed Amount for Direct Model */}
             {settings.popup_model === 'direct' && (
-              <div className="space-y-2 pt-4 border-t">
-                <Label htmlFor="fixed_amount">Valor Fixo do PIX (R$)</Label>
-                <Input 
-                  id="fixed_amount" 
-                  type="number" 
-                  placeholder="100" 
-                  value={settings.fixed_amount} 
-                  onChange={e => setSettings(s => ({
-                    ...s,
-                    fixed_amount: e.target.value
-                  }))} 
-                />
-                <p className="text-xs text-muted-foreground">
-                  Valor que será gerado automaticamente ao abrir o popup
-                </p>
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label htmlFor="fixed_amount">Valor Padrão do PIX (R$)</Label>
+                  <Input 
+                    id="fixed_amount" 
+                    type="number" 
+                    placeholder="100" 
+                    value={settings.fixed_amount} 
+                    onChange={e => setSettings(s => ({
+                      ...s,
+                      fixed_amount: e.target.value
+                    }))} 
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Valor usado quando não especificar na URL
+                  </p>
+                </div>
+                
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
+                  <p className="text-sm font-medium">💡 Dica: Valores dinâmicos via URL</p>
+                  <p className="text-xs text-muted-foreground">
+                    Adicione <code className="bg-muted px-1 rounded">?amount=VALOR</code> ao link para definir valores diferentes em cada botão:
+                  </p>
+                  <div className="text-xs font-mono bg-muted p-2 rounded space-y-1">
+                    <div>Botão R$50: <span className="text-primary">...?u={user?.id}&amount=50</span></div>
+                    <div>Botão R$100: <span className="text-primary">...?u={user?.id}&amount=100</span></div>
+                    <div>Botão R$200: <span className="text-primary">...?u={user?.id}&amount=200</span></div>
+                  </div>
+                </div>
               </div>
             )}
             
