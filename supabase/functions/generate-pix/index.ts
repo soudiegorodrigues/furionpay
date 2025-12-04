@@ -287,17 +287,6 @@ serve(async (req) => {
       ip: '0.0.0.0',
     };
 
-    // Add splits if recipient_id is configured (for payment splitting)
-    if (recipientId) {
-      transactionData.splits = [
-        {
-          recipient_id: recipientId,
-          percentage: 80  // Maximum allowed percentage
-        }
-      ];
-      console.log('Added splits with recipient_id:', recipientId);
-    }
-
     console.log('Creating SpedPay transaction:', JSON.stringify(transactionData, null, 2));
 
     const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions`, {
