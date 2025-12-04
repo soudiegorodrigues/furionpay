@@ -231,15 +231,11 @@ serve(async (req) => {
       if (utmParams.utm_term) customerData.utm_term = utmParams.utm_term;
     }
 
-    // Calculate PIX expiration (30 minutes from now)
-    const pixExpiration = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-
-    const transactionData: Record<string, any> = {
+    const transactionData = {
       external_id: externalId,
       total_amount: amount,
       payment_method: 'PIX',
       webhook_url: webhookUrl,
-      pix_expiration_date: pixExpiration,
       customer: customerData,
       items: [
         {
@@ -278,41 +274,15 @@ serve(async (req) => {
     }
 
     const data = JSON.parse(responseText);
-    const transactionId = data.id || externalId;
     
-    // Try to extract PIX code from various possible locations
-    let pixCode = data.pix?.payload || data.pix?.qr_code || data.pix?.code || data.pix?.brcode ||
-                  data.pixCode || data.qr_code || data.payload || data.brcode;
-    let qrCodeUrl = data.pix?.qr_code_url || data.pix?.qrcode_url || data.pix?.image ||
-                   data.qrCodeUrl || data.qr_code_url || data.qrcode_url;
-
-    // If pix object exists but is empty, log detailed info
-    if (!pixCode && data.pix && Object.keys(data.pix).length === 0) {
-      console.error('SpedPay returned empty pix object. This usually means:');
-      console.error('1. The SpedPay account needs PIX to be enabled/configured');
-      console.error('2. The API key might be for sandbox mode without PIX simulation');
-      console.error('3. KYC verification might be pending');
-      console.error('Full response:', JSON.stringify(data, null, 2));
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'PIX não disponível na sua conta SpedPay',
-          details: 'A SpedPay retornou uma resposta sem código PIX. Verifique se o PIX está habilitado na sua conta SpedPay e se a verificação KYC foi concluída.',
-          suggestion: 'Entre em contato com o suporte da SpedPay para verificar a configuração da sua conta.',
-          rawResponse: data 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const pixCode = data.pix?.payload || data.pixCode || data.qr_code;
+    const qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
+    const transactionId = data.id || externalId;
 
     if (!pixCode) {
       console.error('PIX code not found in response:', data);
       return new Response(
-        JSON.stringify({ 
-          error: 'Código PIX não encontrado na resposta',
-          details: 'Verifique a configuração da sua conta SpedPay.',
-          rawResponse: data 
-        }),
+        JSON.stringify({ error: 'PIX code not found in response', rawResponse: data }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
