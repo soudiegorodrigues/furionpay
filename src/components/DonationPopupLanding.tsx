@@ -312,18 +312,23 @@ export const DonationPopupLanding = ({
             </p>
 
             {/* Security Badge */}
-            <div className="flex justify-center">
-              <div className="inline-flex items-center bg-[#1a1a1a] rounded-full pl-1 pr-4 py-1 gap-2">
+            <div className="bg-[#E8F5E9] rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+              {/* Badge pill */}
+              <div className="inline-flex items-center bg-[#1a3a2a] rounded-full pl-1 pr-3 py-1 gap-2 shrink-0">
                 {/* Green circle with lock icon */}
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-400 border-2 border-[#00A651] flex items-center justify-center">
-                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-400 border-2 border-[#00A651] flex items-center justify-center">
+                  <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A651]" />
                 </div>
                 {/* Badge text */}
-                <div className="text-white text-[10px] sm:text-xs font-bold leading-tight">
+                <div className="text-white text-[9px] sm:text-[10px] font-bold leading-tight">
                   <div>SELO DE</div>
                   <div>SEGURANÇA</div>
                 </div>
               </div>
+              {/* Description text */}
+              <p className="text-xs sm:text-sm text-gray-700">
+                Garantimos uma <span className="font-bold text-gray-900">experiência segura</span> para todos os nossos doadores.
+              </p>
             </div>
 
             {/* Additional Info */}
