@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, TrendingUp, DollarSign, QrCode, CheckCircle, Clock, Settings, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight, Calendar, LogOut, Trophy, Moon, Sun } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, QrCode, CheckCircle, Clock, Settings, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight, Calendar, LogOut, Trophy } from "lucide-react";
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -253,24 +253,10 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => {
-                  const html = document.documentElement;
-                  html.classList.toggle('dark');
-                }}
-                className="shrink-0"
-              >
-                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
           </div>
           <div className="flex flex-wrap gap-2">
             <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
@@ -304,8 +290,8 @@ const AdminDashboard = () => {
             Meu Faturamento
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-              <div className="text-2xl sm:text-4xl font-bold text-primary">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+              <div className="text-2xl sm:text-4xl font-bold text-cyan-500">
                 {dateFilter === 'all' ? stats?.total_generated || 0 : filteredStats.generated}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">PIX Gerados</p>
@@ -313,8 +299,8 @@ const AdminDashboard = () => {
                 {formatCurrency(dateFilter === 'all' ? stats?.total_amount_generated || 0 : filteredStats.amountGenerated)}
               </p>
             </div>
-            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-              <div className="text-2xl sm:text-4xl font-bold text-foreground">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+              <div className="text-2xl sm:text-4xl font-bold text-emerald-500">
                 {dateFilter === 'all' ? stats?.total_paid || 0 : filteredStats.paid}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">PIX Pagos</p>
@@ -322,14 +308,14 @@ const AdminDashboard = () => {
                 {formatCurrency(dateFilter === 'all' ? stats?.total_amount_paid || 0 : filteredStats.amountPaid)}
               </p>
             </div>
-            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-              <div className="text-2xl sm:text-4xl font-bold text-muted-foreground">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+              <div className="text-2xl sm:text-4xl font-bold text-amber-500">
                 {dateFilter === 'all' ? conversionRate : filteredStats.conversionRate}%
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">Conversão</p>
             </div>
-            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-              <div className="text-xl sm:text-3xl font-bold text-primary">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+              <div className="text-xl sm:text-3xl font-bold text-emerald-500">
                 {formatCurrency(dateFilter === 'all' ? stats?.total_amount_paid || 0 : filteredStats.amountPaid)}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total Recebido</p>
@@ -346,32 +332,32 @@ const AdminDashboard = () => {
               <Badge variant="outline" className="text-[10px]">Admin</Badge>
             </h2>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-                <div className="text-2xl sm:text-4xl font-bold text-primary">
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+                <div className="text-2xl sm:text-4xl font-bold text-cyan-500">
                   {globalStats.total_generated}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">PIX Gerados</p>
               </div>
-              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-                <div className="text-2xl sm:text-4xl font-bold text-foreground">
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+                <div className="text-2xl sm:text-4xl font-bold text-emerald-500">
                   {globalStats.total_paid}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">PIX Pagos</p>
               </div>
-              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-                <div className="text-2xl sm:text-4xl font-bold text-muted-foreground">
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+                <div className="text-2xl sm:text-4xl font-bold text-amber-500">
                   {globalStats.total_generated > 0 ? (globalStats.total_paid / globalStats.total_generated * 100).toFixed(1) : '0'}%
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">Conversão</p>
               </div>
-              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
                 <div className="text-lg sm:text-2xl font-bold text-muted-foreground">
                   {formatCurrency(globalStats.total_amount_generated)}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total Gerado</p>
               </div>
-              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-                <div className="text-lg sm:text-2xl font-bold text-primary">
+              <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+                <div className="text-lg sm:text-2xl font-bold text-emerald-500">
                   {formatCurrency(globalStats.total_amount_paid)}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total Recebido</p>
@@ -387,20 +373,20 @@ const AdminDashboard = () => {
             {dateFilter === 'all' ? 'Resumo de Hoje' : 'Resumo do Período'}
           </h2>
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-              <div className="text-2xl sm:text-4xl font-bold text-primary">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+              <div className="text-2xl sm:text-4xl font-bold text-cyan-500">
                 {dateFilter === 'all' ? stats?.today_generated || 0 : filteredStats.generated}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">PIX Gerados</p>
             </div>
-            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-              <div className="text-2xl sm:text-4xl font-bold text-foreground">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+              <div className="text-2xl sm:text-4xl font-bold text-emerald-500">
                 {dateFilter === 'all' ? stats?.today_paid || 0 : filteredStats.paid}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">PIX Pagos</p>
             </div>
-            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30">
-              <div className="text-xl sm:text-3xl font-bold text-primary">
+            <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-sm">
+              <div className="text-xl sm:text-3xl font-bold text-emerald-500">
                 {formatCurrency(dateFilter === 'all' ? stats?.today_amount_paid || 0 : filteredStats.amountPaid)}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total Recebido</p>
