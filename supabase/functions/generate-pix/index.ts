@@ -128,41 +128,6 @@ async function getProductNameFromDatabase(userId?: string): Promise<string> {
   return DEFAULT_PRODUCT_NAME;
 }
 
-async function getRecipientIdFromDatabase(userId?: string): Promise<string | null> {
-  const supabase = getSupabaseClient();
-  
-  // First try user-specific settings
-  if (userId) {
-    const { data: userData, error: userError } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('key', 'recipient_id')
-      .eq('user_id', userId)
-      .single();
-    
-    if (!userError && userData?.value && userData.value.trim() !== '') {
-      console.log('Using user-specific recipient_id:', userData.value);
-      return userData.value;
-    }
-  }
-  
-  // Fall back to global settings
-  const { data, error } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'recipient_id')
-    .is('user_id', null)
-    .single();
-  
-  if (!error && data?.value && data.value.trim() !== '') {
-    console.log('Using global recipient_id:', data.value);
-    return data.value;
-  }
-  
-  return null;
-}
-
-
 async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();

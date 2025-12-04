@@ -29,7 +29,6 @@ interface AvailableDomain {
 }
 interface AdminSettingsData {
   spedpay_api_key: string;
-  recipient_id: string;
   product_name: string;
   meta_pixels: string;
   popup_model: string;
@@ -39,7 +38,6 @@ interface AdminSettingsData {
 const AdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettingsData>({
     spedpay_api_key: "",
-    recipient_id: "",
     product_name: "",
     meta_pixels: "[]",
     popup_model: "boost",
@@ -109,7 +107,6 @@ const AdminSettings = () => {
       if (error) throw error;
       const settingsMap: AdminSettingsData = {
         spedpay_api_key: "",
-        recipient_id: "",
         product_name: "",
         meta_pixels: "[]",
         popup_model: "boost",
@@ -123,8 +120,6 @@ const AdminSettings = () => {
         }[]).forEach(item => {
           if (item.key === 'spedpay_api_key') {
             settingsMap.spedpay_api_key = item.value || "";
-          } else if (item.key === 'recipient_id') {
-            settingsMap.recipient_id = item.value || "";
           } else if (item.key === 'product_name') {
             settingsMap.product_name = item.value || "";
           } else if (item.key === 'meta_pixels') {
@@ -192,9 +187,6 @@ const AdminSettings = () => {
       const updates = [supabase.rpc('update_user_setting', {
         setting_key: 'spedpay_api_key',
         setting_value: settings.spedpay_api_key
-      }), supabase.rpc('update_user_setting', {
-        setting_key: 'recipient_id',
-        setting_value: settings.recipient_id
       }), supabase.rpc('update_user_setting', {
         setting_key: 'product_name',
         setting_value: settings.product_name
