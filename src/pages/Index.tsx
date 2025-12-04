@@ -7,8 +7,8 @@ import { DonationPopupDirect } from "@/components/DonationPopupDirect";
 import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
-import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
+
 const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -24,7 +24,6 @@ const Index = () => {
   
   // Inicia com valores padrão para renderização instantânea
   const [popupModel, setPopupModel] = useState<string>('boost');
-  const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
   useEffect(() => {
@@ -37,7 +36,6 @@ const Index = () => {
 
         if (!error && data) {
           setPopupModel(data.model || 'boost');
-          setSocialProofEnabled(data.socialProofEnabled || false);
           // Só usa o valor das configurações se não tiver valor na URL
           if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
@@ -104,8 +102,6 @@ const Index = () => {
           userId={userId || undefined}
         />
       )}
-      
-      <SocialProofNotification enabled={socialProofEnabled} />
     </div>
   );
 };
