@@ -404,7 +404,7 @@ export const DonationPopupLanding = ({
 
               <button
                 onClick={handleUpsellDecline}
-                className="text-gray-500 text-sm underline hover:text-gray-700 transition-colors"
+                className="w-full py-3 sm:py-4 px-4 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-semibold text-sm sm:text-base hover:bg-gray-50 hover:border-gray-400 transition-all"
               >
                 Não, obrigado. Continuar com {formatCurrency(getContributionAmount())}
               </button>
