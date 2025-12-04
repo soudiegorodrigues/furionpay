@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Heart, Copy, Check, ArrowLeft, X, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -241,6 +242,15 @@ export const DonationPopupDirect = ({
               <div className="flex-1 border-t border-slate-200"></div>
               <span className="px-4 text-sm text-slate-400">ou copie o código PIX</span>
               <div className="flex-1 border-t border-slate-200"></div>
+            </div>
+
+            {/* PIX Code */}
+            <div className="px-6 pb-4">
+              <Input
+                value={pixData.code}
+                readOnly
+                className="font-mono text-xs text-center bg-slate-50 border-slate-200"
+              />
             </div>
 
             {/* Copy Button */}
