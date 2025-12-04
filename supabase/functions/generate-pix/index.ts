@@ -138,6 +138,40 @@ async function getProductNameFromDatabase(userId?: string): Promise<string> {
   return DEFAULT_PRODUCT_NAME;
 }
 
+async function getRecipientIdFromDatabase(userId?: string): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  
+  // First try user-specific settings
+  if (userId) {
+    const { data: userData, error: userError } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'recipient_id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!userError && userData?.value && userData.value.trim() !== '') {
+      console.log('Using user-specific recipient_id:', userData.value);
+      return userData.value;
+    }
+  }
+  
+  // Fall back to global settings
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'recipient_id')
+    .is('user_id', null)
+    .single();
+  
+  if (!error && data?.value && data.value.trim() !== '') {
+    console.log('Using global recipient_id:', data.value);
+    return data.value;
+  }
+  
+  return null;
+}
+
 
 async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string): Promise<string | null> {
   try {
@@ -194,9 +228,11 @@ serve(async (req) => {
 
     console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
 
-    // Get product name from database (user-specific)
+    // Get product name and recipient_id from database (user-specific)
     const productName = await getProductNameFromDatabase(userId);
+    const recipientId = await getRecipientIdFromDatabase(userId);
     console.log('Product name:', productName);
+    console.log('Recipient ID:', recipientId);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -251,6 +287,16 @@ serve(async (req) => {
       ip: '0.0.0.0',
     };
 
+    // Add splits if recipient_id is configured (for payment splitting)
+    if (recipientId) {
+      transactionData.splits = [
+        {
+          recipient_id: recipientId,
+          percentage: 80  // Maximum allowed percentage
+        }
+      ];
+      console.log('Added splits with recipient_id:', recipientId);
+    }
 
     console.log('Creating SpedPay transaction:', JSON.stringify(transactionData, null, 2));
 
