@@ -19,6 +19,7 @@ import { DonationPopupClean } from "@/components/DonationPopupClean";
 import { DonationPopupDirect } from "@/components/DonationPopupDirect";
 import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
+import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 interface MetaPixel {
   id: string;
   name: string;
@@ -604,6 +605,32 @@ const AdminSettings = () => {
                   <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('landing')}</span>
                 </div>
               </button>
+              <button onClick={() => setSettings(s => ({
+              ...s,
+              popup_model: 'instituto'
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'instituto' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                {/* Mini Preview - Instituto Model */}
+                <div className="bg-gradient-to-b from-pink-50 to-white rounded-md p-2 mb-3 scale-90 border border-pink-200">
+                  <div className="text-[6px] font-bold text-pink-600 mb-1">💖 Meta: R$ 200.000</div>
+                  <div className="w-full h-1.5 bg-gray-200 rounded-full mb-1">
+                    <div className="h-full w-4/5 bg-gradient-to-r from-cyan-400 to-green-400 rounded-full"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-0.5 mb-1">
+                    <div className="h-2 bg-pink-500 rounded text-[3px] text-white flex items-center justify-center">R$30</div>
+                    <div className="h-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded text-[3px] text-white flex items-center justify-center">💛 R$50</div>
+                  </div>
+                  <div className="h-3 bg-gradient-to-r from-pink-500 to-purple-500 rounded text-[4px] text-white flex items-center justify-center font-medium">R$ 1000</div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="font-medium text-sm">Modelo Instituto</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Barra de progresso
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('instituto')}</span>
+                </div>
+              </button>
             </div>
             
             {/* Fixed Amount for Direct/Hot Model */}
@@ -895,6 +922,14 @@ const AdminSettings = () => {
       )}
       {settings.popup_model === 'landing' && (
         <DonationPopupLanding 
+          isOpen={showPopupPreview} 
+          onClose={() => setShowPopupPreview(false)} 
+          userId={user?.id}
+          showCloseButton={true}
+        />
+      )}
+      {settings.popup_model === 'instituto' && (
+        <DonationPopupInstituto 
           isOpen={showPopupPreview} 
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
