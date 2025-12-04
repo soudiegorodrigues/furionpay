@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Heart, Copy, Check, ArrowLeft, X, Clock } from "lucide-react";
+import { Heart, Copy, Check, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
@@ -200,16 +200,15 @@ export const DonationPopupDirect = ({
         {step === "pix" && pixData && (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in">
             {/* Header */}
-            <div className="p-6 text-center space-y-3">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
-                Pague {formatCurrency(fixedAmount)} via PIX
+            <div className="p-6 text-center space-y-2">
+              <h2 className="text-xl font-bold text-slate-800">
+                Pague via PIX
               </h2>
               
               {/* Timer */}
-              <div className="inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full text-sm text-slate-600">
-                <Clock className="w-4 h-4" />
-                QR Code expira em: <span className="font-mono font-semibold">{formatTime(timeLeft)}</span>
-              </div>
+              <p className="text-slate-500 flex items-center justify-center gap-1">
+                ⏳ Expira em <span className="font-mono font-semibold">{formatTime(timeLeft)}</span>
+              </p>
             </div>
 
             {/* QR Code Section */}
