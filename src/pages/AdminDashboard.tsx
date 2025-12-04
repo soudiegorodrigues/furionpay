@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart3, TrendingUp, DollarSign, QrCode, CheckCircle, Clock, Settings, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight, Calendar, LogOut, Trophy } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -253,10 +254,13 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
