@@ -244,7 +244,7 @@ export const DonationPopupLanding = ({
                 Ajude MUITO MAIS turbinando sua doação 💚
               </p>
               
-              <div className="grid grid-cols-3 gap-2 p-4 border border-dashed border-gray-300 rounded-lg">
+              <div className="grid grid-cols-3 gap-3">
                 {BOOST_OPTIONS.map((boost) => {
                   const Icon = boost.icon;
                   const isSelected = selectedBoosts.includes(boost.id);
@@ -253,10 +253,10 @@ export const DonationPopupLanding = ({
                       key={boost.id}
                       onClick={() => toggleBoost(boost.id)}
                       className={cn(
-                        "flex flex-col items-center p-2 sm:p-3 rounded-lg transition-all",
+                        "flex flex-col items-center p-3 sm:p-4 rounded-lg transition-all border border-dashed",
                         isSelected 
-                          ? "bg-[#00A651]/10 ring-2 ring-[#00A651]" 
-                          : "hover:bg-gray-50"
+                          ? "border-[#00A651] bg-[#00A651]/5" 
+                          : "border-gray-300 hover:border-gray-400"
                       )}
                     >
                       <div className={cn(
