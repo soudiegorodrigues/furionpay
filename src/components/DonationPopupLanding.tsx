@@ -31,7 +31,7 @@ const DONATION_AMOUNTS = [
 
 const BOOST_OPTIONS = [
   { id: "hearts", label: "10 corações", price: 10.99, icon: Heart, color: "text-emerald-500", bgColor: "bg-emerald-100" },
-  { id: "impact", label: "Multiplicador de impacto", price: 25, icon: Sprout, color: "text-amber-600", bgColor: "bg-amber-100" },
+  { id: "impact", label: "Ajudar Uma Vida a Florescer", price: 25, icon: Sprout, color: "text-amber-600", bgColor: "bg-amber-100" },
   { id: "basket", label: "Doar cesta básica", price: 65, icon: ShoppingBasket, color: "text-orange-500", bgColor: "bg-orange-100" },
 ];
 
