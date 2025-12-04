@@ -68,36 +68,26 @@ function getSupabaseClient() {
 async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
   const supabase = getSupabaseClient();
   
-  // First try user-specific settings
-  if (userId) {
-    const { data: userData, error: userError } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('key', 'spedpay_api_key')
-      .eq('user_id', userId)
-      .single();
-    
-    if (!userError && userData?.value) {
-      console.log('Using user-specific API key');
-      return userData.value;
-    }
-  }
-  
-  // Fall back to global settings (without user_id)
-  const { data, error } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'spedpay_api_key')
-    .is('user_id', null)
-    .single();
-  
-  if (error) {
-    console.error('Error fetching API key from database:', error);
+  // Each user MUST have their own API key configured
+  if (!userId) {
+    console.error('User ID is required to get API key');
     return null;
   }
   
-  console.log('Using global API key');
-  return data?.value || null;
+  const { data: userData, error: userError } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'spedpay_api_key')
+    .eq('user_id', userId)
+    .single();
+  
+  if (userError || !userData?.value) {
+    console.error('User does not have API key configured:', userError?.message || 'No key found');
+    return null;
+  }
+  
+  console.log('Using user-specific API key');
+  return userData.value;
 }
 
 async function getProductNameFromDatabase(userId?: string): Promise<string> {
