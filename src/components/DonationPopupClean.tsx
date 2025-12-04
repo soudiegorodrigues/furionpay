@@ -196,13 +196,13 @@ export const DonationPopupClean = ({
               </div>
 
               {/* Amount Grid */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {DONATION_AMOUNTS.map(({ amount, highlight }) => (
                   <button
                     key={amount}
                     onClick={() => setSelectedAmount(amount)}
                     className={cn(
-                      "py-3 px-4 rounded-xl text-center font-semibold transition-all",
+                      "py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-center font-semibold transition-all text-sm sm:text-base whitespace-nowrap",
                       selectedAmount === amount
                         ? "bg-emerald-500 text-white shadow-lg scale-105"
                         : highlight
