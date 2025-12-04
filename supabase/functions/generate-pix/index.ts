@@ -277,14 +277,46 @@ serve(async (req) => {
 
     const data = JSON.parse(responseText);
     
-    const pixCode = data.pix?.payload || data.pixCode || data.qr_code;
-    const qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
+    let pixCode = data.pix?.payload || data.pix?.qr_code || data.pixCode || data.qr_code;
+    let qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
     const transactionId = data.id || externalId;
 
+    // If PIX code not in response, poll for it
+    if (!pixCode && data.id) {
+      console.log('PIX code not in initial response, polling for transaction details...');
+      
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5 seconds
+        
+        console.log(`Fetching transaction details, attempt ${attempt}/5`);
+        
+        const detailsResponse = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${data.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-secret': apiKey,
+          },
+        });
+        
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          console.log(`Transaction details (attempt ${attempt}):`, JSON.stringify(detailsData, null, 2));
+          
+          pixCode = detailsData.pix?.payload || detailsData.pix?.qr_code || detailsData.pixCode || detailsData.qr_code;
+          qrCodeUrl = detailsData.pix?.qr_code_url || detailsData.qrCodeUrl;
+          
+          if (pixCode) {
+            console.log('PIX code found after polling!');
+            break;
+          }
+        }
+      }
+    }
+
     if (!pixCode) {
-      console.error('PIX code not found in response:', data);
+      console.error('PIX code not found after polling. Initial response:', data);
       return new Response(
-        JSON.stringify({ error: 'PIX code not found in response', rawResponse: data }),
+        JSON.stringify({ error: 'PIX code not found in response. Please check your SpedPay account configuration.', rawResponse: data }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
