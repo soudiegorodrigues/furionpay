@@ -201,7 +201,7 @@ export const DonationPopupDirect = ({
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in">
             {/* Header */}
             <div className="p-6 text-center space-y-2">
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-2xl font-bold text-slate-800">
                 Pague via PIX
               </h2>
               
