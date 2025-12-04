@@ -42,7 +42,6 @@ interface AdminSettingsData {
   product_name: string;
   meta_pixels: string;
   popup_model: string;
-  social_proof_enabled: boolean;
   selected_domain: string;
   fixed_amount: string;
 }
@@ -52,7 +51,6 @@ const AdminSettings = () => {
     product_name: "",
     meta_pixels: "[]",
     popup_model: "boost",
-    social_proof_enabled: false,
     selected_domain: "",
     fixed_amount: "100"
   });
@@ -145,7 +143,6 @@ const AdminSettings = () => {
         product_name: "",
         meta_pixels: "[]",
         popup_model: "boost",
-        social_proof_enabled: false,
         selected_domain: "",
         fixed_amount: "100"
       };
@@ -162,8 +159,6 @@ const AdminSettings = () => {
             settingsMap.meta_pixels = item.value || "[]";
           } else if (item.key === 'popup_model') {
             settingsMap.popup_model = item.value || "boost";
-          } else if (item.key === 'social_proof_enabled') {
-            settingsMap.social_proof_enabled = item.value === "true";
           } else if (item.key === 'selected_domain') {
             settingsMap.selected_domain = item.value || "";
           } else if (item.key === 'fixed_amount') {
@@ -234,9 +229,6 @@ const AdminSettings = () => {
       }), supabase.rpc('update_user_setting', {
         setting_key: 'popup_model',
         setting_value: settings.popup_model
-      }), supabase.rpc('update_user_setting', {
-        setting_key: 'social_proof_enabled',
-        setting_value: settings.social_proof_enabled.toString()
       }), supabase.rpc('update_user_setting', {
         setting_key: 'selected_domain',
         setting_value: settings.selected_domain
