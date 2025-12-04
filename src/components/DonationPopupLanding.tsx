@@ -306,28 +306,32 @@ export const DonationPopupLanding = ({
             </Button>
 
             {/* Footer */}
-            <p className="text-[10px] sm:text-xs text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-600">
               Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os{" "}
-              <span className="font-semibold text-gray-700">Termos, Taxas e Prazos</span>.
+              <span className="font-bold text-gray-900">Termos, Taxas e Prazos</span>.
             </p>
 
             {/* Security Badge */}
-            <div className="bg-gray-100 rounded-lg p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3">
-              <div className="bg-[#00A651] text-white text-[8px] sm:text-[10px] font-bold px-2 sm:px-3 py-1.5 sm:py-2 rounded flex items-center gap-1 sm:gap-1.5 shrink-0">
-                <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-                <div className="flex flex-col leading-tight">
-                  <span>SELO DE</span>
-                  <span>SEGURANÇA</span>
+            <div className="bg-gray-100 rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Yellow circle with lock icon */}
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-400 border-2 border-[#00A651] flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#00A651]" />
+                </div>
+                {/* Badge text */}
+                <div className="bg-[#1a3a2a] text-[#00A651] text-[9px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border border-[#00A651] leading-tight">
+                  <div>SELO DE</div>
+                  <div>SEGURANÇA</div>
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-gray-600">
-                Garantimos uma <span className="font-semibold text-gray-800">experiência segura</span> para todos os nossos doadores.
+                Garantimos uma <span className="font-bold text-gray-900">experiência segura</span> para todos os nossos doadores.
               </p>
             </div>
 
             {/* Additional Info */}
-            <p className="text-[9px] sm:text-[10px] text-gray-400 leading-relaxed">
-              Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação. Importante destacar a importância da adequação do seu cadastro, informando o <span className="font-medium text-gray-500">nome social</span>, caso o utilize.
+            <p className="text-[10px] sm:text-xs text-gray-500 leading-relaxed">
+              Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação. Importante destacar a importância da adequação do seu cadastro, informando o <span className="font-bold text-gray-700">nome social</span>, caso o utilize.
             </p>
           </div>
         )}
