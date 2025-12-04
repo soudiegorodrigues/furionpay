@@ -200,9 +200,11 @@ export const DonationPopup = ({
                     step={0.01}
                   />
                 </div>
-                <p className="text-xs text-destructive mt-1">
-                  Valor mínimo da doação é de R$ {MIN_DONATION},00
-                </p>
+                {baseAmount > 0 && baseAmount < MIN_DONATION && (
+                  <p className="text-xs text-destructive mt-1">
+                    Valor mínimo da doação é de R$ {MIN_DONATION},00
+                  </p>
+                )}
               </div>
 
               {/* Payment Method */}
