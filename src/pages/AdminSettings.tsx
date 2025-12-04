@@ -1,3 +1,4 @@
+// v2.1 - Social Proof removed
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
