@@ -54,9 +54,18 @@ const Index = () => {
     }
   }, [userId]);
 
-  // Não renderiza nada se não houver userId (vai redirecionar) ou se ainda estiver carregando
-  if (!userId || isLoading) {
+  // Não renderiza nada se não houver userId (vai redirecionar)
+  if (!userId) {
     return null;
+  }
+
+  // Mostra loading enquanto busca configurações
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      </div>
+    );
   }
 
   return (
