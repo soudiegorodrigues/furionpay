@@ -145,6 +145,14 @@ export const DonationPopupDirect = ({
         qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
       });
+      
+      // Fire PixGenerated event
+      trackEvent('PixGenerated', {
+        value: fixedAmount,
+        currency: 'BRL',
+        content_name: 'Donation Direct',
+      });
+      
       setStep("pix");
     } catch (err) {
       console.error('Error:', err);
