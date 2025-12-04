@@ -484,7 +484,7 @@ const AdminSettings = () => {
                   <div>
                     <p className="font-medium text-sm">Modelo Boost</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Valor livre + Order Bump
+                      Order Bump
                     </p>
                   </div>
                   <span className="text-xs font-semibold text-primary">{getConversionRate('boost')}</span>
