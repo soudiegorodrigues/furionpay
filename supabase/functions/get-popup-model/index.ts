@@ -29,6 +29,7 @@ serve(async (req) => {
 
     let model = "boost";
     let socialProofEnabled = false;
+    let fixedAmount = 100;
 
     // First try to get user-specific settings
     if (userId) {
@@ -36,7 +37,7 @@ serve(async (req) => {
         .from("admin_settings")
         .select("key, value")
         .eq("user_id", userId)
-        .in("key", ["popup_model", "social_proof_enabled"]);
+        .in("key", ["popup_model", "social_proof_enabled", "fixed_amount"]);
 
       console.log("User settings query result:", userSettings, userError);
 
@@ -46,11 +47,13 @@ serve(async (req) => {
             model = item.value || "boost";
           } else if (item.key === "social_proof_enabled") {
             socialProofEnabled = item.value === "true";
+          } else if (item.key === "fixed_amount") {
+            fixedAmount = parseFloat(item.value) || 100;
           }
         }
-        console.log("Using user-specific settings:", { model, socialProofEnabled });
+        console.log("Using user-specific settings:", { model, socialProofEnabled, fixedAmount });
         return new Response(
-          JSON.stringify({ model, socialProofEnabled }),
+          JSON.stringify({ model, socialProofEnabled, fixedAmount }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -61,7 +64,7 @@ serve(async (req) => {
       .from("admin_settings")
       .select("key, value")
       .is("user_id", null)
-      .in("key", ["popup_model", "social_proof_enabled"]);
+      .in("key", ["popup_model", "social_proof_enabled", "fixed_amount"]);
 
     console.log("Global settings query result:", globalSettings, globalError);
 
@@ -71,20 +74,22 @@ serve(async (req) => {
           model = item.value || "boost";
         } else if (item.key === "social_proof_enabled") {
           socialProofEnabled = item.value === "true";
+        } else if (item.key === "fixed_amount") {
+          fixedAmount = parseFloat(item.value) || 100;
         }
       }
     }
 
-    console.log("Final settings:", { model, socialProofEnabled });
+    console.log("Final settings:", { model, socialProofEnabled, fixedAmount });
 
     return new Response(
-      JSON.stringify({ model, socialProofEnabled }),
+      JSON.stringify({ model, socialProofEnabled, fixedAmount }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ model: "boost", socialProofEnabled: false }),
+      JSON.stringify({ model: "boost", socialProofEnabled: false, fixedAmount: 100 }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

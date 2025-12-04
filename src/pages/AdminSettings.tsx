@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
+import { DonationPopupDirect } from "@/components/DonationPopupDirect";
 interface MetaPixel {
   id: string;
   name: string;
@@ -34,6 +35,7 @@ interface AdminSettingsData {
   popup_model: string;
   social_proof_enabled: boolean;
   selected_domain: string;
+  fixed_amount: string;
 }
 const AdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettingsData>({
@@ -42,7 +44,8 @@ const AdminSettings = () => {
     meta_pixels: "[]",
     popup_model: "boost",
     social_proof_enabled: false,
-    selected_domain: ""
+    selected_domain: "",
+    fixed_amount: "100"
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
   const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
@@ -111,7 +114,8 @@ const AdminSettings = () => {
         meta_pixels: "[]",
         popup_model: "boost",
         social_proof_enabled: false,
-        selected_domain: ""
+        selected_domain: "",
+        fixed_amount: "100"
       };
       if (data) {
         (data as {
@@ -130,6 +134,8 @@ const AdminSettings = () => {
             settingsMap.social_proof_enabled = item.value === "true";
           } else if (item.key === 'selected_domain') {
             settingsMap.selected_domain = item.value || "";
+          } else if (item.key === 'fixed_amount') {
+            settingsMap.fixed_amount = item.value || "100";
           } else if (item.key === 'meta_pixel_id' && item.value) {
             const oldToken = (data as {
               key: string;
@@ -202,6 +208,9 @@ const AdminSettings = () => {
       }), supabase.rpc('update_user_setting', {
         setting_key: 'selected_domain',
         setting_value: settings.selected_domain
+      }), supabase.rpc('update_user_setting', {
+        setting_key: 'fixed_amount',
+        setting_value: settings.fixed_amount
       })];
       await Promise.all(updates);
       toast({
@@ -425,7 +434,7 @@ const AdminSettings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'boost'
@@ -487,7 +496,45 @@ const AdminSettings = () => {
                   Design minimalista
                 </p>
               </button>
+              <button onClick={() => setSettings(s => ({
+              ...s,
+              popup_model: 'direct'
+            }))} className={`p-4 rounded-lg border-2 transition-all text-left ${settings.popup_model === 'direct' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                {/* Mini Preview - Direct Model */}
+                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+                  <div className="text-[6px] font-bold text-center mb-1">💚 Doe R$100</div>
+                  <div className="w-8 h-8 mx-auto bg-amber-50 rounded border border-amber-200 mb-1 flex items-center justify-center">
+                    <span className="text-[6px]">QR</span>
+                  </div>
+                  <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">Copiar PIX</div>
+                </div>
+                <p className="font-medium text-sm">Modelo Direto</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PIX automático
+                </p>
+              </button>
             </div>
+            
+            {/* Fixed Amount for Direct Model */}
+            {settings.popup_model === 'direct' && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label htmlFor="fixed_amount">Valor Fixo do PIX (R$)</Label>
+                <Input 
+                  id="fixed_amount" 
+                  type="number" 
+                  placeholder="100" 
+                  value={settings.fixed_amount} 
+                  onChange={e => setSettings(s => ({
+                    ...s,
+                    fixed_amount: e.target.value
+                  }))} 
+                />
+                <p className="text-xs text-muted-foreground">
+                  Valor que será gerado automaticamente ao abrir o popup
+                </p>
+              </div>
+            )}
+            
             <div className="pt-2">
               <Button variant="outline" onClick={() => setShowPopupPreview(true)} className="w-full">
                 <Eye className="w-4 h-4 mr-2" />
@@ -735,6 +782,14 @@ const AdminSettings = () => {
           isOpen={showPopupPreview} 
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
+        />
+      )}
+      {settings.popup_model === 'direct' && (
+        <DonationPopupDirect 
+          isOpen={showPopupPreview} 
+          onClose={() => setShowPopupPreview(false)} 
+          userId={user?.id}
+          fixedAmount={parseFloat(settings.fixed_amount) || 100}
         />
       )}
     </div>;

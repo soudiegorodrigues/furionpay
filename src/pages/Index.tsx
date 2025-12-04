@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
+import { DonationPopupDirect } from "@/components/DonationPopupDirect";
 import { SocialProofNotification } from "@/components/SocialProofNotification";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,7 @@ const Index = () => {
   // Inicia com valores padrão para renderização instantânea
   const [popupModel, setPopupModel] = useState<string>('boost');
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
+  const [fixedAmount, setFixedAmount] = useState<number>(100);
 
   useEffect(() => {
     // Busca configurações em background sem bloquear a renderização
@@ -33,6 +35,9 @@ const Index = () => {
         if (!error && data) {
           setPopupModel(data.model || 'boost');
           setSocialProofEnabled(data.socialProofEnabled || false);
+          if (data.fixedAmount) {
+            setFixedAmount(data.fixedAmount);
+          }
         }
       } catch (err) {
         console.error('Error fetching settings:', err);
@@ -60,6 +65,13 @@ const Index = () => {
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
+        />
+      ) : popupModel === 'direct' ? (
+        <DonationPopupDirect
+          isOpen={true}
+          onClose={() => {}}
+          userId={userId || undefined}
+          fixedAmount={fixedAmount}
         />
       ) : (
         <DonationPopup
