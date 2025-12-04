@@ -373,8 +373,8 @@ export const DonationPopupInstituto = ({
               <>
                 {/* Title */}
                 <div className="text-center">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-                    <Heart className="inline-block w-6 h-6 text-[#E91E8C] fill-[#E91E8C] mr-1 -mt-1" />
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                    <Heart className="inline-block w-7 h-7 text-[#E91E8C] fill-[#E91E8C] mr-1 -mt-1" />
                     Doe {formatCurrency(selectedAmount || 1000)} e ajude a transformar vidas
                   </h2>
                 </div>
