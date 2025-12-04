@@ -11,6 +11,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const userId = searchParams.get('u') || searchParams.get('user');
+  const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   
   // Redireciona para admin se não houver userId
   useEffect(() => {
@@ -22,7 +23,7 @@ const Index = () => {
   // Inicia com valores padrão para renderização instantânea
   const [popupModel, setPopupModel] = useState<string>('boost');
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
-  const [fixedAmount, setFixedAmount] = useState<number>(100);
+  const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
   useEffect(() => {
     // Busca configurações em background sem bloquear a renderização
@@ -35,7 +36,8 @@ const Index = () => {
         if (!error && data) {
           setPopupModel(data.model || 'boost');
           setSocialProofEnabled(data.socialProofEnabled || false);
-          if (data.fixedAmount) {
+          // Só usa o valor das configurações se não tiver valor na URL
+          if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
           }
         }
