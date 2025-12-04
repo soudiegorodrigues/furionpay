@@ -18,18 +18,13 @@ interface DonationPopupSimpleProps {
 
 const DONATION_AMOUNTS = [
   { amount: 20, mostChosen: false },
-  { amount: 25, mostChosen: false },
   { amount: 30, mostChosen: false },
   { amount: 50, mostChosen: false },
-  { amount: 60, mostChosen: false },
-  { amount: 75, mostChosen: false },
   { amount: 100, mostChosen: true },
-  { amount: 150, mostChosen: false },
   { amount: 200, mostChosen: false },
-  { amount: 300, mostChosen: false },
-  { amount: 400, mostChosen: false },
   { amount: 500, mostChosen: false },
-  { amount: 750, mostChosen: false },
+  { amount: 600, mostChosen: false },
+  { amount: 800, mostChosen: false },
   { amount: 1000, mostChosen: false },
 ];
 
@@ -167,7 +162,7 @@ export const DonationPopupSimple = ({
               </div>
 
               {/* Amount Grid */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
                 {DONATION_AMOUNTS.map((item) => (
                   <button
                     key={item.amount}
