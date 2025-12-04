@@ -15,6 +15,7 @@ interface DonationPopupProps {
   recipientName?: string;
   autoShowDelay?: number;
   userId?: string;
+  showCloseButton?: boolean;
 }
 
 const BOOST_OPTIONS = [
@@ -32,7 +33,8 @@ export const DonationPopup = ({
   isOpen,
   onClose,
   recipientName = "Davizinho",
-  userId
+  userId,
+  showCloseButton = false
 }: DonationPopupProps) => {
   const [customAmount, setCustomAmount] = useState<string>("");
   const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
@@ -164,13 +166,15 @@ export const DonationPopup = ({
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
             </button>
           )}
-          <button 
-            onClick={onClose} 
-            className="absolute right-3 sm:right-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" 
-            aria-label="Fechar"
-          >
-            <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-          </button>
+          {showCloseButton && (
+            <button 
+              onClick={onClose} 
+              className="absolute right-3 sm:right-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" 
+              aria-label="Fechar"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+            </button>
+          )}
         </div>
 
         {/* Content */}

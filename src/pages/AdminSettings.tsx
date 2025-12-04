@@ -802,6 +802,7 @@ const AdminSettings = () => {
           isOpen={showPopupPreview} 
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
+          showCloseButton={true}
         />
       )}
       {settings.popup_model === 'simple' && (
@@ -809,6 +810,7 @@ const AdminSettings = () => {
           isOpen={showPopupPreview} 
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
+          showCloseButton={true}
         />
       )}
       {settings.popup_model === 'clean' && (
@@ -816,6 +818,7 @@ const AdminSettings = () => {
           isOpen={showPopupPreview} 
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
+          showCloseButton={true}
         />
       )}
       {settings.popup_model === 'direct' && (
@@ -824,6 +827,7 @@ const AdminSettings = () => {
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
           fixedAmount={parseFloat(settings.fixed_amount) || 100}
+          showCloseButton={true}
         />
       )}
       {settings.popup_model === 'hot' && (
@@ -832,6 +836,7 @@ const AdminSettings = () => {
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
           fixedAmount={parseFloat(settings.fixed_amount) || 19.90}
+          showCloseButton={true}
         />
       )}
       {settings.popup_model === 'landing' && (
@@ -839,6 +844,7 @@ const AdminSettings = () => {
           isOpen={showPopupPreview} 
           onClose={() => setShowPopupPreview(false)} 
           userId={user?.id}
+          showCloseButton={true}
         />
       )}
     </div>;

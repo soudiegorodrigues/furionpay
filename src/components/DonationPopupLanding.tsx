@@ -16,6 +16,7 @@ interface DonationPopupLandingProps {
   onClose: () => void;
   recipientName?: string;
   userId?: string;
+  showCloseButton?: boolean;
 }
 
 const DONATION_AMOUNTS = [
@@ -42,6 +43,7 @@ export const DonationPopupLanding = ({
   onClose,
   recipientName = "Campanha Solidária",
   userId,
+  showCloseButton = false,
 }: DonationPopupLandingProps) => {
   const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -204,13 +206,15 @@ export const DonationPopupLanding = ({
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-auto">
       {/* Close Button */}
-      <button
-        onClick={onClose}
-        className="fixed top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-        aria-label="Fechar"
-      >
-        <X className="w-5 h-5 text-gray-600" />
-      </button>
+      {showCloseButton && (
+        <button
+          onClick={onClose}
+          className="fixed top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          aria-label="Fechar"
+        >
+          <X className="w-5 h-5 text-gray-600" />
+        </button>
+      )}
       
       <div className="w-full max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-10">
         {step === "select" && (

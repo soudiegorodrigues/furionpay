@@ -12,6 +12,7 @@ interface DonationPopupHotProps {
   onClose: () => void;
   userId?: string;
   fixedAmount?: number;
+  showCloseButton?: boolean;
 }
 
 type Step = "email" | "loading" | "pix";
@@ -20,7 +21,8 @@ export const DonationPopupHot = ({
   isOpen,
   onClose,
   userId,
-  fixedAmount = 19.90
+  fixedAmount = 19.90,
+  showCloseButton = false
 }: DonationPopupHotProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -234,12 +236,14 @@ export const DonationPopupHot = ({
               </>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {showCloseButton && (
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Content */}

@@ -13,6 +13,7 @@ interface DonationPopupDirectProps {
   onClose: () => void;
   userId?: string;
   fixedAmount?: number;
+  showCloseButton?: boolean;
 }
 
 type Step = "loading" | "pix" | "success";
@@ -21,7 +22,8 @@ export const DonationPopupDirect = ({
   isOpen,
   onClose,
   userId,
-  fixedAmount = 100
+  fixedAmount = 100,
+  showCloseButton = false
 }: DonationPopupDirectProps) => {
   const [step, setStep] = useState<Step>("loading");
   const [pixData, setPixData] = useState<{
@@ -192,13 +194,15 @@ export const DonationPopupDirect = ({
       
       <div className="relative w-full max-w-md">
         {/* Close Button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-3 right-3 z-10 w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
-          aria-label="Fechar"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {showCloseButton && (
+          <button 
+            onClick={onClose}
+            className="absolute top-3 right-3 z-10 w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
         {step === "loading" && (
           <div className="bg-white rounded-2xl shadow-xl p-6 animate-fade-in">
