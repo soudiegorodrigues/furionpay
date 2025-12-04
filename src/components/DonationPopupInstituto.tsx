@@ -360,23 +360,6 @@ export const DonationPopupInstituto = ({
 
         {step === "pix" && pixData && (
           <div className="space-y-6">
-            {/* Header with back button */}
-            <div className="flex items-center justify-between">
-              <button
-                onClick={handleBack}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              {showCloseButton && (
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-              )}
-            </div>
 
             {isPaid ? (
               <div className="text-center space-y-4 py-8">
