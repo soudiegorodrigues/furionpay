@@ -319,18 +319,6 @@ export const DonationPopupHot = ({
                     Finalize o pagamento para acessar tudo.
                   </h2>
 
-                  {/* Plan Info */}
-                  <div className="bg-slate-50 rounded-xl p-3 space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Plano</span>
-                      <span className="font-semibold text-slate-800">1 Mês</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Valor</span>
-                      <span className="font-bold text-rose-500">{formatCurrency(fixedAmount)}</span>
-                    </div>
-                  </div>
-
                   {/* QR Code */}
                   <div className="flex justify-center">
                     <div className="p-3 bg-white border-2 border-slate-100 rounded-xl">
