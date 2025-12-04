@@ -512,7 +512,7 @@ const AdminSettings = () => {
                       Grade de valores
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">{getConversionRate('simple')}</span>
+                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('simple')}</span>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -534,7 +534,7 @@ const AdminSettings = () => {
                       Design minimalista
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">{getConversionRate('clean')}</span>
+                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('clean')}</span>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -556,7 +556,7 @@ const AdminSettings = () => {
                       PIX automático
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">{getConversionRate('direct')}</span>
+                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('direct')}</span>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -578,7 +578,7 @@ const AdminSettings = () => {
                       Cadastro + PIX
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">{getConversionRate('hot')}</span>
+                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('hot')}</span>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
@@ -601,7 +601,7 @@ const AdminSettings = () => {
                       Estilo Vakinha
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">{getConversionRate('landing')}</span>
+                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('landing')}</span>
                 </div>
               </button>
             </div>
