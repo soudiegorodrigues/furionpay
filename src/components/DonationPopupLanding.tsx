@@ -16,8 +16,6 @@ interface DonationPopupLandingProps {
   onClose: () => void;
   recipientName?: string;
   userId?: string;
-  campaignTitle?: string;
-  campaignId?: string;
 }
 
 const DONATION_AMOUNTS = [
@@ -44,8 +42,6 @@ export const DonationPopupLanding = ({
   onClose,
   recipientName = "Campanha Solidária",
   userId,
-  campaignTitle = "Mãe com 2 crianças",
-  campaignId = "5819338"
 }: DonationPopupLandingProps) => {
   const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -194,11 +190,6 @@ export const DonationPopupLanding = ({
               <img src={vakinhaLogo} alt="Vakinha" className="h-12 sm:h-14" />
             </div>
 
-            {/* Campaign Title */}
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#00A651]">{campaignTitle}</h1>
-              <p className="text-gray-500 text-sm">ID: {campaignId}</p>
-            </div>
 
             {/* Contribution Value Section */}
             <div>
