@@ -224,17 +224,12 @@ export const DonationPopupLanding = ({
                     key={item.amount}
                     onClick={() => handleSelectAmount(item.amount)}
                     className={cn(
-                      "relative py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
+                      "py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
                       selectedAmount === item.amount
                         ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
                         : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
                     )}
                   >
-                    {item.amount === 100 && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#00A651] text-white text-[8px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap">
-                        Mais escolhido
-                      </span>
-                    )}
                     {formatCurrency(item.amount)}
                   </button>
                 ))}
