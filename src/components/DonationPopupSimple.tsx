@@ -140,15 +140,6 @@ export const DonationPopupSimple = ({
       <div className="relative w-full max-w-md bg-card rounded-2xl shadow-2xl animate-scale-in overflow-hidden max-h-[95vh] overflow-y-auto">
         {/* Header */}
         <div className="relative px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
-          {step === "pix" && (
-            <button 
-              onClick={handleBack} 
-              className="absolute left-3 sm:left-4 top-3 sm:top-4 p-1.5 sm:p-2 rounded-full hover:bg-secondary transition-colors" 
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-            </button>
-          )}
           {showCloseButton && (
             <button 
               onClick={onClose} 

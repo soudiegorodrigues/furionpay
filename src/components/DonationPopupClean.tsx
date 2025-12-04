@@ -256,12 +256,6 @@ export const DonationPopupClean = ({
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in">
               {/* Header */}
               <div className="p-6 text-center space-y-2">
-                <button 
-                  onClick={handleBack}
-                  className="absolute left-4 top-4 p-2 text-slate-400 hover:text-slate-600"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
                 
                 <div className="w-12 h-12 mx-auto bg-emerald-100 rounded-full flex items-center justify-center">
                   <Heart className="w-6 h-6 text-emerald-600" fill="currentColor" />
