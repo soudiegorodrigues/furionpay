@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Bell, Pencil, ChevronDown, Link, Copy, Check, Eye, Globe, Users } from "lucide-react";
+import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Pencil, ChevronDown, Link, Copy, Check, Eye, Globe, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -685,50 +685,6 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
 
-        {/* Social Proof Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Notificações de Prova Social
-            </CardTitle>
-            <CardDescription>
-              Exibe notificações de doações recentes para incentivar novos clientes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="social-proof">Ativar notificações</Label>
-                <p className="text-xs text-muted-foreground">
-                  Mostra notificações como "Vanessa R. doou há 45 minutos"
-                </p>
-              </div>
-              <Switch id="social-proof" checked={settings.social_proof_enabled} onCheckedChange={checked => setSettings(s => ({
-              ...s,
-              social_proof_enabled: checked
-            }))} />
-            </div>
-            {/* Preview */}
-            {settings.social_proof_enabled && <div className="mt-4 p-3 bg-secondary/50 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-2">Prévia:</p>
-                <div className="flex items-center gap-3 bg-card rounded-xl shadow-sm border border-border px-3 py-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-xs">Vanessa R.</span>
-                      <span className="text-[10px] text-muted-foreground">há 45 minutos</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Doou no pix</p>
-                  </div>
-                </div>
-              </div>}
-          </CardContent>
-        </Card>
 
         {/* Meta Pixel Settings */}
         <Card>
