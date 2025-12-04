@@ -228,11 +228,9 @@ serve(async (req) => {
 
     console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
 
-    // Get product name and recipient_id from database (user-specific)
+    // Get product name from database (user-specific)
     const productName = await getProductNameFromDatabase(userId);
-    const recipientId = await getRecipientIdFromDatabase(userId);
     console.log('Product name:', productName);
-    console.log('Recipient ID:', recipientId);
 
     if (!amount || amount <= 0) {
       return new Response(
