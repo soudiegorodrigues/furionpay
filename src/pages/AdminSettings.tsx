@@ -487,7 +487,7 @@ const AdminSettings = () => {
                       Order Bump
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">{getConversionRate('boost')}</span>
+                  <span className="text-xs font-semibold text-primary">Taxa de conversão: {getConversionRate('boost')}</span>
                 </div>
               </button>
               <button onClick={() => setSettings(s => ({
