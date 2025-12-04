@@ -306,7 +306,7 @@ export const DonationPopupLanding = ({
             </Button>
 
             {/* Footer */}
-            <p className="text-xs sm:text-sm text-gray-600">
+              <p className="text-[10px] sm:text-xs text-gray-600">
               Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os{" "}
               <span className="font-bold text-gray-900">Termos, Taxas e Prazos</span>.
             </p>
