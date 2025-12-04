@@ -185,47 +185,46 @@ export const DonationPopupLanding = ({
       {/* Close Button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+        className="fixed top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
         aria-label="Fechar"
       >
         <X className="w-5 h-5 text-gray-600" />
       </button>
       
-      <div className="w-full max-w-lg mx-auto px-4 py-6 sm:py-10">
+      <div className="w-full max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-10">
         {step === "select" && (
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {/* Logo */}
             <div className="flex items-center">
-              <img src={vakinhaLogo} alt="Vakinha" className="h-12 sm:h-14" />
+              <img src={vakinhaLogo} alt="Vakinha" className="h-10 sm:h-14" />
             </div>
-
 
             {/* Contribution Value Section */}
             <div>
-              <h2 className="text-base font-bold text-gray-900 mb-3">Valor da contribuição</h2>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3">Valor da contribuição</h2>
               
               {/* Custom Amount Input */}
-              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden mb-4">
-                <span className="px-4 py-3.5 bg-white text-gray-500 font-medium border-r border-gray-300">
+              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden mb-3 sm:mb-4">
+                <span className="px-3 sm:px-4 py-3 bg-white text-gray-500 font-medium border-r border-gray-300 text-sm sm:text-base">
                   R$
                 </span>
                 <Input
                   type="text"
                   value={customAmount}
                   onChange={handleCustomAmountChange}
-                  className="border-0 text-lg font-medium h-12 focus-visible:ring-0 bg-white text-gray-900"
+                  className="border-0 text-base sm:text-lg font-medium h-11 sm:h-12 focus-visible:ring-0 bg-white text-gray-900"
                   placeholder="0,00"
                 />
               </div>
 
               {/* Amount Grid */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {DONATION_AMOUNTS.map((item) => (
                   <button
                     key={item.amount}
                     onClick={() => handleSelectAmount(item.amount)}
                     className={cn(
-                      "py-3.5 px-4 rounded-lg border transition-all font-medium text-base",
+                      "py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
                       selectedAmount === item.amount
                         ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
                         : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
@@ -239,21 +238,21 @@ export const DonationPopupLanding = ({
 
             {/* Payment Method */}
             <div>
-              <h2 className="text-base font-bold text-gray-900 mb-3">Forma de pagamento</h2>
-              <div className="inline-flex items-center gap-2 bg-[#00A651] text-white px-5 py-2.5 rounded-lg">
-                <img src={pixLogo} alt="PIX" className="w-5 h-5 brightness-0 invert" />
-                <span className="font-medium">Pix</span>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3">Forma de pagamento</h2>
+              <div className="inline-flex items-center gap-2 bg-[#00A651] text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg">
+                <img src={pixLogo} alt="PIX" className="w-4 h-4 sm:w-5 sm:h-5 brightness-0 invert" />
+                <span className="font-medium text-sm sm:text-base">Pix</span>
               </div>
             </div>
 
             {/* Boost Section */}
             <div>
-              <h2 className="text-base font-bold text-gray-900 mb-1">Turbine sua doação</h2>
-              <p className="text-gray-500 text-sm mb-4">
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-1">Turbine sua doação</h2>
+              <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">
                 Ajude MUITO MAIS turbinando sua doação 💚
               </p>
               
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {BOOST_OPTIONS.map((boost) => {
                   const Icon = boost.icon;
                   const isSelected = selectedBoosts.includes(boost.id);
@@ -262,22 +261,22 @@ export const DonationPopupLanding = ({
                       key={boost.id}
                       onClick={() => toggleBoost(boost.id)}
                       className={cn(
-                        "flex flex-col items-center p-3 sm:p-4 rounded-lg transition-all border border-dashed",
+                        "flex flex-col items-center p-2 sm:p-4 rounded-lg transition-all border border-dashed",
                         isSelected 
                           ? "border-[#00A651] bg-[#00A651]/5" 
                           : "border-gray-300 hover:border-gray-400"
                       )}
                     >
                       <div className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center mb-2",
+                        "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2",
                         boost.bgColor
                       )}>
-                        <Icon className={cn("w-6 h-6", boost.color)} />
+                        <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", boost.color)} />
                       </div>
-                      <span className="text-xs sm:text-sm font-medium text-center text-gray-800 leading-tight">
+                      <span className="text-[10px] sm:text-sm font-medium text-center text-gray-800 leading-tight">
                         {boost.label}
                       </span>
-                      <span className="text-xs text-gray-500 mt-1">
+                      <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">
                         {formatCurrency(boost.price)}
                       </span>
                     </button>
@@ -287,7 +286,7 @@ export const DonationPopupLanding = ({
             </div>
 
             {/* Summary */}
-            <div className="space-y-2 text-base">
+            <div className="space-y-1.5 sm:space-y-2 text-sm sm:text-base">
               <div className="flex justify-between text-gray-700">
                 <span>Contribuição:</span>
                 <span>{formatCurrency(getContributionAmount())}</span>
@@ -301,33 +300,33 @@ export const DonationPopupLanding = ({
             {/* CTA Button */}
             <Button 
               onClick={handleGeneratePix}
-              className="w-full bg-[#00A651] hover:bg-[#008a44] text-white font-bold text-lg py-7 rounded-lg"
+              className="w-full bg-[#00A651] hover:bg-[#008a44] text-white font-bold text-base sm:text-lg py-6 sm:py-7 rounded-lg"
             >
               CONTRIBUIR
             </Button>
 
             {/* Footer */}
-            <p className="text-xs text-gray-500">
+            <p className="text-[10px] sm:text-xs text-gray-500">
               Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os{" "}
               <span className="font-semibold text-gray-700">Termos, Taxas e Prazos</span>.
             </p>
 
             {/* Security Badge */}
-            <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-3">
-              <div className="bg-[#00A651] text-white text-[10px] font-bold px-3 py-2 rounded flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4" />
+            <div className="bg-gray-100 rounded-lg p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3">
+              <div className="bg-[#00A651] text-white text-[8px] sm:text-[10px] font-bold px-2 sm:px-3 py-1.5 sm:py-2 rounded flex items-center gap-1 sm:gap-1.5 shrink-0">
+                <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4" />
                 <div className="flex flex-col leading-tight">
                   <span>SELO DE</span>
                   <span>SEGURANÇA</span>
                 </div>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Garantimos uma <span className="font-semibold text-gray-800">experiência segura</span> para todos os nossos doadores.
               </p>
             </div>
 
             {/* Additional Info */}
-            <p className="text-[10px] text-gray-400 leading-relaxed">
+            <p className="text-[9px] sm:text-[10px] text-gray-400 leading-relaxed">
               Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação. Importante destacar a importância da adequação do seu cadastro, informando o <span className="font-medium text-gray-500">nome social</span>, caso o utilize.
             </p>
           </div>
