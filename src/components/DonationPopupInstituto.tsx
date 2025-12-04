@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
-import { Heart, X } from "lucide-react";
+import { Heart, X, ArrowLeft, Clock, Copy, Lock } from "lucide-react";
 import institutoLogo from "@/assets/instituto-logo.png";
 import { Button } from "@/components/ui/button";
-import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { ExitIntentPopup } from "./ExitIntentPopup";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface DonationPopupInstitutoProps {
   isOpen: boolean;
@@ -54,14 +61,83 @@ export const DonationPopupInstituto = ({
   const [raised] = useState(177875.10);
   const [goal] = useState(200000);
   
+  // PIX timer state
+  const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 minutes
+  const [isPaid, setIsPaid] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showExpiredDialog, setShowExpiredDialog] = useState(false);
+  
   const { toast } = useToast();
   const { trackEvent, utmParams } = usePixel();
+
+  // Reset timer when PIX is generated
+  useEffect(() => {
+    if (step === "pix") {
+      setTimeLeft(10 * 60);
+      setIsPaid(false);
+      setCopied(false);
+    }
+  }, [step]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (step !== "pix" || isPaid || timeLeft <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setShowExpiredDialog(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [step, isPaid, timeLeft]);
+
+  // Realtime payment subscription
+  useEffect(() => {
+    if (!pixData?.transactionId || step !== "pix") return;
+
+    const channel = supabase
+      .channel(`payment-${pixData.transactionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pix_transactions',
+          filter: `id=eq.${pixData.transactionId}`,
+        },
+        (payload) => {
+          if (payload.new && (payload.new as any).status === 'paid') {
+            setIsPaid(true);
+            trackEvent('Purchase', {
+              value: selectedAmount || 1000,
+              currency: 'BRL',
+            });
+            toast({
+              title: "Pagamento confirmado!",
+              description: "Obrigado pela sua doação!",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pixData?.transactionId, step, selectedAmount, toast, trackEvent]);
 
   useEffect(() => {
     if (!isOpen) {
       setStep("select");
       setPixData(null);
       setSelectedAmount(null);
+      setTimeLeft(10 * 60);
+      setIsPaid(false);
     } else {
       trackEvent('InitiateCheckout', {
         content_name: 'Donation Popup Instituto',
@@ -76,6 +152,12 @@ export const DonationPopupInstituto = ({
       currency: "BRL",
       minimumFractionDigits: 2,
     }).format(value);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleSelectAmount = (amount: number) => {
@@ -148,6 +230,29 @@ export const DonationPopupInstituto = ({
   const handleBack = () => {
     setStep("select");
     setPixData(null);
+    setTimeLeft(10 * 60);
+  };
+
+  const handleCopyCode = async () => {
+    if (timeLeft <= 0) {
+      setShowExpiredDialog(true);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(pixData?.code || "");
+      setCopied(true);
+      toast({
+        title: "Código copiado!",
+        description: "Cole no app do seu banco.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isOpen) return null;
@@ -254,17 +359,151 @@ export const DonationPopupInstituto = ({
         )}
 
         {step === "pix" && pixData && (
-          <div className="bg-white rounded-xl p-4 sm:p-8">
-            <PixQRCode 
-              amount={selectedAmount || 1000} 
-              pixCode={pixData.code} 
-              qrCodeUrl={pixData.qrCodeUrl}
-              transactionId={pixData.transactionId}
-              onRegenerate={handleBack}
-            />
+          <div className="space-y-6">
+            {/* Header with back button */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handleBack}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              {showCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              )}
+            </div>
+
+            {isPaid ? (
+              <div className="text-center space-y-4 py-8">
+                <div className="w-20 h-20 mx-auto bg-[#E91E8C]/10 rounded-full flex items-center justify-center">
+                  <Heart className="w-10 h-10 text-[#E91E8C] fill-[#E91E8C]" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Pagamento confirmado!</h3>
+                <p className="text-gray-600">Obrigado pela sua doação de {formatCurrency(selectedAmount || 1000)}!</p>
+              </div>
+            ) : (
+              <>
+                {/* Title */}
+                <div className="text-center">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+                    <Heart className="w-6 h-6 text-[#E91E8C] fill-[#E91E8C]" />
+                    Doe {formatCurrency(selectedAmount || 1000)} e ajude a transformar vidas
+                  </h2>
+                </div>
+
+                {/* Timer */}
+                <div className="flex items-center justify-center gap-2 text-gray-500">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm">QR Code expira em: <span className="font-mono font-semibold">{formatTime(timeLeft)}</span></span>
+                </div>
+
+                {/* QR Code */}
+                <div className="flex justify-center">
+                  <div className="p-4 bg-white rounded-2xl shadow-lg border border-gray-100">
+                    {pixData.qrCodeUrl ? (
+                      <img 
+                        src={pixData.qrCodeUrl} 
+                        alt="QR Code PIX" 
+                        className="w-48 h-48 sm:w-56 sm:h-56"
+                      />
+                    ) : (
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixData.code)}`} 
+                        alt="QR Code PIX" 
+                        className="w-48 h-48 sm:w-56 sm:h-56"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-center text-gray-500 text-sm">
+                  📱 Escaneie o QR Code no app do seu banco
+                </p>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-gray-400 text-sm">ou copie o código PIX</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                {/* PIX Code Input */}
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                  <input 
+                    type="text"
+                    readOnly
+                    value={pixData.code}
+                    className="w-full bg-transparent text-gray-700 text-sm font-mono truncate outline-none"
+                  />
+                </div>
+
+                {/* Copy Button */}
+                <Button
+                  onClick={handleCopyCode}
+                  className="w-full py-6 text-lg font-bold rounded-xl text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, #E91E8C 0%, #9C27B0 100%)'
+                  }}
+                >
+                  <Copy className="w-5 h-5 mr-2" />
+                  {copied ? "Código copiado!" : "Copiar Código PIX"}
+                </Button>
+
+                {/* Instructions */}
+                <div className="bg-[#E91E8C]/5 rounded-xl p-4 space-y-2">
+                  <p className="font-semibold text-gray-800 flex items-center gap-2">
+                    🎁 Como doar:
+                  </p>
+                  <ol className="text-sm text-gray-600 space-y-1.5">
+                    <li>1. Toque em Copiar Código PIX</li>
+                    <li>2. Abra seu app do banco</li>
+                    <li>3. Vá em PIX → Copia e Cola</li>
+                    <li>4. Cole o código e confirme 💚</li>
+                    <li>5. Você acabou de transformar uma vida! 💖</li>
+                  </ol>
+                </div>
+
+                {/* Security Badge */}
+                <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
+                  <Lock className="w-4 h-4" />
+                  <span>Pagamento 100% seguro via PIX</span>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
+
+      {/* Expired Dialog */}
+      <Dialog open={showExpiredDialog} onOpenChange={setShowExpiredDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>QR Code expirado</DialogTitle>
+            <DialogDescription>
+              O tempo para pagamento expirou. Gere um novo código PIX para continuar.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              onClick={() => {
+                setShowExpiredDialog(false);
+                handleBack();
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #E91E8C 0%, #9C27B0 100%)'
+              }}
+              className="text-white"
+            >
+              Gerar novo código
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Exit Intent Popup */}
       <ExitIntentPopup 
