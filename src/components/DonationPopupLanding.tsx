@@ -35,7 +35,7 @@ const BOOST_OPTIONS = [
   { id: "basket", label: "Doar cesta básica", price: 85, icon: ShoppingBasket, color: "text-orange-500", bgColor: "bg-orange-100" },
 ];
 
-type Step = "select" | "loading" | "pix";
+type Step = "select" | "upsell" | "loading" | "pix";
 
 export const DonationPopupLanding = ({
   isOpen,
@@ -118,9 +118,9 @@ export const DonationPopupLanding = ({
     return selectedAmount || parseCustomAmount(customAmount);
   };
 
-  const handleGeneratePix = async () => {
-    const total = calculateTotal();
-    if (total <= 0) {
+  const handleContributeClick = () => {
+    const baseAmount = selectedAmount || parseCustomAmount(customAmount);
+    if (baseAmount <= 0) {
       toast({
         title: "Selecione um valor",
         description: "Escolha um valor para contribuir",
@@ -129,6 +129,18 @@ export const DonationPopupLanding = ({
       return;
     }
 
+    // Se não selecionou nenhum boost, mostra upsell
+    if (selectedBoosts.length === 0) {
+      setStep("upsell");
+      return;
+    }
+
+    // Se já tem boost, vai direto pro PIX
+    handleGeneratePix();
+  };
+
+  const handleGeneratePix = async () => {
+    const total = calculateTotal();
     setStep("loading");
 
     try {
@@ -171,6 +183,15 @@ export const DonationPopupLanding = ({
       });
       setStep("select");
     }
+  };
+
+  const handleUpsellAccept = (boostId: string) => {
+    setSelectedBoosts([boostId]);
+    handleGeneratePix();
+  };
+
+  const handleUpsellDecline = () => {
+    handleGeneratePix();
   };
 
   const handleBack = () => {
@@ -299,7 +320,7 @@ export const DonationPopupLanding = ({
 
             {/* CTA Button */}
             <Button 
-              onClick={handleGeneratePix}
+              onClick={handleContributeClick}
               className="w-full bg-[#00A651] hover:bg-[#008a44] text-white font-bold text-base sm:text-lg py-6 sm:py-7 rounded-lg"
             >
               CONTRIBUIR
@@ -335,6 +356,59 @@ export const DonationPopupLanding = ({
             <p className="text-[10px] sm:text-xs text-gray-500 leading-relaxed">
               Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação. Importante destacar a importância da adequação do seu cadastro, informando o <span className="font-bold text-gray-700">nome social</span>, caso o utilize.
             </p>
+          </div>
+        )}
+
+        {step === "upsell" && (
+          <div className="space-y-5 sm:space-y-6">
+            {/* Logo */}
+            <div className="flex items-center">
+              <img src={vakinhaLogo} alt="Vakinha" className="h-10 sm:h-14" />
+            </div>
+
+            <div className="bg-[#E8F5E9] rounded-2xl p-4 sm:p-6 text-center">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
+                Turbine sua doação! 💚
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base mb-4">
+                Você pode ajudar MUITO MAIS adicionando um dos itens abaixo:
+              </p>
+              
+              <div className="space-y-3 mb-5">
+                {BOOST_OPTIONS.map((boost) => {
+                  const Icon = boost.icon;
+                  return (
+                    <button
+                      key={boost.id}
+                      onClick={() => handleUpsellAccept(boost.id)}
+                      className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-white border-2 border-[#00A651]/30 hover:border-[#00A651] transition-all"
+                    >
+                      <div className={cn(
+                        "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0",
+                        boost.bgColor
+                      )}>
+                        <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", boost.color)} />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <span className="text-sm sm:text-base font-medium text-gray-800">
+                          {boost.label}
+                        </span>
+                      </div>
+                      <span className="text-sm sm:text-base font-bold text-[#00A651]">
+                        +{formatCurrency(boost.price)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={handleUpsellDecline}
+                className="text-gray-500 text-sm underline hover:text-gray-700 transition-colors"
+              >
+                Não, obrigado. Continuar com {formatCurrency(getContributionAmount())}
+              </button>
+            </div>
           </div>
         )}
 
