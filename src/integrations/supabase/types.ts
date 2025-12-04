@@ -190,6 +190,7 @@ export type Database = {
           id: string
           paid_at: string | null
           pix_code: string | null
+          popup_model: string | null
           product_name: string | null
           status: Database["public"]["Enums"]["pix_status"]
           txid: string | null
@@ -204,6 +205,7 @@ export type Database = {
           id?: string
           paid_at?: string | null
           pix_code?: string | null
+          popup_model?: string | null
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
@@ -218,6 +220,7 @@ export type Database = {
           id?: string
           paid_at?: string | null
           pix_code?: string | null
+          popup_model?: string | null
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
