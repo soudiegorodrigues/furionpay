@@ -127,6 +127,7 @@ export const DonationPopupLanding = ({
         title: "Selecione um valor",
         description: "Escolha um valor para contribuir",
         variant: "destructive",
+        duration: 2000,
       });
       return;
     }
