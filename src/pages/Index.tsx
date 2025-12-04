@@ -22,9 +22,9 @@ const Index = () => {
     }
   }, [userId, navigate]);
   
-  // Estado de loading até buscar as configurações
+  // Estado de loading até buscar as configurações - popupModel inicia como null para evitar flash
   const [isLoading, setIsLoading] = useState(true);
-  const [popupModel, setPopupModel] = useState<string>('boost');
+  const [popupModel, setPopupModel] = useState<string | null>(null);
   const [socialProofEnabled, setSocialProofEnabled] = useState(false);
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
@@ -41,9 +41,14 @@ const Index = () => {
           if (!urlAmount && data.fixedAmount) {
             setFixedAmount(data.fixedAmount);
           }
+        } else {
+          // Se não houver dados, usa boost como fallback
+          setPopupModel('boost');
         }
       } catch (err) {
         console.error('Error fetching settings:', err);
+        // Em caso de erro, usa boost como fallback
+        setPopupModel('boost');
       } finally {
         setIsLoading(false);
       }
@@ -59,8 +64,8 @@ const Index = () => {
     return null;
   }
 
-  // Mostra loading enquanto busca configurações
-  if (isLoading) {
+  // Mostra loading enquanto busca configurações ou popupModel ainda não foi definido
+  if (isLoading || !popupModel) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
