@@ -533,8 +533,8 @@ const AdminSettings = () => {
               </button>
             </div>
             
-            {/* Fixed Amount for Direct Model */}
-            {settings.popup_model === 'direct' && (
+            {/* Fixed Amount for Direct/Hot Model */}
+            {(settings.popup_model === 'direct' || settings.popup_model === 'hot') && (
               <div className="pt-4 border-t">
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
                   <p className="text-sm font-medium">💡 Valores dinâmicos via URL</p>
