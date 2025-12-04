@@ -6,6 +6,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
+import pixLogo from "@/assets/pix-logo.png";
 
 interface DonationPopupDirectProps {
   isOpen: boolean;
@@ -203,11 +204,7 @@ export const DonationPopupDirect = ({
             <div className="p-6 text-center space-y-2">
               <h2 className="text-2xl font-bold text-slate-800 flex items-center justify-center gap-2">
                 Pague via PIX
-                <svg className="w-7 h-7" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="#32BCAD" d="M395.27 382.27l-86.77-86.77c-14.18-14.18-37.23-14.18-51.41 0l-86.77 86.77c-11.05 11.05-26.05 17.25-41.69 17.25H112.5l107.88 107.88c33.85 33.85 88.78 33.85 122.64 0l107.88-107.88h-14.13c-15.64 0-30.64-6.2-41.69-17.25h.19z"/>
-                  <path fill="#32BCAD" d="M128.63 112.48h.19c15.64 0 30.64 6.2 41.69 17.25l86.77 86.77c14.18 14.18 37.23 14.18 51.41 0l86.77-86.77c11.05-11.05 26.05-17.25 41.69-17.25h14.13L343.4 4.6c-33.85-33.85-88.78-33.85-122.64 0L112.88 112.48h15.75z"/>
-                  <path fill="#229E8E" d="M450.38 168.6L343.4 61.62h-6.06c-15.64 0-30.64 6.2-41.69 17.25l-86.77 86.77c-7.09 7.09-16.4 10.63-25.7 10.63s-18.61-3.54-25.7-10.63l-86.77-86.77c-11.05-11.05-26.05-17.25-41.69-17.25H61.62L61.62 168.6c-33.85 33.85-33.85 88.78 0 122.64l106.97 106.97h-40.58c15.64 0 30.64-6.2 41.69-17.25l86.77-86.77c14.18-14.18 37.23-14.18 51.41 0l86.77 86.77c11.05 11.05 26.05 17.25 41.69 17.25h6.06l106.97-106.97c33.85-33.85 33.85-88.78 0-122.64z"/>
-                </svg>
+                <img src={pixLogo} alt="PIX" className="w-7 h-7" />
               </h2>
               
               {/* Timer */}
