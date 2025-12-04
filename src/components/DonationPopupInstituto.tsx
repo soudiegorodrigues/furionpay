@@ -3,7 +3,7 @@ import { Heart, X, ArrowLeft, Clock, Copy, Lock } from "lucide-react";
 import institutoLogo from "@/assets/instituto-logo.png";
 import { Button } from "@/components/ui/button";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
-import { ExitIntentPopup } from "./ExitIntentPopup";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
@@ -488,12 +488,6 @@ export const DonationPopupInstituto = ({
         </DialogContent>
       </Dialog>
 
-      {/* Exit Intent Popup */}
-      <ExitIntentPopup 
-        pixCode={pixData?.code || ""} 
-        isActive={step === "pix" && !!pixData} 
-        amount={selectedAmount || 1000}
-      />
     </div>
   );
 };

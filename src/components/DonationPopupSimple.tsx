@@ -3,7 +3,7 @@ import { X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
-import { ExitIntentPopup } from "./ExitIntentPopup";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
@@ -216,12 +216,6 @@ export const DonationPopupSimple = ({
         </div>
       </div>
 
-      {/* Exit Intent Popup */}
-      <ExitIntentPopup 
-        pixCode={pixData?.code || ""} 
-        isActive={step === "pix" && !!pixData} 
-        amount={selectedAmount || 0}
-      />
     </div>
   );
 };
