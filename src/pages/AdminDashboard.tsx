@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -229,11 +230,17 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   }, [dateFilter]);
   if (loading || isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-      </div>;
+    return (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </ThemeProvider>
+    );
   }
-  return <div className="min-h-screen bg-background p-3 sm:p-6">
+  return (
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <div className="min-h-screen bg-background p-3 sm:p-6">
       <BlockedUserAlert isBlocked={isBlocked} />
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
@@ -594,6 +601,8 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+    </ThemeProvider>
+  );
 };
 export default AdminDashboard;
