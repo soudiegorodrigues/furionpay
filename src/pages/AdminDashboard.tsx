@@ -55,7 +55,6 @@ const AdminDashboard = () => {
   const [rankingPage, setRankingPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [rankingDateFilter, setRankingDateFilter] = useState<DateFilter>('all');
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const navigate = useNavigate();
   const {
     toast
@@ -230,15 +229,11 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   }, [dateFilter]);
   if (loading || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-  return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-background p-3 sm:p-6">
+  return <div className="min-h-screen bg-background p-3 sm:p-6">
       <BlockedUserAlert isBlocked={isBlocked} />
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
@@ -260,7 +255,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <ThemeToggle isDark={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} />
+              <ThemeToggle />
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Sair</span>
@@ -599,8 +594,6 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-    </div>
-  );
+    </div>;
 };
 export default AdminDashboard;
