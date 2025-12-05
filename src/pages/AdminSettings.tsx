@@ -308,17 +308,44 @@ const AdminSettings = () => {
       <BlockedUserAlert isBlocked={isBlocked} />
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <Settings className="w-5 h-5 text-primary" />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <Settings className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Configurações</h1>
+                <p className="text-sm text-muted-foreground">Painel Administrativo</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Configurações</h1>
-              <p className="text-sm text-muted-foreground">Painel Administrativo</p>
+            {/* Desktop buttons */}
+            <div className="hidden sm:flex gap-2 flex-wrap">
+              {isAdmin && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
+                    <Globe className="w-4 h-4 mr-2" />
+                    Domínios
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')}>
+                    <Users className="w-4 h-4 mr-2" />
+                    Usuários
+                  </Button>
+                </>
+              )}
+              <Button variant="outline" size="sm" onClick={() => navigate('/admin/dashboard')}>
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </Button>
             </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          
+          {/* Mobile buttons */}
+          <div className="flex flex-wrap gap-2 sm:hidden">
             {isAdmin && (
               <>
                 <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
