@@ -263,25 +263,50 @@ const AdminDomains = () => {
     return null;
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/admin');
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <BlockedUserAlert isBlocked={isBlocked} />
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <Globe className="w-5 h-5 text-primary" />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <Globe className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Domínios Disponíveis</h1>
+                <p className="text-sm text-muted-foreground">Gerenciar domínios para os usuários</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Domínios Disponíveis</h1>
-              <p className="text-sm text-muted-foreground">Gerenciar domínios para os usuários</p>
-            </div>
+            {/* Desktop: botão voltar */}
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/settings')} className="hidden sm:flex">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/admin/settings')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
+          
+          {/* Mobile: Navigation buttons */}
+          <div className="flex flex-wrap gap-2 sm:hidden">
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
+              <Globe className="w-4 h-4 mr-2" />
+              Domínios
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')}>
+              Usuários
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/dashboard')}>
+              Dashboard
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Sair
+            </Button>
+          </div>
         </div>
 
         {/* Add Domain */}
