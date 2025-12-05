@@ -514,8 +514,8 @@ const AdminSettings = () => {
                 </div>
                 {/* Stats */}
                 <div className="text-center">
-                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('boost')}</span>
-                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('boost')}</span>
+                  <span className="text-xs font-semibold text-primary block">Conversão: {getConversionRate('boost')}</span>
+                  <span className="text-xs text-muted-foreground">Vendas: {getTotalPaid('boost')}</span>
                 </div>
               </button>
 
@@ -539,8 +539,8 @@ const AdminSettings = () => {
                   <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Doar</div>
                 </div>
                 <div className="text-center">
-                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('simple')}</span>
-                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('simple')}</span>
+                  <span className="text-xs font-semibold text-primary block">Conversão: {getConversionRate('simple')}</span>
+                  <span className="text-xs text-muted-foreground">Vendas: {getTotalPaid('simple')}</span>
                 </div>
               </button>
 
@@ -561,8 +561,8 @@ const AdminSettings = () => {
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">COPIAR</div>
                 </div>
                 <div className="text-center">
-                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('clean')}</span>
-                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('clean')}</span>
+                  <span className="text-xs font-semibold text-primary block">Conversão: {getConversionRate('clean')}</span>
+                  <span className="text-xs text-muted-foreground">Vendas: {getTotalPaid('clean')}</span>
                 </div>
               </button>
 
@@ -583,8 +583,8 @@ const AdminSettings = () => {
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">Copiar PIX</div>
                 </div>
                 <div className="text-center">
-                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('direct')}</span>
-                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('direct')}</span>
+                  <span className="text-xs font-semibold text-primary block">Conversão: {getConversionRate('direct')}</span>
+                  <span className="text-xs text-muted-foreground">Vendas: {getTotalPaid('direct')}</span>
                 </div>
               </button>
 
@@ -605,8 +605,8 @@ const AdminSettings = () => {
                   </div>
                 </div>
                 <div className="text-center">
-                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('hot')}</span>
-                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('hot')}</span>
+                  <span className="text-xs font-semibold text-primary block">Conversão: {getConversionRate('hot')}</span>
+                  <span className="text-xs text-muted-foreground">Vendas: {getTotalPaid('hot')}</span>
                 </div>
               </button>
 
@@ -628,8 +628,8 @@ const AdminSettings = () => {
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">CONTRIBUIR</div>
                 </div>
                 <div className="text-center">
-                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('landing')}</span>
-                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('landing')}</span>
+                  <span className="text-xs font-semibold text-primary block">Conversão: {getConversionRate('landing')}</span>
+                  <span className="text-xs text-muted-foreground">Vendas: {getTotalPaid('landing')}</span>
                 </div>
               </button>
 
@@ -654,8 +654,8 @@ const AdminSettings = () => {
                   <div className="h-3 bg-gradient-to-r from-pink-500 to-purple-500 rounded text-[4px] text-white flex items-center justify-center font-medium">R$ 1000</div>
                 </div>
                 <div className="text-center">
-                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('instituto')}</span>
-                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('instituto')}</span>
+                  <span className="text-xs font-semibold text-primary block">Conversão: {getConversionRate('instituto')}</span>
+                  <span className="text-xs text-muted-foreground">Vendas: {getTotalPaid('instituto')}</span>
                 </div>
               </button>
             </div>
