@@ -14,6 +14,8 @@ const Index = () => {
   const navigate = useNavigate();
   const userId = searchParams.get('u') || searchParams.get('user');
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
+  // Lê o modelo da URL para evitar flash - PRIORIDADE MÁXIMA
+  const urlModel = searchParams.get('m') || searchParams.get('model');
   
   // Redireciona para admin se não houver userId
   useEffect(() => {
@@ -22,12 +24,18 @@ const Index = () => {
     }
   }, [userId, navigate]);
   
-  // Inicia com valores padrão para renderização instantânea
-  const [popupModel, setPopupModel] = useState<string>('boost');
+  // Usa o modelo da URL se disponível, senão usa 'boost' como fallback temporário
+  const [popupModel, setPopupModel] = useState<string>(urlModel || 'boost');
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
 
   useEffect(() => {
-    // Busca configurações em background sem bloquear a renderização
+    // Se já temos o modelo da URL, não precisa buscar do banco
+    if (urlModel) {
+      console.log('Using URL model:', urlModel);
+      return;
+    }
+    
+    // Busca configurações em background apenas se não tiver modelo na URL
     const fetchSettings = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-popup-model', {
@@ -47,7 +55,7 @@ const Index = () => {
     };
 
     fetchSettings();
-  }, [userId]);
+  }, [userId, urlModel, urlAmount]);
 
   // Não renderiza nada se não houver userId (vai redirecionar)
   if (!userId) {
