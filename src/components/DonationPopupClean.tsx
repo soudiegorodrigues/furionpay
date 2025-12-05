@@ -63,19 +63,16 @@ export const DonationPopupClean = ({
     }
   }, [isOpen, trackEvent]);
 
-  // Poll for payment status
+  // Poll for payment status using secure RPC function
   useEffect(() => {
     if (step !== "pix" || !pixData?.transactionId || isPaid) return;
 
     const pollInterval = setInterval(async () => {
       try {
         const { data, error } = await supabase
-          .from("pix_transactions")
-          .select("status")
-          .eq("id", pixData.transactionId)
-          .single();
+          .rpc("get_transaction_status_by_id", { p_id: pixData.transactionId });
 
-        if (!error && data?.status === "paid") {
+        if (!error && data && data.length > 0 && data[0].status === "paid") {
           setIsPaid(true);
           trackEvent("Purchase", {
             value: selectedAmount,

@@ -96,40 +96,34 @@ export const DonationPopupInstituto = ({
     return () => clearInterval(interval);
   }, [step, isPaid, timeLeft]);
 
-  // Realtime payment subscription
+  // Poll for payment status using secure RPC function
   useEffect(() => {
-    if (!pixData?.transactionId || step !== "pix") return;
+    if (!pixData?.transactionId || step !== "pix" || isPaid) return;
 
-    const channel = supabase
-      .channel(`payment-${pixData.transactionId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'pix_transactions',
-          filter: `id=eq.${pixData.transactionId}`,
-        },
-        (payload) => {
-          if (payload.new && (payload.new as any).status === 'paid') {
-            setIsPaid(true);
-            trackEvent('Purchase', {
-              value: selectedAmount || 1000,
-              currency: 'BRL',
-            });
-            toast({
-              title: "Pagamento confirmado!",
-              description: "Obrigado pela sua doação!",
-            });
-          }
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase
+          .rpc("get_transaction_status_by_id", { p_id: pixData.transactionId });
+
+        if (!error && data && data.length > 0 && data[0].status === "paid") {
+          setIsPaid(true);
+          trackEvent('Purchase', {
+            value: selectedAmount || 1000,
+            currency: 'BRL',
+          });
+          toast({
+            title: "Pagamento confirmado!",
+            description: "Obrigado pela sua doação!",
+          });
+          clearInterval(pollInterval);
         }
-      )
-      .subscribe();
+      } catch (err) {
+        console.error("Error polling status:", err);
+      }
+    }, 3000);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [pixData?.transactionId, step, selectedAmount, toast, trackEvent]);
+    return () => clearInterval(pollInterval);
+  }, [pixData?.transactionId, step, selectedAmount, toast, trackEvent, isPaid]);
 
   useEffect(() => {
     if (!isOpen) {
