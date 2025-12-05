@@ -297,9 +297,10 @@ const AdminAuth = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl" />
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl animate-float-slow" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-spin-slow" />
         </div>
         <div className="flex flex-col items-center gap-3 relative z-10">
           <Loader2 className="h-8 w-8 animate-spin text-white" />
@@ -313,11 +314,15 @@ const AdminAuth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 p-4 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Large blurred circles */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-teal-400/20 rounded-full blur-2xl" />
+        {/* Large blurred circles with pulse-glow */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl animate-float-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-teal-400/20 rounded-full blur-2xl animate-float" />
+        
+        {/* Spinning ring */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-spin-slow" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
         
         {/* Grid pattern overlay */}
         <div 
@@ -327,11 +332,17 @@ const AdminAuth = () => {
           }}
         />
         
-        {/* Floating shapes */}
-        <div className="absolute top-20 right-20 w-4 h-4 bg-white/20 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }} />
-        <div className="absolute top-40 left-20 w-3 h-3 bg-white/20 rounded-full animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '4s' }} />
-        <div className="absolute bottom-32 right-32 w-2 h-2 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: '1s', animationDuration: '3.5s' }} />
-        <div className="absolute bottom-20 left-1/3 w-3 h-3 bg-white/20 rounded-full animate-bounce" style={{ animationDelay: '1.5s', animationDuration: '4s' }} />
+        {/* Floating shapes with different animations */}
+        <div className="absolute top-20 right-20 w-4 h-4 bg-white/25 rounded-full animate-float" style={{ animationDelay: '0s' }} />
+        <div className="absolute top-40 left-20 w-3 h-3 bg-white/20 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-32 right-32 w-2 h-2 bg-white/30 rounded-full animate-float-slow" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-20 left-1/3 w-3 h-3 bg-white/20 rounded-full animate-drift" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-white/25 rounded-full animate-float" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-1/3 left-1/4 w-4 h-4 bg-white/15 rounded-full animate-float-slow" style={{ animationDelay: '1.5s' }} />
+        
+        {/* Geometric shapes */}
+        <div className="absolute top-32 left-1/3 w-8 h-8 border-2 border-white/10 rotate-45 animate-drift" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-40 right-1/3 w-6 h-6 border-2 border-white/10 rotate-12 animate-float" style={{ animationDelay: '4s' }} />
       </div>
       <div className="w-full max-w-[400px] animate-fade-in relative z-10">
         {/* Card */}
