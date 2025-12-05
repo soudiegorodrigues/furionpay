@@ -833,30 +833,6 @@ const AdminSettings = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Bottom Navigation - Desktop */}
-        <div className="flex flex-wrap gap-2 justify-center pt-4 border-t border-border/50">
-          {isAdmin && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
-                <Globe className="w-4 h-4 mr-2" />
-                Domínios
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')}>
-                <Users className="w-4 h-4 mr-2" />
-                Usuários
-              </Button>
-            </>
-          )}
-          <Button variant="outline" size="sm" onClick={() => navigate('/admin/dashboard')}>
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Dashboard
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair
-          </Button>
-        </div>
       </div>
 
       {/* Popup Preview */}
