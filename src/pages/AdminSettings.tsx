@@ -487,12 +487,18 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
+              {/* Boost Model */}
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'boost'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'boost' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-                {/* Mini Preview - Boost Model */}
-                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+            }))} className={`p-3 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'boost' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                {/* Nome em cima */}
+                <div className="mb-2">
+                  <p className="font-medium text-sm">Modelo Boost</p>
+                  <p className="text-[10px] text-muted-foreground">Order Bump</p>
+                </div>
+                {/* Mini Preview */}
+                <div className="bg-card border border-border rounded-md p-2 mb-2 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">🚨 Doe agora!</div>
                   <div className="flex gap-1 mb-1">
                     <div className="flex-1 h-4 bg-secondary rounded border border-border flex items-center px-1">
@@ -506,25 +512,23 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Contribuir</div>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="font-medium text-sm">Modelo Boost</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Order Bump
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('boost')}</span>
-                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('boost')}</span>
-                  </div>
+                {/* Stats */}
+                <div className="text-center">
+                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('boost')}</span>
+                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('boost')}</span>
                 </div>
               </button>
+
+              {/* Simple Model */}
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'simple'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'simple' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-                {/* Mini Preview - Simple Model */}
-                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+            }))} className={`p-3 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'simple' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                <div className="mb-2">
+                  <p className="font-medium text-sm">Modelo Simples</p>
+                  <p className="text-[10px] text-muted-foreground">Grade de valores</p>
+                </div>
+                <div className="bg-card border border-border rounded-md p-2 mb-2 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">💚 Escolha o valor</div>
                   <div className="grid grid-cols-2 gap-0.5 mb-1">
                     <div className="h-2.5 bg-secondary rounded border border-border text-[4px] flex items-center justify-center">R$20</div>
@@ -534,100 +538,88 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-primary rounded text-[4px] text-primary-foreground flex items-center justify-center font-medium">Doar</div>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="font-medium text-sm">Modelo Simples</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Grade de valores
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('simple')}</span>
-                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('simple')}</span>
-                  </div>
+                <div className="text-center">
+                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('simple')}</span>
+                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('simple')}</span>
                 </div>
               </button>
+
+              {/* Clean Model */}
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'clean'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'clean' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-                {/* Mini Preview - Clean Model */}
-                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+            }))} className={`p-3 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'clean' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                <div className="mb-2">
+                  <p className="font-medium text-sm">Modelo Limpo</p>
+                  <p className="text-[10px] text-muted-foreground">Design minimalista</p>
+                </div>
+                <div className="bg-card border border-border rounded-md p-2 mb-2 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">❤️ Salvando vidas</div>
                   <div className="w-8 h-8 mx-auto bg-secondary rounded border border-border mb-1 flex items-center justify-center">
                     <span className="text-[6px]">QR</span>
                   </div>
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">COPIAR</div>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="font-medium text-sm">Modelo Limpo</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Design minimalista
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('clean')}</span>
-                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('clean')}</span>
-                  </div>
+                <div className="text-center">
+                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('clean')}</span>
+                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('clean')}</span>
                 </div>
               </button>
+
+              {/* Direct Model */}
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'direct'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'direct' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-                {/* Mini Preview - Direct Model */}
-                <div className="bg-card border border-border rounded-md p-2 mb-3 scale-90">
+            }))} className={`p-3 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'direct' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                <div className="mb-2">
+                  <p className="font-medium text-sm">Modelo Direto</p>
+                  <p className="text-[10px] text-muted-foreground">PIX automático</p>
+                </div>
+                <div className="bg-card border border-border rounded-md p-2 mb-2 scale-90">
                   <div className="text-[6px] font-bold text-center mb-1">💚 Doe R$100</div>
                   <div className="w-8 h-8 mx-auto bg-amber-50 rounded border border-amber-200 mb-1 flex items-center justify-center">
                     <span className="text-[6px]">QR</span>
                   </div>
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">Copiar PIX</div>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="font-medium text-sm">Modelo Direto</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PIX automático
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('direct')}</span>
-                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('direct')}</span>
-                  </div>
+                <div className="text-center">
+                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('direct')}</span>
+                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('direct')}</span>
                 </div>
               </button>
+
+              {/* Hot Model */}
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'hot'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'hot' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-                {/* Mini Preview - Hot Model */}
-                <div className="bg-gradient-to-r from-rose-400 to-orange-300 rounded-md p-2 mb-3 scale-90">
+            }))} className={`p-3 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'hot' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                <div className="mb-2">
+                  <p className="font-medium text-sm">Modelo Hot</p>
+                  <p className="text-[10px] text-muted-foreground">Cadastro + PIX</p>
+                </div>
+                <div className="bg-gradient-to-r from-rose-400 to-orange-300 rounded-md p-2 mb-2 scale-90">
                   <div className="text-[6px] font-bold text-center text-white mb-1">📧 Email</div>
                   <div className="bg-white rounded p-1">
                     <div className="h-2 bg-slate-100 rounded mb-1"></div>
                     <div className="h-3 bg-gradient-to-r from-rose-400 to-orange-300 rounded text-[4px] text-white flex items-center justify-center font-medium">Pagar</div>
                   </div>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="font-medium text-sm">Modelo Hot</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Cadastro + PIX
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('hot')}</span>
-                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('hot')}</span>
-                  </div>
+                <div className="text-center">
+                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('hot')}</span>
+                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('hot')}</span>
                 </div>
               </button>
+
+              {/* Landing/Vakinha Model */}
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'landing'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'landing' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-                {/* Mini Preview - Landing Model */}
-                <div className="bg-gradient-to-b from-emerald-50 to-white rounded-md p-2 mb-3 scale-90 border border-slate-100">
+            }))} className={`p-3 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'landing' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                <div className="mb-2">
+                  <p className="font-medium text-sm">Modelo Vakinha</p>
+                  <p className="text-[10px] text-muted-foreground">Estilo Vakinha</p>
+                </div>
+                <div className="bg-gradient-to-b from-emerald-50 to-white rounded-md p-2 mb-2 scale-90 border border-slate-100">
                   <div className="text-[6px] font-bold text-emerald-600 mb-1">🏠 Landing</div>
                   <div className="grid grid-cols-2 gap-0.5 mb-1">
                     <div className="h-2 bg-slate-100 rounded text-[3px]"></div>
@@ -635,25 +627,22 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-emerald-500 rounded text-[4px] text-white flex items-center justify-center font-medium">CONTRIBUIR</div>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="font-medium text-sm">Modelo Vakinha</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Estilo Vakinha
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('landing')}</span>
-                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('landing')}</span>
-                  </div>
+                <div className="text-center">
+                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('landing')}</span>
+                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('landing')}</span>
                 </div>
               </button>
+
+              {/* Instituto Model */}
               <button onClick={() => setSettings(s => ({
               ...s,
               popup_model: 'instituto'
-            }))} className={`p-4 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'instituto' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-                {/* Mini Preview - Instituto Model */}
-                <div className="bg-gradient-to-b from-pink-50 to-white rounded-md p-2 mb-3 scale-90 border border-pink-200">
+            }))} className={`p-3 rounded-lg border-2 transition-all text-left relative ${settings.popup_model === 'instituto' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                <div className="mb-2">
+                  <p className="font-medium text-sm">Modelo Instituto</p>
+                  <p className="text-[10px] text-muted-foreground">Barra de progresso</p>
+                </div>
+                <div className="bg-gradient-to-b from-pink-50 to-white rounded-md p-2 mb-2 scale-90 border border-pink-200">
                   <div className="text-[6px] font-bold text-pink-600 mb-1">💖 Meta: R$ 200.000</div>
                   <div className="w-full h-1.5 bg-gray-200 rounded-full mb-1">
                     <div className="h-full w-4/5 bg-gradient-to-r from-cyan-400 to-green-400 rounded-full"></div>
@@ -664,17 +653,9 @@ const AdminSettings = () => {
                   </div>
                   <div className="h-3 bg-gradient-to-r from-pink-500 to-purple-500 rounded text-[4px] text-white flex items-center justify-center font-medium">R$ 1000</div>
                 </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="font-medium text-sm">Modelo Instituto</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Barra de progresso
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-primary block">Taxa de conversão: {getConversionRate('instituto')}</span>
-                    <span className="text-xs text-muted-foreground">N. de vendas: {getTotalPaid('instituto')}</span>
-                  </div>
+                <div className="text-center">
+                  <span className="text-[10px] font-semibold text-primary block">Conversão: {getConversionRate('instituto')}</span>
+                  <span className="text-[10px] text-muted-foreground">Vendas: {getTotalPaid('instituto')}</span>
                 </div>
               </button>
             </div>
