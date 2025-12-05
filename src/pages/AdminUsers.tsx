@@ -307,7 +307,9 @@ const AdminUsers = () => {
                   ) : (
                     paginatedUsers.map((u) => (
                       <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.email}</TableCell>
+                        <TableCell className="font-medium">
+                          <span className="no-underline" style={{ textDecoration: 'none' }}>{u.email}</span>
+                        </TableCell>
                         <TableCell>{formatDate(u.created_at)}</TableCell>
                         <TableCell>{formatDate(u.last_sign_in_at)}</TableCell>
                         <TableCell>

@@ -465,7 +465,7 @@ const AdminDashboard = () => {
                               {(rankingPage - 1) * RANKING_PER_PAGE + index + 1}º
                             </TableCell>
                             <TableCell className="text-xs sm:text-sm truncate max-w-[150px]">
-                              {user.user_email}
+                              <span className="no-underline" style={{ textDecoration: 'none' }}>{user.user_email}</span>
                             </TableCell>
                             <TableCell className="text-xs sm:text-sm text-center text-blue-400">
                               {user.total_generated}
