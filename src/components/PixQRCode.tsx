@@ -43,43 +43,36 @@ export const PixQRCode = ({
     });
   }, [amount, trackCustomEvent]);
 
-  // Listen for payment confirmation via Realtime
+  // Poll for payment status using secure RPC function
   useEffect(() => {
     if (!transactionId || isPaid) return;
 
-    const channel = supabase
-      .channel(`pix-payment-${transactionId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'pix_transactions',
-          filter: `id=eq.${transactionId}`,
-        },
-        (payload) => {
-          if (payload.new && payload.new.status === 'paid') {
-            setIsPaid(true);
-            // Fire Purchase event
-            trackEvent('Purchase', {
-              value: amount,
-              currency: 'BRL',
-              content_name: 'Doação PIX',
-              content_type: 'donation',
-              transaction_id: transactionId,
-            });
-            toast({
-              title: "🎉 Pagamento confirmado!",
-              description: "Obrigado pela sua doação! Você transformou uma vida.",
-            });
-          }
-        }
-      )
-      .subscribe();
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase
+          .rpc("get_transaction_status_by_id", { p_id: transactionId });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+        if (!error && data && data.length > 0 && data[0].status === "paid") {
+          setIsPaid(true);
+          trackEvent('Purchase', {
+            value: amount,
+            currency: 'BRL',
+            content_name: 'Doação PIX',
+            content_type: 'donation',
+            transaction_id: transactionId,
+          });
+          toast({
+            title: "🎉 Pagamento confirmado!",
+            description: "Obrigado pela sua doação! Você transformou uma vida.",
+          });
+          clearInterval(pollInterval);
+        }
+      } catch (err) {
+        console.error("Error polling status:", err);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
   }, [transactionId, amount, isPaid, trackEvent]);
 
   useEffect(() => {

@@ -320,6 +320,13 @@ export type Database = {
           total_paid: number
         }[]
       }
+      get_transaction_status_by_id: {
+        Args: { p_id: string }
+        Returns: {
+          paid_at: string
+          status: Database["public"]["Enums"]["pix_status"]
+        }[]
+      }
       get_transaction_status_by_txid: {
         Args: { p_txid: string }
         Returns: {
