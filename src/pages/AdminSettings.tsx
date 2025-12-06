@@ -214,7 +214,25 @@ const AdminSettings = () => {
       [field]: value
     } : p));
   };
+  // Blocked product names list
+  const blockedProductNames = ['doação', 'doacao', 'golpe', 'falso', 'fraude', 'fake', 'scam'];
+
+  const isProductNameBlocked = (name: string): boolean => {
+    const normalizedName = name.toLowerCase().trim();
+    return blockedProductNames.some(blocked => normalizedName.includes(blocked));
+  };
+
   const handleSave = async () => {
+    // Validate product name before saving
+    if (settings.product_name && isProductNameBlocked(settings.product_name)) {
+      toast({
+        title: "Nome de produto bloqueado",
+        description: "O nome do produto contém palavras não permitidas. Por favor, escolha outro nome.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const pixelsJson = JSON.stringify(pixels);
