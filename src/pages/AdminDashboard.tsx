@@ -42,16 +42,13 @@ interface RankingUser {
 }
 const ITEMS_PER_PAGE = 10;
 const RANKING_PER_PAGE = 5;
-const TRANSACTIONS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | 'month' | 'year' | 'all';
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [globalStats, setGlobalStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [globalTransactions, setGlobalTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [globalTxPage, setGlobalTxPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [isAdmin, setIsAdmin] = useState(false);
   const [rankingUsers, setRankingUsers] = useState<RankingUser[]>([]);
@@ -120,16 +117,6 @@ const AdminDashboard = () => {
         } = await supabase.rpc('get_pix_dashboard_auth');
         if (globalData) {
           setGlobalStats(globalData as unknown as DashboardStats);
-        }
-
-        // Load global transactions for admin
-        const {
-          data: globalTxData
-        } = await supabase.rpc('get_pix_transactions_auth', {
-          p_limit: 500
-        });
-        if (globalTxData) {
-          setGlobalTransactions(globalTxData as unknown as Transaction[]);
         }
 
         // Load ranking data
@@ -537,180 +524,75 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>}
 
-        {/* Global Transactions Table - Admin Only */}
-        {isAdmin && (
-          <Card className="bg-card border-border">
-            <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                Transações Globais
-                <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              {globalTransactions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  Nenhuma transação encontrada
+        {/* Transactions Table */}
+        <Card className="bg-card border-border">
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Transações Recentes</CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            {filteredTransactions.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
+                Nenhuma transação encontrada
+              </div> : <>
+                <div className="overflow-x-auto -mx-3 sm:mx-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Data</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Valor</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden sm:table-cell">Produto</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Clientes</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden lg:table-cell">Pago em</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedTransactions.map(tx => <TableRow key={tx.id}>
+                          <TableCell className="text-xs sm:text-sm whitespace-nowrap">
+                            {formatDate(tx.created_at)}
+                          </TableCell>
+                          <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <QrCode className="h-3.5 w-3.5 text-emerald-500" />
+                              {formatCurrency(tx.amount)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(tx.status)}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm text-muted-foreground hidden sm:table-cell">
+                            {tx.product_name || '-'}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm text-muted-foreground hidden md:table-cell">
+                            {tx.donor_name || '-'}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
+                            {tx.paid_at ? formatDate(tx.paid_at) : '-'}
+                          </TableCell>
+                        </TableRow>)}
+                    </TableBody>
+                  </Table>
                 </div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto -mx-3 sm:mx-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Data</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Valor</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden sm:table-cell">Produto</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Clientes</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden lg:table-cell">Pago em</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {globalTransactions
-                          .slice((globalTxPage - 1) * TRANSACTIONS_PER_PAGE, globalTxPage * TRANSACTIONS_PER_PAGE)
-                          .map(tx => (
-                            <TableRow key={tx.id}>
-                              <TableCell className="text-xs sm:text-sm whitespace-nowrap">
-                                {formatDate(tx.created_at)}
-                              </TableCell>
-                              <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
-                                <div className="flex items-center gap-1.5">
-                                  <QrCode className="h-3.5 w-3.5 text-emerald-500" />
-                                  {formatCurrency(tx.amount)}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {getStatusBadge(tx.status)}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm text-muted-foreground hidden sm:table-cell">
-                                {tx.product_name || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm text-muted-foreground hidden md:table-cell">
-                                {tx.donor_name || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
-                                {tx.paid_at ? formatDate(tx.paid_at) : '-'}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
 
-                  {/* Global Transactions Pagination */}
-                  {Math.ceil(globalTransactions.length / TRANSACTIONS_PER_PAGE) > 1 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-border gap-3">
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {(globalTxPage - 1) * TRANSACTIONS_PER_PAGE + 1}-{Math.min(globalTxPage * TRANSACTIONS_PER_PAGE, globalTransactions.length)} de {globalTransactions.length}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => setGlobalTxPage(prev => Math.max(1, prev - 1))} 
-                          disabled={globalTxPage === 1}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-xs sm:text-sm text-muted-foreground px-2">
-                          {globalTxPage}/{Math.ceil(globalTransactions.length / TRANSACTIONS_PER_PAGE)}
-                        </span>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => setGlobalTxPage(prev => Math.min(Math.ceil(globalTransactions.length / TRANSACTIONS_PER_PAGE), prev + 1))} 
-                          disabled={globalTxPage === Math.ceil(globalTransactions.length / TRANSACTIONS_PER_PAGE)}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
+                {/* Pagination */}
+                {totalPages > 1 && <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-border gap-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs sm:text-sm text-muted-foreground px-2">
+                        {currentPage}/{totalPages}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* User Transactions Table - Non-Admin Only */}
-        {!isAdmin && (
-          <Card className="bg-card border-border">
-            <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="text-base sm:text-lg">Minhas Transações</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              {filteredTransactions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  Nenhuma transação encontrada
-                </div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto -mx-3 sm:mx-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Data</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Valor</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden sm:table-cell">Produto</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Clientes</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden lg:table-cell">Pago em</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedTransactions.map(tx => (
-                          <TableRow key={tx.id}>
-                            <TableCell className="text-xs sm:text-sm whitespace-nowrap">
-                              {formatDate(tx.created_at)}
-                            </TableCell>
-                            <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
-                              <div className="flex items-center gap-1.5">
-                                <QrCode className="h-3.5 w-3.5 text-emerald-500" />
-                                {formatCurrency(tx.amount)}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {getStatusBadge(tx.status)}
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-muted-foreground hidden sm:table-cell">
-                              {tx.product_name || '-'}
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-muted-foreground hidden md:table-cell">
-                              {tx.donor_name || '-'}
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
-                              {tx.paid_at ? formatDate(tx.paid_at) : '-'}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-border gap-3">
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-xs sm:text-sm text-muted-foreground px-2">
-                          {currentPage}/{totalPages}
-                        </span>
-                        <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                  </div>}
+              </>}
+          </CardContent>
+        </Card>
       </div>
     </div>;
 };
