@@ -2,14 +2,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import BlockedUserAlert from "@/components/BlockedUserAlert";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, LogOut, Save, Loader2, Plus, Trash2, BarChart3, AlertTriangle, Layout, Pencil, ChevronDown, Link, Copy, Check, Eye, Globe, Users } from "lucide-react";
+import { Settings, Key, Activity, Save, Loader2, Plus, Trash2, AlertTriangle, Layout, Pencil, ChevronDown, Link, Copy, Check, Eye, Globe } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ import { DonationPopupDirect } from "@/components/DonationPopupDirect";
 import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
+
 interface MetaPixel {
   id: string;
   name: string;
@@ -318,47 +319,24 @@ const AdminSettings = () => {
     }
   };
   if (loading || isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-      <BlockedUserAlert isBlocked={isBlocked} />
+  
+  return (
+    <AdminLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <Settings className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Configurações</h1>
-              <p className="text-sm text-muted-foreground">Painel Administrativo</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+            <Settings className="w-5 h-5 text-primary" />
           </div>
-          
-          {/* Navigation buttons - below title */}
-          <div className="flex flex-wrap gap-2">
-            {isAdmin && (
-              <>
-                <Button variant="outline" size="sm" onClick={() => navigate('/admin/domains')}>
-                  <Globe className="w-4 h-4 mr-2" />
-                  Domínios
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')}>
-                  <Users className="w-4 h-4 mr-2" />
-                  Usuários
-                </Button>
-              </>
-            )}
-            <Button variant="outline" size="sm" onClick={() => navigate('/admin/dashboard')}>
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
-            </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Configurações</h1>
+            <p className="text-sm text-muted-foreground">Personalize suas configurações de pagamento</p>
           </div>
         </div>
 
@@ -912,6 +890,7 @@ const AdminSettings = () => {
           showCloseButton={true}
         />
       )}
-    </div>;
+    </AdminLayout>
+  );
 };
 export default AdminSettings;
