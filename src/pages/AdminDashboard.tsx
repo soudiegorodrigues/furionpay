@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import BlockedUserAlert from "@/components/BlockedUserAlert";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, TrendingUp, DollarSign, QrCode, CheckCircle, Clock, Settings, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight, Calendar, LogOut, Trophy } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { BarChart3, DollarSign, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, Trophy, QrCode } from "lucide-react";
+
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -228,39 +228,25 @@ const AdminDashboard = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFilter]);
-  if (loading || isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-      </div>;
-  }
-  return <div className="min-h-screen bg-background p-3 sm:p-6">
-      <BlockedUserAlert isBlocked={isBlocked} />
+  return (
+    <AdminLayout>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
-                  <span className="truncate">Dashboard Financeiro</span>
-                </h1>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  {user?.email && <span className="hidden sm:inline">{user.email} • </span>}
-                  Acompanhe as transações PIX
-                </p>
-              </div>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
+                <span className="truncate">Dashboard Financeiro</span>
+              </h1>
+              <p className="text-muted-foreground text-xs sm:text-sm">
+                Acompanhe as transações PIX
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Atualizar</span>
+            </Button>
           </div>
           <div className="flex flex-wrap gap-2">
             <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
@@ -276,14 +262,6 @@ const AdminDashboard = () => {
                 <SelectItem value="year">Este ano</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={loadData}>
-              <RefreshCw className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Atualizar</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/admin/settings')}>
-              <Settings className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Configurações</span>
-            </Button>
           </div>
         </div>
 
@@ -594,6 +572,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </AdminLayout>
+  );
 };
 export default AdminDashboard;

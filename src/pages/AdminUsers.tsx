@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import BlockedUserAlert from '@/components/BlockedUserAlert';
+import { AdminLayout } from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Shield, ShieldOff, Users, Loader2, RefreshCw, ChevronLeft, ChevronRight, Ban, Unlock, Trash2 } from 'lucide-react';
+import { Shield, ShieldOff, Users, Loader2, RefreshCw, ChevronLeft, ChevronRight, Ban, Unlock, Trash2 } from 'lucide-react';
 
 const USERS_PER_PAGE = 10;
 
@@ -255,29 +255,23 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <BlockedUserAlert isBlocked={isBlocked} />
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-xl font-bold">Gerenciar Usuários</h1>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
-              </div>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <Users className="w-5 h-5 text-primary" />
             </div>
-            <Button variant="outline" size="sm" onClick={loadUsers}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Atualizar
-            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Gerenciar Usuários</h1>
+              <p className="text-sm text-muted-foreground">{users.length} usuário(s) cadastrado(s)</p>
+            </div>
           </div>
+          <Button variant="outline" size="sm" onClick={loadUsers}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
         </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-6">
         <Card className="mb-6">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
@@ -470,7 +464,7 @@ const AdminUsers = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminLayout>
   );
 };
 
