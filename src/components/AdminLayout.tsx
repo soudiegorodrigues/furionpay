@@ -33,6 +33,13 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
   const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin } = useAdminAuth();
   const [userName, setUserName] = useState<string | null>(null);
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [loading, isAuthenticated, navigate]);
+
   // Fetch user profile name
   useEffect(() => {
     const fetchProfile = async () => {
@@ -59,15 +66,12 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
 
   const handleSectionClick = (section: typeof adminSections[0]) => {
     if (section.section && onSectionChange) {
-      // If we're already on /admin, just change section
       if (location.pathname === '/admin') {
         onSectionChange(section.section);
       } else {
-        // Navigate to /admin with section state
         navigate(section.path, { state: { section: section.section } });
       }
     } else {
-      // Direct navigation for personalization/email
       navigate(section.path);
     }
   };
@@ -90,13 +94,6 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
       </div>
     );
   }
-
-  // Redirect if not authenticated - using useEffect to avoid render-time navigation
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/login');
-    }
-  }, [loading, isAuthenticated, navigate]);
 
   // Don't render anything while redirecting
   if (!isAuthenticated) {
