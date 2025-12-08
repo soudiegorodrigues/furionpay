@@ -31,30 +31,32 @@ interface AdminSidebarProps {
 export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
   return (
     <Sidebar className="border-r border-border">
-      <SidebarHeader className="p-6">
+      <SidebarHeader className="px-6 py-8 flex items-center justify-center">
         <img 
           src={furionPayLogo} 
           alt="FurionPay" 
-          className="h-28 w-auto object-contain"
+          className="h-16 w-auto object-contain"
         />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-3">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium mb-2">
+            Menu Principal
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
                       end 
-                      className="flex items-center gap-2 hover:bg-muted/50 rounded-md px-2 py-1.5" 
+                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-3 py-2.5 transition-colors" 
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-5 w-5 shrink-0" />
+                      <span className="text-sm">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -64,24 +66,24 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-3">
-        <div className="flex items-center gap-2">
+      <SidebarFooter className="p-4 space-y-4 mt-auto">
+        <div className="flex items-center gap-3 px-2">
           <ThemeToggle />
-          <span className="text-xs text-muted-foreground">Tema</span>
+          <span className="text-sm text-muted-foreground">Tema</span>
         </div>
         
-        <div className="border-t border-border pt-3">
+        <div className="border-t border-border pt-4">
           <NavLink 
             to="/admin/profile" 
-            className="flex items-center gap-3 mb-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
             activeClassName="bg-primary/10"
           >
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <User className="h-4 w-4 text-primary" />
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <User className="h-5 w-5 text-primary" />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-medium truncate">Meu Perfil</span>
-              <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-semibold truncate">FURIONPAY</span>
+              <span className="text-xs text-muted-foreground truncate">
                 {userEmail || "Não identificado"}
               </span>
             </div>
@@ -91,7 +93,7 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
             variant="ghost" 
             size="sm"
             onClick={onLogout}
-            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 mt-2 px-3"
           >
             <LogOut className="h-4 w-4" />
             <span className="ml-2">Sair da conta</span>
