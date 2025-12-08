@@ -84,7 +84,6 @@ const AdminCheckout = () => {
   const [metaPixels, setMetaPixels] = useState<MetaPixel[]>([]);
   const [selectedPixel, setSelectedPixel] = useState<string>("");
   const [linkCopied, setLinkCopied] = useState(false);
-  const navigate = useNavigate();
   const {
     isAuthenticated,
     loading,

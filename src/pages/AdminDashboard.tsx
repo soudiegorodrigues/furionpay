@@ -47,9 +47,7 @@ const AdminDashboard = () => {
   const {
     isAuthenticated,
     loading,
-    signOut,
-    user,
-    isBlocked
+    signOut
   } = useAdminAuth();
   // Load data when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
