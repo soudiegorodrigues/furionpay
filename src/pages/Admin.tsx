@@ -32,7 +32,8 @@ import {
   Shield,
   ShieldOff,
   Ban,
-  Unlock
+  Unlock,
+  Trophy
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -77,7 +78,18 @@ interface User {
   is_blocked: boolean;
 }
 
+interface RankingUser {
+  user_id: string;
+  user_email: string;
+  total_generated: number;
+  total_paid: number;
+  total_amount_generated: number;
+  total_amount_paid: number;
+  conversion_rate: number;
+}
+
 const USERS_PER_PAGE = 10;
+const RANKING_PER_PAGE = 5;
 
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
@@ -85,6 +97,7 @@ type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 
 const adminSections = [
   { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
+  { id: "ranking", title: "Ranking de Faturamentos", icon: Trophy },
   { id: "dominios", title: "Domínios", icon: Globe },
   { id: "multi", title: "Multi-adquirência", icon: CreditCard },
   { id: "usuarios", title: "Usuários", icon: Users },
@@ -123,6 +136,13 @@ const Admin = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
+  // Ranking states
+  const [rankingUsers, setRankingUsers] = useState<RankingUser[]>([]);
+  const [rankingPage, setRankingPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [rankingDateFilter, setRankingDateFilter] = useState<DateFilter>('all');
+  const [isLoadingRanking, setIsLoadingRanking] = useState(false);
+
   useEffect(() => {
     if (activeSection === "faturamento") {
       loadGlobalStats();
@@ -131,6 +151,8 @@ const Admin = () => {
       loadDomains();
     } else if (activeSection === "usuarios") {
       loadUsers();
+    } else if (activeSection === "ranking") {
+      loadRanking();
     }
   }, [activeSection]);
 
@@ -443,8 +465,68 @@ const Admin = () => {
     setDeleteDialogOpen(true);
   };
 
+  // Ranking functions
+  const loadRanking = async () => {
+    setIsLoadingRanking(true);
+    try {
+      const { data: rankingData } = await supabase.rpc('get_users_revenue_ranking', {
+        p_limit: RANKING_PER_PAGE,
+        p_offset: (rankingPage - 1) * RANKING_PER_PAGE,
+        p_date_filter: rankingDateFilter
+      });
+      if (rankingData) {
+        setRankingUsers(rankingData as unknown as RankingUser[]);
+      }
+      const { data: countData } = await supabase.rpc('get_users_count');
+      if (countData !== null) {
+        setTotalUsers(countData as number);
+      }
+    } catch (error) {
+      console.error('Error loading ranking:', error);
+      toast({
+        title: 'Erro',
+        description: 'Falha ao carregar ranking',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingRanking(false);
+    }
+  };
+
+  const handleRankingFilterChange = async (value: DateFilter) => {
+    setRankingDateFilter(value);
+    setRankingPage(1);
+    setIsLoadingRanking(true);
+    try {
+      const { data } = await supabase.rpc('get_users_revenue_ranking', {
+        p_limit: RANKING_PER_PAGE,
+        p_offset: 0,
+        p_date_filter: value
+      });
+      if (data) setRankingUsers(data as unknown as RankingUser[]);
+    } finally {
+      setIsLoadingRanking(false);
+    }
+  };
+
+  const handleRankingPageChange = async (newPage: number) => {
+    setRankingPage(newPage);
+    setIsLoadingRanking(true);
+    try {
+      const { data } = await supabase.rpc('get_users_revenue_ranking', {
+        p_limit: RANKING_PER_PAGE,
+        p_offset: (newPage - 1) * RANKING_PER_PAGE,
+        p_date_filter: rankingDateFilter
+      });
+      if (data) setRankingUsers(data as unknown as RankingUser[]);
+    } finally {
+      setIsLoadingRanking(false);
+    }
+  };
+
   const userTotalPages = Math.ceil(users.length / USERS_PER_PAGE);
   const paginatedUsers = users.slice((userCurrentPage - 1) * USERS_PER_PAGE, userCurrentPage * USERS_PER_PAGE);
+  const rankingTotalPages = Math.ceil(totalUsers / RANKING_PER_PAGE);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -748,6 +830,107 @@ const Admin = () => {
               </CardContent>
             </Card>
           </>
+        )}
+
+        {activeSection === "ranking" && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                Ranking de Faturamentos
+              </CardTitle>
+              <Select value={rankingDateFilter} onValueChange={handleRankingFilterChange}>
+                <SelectTrigger className="w-[150px]">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="today">Hoje</SelectItem>
+                  <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                  <SelectItem value="month">Este mês</SelectItem>
+                  <SelectItem value="year">Este ano</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              {isLoadingRanking ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : rankingUsers.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhum usuário encontrado
+                </p>
+              ) : (
+                <>
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">#</TableHead>
+                          <TableHead>Usuário</TableHead>
+                          <TableHead className="text-center">PIX Gerados</TableHead>
+                          <TableHead className="text-center">PIX Pagos</TableHead>
+                          <TableHead className="text-center">Conversão</TableHead>
+                          <TableHead className="text-right">Total Recebido</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {rankingUsers.map((rankUser, index) => (
+                          <TableRow key={rankUser.user_id || index}>
+                            <TableCell className="font-bold">
+                              {(rankingPage - 1) * RANKING_PER_PAGE + index + 1}º
+                            </TableCell>
+                            <TableCell className="truncate max-w-[200px]">
+                              {rankUser.user_email}
+                            </TableCell>
+                            <TableCell className="text-center text-blue-400">
+                              {rankUser.total_generated}
+                            </TableCell>
+                            <TableCell className="text-center text-green-400">
+                              {rankUser.total_paid}
+                            </TableCell>
+                            <TableCell className="text-center text-yellow-400">
+                              {rankUser.conversion_rate}%
+                            </TableCell>
+                            <TableCell className="text-right font-semibold text-primary">
+                              {formatCurrency(rankUser.total_amount_paid)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {rankingTotalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <span className="text-sm text-muted-foreground">
+                        Página {rankingPage} de {rankingTotalPages}
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRankingPageChange(rankingPage - 1)}
+                          disabled={rankingPage === 1 || isLoadingRanking}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRankingPageChange(rankingPage + 1)}
+                          disabled={rankingPage >= rankingTotalPages || isLoadingRanking}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {activeSection === "dominios" && (
