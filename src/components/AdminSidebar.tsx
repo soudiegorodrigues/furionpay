@@ -1,6 +1,5 @@
-import { BarChart3, Settings, LogOut, QrCode, Menu, CreditCard, Shield, LucideIcon, User } from "lucide-react";
+import { BarChart3, Settings, LogOut, QrCode, CreditCard, Shield, LucideIcon, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -14,8 +13,6 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
-  SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 const menuItems = [
@@ -31,29 +28,19 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
-
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
+    <Sidebar className="border-r border-border">
       <SidebarHeader className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <QrCode className="h-4 w-4 text-primary-foreground" />
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="font-semibold text-sm">PIX Admin</span>
-                <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                  {userEmail || "Painel"}
-                </span>
-              </div>
-            )}
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <QrCode className="h-4 w-4 text-primary-foreground" />
           </div>
-          <SidebarTrigger className="h-8 w-8">
-            <Menu className="h-4 w-4" />
-          </SidebarTrigger>
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm">PIX Admin</span>
+            <span className="text-xs text-muted-foreground truncate max-w-[140px]">
+              {userEmail || "Painel"}
+            </span>
+          </div>
         </div>
       </SidebarHeader>
 
@@ -64,7 +51,7 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
+                  <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
                       end 
@@ -72,7 +59,7 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -85,7 +72,7 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
       <SidebarFooter className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {!collapsed && <span className="text-xs text-muted-foreground">Tema</span>}
+          <span className="text-xs text-muted-foreground">Tema</span>
         </div>
         
         <div className="border-t border-border pt-3">
@@ -97,24 +84,22 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
               <User className="h-4 w-4 text-primary" />
             </div>
-            {!collapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-medium truncate">Meu Perfil</span>
-                <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-                  {userEmail || "Não identificado"}
-                </span>
-              </div>
-            )}
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-medium truncate">Meu Perfil</span>
+              <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                {userEmail || "Não identificado"}
+              </span>
+            </div>
           </NavLink>
           
           <Button 
             variant="ghost" 
-            size={collapsed ? "icon" : "sm"} 
+            size="sm"
             onClick={onLogout}
             className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
             <LogOut className="h-4 w-4" />
-            {!collapsed && <span className="ml-2">Sair da conta</span>}
+            <span className="ml-2">Sair da conta</span>
           </Button>
         </div>
       </SidebarFooter>
