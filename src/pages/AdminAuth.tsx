@@ -28,7 +28,7 @@ const signUpSchema = authSchema.extend({
   })
 });
 
-type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password';
+type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password' | 'unlock-code';
 
 const AdminAuth = () => {
   const location = useLocation();
@@ -44,6 +44,8 @@ const AdminAuth = () => {
     location.pathname === '/cadastro' ? 'signup' : 'login'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAccountBlocked, setIsAccountBlocked] = useState(false);
+  const [remainingAttempts, setRemainingAttempts] = useState(3);
 
   // Sync mode with URL path changes
   useEffect(() => {
@@ -217,21 +219,94 @@ const AdminAuth = () => {
     setIsSubmitting(true);
     try {
       if (mode === 'login') {
+        // Check if account is blocked before attempting login
+        const { data: blockCheck } = await supabase.functions.invoke('check-login-attempt', {
+          body: { email, loginFailed: false }
+        });
+        
+        if (blockCheck?.isBlocked) {
+          setIsAccountBlocked(true);
+          setMode('unlock-code');
+          toast({
+            variant: "destructive",
+            title: "Conta bloqueada",
+            description: "Sua conta está bloqueada. Digite o código enviado para seu email."
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message === "User is banned" || error.message?.includes("banned")) {
             setShowBlockedDialog(true);
           } else {
-            toast({
-              variant: "destructive",
-              title: "Erro ao entrar",
-              description: error.message === "Invalid login credentials" ? "Email ou senha incorretos" : error.message
+            // Track failed login attempt
+            const { data: attemptData } = await supabase.functions.invoke('check-login-attempt', {
+              body: { email, loginFailed: true }
             });
+            
+            if (attemptData?.isBlocked) {
+              setIsAccountBlocked(true);
+              setMode('unlock-code');
+              toast({
+                variant: "destructive",
+                title: "Conta bloqueada",
+                description: attemptData.message || "Sua conta foi bloqueada após 3 tentativas incorretas. Um código foi enviado para seu email."
+              });
+            } else {
+              setRemainingAttempts(attemptData?.remainingAttempts || 0);
+              toast({
+                variant: "destructive",
+                title: "Erro ao entrar",
+                description: attemptData?.message || (error.message === "Invalid login credentials" ? "Email ou senha incorretos" : error.message)
+              });
+            }
           }
         } else {
+          // Reset login attempts on successful login
+          await supabase.functions.invoke('check-login-attempt', {
+            body: { email, loginFailed: false }
+          });
+          try {
+            await supabase.rpc('reset_login_attempts' as any, { p_email: email });
+          } catch {}
+          
           toast({
             title: "Bem-vindo!",
             description: "Login realizado com sucesso"
+          });
+        }
+      } else if (mode === 'unlock-code') {
+        // Verify unlock code
+        if (otpCode.length !== 6) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "Digite o código de 6 dígitos"
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        const { data, error } = await supabase.functions.invoke('verify-unlock-code', {
+          body: { email, code: otpCode }
+        });
+        
+        if (error || !data?.success) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: data?.error || "Código inválido ou expirado"
+          });
+        } else {
+          setIsAccountBlocked(false);
+          setOtpCode('');
+          setRemainingAttempts(3);
+          setMode('login');
+          toast({
+            title: "Conta desbloqueada!",
+            description: "Você pode fazer login novamente."
           });
         }
       } else {
@@ -270,6 +345,7 @@ const AdminAuth = () => {
       case 'reset-code': return 'Verificar Código';
       case 'reset-password': return 'Nova Senha';
       case 'signup': return 'Criar Conta';
+      case 'unlock-code': return 'Conta Bloqueada';
       default: return 'Bem-vindo de volta';
     }
   };
@@ -280,6 +356,7 @@ const AdminAuth = () => {
       case 'reset-code': return `Enviamos um código de 6 dígitos para ${resetEmail}`;
       case 'reset-password': return 'Crie sua nova senha de acesso';
       case 'signup': return 'Preencha os dados para criar sua conta';
+      case 'unlock-code': return `Digite o código de 6 dígitos enviado para ${email}`;
       default: return 'Entre com suas credenciais para continuar';
     }
   };
@@ -290,6 +367,7 @@ const AdminAuth = () => {
       case 'reset-code': return 'Verificar';
       case 'reset-password': return 'Salvar Senha';
       case 'signup': return 'Criar Conta';
+      case 'unlock-code': return 'Desbloquear Conta';
       default: return 'Entrar';
     }
   };
@@ -405,6 +483,8 @@ const AdminAuth = () => {
                   <KeyRound className="h-8 w-8 text-primary relative z-10" />
                 ) : mode === 'signup' ? (
                   <User className="h-8 w-8 text-primary relative z-10" />
+                ) : mode === 'unlock-code' ? (
+                  <Ban className="h-8 w-8 text-primary relative z-10" />
                 ) : (
                   <Lock className="h-8 w-8 text-primary relative z-10" />
                 )}
@@ -460,10 +540,10 @@ const AdminAuth = () => {
               </div>
             )}
 
-            {mode === 'reset-code' && (
+            {(mode === 'reset-code' || mode === 'unlock-code') && (
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-white/80">
-                  Código de verificação
+                  {mode === 'unlock-code' ? 'Código de desbloqueio' : 'Código de verificação'}
                 </Label>
                 <div className="flex justify-center">
                   <InputOTP
@@ -481,27 +561,34 @@ const AdminAuth = () => {
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                <p className="text-xs text-center text-white/40 mt-3">
-                  Não recebeu?{' '}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setIsSubmitting(true);
-                      await supabase.functions.invoke('send-password-reset', {
-                        body: { email: resetEmail }
-                      });
-                      setIsSubmitting(false);
-                      toast({
-                        title: "Código reenviado!",
-                        description: "Verifique sua caixa de entrada"
-                      });
-                    }}
-                    className="text-primary hover:text-primary/80 font-medium transition-colors"
-                    disabled={isSubmitting}
-                  >
-                    Reenviar código
-                  </button>
-                </p>
+                {mode === 'reset-code' && (
+                  <p className="text-xs text-center text-white/40 mt-3">
+                    Não recebeu?{' '}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsSubmitting(true);
+                        await supabase.functions.invoke('send-password-reset', {
+                          body: { email: resetEmail }
+                        });
+                        setIsSubmitting(false);
+                        toast({
+                          title: "Código reenviado!",
+                          description: "Verifique sua caixa de entrada"
+                        });
+                      }}
+                      className="text-primary hover:text-primary/80 font-medium transition-colors"
+                      disabled={isSubmitting}
+                    >
+                      Reenviar código
+                    </button>
+                  </p>
+                )}
+                {mode === 'unlock-code' && (
+                  <p className="text-xs text-center text-white/40 mt-3">
+                    Um código de desbloqueio foi enviado para seu email.
+                  </p>
+                )}
               </div>
             )}
 
@@ -629,10 +716,14 @@ const AdminAuth = () => {
 
           {/* Footer Links */}
           <div className="mt-8 pt-6 border-t border-white/10 text-center">
-            {mode.startsWith('reset') ? (
+            {mode.startsWith('reset') || mode === 'unlock-code' ? (
               <button
                 type="button"
-                onClick={() => switchMode('login')}
+                onClick={() => {
+                  setIsAccountBlocked(false);
+                  setOtpCode('');
+                  switchMode('login');
+                }}
                 className="text-sm text-white/50 hover:text-white/70 transition-colors inline-flex items-center gap-1"
               >
                 <ArrowRight className="h-3 w-3 rotate-180" />
