@@ -306,13 +306,13 @@ const AdminCheckout = () => {
                   <Activity className="w-4 h-4" />
                   Meta Pixel
                 </Label>
-                <Select value={selectedPixel} onValueChange={setSelectedPixel}>
+                <Select value={selectedPixel || "none"} onValueChange={(val) => setSelectedPixel(val === "none" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Nenhum pixel selecionado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
-                    {metaPixels.map((pixel) => (
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {metaPixels.filter(pixel => pixel.id).map((pixel) => (
                       <SelectItem key={pixel.id} value={pixel.id}>
                         {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
                       </SelectItem>
