@@ -42,6 +42,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { PersonalizacaoSection } from "@/components/admin/PersonalizacaoSection";
+import { EmailSection } from "@/components/admin/EmailSection";
 
 // Zona de Perigo Component
 const ZonaDePerigo = () => {
@@ -1474,6 +1476,14 @@ const Admin = () => {
 
         {activeSection === "zona-perigo" && (
           <ZonaDePerigo />
+        )}
+
+        {activeSection === "personalizacao" && (
+          <PersonalizacaoSection userId={user?.id} />
+        )}
+
+        {activeSection === "email" && (
+          <EmailSection />
         )}
       </div>
     </AdminLayout>
