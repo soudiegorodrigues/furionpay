@@ -302,30 +302,41 @@ const AdminDashboard = () => {
       </div>
 
       {/* Today Summary */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-            <CardTitle className="text-sm sm:text-lg">Resumo de Hoje</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-center">
-              <p className="text-xl sm:text-3xl font-bold text-blue-500">{todayStats.generated}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">PIX Gerados</p>
-            </div>
-            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-center">
-              <p className="text-xl sm:text-3xl font-bold text-green-500">{todayStats.paid}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">PIX Pagos</p>
-            </div>
-            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-center">
-              <p className="text-xl sm:text-3xl font-bold text-yellow-500">{formatCurrency(todayStats.amountPaid)}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Total Recebido</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 px-1">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium text-foreground">Resumo de Hoje</h3>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs sm:text-sm text-muted-foreground">PIX Gerados</p>
+                <QrCode className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+              </div>
+              <p className="text-lg sm:text-2xl font-bold text-blue-500 mt-1">{todayStats.generated}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs sm:text-sm text-muted-foreground">PIX Pagos</p>
+                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+              </div>
+              <p className="text-lg sm:text-2xl font-bold text-green-500 mt-1">{todayStats.paid}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs sm:text-sm text-muted-foreground">Total Recebido</p>
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
+              </div>
+              <p className="text-lg sm:text-2xl font-bold text-yellow-500 mt-1">{formatCurrency(todayStats.amountPaid)}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Chart */}
       <Card>
