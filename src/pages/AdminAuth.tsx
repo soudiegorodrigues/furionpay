@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ const signUpSchema = authSchema.extend({
 type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password';
 
 const AdminAuth = () => {
+  const location = useLocation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,7 +43,9 @@ const AdminAuth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [mode, setMode] = useState<AuthMode>(() => 
+    location.pathname === '/cadastro' ? 'signup' : 'login'
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -588,24 +591,22 @@ const AdminAuth = () => {
             ) : mode === 'login' ? (
               <p className="text-sm text-muted-foreground">
                 Não tem uma conta?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchMode('signup')}
+                <Link
+                  to="/cadastro"
                   className="text-primary hover:text-primary/80 font-semibold transition-colors"
                 >
                   Criar conta
-                </button>
+                </Link>
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
                 Já tem uma conta?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchMode('login')}
+                <Link
+                  to="/login"
                   className="text-primary hover:text-primary/80 font-semibold transition-colors"
                 >
                   Fazer login
-                </button>
+                </Link>
               </p>
             )}
           </div>
