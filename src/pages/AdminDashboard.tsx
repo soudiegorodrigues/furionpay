@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, User } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, User, History } from "lucide-react";
 
 interface DashboardStats {
   total_generated: number;
@@ -297,7 +297,10 @@ const AdminDashboard = () => {
         {/* Transactions Table */}
         <Card className="bg-card border-border">
           <CardHeader className="p-3 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Transações Recentes</CardTitle>
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Transações Recentes
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             {filteredTransactions.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
