@@ -86,14 +86,8 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
     return location.pathname === '/admin' && activeSection === section.section;
   };
 
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Don't show loading spinner - render content immediately
+  // Authentication redirect is handled by useEffect above
 
   // Don't render anything while redirecting
   if (!isAuthenticated) {
