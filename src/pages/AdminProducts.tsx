@@ -326,7 +326,7 @@ const AdminProducts = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {products.map((product, index) => (
                 <div 
                   key={product.id}
@@ -340,7 +340,7 @@ const AdminProducts = () => {
                 >
                   <div 
                     className={`
-                      relative rounded-lg overflow-hidden bg-card border border-border/30
+                      relative rounded-xl overflow-hidden bg-card border border-border/30
                       transition-all duration-500 ease-out cursor-pointer
                       ${hoveredProduct === product.id 
                         ? 'scale-105 z-30 shadow-2xl shadow-black/50 border-primary/50' 
@@ -348,8 +348,8 @@ const AdminProducts = () => {
                       }
                     `}
                   >
-                    {/* Product Image - Netflix aspect ratio */}
-                    <div className="aspect-[16/9] relative overflow-hidden">
+                    {/* Product Image - Poster aspect ratio (taller) */}
+                    <div className="aspect-[2/3] relative overflow-hidden">
                       {product.image_url ? (
                         <img 
                           src={product.image_url} 
