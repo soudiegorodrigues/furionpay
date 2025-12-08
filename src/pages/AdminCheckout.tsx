@@ -63,7 +63,7 @@ const popupModels = [{
   hasDynamicAmount: true
 }, {
   id: "landing",
-  name: "Landing",
+  name: "Modelo Vakinha",
   description: "Estilo página de vendas",
   hasDynamicAmount: false
 }, {
