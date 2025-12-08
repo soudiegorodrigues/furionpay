@@ -12,7 +12,6 @@ import { z } from 'zod';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
 import furionLogo from '@/assets/furionpay-logo-white-text.png';
-import authHeroImage from '@/assets/auth-hero-image.png';
 
 const authSchema = z.object({
   email: z.string().trim().email({
@@ -275,7 +274,7 @@ const AdminAuth = () => {
       case 'reset-code': return 'Verificar Código';
       case 'reset-password': return 'Nova Senha';
       case 'signup': return 'Criar Conta';
-      default: return 'Fazer Login';
+      default: return 'Bem-vindo de volta';
     }
   };
 
@@ -301,10 +300,12 @@ const AdminAuth = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/70 relative overflow-hidden">
+        {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-float-slow" />
         </div>
         <div className="flex flex-col items-center gap-4 relative z-10">
           <img src={furionLogo} alt="FurionPay" className="h-12 mb-2" />
@@ -316,267 +317,245 @@ const AdminAuth = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left Side - Branding & Image */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-        {/* Background decorations */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-float-slow" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between w-full p-12">
-          {/* Logo */}
-          <div>
-            <img 
-              src={furionLogo} 
-              alt="FurionPay" 
-              className="h-12 drop-shadow-lg"
-            />
-          </div>
-
-          {/* Center content with image */}
-          <div className="flex-1 flex flex-col items-center justify-center -mt-12">
-            <div className="relative">
-              <img 
-                src={authHeroImage} 
-                alt="Mulher de sucesso com notificações PIX" 
-                className="max-h-[500px] object-contain drop-shadow-2xl rounded-2xl"
-              />
-            </div>
-          </div>
-
-          {/* Bottom text */}
-          <div className="text-center lg:text-left">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-3">
-              Bem-vindo de volta!
-            </h2>
-            <p className="text-lg text-white/80 max-w-md">
-              Entre para continuar sua jornada conosco e escalar suas vendas.
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-4 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Large blurred circles with pulse-glow */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-float-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl animate-float" />
+        
+        {/* Spinning rings */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-spin-slow" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
+        
+        {/* Grid pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        
+        {/* Floating shapes */}
+        <div className="absolute top-20 right-20 w-4 h-4 bg-white/20 rounded-full animate-float" style={{ animationDelay: '0s' }} />
+        <div className="absolute top-40 left-20 w-3 h-3 bg-white/15 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-32 right-32 w-2 h-2 bg-white/25 rounded-full animate-float-slow" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-20 left-1/3 w-3 h-3 bg-white/15 rounded-full animate-drift" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-white/20 rounded-full animate-float" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-1/3 left-1/4 w-4 h-4 bg-white/10 rounded-full animate-float-slow" style={{ animationDelay: '1.5s' }} />
+        
+        {/* Geometric shapes */}
+        <div className="absolute top-32 left-1/3 w-8 h-8 border-2 border-white/10 rotate-45 animate-drift" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-40 right-1/3 w-6 h-6 border-2 border-white/10 rotate-12 animate-float" style={{ animationDelay: '4s' }} />
       </div>
 
-      {/* Right Side - Form */}
-      <div className="flex-1 flex flex-col bg-background min-h-screen lg:min-h-0">
-        {/* Mobile header with logo */}
-        <div className="lg:hidden bg-primary p-6 flex items-center justify-center">
+      <div className="w-full max-w-[420px] animate-fade-in relative z-10">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
           <img 
             src={furionLogo} 
             alt="FurionPay" 
-            className="h-10"
+            className="h-14 drop-shadow-lg"
           />
         </div>
 
-        {/* Form container */}
-        <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-          <div className="w-full max-w-[420px] animate-fade-in">
-            {/* Header with icon */}
-            <div className="mb-8">
-              <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 mb-5">
-                {mode.startsWith('reset') ? (
-                  <KeyRound className="h-6 w-6 text-primary" />
-                ) : mode === 'signup' ? (
-                  <User className="h-6 w-6 text-primary" />
-                ) : (
-                  <Lock className="h-6 w-6 text-primary" />
-                )}
-              </div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight mb-2">
-                {getTitle()}
-              </h1>
-              <p className="text-muted-foreground">
-                {getDescription()}
-              </p>
+        {/* Card */}
+        <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-8 md:p-10">
+          {/* Header with icon */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 mb-4">
+              {mode.startsWith('reset') ? (
+                <KeyRound className="h-7 w-7 text-primary" />
+              ) : mode === 'signup' ? (
+                <User className="h-7 w-7 text-primary" />
+              ) : (
+                <Lock className="h-7 w-7 text-primary" />
+              )}
             </div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">
+              {getTitle()}
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {getDescription()}
+            </p>
+          </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {mode === 'signup' && (
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium text-foreground">
-                    Nome completo
-                  </Label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Seu nome"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
-                      required
-                    />
-                  </div>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {mode === 'signup' && (
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium text-foreground">
+                  Nome completo
+                </Label>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Seu nome"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    required
+                  />
                 </div>
-              )}
+              </div>
+            )}
 
-              {(mode === 'login' || mode === 'signup' || mode === 'reset-email') && (
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                    Email
-                  </Label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
-                      required
-                    />
-                  </div>
+            {(mode === 'login' || mode === 'signup' || mode === 'reset-email') && (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    required
+                  />
                 </div>
-              )}
+              </div>
+            )}
 
-              {mode === 'reset-code' && (
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-foreground">
-                    Código de verificação
-                  </Label>
-                  <div className="flex justify-center">
-                    <InputOTP
-                      maxLength={6}
-                      value={otpCode}
-                      onChange={setOtpCode}
-                    >
-                      <InputOTPGroup className="gap-2">
-                        <InputOTPSlot index={0} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                        <InputOTPSlot index={1} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                        <InputOTPSlot index={2} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                        <InputOTPSlot index={3} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                        <InputOTPSlot index={4} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                        <InputOTPSlot index={5} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-                  <p className="text-xs text-center text-muted-foreground mt-3">
-                    Não recebeu?{' '}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setIsSubmitting(true);
-                        await supabase.functions.invoke('send-password-reset', {
-                          body: { email: resetEmail }
-                        });
-                        setIsSubmitting(false);
-                        toast({
-                          title: "Código reenviado!",
-                          description: "Verifique sua caixa de entrada"
-                        });
-                      }}
-                      className="text-primary hover:text-primary/80 font-medium transition-colors"
-                      disabled={isSubmitting}
-                    >
-                      Reenviar código
-                    </button>
-                  </p>
+            {mode === 'reset-code' && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-foreground">
+                  Código de verificação
+                </Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={setOtpCode}
+                  >
+                    <InputOTPGroup className="gap-2">
+                      <InputOTPSlot index={0} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={1} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={2} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={3} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={4} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={5} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                    </InputOTPGroup>
+                  </InputOTP>
                 </div>
-              )}
+                <p className="text-xs text-center text-muted-foreground mt-3">
+                  Não recebeu?{' '}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsSubmitting(true);
+                      await supabase.functions.invoke('send-password-reset', {
+                        body: { email: resetEmail }
+                      });
+                      setIsSubmitting(false);
+                      toast({
+                        title: "Código reenviado!",
+                        description: "Verifique sua caixa de entrada"
+                      });
+                    }}
+                    className="text-primary hover:text-primary/80 font-medium transition-colors"
+                    disabled={isSubmitting}
+                  >
+                    Reenviar código
+                  </button>
+                </p>
+              </div>
+            )}
 
-              {(mode === 'login' || mode === 'signup') && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                      Senha
-                    </Label>
-                    {mode === 'login' && (
-                      <button
-                        type="button"
-                        onClick={() => switchMode('reset-email')}
-                        className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-                      >
-                        Esqueceu sua senha?
-                      </button>
-                    )}
-                  </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
-                    </button>
-                  </div>
+            {(mode === 'login' || mode === 'signup') && (
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                  Senha
+                </Label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                  </button>
                 </div>
-              )}
+              </div>
+            )}
 
-              {(mode === 'signup' || mode === 'reset-password') && (
-                <>
-                  {mode === 'reset-password' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword" className="text-sm font-medium text-foreground">
-                        Nova senha
-                      </Label>
-                      <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
-                        <Input
-                          id="newPassword"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                          className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
-                          required
-                          minLength={6}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
-                        </button>
-                      </div>
-                    </div>
-                  )}
+            {(mode === 'signup' || mode === 'reset-password') && (
+              <>
+                {mode === 'reset-password' && (
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
-                      Confirmar senha
+                    <Label htmlFor="newPassword" className="text-sm font-medium text-foreground">
+                      Nova senha
                     </Label>
                     <div className="relative group">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                       <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
+                        id="newPassword"
+                        type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
                         className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
                         required
                         minLength={6}
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                       >
-                        {showConfirmPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                        {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                       </button>
                     </div>
                   </div>
-                </>
-              )}
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+                    Confirmar senha
+                  </Label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
-              {mode === 'login' && (
+            {mode === 'login' && (
+              <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="remember"
@@ -588,66 +567,71 @@ const AdminAuth = () => {
                     Lembrar-me
                   </Label>
                 </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full h-12 text-[15px] font-semibold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    {getButtonText()}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </form>
-
-            {/* Footer Links */}
-            <div className="mt-8 text-center">
-              {mode.startsWith('reset') ? (
                 <button
                   type="button"
-                  onClick={() => switchMode('login')}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                  onClick={() => switchMode('reset-email')}
+                  className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
                 >
-                  <ArrowRight className="h-3 w-3 rotate-180" />
-                  Voltar ao login
+                  Esqueceu a senha?
                 </button>
-              ) : mode === 'login' ? (
-                <p className="text-sm text-muted-foreground">
-                  Ainda não tem uma conta?{' '}
-                  <Link
-                    to="/cadastro"
-                    className="text-primary hover:text-primary/80 font-semibold transition-colors"
-                  >
-                    Registre-se
-                  </Link>
-                </p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full h-12 text-[15px] font-semibold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Já tem uma conta?{' '}
-                  <Link
-                    to="/login"
-                    className="text-primary hover:text-primary/80 font-semibold transition-colors"
-                  >
-                    Fazer login
-                  </Link>
-                </p>
+                <>
+                  {getButtonText()}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
               )}
-            </div>
+            </Button>
+          </form>
+
+          {/* Footer Links */}
+          <div className="mt-8 pt-6 border-t border-border/30 text-center">
+            {mode.startsWith('reset') ? (
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+              >
+                <ArrowRight className="h-3 w-3 rotate-180" />
+                Voltar ao login
+              </button>
+            ) : mode === 'login' ? (
+              <p className="text-sm text-muted-foreground">
+                Não tem uma conta?{' '}
+                <Link
+                  to="/cadastro"
+                  className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                >
+                  Criar conta
+                </Link>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Já tem uma conta?{' '}
+                <Link
+                  to="/login"
+                  className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                >
+                  Fazer login
+                </Link>
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 text-center lg:text-left">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} FurionPay. Todos os direitos reservados.
-          </p>
-        </div>
+        {/* Footer text */}
+        <p className="text-center text-white/60 text-xs mt-6">
+          © {new Date().getFullYear()} FurionPay. Todos os direitos reservados.
+        </p>
       </div>
 
       {/* Blocked User Dialog */}
