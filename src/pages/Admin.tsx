@@ -81,6 +81,7 @@ const USERS_PER_PAGE = 10;
 
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
+type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 
 const adminSections = [
   { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
@@ -102,6 +103,7 @@ const Admin = () => {
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   
   // Domain states
   const [domains, setDomains] = useState<Domain[]>([]);
@@ -471,38 +473,48 @@ const Admin = () => {
     ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1) 
     : '0';
 
-  // Filter transactions by date
+  // Filter transactions by date and status
   const filteredTransactions = useMemo(() => {
-    if (dateFilter === 'all') return transactions;
+    let filtered = transactions;
     
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(tx => tx.status === statusFilter);
+    }
     
-    return transactions.filter(tx => {
-      const txDate = new Date(tx.created_at);
-      switch (dateFilter) {
-        case 'today':
-          return txDate >= startOfDay;
-        case '7days':
-          const sevenDaysAgo = new Date(startOfDay);
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          return txDate >= sevenDaysAgo;
-        case 'month':
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-          return txDate >= startOfMonth;
-        case 'year':
-          const startOfYear = new Date(now.getFullYear(), 0, 1);
-          return txDate >= startOfYear;
-        default:
-          return true;
-      }
-    });
-  }, [transactions, dateFilter]);
+    // Filter by date
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      filtered = filtered.filter(tx => {
+        const txDate = new Date(tx.created_at);
+        switch (dateFilter) {
+          case 'today':
+            return txDate >= startOfDay;
+          case '7days':
+            const sevenDaysAgo = new Date(startOfDay);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            return txDate >= sevenDaysAgo;
+          case 'month':
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            return txDate >= startOfMonth;
+          case 'year':
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            return txDate >= startOfYear;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    return filtered;
+  }, [transactions, dateFilter, statusFilter]);
 
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter]);
+  }, [dateFilter, statusFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
@@ -617,25 +629,38 @@ const Admin = () => {
 
             {/* Transactions Table */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
                 <CardTitle className="flex items-center gap-2">
                   <Receipt className="h-5 w-5 text-primary" />
                   Transações Globais
                   <Badge variant="secondary" className="ml-2">{filteredTransactions.length}</Badge>
                 </CardTitle>
-                <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-                  <SelectTrigger className="w-[150px]">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="today">Hoje</SelectItem>
-                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                    <SelectItem value="month">Este mês</SelectItem>
-                    <SelectItem value="year">Este ano</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="paid">Pago</SelectItem>
+                      <SelectItem value="generated">Gerado</SelectItem>
+                      <SelectItem value="expired">Expirado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
+                    <SelectTrigger className="w-[150px]">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Período" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="today">Hoje</SelectItem>
+                      <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                      <SelectItem value="month">Este mês</SelectItem>
+                      <SelectItem value="year">Este ano</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 {isLoadingTransactions ? (
