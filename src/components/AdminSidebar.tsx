@@ -3,8 +3,8 @@ import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "next-themes";
-import furionPayLogo from "@/assets/furionpay-logo-full.png";
-import furionPayLogoLight from "@/assets/furionpay-logo-light.png";
+import furionPayLogoDark from "@/assets/furionpay-logo-full.png";
+import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 const menuItems = [{
   title: "Admin",
@@ -35,7 +35,7 @@ export function AdminSidebar({
   
   return <Sidebar className="border-r border-border bg-background dark:bg-black">
       <SidebarHeader className="p-6 flex items-center justify-center">
-        <img src={theme === "dark" ? furionPayLogo : furionPayLogoLight} alt="FurionPay" className="h-16 w-auto object-contain" />
+        <img src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} alt="FurionPay" className="h-16 w-auto object-contain" />
       </SidebarHeader>
       <SidebarContent className="px-3">
         <SidebarGroup>
