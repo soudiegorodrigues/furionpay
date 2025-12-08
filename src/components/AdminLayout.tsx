@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
@@ -16,15 +16,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin } = useAdminAuth();
   const [userName, setUserName] = useState<string | null>(null);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const initialAuthChecked = useRef(false);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated - only on initial load
   useEffect(() => {
     if (!loading) {
-      setHasCheckedAuth(true);
-      if (!isAuthenticated) {
+      if (!isAuthenticated && !initialAuthChecked.current) {
         navigate('/login');
       }
+      initialAuthChecked.current = true;
     }
   }, [loading, isAuthenticated, navigate]);
 
@@ -52,12 +52,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     navigate('/login');
   };
 
-  // Show nothing only during initial auth check
-  if (!hasCheckedAuth && loading) {
-    return null;
+  // Only show nothing during very first auth check, not on page navigation
+  if (loading && !initialAuthChecked.current) {
+    return (
+      <div className="min-h-screen flex w-full bg-background">
+        <div className="w-64 min-w-64 max-w-64 flex-shrink-0 border-r border-border bg-background dark:bg-black" />
+        <div className="flex-1" />
+      </div>
+    );
   }
 
-  if (!isAuthenticated && hasCheckedAuth) {
+  if (!isAuthenticated && !loading) {
     return null;
   }
 
