@@ -21,15 +21,12 @@ const AdminPersonalization = () => {
   const { toast } = useToast();
   const { isAuthenticated, loading, user } = useAdminAuth();
 
+  // Load settings when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/admin');
-      return;
-    }
-    if (isAuthenticated) {
+    if (isAuthenticated && !loading) {
       loadSettings();
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading]);
 
   const loadSettings = async () => {
     setIsLoading(true);
