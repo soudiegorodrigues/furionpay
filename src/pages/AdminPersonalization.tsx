@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminLayout } from "@/components/AdminLayout";
@@ -6,17 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Palette, Save, Image, Loader2, Trash2 } from "lucide-react";
+import { Palette, Save, Image, Loader2, Trash2, Upload, Link } from "lucide-react";
 
 const AdminPersonalization = () => {
   const [bannerUrl, setBannerUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, loading } = useAdminAuth();
+  const { isAuthenticated, loading, user } = useAdminAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -48,6 +51,78 @@ const AdminPersonalization = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma imagem válida",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/banner.${fileExt}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('banners')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('banners')
+        .getPublicUrl(fileName);
+
+      // Add timestamp to bust cache
+      const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
+      setBannerUrl(urlWithTimestamp);
+
+      // Save to settings
+      const { error: saveError } = await supabase.rpc('update_user_setting', {
+        setting_key: 'dashboard_banner_url',
+        setting_value: urlWithTimestamp
+      });
+
+      if (saveError) throw saveError;
+
+      toast({
+        title: "Sucesso",
+        description: "Banner enviado e salvo com sucesso!"
+      });
+    } catch (error: any) {
+      console.error('Error uploading banner:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar imagem",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -138,23 +213,71 @@ const AdminPersonalization = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="banner-url">URL da Imagem</Label>
-              <Input
-                id="banner-url"
-                type="url"
-                placeholder="https://exemplo.com/imagem.png"
-                value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Use uma URL de imagem pública. Tamanho recomendado: 1200x300 pixels
-              </p>
-            </div>
+            <Tabs defaultValue="upload" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upload" className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Enviar Imagem
+                </TabsTrigger>
+                <TabsTrigger value="url" className="flex items-center gap-2">
+                  <Link className="h-4 w-4" />
+                  URL da Imagem
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="upload" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label>Selecionar Imagem</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Formatos aceitos: JPG, PNG, GIF, WebP. Tamanho máximo: 5MB
+                  </p>
+                </div>
+                {isUploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Enviando imagem...
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="url" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="banner-url">URL da Imagem</Label>
+                  <Input
+                    id="banner-url"
+                    type="url"
+                    placeholder="https://exemplo.com/imagem.png"
+                    value={bannerUrl}
+                    onChange={(e) => setBannerUrl(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use uma URL de imagem pública. Tamanho recomendado: 1200x300 pixels
+                  </p>
+                </div>
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Salvar URL
+                </Button>
+              </TabsContent>
+            </Tabs>
 
             {/* Preview */}
             {bannerUrl && (
-              <div className="space-y-2">
+              <div className="space-y-2 pt-4 border-t border-border">
                 <Label>Pré-visualização</Label>
                 <div className="rounded-lg overflow-hidden border border-border">
                   <img
@@ -166,25 +289,12 @@ const AdminPersonalization = () => {
                     }}
                   />
                 </div>
+                <Button variant="outline" onClick={handleClear} disabled={isSaving || isUploading}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover Banner
+                </Button>
               </div>
             )}
-
-            <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Salvar Banner
-              </Button>
-              {bannerUrl && (
-                <Button variant="outline" onClick={handleClear} disabled={isSaving}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Remover
-                </Button>
-              )}
-            </div>
           </CardContent>
         </Card>
       </div>
