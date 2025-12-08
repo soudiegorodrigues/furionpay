@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +59,7 @@ const adminSections = [
 ];
 
 const Admin = () => {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<string>("faturamento");
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -388,7 +390,9 @@ const Admin = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Em desenvolvimento...</p>
+              <Button onClick={() => navigate('/admin/domains')} className="w-full">
+                Gerenciar Domínios
+              </Button>
             </CardContent>
           </Card>
         )}
