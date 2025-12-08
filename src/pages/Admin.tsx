@@ -34,11 +34,90 @@ import {
   Ban,
   Unlock,
   Trophy,
-  Mail
+  Mail,
+  AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+
+// Zona de Perigo Component
+const ZonaDePerigo = () => {
+  const [isResettingGlobal, setIsResettingGlobal] = useState(false);
+
+  const handleResetGlobalDashboard = async () => {
+    setIsResettingGlobal(true);
+    try {
+      const { error } = await supabase.rpc('reset_pix_transactions_auth');
+      if (error) throw error;
+      toast({
+        title: "Sucesso",
+        description: "Todas as transações da plataforma foram apagadas!"
+      });
+    } catch (error) {
+      console.error('Error resetting global transactions:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao resetar transações globais",
+        variant: "destructive"
+      });
+    } finally {
+      setIsResettingGlobal(false);
+    }
+  };
+
+  return (
+    <Card className="border-destructive/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-destructive">
+          <AlertTriangle className="w-5 h-5" />
+          Zona de Perigo
+        </CardTitle>
+        <CardDescription>
+          Ações irreversíveis que afetam permanentemente os dados da plataforma
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" className="w-full" disabled={isResettingGlobal}>
+              {isResettingGlobal ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Resetando Global...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Resetar Faturamento Global (Todas as Contas)
+                </>
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>⚠️ ATENÇÃO: Ação Crítica!</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação irá apagar TODAS as transações de TODOS os usuários da plataforma.
+                Isso inclui o histórico completo de pagamentos de todas as contas.
+                Esta ação NÃO pode ser desfeita!
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleResetGlobalDashboard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Sim, apagar TUDO da plataforma
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <p className="text-xs text-muted-foreground">
+          Isso irá apagar todas as transações de todos os usuários da plataforma.
+        </p>
+      </CardContent>
+    </Card>
+  );
+};
 
 interface GlobalStats {
   total_generated: number;
@@ -1337,6 +1416,10 @@ const Admin = () => {
               </Button>
             </CardContent>
           </Card>
+        )}
+
+        {activeSection === "zona-perigo" && (
+          <ZonaDePerigo />
         )}
     </AdminLayout>
   );

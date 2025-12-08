@@ -5,7 +5,7 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, DollarSign, Trophy, Globe, CreditCard, Users, FileText, Percent, Palette, Mail } from "lucide-react";
+import { RefreshCw, DollarSign, Trophy, Globe, CreditCard, Users, FileText, Percent, Palette, Mail, AlertTriangle } from "lucide-react";
 
 const adminSections = [
   { id: "faturamento", title: "Faturamento Global", icon: DollarSign, path: "/admin", section: "faturamento" },
@@ -17,6 +17,7 @@ const adminSections = [
   { id: "taxas", title: "Taxas", icon: Percent, path: "/admin", section: "taxas" },
   { id: "personalizacao", title: "Personalização", icon: Palette, path: "/admin/personalization", section: null },
   { id: "email", title: "Email", icon: Mail, path: "/admin/email", section: null },
+  { id: "zona-perigo", title: "Zona de Perigo", icon: AlertTriangle, path: "/admin", section: "zona-perigo" },
 ];
 
 interface AdminLayoutProps {
