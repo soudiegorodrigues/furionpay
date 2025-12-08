@@ -1,4 +1,3 @@
-import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   DollarSign, 
@@ -13,15 +12,15 @@ import {
 } from "lucide-react";
 
 const adminSections = [
-  { id: "faturamento", title: "Faturamento Global", icon: DollarSign, path: "/admin", section: "faturamento" },
-  { id: "ranking", title: "Ranking", icon: Trophy, path: "/admin", section: "ranking" },
-  { id: "dominios", title: "Domínios", icon: Globe, path: "/admin", section: "dominios" },
-  { id: "multi", title: "Multi-adquirência", icon: CreditCard, path: "/admin", section: "multi" },
-  { id: "usuarios", title: "Usuários", icon: Users, path: "/admin", section: "usuarios" },
-  { id: "taxas", title: "Taxas", icon: Percent, path: "/admin", section: "taxas" },
-  { id: "personalizacao", title: "Personalização", icon: Palette, path: "/admin/personalization", section: null },
-  { id: "email", title: "Email", icon: Mail, path: "/admin/email", section: null },
-  { id: "zona-perigo", title: "Zona de Perigo", icon: AlertTriangle, path: "/admin", section: "zona-perigo" },
+  { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
+  { id: "ranking", title: "Ranking", icon: Trophy },
+  { id: "dominios", title: "Domínios", icon: Globe },
+  { id: "multi", title: "Multi-adquirência", icon: CreditCard },
+  { id: "usuarios", title: "Usuários", icon: Users },
+  { id: "taxas", title: "Taxas", icon: Percent },
+  { id: "personalizacao", title: "Personalização", icon: Palette },
+  { id: "email", title: "Email", icon: Mail },
+  { id: "zona-perigo", title: "Zona de Perigo", icon: AlertTriangle },
 ];
 
 interface AdminNavigationProps {
@@ -30,33 +29,10 @@ interface AdminNavigationProps {
 }
 
 export function AdminNavigation({ activeSection, onSectionChange }: AdminNavigationProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleSectionClick = (section: typeof adminSections[0]) => {
-    if (section.path === '/admin/personalization') {
-      navigate('/admin/personalization');
-    } else if (section.path === '/admin/email') {
-      navigate('/admin/email');
-    } else if (section.section && onSectionChange) {
-      if (location.pathname === '/admin') {
-        onSectionChange(section.section);
-      } else {
-        navigate('/admin', { state: { section: section.section } });
-      }
-    } else if (section.section) {
-      navigate('/admin', { state: { section: section.section } });
+  const handleSectionClick = (sectionId: string) => {
+    if (onSectionChange) {
+      onSectionChange(sectionId);
     }
-  };
-
-  const isActive = (section: typeof adminSections[0]) => {
-    if (section.path === '/admin/personalization') {
-      return location.pathname === '/admin/personalization';
-    }
-    if (section.path === '/admin/email') {
-      return location.pathname === '/admin/email';
-    }
-    return location.pathname === '/admin' && activeSection === section.section;
   };
 
   return (
@@ -66,10 +42,10 @@ export function AdminNavigation({ activeSection, onSectionChange }: AdminNavigat
         {adminSections.map((section) => (
           <Button
             key={section.id}
-            variant={isActive(section) ? "default" : "outline"}
+            variant={activeSection === section.id ? "default" : "outline"}
             size="sm"
             className="flex items-center gap-2"
-            onClick={() => handleSectionClick(section)}
+            onClick={() => handleSectionClick(section.id)}
           >
             <section.icon className="h-4 w-4" />
             {section.title}
