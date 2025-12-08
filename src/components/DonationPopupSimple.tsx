@@ -171,12 +171,12 @@ export const DonationPopupSimple = ({
                     className={cn(
                       "relative py-3 px-4 rounded-lg border-2 transition-all font-medium text-sm sm:text-base",
                       selectedAmount === item.amount
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card text-foreground hover:border-primary/50"
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-border bg-card text-foreground hover:border-emerald-500/50"
                     )}
                   >
                     {item.mostChosen && (
-                      <span className="absolute -top-2 left-2 text-[10px] sm:text-xs font-semibold text-primary bg-card px-1">
+                      <span className="absolute -top-2 left-2 text-[10px] sm:text-xs font-semibold text-emerald-500 bg-card px-1">
                         Mais escolhido
                       </span>
                     )}
