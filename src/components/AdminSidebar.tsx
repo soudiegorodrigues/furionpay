@@ -20,10 +20,10 @@ import {
 
 const menuItems = [
   { title: "Admin", url: "/admin", icon: Shield },
+  { title: "Email", url: "/admin/email", icon: Mail },
   { title: "Dashboard", url: "/admin/dashboard", icon: BarChart3 },
   { title: "Checkout", url: "/admin/checkout", icon: CreditCard },
   { title: "Personalização", url: "/admin/personalization", icon: Palette },
-  { title: "Email", url: "/admin/email", icon: Mail },
   { title: "Configurações", url: "/admin/settings", icon: Settings },
 ];
 
