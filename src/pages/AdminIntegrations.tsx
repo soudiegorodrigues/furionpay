@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,8 +93,7 @@ const AdminIntegrations = () => {
 
 
   return (
-    <AdminLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
+    <>
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -149,7 +147,6 @@ const AdminIntegrations = () => {
                 </CardContent>
               </Card>
             ))}
-          </div>
         </div>
       </div>
 
@@ -212,7 +209,7 @@ const AdminIntegrations = () => {
           )}
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 };
 

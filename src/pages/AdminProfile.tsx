@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { AdminLayout } from "@/components/AdminLayout";
 import { AdminHeader } from "@/components/AdminSidebar";
 import { User, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,9 +75,8 @@ export default function AdminProfile() {
   };
 
   return (
-    <AdminLayout>
-      <div className="flex flex-col flex-1">
-        <AdminHeader title="Meu Perfil" icon={User} />
+    <div className="flex flex-col flex-1">
+      <AdminHeader title="Meu Perfil" icon={User} />
         
         <div className="flex-1 p-6 space-y-6">
           {/* Informações do Usuário */}
@@ -127,8 +125,7 @@ export default function AdminProfile() {
               </Button>
             </CardContent>
           </Card>
-        </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 }

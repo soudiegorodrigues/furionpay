@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -237,7 +236,7 @@ const AdminCheckout = () => {
     }
     return link;
   })();
-  return <AdminLayout>
+  return <>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -434,6 +433,6 @@ const AdminCheckout = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </AdminLayout>;
+    </>;
 };
 export default AdminCheckout;

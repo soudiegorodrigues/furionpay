@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
+import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
@@ -31,14 +32,19 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<AdminAuth />} />
               <Route path="/cadastro" element={<AdminAuth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/checkout" element={<AdminCheckout />} />
-              <Route path="/admin/personalization" element={<AdminPersonalization />} />
-              <Route path="/admin/email" element={<AdminEmail />} />
-              <Route path="/admin/profile" element={<AdminProfile />} />
-              <Route path="/admin/integrations" element={<AdminIntegrations />} />
+              
+              {/* Admin routes with shared layout */}
+              <Route path="/admin" element={<AdminLayoutWrapper />}>
+                <Route index element={<Admin />} />
+                <Route path="settings" element={<AdminSettings />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="checkout" element={<AdminCheckout />} />
+                <Route path="personalization" element={<AdminPersonalization />} />
+                <Route path="email" element={<AdminEmail />} />
+                <Route path="profile" element={<AdminProfile />} />
+                <Route path="integrations" element={<AdminIntegrations />} />
+              </Route>
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
