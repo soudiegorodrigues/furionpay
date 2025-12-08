@@ -129,6 +129,63 @@ async function getProductNameFromDatabase(userId?: string): Promise<string> {
   return DEFAULT_PRODUCT_NAME;
 }
 
+interface FeeSettings {
+  feeRate: number; // percentage (e.g., 1.99 means 1.99%)
+  fixedFee: number; // fixed amount in BRL (e.g., 0.50)
+}
+
+async function getFeeSettings(userId?: string): Promise<FeeSettings> {
+  const supabase = getSupabaseClient();
+  const DEFAULT_FEES: FeeSettings = { feeRate: 0, fixedFee: 0 };
+  
+  if (!userId) {
+    console.log('No userId provided, using default fees (no fees)');
+    return DEFAULT_FEES;
+  }
+  
+  try {
+    // Get fee rate
+    const { data: feeRateData } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'spedpay_fee_rate')
+      .eq('user_id', userId)
+      .single();
+    
+    // Get fixed fee
+    const { data: fixedFeeData } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'spedpay_fixed_fee')
+      .eq('user_id', userId)
+      .single();
+    
+    const feeRate = feeRateData?.value ? parseFloat(feeRateData.value) : 0;
+    const fixedFee = fixedFeeData?.value ? parseFloat(fixedFeeData.value) : 0;
+    
+    console.log('Fee settings loaded - Rate:', feeRate, '%, Fixed:', fixedFee, 'BRL');
+    
+    return {
+      feeRate: isNaN(feeRate) ? 0 : feeRate,
+      fixedFee: isNaN(fixedFee) ? 0 : fixedFee
+    };
+  } catch (error) {
+    console.error('Error loading fee settings:', error);
+    return DEFAULT_FEES;
+  }
+}
+
+function calculateFinalAmount(baseAmount: number, feeSettings: FeeSettings): number {
+  // Calculate percentage fee
+  const percentageFee = (baseAmount * feeSettings.feeRate) / 100;
+  
+  // Add percentage fee and fixed fee to base amount
+  const finalAmount = baseAmount + percentageFee + feeSettings.fixedFee;
+  
+  // Round to 2 decimal places
+  return Math.round(finalAmount * 100) / 100;
+}
+
 async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string, popupModel?: string): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
@@ -197,6 +254,11 @@ serve(async (req) => {
       );
     }
 
+    // Get fee settings and calculate final amount with fees
+    const feeSettings = await getFeeSettings(userId);
+    const finalAmount = calculateFinalAmount(amount, feeSettings);
+    console.log('Base amount:', amount, '-> Final amount with fees:', finalAmount);
+
     const externalId = `donation_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const donorName = customerName || getRandomName();
     const donorEmail = customerEmail || getRandomEmail(donorName);
@@ -226,7 +288,7 @@ serve(async (req) => {
 
     const transactionData: Record<string, any> = {
       external_id: externalId,
-      total_amount: amount,
+      total_amount: finalAmount,
       payment_method: 'PIX',
       webhook_url: webhookUrl,
       customer: customerData,
@@ -235,7 +297,7 @@ serve(async (req) => {
           id: `item_${externalId}`,
           title: productName,
           description: productName,
-          price: amount,
+          price: finalAmount,
           quantity: 1,
           is_physical: false,
         }
@@ -313,7 +375,8 @@ serve(async (req) => {
     }
 
     // Log the PIX generation to database and get the database ID
-    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName, userId, popupModel);
+    // Log the PIX generation with the final amount (including fees)
+    const dbTransactionId = await logPixGenerated(finalAmount, transactionId, pixCode, donorName, utmParams, productName, userId, popupModel);
 
     return new Response(
       JSON.stringify({
