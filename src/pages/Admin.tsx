@@ -89,7 +89,7 @@ const ZonaDePerigo = () => {
               ) : (
                 <>
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Resetar Faturamento Global (Todas as Contas)
+                  Resetar Faturamento Global
                 </>
               )}
             </Button>
