@@ -17,7 +17,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         donation: "border-2 border-border bg-card text-foreground font-semibold hover:border-primary/50 hover:bg-primary/5 transition-all duration-200",
         donationSelected: "border-2 border-primary bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20",
-        donationCta: "bg-primary text-primary-foreground font-bold text-lg shadow-lg shadow-primary/30 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.98]",
+        donationCta: "bg-emerald-500 text-white font-bold text-lg shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-500/40 active:scale-[0.98]",
       },
       size: {
         default: "h-10 px-4 py-2",
