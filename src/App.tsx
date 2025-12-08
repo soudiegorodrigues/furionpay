@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
+import Admin from "./pages/Admin";
 import AdminSettings from "./pages/AdminSettings";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
@@ -26,7 +27,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/admin" element={<AdminAuth />} />
+              <Route path="/admin/login" element={<AdminAuth />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<AdminUsers />} />
