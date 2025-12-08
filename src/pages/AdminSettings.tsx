@@ -21,13 +21,11 @@ interface MetaPixel {
 }
 interface AdminSettingsData {
   spedpay_api_key: string;
-  product_name: string;
   meta_pixels: string;
 }
 const AdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettingsData>({
     spedpay_api_key: "",
-    product_name: "",
     meta_pixels: "[]"
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
@@ -75,7 +73,6 @@ const AdminSettings = () => {
       if (error) throw error;
       const settingsMap: AdminSettingsData = {
         spedpay_api_key: "",
-        product_name: "",
         meta_pixels: "[]"
       };
       if (data) {
@@ -85,8 +82,6 @@ const AdminSettings = () => {
         }[]).forEach(item => {
           if (item.key === 'spedpay_api_key') {
             settingsMap.spedpay_api_key = item.value || "";
-          } else if (item.key === 'product_name') {
-            settingsMap.product_name = item.value || "";
           } else if (item.key === 'meta_pixels') {
             settingsMap.meta_pixels = item.value || "[]";
           } else if (item.key === 'meta_pixel_id' && item.value) {
@@ -139,34 +134,13 @@ const AdminSettings = () => {
       [field]: value
     } : p));
   };
-  // Blocked product names list
-  const blockedProductNames = ['doação', 'doacao', 'golpe', 'falso', 'fraude', 'fake', 'scam'];
-
-  const isProductNameBlocked = (name: string): boolean => {
-    const normalizedName = name.toLowerCase().trim();
-    return blockedProductNames.some(blocked => normalizedName.includes(blocked));
-  };
-
   const handleSave = async () => {
-    // Validate product name before saving
-    if (settings.product_name && isProductNameBlocked(settings.product_name)) {
-      toast({
-        title: "Nome de produto bloqueado",
-        description: "O nome do produto contém palavras não permitidas. Por favor, escolha outro nome.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSaving(true);
     try {
       const pixelsJson = JSON.stringify(pixels);
       const updates = [supabase.rpc('update_user_setting', {
         setting_key: 'spedpay_api_key',
         setting_value: settings.spedpay_api_key
-      }), supabase.rpc('update_user_setting', {
-        setting_key: 'product_name',
-        setting_value: settings.product_name
       }), supabase.rpc('update_user_setting', {
         setting_key: 'meta_pixels',
         setting_value: pixelsJson
@@ -273,16 +247,6 @@ const AdminSettings = () => {
               ...s,
               spedpay_api_key: e.target.value
             }))} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="product_name">Nome do Produto</Label>
-              <Input id="product_name" type="text" placeholder="Anônimo (padrão)" value={settings.product_name} onChange={e => setSettings(s => ({
-              ...s,
-              product_name: e.target.value
-            }))} />
-              <p className="text-xs text-muted-foreground">
-                Nome que aparecerá no gateway de pagamento
-              </p>
             </div>
           </CardContent>
         </Card>
