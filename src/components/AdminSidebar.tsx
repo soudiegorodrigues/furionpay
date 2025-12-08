@@ -50,12 +50,8 @@ export function AdminSidebar({
   const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
   
   return <Sidebar className="border-r border-border bg-background dark:bg-black">
-      <SidebarHeader className="p-6 flex flex-col items-center justify-center gap-4">
+      <SidebarHeader className="p-6 flex flex-col items-center justify-center">
         <img src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} alt="FurionPay" className="h-16 w-auto object-contain" />
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <span className="text-sm text-muted-foreground">Tema</span>
-        </div>
       </SidebarHeader>
       <SidebarContent className="px-3">
         <SidebarGroup>
@@ -79,17 +75,20 @@ export function AdminSidebar({
 
       <SidebarFooter className="p-4 space-y-4 mt-auto">
         <div className="border-t border-border pt-4">
-          <NavLink to="/admin/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors" activeClassName="bg-primary/10">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <User className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-semibold truncate">{userName || "Usuário"}</span>
-              <span className="text-xs text-muted-foreground truncate">
-                {userEmail || "Não identificado"}
-              </span>
-            </div>
-          </NavLink>
+          <div className="flex items-center gap-2">
+            <NavLink to="/admin/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors flex-1" activeClassName="bg-primary/10">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-sm font-semibold truncate">{userName || "Usuário"}</span>
+                <span className="text-xs text-muted-foreground truncate">
+                  {userEmail || "Não identificado"}
+                </span>
+              </div>
+            </NavLink>
+            <ThemeToggle />
+          </div>
           
           <Button variant="ghost" size="sm" onClick={onLogout} className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 mt-2 px-3">
             <LogOut className="h-4 w-4" />
