@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -196,8 +195,7 @@ const AdminSettings = () => {
     }
   };
   return (
-    <AdminLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -296,9 +294,7 @@ const AdminSettings = () => {
               Salvar Configurações
             </>}
         </Button>
-      </div>
-
-    </AdminLayout>
+    </div>
   );
 };
 export default AdminSettings;
