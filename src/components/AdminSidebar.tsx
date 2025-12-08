@@ -87,7 +87,11 @@ export function AdminSidebar({
                 </span>
               </div>
             </NavLink>
+          </div>
+          
+          <div className="flex items-center gap-2 px-3 py-2 text-muted-foreground">
             <ThemeToggle />
+            <span className="text-sm">Dark Mode</span>
           </div>
           
           <Button variant="ghost" size="sm" onClick={onLogout} className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 mt-2 px-3">
