@@ -81,42 +81,44 @@ const ZonaDePerigo = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="w-full" disabled={isResettingGlobal}>
-              {isResettingGlobal ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Resetando Global...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Resetar Faturamento Global
-                </>
-              )}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>⚠️ ATENÇÃO: Ação Crítica!</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta ação irá apagar TODAS as transações de TODOS os usuários da plataforma.
-                Isso inclui o histórico completo de pagamentos de todas as contas.
-                Esta ação NÃO pode ser desfeita!
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleResetGlobalDashboard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Sim, apagar TUDO da plataforma
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <p className="text-xs text-muted-foreground">
-          Isso irá apagar todas as transações de todos os usuários da plataforma.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isResettingGlobal}>
+                {isResettingGlobal ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Resetando Global...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Resetar Faturamento Global
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>⚠️ ATENÇÃO: Ação Crítica!</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá apagar TODAS as transações de TODOS os usuários da plataforma.
+                  Isso inclui o histórico completo de pagamentos de todas as contas.
+                  Esta ação NÃO pode ser desfeita!
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetGlobalDashboard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Sim, apagar TUDO da plataforma
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <p className="text-sm text-muted-foreground">
+            Isso irá apagar todas as transações de todos os usuários da plataforma.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
