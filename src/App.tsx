@@ -14,7 +14,6 @@ import AdminCheckout from "./pages/AdminCheckout";
 import AdminPersonalization from "./pages/AdminPersonalization";
 import AdminEmail from "./pages/AdminEmail";
 import AdminProfile from "./pages/AdminProfile";
-import AdminPopupEditor from "./pages/AdminPopupEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,7 +36,6 @@ const App = () => (
               <Route path="/admin/personalization" element={<AdminPersonalization />} />
               <Route path="/admin/email" element={<AdminEmail />} />
               <Route path="/admin/profile" element={<AdminProfile />} />
-              <Route path="/admin/popup-editor" element={<AdminPopupEditor />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

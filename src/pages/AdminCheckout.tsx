@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle, X, Package, Activity, Settings2 } from "lucide-react";
+import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle, X, Package, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -429,30 +429,17 @@ const AdminCheckout = () => {
                       </div>
                     </div>
                   )}
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/admin/popup-editor?model=${model.id}`);
-                      }}
-                    >
-                      <Settings2 className="w-4 h-4 mr-2" />
-                      Personalizar
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPreviewModel(model.id);
-                      }}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Visualizar
-                    </Button>
-                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewModel(model.id);
+                    }}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Visualizar
+                  </Button>
                 </CardContent>
               </Card>
             );
