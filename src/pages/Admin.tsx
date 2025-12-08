@@ -695,9 +695,8 @@ const Admin = () => {
   return (
     <div className="space-y-6">
       <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
-        <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
 
-        {/* Content Sections */}
+      {/* Content Sections */}
         {activeSection === "faturamento" && (
           <>
             {/* Stats Card */}
