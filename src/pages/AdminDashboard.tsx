@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, User, History } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface DashboardStats {
   total_generated: number;
@@ -30,8 +31,17 @@ interface Transaction {
   created_at: string;
   paid_at: string | null;
 }
+
+interface ChartData {
+  date: string;
+  gerados: number;
+  pagos: number;
+  valorPago: number;
+}
+
 const ITEMS_PER_PAGE = 10;
-type DateFilter = 'today' | '7days' | 'month' | 'year' | 'all';
+type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -40,53 +50,34 @@ const AdminDashboard = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
-  const {
-    isAuthenticated,
-    loading,
-    signOut,
-    user
-  } = useAdminAuth();
-  // Load data when authenticated
+  const { toast } = useToast();
+  const { isAuthenticated, signOut } = useAdminAuth();
+
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
     }
   }, [isAuthenticated]);
 
-  // Auto-refresh every 1 minute
   useEffect(() => {
     if (!isAuthenticated) return;
     const interval = setInterval(() => {
       loadData(false);
-    }, 60000); // 60 seconds
-
+    }, 60000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
+
   const loadData = async (showLoading = true) => {
     if (showLoading && !stats) setIsLoading(true);
     try {
-      // Load dashboard stats (user-scoped)
-      const {
-        data: statsData,
-        error: statsError
-      } = await supabase.rpc('get_user_dashboard');
+      const { data: statsData, error: statsError } = await supabase.rpc('get_user_dashboard');
       if (statsError) throw statsError;
       setStats(statsData as unknown as DashboardStats);
 
-      // Load transactions (user-scoped)
-      const {
-        data: txData,
-        error: txError
-      } = await supabase.rpc('get_user_transactions', {
-        p_limit: 50
-      });
+      const { data: txData, error: txError } = await supabase.rpc('get_user_transactions', { p_limit: 200 });
       if (txError) throw txError;
       setTransactions(txData as unknown as Transaction[] || []);
 
-      // Load banner URL from user settings
       const { data: settingsData } = await supabase.rpc('get_user_settings');
       if (settingsData) {
         const settings = settingsData as { key: string; value: string }[];
@@ -109,19 +100,15 @@ const AdminDashboard = () => {
       setIsLoading(false);
     }
   };
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/admin');
-  };
+
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR');
   };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
@@ -132,9 +119,18 @@ const AdminDashboard = () => {
         return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Gerado</Badge>;
     }
   };
-  const conversionRate = stats && stats.total_generated > 0 ? (stats.total_paid / stats.total_generated * 100).toFixed(1) : '0';
 
-  // Filter transactions by date
+  const getFilterDays = (filter: DateFilter): number => {
+    switch (filter) {
+      case 'today': return 1;
+      case '7days': return 7;
+      case '15days': return 15;
+      case 'month': return 30;
+      case 'year': return 365;
+      default: return 30;
+    }
+  };
+
   const filteredTransactions = useMemo(() => {
     if (dateFilter === 'all') return transactions;
     const now = new Date();
@@ -148,6 +144,10 @@ const AdminDashboard = () => {
           const sevenDaysAgo = new Date(startOfDay);
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
           return txDate >= sevenDaysAgo;
+        case '15days':
+          const fifteenDaysAgo = new Date(startOfDay);
+          fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+          return txDate >= fifteenDaysAgo;
         case 'month':
           const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
           return txDate >= startOfMonth;
@@ -160,7 +160,32 @@ const AdminDashboard = () => {
     });
   }, [transactions, dateFilter]);
 
-  // Calculate filtered stats
+  const chartData = useMemo((): ChartData[] => {
+    const days = getFilterDays(dateFilter);
+    const data: ChartData[] = [];
+    const now = new Date();
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      
+      const dayTransactions = transactions.filter(tx => {
+        const txDate = new Date(tx.created_at).toISOString().split('T')[0];
+        return txDate === dateStr;
+      });
+      
+      const gerados = dayTransactions.length;
+      const pagos = dayTransactions.filter(tx => tx.status === 'paid').length;
+      const valorPago = dayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+      
+      data.push({ date: displayDate, gerados, pagos, valorPago });
+    }
+    
+    return data;
+  }, [transactions, dateFilter]);
+
   const filteredStats = useMemo(() => {
     const generated = filteredTransactions.length;
     const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
@@ -175,15 +200,14 @@ const AdminDashboard = () => {
     };
   }, [filteredTransactions]);
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFilter]);
+
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
@@ -198,10 +222,25 @@ const AdminDashboard = () => {
               Acompanhe as transações PIX
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => loadData(false)}>
-            <RefreshCw className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Atualizar</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+              <SelectTrigger className="w-[130px] sm:w-[160px] h-8 text-xs sm:text-sm">
+                <Calendar className="h-3 w-3 mr-1" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="7days">7 dias</SelectItem>
+                <SelectItem value="15days">15 dias</SelectItem>
+                <SelectItem value="month">Este mês</SelectItem>
+                <SelectItem value="year">Este ano</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => loadData(false)}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -212,9 +251,7 @@ const AdminDashboard = () => {
             src={bannerUrl}
             alt="Banner do Dashboard"
             className="w-full h-auto object-cover max-h-[200px]"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         </div>
       )}
@@ -253,29 +290,81 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
+      {/* Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <CardTitle className="text-sm sm:text-lg">Evolução de Transações</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px] sm:h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorGerados" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorPagos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 10 }} 
+                  className="text-muted-foreground"
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10 }} 
+                  className="text-muted-foreground"
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="gerados" 
+                  name="Gerados"
+                  stroke="hsl(var(--primary))" 
+                  fillOpacity={1} 
+                  fill="url(#colorGerados)" 
+                  strokeWidth={2}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="pagos" 
+                  name="Pagos"
+                  stroke="#22c55e" 
+                  fillOpacity={1} 
+                  fill="url(#colorPagos)" 
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Transactions Table */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <CardTitle className="text-sm sm:text-lg">Histórico de Transações</CardTitle>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-                <SelectTrigger className="w-[140px] sm:w-[180px] h-8 text-xs sm:text-sm">
-                  <SelectValue placeholder="Período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="today">Hoje</SelectItem>
-                  <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                  <SelectItem value="month">Este mês</SelectItem>
-                  <SelectItem value="year">Este ano</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <CardTitle className="text-sm sm:text-lg">Histórico de Transações</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
