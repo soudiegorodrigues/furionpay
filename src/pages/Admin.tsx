@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { AdminLayout } from "@/components/AdminLayout";
+import { useLocation } from "react-router-dom";
 import { AdminNavigation } from "@/components/AdminNavigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -180,11 +179,9 @@ const ITEMS_PER_PAGE = 10;
 type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
 type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 
-
 const Admin = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading, isAuthenticated } = useAdminAuth();
+  const { user } = useAdminAuth();
   const [activeSection, setActiveSection] = useState<string>(() => {
     // Check if coming from another page with section state
     const state = location.state as { section?: string } | null;
@@ -696,8 +693,8 @@ const Admin = () => {
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
+      <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
         <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
 
         {/* Content Sections */}
@@ -1486,7 +1483,6 @@ const Admin = () => {
           <EmailSection />
         )}
       </div>
-    </AdminLayout>
   );
 };
 
