@@ -35,7 +35,7 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
         <img 
           src={furionPayLogo} 
           alt="FurionPay" 
-          className="h-10 w-auto object-contain"
+          className="h-14 w-auto object-contain"
         />
       </SidebarHeader>
 
