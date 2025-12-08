@@ -492,14 +492,6 @@ const AdminCheckout = () => {
       {/* Full-page popups wrapped in Dialog for preview */}
       <Dialog open={previewModel === 'landing'} onOpenChange={(open) => !open && setPreviewModel(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-2 z-50"
-            onClick={() => setPreviewModel(null)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
           <div className="relative">
             <DonationPopupLanding 
               isOpen={true} 
@@ -514,14 +506,6 @@ const AdminCheckout = () => {
 
       <Dialog open={previewModel === 'instituto'} onOpenChange={(open) => !open && setPreviewModel(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-2 z-50"
-            onClick={() => setPreviewModel(null)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
           <div className="relative">
             <DonationPopupInstituto 
               isOpen={true} 
