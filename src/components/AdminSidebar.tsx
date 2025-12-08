@@ -31,11 +31,11 @@ interface AdminSidebarProps {
 export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
   return (
     <Sidebar className="border-r border-border">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-6">
         <img 
           src={furionPayLogo} 
           alt="FurionPay" 
-          className="h-20 w-auto object-contain"
+          className="h-28 w-auto object-contain"
         />
       </SidebarHeader>
 
