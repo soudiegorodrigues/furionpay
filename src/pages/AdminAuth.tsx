@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
 import furionLogo from '@/assets/furionpay-logo-white-text.png';
-import authWoman from '@/assets/auth-woman.png';
+import authWoman from '@/assets/auth-woman-front.png';
 
 // Animated sales notifications data
 const salesNotifications = [
@@ -349,17 +349,45 @@ const AdminAuth = () => {
   }
 
   return (
-    <div className="min-h-screen flex bg-black relative overflow-hidden">
-      {/* Base gradient */}
+    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
+      {/* Base gradient - full page */}
       <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-red-950/40" />
       
-      {/* Left side - Woman image with notifications (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center overflow-hidden">
+      {/* Animated gradient orbs - full page background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Primary glow - top right */}
+        <div 
+          className="absolute -top-32 -right-32 w-[700px] h-[700px] rounded-full animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+          }}
+        />
+        
+        {/* Secondary glow - bottom left */}
+        <div 
+          className="absolute -bottom-48 -left-48 w-[600px] h-[600px] rounded-full animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+            animationDelay: '1.5s',
+          }}
+        />
+        
+        {/* Floating particles */}
+        <div className="absolute top-20 right-[15%] w-1.5 h-1.5 bg-primary/60 rounded-full animate-float" />
+        <div className="absolute top-[30%] right-[25%] w-1 h-1 bg-primary/40 rounded-full animate-float-slow" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-[25%] right-[20%] w-2 h-2 bg-primary/50 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[60%] left-[45%] w-1.5 h-1.5 bg-primary/30 rounded-full animate-float" style={{ animationDelay: '2s' }} />
+      </div>
+      
+      {/* Woman image - positioned left (hidden on mobile) */}
+      <div className="hidden lg:block absolute left-0 bottom-0 z-10 pointer-events-none">
         {/* Glow behind woman */}
         <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+          className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full"
           style={{
-            background: 'radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 60%)',
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 60%)',
             filter: 'blur(80px)',
           }}
         />
@@ -368,11 +396,11 @@ const AdminAuth = () => {
         <img 
           src={authWoman} 
           alt="" 
-          className="relative z-10 h-[85vh] max-h-[900px] object-contain object-bottom drop-shadow-[0_0_60px_rgba(239,68,68,0.3)]"
+          className="relative z-10 h-[85vh] max-h-[850px] object-contain object-bottom drop-shadow-[0_0_80px_rgba(239,68,68,0.4)] ml-8"
         />
         
         {/* Floating sales notifications */}
-        <div className="absolute inset-0 z-20 pointer-events-none">
+        <div className="absolute inset-0 z-20">
           {salesNotifications.map((notification, index) => (
             <SalesNotification 
               key={index} 
@@ -383,45 +411,24 @@ const AdminAuth = () => {
             />
           ))}
         </div>
-        
-        {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent z-10" />
       </div>
       
-      {/* Right side - Login form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 relative z-10">
-        {/* Animated gradient orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Primary glow */}
-          <div 
-            className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full animate-pulse"
-            style={{
-              background: 'radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)',
-              filter: 'blur(80px)',
-            }}
-          />
-          
-          {/* Floating particles */}
-          <div className="absolute top-20 right-[15%] w-1.5 h-1.5 bg-primary/60 rounded-full animate-float" />
-          <div className="absolute top-[30%] left-[10%] w-1 h-1 bg-primary/40 rounded-full animate-float-slow" style={{ animationDelay: '0.5s' }} />
-          <div className="absolute bottom-[25%] right-[20%] w-2 h-2 bg-primary/50 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
-        </div>
-        
-        <div className="w-full max-w-[420px] animate-fade-in relative z-10">
-          {/* Logo with glow effect */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div 
-                className="absolute inset-0 blur-2xl opacity-60"
-                style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.6) 0%, transparent 70%)' }}
-              />
-              <img 
-                src={furionLogo} 
-                alt="FurionPay" 
-                className="h-16 relative z-10 drop-shadow-[0_0_40px_rgba(239,68,68,0.4)]"
-              />
-            </div>
+      {/* Login form - centered on page, offset right on desktop */}
+      <div className="w-full max-w-[420px] lg:ml-auto lg:mr-[10%] animate-fade-in relative z-20 p-4">
+        {/* Logo with glow effect */}
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <div 
+              className="absolute inset-0 blur-2xl opacity-60"
+              style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.6) 0%, transparent 70%)' }}
+            />
+            <img 
+              src={furionLogo} 
+              alt="FurionPay" 
+              className="h-16 relative z-10 drop-shadow-[0_0_40px_rgba(239,68,68,0.4)]"
+            />
           </div>
+        </div>
 
         {/* Card with glassmorphism */}
         <div className="relative">
@@ -699,7 +706,6 @@ const AdminAuth = () => {
         <p className="text-center text-white/40 text-xs mt-6">
           © {new Date().getFullYear()} FurionPay. Todos os direitos reservados.
         </p>
-        </div>
       </div>
 
       {/* Blocked User Dialog */}
