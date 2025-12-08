@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, X, Package, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, X, Package, Activity, LayoutGrid, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -237,7 +238,7 @@ const AdminCheckout = () => {
     return link;
   })();
   return <>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -249,165 +250,178 @@ const AdminCheckout = () => {
           </div>
         </div>
 
-        {/* Checkout Link Card */}
-        <Card className="border-primary/50 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Link className="w-5 h-5" />
-              Seu Link de Checkout
-            </CardTitle>
-            <CardDescription>
-              Escolha o domínio e modelo, depois copie o link para compartilhar
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Domain Selector */}
-              {availableDomains.length > 0 && <div className="space-y-2">
+        <Tabs defaultValue="link" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="link" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Configurar Link
+            </TabsTrigger>
+            <TabsTrigger value="models" className="flex items-center gap-2">
+              <LayoutGrid className="w-4 h-4" />
+              Modelos ({popupModels.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Link Configuration */}
+          <TabsContent value="link" className="mt-4">
+            <Card className="border-primary/50 bg-primary/5">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Link className="w-5 h-5" />
+                  Seu Link de Checkout
+                </CardTitle>
+                <CardDescription>
+                  Escolha o domínio e modelo, depois copie o link para compartilhar
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Domain Selector */}
+                  {availableDomains.length > 0 && <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Globe className="w-4 h-4" />
+                        Domínio
+                      </Label>
+                      <Select value={selectedDomain} onValueChange={setSelectedDomain}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um domínio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableDomains.map(domain => <SelectItem key={domain.id} value={domain.domain}>
+                              {domain.name ? `${domain.name} (${domain.domain})` : domain.domain}
+                            </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  {/* Model Selector */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4" />
+                      Modelo Selecionado
+                    </Label>
+                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um modelo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {popupModels.map(model => <SelectItem key={model.id} value={model.id}>
+                            {model.name}
+                          </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Pixel Selector */}
+                {metaPixels.length > 0 && <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Activity className="w-4 h-4" />
+                      Meta Pixel
+                    </Label>
+                    <Select value={selectedPixel || "none"} onValueChange={val => setSelectedPixel(val === "none" ? "" : val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhum pixel selecionado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {metaPixels.filter(pixel => pixel.id).map(pixel => <SelectItem key={pixel.id} value={pixel.id}>
+                            {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
+                          </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      O pixel será incluído no link para rastreamento
+                    </p>
+                  </div>}
+
+                <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    Domínio
+                    <Package className="w-4 h-4" />
+                    Nome do Produto
                   </Label>
-                  <Select value={selectedDomain} onValueChange={setSelectedDomain}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um domínio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableDomains.map(domain => <SelectItem key={domain.id} value={domain.domain}>
-                          {domain.name ? `${domain.name} (${domain.domain})` : domain.domain}
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>}
+                  <Input type="text" placeholder="Anônimo (padrão)" value={productName} onChange={e => setProductName(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">
+                    Nome que aparecerá no gateway de pagamento
+                  </p>
+                </div>
+                
+                {/* Generated Link */}
+                <div className="space-y-2">
+                  <Label>Seu link</Label>
+                  <div className="flex gap-2">
+                    <Input value={generatedLink} readOnly className="font-mono text-sm" />
+                    <Button variant="outline" onClick={copyLink}>
+                      {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
 
-              {/* Model Selector */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  Modelo Selecionado
-                </Label>
-                <Select value={selectedModel} onValueChange={setSelectedModel}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um modelo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {popupModels.map(model => <SelectItem key={model.id} value={model.id}>
-                        {model.name}
-                      </SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Pixel Selector */}
-            {metaPixels.length > 0 && <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Activity className="w-4 h-4" />
-                  Meta Pixel
-                </Label>
-                <Select value={selectedPixel || "none"} onValueChange={val => setSelectedPixel(val === "none" ? "" : val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Nenhum pixel selecionado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {metaPixels.filter(pixel => pixel.id).map(pixel => <SelectItem key={pixel.id} value={pixel.id}>
-                        {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
-                      </SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  O pixel será incluído no link para rastreamento
-                </p>
-              </div>}
-
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Nome do Produto
-              </Label>
-              <Input type="text" placeholder="Anônimo (padrão)" value={productName} onChange={e => setProductName(e.target.value)} />
-              <p className="text-xs text-muted-foreground">
-                Nome que aparecerá no gateway de pagamento
-              </p>
-            </div>
-            
-            {/* Generated Link */}
-            <div className="space-y-2">
-              <Label>Seu link</Label>
-              <div className="flex gap-2">
-                <Input value={generatedLink} readOnly className="font-mono text-sm" />
-                <Button variant="outline" onClick={copyLink}>
-                  {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {/* Save Button */}
+                <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
+                  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  Salvar Configurações
                 </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            {/* Save Button */}
-            <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
-              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              Salvar Configurações
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Models Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {popupModels.map(model => {
-          const stats = getStatsForModel(model.id);
-          const isSelected = selectedModel === model.id;
-          return <Card key={model.id} className={`transition-all cursor-pointer ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`} onClick={() => handleSelectModel(model.id)}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg">{model.name}</CardTitle>
-                      {isSelected}
-                    </div>
-                    {stats && stats.total_paid > 0 && <Badge variant="secondary" className="text-xs">
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        {stats.conversion_rate}%
-                      </Badge>}
-                  </div>
-                  <CardDescription>{model.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <div className="font-semibold text-blue-500">{stats?.total_generated || 0}</div>
-                      <div className="text-xs text-muted-foreground">Gerados</div>
-                    </div>
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <div className="font-semibold text-green-500">{stats?.total_paid || 0}</div>
-                      <div className="text-xs text-muted-foreground">Pagos</div>
-                    </div>
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <div className="font-semibold text-amber-500">{stats?.conversion_rate || 0}%</div>
-                      <div className="text-xs text-muted-foreground">Conversão</div>
-                    </div>
-                  </div>
-                  
-                  {model.hasDynamicAmount && <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-                      <div className="flex items-start gap-2">
-                        <span className="text-amber-500">💡</span>
-                        <div className="text-xs text-amber-600 dark:text-amber-400">
-                          <strong>Valores dinâmicos via URL</strong>
-                          <p className="mt-1 text-muted-foreground">
-                            Adicione <code className="bg-muted px-1 rounded">&amount=VALOR</code> ao link para definir valores diferentes em cada botão.
-                          </p>
+          {/* Tab: Models Grid */}
+          <TabsContent value="models" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {popupModels.map(model => {
+                const stats = getStatsForModel(model.id);
+                const isSelected = selectedModel === model.id;
+                return <Card key={model.id} className={`transition-all cursor-pointer ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`} onClick={() => handleSelectModel(model.id)}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-base">{model.name}</CardTitle>
+                        </div>
+                        {stats && stats.total_paid > 0 && <Badge variant="secondary" className="text-xs">
+                            <TrendingUp className="w-3 h-3 mr-1" />
+                            {stats.conversion_rate}%
+                          </Badge>}
+                      </div>
+                      <CardDescription className="text-xs">{model.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3 pt-0">
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div className="bg-muted/50 rounded-lg p-2 text-center">
+                          <div className="font-semibold text-blue-500 text-sm">{stats?.total_generated || 0}</div>
+                          <div className="text-xs text-muted-foreground">Gerados</div>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-2 text-center">
+                          <div className="font-semibold text-green-500 text-sm">{stats?.total_paid || 0}</div>
+                          <div className="text-xs text-muted-foreground">Pagos</div>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-2 text-center">
+                          <div className="font-semibold text-amber-500 text-sm">{stats?.conversion_rate || 0}%</div>
+                          <div className="text-xs text-muted-foreground">Conversão</div>
                         </div>
                       </div>
-                    </div>}
-                  <Button variant="outline" className="w-full" onClick={e => {
-                e.stopPropagation();
-                setPreviewModel(model.id);
-              }}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Visualizar
-                  </Button>
-                </CardContent>
-              </Card>;
-        })}
-        </div>
+                      
+                      {model.hasDynamicAmount && <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
+                          <div className="flex items-start gap-2">
+                            <span className="text-amber-500 text-sm">💡</span>
+                            <div className="text-xs text-amber-600 dark:text-amber-400">
+                              <strong>Valores dinâmicos:</strong> <code className="bg-muted px-1 rounded">&amount=VALOR</code>
+                            </div>
+                          </div>
+                        </div>}
+                      <Button variant="outline" size="sm" className="w-full" onClick={e => {
+                        e.stopPropagation();
+                        setPreviewModel(model.id);
+                      }}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Visualizar
+                      </Button>
+                    </CardContent>
+                  </Card>;
+              })}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Popup Previews - Regular popups */}
