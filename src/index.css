@@ -159,26 +159,3 @@
     transform: translateY(0);
   }
 }
-
-@keyframes notification {
-  0% {
-    opacity: 0;
-    transform: translateX(-50px) scale(0.8);
-  }
-  10% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-  80% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(30px) scale(0.9);
-  }
-}
-
-.animate-notification {
-  animation: notification 12s ease-in-out infinite;
-}
