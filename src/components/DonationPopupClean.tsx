@@ -28,6 +28,12 @@ const DONATION_AMOUNTS = [
   { amount: 1000 },
 ];
 
+const BOOST_OPTIONS = [
+  { id: 1, label: "Reforma Ong", price: 50.00, icon: "🏠" },
+  { id: 2, label: "Ração 5kg", price: 34.90, icon: "🍖" },
+  { id: 3, label: "Vacina", price: 32.70, icon: "💉" },
+];
+
 type Step = "select" | "loading" | "pix";
 
 export const DonationPopupClean = ({
@@ -38,6 +44,7 @@ export const DonationPopupClean = ({
   showCloseButton = false
 }: DonationPopupCleanProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(30);
+  const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
   const [step, setStep] = useState<Step>("select");
   const [pixData, setPixData] = useState<{
     code: string;
@@ -49,11 +56,25 @@ export const DonationPopupClean = ({
   const { toast } = useToast();
   const { trackEvent, utmParams } = usePixel();
 
+  const toggleBoost = (id: number) => {
+    setSelectedBoosts(prev => 
+      prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]
+    );
+  };
+
+  const boostTotal = selectedBoosts.reduce((sum, id) => {
+    const boost = BOOST_OPTIONS.find(b => b.id === id);
+    return sum + (boost?.price || 0);
+  }, 0);
+
+  const totalAmount = selectedAmount + boostTotal;
+
   useEffect(() => {
     if (!isOpen) {
       setStep("select");
       setPixData(null);
       setSelectedAmount(30);
+      setSelectedBoosts([]);
       setIsPaid(false);
     } else {
       trackEvent('InitiateCheckout', {
@@ -75,7 +96,7 @@ export const DonationPopupClean = ({
         if (!error && data && data.length > 0 && data[0].status === "paid") {
           setIsPaid(true);
           trackEvent("Purchase", {
-            value: selectedAmount,
+            value: totalAmount,
             currency: "BRL",
             content_name: "Donation Clean",
           });
@@ -103,7 +124,7 @@ export const DonationPopupClean = ({
     try {
       const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
-          amount: selectedAmount,
+          amount: totalAmount,
           utmParams: utmParams,
           userId: userId,
           popupModel: 'clean',
@@ -129,7 +150,7 @@ export const DonationPopupClean = ({
       
       // Fire PixGenerated event
       trackEvent('PixGenerated', {
-        value: selectedAmount,
+        value: totalAmount,
         currency: 'BRL',
         content_name: 'Donation Clean',
       });
@@ -225,12 +246,61 @@ export const DonationPopupClean = ({
                 ))}
               </div>
 
-              {/* Selected Amount */}
-              <div className="text-center py-4 bg-slate-50 rounded-xl">
-                <p className="text-sm text-slate-500">Valor selecionado</p>
-                <p className="text-3xl font-bold text-emerald-600">
-                  {formatCurrency(selectedAmount)}
-                </p>
+              {/* Boost Options */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-slate-700">Turbine sua doação</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {BOOST_OPTIONS.map((boost) => (
+                    <button
+                      key={boost.id}
+                      onClick={() => toggleBoost(boost.id)}
+                      className={cn(
+                        "p-3 rounded-xl border-2 transition-all text-center",
+                        selectedBoosts.includes(boost.id)
+                          ? "border-emerald-500 bg-emerald-50"
+                          : "border-slate-200 hover:border-slate-300 bg-white"
+                      )}
+                    >
+                      <div className="text-2xl mb-1">{boost.icon}</div>
+                      <p className="text-xs font-medium text-slate-700">{boost.label}</p>
+                      <p className="text-xs text-slate-500">{formatCurrency(boost.price)}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="space-y-2 bg-slate-50 rounded-xl p-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Contribuição:</span>
+                  <span className="font-medium text-slate-700">{formatCurrency(selectedAmount)}</span>
+                </div>
+                {selectedBoosts.length > 0 && (
+                  <>
+                    {selectedBoosts.map(id => {
+                      const boost = BOOST_OPTIONS.find(b => b.id === id);
+                      if (!boost) return null;
+                      return (
+                        <div key={id} className="flex justify-between text-sm">
+                          <span className="text-slate-500">{boost.label}:</span>
+                          <span className="font-medium text-slate-700">{formatCurrency(boost.price)}</span>
+                        </div>
+                      );
+                    })}
+                    <div className="border-t border-slate-200 pt-2 mt-2">
+                      <div className="flex justify-between text-base font-semibold">
+                        <span className="text-slate-700">Total:</span>
+                        <span className="text-emerald-600">{formatCurrency(totalAmount)}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {selectedBoosts.length === 0 && (
+                  <div className="flex justify-between text-base font-semibold">
+                    <span className="text-slate-700">Total:</span>
+                    <span className="text-emerald-600">{formatCurrency(totalAmount)}</span>
+                  </div>
+                )}
               </div>
 
               {/* Submit Button */}
@@ -279,7 +349,7 @@ export const DonationPopupClean = ({
                 )}
                 
                 <p className="text-lg">
-                  Valor total: <span className="font-bold text-emerald-600">{formatCurrency(selectedAmount)}</span>
+                  Valor total: <span className="font-bold text-emerald-600">{formatCurrency(totalAmount)}</span>
                 </p>
               </div>
 
