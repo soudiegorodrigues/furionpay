@@ -1058,7 +1058,7 @@ const Admin = () => {
             </Card>
 
             {/* Domains List */}
-            <Card>
+            <Card className="max-w-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Globe className="h-5 w-5 text-primary" />
@@ -1125,10 +1125,10 @@ const Admin = () => {
                               <div className={`w-2 h-2 rounded-full ${
                                 domain.is_active ? 'bg-green-500' : 'bg-gray-400'
                               }`} />
-                              <div>
-                                <p className="font-medium">{domain.domain}</p>
+                              <div className="max-w-[180px]">
+                                <p className="font-medium truncate">{domain.domain}</p>
                                 {domain.name && (
-                                  <p className="text-sm text-muted-foreground">{domain.name}</p>
+                                  <p className="text-sm text-muted-foreground truncate">{domain.name}</p>
                                 )}
                               </div>
                             </div>
