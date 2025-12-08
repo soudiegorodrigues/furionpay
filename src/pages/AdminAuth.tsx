@@ -68,18 +68,9 @@ const AdminAuth = () => {
 
   useEffect(() => {
     if (isAuthenticated && !loading && mode !== 'reset-password') {
-      if (isAdmin) {
-        navigate('/admin/dashboard');
-      } else {
-        // User is authenticated but not admin - show message
-        toast({
-          variant: "destructive",
-          title: "Acesso negado",
-          description: "Você não tem permissão de administrador."
-        });
-      }
+      navigate('/admin/dashboard');
     }
-  }, [isAuthenticated, isAdmin, loading, navigate, mode, toast]);
+  }, [isAuthenticated, loading, navigate, mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
