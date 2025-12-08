@@ -250,7 +250,7 @@ const AdminCheckout = () => {
         </div>
 
         {/* Checkout Link Card */}
-        <Card className="border-primary/50 bg-primary/5">
+        <Card className="border-primary/50 bg-primary/5 max-w-2xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Link className="w-5 h-5" />
