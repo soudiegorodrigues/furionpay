@@ -375,54 +375,6 @@ const AdminProducts = () => {
                         ${hoveredProduct === product.id ? 'opacity-100' : 'opacity-60'}
                       `} />
                       
-                      {/* Status Badge */}
-                      <div className="absolute top-3 left-3 z-10">
-                        <Badge 
-                          className={`
-                            font-semibold shadow-lg transition-all duration-300
-                            ${product.is_active 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-muted text-muted-foreground'
-                            }
-                            ${hoveredProduct === product.id ? 'scale-110' : 'scale-100'}
-                          `}
-                        >
-                          {product.is_active ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </div>
-
-                      {/* Price Badge */}
-                      <div className="absolute top-3 right-3 z-10">
-                        <Badge 
-                          className={`
-                            bg-background/90 backdrop-blur-md font-bold text-primary border-0 shadow-lg
-                            transition-all duration-300
-                            ${hoveredProduct === product.id ? 'scale-110' : 'scale-100'}
-                          `}
-                        >
-                          {formatCurrency(product.price)}
-                        </Badge>
-                      </div>
-
-                      {/* Product Info - Always visible at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                        <h3 className={`
-                          font-bold text-white transition-all duration-300 line-clamp-1
-                          ${hoveredProduct === product.id ? 'text-xl' : 'text-lg'}
-                        `}>
-                          {product.name}
-                        </h3>
-                        
-                        {product.description && (
-                          <p className={`
-                            text-white/70 text-sm line-clamp-2 mt-1 transition-all duration-500
-                            ${hoveredProduct === product.id ? 'opacity-100 max-h-12' : 'opacity-0 max-h-0'}
-                          `}>
-                            {product.description}
-                          </p>
-                        )}
-                      </div>
-
                       {/* Action Buttons - Netflix style */}
                       <div className={`
                         absolute bottom-4 right-4 flex items-center gap-2 z-20
@@ -471,20 +423,36 @@ const AdminProducts = () => {
                       </div>
                     </div>
 
-                    {/* Bottom bar with toggle */}
-                    <div className={`
-                      flex items-center justify-between p-3 bg-card/95 backdrop-blur-sm border-t border-border/30
-                      transition-all duration-500
-                      ${hoveredProduct === product.id ? 'bg-card' : 'bg-transparent'}
-                    `}>
-                      <span className="text-sm font-medium text-foreground truncate pr-2">
-                        {product.name}
-                      </span>
-                      <Switch 
-                        checked={product.is_active} 
-                        onCheckedChange={() => handleToggleActive(product)}
-                        className="shrink-0 data-[state=checked]:bg-primary"
-                      />
+                    {/* Bottom info with price, status and toggle */}
+                    <div className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-foreground truncate pr-2">
+                          {product.name}
+                        </h3>
+                        <span className="font-bold text-primary shrink-0">
+                          {formatCurrency(product.price)}
+                        </span>
+                      </div>
+                      
+                      {product.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {product.description}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                        <Badge 
+                          variant={product.is_active ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          {product.is_active ? "Ativo" : "Inativo"}
+                        </Badge>
+                        <Switch 
+                          checked={product.is_active} 
+                          onCheckedChange={() => handleToggleActive(product)}
+                          className="shrink-0 data-[state=checked]:bg-primary"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
