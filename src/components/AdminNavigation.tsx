@@ -36,19 +36,20 @@ export function AdminNavigation({ activeSection, onSectionChange }: AdminNavigat
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Painel Admin</h1>
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-xl sm:text-2xl font-bold">Painel Admin</h1>
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {adminSections.map((section) => (
           <Button
             key={section.id}
             variant={activeSection === section.id ? "default" : "outline"}
             size="sm"
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
             onClick={() => handleSectionClick(section.id)}
           >
-            <section.icon className="h-4 w-4" />
-            {section.title}
+            <section.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{section.title}</span>
+            <span className="xs:hidden sm:hidden">{section.title.split(' ')[0]}</span>
           </Button>
         ))}
       </div>

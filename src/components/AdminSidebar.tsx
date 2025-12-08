@@ -53,7 +53,7 @@ export function AdminSidebar({
   const logoSrc = theme === "dark" ? furionPayLogoDark : furionPayLogoLight;
   
   return (
-    <Sidebar collapsible="none" className="border-r border-border bg-background dark:bg-black w-64 min-w-64 max-w-64 flex-shrink-0">
+    <Sidebar collapsible="offcanvas" className="border-r border-border bg-background dark:bg-black">
       <SidebarHeader className="p-6 flex flex-col items-center justify-center">
         <img src={logoSrc} alt="FurionPay" className="h-16 w-auto object-contain" />
       </SidebarHeader>

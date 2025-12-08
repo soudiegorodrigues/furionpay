@@ -695,7 +695,7 @@ const Admin = () => {
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
 
       {/* Content Sections */}
@@ -703,12 +703,12 @@ const Admin = () => {
           <>
             {/* Stats Card */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-primary" />
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   Faturamento Global
                 </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => { loadGlobalStats(); loadTransactions(); }} disabled={isLoading}>
+                <Button variant="outline" size="sm" onClick={() => { loadGlobalStats(); loadTransactions(); }} disabled={isLoading} className="w-full sm:w-auto">
                   <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                   Atualizar
                 </Button>
@@ -719,59 +719,59 @@ const Admin = () => {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : globalStats ? (
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-blue-500">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                    <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+                      <div className="text-xl sm:text-3xl font-bold text-blue-500">
                         {globalStats.total_generated}
                       </div>
-                      <p className="text-sm text-muted-foreground">PIX Gerados</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">PIX Gerados</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
                         {formatCurrency(globalStats.total_amount_generated)}
                       </p>
                     </div>
-                    <div className="text-center p-4 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-green-500">
+                    <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+                      <div className="text-xl sm:text-3xl font-bold text-green-500">
                         {globalStats.total_paid}
                       </div>
-                      <p className="text-sm text-muted-foreground">PIX Pagos</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">PIX Pagos</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
                         {formatCurrency(globalStats.total_amount_paid)}
                       </p>
                     </div>
-                    <div className="text-center p-4 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-yellow-500">
+                    <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+                      <div className="text-xl sm:text-3xl font-bold text-yellow-500">
                         {conversionRate}%
                       </div>
-                      <p className="text-sm text-muted-foreground">Conversão</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Conversão</p>
                     </div>
-                    <div className="text-center p-4 bg-muted/30 rounded-lg">
-                      <div className="text-3xl font-bold text-red-500">
+                    <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+                      <div className="text-xl sm:text-3xl font-bold text-red-500">
                         {globalStats.total_expired}
                       </div>
-                      <p className="text-sm text-muted-foreground">Expirados</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Expirados</p>
                     </div>
 
                     {/* Today Stats */}
-                    <div className="col-span-2 lg:col-span-4 mt-4">
-                      <h3 className="text-lg font-semibold mb-3">Hoje</h3>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-primary/10 rounded-lg">
-                          <div className="text-2xl font-bold text-blue-500">
+                    <div className="col-span-2 lg:col-span-4 mt-3 sm:mt-4">
+                      <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Hoje</h3>
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                        <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
+                          <div className="text-lg sm:text-2xl font-bold text-blue-500">
                             {globalStats.today_generated}
                           </div>
-                          <p className="text-sm text-muted-foreground">Gerados Hoje</p>
+                          <p className="text-[10px] sm:text-sm text-muted-foreground">Gerados</p>
                         </div>
-                        <div className="text-center p-4 bg-primary/10 rounded-lg">
-                          <div className="text-2xl font-bold text-green-500">
+                        <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
+                          <div className="text-lg sm:text-2xl font-bold text-green-500">
                             {globalStats.today_paid}
                           </div>
-                          <p className="text-sm text-muted-foreground">Pagos Hoje</p>
+                          <p className="text-[10px] sm:text-sm text-muted-foreground">Pagos</p>
                         </div>
-                        <div className="text-center p-4 bg-primary/10 rounded-lg">
-                          <div className="text-2xl font-bold text-primary">
+                        <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
+                          <div className="text-sm sm:text-2xl font-bold text-primary truncate">
                             {formatCurrency(globalStats.today_amount_paid)}
                           </div>
-                          <p className="text-sm text-muted-foreground">Recebido Hoje</p>
+                          <p className="text-[10px] sm:text-sm text-muted-foreground">Recebido</p>
                         </div>
                       </div>
                     </div>
@@ -786,15 +786,15 @@ const Admin = () => {
 
             {/* Transactions Table */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5 text-primary" />
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Receipt className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   Transações Globais
-                  <Badge variant="secondary" className="ml-2">{filteredTransactions.length}</Badge>
+                  <Badge variant="secondary" className="ml-2 text-xs">{filteredTransactions.length}</Badge>
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
-                    <SelectTrigger className="w-[130px]">
+                    <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs sm:text-sm">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -805,14 +805,14 @@ const Admin = () => {
                     </SelectContent>
                   </Select>
                   <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-                    <SelectTrigger className="w-[150px]">
-                      <Calendar className="h-4 w-4 mr-2" />
+                    <SelectTrigger className="w-[120px] sm:w-[150px] h-8 text-xs sm:text-sm">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       <SelectValue placeholder="Período" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="today">Hoje</SelectItem>
-                      <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                      <SelectItem value="7days">7 dias</SelectItem>
                       <SelectItem value="month">Este mês</SelectItem>
                       <SelectItem value="year">Este ano</SelectItem>
                     </SelectContent>
@@ -830,37 +830,37 @@ const Admin = () => {
                   </p>
                 ) : (
                   <>
-                    <div className="rounded-md border overflow-x-auto">
+                    <div className="rounded-md border overflow-x-auto -mx-4 sm:mx-0">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Data</TableHead>
-                            <TableHead>Cliente</TableHead>
-                            <TableHead>Produto</TableHead>
-                            <TableHead>Valor</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Pago em</TableHead>
+                            <TableHead className="text-xs">Data</TableHead>
+                            <TableHead className="text-xs">Cliente</TableHead>
+                            <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
+                            <TableHead className="text-xs">Valor</TableHead>
+                            <TableHead className="text-xs">Status</TableHead>
+                            <TableHead className="text-xs hidden md:table-cell">Pago em</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {paginatedTransactions.map((tx) => (
                             <TableRow key={tx.id}>
-                              <TableCell className="text-sm">
+                              <TableCell className="text-xs whitespace-nowrap">
                                 {formatDate(tx.created_at)}
                               </TableCell>
-                              <TableCell className="font-medium">
+                              <TableCell className="text-xs font-medium max-w-[80px] sm:max-w-none truncate">
                                 {tx.donor_name || '-'}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="text-xs text-muted-foreground hidden sm:table-cell max-w-[100px] truncate">
                                 {tx.product_name || '-'}
                               </TableCell>
-                              <TableCell className="font-medium">
+                              <TableCell className="text-xs font-medium whitespace-nowrap">
                                 {formatCurrency(tx.amount)}
                               </TableCell>
                               <TableCell>
                                 {getStatusBadge(tx.status)}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
                                 {tx.paid_at ? formatDate(tx.paid_at) : '-'}
                               </TableCell>
                             </TableRow>
@@ -871,30 +871,32 @@ const Admin = () => {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                      <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                        <p className="text-sm text-muted-foreground">
-                          Mostrando {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
                         </p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
+                            className="h-8 px-2 sm:px-3"
                           >
                             <ChevronLeft className="h-4 w-4" />
-                            Anterior
+                            <span className="hidden sm:inline ml-1">Anterior</span>
                           </Button>
-                          <span className="text-sm text-muted-foreground px-2">
-                            Página {currentPage} de {totalPages}
+                          <span className="text-xs sm:text-sm text-muted-foreground px-2">
+                            {currentPage}/{totalPages}
                           </span>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
+                            className="h-8 px-2 sm:px-3"
                           >
-                            Próximo
+                            <span className="hidden sm:inline mr-1">Próximo</span>
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -909,20 +911,20 @@ const Admin = () => {
 
         {activeSection === "ranking" && (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                 Ranking de Faturamentos
               </CardTitle>
               <Select value={rankingDateFilter} onValueChange={handleRankingFilterChange}>
-                <SelectTrigger className="w-[150px]">
-                  <Calendar className="h-4 w-4 mr-2" />
+                <SelectTrigger className="w-full sm:w-[150px] h-8 text-xs sm:text-sm">
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   <SelectValue placeholder="Período" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="today">Hoje</SelectItem>
-                  <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                  <SelectItem value="7days">7 dias</SelectItem>
                   <SelectItem value="month">Este mês</SelectItem>
                   <SelectItem value="year">Este ano</SelectItem>
                 </SelectContent>
@@ -939,37 +941,37 @@ const Admin = () => {
                 </p>
               ) : (
                 <>
-                  <div className="rounded-md border overflow-x-auto">
+                  <div className="rounded-md border overflow-x-auto -mx-4 sm:mx-0">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-12">#</TableHead>
-                          <TableHead>Usuário</TableHead>
-                          <TableHead className="text-center">PIX Gerados</TableHead>
-                          <TableHead className="text-center">PIX Pagos</TableHead>
-                          <TableHead className="text-center">Conversão</TableHead>
-                          <TableHead className="text-right">Total Recebido</TableHead>
+                          <TableHead className="w-10 text-xs">#</TableHead>
+                          <TableHead className="text-xs">Usuário</TableHead>
+                          <TableHead className="text-center text-xs hidden sm:table-cell">Gerados</TableHead>
+                          <TableHead className="text-center text-xs">Pagos</TableHead>
+                          <TableHead className="text-center text-xs hidden sm:table-cell">Conv.</TableHead>
+                          <TableHead className="text-right text-xs">Total</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {rankingUsers.map((rankUser, index) => (
                           <TableRow key={rankUser.user_id || index}>
-                            <TableCell className="font-bold">
+                            <TableCell className="font-bold text-xs">
                               {(rankingPage - 1) * RANKING_PER_PAGE + index + 1}º
                             </TableCell>
-                            <TableCell className="truncate max-w-[200px]">
+                            <TableCell className="truncate max-w-[120px] sm:max-w-[200px] text-xs">
                               {rankUser.user_email}
                             </TableCell>
-                            <TableCell className="text-center text-blue-400">
+                            <TableCell className="text-center text-blue-400 text-xs hidden sm:table-cell">
                               {rankUser.total_generated}
                             </TableCell>
-                            <TableCell className="text-center text-green-400">
+                            <TableCell className="text-center text-green-400 text-xs">
                               {rankUser.total_paid}
                             </TableCell>
-                            <TableCell className="text-center text-yellow-400">
+                            <TableCell className="text-center text-yellow-400 text-xs hidden sm:table-cell">
                               {rankUser.conversion_rate}%
                             </TableCell>
-                            <TableCell className="text-right font-semibold text-primary">
+                            <TableCell className="text-right font-semibold text-primary text-xs whitespace-nowrap">
                               {formatCurrency(rankUser.total_amount_paid)}
                             </TableCell>
                           </TableRow>
@@ -979,13 +981,14 @@ const Admin = () => {
                   </div>
                   {rankingTotalPages > 1 && (
                     <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                      <span className="text-sm text-muted-foreground">
-                        Página {rankingPage} de {rankingTotalPages}
+                      <span className="text-xs sm:text-sm text-muted-foreground">
+                        {rankingPage}/{rankingTotalPages}
                       </span>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1 sm:gap-2">
                         <Button
                           variant="outline"
                           size="sm"
+                          className="h-8 px-2"
                           onClick={() => handleRankingPageChange(rankingPage - 1)}
                           disabled={rankingPage === 1 || isLoadingRanking}
                         >
@@ -994,6 +997,7 @@ const Admin = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="h-8 px-2"
                           onClick={() => handleRankingPageChange(rankingPage + 1)}
                           disabled={rankingPage >= rankingTotalPages || isLoadingRanking}
                         >
@@ -1250,15 +1254,15 @@ const Admin = () => {
 
         {activeSection === "usuarios" && (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   Gerenciar Usuários
                 </CardTitle>
-                <CardDescription>{filteredUsers.length} de {users.length} usuário(s)</CardDescription>
+                <CardDescription className="text-xs sm:text-sm">{filteredUsers.length} de {users.length} usuário(s)</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={loadUsers} disabled={isLoadingUsers}>
+              <Button variant="outline" size="sm" onClick={loadUsers} disabled={isLoadingUsers} className="w-full sm:w-auto">
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsers ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
@@ -1268,13 +1272,13 @@ const Admin = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nome ou email..."
+                    placeholder="Buscar..."
                     value={userSearch}
                     onChange={(e) => {
                       setUserSearch(e.target.value);
                       setUserCurrentPage(1);
                     }}
-                    className="pl-9 max-w-sm"
+                    className="pl-9 w-full sm:max-w-sm h-8 text-sm"
                   />
                 </div>
               </div>
@@ -1284,97 +1288,103 @@ const Admin = () => {
                 </div>
               ) : (
                 <>
-                  <div className="rounded-md border overflow-x-auto">
+                  <div className="rounded-md border overflow-x-auto -mx-4 sm:mx-0">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Cadastro</TableHead>
-                          <TableHead>Último Acesso</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
+                          <TableHead className="text-xs">Nome</TableHead>
+                          <TableHead className="text-xs hidden sm:table-cell">Email</TableHead>
+                          <TableHead className="text-xs hidden md:table-cell">Cadastro</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-right text-xs">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {paginatedUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
                               Nenhum usuário cadastrado
                             </TableCell>
                           </TableRow>
                         ) : (
                           paginatedUsers.map((u) => (
                             <TableRow key={u.id}>
-                              <TableCell className="font-medium">{u.full_name || '-'}</TableCell>
-                              <TableCell>{u.email}</TableCell>
-                              <TableCell>{formatDate(u.created_at)}</TableCell>
+                              <TableCell className="font-medium text-xs max-w-[100px] truncate">
+                                {u.full_name || u.email.split('@')[0]}
+                              </TableCell>
+                              <TableCell className="text-xs hidden sm:table-cell max-w-[150px] truncate">{u.email}</TableCell>
+                              <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">{formatDate(u.created_at)}</TableCell>
                               <TableCell>
                                 <div className="flex gap-1">
                                   {u.is_blocked ? (
-                                    <Badge variant="destructive">Bloqueado</Badge>
+                                    <Badge variant="destructive" className="text-[10px] px-1.5">Bloq.</Badge>
                                   ) : u.is_admin ? (
-                                    <Badge className="bg-primary">Admin</Badge>
+                                    <Badge className="bg-primary text-[10px] px-1.5">Admin</Badge>
                                   ) : (
-                                    <Badge variant="secondary">Usuário</Badge>
+                                    <Badge variant="secondary" className="text-[10px] px-1.5">User</Badge>
                                   )}
                                 </div>
                               </TableCell>
                               <TableCell className="text-right">
                                 {u.id === user?.id ? (
-                                  <span className="text-sm text-muted-foreground">Você</span>
+                                  <span className="text-xs text-muted-foreground">Você</span>
                                 ) : (
-                                  <div className="flex items-center justify-end gap-2">
+                                  <div className="flex items-center justify-end gap-1">
                                     {u.is_admin ? (
                                       <Button
                                         variant="outline"
                                         size="sm"
+                                        className="h-7 w-7 p-0"
                                         onClick={() => handleRevokeAdmin(u.id)}
                                         disabled={actionLoading === u.id}
                                         title="Revogar Admin"
                                       >
-                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldOff className="h-4 w-4" />}
+                                        {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldOff className="h-3 w-3" />}
                                       </Button>
                                     ) : (
                                       <Button
                                         variant="outline"
                                         size="sm"
+                                        className="h-7 w-7 p-0"
                                         onClick={() => handleGrantAdmin(u.id)}
                                         disabled={actionLoading === u.id}
                                         title="Tornar Admin"
                                       >
-                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
+                                        {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Shield className="h-3 w-3" />}
                                       </Button>
                                     )}
                                     {u.is_blocked ? (
                                       <Button
                                         variant="outline"
                                         size="sm"
+                                        className="h-7 w-7 p-0"
                                         onClick={() => handleUnblockUser(u.id)}
                                         disabled={actionLoading === u.id}
                                         title="Desbloquear"
                                       >
-                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="h-4 w-4" />}
+                                        {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Unlock className="h-3 w-3" />}
                                       </Button>
                                     ) : (
                                       <Button
                                         variant="outline"
                                         size="sm"
+                                        className="h-7 w-7 p-0 hidden sm:flex"
                                         onClick={() => handleBlockUser(u.id)}
                                         disabled={actionLoading === u.id}
                                         title="Bloquear"
                                       >
-                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                                        {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Ban className="h-3 w-3" />}
                                       </Button>
                                     )}
                                     <Button
                                       variant="destructive"
                                       size="sm"
+                                      className="h-7 w-7 p-0"
                                       onClick={() => openDeleteDialog(u)}
                                       disabled={actionLoading === u.id}
                                       title="Excluir"
                                     >
-                                      {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                      {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                                     </Button>
                                   </div>
                                 )}
@@ -1386,30 +1396,30 @@ const Admin = () => {
                     </Table>
                   </div>
                   {userTotalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                      <p className="text-sm text-muted-foreground">
-                        Mostrando {((userCurrentPage - 1) * USERS_PER_PAGE) + 1} - {Math.min(userCurrentPage * USERS_PER_PAGE, users.length)} de {users.length}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        {((userCurrentPage - 1) * USERS_PER_PAGE) + 1}-{Math.min(userCurrentPage * USERS_PER_PAGE, users.length)} de {users.length}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <Button
                           variant="outline"
                           size="sm"
+                          className="h-8 px-2"
                           onClick={() => setUserCurrentPage(p => Math.max(1, p - 1))}
                           disabled={userCurrentPage === 1}
                         >
                           <ChevronLeft className="h-4 w-4" />
-                          Anterior
                         </Button>
-                        <span className="text-sm text-muted-foreground px-2">
-                          Página {userCurrentPage} de {userTotalPages}
+                        <span className="text-xs sm:text-sm text-muted-foreground px-2">
+                          {userCurrentPage}/{userTotalPages}
                         </span>
                         <Button
                           variant="outline"
                           size="sm"
+                          className="h-8 px-2"
                           onClick={() => setUserCurrentPage(p => Math.min(userTotalPages, p + 1))}
                           disabled={userCurrentPage === userTotalPages}
                         >
-                          Próximo
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
