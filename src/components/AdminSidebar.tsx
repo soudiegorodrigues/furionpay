@@ -1,4 +1,4 @@
-import { BarChart3, Settings, Users, Globe, LogOut, QrCode, Menu, CreditCard, Shield } from "lucide-react";
+import { BarChart3, Settings, Users, Globe, LogOut, QrCode, Menu, CreditCard, Shield, LucideIcon } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -100,16 +100,20 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
 
 interface AdminHeaderProps {
   title?: string;
+  icon?: LucideIcon;
 }
 
-export function AdminHeader({ title }: AdminHeaderProps) {
+export function AdminHeader({ title, icon: Icon }: AdminHeaderProps) {
   return (
     <header className="h-14 border-b border-border bg-background flex items-center px-4 sticky top-0 z-10">
       <SidebarTrigger className="mr-4">
         <Menu className="h-5 w-5" />
       </SidebarTrigger>
       {title && (
-        <span className="font-semibold">{title}</span>
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="h-5 w-5 text-primary" />}
+          <span className="font-semibold">{title}</span>
+        </div>
       )}
     </header>
   );

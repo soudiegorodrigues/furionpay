@@ -229,7 +229,7 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   }, [dateFilter]);
   return (
-    <AdminLayout title="Dashboard">
+    <AdminLayout title="Dashboard" icon={BarChart3}>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
