@@ -300,104 +300,144 @@ const AdminAuth = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/70 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-float-slow" />
-        </div>
-        <div className="flex flex-col items-center gap-4 relative z-10">
-          <img src={furionLogo} alt="FurionPay" className="h-12 mb-2" />
-          <Loader2 className="h-8 w-8 animate-spin text-white" />
-          <span className="text-sm text-white/80">Carregando...</span>
+      <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-red-950/50" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent animate-pulse" />
+        
+        {/* Glow effects */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        
+        <div className="flex flex-col items-center gap-6 relative z-10">
+          <img src={furionLogo} alt="FurionPay" className="h-16 drop-shadow-[0_0_30px_rgba(239,68,68,0.5)]" />
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/50 rounded-full blur-xl animate-pulse" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary relative z-10" />
+          </div>
+          <span className="text-sm text-white/60 tracking-wider uppercase">Carregando...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-4 relative overflow-hidden">
-      {/* Decorative background elements */}
+    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden">
+      {/* Base gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-red-950/40" />
+      
+      {/* Animated gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Large blurred circles with pulse-glow */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-float-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl animate-float" />
-        
-        {/* Spinning rings */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-spin-slow" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
-        
-        {/* Grid pattern overlay */}
+        {/* Primary glow - top right */}
         <div 
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute -top-32 -right-32 w-[700px] h-[700px] rounded-full animate-pulse"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%)',
+            filter: 'blur(80px)',
           }}
         />
         
-        {/* Floating shapes */}
-        <div className="absolute top-20 right-20 w-4 h-4 bg-white/20 rounded-full animate-float" style={{ animationDelay: '0s' }} />
-        <div className="absolute top-40 left-20 w-3 h-3 bg-white/15 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-32 right-32 w-2 h-2 bg-white/25 rounded-full animate-float-slow" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-20 left-1/3 w-3 h-3 bg-white/15 rounded-full animate-drift" style={{ animationDelay: '3s' }} />
-        <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-white/20 rounded-full animate-float" style={{ animationDelay: '0.5s' }} />
-        <div className="absolute bottom-1/3 left-1/4 w-4 h-4 bg-white/10 rounded-full animate-float-slow" style={{ animationDelay: '1.5s' }} />
+        {/* Secondary glow - bottom left */}
+        <div 
+          className="absolute -bottom-48 -left-48 w-[600px] h-[600px] rounded-full animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+            animationDelay: '1.5s',
+          }}
+        />
         
-        {/* Geometric shapes */}
-        <div className="absolute top-32 left-1/3 w-8 h-8 border-2 border-white/10 rotate-45 animate-drift" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-40 right-1/3 w-6 h-6 border-2 border-white/10 rotate-12 animate-float" style={{ animationDelay: '4s' }} />
+        {/* Center accent glow */}
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-30"
+          style={{
+            background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.2) 0%, transparent 60%)',
+            filter: 'blur(60px)',
+          }}
+        />
+        
+        {/* Animated lines */}
+        <div className="absolute inset-0 opacity-[0.04]">
+          <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-primary to-transparent" />
+          <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
+          <div className="absolute top-0 left-3/4 w-px h-full bg-gradient-to-b from-transparent via-primary to-transparent" />
+          <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+          <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        </div>
+        
+        {/* Floating particles */}
+        <div className="absolute top-20 right-[15%] w-1.5 h-1.5 bg-primary/60 rounded-full animate-float" />
+        <div className="absolute top-[30%] left-[10%] w-1 h-1 bg-primary/40 rounded-full animate-float-slow" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-[25%] right-[20%] w-2 h-2 bg-primary/50 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[60%] left-[15%] w-1.5 h-1.5 bg-primary/30 rounded-full animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-20 left-[30%] w-1 h-1 bg-primary/50 rounded-full animate-float-slow" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-[15%] right-[30%] w-2 h-2 bg-primary/40 rounded-full animate-drift" style={{ animationDelay: '0.8s' }} />
+        
+        {/* Geometric accents */}
+        <div className="absolute top-[20%] left-[8%] w-20 h-20 border border-primary/10 rounded-full animate-spin-slow" />
+        <div className="absolute bottom-[15%] right-[8%] w-32 h-32 border border-primary/5 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse' }} />
+        <div className="absolute top-[40%] right-[5%] w-16 h-16 border border-primary/10 rotate-45 animate-float-slow" />
       </div>
 
-      <div className="w-full max-w-[420px] animate-fade-in relative z-10">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img 
-            src={furionLogo} 
-            alt="FurionPay" 
-            className="h-14 drop-shadow-lg"
-          />
+      <div className="w-full max-w-[440px] animate-fade-in relative z-10">
+        {/* Logo with glow effect */}
+        <div className="flex justify-center mb-10">
+          <div className="relative">
+            <div 
+              className="absolute inset-0 blur-2xl opacity-60"
+              style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.6) 0%, transparent 70%)' }}
+            />
+            <img 
+              src={furionLogo} 
+              alt="FurionPay" 
+              className="h-20 relative z-10 drop-shadow-[0_0_40px_rgba(239,68,68,0.4)]"
+            />
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-8 md:p-10">
-          {/* Header with icon */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 mb-4">
-              {mode.startsWith('reset') ? (
-                <KeyRound className="h-7 w-7 text-primary" />
-              ) : mode === 'signup' ? (
-                <User className="h-7 w-7 text-primary" />
-              ) : (
-                <Lock className="h-7 w-7 text-primary" />
-              )}
+        {/* Card with glassmorphism */}
+        <div className="relative">
+          {/* Card glow */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-3xl blur-xl opacity-60" />
+          
+          <div className="relative bg-black/60 backdrop-blur-2xl rounded-2xl border border-white/10 p-8 md:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+            {/* Header with icon */}
+            <div className="text-center mb-8">
+              <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 mb-5">
+                <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-xl" />
+                {mode.startsWith('reset') ? (
+                  <KeyRound className="h-8 w-8 text-primary relative z-10" />
+                ) : mode === 'signup' ? (
+                  <User className="h-8 w-8 text-primary relative z-10" />
+                ) : (
+                  <Lock className="h-8 w-8 text-primary relative z-10" />
+                )}
+              </div>
+              <h1 className="text-2xl font-bold text-white tracking-tight mb-2">
+                {getTitle()}
+              </h1>
+              <p className="text-sm text-white/50 leading-relaxed">
+                {getDescription()}
+              </p>
             </div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">
-              {getTitle()}
-            </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {getDescription()}
-            </p>
-          </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
             {mode === 'signup' && (
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-foreground">
+                <Label htmlFor="name" className="text-sm font-medium text-white/80">
                   Nome completo
                 </Label>
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="name"
                     type="text"
                     placeholder="Seu nome"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    className="h-12 pl-11 pr-4 text-[15px] bg-white/5 border-white/10 text-white rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white/10 transition-all placeholder:text-white/30"
                     required
                   />
                 </div>
@@ -406,18 +446,18 @@ const AdminAuth = () => {
 
             {(mode === 'login' || mode === 'signup' || mode === 'reset-email') && (
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                <Label htmlFor="email" className="text-sm font-medium text-white/80">
                   Email
                 </Label>
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    className="h-12 pl-11 pr-4 text-[15px] bg-white/5 border-white/10 text-white rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white/10 transition-all placeholder:text-white/30"
                     required
                   />
                 </div>
@@ -426,7 +466,7 @@ const AdminAuth = () => {
 
             {mode === 'reset-code' && (
               <div className="space-y-3">
-                <Label className="text-sm font-medium text-foreground">
+                <Label className="text-sm font-medium text-white/80">
                   Código de verificação
                 </Label>
                 <div className="flex justify-center">
@@ -436,16 +476,16 @@ const AdminAuth = () => {
                     onChange={setOtpCode}
                   >
                     <InputOTPGroup className="gap-2">
-                      <InputOTPSlot index={0} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                      <InputOTPSlot index={1} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                      <InputOTPSlot index={2} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                      <InputOTPSlot index={3} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                      <InputOTPSlot index={4} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
-                      <InputOTPSlot index={5} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={0} className="h-12 w-12 text-lg rounded-lg border-white/10 bg-white/5 text-white" />
+                      <InputOTPSlot index={1} className="h-12 w-12 text-lg rounded-lg border-white/10 bg-white/5 text-white" />
+                      <InputOTPSlot index={2} className="h-12 w-12 text-lg rounded-lg border-white/10 bg-white/5 text-white" />
+                      <InputOTPSlot index={3} className="h-12 w-12 text-lg rounded-lg border-white/10 bg-white/5 text-white" />
+                      <InputOTPSlot index={4} className="h-12 w-12 text-lg rounded-lg border-white/10 bg-white/5 text-white" />
+                      <InputOTPSlot index={5} className="h-12 w-12 text-lg rounded-lg border-white/10 bg-white/5 text-white" />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                <p className="text-xs text-center text-muted-foreground mt-3">
+                <p className="text-xs text-center text-white/40 mt-3">
                   Não recebeu?{' '}
                   <button
                     type="button"
@@ -471,25 +511,25 @@ const AdminAuth = () => {
 
             {(mode === 'login' || mode === 'signup') && (
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                <Label htmlFor="password" className="text-sm font-medium text-white/80">
                   Senha
                 </Label>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    className="h-12 pl-11 pr-12 text-[15px] bg-white/5 border-white/10 text-white rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white/10 transition-all placeholder:text-white/30"
                     required
                     minLength={6}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                   </button>
@@ -501,25 +541,25 @@ const AdminAuth = () => {
               <>
                 {mode === 'reset-password' && (
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword" className="text-sm font-medium text-foreground">
+                    <Label htmlFor="newPassword" className="text-sm font-medium text-white/80">
                       Nova senha
                     </Label>
                     <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
                       <Input
                         id="newPassword"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                        className="h-12 pl-11 pr-12 text-[15px] bg-white/5 border-white/10 text-white rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white/10 transition-all placeholder:text-white/30"
                         required
                         minLength={6}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                       >
                         {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                       </button>
@@ -527,25 +567,25 @@ const AdminAuth = () => {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-white/80">
                     Confirmar senha
                   </Label>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
-                      className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                      className="h-12 pl-11 pr-12 text-[15px] bg-white/5 border-white/10 text-white rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white/10 transition-all placeholder:text-white/30"
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                     >
                       {showConfirmPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                     </button>
@@ -561,9 +601,9 @@ const AdminAuth = () => {
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={checked => setRememberMe(checked as boolean)}
-                    className="h-4 w-4 rounded border-border/60 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    className="h-4 w-4 rounded border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
-                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                  <Label htmlFor="remember" className="text-sm text-white/50 cursor-pointer hover:text-white/70 transition-colors">
                     Lembrar-me
                   </Label>
                 </div>
@@ -579,7 +619,7 @@ const AdminAuth = () => {
 
             <Button
               type="submit"
-              className="w-full h-12 text-[15px] font-semibold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
+              className="w-full h-12 text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-500/90 text-white shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 active:scale-[0.98] border-0"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -594,18 +634,18 @@ const AdminAuth = () => {
           </form>
 
           {/* Footer Links */}
-          <div className="mt-8 pt-6 border-t border-border/30 text-center">
+          <div className="mt-8 pt-6 border-t border-white/10 text-center">
             {mode.startsWith('reset') ? (
               <button
                 type="button"
                 onClick={() => switchMode('login')}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                className="text-sm text-white/50 hover:text-white/70 transition-colors inline-flex items-center gap-1"
               >
                 <ArrowRight className="h-3 w-3 rotate-180" />
                 Voltar ao login
               </button>
             ) : mode === 'login' ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/50">
                 Não tem uma conta?{' '}
                 <Link
                   to="/cadastro"
@@ -615,7 +655,7 @@ const AdminAuth = () => {
                 </Link>
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-white/50">
                 Já tem uma conta?{' '}
                 <Link
                   to="/login"
@@ -626,30 +666,31 @@ const AdminAuth = () => {
               </p>
             )}
           </div>
+          </div>
         </div>
 
         {/* Footer text */}
-        <p className="text-center text-white/60 text-xs mt-6">
+        <p className="text-center text-white/40 text-xs mt-8">
           © {new Date().getFullYear()} FurionPay. Todos os direitos reservados.
         </p>
       </div>
 
       {/* Blocked User Dialog */}
       <AlertDialog open={showBlockedDialog} onOpenChange={setShowBlockedDialog}>
-        <AlertDialogContent className="rounded-2xl border-border/50">
+        <AlertDialogContent className="rounded-2xl bg-black/90 border-white/10 backdrop-blur-xl">
           <AlertDialogHeader>
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-destructive/20 flex items-center justify-center">
               <Ban className="h-8 w-8 text-destructive" />
             </div>
-            <AlertDialogTitle className="text-center text-xl font-semibold">
+            <AlertDialogTitle className="text-center text-xl font-semibold text-white">
               Usuário Bloqueado
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-muted-foreground">
+            <AlertDialogDescription className="text-center text-white/50">
               Sua conta foi bloqueada pelo administrador. Entre em contato com o suporte para mais informações.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:justify-center">
-            <AlertDialogAction onClick={() => setShowBlockedDialog(false)} className="rounded-xl">
+            <AlertDialogAction onClick={() => setShowBlockedDialog(false)} className="rounded-xl bg-primary hover:bg-primary/90">
               Entendi
             </AlertDialogAction>
           </AlertDialogFooter>
