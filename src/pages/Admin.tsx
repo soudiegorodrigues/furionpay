@@ -1329,9 +1329,15 @@ const Admin = () => {
                 <Palette className="h-5 w-5 text-primary" />
                 Personalização
               </CardTitle>
+              <CardDescription>
+                Personalize o banner e aparência do dashboard
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Em desenvolvimento...</p>
+              <Button onClick={() => navigate('/admin/personalization')}>
+                <Palette className="h-4 w-4 mr-2" />
+                Configurar Personalização
+              </Button>
             </CardContent>
           </Card>
         )}
