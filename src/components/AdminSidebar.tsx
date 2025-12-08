@@ -98,16 +98,19 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
   );
 }
 
-export function AdminHeader() {
+interface AdminHeaderProps {
+  title?: string;
+}
+
+export function AdminHeader({ title }: AdminHeaderProps) {
   return (
     <header className="h-14 border-b border-border bg-background flex items-center px-4 sticky top-0 z-10">
       <SidebarTrigger className="mr-4">
         <Menu className="h-5 w-5" />
       </SidebarTrigger>
-      <div className="flex items-center gap-2">
-        <QrCode className="h-5 w-5 text-primary" />
-        <span className="font-semibold">Painel Administrativo</span>
-      </div>
+      {title && (
+        <span className="font-semibold">{title}</span>
+      )}
     </header>
   );
 }
