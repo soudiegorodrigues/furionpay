@@ -33,8 +33,6 @@ const AdminIntegrations = () => {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [apiKey, setApiKey] = useState("");
-  const [feeRate, setFeeRate] = useState("");
-  const [fixedFee, setFixedFee] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
@@ -64,23 +62,14 @@ const AdminIntegrations = () => {
         key: string;
         value: string;
       }) => s.key === `${integrationId}_api_key`);
-      const feeRateSetting = data?.find((s: {
-        key: string;
-        value: string;
-      }) => s.key === `${integrationId}_fee_rate`);
-      const fixedFeeSetting = data?.find((s: {
-        key: string;
-        value: string;
-      }) => s.key === `${integrationId}_fixed_fee`);
-      
-      setApiKey(apiKeySetting?.value || "");
-      setFeeRate(feeRateSetting?.value || "");
-      setFixedFee(fixedFeeSetting?.value || "");
+      if (apiKeySetting) {
+        setApiKey(apiKeySetting.value);
+      } else {
+        setApiKey("");
+      }
     } catch (error) {
       console.error("Erro ao carregar configuração:", error);
       setApiKey("");
-      setFeeRate("");
-      setFixedFee("");
     } finally {
       setIsLoadingConfig(false);
     }
@@ -95,32 +84,18 @@ const AdminIntegrations = () => {
     if (!selectedIntegration) return;
     setIsSaving(true);
     try {
-      // Save API key
-      const { error: apiError } = await supabase.rpc('update_user_setting', {
+      const {
+        error
+      } = await supabase.rpc('update_user_setting', {
         setting_key: `${selectedIntegration.id}_api_key`,
         setting_value: apiKey
       });
-      if (apiError) throw apiError;
-
-      // Save fee rate
-      const { error: feeError } = await supabase.rpc('update_user_setting', {
-        setting_key: `${selectedIntegration.id}_fee_rate`,
-        setting_value: feeRate
-      });
-      if (feeError) throw feeError;
-
-      // Save fixed fee
-      const { error: fixedError } = await supabase.rpc('update_user_setting', {
-        setting_key: `${selectedIntegration.id}_fixed_fee`,
-        setting_value: fixedFee
-      });
-      if (fixedError) throw fixedError;
-
-      toast.success("Configurações salvas com sucesso!");
+      if (error) throw error;
+      toast.success("Credenciais salvas com sucesso!");
       setConfigDialogOpen(false);
     } catch (error) {
       console.error("Erro ao salvar configuração:", error);
-      toast.error("Erro ao salvar configurações");
+      toast.error("Erro ao salvar credenciais");
     } finally {
       setIsSaving(false);
     }
@@ -215,41 +190,6 @@ const AdminIntegrations = () => {
                 <p className="text-xs text-muted-foreground">
                   Sua chave de API será armazenada de forma segura.
                 </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fee-rate">Taxa por Transação (%)</Label>
-                  <Input 
-                    id="fee-rate" 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    placeholder="Ex: 1.99" 
-                    value={feeRate} 
-                    onChange={e => setFeeRate(e.target.value)} 
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Percentual cobrado sobre cada transação.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="fixed-fee">Valor Fixo (R$)</Label>
-                  <Input 
-                    id="fixed-fee" 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    placeholder="Ex: 0.50" 
-                    value={fixedFee} 
-                    onChange={e => setFixedFee(e.target.value)} 
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Valor fixo cobrado por transação.
-                  </p>
-                </div>
               </div>
               
               <div className="flex justify-end gap-2">
