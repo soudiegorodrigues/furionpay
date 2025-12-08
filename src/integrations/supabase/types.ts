@@ -229,10 +229,38 @@ export type Database = {
         }
         Relationships: []
       }
+      product_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           created_at: string
           description: string | null
+          folder_id: string | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -244,6 +272,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          folder_id?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -255,6 +284,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          folder_id?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -263,7 +293,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "product_folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
