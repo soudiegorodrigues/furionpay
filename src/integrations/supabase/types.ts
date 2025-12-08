@@ -427,6 +427,7 @@ export type Database = {
         Returns: {
           created_at: string
           email: string
+          full_name: string
           id: string
           is_admin: boolean
           is_blocked: boolean
