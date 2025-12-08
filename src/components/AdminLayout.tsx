@@ -61,9 +61,9 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
     return location.pathname === '/admin' && activeSection === section.section;
   };
 
-  // Redirect if not authenticated or not admin
-  if (!loading && (!isAuthenticated || !isAdmin)) {
-    navigate('/admin');
+  // Redirect if not authenticated
+  if (!loading && !isAuthenticated) {
+    navigate('/login');
     return null;
   }
 
