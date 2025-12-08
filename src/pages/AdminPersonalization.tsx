@@ -9,22 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Palette, Save, Image, Loader2, Trash2, Upload, Link,
-  DollarSign, Trophy, Globe, CreditCard, Users, FileText, Percent, Mail
-} from "lucide-react";
-
-const adminSections = [
-  { id: "faturamento", title: "Faturamento Global", icon: DollarSign, path: "/admin" },
-  { id: "ranking", title: "Ranking de Faturamentos", icon: Trophy, path: "/admin" },
-  { id: "dominios", title: "Domínios", icon: Globe, path: "/admin" },
-  { id: "multi", title: "Multi-adquirência", icon: CreditCard, path: "/admin" },
-  { id: "usuarios", title: "Usuários", icon: Users, path: "/admin" },
-  { id: "documentos", title: "Documentos", icon: FileText, path: "/admin" },
-  { id: "taxas", title: "Taxas", icon: Percent, path: "/admin" },
-  { id: "personalizacao", title: "Personalização", icon: Palette, path: "/admin/personalization" },
-  { id: "email", title: "Email", icon: Mail, path: "/admin/email" },
-];
+import { Palette, Save, Image, Loader2, Trash2, Upload, Link } from "lucide-react";
 
 const AdminPersonalization = () => {
   const [bannerUrl, setBannerUrl] = useState("");
@@ -206,24 +191,6 @@ const AdminPersonalization = () => {
 
   return (
     <AdminLayout>
-      <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Painel Admin</h1>
-        
-        {/* Navigation Buttons */}
-        <div className="flex flex-wrap gap-3">
-          {adminSections.map((section) => (
-            <Button
-              key={section.id}
-              variant={section.id === "personalizacao" ? "default" : "outline"}
-              className="flex items-center gap-2"
-              onClick={() => navigate(section.path)}
-            >
-              <section.icon className="h-4 w-4" />
-              {section.title}
-            </Button>
-          ))}
-        </div>
-
         <div className="max-w-4xl space-y-6">
           {/* Header */}
           <div className="flex items-center gap-2">
@@ -331,7 +298,6 @@ const AdminPersonalization = () => {
           </CardContent>
         </Card>
         </div>
-      </div>
     </AdminLayout>
   );
 };
