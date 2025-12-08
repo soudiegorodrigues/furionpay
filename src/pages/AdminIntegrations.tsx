@@ -11,7 +11,6 @@ import { Loader2, Puzzle, Check, Plus, ExternalLink, Settings, Eye, EyeOff } fro
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 interface Integration {
   id: string;
   name: string;
@@ -21,18 +20,14 @@ interface Integration {
   methods?: string[];
   configurable?: boolean;
 }
-
-const integrations: Integration[] = [
-  {
-    id: "spedpay",
-    name: "SpedPay",
-    description: "Gateway de pagamento PIX integrado",
-    status: "connected",
-    methods: ["PIX"],
-    configurable: true
-  }
-];
-
+const integrations: Integration[] = [{
+  id: "spedpay",
+  name: "SpedPay",
+  description: "Gateway de pagamento PIX integrado",
+  status: "connected",
+  methods: ["PIX"],
+  configurable: true
+}];
 const AdminIntegrations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
@@ -42,8 +37,10 @@ const AdminIntegrations = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, loading } = useAdminAuth();
-
+  const {
+    isAuthenticated,
+    loading
+  } = useAdminAuth();
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate('/admin');
@@ -53,14 +50,18 @@ const AdminIntegrations = () => {
       setIsLoading(false);
     }
   }, [isAuthenticated, loading, navigate]);
-
   const loadIntegrationConfig = async (integrationId: string) => {
     setIsLoadingConfig(true);
     try {
-      const { data, error } = await supabase.rpc('get_user_settings');
+      const {
+        data,
+        error
+      } = await supabase.rpc('get_user_settings');
       if (error) throw error;
-      
-      const apiKeySetting = data?.find((s: { key: string; value: string }) => s.key === `${integrationId}_api_key`);
+      const apiKeySetting = data?.find((s: {
+        key: string;
+        value: string;
+      }) => s.key === `${integrationId}_api_key`);
       if (apiKeySetting) {
         setApiKey(apiKeySetting.value);
       } else {
@@ -73,26 +74,23 @@ const AdminIntegrations = () => {
       setIsLoadingConfig(false);
     }
   };
-
   const handleOpenConfig = async (integration: Integration) => {
     setSelectedIntegration(integration);
     setShowApiKey(false);
     setConfigDialogOpen(true);
     await loadIntegrationConfig(integration.id);
   };
-
   const handleSaveConfig = async () => {
     if (!selectedIntegration) return;
-    
     setIsSaving(true);
     try {
-      const { error } = await supabase.rpc('update_user_setting', {
+      const {
+        error
+      } = await supabase.rpc('update_user_setting', {
         setting_key: `${selectedIntegration.id}_api_key`,
         setting_value: apiKey
       });
-      
       if (error) throw error;
-      
       toast.success("Credenciais salvas com sucesso!");
       setConfigDialogOpen(false);
     } catch (error) {
@@ -102,19 +100,14 @@ const AdminIntegrations = () => {
       setIsSaving(false);
     }
   };
-
   if (loading || isLoading) {
-    return (
-      <AdminLayout>
+    return <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </AdminLayout>
-    );
+      </AdminLayout>;
   }
-
-  return (
-    <AdminLayout>
+  return <AdminLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -135,8 +128,7 @@ const AdminIntegrations = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {integrations.filter(i => i.status === "connected").map((integration) => (
-              <Card key={integration.id} className="border-primary/50">
+            {integrations.filter(i => i.status === "connected").map(integration => <Card key={integration.id} className="border-primary/50">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-bold text-primary">
@@ -153,38 +145,24 @@ const AdminIntegrations = () => {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-2">Métodos disponíveis:</p>
                     <div className="flex flex-wrap gap-2">
-                      {integration.methods?.map((method) => (
-                        <Badge key={method} variant="secondary" className="text-xs">
+                      {integration.methods?.map(method => <Badge key={method} variant="secondary" className="text-xs">
                           {method}
-                        </Badge>
-                      ))}
+                        </Badge>)}
                     </div>
                   </div>
-                  {integration.configurable && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => handleOpenConfig(integration)}
-                    >
+                  {integration.configurable && <Button variant="outline" className="w-full" onClick={() => handleOpenConfig(integration)}>
                       <Settings className="w-4 h-4 mr-2" />
                       Configurar
-                    </Button>
-                  )}
+                    </Button>}
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
 
 
         {/* Info Card */}
         <Card className="bg-muted/30">
-          <CardContent className="py-4">
-            <p className="text-sm text-muted-foreground">
-              💡 <strong>Dica:</strong> Novas integrações serão disponibilizadas em futuras atualizações. 
-              Entre em contato com o suporte para solicitar integrações específicas.
-            </p>
-          </CardContent>
+          
         </Card>
       </div>
 
@@ -198,35 +176,15 @@ const AdminIntegrations = () => {
             </DialogDescription>
           </DialogHeader>
           
-          {isLoadingConfig ? (
-            <div className="flex items-center justify-center py-8">
+          {isLoadingConfig ? <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="space-y-4">
+            </div> : <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="api-key">Chave de API</Label>
                 <div className="relative">
-                  <Input
-                    id="api-key"
-                    type={showApiKey ? "text" : "password"}
-                    placeholder="Insira sua chave de API"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                  >
-                    {showApiKey ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
+                  <Input id="api-key" type={showApiKey ? "text" : "password"} placeholder="Insira sua chave de API" value={apiKey} onChange={e => setApiKey(e.target.value)} className="pr-10" />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setShowApiKey(!showApiKey)}>
+                    {showApiKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -243,12 +201,9 @@ const AdminIntegrations = () => {
                   Salvar
                 </Button>
               </div>
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
-    </AdminLayout>
-  );
+    </AdminLayout>;
 };
-
 export default AdminIntegrations;
