@@ -70,7 +70,7 @@ const ZonaDePerigo = () => {
   };
 
   return (
-    <Card className="border-destructive/50">
+    <Card className="border-destructive/50 max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-destructive">
           <AlertTriangle className="w-5 h-5" />
