@@ -235,7 +235,7 @@ const AdminAuth = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(email, password, name);
         if (error) {
           toast({
             variant: "destructive",

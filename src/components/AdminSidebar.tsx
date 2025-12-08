@@ -34,11 +34,13 @@ const menuItems = [{
 }];
 interface AdminSidebarProps {
   userEmail?: string;
+  userName?: string;
   onLogout: () => void;
   isAdmin?: boolean;
 }
 export function AdminSidebar({
   userEmail,
+  userName,
   onLogout,
   isAdmin = false
 }: AdminSidebarProps) {
@@ -82,7 +84,7 @@ export function AdminSidebar({
               <User className="h-5 w-5 text-primary" />
             </div>
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-semibold truncate">FURIONPAY</span>
+              <span className="text-sm font-semibold truncate">{userName || "Usuário"}</span>
               <span className="text-xs text-muted-foreground truncate">
                 {userEmail || "Não identificado"}
               </span>
