@@ -220,7 +220,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -249,16 +249,6 @@ const AdminDashboard = () => {
             </div>
             <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{filteredStats.conversionRate}%</p>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Taxa geral</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs sm:text-sm text-muted-foreground">Usuário</p>
-              <User className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
-            </div>
-            <p className="text-sm sm:text-lg font-medium text-foreground mt-1 truncate">{user?.email?.split('@')[0] || 'N/A'}</p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Logado</p>
           </CardContent>
         </Card>
       </div>
