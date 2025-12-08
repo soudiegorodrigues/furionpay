@@ -209,21 +209,6 @@ const AdminDashboard = () => {
               <span className="hidden sm:inline">Atualizar</span>
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-              <SelectTrigger className="w-[120px] sm:w-[140px] text-sm">
-                <Calendar className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="today">Hoje</SelectItem>
-                <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                <SelectItem value="month">Este mês</SelectItem>
-                <SelectItem value="year">Este ano</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         {/* Banner */}
@@ -243,10 +228,25 @@ const AdminDashboard = () => {
         {/* Stats Cards */}
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
           <CardHeader className="p-3 sm:p-6">
-            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
-              Meu Faturamento
-            </CardTitle>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+                Meu Faturamento
+              </CardTitle>
+              <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
+                <SelectTrigger className="w-[120px] sm:w-[140px] text-sm">
+                  <Calendar className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="today">Hoje</SelectItem>
+                  <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                  <SelectItem value="month">Este mês</SelectItem>
+                  <SelectItem value="year">Este ano</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
