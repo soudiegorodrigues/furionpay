@@ -6,6 +6,7 @@ export const useAdminAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [adminLoading, setAdminLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -37,6 +38,7 @@ export const useAdminAuth = () => {
   }, [signOut]);
 
   const checkIfAdmin = useCallback(async () => {
+    setAdminLoading(true);
     try {
       const { data, error } = await supabase.rpc('is_admin_authenticated');
       
@@ -52,6 +54,8 @@ export const useAdminAuth = () => {
       console.error('Error in checkIfAdmin:', err);
       setIsAdmin(false);
       return false;
+    } finally {
+      setAdminLoading(false);
     }
   }, []);
 
@@ -65,28 +69,30 @@ export const useAdminAuth = () => {
         
         // Check if user is blocked and admin when they sign in
         if (event === 'SIGNED_IN' && session?.user) {
-          setTimeout(() => {
-            checkIfBlocked();
-            checkIfAdmin();
-          }, 0);
+          checkIfBlocked();
+          checkIfAdmin();
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          setIsAdmin(false);
+          setAdminLoading(false);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
       
       // Check if existing user is blocked and admin
       if (session?.user) {
-        setTimeout(() => {
-          checkIfBlocked();
-          checkIfAdmin();
-        }, 0);
+        checkIfBlocked();
+        await checkIfAdmin();
       } else {
         setIsAdmin(false);
+        setAdminLoading(false);
       }
     });
 
@@ -163,7 +169,7 @@ export const useAdminAuth = () => {
   return {
     user,
     session,
-    loading,
+    loading: loading || adminLoading,
     isBlocked,
     isAdmin,
     signIn,
