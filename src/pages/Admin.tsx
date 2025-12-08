@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,22 +96,16 @@ const ITEMS_PER_PAGE = 10;
 type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
 type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 
-const adminSections = [
-  { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
-  { id: "ranking", title: "Ranking de Faturamentos", icon: Trophy },
-  { id: "dominios", title: "Domínios", icon: Globe },
-  { id: "multi", title: "Multi-adquirência", icon: CreditCard },
-  { id: "usuarios", title: "Usuários", icon: Users },
-  { id: "documentos", title: "Documentos", icon: FileText },
-  { id: "taxas", title: "Taxas", icon: Percent },
-  { id: "personalizacao", title: "Personalização", icon: Palette },
-  { id: "email", title: "Email", icon: Mail },
-];
 
 const Admin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAdminAuth();
-  const [activeSection, setActiveSection] = useState<string>("faturamento");
+  const [activeSection, setActiveSection] = useState<string>(() => {
+    // Check if coming from another page with section state
+    const state = location.state as { section?: string } | null;
+    return state?.section || "faturamento";
+  });
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -606,32 +600,7 @@ const Admin = () => {
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
-    <AdminLayout>
-      <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Painel Admin</h1>
-        
-        {/* Navigation Buttons */}
-        <div className="flex flex-wrap gap-3">
-          {adminSections.map((section) => (
-            <Button
-              key={section.id}
-              variant={activeSection === section.id ? "default" : "outline"}
-              className="flex items-center gap-2"
-              onClick={() => {
-                if (section.id === "personalizacao") {
-                  navigate('/admin/personalization');
-                } else if (section.id === "email") {
-                  navigate('/admin/email');
-                } else {
-                  setActiveSection(section.id);
-                }
-              }}
-            >
-              <section.icon className="h-4 w-4" />
-              {section.title}
-            </Button>
-          ))}
-        </div>
+    <AdminLayout activeSection={activeSection} onSectionChange={setActiveSection}>
 
         {/* Content Sections */}
         {activeSection === "faturamento" && (
@@ -1369,7 +1338,6 @@ const Admin = () => {
             </CardContent>
           </Card>
         )}
-      </div>
     </AdminLayout>
   );
 };
