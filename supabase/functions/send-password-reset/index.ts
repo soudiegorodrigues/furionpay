@@ -2,8 +2,6 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -12,6 +10,30 @@ const corsHeaders = {
 interface PasswordResetRequest {
   email: string;
 }
+
+const getResendApiKey = async (supabase: any): Promise<string | null> => {
+  // First try to get from admin_settings table
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .select("value")
+    .eq("key", "resend_api_key")
+    .limit(1)
+    .maybeSingle();
+
+  if (!error && data?.value) {
+    console.log("Using Resend API key from admin_settings");
+    return data.value;
+  }
+
+  // Fallback to environment variable
+  const envKey = Deno.env.get("RESEND_API_KEY");
+  if (envKey) {
+    console.log("Using Resend API key from environment");
+    return envKey;
+  }
+
+  return null;
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -33,6 +55,18 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get Resend API key
+    const resendApiKey = await getResendApiKey(supabase);
+    if (!resendApiKey) {
+      console.error("Resend API key not configured");
+      return new Response(
+        JSON.stringify({ error: "Serviço de email não configurado" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
 
     // Check if user exists
     const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
