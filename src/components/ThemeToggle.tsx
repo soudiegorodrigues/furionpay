@@ -1,20 +1,15 @@
-import { memo, useCallback } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
-export const ThemeToggle = memo(function ThemeToggle() {
+export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-
-  const toggleTheme = useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }, [theme, setTheme]);
 
   return (
     <Button
       variant="outline"
       size="icon"
-      onClick={toggleTheme}
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="h-9 w-9"
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -22,4 +17,4 @@ export const ThemeToggle = memo(function ThemeToggle() {
       <span className="sr-only">Alternar tema</span>
     </Button>
   );
-});
+}
