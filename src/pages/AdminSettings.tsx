@@ -350,39 +350,49 @@ const AdminSettings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full" disabled={isResetting}>
-                  {isResetting ? <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Resetando...
-                    </> : <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Resetar Meu Dashboard (Apagar Minhas Transações)
-                    </>}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. Isso irá apagar permanentemente
-                    todas as suas transações PIX do dashboard, incluindo histórico de pagamentos.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleResetDashboard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Sim, apagar tudo
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <p className="text-xs text-muted-foreground">
-              Isso irá zerar todos os seus contadores e remover seu histórico de transações.
-            </p>
+          {/* Global Reset - Admin Only */}
+          {isAdmin && (
+            <>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full" disabled={isResettingGlobal}>
+                    {isResettingGlobal ? <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Resetando Global...
+                      </> : <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Resetar Faturamento Global (Todas as Contas)
+                      </>}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>⚠️ ATENÇÃO: Ação Crítica!</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação irá apagar TODAS as transações de TODOS os usuários da plataforma.
+                      Isso inclui o histórico completo de pagamentos de todas as contas.
+                      Esta ação NÃO pode ser desfeita!
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetGlobalDashboard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Sim, apagar TUDO da plataforma
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <p className="text-xs text-muted-foreground">
+                Isso irá apagar todas as transações de todos os usuários da plataforma.
+              </p>
+            </>
+          )}
 
-            {/* Global Reset - Admin Only */}
+          {!isAdmin && (
+            <p className="text-xs text-muted-foreground text-center">
+              Apenas administradores podem realizar ações nesta seção.
+            </p>
+          )}
             {isAdmin && (
               <>
                 <Separator className="my-4" />
