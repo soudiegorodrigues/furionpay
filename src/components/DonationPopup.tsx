@@ -21,7 +21,7 @@ interface DonationPopupProps {
 const BOOST_OPTIONS = [
   { id: 1, label: "Reforma Ong", price: 50.00, icon: "🏠" },
   { id: 2, label: "Ração 5kg", price: 34.90, icon: "🍖" },
-  { id: 3, label: "Vacina", price: 47.99, icon: "💉" },
+  { id: 3, label: "Vacina", price: 32.70, icon: "💉" },
 ];
 
 const MIN_DONATION = 10;
