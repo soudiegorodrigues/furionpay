@@ -30,27 +30,6 @@ const integrations: Integration[] = [
     status: "connected",
     methods: ["PIX"],
     configurable: true
-  },
-  {
-    id: "asaas",
-    name: "Asaas",
-    description: "Plataforma completa de cobranças",
-    status: "coming_soon",
-    methods: ["PIX", "Cartão", "Boleto"]
-  },
-  {
-    id: "pagarme",
-    name: "Pagar.me",
-    description: "Soluções de pagamento digital",
-    status: "coming_soon",
-    methods: ["PIX", "Cartão"]
-  },
-  {
-    id: "stripe",
-    name: "Stripe",
-    description: "Pagamentos internacionais",
-    status: "coming_soon",
-    methods: ["Cartão"]
   }
 ];
 
@@ -197,44 +176,6 @@ const AdminIntegrations = () => {
           </div>
         </div>
 
-        {/* Available Integrations */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Disponível em Breve</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {integrations.filter(i => i.status === "coming_soon").map((integration) => (
-              <Card key={integration.id} className="opacity-60">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-muted-foreground">
-                      {integration.name}
-                    </CardTitle>
-                    <Badge variant="outline" className="text-muted-foreground">
-                      Em breve
-                    </Badge>
-                  </div>
-                  <CardDescription>{integration.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Métodos disponíveis:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {integration.methods?.map((method) => (
-                        <Badge key={method} variant="outline" className="text-xs text-muted-foreground">
-                          {method}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Conectar
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
 
         {/* Info Card */}
         <Card className="bg-muted/30">
