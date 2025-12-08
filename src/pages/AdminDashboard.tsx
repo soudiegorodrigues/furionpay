@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, User } from "lucide-react";
 
 interface DashboardStats {
   total_generated: number;
@@ -333,7 +333,10 @@ const AdminDashboard = () => {
                             {tx.product_name || '-'}
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm text-muted-foreground hidden md:table-cell">
-                            {tx.donor_name || '-'}
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5 text-blue-500" />
+                              {tx.donor_name || '-'}
+                            </div>
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm text-muted-foreground hidden lg:table-cell">
                             {tx.paid_at ? formatDate(tx.paid_at) : '-'}
