@@ -33,7 +33,8 @@ import {
   ShieldOff,
   Ban,
   Unlock,
-  Trophy
+  Trophy,
+  Mail
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -104,6 +105,7 @@ const adminSections = [
   { id: "documentos", title: "Documentos", icon: FileText },
   { id: "taxas", title: "Taxas", icon: Percent },
   { id: "personalizacao", title: "Personalização", icon: Palette },
+  { id: "email", title: "Email", icon: Mail },
 ];
 
 const Admin = () => {
@@ -1330,6 +1332,26 @@ const Admin = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">Em desenvolvimento...</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeSection === "email" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-primary" />
+                Configuração de Email
+              </CardTitle>
+              <CardDescription>
+                Configure o envio de emails através do Resend
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate('/admin/email')}>
+                <Mail className="h-4 w-4 mr-2" />
+                Configurar Email
+              </Button>
             </CardContent>
           </Card>
         )}
