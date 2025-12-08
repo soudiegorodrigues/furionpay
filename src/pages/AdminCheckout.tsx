@@ -33,13 +33,6 @@ interface AvailableDomain {
   name: string | null;
 }
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  is_active: boolean;
-}
-
 const popupModels = [
   { id: "boost", name: "Boost", description: "Modelo com animações e destaque visual" },
   { id: "simple", name: "Simples", description: "Modelo minimalista e direto" },
@@ -58,8 +51,6 @@ const AdminCheckout = () => {
   const [selectedModel, setSelectedModel] = useState<string>("boost");
   const [selectedDomain, setSelectedDomain] = useState<string>("");
   const [productName, setProductName] = useState<string>("");
-  const [selectedProductId, setSelectedProductId] = useState<string>("");
-  const [products, setProducts] = useState<Product[]>([]);
   const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
   const [linkCopied, setLinkCopied] = useState(false);
   const navigate = useNavigate();
@@ -89,14 +80,6 @@ const AdminCheckout = () => {
         .order('domain');
       setAvailableDomains(domainsData || []);
 
-      // Load products
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, name, price, is_active')
-        .eq('is_active', true)
-        .order('name');
-      setProducts(productsData || []);
-
       // Load user settings
       const { data: settingsData } = await supabase.rpc('get_user_settings');
       if (settingsData) {
@@ -104,34 +87,15 @@ const AdminCheckout = () => {
         const popupSetting = settings.find(s => s.key === 'popup_model');
         const domainSetting = settings.find(s => s.key === 'selected_domain');
         const productSetting = settings.find(s => s.key === 'product_name');
-        const productIdSetting = settings.find(s => s.key === 'selected_product_id');
         if (popupSetting?.value) setSelectedModel(popupSetting.value);
         if (domainSetting?.value) setSelectedDomain(domainSetting.value);
         if (productSetting?.value) setProductName(productSetting.value);
-        if (productIdSetting?.value) setSelectedProductId(productIdSetting.value);
       }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleProductSelect = (productId: string) => {
-    setSelectedProductId(productId);
-    if (productId) {
-      const product = products.find(p => p.id === productId);
-      if (product) {
-        setProductName(product.name);
-      }
-    }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
   };
 
   // Blocked product names list
@@ -167,10 +131,6 @@ const AdminCheckout = () => {
         supabase.rpc('update_user_setting', {
           setting_key: 'product_name',
           setting_value: productName
-        }),
-        supabase.rpc('update_user_setting', {
-          setting_key: 'selected_product_id',
-          setting_value: selectedProductId
         })
       ]);
       toast({
@@ -210,13 +170,9 @@ const AdminCheckout = () => {
     return popupStats.find(s => s.popup_model === modelId);
   };
 
-  const baseLink = selectedDomain 
+  const generatedLink = selectedDomain 
     ? `https://www.${selectedDomain}/?u=${user?.id || ''}&m=${selectedModel}` 
     : `${window.location.origin}/?u=${user?.id || ''}&m=${selectedModel}`;
-  
-  const generatedLink = selectedProductId 
-    ? `${baseLink}&p=${selectedProductId}`
-    : baseLink;
 
   if (loading) {
     return (
@@ -296,32 +252,6 @@ const AdminCheckout = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Product Selector */}
-              {products.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Package className="w-4 h-4" />
-                    Produto Cadastrado
-                  </Label>
-                  <Select value={selectedProductId || "none"} onValueChange={(val) => handleProductSelect(val === "none" ? "" : val)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um produto (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum (usar nome manual)</SelectItem>
-                      {products.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name} - {formatCurrency(product.price)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Selecione um produto para usar automaticamente seu nome e preço
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Product Name */}
