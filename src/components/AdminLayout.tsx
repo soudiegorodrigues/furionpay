@@ -8,9 +8,10 @@ import { RefreshCw } from "lucide-react";
 
 interface AdminLayoutProps {
   children: ReactNode;
+  title?: string;
 }
 
-export function AdminLayout({ children }: AdminLayoutProps) {
+export function AdminLayout({ children, title }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signOut, user, isBlocked } = useAdminAuth();
 
@@ -38,7 +39,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar userEmail={user?.email} onLogout={handleLogout} />
         <div className="flex-1 flex flex-col min-w-0">
-          <AdminHeader />
+          <AdminHeader title={title} />
           <BlockedUserAlert isBlocked={isBlocked} />
           <main className="flex-1 p-4 sm:p-6 overflow-auto">
             {children}

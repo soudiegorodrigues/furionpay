@@ -216,7 +216,7 @@ const AdminSettings = () => {
   }
   
   return (
-    <AdminLayout>
+    <AdminLayout title="Configurações">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
