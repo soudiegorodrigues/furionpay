@@ -304,12 +304,12 @@ const AdminCheckout = () => {
                     <Package className="w-4 h-4" />
                     Produto Cadastrado
                   </Label>
-                  <Select value={selectedProductId} onValueChange={handleProductSelect}>
+                  <Select value={selectedProductId || "none"} onValueChange={(val) => handleProductSelect(val === "none" ? "" : val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um produto (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum (usar nome manual)</SelectItem>
+                      <SelectItem value="none">Nenhum (usar nome manual)</SelectItem>
                       {products.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
                           {product.name} - {formatCurrency(product.price)}
