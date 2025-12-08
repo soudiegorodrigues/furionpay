@@ -7,7 +7,8 @@ import {
   Users, 
   FileText, 
   Percent, 
-  Palette 
+  Palette,
+  Shield
 } from "lucide-react";
 
 const adminSections = [
@@ -22,7 +23,7 @@ const adminSections = [
 
 const Admin = () => {
   return (
-    <AdminLayout title="Admin">
+    <AdminLayout title="Admin" icon={Shield}>
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Painel Admin</h1>
         
