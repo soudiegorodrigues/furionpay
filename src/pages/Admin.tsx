@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   DollarSign, 
   Globe, 
@@ -16,7 +17,8 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Receipt
+  Receipt,
+  Calendar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,6 +45,7 @@ interface Transaction {
 }
 
 const ITEMS_PER_PAGE = 10;
+type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
 
 const adminSections = [
   { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
@@ -61,6 +64,7 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
 
   useEffect(() => {
     if (activeSection === "faturamento") {
@@ -121,10 +125,43 @@ const Admin = () => {
     ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1) 
     : '0';
 
+  // Filter transactions by date
+  const filteredTransactions = useMemo(() => {
+    if (dateFilter === 'all') return transactions;
+    
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    return transactions.filter(tx => {
+      const txDate = new Date(tx.created_at);
+      switch (dateFilter) {
+        case 'today':
+          return txDate >= startOfDay;
+        case '7days':
+          const sevenDaysAgo = new Date(startOfDay);
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          return txDate >= sevenDaysAgo;
+        case 'month':
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          return txDate >= startOfMonth;
+        case 'year':
+          const startOfYear = new Date(now.getFullYear(), 0, 1);
+          return txDate >= startOfYear;
+        default:
+          return true;
+      }
+    });
+  }, [transactions, dateFilter]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilter]);
+
   // Pagination
-  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedTransactions = transactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <AdminLayout>
@@ -234,19 +271,32 @@ const Admin = () => {
 
             {/* Transactions Table */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Receipt className="h-5 w-5 text-primary" />
                   Transações Globais
-                  <Badge variant="secondary" className="ml-2">{transactions.length}</Badge>
+                  <Badge variant="secondary" className="ml-2">{filteredTransactions.length}</Badge>
                 </CardTitle>
+                <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
+                  <SelectTrigger className="w-[150px]">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="today">Hoje</SelectItem>
+                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                    <SelectItem value="month">Este mês</SelectItem>
+                    <SelectItem value="year">Este ano</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 {isLoadingTransactions ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                ) : transactions.length === 0 ? (
+                ) : filteredTransactions.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
                     Nenhuma transação encontrada
                   </p>
@@ -295,7 +345,7 @@ const Admin = () => {
                     {totalPages > 1 && (
                       <div className="flex items-center justify-between mt-4 pt-4 border-t">
                         <p className="text-sm text-muted-foreground">
-                          Mostrando {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, transactions.length)} de {transactions.length}
+                          Mostrando {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
                         </p>
                         <div className="flex items-center gap-2">
                           <Button
