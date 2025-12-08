@@ -87,7 +87,7 @@ export function AdminSidebar({
             </div>
           </NavLink>
           
-          <div className="flex items-center justify-between mt-2 px-3">
+          <div className="flex items-center justify-center gap-4 mt-2 px-3">
             <Button variant="ghost" size="sm" onClick={onLogout} className="justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2">
               <LogOut className="h-4 w-4" />
               <span className="ml-2">Sair</span>
