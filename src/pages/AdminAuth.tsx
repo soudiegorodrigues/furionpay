@@ -47,6 +47,15 @@ const AdminAuth = () => {
     location.pathname === '/cadastro' ? 'signup' : 'login'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync mode with URL path changes
+  useEffect(() => {
+    if (location.pathname === '/cadastro') {
+      setMode('signup');
+    } else if (location.pathname === '/login') {
+      setMode('login');
+    }
+  }, [location.pathname]);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
