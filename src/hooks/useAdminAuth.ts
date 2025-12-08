@@ -121,7 +121,7 @@ export const useAdminAuth = () => {
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/admin/dashboard`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -131,6 +131,17 @@ export const useAdminAuth = () => {
         }
       }
     });
+
+    // If signup successful and we have a user, create profile
+    if (!error && data?.user && fullName) {
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: data.user.id,
+          full_name: fullName
+        }, { onConflict: 'id' });
+    }
+
     return { error };
   };
 

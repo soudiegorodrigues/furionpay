@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { AdminHeader } from "@/components/AdminSidebar";
 import { User, Save } from "lucide-react";
@@ -14,8 +14,27 @@ export default function AdminProfile() {
   const { user } = useAdminAuth();
   const { toast } = useToast();
   
-  const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || "");
+  const [displayName, setDisplayName] = useState("");
   const [savingName, setSavingName] = useState(false);
+
+  // Load profile name from database
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.id) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (data?.full_name) {
+        setDisplayName(data.full_name);
+      }
+    };
+    
+    loadProfile();
+  }, [user?.id]);
 
   const handleSaveName = async () => {
     if (!displayName.trim()) {
@@ -27,11 +46,17 @@ export default function AdminProfile() {
       return;
     }
 
+    if (!user?.id) return;
+
     setSavingName(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: { display_name: displayName.trim() }
-      });
+      // Save to profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          full_name: displayName.trim()
+        }, { onConflict: 'id' });
 
       if (error) throw error;
 
