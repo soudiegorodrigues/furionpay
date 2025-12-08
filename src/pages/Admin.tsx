@@ -179,12 +179,19 @@ type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 const Admin = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAdminAuth();
+  const { user, loading, isAuthenticated } = useAdminAuth();
   const [activeSection, setActiveSection] = useState<string>(() => {
     // Check if coming from another page with section state
     const state = location.state as { section?: string } | null;
     return state?.section || "faturamento";
   });
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate('/admin/login');
+    }
+  }, [loading, isAuthenticated, navigate]);
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -677,6 +684,15 @@ const Admin = () => {
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <AdminLayout activeSection={activeSection} onSectionChange={setActiveSection}>
