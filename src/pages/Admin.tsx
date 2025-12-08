@@ -1157,17 +1157,78 @@ const Admin = () => {
         )}
 
         {activeSection === "multi" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
-                Multi-adquirência
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Em desenvolvimento...</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
+                <Badge variant="secondary" className="text-xs">1</Badge>
+              </div>
+              <Button variant="outline" disabled>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Adquirente
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* SPEDPAY Card */}
+              <Card className="border-primary/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-xl font-bold text-primary">SPEDPAY</CardTitle>
+                  <CardDescription className="text-sm">
+                    Adquirente principal integrada ao sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Métodos de pagamento disponíveis:</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-emerald-500/10 rounded flex items-center justify-center">
+                            <svg width="12" height="12" viewBox="0 0 32 32" fill="none">
+                              <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                              <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
+                              <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
+                              <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium">PIX</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Ativo</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <Badge variant="outline" className="text-emerald-600 border-emerald-600/30 bg-emerald-600/10">
+                      <Check className="w-3 h-3 mr-1" />
+                      Integrado
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Add New Acquirer Card (Placeholder) */}
+              <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-not-allowed opacity-50">
+                <CardContent className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <Plus className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">Adicionar Nova Adquirente</p>
+                  <p className="text-xs text-muted-foreground mt-1">Em breve</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-muted/30">
+              <CardContent className="py-4">
+                <p className="text-sm text-muted-foreground">
+                  💡 <strong>Dica:</strong> Novas adquirentes serão disponibilizadas em futuras atualizações. 
+                  Por enquanto, todas as transações são processadas pela SpedPay.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {activeSection === "usuarios" && (
