@@ -1,20 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Save, Eye, EyeOff, ExternalLink, CheckCircle2 } from "lucide-react";
+import { Mail, Save, Eye, EyeOff, ExternalLink, CheckCircle2, Image, Upload, Trash2 } from "lucide-react";
 
 export function EmailSection() {
   const [resendApiKey, setResendApiKey] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
+  const [emailLogoUrl, setEmailLogoUrl] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingSender, setIsSavingSender] = useState(false);
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [hasExistingKey, setHasExistingKey] = useState(false);
   const [hasExistingSender, setHasExistingSender] = useState(false);
+  const [hasExistingLogo, setHasExistingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadSettings();
@@ -36,6 +41,11 @@ export function EmailSection() {
         if (sender?.value) {
           setHasExistingSender(true);
           setSenderEmail(sender.value);
+        }
+        const logo = settings.find(s => s.key === 'email_logo_url');
+        if (logo?.value) {
+          setHasExistingLogo(true);
+          setEmailLogoUrl(logo.value);
         }
       }
     } catch (error: any) {
@@ -125,6 +135,145 @@ export function EmailSection() {
       });
     } finally {
       setIsSavingSender(false);
+    }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma imagem válida",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 2MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error("Usuário não autenticado");
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userData.user.id}/email-logo.${fileExt}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('banners')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('banners')
+        .getPublicUrl(fileName);
+
+      const logoUrl = urlData.publicUrl;
+      setEmailLogoUrl(logoUrl);
+
+      // Save URL to settings
+      const { error } = await supabase.rpc('update_user_setting', {
+        setting_key: 'email_logo_url',
+        setting_value: logoUrl
+      });
+
+      if (error) throw error;
+
+      setHasExistingLogo(true);
+      toast({
+        title: "Sucesso",
+        description: "Logo do email salva com sucesso!",
+      });
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer upload da logo",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingLogo(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleSaveLogoUrl = async () => {
+    if (!emailLogoUrl) {
+      toast({
+        title: "Erro",
+        description: "Digite uma URL válida",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSavingLogo(true);
+    try {
+      const { error } = await supabase.rpc('update_user_setting', {
+        setting_key: 'email_logo_url',
+        setting_value: emailLogoUrl
+      });
+
+      if (error) throw error;
+
+      setHasExistingLogo(true);
+      toast({
+        title: "Sucesso",
+        description: "Logo do email salva com sucesso!",
+      });
+    } catch (error: any) {
+      console.error('Error saving logo URL:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar URL da logo",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setIsSavingLogo(true);
+    try {
+      const { error } = await supabase.rpc('update_user_setting', {
+        setting_key: 'email_logo_url',
+        setting_value: ''
+      });
+
+      if (error) throw error;
+
+      setEmailLogoUrl('');
+      setHasExistingLogo(false);
+      toast({
+        title: "Sucesso",
+        description: "Logo removida com sucesso!",
+      });
+    } catch (error: any) {
+      console.error('Error removing logo:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover logo",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingLogo(false);
     }
   };
 
@@ -257,6 +406,84 @@ export function EmailSection() {
             <Save className="h-4 w-4 mr-2" />
             {isSavingSender ? "Salvando..." : "Salvar Email Remetente"}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Image className="h-5 w-5 text-primary" />
+            Logo do Email
+            {hasExistingLogo && (
+              <span className="ml-2 flex items-center gap-1 text-sm text-green-500">
+                <CheckCircle2 className="h-4 w-4" />
+                Configurado
+              </span>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Logo que aparecerá no topo dos emails enviados (recuperação de senha, desbloqueio de conta, etc.)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {emailLogoUrl && (
+            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+              <img 
+                src={emailLogoUrl} 
+                alt="Logo do email" 
+                className="h-16 w-auto object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleRemoveLogo}
+                disabled={isSavingLogo}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remover
+              </Button>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="logo-url">URL da Logo</Label>
+            <Input
+              id="logo-url"
+              type="url"
+              placeholder="https://seusite.com/logo.png"
+              value={emailLogoUrl}
+              onChange={(e) => setEmailLogoUrl(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Cole a URL de uma imagem ou faça upload abaixo
+            </p>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={handleSaveLogoUrl} disabled={isSavingLogo || !emailLogoUrl}>
+              <Save className="h-4 w-4 mr-2" />
+              {isSavingLogo ? "Salvando..." : "Salvar URL"}
+            </Button>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleLogoUpload}
+              accept="image/*"
+              className="hidden"
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingLogo}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {isUploadingLogo ? "Enviando..." : "Fazer Upload"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

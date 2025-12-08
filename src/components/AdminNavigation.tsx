@@ -8,13 +8,11 @@ import {
   Percent, 
   Palette, 
   Mail, 
-  AlertTriangle,
-  Receipt
+  AlertTriangle 
 } from "lucide-react";
 
 const adminSections = [
   { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
-  { id: "transacoes", title: "Transações Globais", icon: Receipt },
   { id: "ranking", title: "Ranking", icon: Trophy },
   { id: "dominios", title: "Domínios", icon: Globe },
   { id: "multi", title: "Multi-adquirência", icon: CreditCard },
