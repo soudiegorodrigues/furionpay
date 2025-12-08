@@ -68,8 +68,8 @@ const AdminCheckout = () => {
 
   const loadData = async () => {
     try {
-      // Load popup stats
-      const { data: statsData } = await supabase.rpc('get_popup_model_stats');
+      // Load popup stats for current user only
+      const { data: statsData } = await supabase.rpc('get_user_popup_model_stats');
       setPopupStats(statsData || []);
 
       // Load available domains
@@ -331,18 +331,20 @@ const AdminCheckout = () => {
                   <CardDescription>{model.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {stats && (
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="bg-muted/50 rounded-lg p-2 text-center">
-                        <div className="font-semibold text-blue-500">{stats.total_generated}</div>
-                        <div className="text-xs text-muted-foreground">Gerados</div>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-2 text-center">
-                        <div className="font-semibold text-green-500">{stats.total_paid}</div>
-                        <div className="text-xs text-muted-foreground">Pagos</div>
-                      </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <div className="bg-muted/50 rounded-lg p-2 text-center">
+                      <div className="font-semibold text-blue-500">{stats?.total_generated || 0}</div>
+                      <div className="text-xs text-muted-foreground">Gerados</div>
                     </div>
-                  )}
+                    <div className="bg-muted/50 rounded-lg p-2 text-center">
+                      <div className="font-semibold text-green-500">{stats?.total_paid || 0}</div>
+                      <div className="text-xs text-muted-foreground">Pagos</div>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-2 text-center">
+                      <div className="font-semibold text-amber-500">{stats?.conversion_rate || 0}%</div>
+                      <div className="text-xs text-muted-foreground">Conversão</div>
+                    </div>
+                  </div>
                   <Button 
                     variant="outline" 
                     className="w-full"
