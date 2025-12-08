@@ -124,10 +124,10 @@ export const DonationPopupLanding = ({
 
   const handleContributeClick = () => {
     const baseAmount = selectedAmount || parseCustomAmount(customAmount);
-    if (baseAmount <= 0) {
+    if (baseAmount < 10) {
       toast({
-        title: "Selecione um valor",
-        description: "Escolha um valor para contribuir",
+        title: "Valor mínimo",
+        description: "O valor mínimo para contribuição é R$ 10,00",
         variant: "destructive",
         duration: 2000,
       });
@@ -362,7 +362,7 @@ export const DonationPopupLanding = ({
 
             {/* Additional Info */}
             <p className="text-[10px] sm:text-xs text-gray-500 leading-relaxed">
-              Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação. Importante destacar a importância da adequação do seu cadastro, informando o <span className="font-bold text-gray-700">nome social</span>, caso o utilize.
+              Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação.
             </p>
           </div>
         )}
