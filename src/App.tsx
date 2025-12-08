@@ -29,7 +29,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/admin/login" element={<AdminAuth />} />
+              <Route path="/login" element={<AdminAuth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
