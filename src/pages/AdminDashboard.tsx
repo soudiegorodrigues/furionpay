@@ -200,6 +200,17 @@ const AdminDashboard = () => {
     };
   }, [filteredTransactions]);
 
+  // Today's stats
+  const todayStats = useMemo(() => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayTransactions = transactions.filter(tx => new Date(tx.created_at) >= startOfDay);
+    const generated = todayTransactions.length;
+    const paid = todayTransactions.filter(tx => tx.status === 'paid').length;
+    const amountPaid = todayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+    return { generated, paid, amountPaid };
+  }, [transactions]);
+
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -289,6 +300,32 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Today Summary */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+            <CardTitle className="text-sm sm:text-lg">Resumo de Hoje</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-3xl font-bold text-blue-500">{todayStats.generated}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">PIX Gerados</p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-3xl font-bold text-green-500">{todayStats.paid}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">PIX Pagos</p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-3xl font-bold text-yellow-500">{formatCurrency(todayStats.amountPaid)}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Total Recebido</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Chart */}
       <Card>
