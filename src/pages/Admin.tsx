@@ -23,7 +23,7 @@ const adminSections = [
 
 const Admin = () => {
   return (
-    <AdminLayout title="Admin" icon={Shield}>
+    <AdminLayout>
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Painel Admin</h1>
         

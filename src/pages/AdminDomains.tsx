@@ -264,7 +264,7 @@ const AdminDomains = () => {
   }
 
   return (
-    <AdminLayout title="Domínios" icon={Globe}>
+    <AdminLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
