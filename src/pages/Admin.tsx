@@ -35,7 +35,8 @@ import {
   Unlock,
   Trophy,
   Mail,
-  AlertTriangle
+  AlertTriangle,
+  Search
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -218,6 +219,7 @@ const Admin = () => {
   const [userCurrentPage, setUserCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userSearch, setUserSearch] = useState("");
 
   // Ranking states
   const [rankingUsers, setRankingUsers] = useState<RankingUser[]>([]);
@@ -607,8 +609,17 @@ const Admin = () => {
     }
   };
 
-  const userTotalPages = Math.ceil(users.length / USERS_PER_PAGE);
-  const paginatedUsers = users.slice((userCurrentPage - 1) * USERS_PER_PAGE, userCurrentPage * USERS_PER_PAGE);
+  const filteredUsers = useMemo(() => {
+    if (!userSearch.trim()) return users;
+    const search = userSearch.toLowerCase().trim();
+    return users.filter(u => 
+      u.email.toLowerCase().includes(search) || 
+      (u.full_name && u.full_name.toLowerCase().includes(search))
+    );
+  }, [users, userSearch]);
+
+  const userTotalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice((userCurrentPage - 1) * USERS_PER_PAGE, userCurrentPage * USERS_PER_PAGE);
   const rankingTotalPages = Math.ceil(totalUsers / RANKING_PER_PAGE);
 
   const formatCurrency = (value: number) => {
@@ -1256,7 +1267,7 @@ const Admin = () => {
                   <Users className="h-5 w-5 text-primary" />
                   Gerenciar Usuários
                 </CardTitle>
-                <CardDescription>{users.length} usuário(s) cadastrado(s)</CardDescription>
+                <CardDescription>{filteredUsers.length} de {users.length} usuário(s)</CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={loadUsers} disabled={isLoadingUsers}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsers ? 'animate-spin' : ''}`} />
@@ -1264,6 +1275,20 @@ const Admin = () => {
               </Button>
             </CardHeader>
             <CardContent>
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome ou email..."
+                    value={userSearch}
+                    onChange={(e) => {
+                      setUserSearch(e.target.value);
+                      setUserCurrentPage(1);
+                    }}
+                    className="pl-9 max-w-sm"
+                  />
+                </div>
+              </div>
               {isLoadingUsers ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
