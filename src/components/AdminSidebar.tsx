@@ -49,7 +49,7 @@ export function AdminSidebar({
   // Filter menu items based on admin status
   const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
   
-  return <Sidebar className="border-r border-border bg-background dark:bg-black">
+  return <Sidebar collapsible="none" className="border-r border-border bg-background dark:bg-black">
       <SidebarHeader className="p-6 flex flex-col items-center justify-center">
         <img src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} alt="FurionPay" className="h-16 w-auto object-contain" />
       </SidebarHeader>
