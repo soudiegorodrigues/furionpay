@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle, X, Package } from "lucide-react";
+import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle, X, Package, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -33,6 +33,13 @@ interface AvailableDomain {
   name: string | null;
 }
 
+interface MetaPixel {
+  id: string;
+  name: string;
+  pixelId: string;
+  accessToken: string;
+}
+
 const popupModels = [
   { id: "boost", name: "Boost", description: "Modelo com animações e destaque visual", hasDynamicAmount: false },
   { id: "simple", name: "Simples", description: "Modelo minimalista e direto", hasDynamicAmount: false },
@@ -52,6 +59,8 @@ const AdminCheckout = () => {
   const [selectedDomain, setSelectedDomain] = useState<string>("");
   const [productName, setProductName] = useState<string>("");
   const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
+  const [metaPixels, setMetaPixels] = useState<MetaPixel[]>([]);
+  const [selectedPixel, setSelectedPixel] = useState<string>("");
   const [linkCopied, setLinkCopied] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, loading, user } = useAdminAuth();
@@ -87,9 +96,20 @@ const AdminCheckout = () => {
         const popupSetting = settings.find(s => s.key === 'popup_model');
         const domainSetting = settings.find(s => s.key === 'selected_domain');
         const productSetting = settings.find(s => s.key === 'product_name');
+        const pixelsSetting = settings.find(s => s.key === 'meta_pixels');
+        const selectedPixelSetting = settings.find(s => s.key === 'selected_pixel');
         if (popupSetting?.value) setSelectedModel(popupSetting.value);
         if (domainSetting?.value) setSelectedDomain(domainSetting.value);
         if (productSetting?.value) setProductName(productSetting.value);
+        if (pixelsSetting?.value) {
+          try {
+            const parsedPixels = JSON.parse(pixelsSetting.value);
+            setMetaPixels(Array.isArray(parsedPixels) ? parsedPixels : []);
+          } catch {
+            setMetaPixels([]);
+          }
+        }
+        if (selectedPixelSetting?.value) setSelectedPixel(selectedPixelSetting.value);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -131,6 +151,10 @@ const AdminCheckout = () => {
         supabase.rpc('update_user_setting', {
           setting_key: 'product_name',
           setting_value: productName
+        }),
+        supabase.rpc('update_user_setting', {
+          setting_key: 'selected_pixel',
+          setting_value: selectedPixel
         })
       ]);
       toast({
@@ -154,9 +178,18 @@ const AdminCheckout = () => {
   };
 
   const copyLink = () => {
-    const link = selectedDomain 
+    let link = selectedDomain 
       ? `https://www.${selectedDomain}/?u=${user?.id || ''}&m=${selectedModel}` 
       : `${window.location.origin}/?u=${user?.id || ''}&m=${selectedModel}`;
+    
+    // Add pixel ID to the link if selected
+    if (selectedPixel) {
+      const pixel = metaPixels.find(p => p.id === selectedPixel);
+      if (pixel?.pixelId) {
+        link += `&pixel=${pixel.pixelId}`;
+      }
+    }
+    
     navigator.clipboard.writeText(link);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
@@ -170,9 +203,21 @@ const AdminCheckout = () => {
     return popupStats.find(s => s.popup_model === modelId);
   };
 
-  const generatedLink = selectedDomain 
-    ? `https://www.${selectedDomain}/?u=${user?.id || ''}&m=${selectedModel}` 
-    : `${window.location.origin}/?u=${user?.id || ''}&m=${selectedModel}`;
+  // Generate link with pixel if selected
+  const generatedLink = (() => {
+    let link = selectedDomain 
+      ? `https://www.${selectedDomain}/?u=${user?.id || ''}&m=${selectedModel}` 
+      : `${window.location.origin}/?u=${user?.id || ''}&m=${selectedModel}`;
+    
+    if (selectedPixel) {
+      const pixel = metaPixels.find(p => p.id === selectedPixel);
+      if (pixel?.pixelId) {
+        link += `&pixel=${pixel.pixelId}`;
+      }
+    }
+    
+    return link;
+  })();
 
   if (loading) {
     return (
@@ -254,7 +299,32 @@ const AdminCheckout = () => {
               </div>
             </div>
 
-            {/* Product Name */}
+            {/* Pixel Selector */}
+            {metaPixels.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Meta Pixel
+                </Label>
+                <Select value={selectedPixel} onValueChange={setSelectedPixel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum pixel selecionado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
+                    {metaPixels.map((pixel) => (
+                      <SelectItem key={pixel.id} value={pixel.id}>
+                        {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  O pixel será incluído no link para rastreamento
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Package className="w-4 h-4" />
