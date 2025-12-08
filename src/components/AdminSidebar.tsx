@@ -3,8 +3,8 @@ import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "next-themes";
-import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
-import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
+import furionPayLogoDark from "@/assets/furionpay-logo-white-text.webp";
+import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.webp";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 
 const menuItems = [{
