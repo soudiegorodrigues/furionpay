@@ -20,12 +20,12 @@ const AdminEmail = () => {
   const { toast } = useToast();
   const { isAuthenticated, loading, signOut } = useAdminAuth();
 
-  // Load settings when authenticated - AdminLayout handles auth redirects
+  // Load settings when authenticated
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isAuthenticated) {
       loadSettings();
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated]);
 
   const loadSettings = async () => {
     setIsLoading(true);

@@ -13,7 +13,7 @@ import { Palette, Save, Image, Loader2, Trash2, Upload, Link } from "lucide-reac
 
 const AdminPersonalization = () => {
   const [bannerUrl, setBannerUrl] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,12 +21,12 @@ const AdminPersonalization = () => {
   const { toast } = useToast();
   const { isAuthenticated, loading, user } = useAdminAuth();
 
-  // Load settings when authenticated - AdminLayout handles auth redirects
+  // Load settings when authenticated
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isAuthenticated) {
       loadSettings();
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated]);
 
   const loadSettings = async () => {
     setIsLoading(true);
@@ -176,15 +176,6 @@ const AdminPersonalization = () => {
     }
   };
 
-  if (loading || isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
     <AdminLayout>
