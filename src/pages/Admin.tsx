@@ -28,10 +28,15 @@ import {
   Trash2,
   Pencil,
   Check,
-  X
+  X,
+  Shield,
+  ShieldOff,
+  Ban,
+  Unlock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 interface GlobalStats {
   total_generated: number;
@@ -63,6 +68,17 @@ interface Domain {
   created_at: string;
 }
 
+interface User {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+  is_admin: boolean;
+  is_blocked: boolean;
+}
+
+const USERS_PER_PAGE = 10;
+
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
 
@@ -78,6 +94,7 @@ const adminSections = [
 
 const Admin = () => {
   const navigate = useNavigate();
+  const { user } = useAdminAuth();
   const [activeSection, setActiveSection] = useState<string>("faturamento");
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -96,12 +113,22 @@ const Admin = () => {
   const [editDomain, setEditDomain] = useState("");
   const [editName, setEditName] = useState("");
 
+  // User states
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
   useEffect(() => {
     if (activeSection === "faturamento") {
       loadGlobalStats();
       loadTransactions();
     } else if (activeSection === "dominios") {
       loadDomains();
+    } else if (activeSection === "usuarios") {
+      loadUsers();
     }
   }, [activeSection]);
 
@@ -318,6 +345,105 @@ const Admin = () => {
     }
   };
 
+  // User functions
+  const loadUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const { data, error } = await supabase.rpc('get_all_users_auth');
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao carregar usuários',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const handleGrantAdmin = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      const { error } = await supabase.rpc('grant_admin_role', { target_user_id: userId });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Permissão de admin concedida' });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao conceder permissão', variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRevokeAdmin = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      const { error } = await supabase.rpc('revoke_admin_role', { target_user_id: userId });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Permissão de admin revogada' });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao revogar permissão', variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleBlockUser = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      const { error } = await supabase.rpc('block_user' as any, { target_user_id: userId });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Usuário bloqueado' });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao bloquear usuário', variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnblockUser = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      const { error } = await supabase.rpc('unblock_user' as any, { target_user_id: userId });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Usuário desbloqueado' });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao desbloquear usuário', variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    try {
+      setActionLoading(userToDelete.id);
+      const { error } = await supabase.rpc('delete_user' as any, { target_user_id: userToDelete.id });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Usuário excluído permanentemente' });
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao excluir usuário', variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const openDeleteDialog = (u: User) => {
+    setUserToDelete(u);
+    setDeleteDialogOpen(true);
+  };
+
+  const userTotalPages = Math.ceil(users.length / USERS_PER_PAGE);
+  const paginatedUsers = users.slice((userCurrentPage - 1) * USERS_PER_PAGE, userCurrentPage * USERS_PER_PAGE);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -325,7 +451,8 @@ const Admin = () => {
     }).format(value);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Nunca';
     return new Date(dateString).toLocaleString('pt-BR');
   };
 
@@ -779,17 +906,183 @@ const Admin = () => {
 
         {activeSection === "usuarios" && (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Usuários
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Gerenciar Usuários
+                </CardTitle>
+                <CardDescription>{users.length} usuário(s) cadastrado(s)</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadUsers} disabled={isLoadingUsers}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Em desenvolvimento...</p>
+              {isLoadingUsers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Cadastro</TableHead>
+                          <TableHead>Último Acesso</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedUsers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                              Nenhum usuário cadastrado
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          paginatedUsers.map((u) => (
+                            <TableRow key={u.id}>
+                              <TableCell className="font-medium">{u.email}</TableCell>
+                              <TableCell>{formatDate(u.created_at)}</TableCell>
+                              <TableCell>{formatDate(u.last_sign_in_at)}</TableCell>
+                              <TableCell>
+                                <div className="flex gap-1">
+                                  {u.is_blocked ? (
+                                    <Badge variant="destructive">Bloqueado</Badge>
+                                  ) : u.is_admin ? (
+                                    <Badge className="bg-primary">Admin</Badge>
+                                  ) : (
+                                    <Badge variant="secondary">Usuário</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {u.id === user?.id ? (
+                                  <span className="text-sm text-muted-foreground">Você</span>
+                                ) : (
+                                  <div className="flex items-center justify-end gap-2">
+                                    {u.is_admin ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRevokeAdmin(u.id)}
+                                        disabled={actionLoading === u.id}
+                                        title="Revogar Admin"
+                                      >
+                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldOff className="h-4 w-4" />}
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleGrantAdmin(u.id)}
+                                        disabled={actionLoading === u.id}
+                                        title="Tornar Admin"
+                                      >
+                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
+                                      </Button>
+                                    )}
+                                    {u.is_blocked ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleUnblockUser(u.id)}
+                                        disabled={actionLoading === u.id}
+                                        title="Desbloquear"
+                                      >
+                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="h-4 w-4" />}
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleBlockUser(u.id)}
+                                        disabled={actionLoading === u.id}
+                                        title="Bloquear"
+                                      >
+                                        {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => openDeleteDialog(u)}
+                                      disabled={actionLoading === u.id}
+                                      title="Excluir"
+                                    >
+                                      {actionLoading === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                    </Button>
+                                  </div>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {userTotalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Mostrando {((userCurrentPage - 1) * USERS_PER_PAGE) + 1} - {Math.min(userCurrentPage * USERS_PER_PAGE, users.length)} de {users.length}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUserCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={userCurrentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Anterior
+                        </Button>
+                        <span className="text-sm text-muted-foreground px-2">
+                          Página {userCurrentPage} de {userTotalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUserCurrentPage(p => Math.min(userTotalPages, p + 1))}
+                          disabled={userCurrentPage === userTotalPages}
+                        >
+                          Próximo
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         )}
+
+        {/* Delete User Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir permanentemente o usuário <strong>{userToDelete?.email}</strong>? 
+                Esta ação não pode ser desfeita e todos os dados do usuário serão perdidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteUser}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {activeSection === "documentos" && (
           <Card>
