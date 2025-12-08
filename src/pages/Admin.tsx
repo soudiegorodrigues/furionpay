@@ -189,7 +189,7 @@ const Admin = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate('/admin/login');
+      navigate('/login');
     }
   }, [loading, isAuthenticated, navigate]);
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
