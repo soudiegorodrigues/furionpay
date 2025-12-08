@@ -313,15 +313,15 @@ const AdminCheckout = () => {
                   </div>
                 </div>
 
-                {/* Pixel Selector */}
-                {metaPixels.length > 0 && <div className="space-y-2">
+                {/* Pixel Selector - always visible */}
+                <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Activity className="w-4 h-4" />
                       Meta Pixel
                     </Label>
                     <Select value={selectedPixel || "none"} onValueChange={val => setSelectedPixel(val === "none" ? "" : val)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Nenhum pixel selecionado" />
+                        <SelectValue placeholder="Nenhum pixel configurado" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Nenhum</SelectItem>
@@ -331,9 +331,11 @@ const AdminCheckout = () => {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      O pixel será incluído no link para rastreamento
+                      {metaPixels.length > 0 
+                        ? "O pixel será incluído no link para rastreamento"
+                        : "Configure seus pixels em Meta Pixels no menu"}
                     </p>
-                  </div>}
+                  </div>
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
