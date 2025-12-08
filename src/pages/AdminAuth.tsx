@@ -16,22 +16,21 @@ import authWoman from '@/assets/auth-woman.png';
 
 // Animated sales notifications data
 const salesNotifications = [
-  { name: 'Maria S.', amount: 'R$ 297,00', delay: 0 },
-  { name: 'Carlos M.', amount: 'R$ 497,00', delay: 2 },
-  { name: 'Ana P.', amount: 'R$ 197,00', delay: 4 },
-  { name: 'João R.', amount: 'R$ 997,00', delay: 6 },
-  { name: 'Fernanda L.', amount: 'R$ 397,00', delay: 8 },
-  { name: 'Pedro H.', amount: 'R$ 147,00', delay: 10 },
+  { name: 'Maria S.', amount: 'R$ 297,00', delay: 0, position: 0 },
+  { name: 'Carlos M.', amount: 'R$ 497,00', delay: 3, position: 1 },
+  { name: 'Ana P.', amount: 'R$ 197,00', delay: 6, position: 2 },
+  { name: 'João R.', amount: 'R$ 997,00', delay: 9, position: 0 },
+  { name: 'Fernanda L.', amount: 'R$ 397,00', delay: 12, position: 1 },
 ];
 
 // Sales notification component
-const SalesNotification = ({ name, amount, delay }: { name: string; amount: string; delay: number }) => (
+const SalesNotification = ({ name, amount, delay, position }: { name: string; amount: string; delay: number; position: number }) => (
   <div 
     className="absolute bg-black/80 backdrop-blur-sm border border-primary/30 rounded-lg px-4 py-3 flex items-center gap-3 animate-notification shadow-lg shadow-primary/20"
     style={{ 
       animationDelay: `${delay}s`,
-      left: `${10 + Math.random() * 20}%`,
-      top: `${15 + (delay * 10)}%`,
+      left: `${8 + (position * 12)}%`,
+      bottom: `${80 + (position * 40)}px`,
     }}
   >
     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
@@ -379,7 +378,8 @@ const AdminAuth = () => {
               key={index} 
               name={notification.name} 
               amount={notification.amount} 
-              delay={notification.delay} 
+              delay={notification.delay}
+              position={notification.position}
             />
           ))}
         </div>
