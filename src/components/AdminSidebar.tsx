@@ -49,17 +49,17 @@ export function AdminSidebar({
   // Filter menu items based on admin status
   const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
   
-  return <Sidebar collapsible="none" className="border-r border-border bg-background dark:bg-black">
+  return <Sidebar collapsible="none" className="border-r border-border bg-background dark:bg-black w-64 min-w-64 max-w-64">
       <SidebarHeader className="p-6 flex flex-col items-center justify-center">
         <img src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} alt="FurionPay" className="h-16 w-auto object-contain" />
       </SidebarHeader>
-      <SidebarContent className="px-3">
+      <SidebarContent className="px-3 flex-1 overflow-y-auto overflow-x-hidden">
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium mb-2">
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-1 w-full">
               {visibleMenuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-3 py-2.5" activeClassName="bg-primary/10 text-primary font-medium">
