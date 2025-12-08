@@ -33,7 +33,7 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const { theme } = useTheme();
   
-  return <Sidebar className="border-r border-border">
+  return <Sidebar className="border-r border-border bg-background dark:bg-black">
       <SidebarHeader className="p-6 flex items-center justify-center">
         <img src={theme === "dark" ? furionPayLogo : furionPayLogoLight} alt="FurionPay" className="h-16 w-auto object-contain" />
       </SidebarHeader>
