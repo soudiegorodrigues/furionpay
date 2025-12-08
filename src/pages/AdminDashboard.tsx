@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, DollarSign, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, Trophy, QrCode } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode } from "lucide-react";
 
 interface DashboardStats {
   total_generated: number;
@@ -31,30 +31,14 @@ interface Transaction {
   created_at: string;
   paid_at: string | null;
 }
-interface RankingUser {
-  user_id: string;
-  user_email: string;
-  total_generated: number;
-  total_paid: number;
-  total_amount_generated: number;
-  total_amount_paid: number;
-  conversion_rate: number;
-}
 const ITEMS_PER_PAGE = 10;
-const RANKING_PER_PAGE = 5;
 type DateFilter = 'today' | '7days' | 'month' | 'year' | 'all';
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [globalStats, setGlobalStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [rankingUsers, setRankingUsers] = useState<RankingUser[]>([]);
-  const [rankingPage, setRankingPage] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [rankingDateFilter, setRankingDateFilter] = useState<DateFilter>('all');
   const navigate = useNavigate();
   const {
     toast
@@ -105,38 +89,6 @@ const AdminDashboard = () => {
       });
       if (txError) throw txError;
       setTransactions(txData as unknown as Transaction[] || []);
-
-      // Check if user is admin and load global stats
-      const {
-        data: adminCheck
-      } = await supabase.rpc('is_admin_authenticated');
-      setIsAdmin(!!adminCheck);
-      if (adminCheck) {
-        const {
-          data: globalData
-        } = await supabase.rpc('get_pix_dashboard_auth');
-        if (globalData) {
-          setGlobalStats(globalData as unknown as DashboardStats);
-        }
-
-        // Load ranking data
-        const {
-          data: rankingData
-        } = await supabase.rpc('get_users_revenue_ranking', {
-          p_limit: RANKING_PER_PAGE,
-          p_offset: (rankingPage - 1) * RANKING_PER_PAGE,
-          p_date_filter: rankingDateFilter
-        });
-        if (rankingData) {
-          setRankingUsers(rankingData as unknown as RankingUser[]);
-        }
-        const {
-          data: countData
-        } = await supabase.rpc('get_users_count');
-        if (countData !== null) {
-          setTotalUsers(countData as number);
-        }
-      }
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       if (error.message?.includes('Not authenticated')) {
@@ -341,122 +293,6 @@ const AdminDashboard = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Ranking Card - Admin Only */}
-        {isAdmin && <Card className="bg-card border-border">
-            <CardHeader className="p-3 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
-                  Ranking de Faturamentos
-                  <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>
-                </CardTitle>
-                <Select value={rankingDateFilter} onValueChange={async (value: DateFilter) => {
-              setRankingDateFilter(value);
-              setRankingPage(1);
-              const {
-                data
-              } = await supabase.rpc('get_users_revenue_ranking', {
-                p_limit: RANKING_PER_PAGE,
-                p_offset: 0,
-                p_date_filter: value
-              });
-              if (data) setRankingUsers(data as unknown as RankingUser[]);
-            }}>
-                  <SelectTrigger className="w-[130px] sm:w-[150px] text-sm">
-                    <Calendar className="h-4 w-4 mr-1 sm:mr-2 shrink-0" />
-                    <SelectValue placeholder="Período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="today">Hoje</SelectItem>
-                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                    <SelectItem value="month">Este mês</SelectItem>
-                    <SelectItem value="year">Este ano</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              {rankingUsers.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
-                  Nenhum usuário encontrado
-                </div> : <>
-                  <div className="overflow-x-auto -mx-3 sm:mx-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm w-12">#</TableHead>
-                          <TableHead className="text-xs sm:text-sm">Usuário</TableHead>
-                          <TableHead className="text-xs sm:text-sm text-center">PIX Gerados</TableHead>
-                          <TableHead className="text-xs sm:text-sm text-center">PIX Pagos</TableHead>
-                          <TableHead className="text-xs sm:text-sm text-center">Conversão</TableHead>
-                          <TableHead className="text-xs sm:text-sm text-right">Total Recebido</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {rankingUsers.map((user, index) => <TableRow key={user.user_id}>
-                            <TableCell className="text-xs sm:text-sm font-bold">
-                              {(rankingPage - 1) * RANKING_PER_PAGE + index + 1}º
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm truncate max-w-[150px]">
-                              <span className="no-underline" style={{ textDecoration: 'none' }}>{user.user_email}</span>
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-center text-blue-400">
-                              {user.total_generated}
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-center text-green-400">
-                              {user.total_paid}
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-center text-yellow-400">
-                              {user.conversion_rate}%
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-right font-semibold text-primary">
-                              {formatCurrency(user.total_amount_paid)}
-                            </TableCell>
-                          </TableRow>)}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  
-                  {/* Ranking Pagination */}
-                  {totalUsers > RANKING_PER_PAGE && <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                      <span className="text-xs sm:text-sm text-muted-foreground">
-                        Página {rankingPage} de {Math.ceil(totalUsers / RANKING_PER_PAGE)}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={async () => {
-                  const newPage = rankingPage - 1;
-                  setRankingPage(newPage);
-                  const {
-                    data
-                  } = await supabase.rpc('get_users_revenue_ranking', {
-                    p_limit: RANKING_PER_PAGE,
-                    p_offset: (newPage - 1) * RANKING_PER_PAGE,
-                    p_date_filter: rankingDateFilter
-                  });
-                  if (data) setRankingUsers(data as unknown as RankingUser[]);
-                }} disabled={rankingPage === 1}>
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={async () => {
-                  const newPage = rankingPage + 1;
-                  setRankingPage(newPage);
-                  const {
-                    data
-                  } = await supabase.rpc('get_users_revenue_ranking', {
-                    p_limit: RANKING_PER_PAGE,
-                    p_offset: (newPage - 1) * RANKING_PER_PAGE,
-                    p_date_filter: rankingDateFilter
-                  });
-                  if (data) setRankingUsers(data as unknown as RankingUser[]);
-                }} disabled={rankingPage >= Math.ceil(totalUsers / RANKING_PER_PAGE)}>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>}
-                </>}
-            </CardContent>
-          </Card>}
 
         {/* Transactions Table */}
         <Card className="bg-card border-border">
