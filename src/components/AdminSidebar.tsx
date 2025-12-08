@@ -89,19 +89,23 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
         </div>
         
         <div className="border-t border-border pt-3">
-          <div className="flex items-center gap-3 mb-3">
+          <NavLink 
+            to="/admin/profile" 
+            className="flex items-center gap-3 mb-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
+            activeClassName="bg-primary/10"
+          >
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
               <User className="h-4 w-4 text-primary" />
             </div>
             {!collapsed && (
               <div className="flex flex-col min-w-0">
-                <span className="text-xs font-medium truncate">Usuário</span>
+                <span className="text-xs font-medium truncate">Meu Perfil</span>
                 <span className="text-xs text-muted-foreground truncate max-w-[120px]">
                   {userEmail || "Não identificado"}
                 </span>
               </div>
             )}
-          </div>
+          </NavLink>
           
           <Button 
             variant="ghost" 
