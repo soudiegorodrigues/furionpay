@@ -49,12 +49,12 @@ const AdminDashboard = () => {
     loading,
     signOut
   } = useAdminAuth();
-  // Load data when authenticated - AdminLayout handles auth redirects
+  // Load data when authenticated
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isAuthenticated) {
       loadData();
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated]);
 
   // Auto-refresh every 1 minute
   useEffect(() => {

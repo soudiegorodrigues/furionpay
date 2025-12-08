@@ -89,12 +89,12 @@ const AdminCheckout = () => {
     loading,
     user
   } = useAdminAuth();
-  // Load data when authenticated - AdminLayout handles auth redirects
+  // Load data when authenticated
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isAuthenticated) {
       loadData();
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated]);
   const loadData = async () => {
     try {
       // Load popup stats for current user only
@@ -237,13 +237,6 @@ const AdminCheckout = () => {
     }
     return link;
   })();
-  if (loading) {
-    return <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>;
-  }
   return <AdminLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}

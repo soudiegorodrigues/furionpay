@@ -32,7 +32,6 @@ const integrations: Integration[] = [{
 }];
 
 const AdminIntegrations = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [apiKey, setApiKey] = useState("");
@@ -42,12 +41,7 @@ const AdminIntegrations = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAdminAuth();
 
-  // Load data when authenticated - AdminLayout handles auth redirects
-  useEffect(() => {
-    if (isAuthenticated && !loading) {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, loading]);
+  // No loading state needed - AdminLayout handles auth
 
   const loadIntegrationConfig = async (integrationId: string) => {
     setIsLoadingConfig(true);
@@ -98,15 +92,6 @@ const AdminIntegrations = () => {
     }
   };
 
-  if (loading || isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
-    );
-  }
 
   return (
     <AdminLayout>
