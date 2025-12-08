@@ -74,6 +74,9 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
     );
   }
 
+  // Only show admin panel navigation on specific routes
+  const showAdminNavigation = ['/admin', '/admin/personalization', '/admin/email'].includes(location.pathname);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -81,26 +84,30 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
         <div className="flex-1 flex flex-col min-w-0">
           <BlockedUserAlert isBlocked={isBlocked} />
           <main className="flex-1 p-4 sm:p-6 overflow-auto">
-            <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Painel Admin</h1>
-              
-              {/* Navigation Buttons */}
-              <div className="flex flex-wrap gap-3">
-                {adminSections.map((section) => (
-                  <Button
-                    key={section.id}
-                    variant={isActiveSection(section) ? "default" : "outline"}
-                    className="flex items-center gap-2"
-                    onClick={() => handleSectionClick(section)}
-                  >
-                    <section.icon className="h-4 w-4" />
-                    {section.title}
-                  </Button>
-                ))}
-              </div>
+            {showAdminNavigation ? (
+              <div className="space-y-6">
+                <h1 className="text-2xl font-bold">Painel Admin</h1>
+                
+                {/* Navigation Buttons */}
+                <div className="flex flex-wrap gap-3">
+                  {adminSections.map((section) => (
+                    <Button
+                      key={section.id}
+                      variant={isActiveSection(section) ? "default" : "outline"}
+                      className="flex items-center gap-2"
+                      onClick={() => handleSectionClick(section)}
+                    >
+                      <section.icon className="h-4 w-4" />
+                      {section.title}
+                    </Button>
+                  ))}
+                </div>
 
-              {children}
-            </div>
+                {children}
+              </div>
+            ) : (
+              children
+            )}
           </main>
         </div>
       </div>
