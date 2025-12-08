@@ -154,9 +154,40 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          attempt_count: number
+          blocked_at: string | null
+          created_at: string
+          email: string
+          id: string
+          is_blocked: boolean
+          last_attempt_at: string | null
+        }
+        Insert: {
+          attempt_count?: number
+          blocked_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          is_blocked?: boolean
+          last_attempt_at?: string | null
+        }
+        Update: {
+          attempt_count?: number
+          blocked_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_blocked?: boolean
+          last_attempt_at?: string | null
+        }
+        Relationships: []
+      }
       password_reset_codes: {
         Row: {
           code: string
+          code_hash: string | null
           created_at: string
           email: string
           expires_at: string
@@ -165,6 +196,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          code_hash?: string | null
           created_at?: string
           email: string
           expires_at?: string
@@ -173,6 +205,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          code_hash?: string | null
           created_at?: string
           email?: string
           expires_at?: string
@@ -406,6 +439,7 @@ export type Database = {
     Functions: {
       block_user: { Args: { target_user_id: string }; Returns: boolean }
       bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
+      check_login_blocked: { Args: { p_email: string }; Returns: Json }
       check_user_blocked: { Args: never; Returns: boolean }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
       get_admin_settings: {
@@ -553,6 +587,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_login_attempt: { Args: { p_email: string }; Returns: Json }
       is_admin_authenticated: { Args: never; Returns: boolean }
       is_user_authenticated: { Args: never; Returns: boolean }
       log_pix_generated:
@@ -613,6 +648,7 @@ export type Database = {
             Returns: string
           }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
+      reset_login_attempts: { Args: { p_email: string }; Returns: boolean }
       reset_pix_transactions: {
         Args: { input_token: string }
         Returns: boolean
