@@ -617,7 +617,15 @@ const Admin = () => {
               key={section.id}
               variant={activeSection === section.id ? "default" : "outline"}
               className="flex items-center gap-2"
-              onClick={() => setActiveSection(section.id)}
+              onClick={() => {
+                if (section.id === "personalizacao") {
+                  navigate('/admin/personalization');
+                } else if (section.id === "email") {
+                  navigate('/admin/email');
+                } else {
+                  setActiveSection(section.id);
+                }
+              }}
             >
               <section.icon className="h-4 w-4" />
               {section.title}
