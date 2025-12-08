@@ -42,15 +42,12 @@ const AdminIntegrations = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAdminAuth();
 
+  // Load data when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/admin');
-      return;
-    }
-    if (isAuthenticated) {
+    if (isAuthenticated && !loading) {
       setIsLoading(false);
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading]);
 
   const loadIntegrationConfig = async (integrationId: string) => {
     setIsLoadingConfig(true);

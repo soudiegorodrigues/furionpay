@@ -51,15 +51,12 @@ const AdminDashboard = () => {
     user,
     isBlocked
   } = useAdminAuth();
+  // Load data when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/admin');
-      return;
-    }
-    if (isAuthenticated) {
+    if (isAuthenticated && !loading) {
       loadData();
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading]);
 
   // Auto-refresh every 1 minute
   useEffect(() => {
