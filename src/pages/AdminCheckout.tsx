@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle, X } from "lucide-react";
+import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle, X, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -50,6 +50,7 @@ const AdminCheckout = () => {
   const [previewModel, setPreviewModel] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("boost");
   const [selectedDomain, setSelectedDomain] = useState<string>("");
+  const [productName, setProductName] = useState<string>("");
   const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
   const [linkCopied, setLinkCopied] = useState(false);
   const navigate = useNavigate();
@@ -85,8 +86,10 @@ const AdminCheckout = () => {
         const settings = settingsData as { key: string; value: string }[];
         const popupSetting = settings.find(s => s.key === 'popup_model');
         const domainSetting = settings.find(s => s.key === 'selected_domain');
+        const productSetting = settings.find(s => s.key === 'product_name');
         if (popupSetting?.value) setSelectedModel(popupSetting.value);
         if (domainSetting?.value) setSelectedDomain(domainSetting.value);
+        if (productSetting?.value) setProductName(productSetting.value);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -95,7 +98,25 @@ const AdminCheckout = () => {
     }
   };
 
+  // Blocked product names list
+  const blockedProductNames = ['doação', 'doacao', 'golpe', 'falso', 'fraude', 'fake', 'scam'];
+
+  const isProductNameBlocked = (name: string): boolean => {
+    const normalizedName = name.toLowerCase().trim();
+    return blockedProductNames.some(blocked => normalizedName.includes(blocked));
+  };
+
   const handleSave = async () => {
+    // Validate product name before saving
+    if (productName && isProductNameBlocked(productName)) {
+      toast({
+        title: "Nome de produto bloqueado",
+        description: "O nome do produto contém palavras não permitidas. Por favor, escolha outro nome.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       await Promise.all([
@@ -106,6 +127,10 @@ const AdminCheckout = () => {
         supabase.rpc('update_user_setting', {
           setting_key: 'selected_domain',
           setting_value: selectedDomain
+        }),
+        supabase.rpc('update_user_setting', {
+          setting_key: 'product_name',
+          setting_value: productName
         })
       ]);
       toast({
@@ -225,6 +250,23 @@ const AdminCheckout = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Product Name */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Nome do Produto
+              </Label>
+              <Input 
+                type="text"
+                placeholder="Anônimo (padrão)"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nome que aparecerá no gateway de pagamento
+              </p>
             </div>
             
             {/* Generated Link */}
