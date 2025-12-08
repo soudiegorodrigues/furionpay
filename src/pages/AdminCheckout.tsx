@@ -111,7 +111,8 @@ const AdminCheckout = () => {
       const {
         data: domainsData
       } = await supabase.from('available_domains').select('id, domain, name').eq('is_active', true).order('domain');
-      setAvailableDomains(domainsData || []);
+      const availableDomainsList = domainsData || [];
+      setAvailableDomains(availableDomainsList);
 
       // Load user settings
       const {
@@ -128,7 +129,18 @@ const AdminCheckout = () => {
         const pixelsSetting = settings.find(s => s.key === 'meta_pixels');
         const selectedPixelSetting = settings.find(s => s.key === 'selected_pixel');
         if (popupSetting?.value) setSelectedModel(popupSetting.value);
-        if (domainSetting?.value) setSelectedDomain(domainSetting.value);
+        
+        // Only set domain if it still exists in available domains
+        if (domainSetting?.value) {
+          const domainExists = availableDomainsList.some(d => d.domain === domainSetting.value);
+          if (domainExists) {
+            setSelectedDomain(domainSetting.value);
+          } else {
+            // Clear the invalid domain from settings
+            setSelectedDomain("");
+          }
+        }
+        
         if (productSetting?.value) setProductName(productSetting.value);
         if (pixelsSetting?.value) {
           try {
