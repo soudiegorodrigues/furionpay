@@ -115,9 +115,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Get sender email from settings or use default
+    const { data: senderData } = await supabase
+      .from("admin_settings")
+      .select("value")
+      .eq("key", "resend_sender_email")
+      .limit(1)
+      .maybeSingle();
+    
+    const senderEmail = senderData?.value || "noreply@resend.dev";
+    
     // Send email with code
     const emailResponse = await resend.emails.send({
-      from: "Recuperação de Senha <onboarding@resend.dev>",
+      from: `Recuperação de Senha <${senderEmail}>`,
       to: [email],
       subject: "Seu código de recuperação de senha",
       html: `
