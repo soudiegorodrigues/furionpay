@@ -1,4 +1,3 @@
-import React, { memo, useMemo, useCallback } from "react";
 import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
@@ -42,7 +41,7 @@ interface AdminSidebarProps {
   isAdmin?: boolean;
 }
 
-export const AdminSidebar = memo(function AdminSidebar({
+export function AdminSidebar({
   userEmail,
   userName,
   onLogout,
@@ -50,21 +49,8 @@ export const AdminSidebar = memo(function AdminSidebar({
 }: AdminSidebarProps) {
   const { theme } = useTheme();
   
-  // Memoize filtered menu items
-  const visibleMenuItems = useMemo(() => 
-    menuItems.filter(item => !item.adminOnly || isAdmin),
-    [isAdmin]
-  );
-
-  // Memoize logo based on theme
-  const logoSrc = useMemo(() => 
-    theme === "dark" ? furionPayLogoDark : furionPayLogoLight,
-    [theme]
-  );
-
-  const handleLogout = useCallback(() => {
-    onLogout();
-  }, [onLogout]);
+  const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
+  const logoSrc = theme === "dark" ? furionPayLogoDark : furionPayLogoLight;
   
   return (
     <Sidebar collapsible="none" className="border-r border-border bg-background dark:bg-black w-64 min-w-64 max-w-64 flex-shrink-0">
@@ -120,7 +106,7 @@ export const AdminSidebar = memo(function AdminSidebar({
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleLogout} 
+              onClick={onLogout} 
               className="justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2"
             >
               <LogOut className="h-4 w-4" />
@@ -132,7 +118,7 @@ export const AdminSidebar = memo(function AdminSidebar({
       </SidebarFooter>
     </Sidebar>
   );
-});
+}
 
 interface AdminHeaderProps {
   title?: string;
