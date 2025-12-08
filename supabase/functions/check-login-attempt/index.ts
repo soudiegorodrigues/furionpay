@@ -132,6 +132,21 @@ const handler = async (req: Request): Promise<Response> => {
               .maybeSingle();
             
             const senderEmail = senderData?.value || "noreply@resend.dev";
+
+            // Get logo URL from settings
+            const { data: logoData } = await supabase
+              .from("admin_settings")
+              .select("value")
+              .eq("key", "email_logo_url")
+              .limit(1)
+              .maybeSingle();
+            
+            const logoUrl = logoData?.value;
+
+            // Build logo HTML
+            const logoHtml = logoUrl 
+              ? `<img src="${logoUrl}" alt="Logo" style="max-height: 60px; width: auto; display: block; margin: 0 auto 16px;" />`
+              : `<h1 style="color: #ef4444; text-align: center; margin-bottom: 16px;">FurionPay</h1>`;
             
             // Send email with unlock code
             try {
@@ -140,19 +155,28 @@ const handler = async (req: Request): Promise<Response> => {
                 to: [email],
                 subject: "Código de Desbloqueio - FurionPay",
                 html: `
-                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h1 style="color: #ef4444; text-align: center;">FurionPay</h1>
-                    <h2 style="color: #333;">Sua conta foi bloqueada temporariamente</h2>
-                    <p>Detectamos múltiplas tentativas de login incorretas na sua conta.</p>
-                    <p>Para desbloquear sua conta, use o código abaixo:</p>
-                    <div style="background-color: #f4f4f4; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-                      <code style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #ef4444;">${unlockCode}</code>
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  </head>
+                  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 20px;">
+                    <div style="max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                      <div style="text-align: center; margin-bottom: 24px;">
+                        ${logoHtml}
+                      </div>
+                      <h2 style="color: #1e293b; text-align: center; font-size: 20px; margin-bottom: 16px;">Sua conta foi bloqueada temporariamente</h2>
+                      <p style="color: #64748b; text-align: center; margin-bottom: 24px;">Detectamos múltiplas tentativas de login incorretas na sua conta. Para desbloquear, use o código abaixo:</p>
+                      <div style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #ef4444; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+                        <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Seu código de desbloqueio:</p>
+                        <p style="color: #dc2626; font-size: 36px; font-weight: 700; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">${unlockCode}</p>
+                      </div>
+                      <p style="color: #94a3b8; font-size: 14px; text-align: center; margin-bottom: 8px;">Este código expira em 15 minutos.</p>
+                      <p style="color: #94a3b8; font-size: 14px; text-align: center;">Se você não tentou fazer login, recomendamos alterar sua senha imediatamente.</p>
                     </div>
-                    <p style="color: #666; font-size: 14px;">Este código expira em 15 minutos.</p>
-                    <p style="color: #666; font-size: 14px;">Se você não tentou fazer login, recomendamos alterar sua senha imediatamente.</p>
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p style="color: #999; font-size: 12px; text-align: center;">FurionPay - Pagamentos Seguros</p>
-                  </div>
+                  </body>
+                  </html>
                 `,
               });
               console.log("Unlock email sent to", email);
