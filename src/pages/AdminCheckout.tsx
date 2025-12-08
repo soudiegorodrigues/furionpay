@@ -34,13 +34,13 @@ interface AvailableDomain {
 }
 
 const popupModels = [
-  { id: "boost", name: "Boost", description: "Modelo com animações e destaque visual" },
-  { id: "simple", name: "Simples", description: "Modelo minimalista e direto" },
-  { id: "clean", name: "Clean", description: "Design limpo e moderno" },
-  { id: "direct", name: "Direto", description: "Foco no pagamento rápido" },
-  { id: "hot", name: "Hot", description: "Design com urgência e destaque" },
-  { id: "landing", name: "Landing", description: "Estilo página de vendas" },
-  { id: "instituto", name: "Instituto", description: "Modelo institucional" },
+  { id: "boost", name: "Boost", description: "Modelo com animações e destaque visual", hasDynamicAmount: false },
+  { id: "simple", name: "Simples", description: "Modelo minimalista e direto", hasDynamicAmount: false },
+  { id: "clean", name: "Clean", description: "Design limpo e moderno", hasDynamicAmount: false },
+  { id: "direct", name: "Direto", description: "Foco no pagamento rápido", hasDynamicAmount: true },
+  { id: "hot", name: "Hot", description: "Design com urgência e destaque", hasDynamicAmount: true },
+  { id: "landing", name: "Landing", description: "Estilo página de vendas", hasDynamicAmount: false },
+  { id: "instituto", name: "Instituto", description: "Modelo institucional", hasDynamicAmount: false },
 ];
 
 const AdminCheckout = () => {
@@ -345,6 +345,20 @@ const AdminCheckout = () => {
                       <div className="text-xs text-muted-foreground">Conversão</div>
                     </div>
                   </div>
+                  
+                  {model.hasDynamicAmount && (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <span className="text-amber-500">💡</span>
+                        <div className="text-xs text-amber-600 dark:text-amber-400">
+                          <strong>Valores dinâmicos via URL</strong>
+                          <p className="mt-1 text-muted-foreground">
+                            Adicione <code className="bg-muted px-1 rounded">&amount=VALOR</code> ao link para definir valores diferentes em cada botão.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <Button 
                     variant="outline" 
                     className="w-full"
