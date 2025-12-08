@@ -9,9 +9,12 @@ import { Mail, Save, Eye, EyeOff, ExternalLink, CheckCircle2 } from "lucide-reac
 
 export function EmailSection() {
   const [resendApiKey, setResendApiKey] = useState("");
+  const [senderEmail, setSenderEmail] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingSender, setIsSavingSender] = useState(false);
   const [hasExistingKey, setHasExistingKey] = useState(false);
+  const [hasExistingSender, setHasExistingSender] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -28,6 +31,11 @@ export function EmailSection() {
         if (apiKey?.value) {
           setHasExistingKey(true);
           setResendApiKey('re_••••••••••••••••••••••••');
+        }
+        const sender = settings.find(s => s.key === 'resend_sender_email');
+        if (sender?.value) {
+          setHasExistingSender(true);
+          setSenderEmail(sender.value);
         }
       }
     } catch (error: any) {
@@ -80,6 +88,43 @@ export function EmailSection() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveSender = async () => {
+    if (!senderEmail || !senderEmail.includes('@')) {
+      toast({
+        title: "Erro",
+        description: "Digite um email válido",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSavingSender(true);
+    try {
+      const { error } = await supabase.rpc('update_user_setting', {
+        setting_key: 'resend_sender_email',
+        setting_value: senderEmail
+      });
+
+      if (error) throw error;
+
+      setHasExistingSender(true);
+
+      toast({
+        title: "Sucesso",
+        description: "Email remetente salvo com sucesso!",
+      });
+    } catch (error: any) {
+      console.error('Error saving sender email:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar email remetente",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingSender(false);
     }
   };
 
@@ -174,6 +219,44 @@ export function EmailSection() {
               </a>
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
+            Email Remetente
+            {hasExistingSender && (
+              <span className="ml-2 flex items-center gap-1 text-sm text-green-500">
+                <CheckCircle2 className="h-4 w-4" />
+                Configurado
+              </span>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Email que aparecerá como remetente nas mensagens enviadas. Deve ser de um domínio verificado no Resend.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="sender-email">Email Remetente</Label>
+            <Input
+              id="sender-email"
+              type="email"
+              placeholder="noreply@seudominio.com"
+              value={senderEmail}
+              onChange={(e) => setSenderEmail(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Use um email do domínio que você verificou no Resend (ex: noreply@seudominio.com)
+            </p>
+          </div>
+
+          <Button onClick={handleSaveSender} disabled={isSavingSender}>
+            <Save className="h-4 w-4 mr-2" />
+            {isSavingSender ? "Salvando..." : "Salvar Email Remetente"}
+          </Button>
         </CardContent>
       </Card>
     </div>

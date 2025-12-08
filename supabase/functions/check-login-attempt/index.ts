@@ -123,10 +123,20 @@ const handler = async (req: Request): Promise<Response> => {
           if (insertError) {
             console.error("Error storing unlock code:", insertError);
           } else {
+            // Get sender email from settings or use default
+            const { data: senderData } = await supabase
+              .from("admin_settings")
+              .select("value")
+              .eq("key", "resend_sender_email")
+              .limit(1)
+              .maybeSingle();
+            
+            const senderEmail = senderData?.value || "noreply@resend.dev";
+            
             // Send email with unlock code
             try {
               await resend.emails.send({
-                from: "FurionPay <onboarding@resend.dev>",
+                from: `FurionPay <${senderEmail}>`,
                 to: [email],
                 subject: "Código de Desbloqueio - FurionPay",
                 html: `
