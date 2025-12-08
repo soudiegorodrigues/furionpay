@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Loader2, Eye, CreditCard, TrendingUp, Link, Copy, Check, Globe, Save, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -316,7 +317,7 @@ const AdminCheckout = () => {
         </div>
       </div>
 
-      {/* Popup Previews */}
+      {/* Popup Previews - Regular popups */}
       {previewModel === 'boost' && (
         <DonationPopup 
           isOpen={true} 
@@ -357,22 +358,51 @@ const AdminCheckout = () => {
           showCloseButton={true}
         />
       )}
-      {previewModel === 'landing' && (
-        <DonationPopupLanding 
-          isOpen={true} 
-          onClose={() => setPreviewModel(null)} 
-          userId={user?.id}
-          showCloseButton={true}
-        />
-      )}
-      {previewModel === 'instituto' && (
-        <DonationPopupInstituto 
-          isOpen={true} 
-          onClose={() => setPreviewModel(null)} 
-          userId={user?.id}
-          showCloseButton={true}
-        />
-      )}
+
+      {/* Full-page popups wrapped in Dialog for preview */}
+      <Dialog open={previewModel === 'landing'} onOpenChange={(open) => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-2 z-50"
+            onClick={() => setPreviewModel(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <div className="relative">
+            <DonationPopupLanding 
+              isOpen={true} 
+              onClose={() => setPreviewModel(null)} 
+              userId={user?.id}
+              showCloseButton={false}
+              isPreview={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewModel === 'instituto'} onOpenChange={(open) => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-2 z-50"
+            onClick={() => setPreviewModel(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <div className="relative">
+            <DonationPopupInstituto 
+              isOpen={true} 
+              onClose={() => setPreviewModel(null)} 
+              userId={user?.id}
+              showCloseButton={false}
+              isPreview={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

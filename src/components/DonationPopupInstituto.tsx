@@ -24,6 +24,7 @@ interface DonationPopupInstitutoProps {
   userId?: string;
   showCloseButton?: boolean;
   fixedAmount?: number;
+  isPreview?: boolean;
 }
 
 const DONATION_AMOUNTS = [
@@ -48,6 +49,7 @@ export const DonationPopupInstituto = ({
   userId,
   showCloseButton = false,
   fixedAmount,
+  isPreview = false,
 }: DonationPopupInstitutoProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [step, setStep] = useState<Step>("select");
@@ -252,7 +254,7 @@ export const DonationPopupInstituto = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white overflow-auto">
+    <div className={isPreview ? "bg-white overflow-auto" : "fixed inset-0 z-50 bg-white overflow-auto"}>
       {/* Close Button */}
       {showCloseButton && (
         <button

@@ -17,6 +17,7 @@ interface DonationPopupLandingProps {
   recipientName?: string;
   userId?: string;
   showCloseButton?: boolean;
+  isPreview?: boolean;
 }
 
 const DONATION_AMOUNTS = [
@@ -44,6 +45,7 @@ export const DonationPopupLanding = ({
   recipientName = "Campanha Solidária",
   userId,
   showCloseButton = false,
+  isPreview = false,
 }: DonationPopupLandingProps) => {
   const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -206,7 +208,7 @@ export const DonationPopupLanding = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white overflow-auto">
+    <div className={isPreview ? "bg-white overflow-auto" : "fixed inset-0 z-50 bg-white overflow-auto"}>
       {/* Close Button */}
       {showCloseButton && (
         <button
