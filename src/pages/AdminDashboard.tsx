@@ -65,13 +65,13 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!isAuthenticated) return;
     const interval = setInterval(() => {
-      loadData();
+      loadData(false);
     }, 60000); // 60 seconds
 
     return () => clearInterval(interval);
   }, [isAuthenticated]);
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadData = async (showLoading = true) => {
+    if (showLoading && !stats) setIsLoading(true);
     try {
       // Load dashboard stats (user-scoped)
       const {
@@ -204,7 +204,7 @@ const AdminDashboard = () => {
                 Acompanhe as transações PIX
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={loadData}>
+            <Button variant="outline" size="sm" onClick={() => loadData(false)}>
               <RefreshCw className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Atualizar</span>
             </Button>

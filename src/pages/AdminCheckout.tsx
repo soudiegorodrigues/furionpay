@@ -174,11 +174,13 @@ const AdminCheckout = () => {
     ? `https://www.${selectedDomain}/?u=${user?.id || ''}&m=${selectedModel}` 
     : `${window.location.origin}/?u=${user?.id || ''}&m=${selectedModel}`;
 
-  if (loading || isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
     );
   }
 
