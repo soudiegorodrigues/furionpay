@@ -25,11 +25,7 @@ const authSchema = z.object({
 const signUpSchema = authSchema.extend({
   name: z.string().min(2, {
     message: "Nome deve ter no mínimo 2 caracteres"
-  }),
-  confirmPassword: z.string()
-}).refine(data => data.password === data.confirmPassword, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"]
+  })
 });
 
 type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password';
@@ -192,8 +188,7 @@ const AdminAuth = () => {
       const validation = signUpSchema.safeParse({
         email,
         password,
-        name,
-        confirmPassword
+        name
       });
       if (!validation.success) {
         toast({
@@ -512,7 +507,7 @@ const AdminAuth = () => {
             {(mode === 'login' || mode === 'signup') && (
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-white/80">
-                  Senha
+                  {mode === 'signup' ? 'Criar senha' : 'Senha'}
                 </Label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
@@ -537,35 +532,33 @@ const AdminAuth = () => {
               </div>
             )}
 
-            {(mode === 'signup' || mode === 'reset-password') && (
+            {mode === 'reset-password' && (
               <>
-                {mode === 'reset-password' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword" className="text-sm font-medium text-white/80">
-                      Nova senha
-                    </Label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
-                      <Input
-                        id="newPassword"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        className="h-12 pl-11 pr-12 text-[15px] bg-white/5 border-white/10 text-white rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white/10 transition-all placeholder:text-white/30"
-                        required
-                        minLength={6}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
-                      </button>
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-sm font-medium text-white/80">
+                    Nova senha
+                  </Label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
+                    <Input
+                      id="newPassword"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="h-12 pl-11 pr-12 text-[15px] bg-white/5 border-white/10 text-white rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white/10 transition-all placeholder:text-white/30"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                    </button>
                   </div>
-                )}
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword" className="text-sm font-medium text-white/80">
                     Confirmar senha
