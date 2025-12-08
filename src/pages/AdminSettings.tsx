@@ -195,14 +195,6 @@ const AdminSettings = () => {
       setIsResettingGlobal(false);
     }
   };
-  if (loading || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
   return (
     <AdminLayout>
       <div className="max-w-2xl mx-auto space-y-6">
