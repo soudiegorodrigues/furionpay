@@ -12,6 +12,30 @@ interface CheckLoginRequest {
   loginFailed: boolean;
 }
 
+const getResendApiKey = async (supabase: any): Promise<string | null> => {
+  // First try to get from admin_settings table
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .select("value")
+    .eq("key", "resend_api_key")
+    .limit(1)
+    .maybeSingle();
+
+  if (!error && data?.value) {
+    console.log("Using Resend API key from admin_settings");
+    return data.value;
+  }
+
+  // Fallback to environment variable
+  const envKey = Deno.env.get("RESEND_API_KEY");
+  if (envKey) {
+    console.log("Using Resend API key from environment");
+    return envKey;
+  }
+
+  return null;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -70,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       // If should send code (just got blocked after 3rd attempt)
       if (attemptResult?.should_send_code) {
-        const resendApiKey = Deno.env.get("RESEND_API_KEY");
+        const resendApiKey = await getResendApiKey(supabase);
         if (resendApiKey) {
           const resend = new Resend(resendApiKey);
           
@@ -126,6 +150,8 @@ const handler = async (req: Request): Promise<Response> => {
               console.error("Error sending unlock email:", emailError);
             }
           }
+        } else {
+          console.error("Resend API key not configured");
         }
 
         return new Response(
