@@ -410,6 +410,15 @@ export type Database = {
         }[]
       }
       get_user_dashboard: { Args: never; Returns: Json }
+      get_user_popup_model_stats: {
+        Args: never
+        Returns: {
+          conversion_rate: number
+          popup_model: string
+          total_generated: number
+          total_paid: number
+        }[]
+      }
       get_user_settings: {
         Args: never
         Returns: {
