@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { AdminHeader } from "@/components/AdminSidebar";
-import { User, Lock, Save, Eye, EyeOff } from "lucide-react";
+import { User, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,14 +15,7 @@ export default function AdminProfile() {
   const { toast } = useToast();
   
   const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || "");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [savingName, setSavingName] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
 
   const handleSaveName = async () => {
     if (!displayName.trim()) {
@@ -54,61 +47,6 @@ export default function AdminProfile() {
       });
     } finally {
       setSavingName(false);
-    }
-  };
-
-  const handleSavePassword = async () => {
-    if (!newPassword || !confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos de senha",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "Erro",
-        description: "A nova senha deve ter pelo menos 6 caracteres",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSavingPassword(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: "Senha atualizada com sucesso",
-      });
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar senha",
-        variant: "destructive",
-      });
-    } finally {
-      setSavingPassword(false);
     }
   };
 
@@ -161,73 +99,6 @@ export default function AdminProfile() {
               >
                 <Save className="h-4 w-4 mr-2" />
                 {savingName ? "Salvando..." : "Salvar Nome"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Alterar Senha */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                Alterar Senha
-              </CardTitle>
-              <CardDescription>
-                Atualize sua senha de acesso
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">Nova Senha</Label>
-                <div className="relative">
-                  <Input 
-                    id="newPassword" 
-                    type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Digite a nova senha"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-                <div className="relative">
-                  <Input 
-                    id="confirmPassword" 
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirme a nova senha"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              <Button 
-                onClick={handleSavePassword} 
-                disabled={savingPassword}
-                className="w-full sm:w-auto"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                {savingPassword ? "Salvando..." : "Alterar Senha"}
               </Button>
             </CardContent>
           </Card>
