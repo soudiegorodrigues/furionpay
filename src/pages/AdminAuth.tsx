@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from '@/components/ui/alert-dialog';
-import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, ShieldCheck, Ban, KeyRound } from 'lucide-react';
+import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, Ban, KeyRound } from 'lucide-react';
 import { z } from 'zod';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
+import furionLogo from '@/assets/furionpay-logo-white-text.png';
 
 const authSchema = z.object({
   email: z.string().trim().email({
@@ -273,7 +274,7 @@ const AdminAuth = () => {
       case 'reset-code': return 'Verificar Código';
       case 'reset-password': return 'Nova Senha';
       case 'signup': return 'Criar Conta';
-      default: return 'Acessar Painel';
+      default: return 'Bem-vindo de volta';
     }
   };
 
@@ -297,24 +298,17 @@ const AdminAuth = () => {
     }
   };
 
-  const getIcon = () => {
-    if (mode.startsWith('reset')) {
-      return <KeyRound className="h-7 w-7 text-primary" />;
-    }
-    return <ShieldCheck className="h-7 w-7 text-primary" />;
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/70 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl animate-float-slow" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-spin-slow" />
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-float-slow" />
         </div>
-        <div className="flex flex-col items-center gap-3 relative z-10">
+        <div className="flex flex-col items-center gap-4 relative z-10">
+          <img src={furionLogo} alt="FurionPay" className="h-12 mb-2" />
           <Loader2 className="h-8 w-8 animate-spin text-white" />
           <span className="text-sm text-white/80">Carregando...</span>
         </div>
@@ -323,16 +317,16 @@ const AdminAuth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-4 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Large blurred circles with pulse-glow */}
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-glow" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl animate-float-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-teal-400/20 rounded-full blur-2xl animate-float" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-float-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl animate-float" />
         
-        {/* Spinning ring */}
+        {/* Spinning rings */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-spin-slow" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '25s' }} />
         
@@ -344,31 +338,43 @@ const AdminAuth = () => {
           }}
         />
         
-        {/* Floating shapes with different animations */}
-        <div className="absolute top-20 right-20 w-4 h-4 bg-white/25 rounded-full animate-float" style={{ animationDelay: '0s' }} />
-        <div className="absolute top-40 left-20 w-3 h-3 bg-white/20 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-32 right-32 w-2 h-2 bg-white/30 rounded-full animate-float-slow" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-20 left-1/3 w-3 h-3 bg-white/20 rounded-full animate-drift" style={{ animationDelay: '3s' }} />
-        <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-white/25 rounded-full animate-float" style={{ animationDelay: '0.5s' }} />
-        <div className="absolute bottom-1/3 left-1/4 w-4 h-4 bg-white/15 rounded-full animate-float-slow" style={{ animationDelay: '1.5s' }} />
+        {/* Floating shapes */}
+        <div className="absolute top-20 right-20 w-4 h-4 bg-white/20 rounded-full animate-float" style={{ animationDelay: '0s' }} />
+        <div className="absolute top-40 left-20 w-3 h-3 bg-white/15 rounded-full animate-drift" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-32 right-32 w-2 h-2 bg-white/25 rounded-full animate-float-slow" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-20 left-1/3 w-3 h-3 bg-white/15 rounded-full animate-drift" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-white/20 rounded-full animate-float" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-1/3 left-1/4 w-4 h-4 bg-white/10 rounded-full animate-float-slow" style={{ animationDelay: '1.5s' }} />
         
         {/* Geometric shapes */}
         <div className="absolute top-32 left-1/3 w-8 h-8 border-2 border-white/10 rotate-45 animate-drift" style={{ animationDelay: '2s' }} />
         <div className="absolute bottom-40 right-1/3 w-6 h-6 border-2 border-white/10 rotate-12 animate-float" style={{ animationDelay: '4s' }} />
       </div>
-      <div className="w-full max-w-[400px] animate-fade-in relative z-10">
-        {/* Card */}
-        <div className="bg-card rounded-[18px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.2)] border border-white/20 p-8 md:p-10 backdrop-blur-sm">
-          {/* Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-[0_0_24px_-4px_rgba(34,197,94,0.3)]">
-              {getIcon()}
-            </div>
-          </div>
 
-          {/* Title */}
+      <div className="w-full max-w-[420px] animate-fade-in relative z-10">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <img 
+            src={furionLogo} 
+            alt="FurionPay" 
+            className="h-14 drop-shadow-lg"
+          />
+        </div>
+
+        {/* Card */}
+        <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-8 md:p-10">
+          {/* Header with icon */}
           <div className="text-center mb-8">
-            <h1 className="text-[22px] font-semibold text-foreground tracking-tight mb-2">
+            <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 mb-4">
+              {mode.startsWith('reset') ? (
+                <KeyRound className="h-7 w-7 text-primary" />
+              ) : mode === 'signup' ? (
+                <User className="h-7 w-7 text-primary" />
+              ) : (
+                <Lock className="h-7 w-7 text-primary" />
+              )}
+            </div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">
               {getTitle()}
             </h1>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -383,15 +389,15 @@ const AdminAuth = () => {
                 <Label htmlFor="name" className="text-sm font-medium text-foreground">
                   Nome completo
                 </Label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="name"
                     type="text"
                     placeholder="Seu nome"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="h-[52px] pl-11 pr-4 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
                     required
                   />
                 </div>
@@ -403,15 +409,15 @@ const AdminAuth = () => {
                 <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   Email
                 </Label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="h-[52px] pl-11 pr-4 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    className="h-12 pl-11 pr-4 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
                     required
                   />
                 </div>
@@ -419,7 +425,7 @@ const AdminAuth = () => {
             )}
 
             {mode === 'reset-code' && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label className="text-sm font-medium text-foreground">
                   Código de verificação
                 </Label>
@@ -429,17 +435,17 @@ const AdminAuth = () => {
                     value={otpCode}
                     onChange={setOtpCode}
                   >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} className="h-12 w-12 text-lg" />
-                      <InputOTPSlot index={1} className="h-12 w-12 text-lg" />
-                      <InputOTPSlot index={2} className="h-12 w-12 text-lg" />
-                      <InputOTPSlot index={3} className="h-12 w-12 text-lg" />
-                      <InputOTPSlot index={4} className="h-12 w-12 text-lg" />
-                      <InputOTPSlot index={5} className="h-12 w-12 text-lg" />
+                    <InputOTPGroup className="gap-2">
+                      <InputOTPSlot index={0} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={1} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={2} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={3} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={4} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
+                      <InputOTPSlot index={5} className="h-12 w-12 text-lg rounded-lg border-border/50 bg-secondary/50" />
                     </InputOTPGroup>
                   </InputOTP>
                 </div>
-                <p className="text-xs text-center text-muted-foreground mt-2">
+                <p className="text-xs text-center text-muted-foreground mt-3">
                   Não recebeu?{' '}
                   <button
                     type="button"
@@ -454,7 +460,7 @@ const AdminAuth = () => {
                         description: "Verifique sua caixa de entrada"
                       });
                     }}
-                    className="text-primary hover:text-primary/80 font-medium"
+                    className="text-primary hover:text-primary/80 font-medium transition-colors"
                     disabled={isSubmitting}
                   >
                     Reenviar código
@@ -468,15 +474,15 @@ const AdminAuth = () => {
                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Senha
                 </Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                    className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
                     required
                     minLength={6}
                   />
@@ -498,15 +504,15 @@ const AdminAuth = () => {
                     <Label htmlFor="newPassword" className="text-sm font-medium text-foreground">
                       Nova senha
                     </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                       <Input
                         id="newPassword"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                        className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
                         required
                         minLength={6}
                       />
@@ -524,15 +530,15 @@ const AdminAuth = () => {
                   <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                     Confirmar senha
                   </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60" />
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
-                      className="h-[52px] pl-11 pr-12 text-[15px] bg-secondary/30 border-border/60 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                      className="h-12 pl-11 pr-12 text-[15px] bg-secondary/50 border-border/50 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
                       required
                       minLength={6}
                     />
@@ -573,7 +579,7 @@ const AdminAuth = () => {
 
             <Button
               type="submit"
-              className="w-full h-[52px] text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-[hsl(152,71%,40%)] hover:from-primary/90 hover:to-[hsl(152,71%,35%)] shadow-[0_4px_14px_-2px_rgba(34,197,94,0.4)] hover:shadow-[0_6px_20px_-2px_rgba(34,197,94,0.5)] transition-all duration-200 active:scale-[0.98]"
+              className="w-full h-12 text-[15px] font-semibold rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -588,14 +594,15 @@ const AdminAuth = () => {
           </form>
 
           {/* Footer Links */}
-          <div className="mt-6 pt-6 border-t border-border/50 text-center">
+          <div className="mt-8 pt-6 border-t border-border/30 text-center">
             {mode.startsWith('reset') ? (
               <button
                 type="button"
                 onClick={() => switchMode('login')}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
               >
-                ← Voltar ao login
+                <ArrowRight className="h-3 w-3 rotate-180" />
+                Voltar ao login
               </button>
             ) : mode === 'login' ? (
               <p className="text-sm text-muted-foreground">
@@ -620,11 +627,16 @@ const AdminAuth = () => {
             )}
           </div>
         </div>
+
+        {/* Footer text */}
+        <p className="text-center text-white/60 text-xs mt-6">
+          © {new Date().getFullYear()} FurionPay. Todos os direitos reservados.
+        </p>
       </div>
 
       {/* Blocked User Dialog */}
       <AlertDialog open={showBlockedDialog} onOpenChange={setShowBlockedDialog}>
-        <AlertDialogContent className="rounded-[18px] border-border/50">
+        <AlertDialogContent className="rounded-2xl border-border/50">
           <AlertDialogHeader>
             <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
               <Ban className="h-8 w-8 text-destructive" />
