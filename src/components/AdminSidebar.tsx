@@ -62,7 +62,7 @@ export function AdminSidebar({
             <SidebarMenu className="space-y-1">
               {visibleMenuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-3 py-2.5 transition-colors" activeClassName="bg-primary/10 text-primary font-medium">
+                    <NavLink to={item.url} end className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-3 py-2.5" activeClassName="bg-primary/10 text-primary font-medium">
                       <item.icon className="h-5 w-5 shrink-0" />
                       <span className="text-sm">{item.title}</span>
                     </NavLink>
@@ -75,7 +75,7 @@ export function AdminSidebar({
 
       <SidebarFooter className="p-4 space-y-4 mt-auto">
         <div className="border-t border-border pt-4">
-          <NavLink to="/admin/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors" activeClassName="bg-primary/10">
+          <NavLink to="/admin/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50" activeClassName="bg-primary/10">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
               <User className="h-5 w-5 text-primary" />
             </div>
