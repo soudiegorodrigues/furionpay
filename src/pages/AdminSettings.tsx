@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Key, Activity, Save, Loader2, Plus, Trash2, AlertTriangle, Pencil, ChevronDown } from "lucide-react";
+import { Settings, Activity, Save, Loader2, Plus, Trash2, AlertTriangle, Pencil, ChevronDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,12 +20,10 @@ interface MetaPixel {
   accessToken: string;
 }
 interface AdminSettingsData {
-  spedpay_api_key: string;
   meta_pixels: string;
 }
 const AdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettingsData>({
-    spedpay_api_key: "",
     meta_pixels: "[]"
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
@@ -72,7 +70,6 @@ const AdminSettings = () => {
       } = await supabase.rpc('get_user_settings');
       if (error) throw error;
       const settingsMap: AdminSettingsData = {
-        spedpay_api_key: "",
         meta_pixels: "[]"
       };
       if (data) {
@@ -80,9 +77,7 @@ const AdminSettings = () => {
           key: string;
           value: string;
         }[]).forEach(item => {
-          if (item.key === 'spedpay_api_key') {
-            settingsMap.spedpay_api_key = item.value || "";
-          } else if (item.key === 'meta_pixels') {
+          if (item.key === 'meta_pixels') {
             settingsMap.meta_pixels = item.value || "[]";
           } else if (item.key === 'meta_pixel_id' && item.value) {
             const oldToken = (data as {
@@ -138,14 +133,10 @@ const AdminSettings = () => {
     setIsSaving(true);
     try {
       const pixelsJson = JSON.stringify(pixels);
-      const updates = [supabase.rpc('update_user_setting', {
-        setting_key: 'spedpay_api_key',
-        setting_value: settings.spedpay_api_key
-      }), supabase.rpc('update_user_setting', {
+      await supabase.rpc('update_user_setting', {
         setting_key: 'meta_pixels',
         setting_value: pixelsJson
-      })];
-      await Promise.all(updates);
+      });
       toast({
         title: "Sucesso",
         description: "Configurações salvas com sucesso!"
@@ -229,27 +220,6 @@ const AdminSettings = () => {
           </div>
         </div>
 
-        {/* API Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              Configurações da API
-            </CardTitle>
-            <CardDescription>
-              Configure as credenciais do SpedPay para processar pagamentos PIX
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="api_key">Chave de API (SpedPay)</Label>
-              <Input id="api_key" type="password" placeholder="Digite a chave de API" value={settings.spedpay_api_key} onChange={e => setSettings(s => ({
-              ...s,
-              spedpay_api_key: e.target.value
-            }))} />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Meta Pixel Settings */}
         <Card>
