@@ -81,7 +81,7 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar userEmail={user?.email} onLogout={handleLogout} />
+        <AdminSidebar userEmail={user?.email} onLogout={handleLogout} isAdmin={isAdmin} />
         <div className="flex-1 flex flex-col min-w-0">
           <BlockedUserAlert isBlocked={isBlocked} />
           <main className="flex-1 p-4 sm:p-6 overflow-auto">

@@ -9,33 +9,43 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 const menuItems = [{
   title: "Admin",
   url: "/admin",
-  icon: Shield
+  icon: Shield,
+  adminOnly: true
 }, {
   title: "Dashboard",
   url: "/admin/dashboard",
-  icon: BarChart3
+  icon: BarChart3,
+  adminOnly: false
 }, {
   title: "Checkout",
   url: "/admin/checkout",
-  icon: CreditCard
+  icon: CreditCard,
+  adminOnly: false
 }, {
   title: "Integrações",
   url: "/admin/integrations",
-  icon: Puzzle
+  icon: Puzzle,
+  adminOnly: false
 }, {
   title: "Meta Pixels",
   url: "/admin/settings",
-  icon: Settings
+  icon: Settings,
+  adminOnly: false
 }];
 interface AdminSidebarProps {
   userEmail?: string;
   onLogout: () => void;
+  isAdmin?: boolean;
 }
 export function AdminSidebar({
   userEmail,
-  onLogout
+  onLogout,
+  isAdmin = false
 }: AdminSidebarProps) {
   const { theme } = useTheme();
+  
+  // Filter menu items based on admin status
+  const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
   
   return <Sidebar className="border-r border-border bg-background dark:bg-black">
       <SidebarHeader className="p-6 flex items-center justify-center">
@@ -48,7 +58,7 @@ export function AdminSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map(item => <SidebarMenuItem key={item.title}>
+              {visibleMenuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-3 py-2.5 transition-colors" activeClassName="bg-primary/10 text-primary font-medium">
                       <item.icon className="h-5 w-5 shrink-0" />
