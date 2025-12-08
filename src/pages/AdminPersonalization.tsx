@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminLayout } from "@/components/AdminLayout";
+import { AdminNavigation } from "@/components/AdminNavigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,6 +180,9 @@ const AdminPersonalization = () => {
 
   return (
     <AdminLayout>
+      <div className="space-y-6">
+        <AdminNavigation activeSection="personalizacao" />
+        
         <div className="max-w-4xl space-y-6">
           {/* Header */}
           <div className="flex items-center gap-2">
@@ -286,6 +290,7 @@ const AdminPersonalization = () => {
           </CardContent>
         </Card>
         </div>
+      </div>
     </AdminLayout>
   );
 };

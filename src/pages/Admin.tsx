@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
+import { AdminNavigation } from "@/components/AdminNavigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -188,12 +189,7 @@ const Admin = () => {
     return state?.section || "faturamento";
   });
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/login');
-    }
-  }, [loading, isAuthenticated, navigate]);
+  // Authentication redirect is handled by AdminLayout
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -697,17 +693,10 @@ const Admin = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Show loading while checking auth
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <AdminLayout activeSection={activeSection} onSectionChange={setActiveSection}>
+    <AdminLayout>
+      <div className="space-y-6">
+        <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
 
         {/* Content Sections */}
         {activeSection === "faturamento" && (
@@ -1482,49 +1471,11 @@ const Admin = () => {
           </Card>
         )}
 
-        {activeSection === "personalizacao" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5 text-primary" />
-                Personalização
-              </CardTitle>
-              <CardDescription>
-                Personalize o banner e aparência do dashboard
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate('/admin/personalization')}>
-                <Palette className="h-4 w-4 mr-2" />
-                Configurar Personalização
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeSection === "email" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-primary" />
-                Configuração de Email
-              </CardTitle>
-              <CardDescription>
-                Configure o envio de emails através do Resend
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate('/admin/email')}>
-                <Mail className="h-4 w-4 mr-2" />
-                Configurar Email
-              </Button>
-            </CardContent>
-          </Card>
-        )}
 
         {activeSection === "zona-perigo" && (
           <ZonaDePerigo />
         )}
+      </div>
     </AdminLayout>
   );
 };

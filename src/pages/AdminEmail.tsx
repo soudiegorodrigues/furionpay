@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminLayout } from "@/components/AdminLayout";
+import { AdminNavigation } from "@/components/AdminNavigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,16 +115,19 @@ const AdminEmail = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-            <Mail className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
-            Configuração de Email
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Configure o envio de emails através do Resend
-          </p>
-        </div>
+      <div className="space-y-6">
+        <AdminNavigation activeSection="email" />
+        
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <Mail className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
+              Configuração de Email
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Configure o envio de emails através do Resend
+            </p>
+          </div>
 
         <Card>
           <CardHeader>
@@ -196,6 +200,7 @@ const AdminEmail = () => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </AdminLayout>
   );
