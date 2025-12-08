@@ -2,7 +2,7 @@ import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User } fro
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import furionPayLogo from "@/assets/furionpay-logo.png";
+import furionPayLogo from "@/assets/furionpay-logo-full.png";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 const menuItems = [{
   title: "Admin",
@@ -30,8 +30,9 @@ export function AdminSidebar({
   onLogout
 }: AdminSidebarProps) {
   return <Sidebar className="border-r border-border">
-      
-
+      <SidebarHeader className="p-6 flex items-center justify-center">
+        <img src={furionPayLogo} alt="FurionPay" className="h-16 w-auto object-contain" />
+      </SidebarHeader>
       <SidebarContent className="px-3">
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium mb-2">
