@@ -39,18 +39,23 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <QrCode className="h-4 w-4 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="font-semibold text-sm">PIX Admin</span>
-              <span className="text-xs text-muted-foreground truncate max-w-[140px]">
-                {userEmail || "Painel"}
-              </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <QrCode className="h-4 w-4 text-primary-foreground" />
             </div>
-          )}
+            {!collapsed && (
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm">PIX Admin</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+                  {userEmail || "Painel"}
+                </span>
+              </div>
+            )}
+          </div>
+          <SidebarTrigger className="h-8 w-8">
+            <Menu className="h-4 w-4" />
+          </SidebarTrigger>
         </div>
       </SidebarHeader>
 
@@ -106,9 +111,6 @@ interface AdminHeaderProps {
 export function AdminHeader({ title, icon: Icon }: AdminHeaderProps) {
   return (
     <header className="h-14 border-b border-border bg-background flex items-center px-4 sticky top-0 z-10">
-      <SidebarTrigger className="mr-4">
-        <Menu className="h-5 w-5" />
-      </SidebarTrigger>
       {title && (
         <div className="flex items-center gap-2">
           {Icon && <Icon className="h-5 w-5 text-primary" />}
