@@ -39,6 +39,7 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const {
     toast
@@ -89,6 +90,14 @@ const AdminDashboard = () => {
       });
       if (txError) throw txError;
       setTransactions(txData as unknown as Transaction[] || []);
+
+      // Load banner URL from user settings
+      const { data: settingsData } = await supabase.rpc('get_user_settings');
+      if (settingsData) {
+        const settings = settingsData as { key: string; value: string }[];
+        const banner = settings.find(s => s.key === 'dashboard_banner_url');
+        setBannerUrl(banner?.value || null);
+      }
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       if (error.message?.includes('Not authenticated')) {
@@ -216,6 +225,20 @@ const AdminDashboard = () => {
             </Select>
           </div>
         </div>
+
+        {/* Banner */}
+        {bannerUrl && (
+          <div className="rounded-lg overflow-hidden border border-border">
+            <img
+              src={bannerUrl}
+              alt="Banner"
+              className="w-full h-auto object-cover max-h-[200px]"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
 
         {/* Stats Cards */}
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
