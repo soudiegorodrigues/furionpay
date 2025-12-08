@@ -7,6 +7,7 @@ export const useAdminAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -35,6 +36,25 @@ export const useAdminAuth = () => {
     }
   }, [signOut]);
 
+  const checkIfAdmin = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('is_admin_authenticated');
+      
+      if (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+        return false;
+      }
+      
+      setIsAdmin(data === true);
+      return data === true;
+    } catch (err) {
+      console.error('Error in checkIfAdmin:', err);
+      setIsAdmin(false);
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -43,10 +63,11 @@ export const useAdminAuth = () => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Check if user is blocked when they sign in
+        // Check if user is blocked and admin when they sign in
         if (event === 'SIGNED_IN' && session?.user) {
           setTimeout(() => {
             checkIfBlocked();
+            checkIfAdmin();
           }, 0);
         }
       }
@@ -58,16 +79,19 @@ export const useAdminAuth = () => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Check if existing user is blocked
+      // Check if existing user is blocked and admin
       if (session?.user) {
         setTimeout(() => {
           checkIfBlocked();
+          checkIfAdmin();
         }, 0);
+      } else {
+        setIsAdmin(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [checkIfBlocked]);
+  }, [checkIfBlocked, checkIfAdmin]);
 
   // Periodically check if user is blocked (every 30 seconds)
   useEffect(() => {
@@ -141,6 +165,7 @@ export const useAdminAuth = () => {
     session,
     loading,
     isBlocked,
+    isAdmin,
     signIn,
     signUp,
     signOut,
@@ -149,6 +174,7 @@ export const useAdminAuth = () => {
     verifyOtpCode,
     updatePassword,
     checkIfBlocked,
+    checkIfAdmin,
     isAuthenticated: !!session
   };
 };

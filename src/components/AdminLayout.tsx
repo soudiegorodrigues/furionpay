@@ -29,7 +29,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, activeSection, onSectionChange }: AdminLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, loading, signOut, user, isBlocked } = useAdminAuth();
+  const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin } = useAdminAuth();
 
   const handleLogout = async () => {
     await signOut();
@@ -61,8 +61,8 @@ export function AdminLayout({ children, activeSection, onSectionChange }: AdminL
     return location.pathname === '/admin' && activeSection === section.section;
   };
 
-  // Redirect if not authenticated
-  if (!loading && !isAuthenticated) {
+  // Redirect if not authenticated or not admin
+  if (!loading && (!isAuthenticated || !isAdmin)) {
     navigate('/admin');
     return null;
   }
