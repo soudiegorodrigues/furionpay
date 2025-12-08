@@ -90,15 +90,12 @@ const AdminCheckout = () => {
     loading,
     user
   } = useAdminAuth();
+  // Load data when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/admin');
-      return;
-    }
-    if (isAuthenticated) {
+    if (isAuthenticated && !loading) {
       loadData();
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading]);
   const loadData = async () => {
     try {
       // Load popup stats for current user only

@@ -41,16 +41,13 @@ const AdminSettings = () => {
     user,
     isBlocked
   } = useAdminAuth();
+  // Load settings when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/admin');
-      return;
-    }
-    if (isAuthenticated) {
+    if (isAuthenticated && !loading) {
       loadSettings();
       checkAdminRole();
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading]);
 
   const checkAdminRole = async () => {
     try {
