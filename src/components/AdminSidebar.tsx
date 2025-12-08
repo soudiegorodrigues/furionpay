@@ -32,16 +32,11 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
   return (
     <Sidebar className="border-r border-border">
       <SidebarHeader className="p-4">
-        <div className="flex flex-col gap-2">
-          <img 
-            src={furionPayLogo} 
-            alt="FurionPay" 
-            className="h-10 w-auto object-contain"
-          />
-          <span className="text-xs text-muted-foreground truncate">
-            {userEmail || "Painel"}
-          </span>
-        </div>
+        <img 
+          src={furionPayLogo} 
+          alt="FurionPay" 
+          className="h-10 w-auto object-contain"
+        />
       </SidebarHeader>
 
       <SidebarContent>
