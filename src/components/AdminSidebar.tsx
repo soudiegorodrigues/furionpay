@@ -23,7 +23,7 @@ const menuItems = [{
   url: "/admin/integrations",
   icon: Puzzle
 }, {
-  title: "Configurações",
+  title: "Meta Pixels",
   url: "/admin/settings",
   icon: Settings
 }];
