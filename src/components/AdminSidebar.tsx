@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, QrCode, Menu, CreditCard, Shield, LucideIcon } from "lucide-react";
+import { BarChart3, Settings, LogOut, QrCode, Menu, CreditCard, Shield, LucideIcon, Package } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ const menuItems = [
   { title: "Admin", url: "/admin", icon: Shield },
   { title: "Dashboard", url: "/admin/dashboard", icon: BarChart3 },
   { title: "Checkout", url: "/admin/checkout", icon: CreditCard },
+  { title: "Produtos", url: "/admin/products", icon: Package },
   { title: "Configurações", url: "/admin/settings", icon: Settings },
 ];
 
