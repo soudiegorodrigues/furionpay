@@ -156,6 +156,7 @@ interface User {
   last_sign_in_at: string | null;
   is_admin: boolean;
   is_blocked: boolean;
+  full_name: string | null;
 }
 
 interface RankingUser {
@@ -1273,6 +1274,7 @@ const Admin = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>Nome</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Cadastro</TableHead>
                           <TableHead>Último Acesso</TableHead>
@@ -1283,16 +1285,16 @@ const Admin = () => {
                       <TableBody>
                         {paginatedUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                               Nenhum usuário cadastrado
                             </TableCell>
                           </TableRow>
                         ) : (
                           paginatedUsers.map((u) => (
                             <TableRow key={u.id}>
-                              <TableCell className="font-medium">{u.email}</TableCell>
+                              <TableCell className="font-medium">{u.full_name || '-'}</TableCell>
+                              <TableCell>{u.email}</TableCell>
                               <TableCell>{formatDate(u.created_at)}</TableCell>
-                              <TableCell>{formatDate(u.last_sign_in_at)}</TableCell>
                               <TableCell>
                                 <div className="flex gap-1">
                                   {u.is_blocked ? (
