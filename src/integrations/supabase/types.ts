@@ -229,6 +229,60 @@ export type Database = {
         }
         Relationships: []
       }
+      popup_configurations: {
+        Row: {
+          background_color: string | null
+          button_text: string | null
+          button_values: Json | null
+          created_at: string
+          custom_css: string | null
+          font_family: string | null
+          id: string
+          logo_url: string | null
+          popup_model: string
+          primary_color: string | null
+          subtitle: string | null
+          text_color: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          background_color?: string | null
+          button_text?: string | null
+          button_values?: Json | null
+          created_at?: string
+          custom_css?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          popup_model: string
+          primary_color?: string | null
+          subtitle?: string | null
+          text_color?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          background_color?: string | null
+          button_text?: string | null
+          button_values?: Json | null
+          created_at?: string
+          custom_css?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          popup_model?: string
+          primary_color?: string | null
+          subtitle?: string | null
+          text_color?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_folders: {
         Row: {
           color: string | null
