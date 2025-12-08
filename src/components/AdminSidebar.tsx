@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, QrCode, Menu, CreditCard, Shield, LucideIcon } from "lucide-react";
+import { BarChart3, Settings, LogOut, QrCode, Menu, CreditCard, Shield, LucideIcon, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -82,20 +82,37 @@ export function AdminSidebar({ userEmail, onLogout }: AdminSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-2">
+      <SidebarFooter className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {!collapsed && <span className="text-xs text-muted-foreground">Tema</span>}
         </div>
-        <Button 
-          variant="outline" 
-          size={collapsed ? "icon" : "sm"} 
-          onClick={onLogout}
-          className="w-full justify-start"
-        >
-          <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="ml-2">Sair</span>}
-        </Button>
+        
+        <div className="border-t border-border pt-3">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 text-primary" />
+            </div>
+            {!collapsed && (
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-medium truncate">Usuário</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                  {userEmail || "Não identificado"}
+                </span>
+              </div>
+            )}
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            size={collapsed ? "icon" : "sm"} 
+            onClick={onLogout}
+            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4" />
+            {!collapsed && <span className="ml-2">Sair da conta</span>}
+          </Button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
