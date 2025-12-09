@@ -21,13 +21,17 @@ const CloakerRedirect = () => {
 
   useEffect(() => {
     const processCloaker = async () => {
+      console.log("CloakerRedirect: Processing cloaker ID:", id);
+      
       if (!id) {
+        console.log("CloakerRedirect: No ID provided, redirecting home");
         navigate("/");
         return;
       }
 
       try {
         // Fetch cloaker data
+        console.log("CloakerRedirect: Fetching cloaker from database...");
         const { data: cloaker, error } = await supabase
           .from("cloakers")
           .select("*")
@@ -35,9 +39,11 @@ const CloakerRedirect = () => {
           .eq("is_active", true)
           .maybeSingle();
 
+        console.log("CloakerRedirect: Query result:", { cloaker, error });
+
         if (error || !cloaker) {
-          console.error("Cloaker not found:", error);
-          // Redirect to safe page or home if not found
+          console.error("CloakerRedirect: Cloaker not found:", error);
+          // Redirect to home if not found
           navigate("/");
           return;
         }
