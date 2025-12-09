@@ -200,6 +200,7 @@ const Admin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [emailSearch, setEmailSearch] = useState("");
   
   // Domain states
   const [domains, setDomains] = useState<Domain[]>([]);
@@ -654,6 +655,14 @@ const Admin = () => {
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
     
+    // Filter by email
+    if (emailSearch.trim()) {
+      const search = emailSearch.toLowerCase();
+      filtered = filtered.filter(tx => 
+        tx.user_email?.toLowerCase().includes(search)
+      );
+    }
+    
     // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(tx => tx.status === statusFilter);
@@ -686,12 +695,12 @@ const Admin = () => {
     }
     
     return filtered;
-  }, [transactions, dateFilter, statusFilter]);
+  }, [transactions, dateFilter, statusFilter, emailSearch]);
 
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, statusFilter]);
+  }, [dateFilter, statusFilter, emailSearch]);
 
   // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
@@ -837,6 +846,15 @@ const Admin = () => {
                 <Badge variant="secondary" className="ml-2 text-xs">{filteredTransactions.length}</Badge>
               </CardTitle>
               <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar email..."
+                    value={emailSearch}
+                    onChange={(e) => setEmailSearch(e.target.value)}
+                    className="w-[140px] sm:w-[180px] h-8 text-xs sm:text-sm pl-7"
+                  />
+                </div>
                 <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
                   <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs sm:text-sm">
                     <SelectValue placeholder="Status" />
