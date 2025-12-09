@@ -880,7 +880,6 @@ const Admin = () => {
                             <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                             <TableHead className="text-xs">Valor</TableHead>
                             <TableHead className="text-xs">Status</TableHead>
-                            <TableHead className="text-xs hidden md:table-cell">Pago em</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -903,9 +902,6 @@ const Admin = () => {
                               </TableCell>
                               <TableCell>
                                 {getStatusBadge(tx.status)}
-                              </TableCell>
-                              <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
-                                {tx.paid_at ? formatDate(tx.paid_at) : '-'}
                               </TableCell>
                             </TableRow>
                           ))}
