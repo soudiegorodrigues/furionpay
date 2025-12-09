@@ -100,7 +100,7 @@ export const CheckoutGlobalSection = () => {
             <BarChart3 className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">Conversão Global de Popups</h2>
+            <h2 className="text-xl font-bold">Conversão Global Checkout</h2>
             <p className="text-sm text-muted-foreground">Performance de todos os modelos de checkout</p>
           </div>
         </div>
