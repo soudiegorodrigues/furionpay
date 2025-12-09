@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Clover, Heart, Globe, Shield } from "lucide-react";
+import { X, Search, Menu, Clover, Heart, Globe, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMetaPixel } from "@/hooks/useMetaPixel";
@@ -29,7 +29,7 @@ const BOOST_OPTIONS = [
     price: 0,
     priceLabel: "Grátis",
     icon: Clover,
-    color: "text-emerald-500",
+    iconColor: "#22c55e",
   },
   {
     id: 2,
@@ -38,7 +38,7 @@ const BOOST_OPTIONS = [
     price: 3.99,
     priceLabel: "R$ 3,99",
     icon: Heart,
-    color: "text-pink-500",
+    iconColor: "#ec4899",
   },
   {
     id: 3,
@@ -47,7 +47,7 @@ const BOOST_OPTIONS = [
     price: 2.00,
     priceLabel: "R$ 2,00",
     icon: Globe,
-    color: "text-emerald-600",
+    iconColor: "#22c55e",
   },
 ];
 
@@ -67,6 +67,7 @@ export const DonationPopupVakinha = ({
   const [customAmount, setCustomAmount] = useState("");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
+  const [boostSectionEnabled, setBoostSectionEnabled] = useState(false);
   const [wantsUpdates, setWantsUpdates] = useState(false);
   const [step, setStep] = useState<Step>("select");
   const [pixData, setPixData] = useState<any>(null);
@@ -78,6 +79,7 @@ export const DonationPopupVakinha = ({
       setCustomAmount("");
       setSelectedAmount(null);
       setSelectedBoosts([]);
+      setBoostSectionEnabled(false);
       setWantsUpdates(false);
       setStep("select");
       setPixData(null);
@@ -86,10 +88,14 @@ export const DonationPopupVakinha = ({
     }
   }, [isOpen, recipientName, trackEvent]);
 
-  const toggleBoost = (id: number) => {
-    setSelectedBoosts((prev) =>
-      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]
-    );
+  const toggleBoostSection = () => {
+    if (boostSectionEnabled) {
+      setBoostSectionEnabled(false);
+      setSelectedBoosts([]);
+    } else {
+      setBoostSectionEnabled(true);
+      setSelectedBoosts(BOOST_OPTIONS.map(b => b.id));
+    }
   };
 
   const getBaseAmount = (): number => {
@@ -98,10 +104,12 @@ export const DonationPopupVakinha = ({
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  const boostTotal = selectedBoosts.reduce((sum, id) => {
-    const boost = BOOST_OPTIONS.find((b) => b.id === id);
-    return sum + (boost?.price || 0);
-  }, 0);
+  const boostTotal = boostSectionEnabled 
+    ? selectedBoosts.reduce((sum, id) => {
+        const boost = BOOST_OPTIONS.find((b) => b.id === id);
+        return sum + (boost?.price || 0);
+      }, 0)
+    : 0;
 
   const totalAmount = getBaseAmount() + boostTotal;
 
@@ -206,184 +214,186 @@ export const DonationPopupVakinha = ({
   return (
     <div className={containerClass}>
       <div className={innerClass}>
-        {/* Close Button */}
-        {showCloseButton && (
+        {/* Close Button (only when not in preview) */}
+        {showCloseButton && !isPreview && (
           <button
             onClick={onClose}
-            className="absolute right-3 top-3 z-10 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="absolute right-3 top-3 z-10 p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
           >
-            <X className="h-5 w-5 text-gray-600" />
+            <X className="h-5 w-5 text-white" />
           </button>
         )}
 
         {step === "select" && (
-          <div className="p-5 space-y-4">
-            {/* Header with Logo */}
-            <div className="flex items-center justify-center border-b border-gray-100 pb-4">
-              <img src={vakinhaLogo} alt="Vakinha" className="h-8" />
-            </div>
-
-            {/* Contribution Value Input */}
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Valor da contribuição</p>
-              <div className="flex border-2 border-emerald-400 rounded-lg overflow-hidden">
-                <span className="px-4 py-3 bg-white text-gray-600 font-medium border-r border-emerald-400 flex items-center">
-                  R$
-                </span>
-                <Input
-                  type="text"
-                  value={customAmount || (selectedAmount ? formatCurrency(selectedAmount) : "")}
-                  onChange={handleCustomAmountChange}
-                  placeholder="0,00"
-                  className="flex-1 border-0 text-lg font-medium bg-emerald-50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
-                />
+          <div>
+            {/* Green Header with Logo and Menu */}
+            <div className="bg-[#00C853] px-4 py-3 flex items-center justify-between">
+              <img src={vakinhaLogo} alt="Vakinha" className="h-7" />
+              <div className="flex items-center gap-4">
+                <Search className="h-6 w-6 text-white cursor-pointer" />
+                <Menu className="h-6 w-6 text-white cursor-pointer" />
               </div>
             </div>
 
-            {/* Preset Amounts Grid */}
-            <div className="grid grid-cols-2 gap-2">
-              {DONATION_AMOUNTS.map((amount) => (
-                <button
-                  key={amount}
-                  onClick={() => handleSelectAmount(amount)}
-                  className={`py-3 px-4 rounded-lg border text-center font-medium transition-all ${
-                    selectedAmount === amount
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700 border-2"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-emerald-300"
-                  }`}
-                >
-                  R$ {formatCurrency(amount)}
-                </button>
-              ))}
-            </div>
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Contribution Value Input */}
+              <div>
+                <p className="text-sm text-gray-700 mb-2">Valor da contribuição</p>
+                <div className="flex border border-[#4ade80] rounded overflow-hidden">
+                  <span className="px-4 py-3 bg-white text-gray-600 text-sm border-r border-[#4ade80] flex items-center">
+                    R$
+                  </span>
+                  <Input
+                    type="text"
+                    value={customAmount || (selectedAmount ? formatCurrency(selectedAmount) : "")}
+                    onChange={handleCustomAmountChange}
+                    placeholder="0,00"
+                    className="flex-1 border-0 py-3 bg-[#e8f5e9] focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none text-base"
+                  />
+                </div>
+              </div>
 
-            {/* Min/Max Info */}
-            <div>
-              <p className="text-xs text-gray-400">
-                Mínimo R$ 25,00 - Máximo R$ 1.000,00
-              </p>
-              {!isValidAmount() && getBaseAmount() > 0 && (
-                <p className="text-xs text-red-500 mt-1">
-                  Valor deve estar entre R$ 25,00 e R$ 1.000,00
+              {/* Preset Amounts Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {DONATION_AMOUNTS.map((amount) => (
+                  <button
+                    key={amount}
+                    onClick={() => handleSelectAmount(amount)}
+                    className={`py-3 px-4 rounded border text-center text-sm transition-all ${
+                      selectedAmount === amount
+                        ? "border-[#00C853] bg-[#e8f5e9] text-gray-800 border-2"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-[#4ade80]"
+                    }`}
+                  >
+                    R$ {formatCurrency(amount)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Min/Max Info */}
+              <div>
+                <p className="text-xs text-gray-400">
+                  Mínimo R$ 25,00 - Máximo R$ 1.000,00
                 </p>
-              )}
-            </div>
+                {!isValidAmount() && getBaseAmount() > 0 && (
+                  <p className="text-xs text-[#ef5350] mt-1">
+                    Valor deve estar entre R$ 25,00 e R$ 1.000,00
+                  </p>
+                )}
+              </div>
 
-            {/* Payment Method */}
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Forma de pagamento</p>
-              <span className="inline-block px-4 py-2 bg-emerald-500 text-white font-medium rounded-lg text-sm">
-                Pix
-              </span>
-            </div>
+              {/* Payment Method */}
+              <div>
+                <p className="text-sm text-gray-700 mb-2">Forma de pagamento</p>
+                <span className="inline-block px-4 py-2 bg-[#00C853] text-white font-medium rounded text-sm">
+                  Pix
+                </span>
+              </div>
 
-            {/* Boost Section */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-              {/* Header */}
-              <div className="bg-emerald-500 px-4 py-2.5 flex items-center gap-3">
+              {/* Boost Section */}
+              <div className="border border-gray-200 rounded overflow-hidden">
+                {/* Header */}
+                <div className="bg-[#00C853] px-3 py-2 flex items-center gap-2">
+                  <Checkbox
+                    id="boost-section"
+                    checked={boostSectionEnabled}
+                    onCheckedChange={toggleBoostSection}
+                    className="border-white data-[state=checked]:bg-white data-[state=checked]:text-[#00C853] h-4 w-4"
+                  />
+                  <label htmlFor="boost-section" className="text-white font-bold text-xs uppercase tracking-wider cursor-pointer">
+                    Turbine sua doação
+                  </label>
+                </div>
+
+                {/* Boost Options */}
+                <div className="divide-y divide-gray-100">
+                  {BOOST_OPTIONS.map((boost) => {
+                    const Icon = boost.icon;
+                    return (
+                      <div
+                        key={boost.id}
+                        className="p-3 bg-white"
+                      >
+                        <div className="flex items-start gap-2">
+                          <Icon 
+                            className="h-4 w-4 mt-0.5 flex-shrink-0" 
+                            style={{ color: boost.iconColor }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h4 className="font-semibold text-gray-900 text-sm leading-tight">
+                                  {boost.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                                  {boost.description}
+                                </p>
+                              </div>
+                              <span className={`font-bold text-sm whitespace-nowrap ${
+                                boost.price === 0 ? "text-[#00C853]" : "text-[#00C853]"
+                              }`}>
+                                {boost.priceLabel}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="space-y-1">
+                <p className="text-sm text-gray-600">
+                  Contribuição: R$ {formatCurrency(getBaseAmount())}
+                </p>
+                <p className="text-base font-bold text-gray-900">
+                  Total: R$ {formatCurrency(totalAmount)}
+                </p>
+              </div>
+
+              {/* Newsletter Checkbox */}
+              <div className="flex items-start gap-2">
                 <Checkbox
-                  id="boost-all"
-                  checked={selectedBoosts.length === BOOST_OPTIONS.length}
-                  onCheckedChange={() => {
-                    if (selectedBoosts.length === BOOST_OPTIONS.length) {
-                      setSelectedBoosts([]);
-                    } else {
-                      setSelectedBoosts(BOOST_OPTIONS.map(b => b.id));
-                    }
-                  }}
-                  className="border-white data-[state=checked]:bg-white data-[state=checked]:text-emerald-500 h-5 w-5"
+                  id="updates"
+                  checked={wantsUpdates}
+                  onCheckedChange={(checked) => setWantsUpdates(checked as boolean)}
+                  className="mt-0.5 h-4 w-4 border-gray-400"
                 />
-                <label htmlFor="boost-all" className="text-white font-bold text-sm uppercase tracking-wide cursor-pointer">
-                  Turbine sua doação
+                <label htmlFor="updates" className="text-xs text-gray-600 leading-relaxed cursor-pointer">
+                  Quero receber atualizações desta vaquinha e de outras iniciativas.
                 </label>
               </div>
 
-              {/* Boost Options */}
-              <div className="divide-y divide-gray-100">
-                {BOOST_OPTIONS.map((boost) => {
-                  const Icon = boost.icon;
-                  const isSelected = selectedBoosts.includes(boost.id);
-                  return (
-                    <div
-                      key={boost.id}
-                      onClick={() => toggleBoost(boost.id)}
-                      className={`p-4 cursor-pointer transition-colors ${
-                        isSelected ? "bg-emerald-50/50" : "bg-white hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${boost.color}`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <h4 className="font-semibold text-gray-900 text-sm">
-                              {boost.title}
-                            </h4>
-                            <span className={`font-bold text-sm whitespace-nowrap ${
-                              boost.price === 0 ? "text-emerald-500" : "text-emerald-600"
-                            }`}>
-                              {boost.priceLabel}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                            {boost.description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+              {/* CTA Button */}
+              <Button
+                onClick={handleGeneratePix}
+                disabled={!isValidAmount() || getBaseAmount() === 0}
+                className="w-full py-6 text-base font-bold bg-[#00C853] hover:bg-[#00b548] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                CONTRIBUIR
+              </Button>
 
-            {/* Totals */}
-            <div className="space-y-1">
-              <p className="text-sm text-gray-600">
-                Contribuição: R$ {formatCurrency(getBaseAmount())}
-              </p>
-              <p className="text-base font-bold text-gray-900">
-                Total: R$ {formatCurrency(totalAmount)}
-              </p>
-            </div>
-
-            {/* Newsletter Checkbox */}
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="updates"
-                checked={wantsUpdates}
-                onCheckedChange={(checked) => setWantsUpdates(checked as boolean)}
-                className="mt-0.5 h-4 w-4"
-              />
-              <label htmlFor="updates" className="text-xs text-gray-500 leading-relaxed cursor-pointer">
-                Quero receber atualizações desta vaquinha e de outras iniciativas.
-              </label>
-            </div>
-
-            {/* CTA Button */}
-            <Button
-              onClick={handleGeneratePix}
-              disabled={!isValidAmount() || getBaseAmount() === 0}
-              className="w-full py-6 text-base font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              CONTRIBUIR
-            </Button>
-
-            {/* Security Badge */}
-            <div className="flex items-center gap-4 py-3">
-              <div className="flex items-center justify-center w-20 h-14 bg-gray-100 rounded-lg flex-shrink-0 relative">
-                <Shield className="h-8 w-8 text-emerald-600" />
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gray-200 text-[8px] font-bold text-gray-600 px-2 py-0.5 rounded uppercase whitespace-nowrap">
-                  Selo de Segurança
+              {/* Security Badge */}
+              <div className="flex items-center gap-4 pt-2">
+                <div className="flex flex-col items-center justify-center w-24 h-16 bg-gray-100 rounded-lg flex-shrink-0 relative">
+                  <ShieldCheck className="h-8 w-8 text-[#00C853]" />
+                  <span className="text-[7px] font-bold text-gray-500 uppercase mt-0.5 tracking-tight">
+                    Selo de Segurança
+                  </span>
                 </div>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Garantimos uma experiência segura para todos os nossos doadores.
+                </p>
               </div>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Garantimos uma experiência segura para todos os nossos doadores.
+
+              {/* Terms */}
+              <p className="text-[11px] text-gray-400 leading-relaxed pt-2">
+                Ao clicar no botão acima você declara que é maior de 18 anos e concorda com os Termos.
               </p>
             </div>
-
-            {/* Terms */}
-            <p className="text-[11px] text-gray-400 leading-relaxed">
-              Ao clicar no botão acima você declara que é maior de 18 anos e concorda com os Termos.
-            </p>
           </div>
         )}
 
