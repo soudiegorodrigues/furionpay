@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle } from "lucide-react";
+import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 const menuItems = [{
   title: "Admin",
@@ -48,6 +49,7 @@ export function AdminSidebar({
   isAdmin = false
 }: AdminSidebarProps) {
   const { theme } = useTheme();
+  const { canInstall, isInstalled, promptInstall } = usePWAInstall();
   
   const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
   const logoSrc = theme === "dark" ? furionPayLogoDark : furionPayLogoLight;
@@ -101,6 +103,18 @@ export function AdminSidebar({
               </span>
             </div>
           </NavLink>
+          
+          {canInstall && !isInstalled && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={promptInstall} 
+              className="w-full justify-center gap-2 mb-2 border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <Download className="h-4 w-4" />
+              <span>Instalar App</span>
+            </Button>
+          )}
           
           <div className="flex items-center justify-center gap-4 mt-2 px-3">
             <Button 
