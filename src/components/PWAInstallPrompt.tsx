@@ -227,9 +227,9 @@ export const PWAInstallPrompt = () => {
               {/* Buttons */}
               <div className="flex gap-3">
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   onClick={handleDismiss}
-                  className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                  className="flex-1 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-0"
                 >
                   Agora não
                 </Button>
