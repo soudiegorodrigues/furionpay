@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Share } from "lucide-react";
 import pwaLogo from "/pwa-512x512.png";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -19,6 +19,7 @@ export const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     // Check if already installed
@@ -27,11 +28,30 @@ export const PWAInstallPrompt = () => {
       return;
     }
 
+    // Check if running as standalone on iOS
+    if ((navigator as any).standalone === true) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // Detect iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIOSDevice);
+
+    // For iOS, show manual install instructions
+    if (isIOSDevice) {
+      const dismissed = localStorage.getItem("pwa-prompt-dismissed");
+      if (!dismissed) {
+        setTimeout(() => setShowPrompt(true), 2000);
+      }
+      return;
+    }
+
+    // For Android/Desktop, use beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Show prompt after a short delay if not dismissed before
       const dismissed = localStorage.getItem("pwa-prompt-dismissed");
       if (!dismissed) {
         setTimeout(() => setShowPrompt(true), 2000);
@@ -64,14 +84,15 @@ export const PWAInstallPrompt = () => {
     localStorage.setItem("pwa-prompt-dismissed", "true");
   };
 
-  if (isInstalled || !deferredPrompt) return null;
+  // Don't show if installed or if not iOS and no deferred prompt
+  if (isInstalled || (!isIOS && !deferredPrompt)) return null;
 
   return (
     <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-[90vw] sm:max-w-md rounded-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <Download className="h-5 w-5 text-primary" />
+            {isIOS ? <Share className="h-5 w-5 text-primary" /> : <Download className="h-5 w-5 text-primary" />}
             Instale o app
           </DialogTitle>
           <DialogDescription className="flex items-center gap-3 pt-4">
@@ -86,14 +107,33 @@ export const PWAInstallPrompt = () => {
             </div>
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end gap-3 pt-4">
-          <Button variant="outline" onClick={handleDismiss}>
-            Cancelar
-          </Button>
-          <Button onClick={handleInstall}>
-            Instalar
-          </Button>
-        </div>
+        
+        {isIOS ? (
+          <div className="space-y-3 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Para instalar no iPhone/iPad:
+            </p>
+            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+              <li>Toque no botão <Share className="inline h-4 w-4 mx-1" /> Compartilhar</li>
+              <li>Role e toque em <strong>"Adicionar à Tela de Início"</strong></li>
+              <li>Toque em <strong>"Adicionar"</strong></li>
+            </ol>
+            <div className="flex justify-end pt-2">
+              <Button variant="outline" onClick={handleDismiss}>
+                Entendi
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={handleDismiss}>
+              Cancelar
+            </Button>
+            <Button onClick={handleInstall}>
+              Instalar
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
