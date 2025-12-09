@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AdminNavigation } from "@/components/AdminNavigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -196,12 +196,25 @@ type ChartFilter = 'today' | '7days' | '15days' | '30days' | 'month' | 'year';
 
 const Admin = () => {
   const location = useLocation();
-  const { user } = useAdminAuth();
+  const navigate = useNavigate();
+  const { user, isAdmin, loading } = useAdminAuth();
   const [activeSection, setActiveSection] = useState<string>(() => {
     // Check if coming from another page with section state
     const state = location.state as { section?: string } | null;
     return state?.section || "faturamento";
   });
+
+  // Redirect non-admin users to dashboard
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      navigate('/admin/dashboard');
+    }
+  }, [loading, isAdmin, navigate]);
+
+  // Show nothing while checking or if not admin
+  if (loading || !isAdmin) {
+    return null;
+  }
 
   // Authentication redirect is handled by AdminLayout
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
