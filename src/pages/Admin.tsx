@@ -989,12 +989,12 @@ const Admin = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-10 text-xs">#</TableHead>
-                          <TableHead className="text-xs">Usuário</TableHead>
-                          <TableHead className="text-center text-xs hidden sm:table-cell">Gerados</TableHead>
-                          <TableHead className="text-center text-xs">Pagos</TableHead>
-                          <TableHead className="text-center text-xs hidden sm:table-cell">Conv.</TableHead>
-                          <TableHead className="text-right text-xs">Total</TableHead>
+                          <TableHead className="w-10 text-sm font-semibold">#</TableHead>
+                          <TableHead className="text-sm font-semibold">Usuário</TableHead>
+                          <TableHead className="text-center text-sm font-semibold hidden sm:table-cell">Gerados</TableHead>
+                          <TableHead className="text-center text-sm font-semibold">Pagos</TableHead>
+                          <TableHead className="text-center text-sm font-semibold hidden sm:table-cell">Conv.</TableHead>
+                          <TableHead className="text-right text-sm font-semibold">Total</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
