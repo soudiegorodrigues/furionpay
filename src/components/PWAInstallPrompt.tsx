@@ -141,9 +141,19 @@ export const PWAInstallPrompt = () => {
               <li>Clique no ícone <Download className="inline h-4 w-4 mx-1" /> na barra de endereço</li>
               <li>Ou clique nos 3 pontos do menu e selecione <strong>"Instalar FurionPay"</strong></li>
             </ol>
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={handleDismiss}>
-                Entendi
+                Fechar
+              </Button>
+              <Button onClick={() => {
+                // Try to find the install button in the browser's UI
+                // This won't work programmatically, but we can at least close and let user install
+                handleDismiss();
+                // Show a toast with instructions
+                alert('Clique no ícone de instalação na barra de endereço do navegador');
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                Instalar
               </Button>
             </div>
           </div>
