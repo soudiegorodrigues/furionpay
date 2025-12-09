@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ interface Cloaker {
   verifyDevice: boolean;
   country: string;
   domain: string;
+  blockedDevices: string[];
   createdAt: Date;
   isActive: boolean;
 }
@@ -59,6 +61,14 @@ export default function AdminCloaker() {
   const [blockVpn, setBlockVpn] = useState(true);
   const [verifyDevice, setVerifyDevice] = useState(false);
   const [country, setCountry] = useState("br");
+  const [blockedDevices, setBlockedDevices] = useState<string[]>([]);
+
+  const deviceOptions = [
+    { id: "mobile", label: "Mobile (Android)" },
+    { id: "iphone", label: "iPhone/iOS" },
+    { id: "desktop", label: "Computadores" },
+    { id: "tablet", label: "Tablets" },
+  ];
 
   useEffect(() => {
     loadDomains();
@@ -73,6 +83,14 @@ export default function AdminCloaker() {
     setAvailableDomains(data || []);
   };
 
+  const toggleDevice = (deviceId: string) => {
+    setBlockedDevices(prev => 
+      prev.includes(deviceId) 
+        ? prev.filter(d => d !== deviceId)
+        : [...prev, deviceId]
+    );
+  };
+
   const resetForm = () => {
     setName("");
     setSafeUrl("");
@@ -82,6 +100,7 @@ export default function AdminCloaker() {
     setBlockVpn(true);
     setVerifyDevice(false);
     setCountry("br");
+    setBlockedDevices([]);
   };
 
   const handleCreateCloaker = () => {
@@ -104,6 +123,7 @@ export default function AdminCloaker() {
       verifyDevice,
       country,
       domain: selectedDomain,
+      blockedDevices,
       createdAt: new Date(),
       isActive: true,
     };
@@ -267,6 +287,34 @@ export default function AdminCloaker() {
                     </div>
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label>Bloquear Dispositivos</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Selecione os dispositivos que devem ser bloqueados
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {deviceOptions.map((device) => (
+                      <div 
+                        key={device.id}
+                        onClick={() => toggleDevice(device.id)}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                          blockedDevices.includes(device.id) 
+                            ? 'border-primary bg-primary/10 text-primary' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            checked={blockedDevices.includes(device.id)}
+                            onCheckedChange={() => toggleDevice(device.id)}
+                          />
+                          <span className="text-sm font-medium">{device.label}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 
                 <div className="space-y-2">
                   <Label>País Permitido</Label>
@@ -366,6 +414,13 @@ export default function AdminCloaker() {
                         <Badge variant="outline" className="text-xs">
                           {getCountryLabel(cloaker.country)}
                         </Badge>
+                        {cloaker.blockedDevices.length > 0 && (
+                          <Badge variant="outline" className="text-xs text-destructive border-destructive">
+                            Bloqueado: {cloaker.blockedDevices.map(d => 
+                              deviceOptions.find(opt => opt.id === d)?.label || d
+                            ).join(", ")}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     
