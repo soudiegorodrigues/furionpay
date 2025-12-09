@@ -154,57 +154,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cloakers: {
-        Row: {
-          block_bots: boolean
-          block_vpn: boolean
-          blocked_devices: string[] | null
-          country: string
-          created_at: string
-          domain: string
-          id: string
-          is_active: boolean
-          name: string
-          offer_url: string
-          safe_url: string
-          updated_at: string
-          user_id: string
-          verify_device: boolean
-        }
-        Insert: {
-          block_bots?: boolean
-          block_vpn?: boolean
-          blocked_devices?: string[] | null
-          country?: string
-          created_at?: string
-          domain: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          offer_url: string
-          safe_url: string
-          updated_at?: string
-          user_id: string
-          verify_device?: boolean
-        }
-        Update: {
-          block_bots?: boolean
-          block_vpn?: boolean
-          blocked_devices?: string[] | null
-          country?: string
-          created_at?: string
-          domain?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          offer_url?: string
-          safe_url?: string
-          updated_at?: string
-          user_id?: string
-          verify_device?: boolean
-        }
-        Relationships: []
-      }
       login_attempts: {
         Row: {
           attempt_count: number
@@ -604,7 +553,11 @@ export type Database = {
       get_users_count: { Args: never; Returns: number }
       get_users_revenue_ranking:
         | {
-            Args: { p_limit?: number; p_offset?: number }
+            Args: {
+              p_date_filter?: string
+              p_limit?: number
+              p_offset?: number
+            }
             Returns: {
               conversion_rate: number
               total_amount_generated: number
@@ -616,11 +569,7 @@ export type Database = {
             }[]
           }
         | {
-            Args: {
-              p_date_filter?: string
-              p_limit?: number
-              p_offset?: number
-            }
+            Args: { p_limit?: number; p_offset?: number }
             Returns: {
               conversion_rate: number
               total_amount_generated: number
