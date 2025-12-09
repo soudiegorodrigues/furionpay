@@ -164,6 +164,7 @@ export type Database = {
           domain: string
           id: string
           is_active: boolean
+          name: string
           offer_url: string
           safe_url: string
           updated_at: string
@@ -179,6 +180,7 @@ export type Database = {
           domain: string
           id?: string
           is_active?: boolean
+          name?: string
           offer_url: string
           safe_url: string
           updated_at?: string
@@ -194,6 +196,7 @@ export type Database = {
           domain?: string
           id?: string
           is_active?: boolean
+          name?: string
           offer_url?: string
           safe_url?: string
           updated_at?: string

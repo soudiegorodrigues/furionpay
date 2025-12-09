@@ -95,7 +95,7 @@ export default function AdminCloaker() {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setCloakers(data as Cloaker[]);
+      setCloakers(data as unknown as Cloaker[]);
     }
   };
 
@@ -143,6 +143,7 @@ export default function AdminCloaker() {
       .from('cloakers')
       .insert({
         user_id: user.id,
+        name,
         safe_url: safeUrl,
         offer_url: offerUrl,
         block_bots: blockBots,
@@ -165,7 +166,7 @@ export default function AdminCloaker() {
       return;
     }
 
-    setCloakers([data as Cloaker, ...cloakers]);
+    setCloakers([data as unknown as Cloaker, ...cloakers]);
     resetForm();
     setIsDialogOpen(false);
     
@@ -457,34 +458,34 @@ export default function AdminCloaker() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold truncate">{cloaker.name}</h3>
-                        <Badge variant={cloaker.isActive ? "default" : "secondary"}>
-                          {cloaker.isActive ? "Ativo" : "Inativo"}
+                        <Badge variant={cloaker.is_active ? "default" : "secondary"}>
+                          {cloaker.is_active ? "Ativo" : "Inativo"}
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground space-y-1">
                         <p className="truncate">
-                          <span className="font-medium">Safe:</span> {cloaker.safeUrl}
+                          <span className="font-medium">Safe:</span> {cloaker.safe_url}
                         </p>
                         <p className="truncate">
-                          <span className="font-medium">Oferta:</span> {cloaker.offerUrl}
+                          <span className="font-medium">Oferta:</span> {cloaker.offer_url}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {cloaker.blockBots && (
+                        {cloaker.block_bots && (
                           <Badge variant="outline" className="text-xs">Anti-Bot</Badge>
                         )}
-                        {cloaker.blockVpn && (
+                        {cloaker.block_vpn && (
                           <Badge variant="outline" className="text-xs">Anti-VPN</Badge>
                         )}
-                        {cloaker.verifyDevice && (
+                        {cloaker.verify_device && (
                           <Badge variant="outline" className="text-xs">Verificação</Badge>
                         )}
                         <Badge variant="outline" className="text-xs">
                           {getCountryLabel(cloaker.country)}
                         </Badge>
-                        {cloaker.blockedDevices.length > 0 && (
+                        {cloaker.blocked_devices && cloaker.blocked_devices.length > 0 && (
                           <Badge variant="outline" className="text-xs text-destructive border-destructive">
-                            Bloqueado: {cloaker.blockedDevices.map(d => 
+                            Bloqueado: {cloaker.blocked_devices.map(d => 
                               deviceOptions.find(opt => opt.id === d)?.label || d
                             ).join(", ")}
                           </Badge>
@@ -494,7 +495,7 @@ export default function AdminCloaker() {
                     
                     <div className="flex items-center gap-2">
                       <Switch 
-                        checked={cloaker.isActive} 
+                        checked={cloaker.is_active} 
                         onCheckedChange={() => handleToggleActive(cloaker.id)}
                       />
                       <Button 
@@ -507,7 +508,7 @@ export default function AdminCloaker() {
                       <Button 
                         variant="outline" 
                         size="icon"
-                        onClick={() => window.open(cloaker.offerUrl, '_blank')}
+                        onClick={() => window.open(cloaker.offer_url, '_blank')}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
