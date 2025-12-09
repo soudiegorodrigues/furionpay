@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { TrendingUp, Eye, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -233,24 +234,33 @@ export const CheckoutGlobalSection = () => {
           showCloseButton={true}
         />
       )}
-      {previewModel === "landing" && (
-        <DonationPopupLanding
-          isOpen={true}
-          onClose={() => setPreviewModel(null)}
-          recipientName="Preview"
-          userId=""
-          showCloseButton={true}
-        />
-      )}
-      {previewModel === "instituto" && (
-        <DonationPopupInstituto
-          isOpen={true}
-          onClose={() => setPreviewModel(null)}
-          recipientName="Preview"
-          userId=""
-          showCloseButton={true}
-        />
-      )}
+      <Dialog open={previewModel === "landing"} onOpenChange={(open) => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <div className="relative">
+            <DonationPopupLanding
+              isOpen={true}
+              onClose={() => setPreviewModel(null)}
+              userId=""
+              showCloseButton={false}
+              isPreview={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewModel === "instituto"} onOpenChange={(open) => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <div className="relative">
+            <DonationPopupInstituto
+              isOpen={true}
+              onClose={() => setPreviewModel(null)}
+              userId=""
+              showCloseButton={false}
+              isPreview={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
