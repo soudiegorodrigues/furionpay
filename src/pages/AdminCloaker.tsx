@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/AdminSidebar";
-import { EyeOff, Plus, Trash2, Copy, ExternalLink, Settings } from "lucide-react";
+import { EyeOff, Plus, Trash2, Copy, ExternalLink, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Cloaker {
   id: string;
@@ -33,27 +34,50 @@ interface Cloaker {
   blockVpn: boolean;
   verifyDevice: boolean;
   country: string;
+  domain: string;
   createdAt: Date;
   isActive: boolean;
+}
+
+interface AvailableDomain {
+  id: string;
+  domain: string;
+  name: string | null;
 }
 
 export default function AdminCloaker() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cloakers, setCloakers] = useState<Cloaker[]>([]);
+  const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
   
   // Form state
   const [name, setName] = useState("");
   const [safeUrl, setSafeUrl] = useState("");
   const [offerUrl, setOfferUrl] = useState("");
+  const [selectedDomain, setSelectedDomain] = useState("");
   const [blockBots, setBlockBots] = useState(true);
   const [blockVpn, setBlockVpn] = useState(true);
   const [verifyDevice, setVerifyDevice] = useState(false);
   const [country, setCountry] = useState("br");
 
+  useEffect(() => {
+    loadDomains();
+  }, []);
+
+  const loadDomains = async () => {
+    const { data } = await supabase
+      .from('available_domains')
+      .select('id, domain, name')
+      .eq('is_active', true)
+      .order('domain');
+    setAvailableDomains(data || []);
+  };
+
   const resetForm = () => {
     setName("");
     setSafeUrl("");
     setOfferUrl("");
+    setSelectedDomain("");
     setBlockBots(true);
     setBlockVpn(true);
     setVerifyDevice(false);
@@ -61,7 +85,7 @@ export default function AdminCloaker() {
   };
 
   const handleCreateCloaker = () => {
-    if (!name || !safeUrl || !offerUrl) {
+    if (!name || !safeUrl || !offerUrl || !selectedDomain) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos para criar o cloaker.",
@@ -79,6 +103,7 @@ export default function AdminCloaker() {
       blockVpn,
       verifyDevice,
       country,
+      domain: selectedDomain,
       createdAt: new Date(),
       isActive: true,
     };
@@ -107,8 +132,8 @@ export default function AdminCloaker() {
     ));
   };
 
-  const handleCopyLink = (id: string) => {
-    const link = `${window.location.origin}/c/${id}`;
+  const handleCopyLink = (cloaker: Cloaker) => {
+    const link = `https://${cloaker.domain}/c/${cloaker.id}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Link copiado!",
@@ -191,6 +216,28 @@ export default function AdminCloaker() {
                   />
                   <p className="text-xs text-muted-foreground">
                     Cole o link que você copiou na página de Checkout
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Domínio do Cloaker</Label>
+                  <Select value={selectedDomain} onValueChange={setSelectedDomain}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o domínio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableDomains.map((domain) => (
+                        <SelectItem key={domain.id} value={domain.domain}>
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            {domain.domain}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    O link do cloaker será gerado com este domínio
                   </p>
                 </div>
                 
@@ -330,7 +377,7 @@ export default function AdminCloaker() {
                       <Button 
                         variant="outline" 
                         size="icon"
-                        onClick={() => handleCopyLink(cloaker.id)}
+                        onClick={() => handleCopyLink(cloaker)}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
