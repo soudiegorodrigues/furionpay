@@ -9,12 +9,14 @@ import {
   Palette, 
   Mail, 
   AlertTriangle,
-  Receipt
+  Receipt,
+  PieChart
 } from "lucide-react";
 
 const adminSections = [
   { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
   { id: "transacoes", title: "Transações Globais", icon: Receipt },
+  { id: "checkout-global", title: "Checkout Global", icon: PieChart },
   { id: "ranking", title: "Ranking", icon: Trophy },
   { id: "dominios", title: "Domínios", icon: Globe },
   { id: "multi", title: "Multi-adquirência", icon: CreditCard },

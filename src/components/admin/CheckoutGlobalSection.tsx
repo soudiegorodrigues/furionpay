@@ -3,9 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { CreditCard, TrendingUp, Eye, BarChart3 } from "lucide-react";
+import { TrendingUp, Eye, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
@@ -66,16 +65,13 @@ const popupModels = [
   }
 ];
 
-const AdminCheckoutGlobal = () => {
+export const CheckoutGlobalSection = () => {
   const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
   const [previewModel, setPreviewModel] = useState<string | null>(null);
-  const { isAuthenticated, isAdmin } = useAdminAuth();
 
   useEffect(() => {
-    if (isAuthenticated && isAdmin) {
-      loadGlobalStats();
-    }
-  }, [isAuthenticated, isAdmin]);
+    loadGlobalStats();
+  }, []);
 
   const loadGlobalStats = async () => {
     try {
@@ -97,15 +93,15 @@ const AdminCheckoutGlobal = () => {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
             <BarChart3 className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Conversão Global de Popups</h1>
-            <p className="text-sm text-muted-foreground">Acompanhe a performance de todos os modelos de checkout</p>
+            <h2 className="text-xl font-bold">Conversão Global de Popups</h2>
+            <p className="text-sm text-muted-foreground">Performance de todos os modelos de checkout</p>
           </div>
         </div>
 
@@ -263,5 +259,3 @@ const AdminCheckoutGlobal = () => {
     </>
   );
 };
-
-export default AdminCheckoutGlobal;
