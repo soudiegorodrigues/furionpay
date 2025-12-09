@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import furionLogo from "@/assets/furionpay-logo.png";
+import pwaLogo from "/pwa-512x512.png";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -76,7 +76,7 @@ export const PWAInstallPrompt = () => {
           </DialogTitle>
           <DialogDescription className="flex items-center gap-3 pt-4">
             <img 
-              src={furionLogo} 
+              src={pwaLogo} 
               alt="FurionPay" 
               className="h-10 w-10 rounded-lg"
             />
