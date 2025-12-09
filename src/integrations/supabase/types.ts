@@ -553,11 +553,7 @@ export type Database = {
       get_users_count: { Args: never; Returns: number }
       get_users_revenue_ranking:
         | {
-            Args: {
-              p_date_filter?: string
-              p_limit?: number
-              p_offset?: number
-            }
+            Args: { p_limit?: number; p_offset?: number }
             Returns: {
               conversion_rate: number
               total_amount_generated: number
@@ -569,7 +565,11 @@ export type Database = {
             }[]
           }
         | {
-            Args: { p_limit?: number; p_offset?: number }
+            Args: {
+              p_date_filter?: string
+              p_limit?: number
+              p_offset?: number
+            }
             Returns: {
               conversion_rate: number
               total_amount_generated: number

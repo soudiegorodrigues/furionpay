@@ -16,6 +16,7 @@ import AdminPersonalization from "./pages/AdminPersonalization";
 import AdminEmail from "./pages/AdminEmail";
 import AdminProfile from "./pages/AdminProfile";
 import AdminIntegrations from "./pages/AdminIntegrations";
+import AdminCloaker from "./pages/AdminCloaker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="email" element={<AdminEmail />} />
                 <Route path="profile" element={<AdminProfile />} />
                 <Route path="integrations" element={<AdminIntegrations />} />
+                <Route path="cloaker" element={<AdminCloaker />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
