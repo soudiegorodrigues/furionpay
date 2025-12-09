@@ -41,7 +41,7 @@ interface ChartData {
 
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
-type ChartFilter = '7days' | '15days' | '30days' | '60days';
+type ChartFilter = 'today' | '7days' | '15days' | '30days' | 'month' | 'year';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -135,10 +135,12 @@ const AdminDashboard = () => {
 
   const getChartDays = (filter: ChartFilter): number => {
     switch (filter) {
+      case 'today': return 1;
       case '7days': return 7;
       case '15days': return 15;
       case '30days': return 30;
-      case '60days': return 60;
+      case 'month': return 30;
+      case 'year': return 365;
       default: return 30;
     }
   };
@@ -327,10 +329,12 @@ const AdminDashboard = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="today">Hoje</SelectItem>
                 <SelectItem value="7days">7 dias</SelectItem>
                 <SelectItem value="15days">15 dias</SelectItem>
                 <SelectItem value="30days">30 dias</SelectItem>
-                <SelectItem value="60days">60 dias</SelectItem>
+                <SelectItem value="month">Este mês</SelectItem>
+                <SelectItem value="year">Este ano</SelectItem>
               </SelectContent>
             </Select>
           </div>
