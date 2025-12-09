@@ -856,8 +856,10 @@ const Admin = () => {
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
-                  <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs sm:text-sm">
-                    <SelectValue placeholder="Status" />
+                  <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs sm:text-sm">
+                    <SelectValue>
+                      {statusFilter === 'all' ? 'Status' : statusFilter === 'paid' ? 'Pago' : statusFilter === 'generated' ? 'Gerado' : 'Expirado'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
@@ -867,9 +869,11 @@ const Admin = () => {
                   </SelectContent>
                 </Select>
                 <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-                  <SelectTrigger className="w-[120px] sm:w-[150px] h-8 text-xs sm:text-sm">
-                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    <SelectValue placeholder="Período" />
+                  <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs sm:text-sm">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <SelectValue>
+                      {dateFilter === 'all' ? 'Período' : dateFilter === 'today' ? 'Hoje' : dateFilter === '7days' ? '7 dias' : dateFilter === 'month' ? 'Este mês' : 'Este ano'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
