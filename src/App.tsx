@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
@@ -28,7 +27,6 @@ const App = () => (
         <MetaPixelProvider>
           <Toaster />
           <Sonner />
-          <PWAInstallPrompt />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

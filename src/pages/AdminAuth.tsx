@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
 import furionLogo from '@/assets/furionpay-logo-white-text.png';
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 const authSchema = z.object({
   email: z.string().trim().email({
     message: "Email inválido"
@@ -424,7 +425,9 @@ const AdminAuth = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden">
+  return <>
+    <PWAInstallPrompt />
+    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden">
       {/* Base gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-red-950/40" />
       
@@ -684,6 +687,7 @@ const AdminAuth = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>;
+    </div>
+  </>;
 };
 export default AdminAuth;
