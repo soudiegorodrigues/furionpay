@@ -204,19 +204,7 @@ const Admin = () => {
     return state?.section || "faturamento";
   });
 
-  // Redirect non-admin users to dashboard
-  useEffect(() => {
-    if (!loading && !isAdmin) {
-      navigate('/admin/dashboard');
-    }
-  }, [loading, isAdmin, navigate]);
-
-  // Show nothing while checking or if not admin
-  if (loading || !isAdmin) {
-    return null;
-  }
-
-  // Authentication redirect is handled by AdminLayout
+  // All hooks must be called before any conditional returns
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -254,7 +242,15 @@ const Admin = () => {
   const [chartFilter, setChartFilter] = useState<ChartFilter>('30days');
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
 
+  // Redirect non-admin users to dashboard
   useEffect(() => {
+    if (!loading && !isAdmin) {
+      navigate('/admin/dashboard');
+    }
+  }, [loading, isAdmin, navigate]);
+
+  useEffect(() => {
+    if (!isAdmin) return; // Don't load data if not admin
     if (activeSection === "faturamento") {
       loadGlobalStats();
     } else if (activeSection === "transacoes") {
@@ -266,7 +262,7 @@ const Admin = () => {
     } else if (activeSection === "ranking") {
       loadRanking();
     }
-  }, [activeSection]);
+  }, [activeSection, isAdmin]);
 
   const loadGlobalStats = async () => {
     setIsLoading(true);
@@ -770,6 +766,11 @@ const Admin = () => {
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Show nothing while checking or if not admin (after all hooks)
+  if (loading || !isAdmin) {
+    return null;
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
