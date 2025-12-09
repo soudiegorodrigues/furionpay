@@ -10,9 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { 
   DollarSign, 
-  Globe, 
+  Globe,
+  TrendingUp,
   CreditCard, 
   Users, 
   FileText, 
@@ -174,6 +176,13 @@ interface RankingUser {
   total_amount_generated: number;
   total_amount_paid: number;
   conversion_rate: number;
+}
+
+interface ChartData {
+  date: string;
+  gerados: number;
+  pagos: number;
+  valorPago: number;
 }
 
 const USERS_PER_PAGE = 10;
@@ -702,6 +711,33 @@ const Admin = () => {
     setCurrentPage(1);
   }, [dateFilter, statusFilter, emailSearch]);
 
+  // Chart data for global transactions
+  const globalChartData = useMemo((): ChartData[] => {
+    const days = 30;
+    const data: ChartData[] = [];
+    const now = new Date();
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      
+      const dayTransactions = transactions.filter(tx => {
+        const txDate = new Date(tx.created_at).toISOString().split('T')[0];
+        return txDate === dateStr;
+      });
+      
+      const gerados = dayTransactions.length;
+      const pagos = dayTransactions.filter(tx => tx.status === 'paid').length;
+      const valorPago = dayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+      
+      data.push({ date: displayDate, gerados, pagos, valorPago });
+    }
+    
+    return data;
+  }, [transactions]);
+
   // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -831,6 +867,75 @@ const Admin = () => {
                     Nenhum dado disponível
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Chart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-sm sm:text-lg">Evolução de Transações (30 dias)</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[250px] sm:h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={globalChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorGeradosGlobal" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorPagosGlobal" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 10 }} 
+                        className="text-muted-foreground"
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 10 }} 
+                        className="text-muted-foreground"
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="gerados" 
+                        name="Gerados"
+                        stroke="hsl(var(--primary))" 
+                        fillOpacity={1} 
+                        fill="url(#colorGeradosGlobal)" 
+                        strokeWidth={2}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="pagos" 
+                        name="Pagos"
+                        stroke="#22c55e" 
+                        fillOpacity={1} 
+                        fill="url(#colorPagosGlobal)" 
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
