@@ -231,6 +231,7 @@ const Admin = () => {
   useEffect(() => {
     if (activeSection === "faturamento") {
       loadGlobalStats();
+    } else if (activeSection === "transacoes") {
       loadTransactions();
     } else if (activeSection === "dominios") {
       loadDomains();
@@ -824,129 +825,131 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            {/* Transactions Table */}
-            <Card>
-              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Receipt className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                  Transações Globais
-                  <Badge variant="secondary" className="ml-2 text-xs">{filteredTransactions.length}</Badge>
-                </CardTitle>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
-                    <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs sm:text-sm">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="paid">Pago</SelectItem>
-                      <SelectItem value="generated">Gerado</SelectItem>
-                      <SelectItem value="expired">Expirado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-                    <SelectTrigger className="w-[120px] sm:w-[150px] h-8 text-xs sm:text-sm">
-                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <SelectValue placeholder="Período" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="today">Hoje</SelectItem>
-                      <SelectItem value="7days">7 dias</SelectItem>
-                      <SelectItem value="month">Este mês</SelectItem>
-                      <SelectItem value="year">Este ano</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoadingTransactions ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : filteredTransactions.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhuma transação encontrada
-                  </p>
-                ) : (
-                  <>
-                    <div className="rounded-md border overflow-x-auto -mx-4 sm:mx-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-xs hidden lg:table-cell">Email</TableHead>
-                            <TableHead className="text-xs">Data</TableHead>
-                            <TableHead className="text-xs">Cliente</TableHead>
-                            <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
-                            <TableHead className="text-xs">Valor</TableHead>
-                            <TableHead className="text-xs">Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedTransactions.map((tx) => (
-                            <TableRow key={tx.id}>
-                              <TableCell className="text-xs text-muted-foreground hidden lg:table-cell max-w-[150px] truncate">
-                                {tx.user_email || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs whitespace-nowrap">
-                                {formatDate(tx.created_at)}
-                              </TableCell>
-                              <TableCell className="text-xs font-medium max-w-[80px] sm:max-w-none truncate">
-                                {tx.donor_name || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs text-muted-foreground hidden sm:table-cell max-w-[100px] truncate">
-                                {tx.product_name || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs font-medium whitespace-nowrap">
-                                {formatCurrency(tx.amount)}
-                              </TableCell>
-                              <TableCell>
-                                {getStatusBadge(tx.status)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
-                        </p>
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="h-8 px-2 sm:px-3"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            <span className="hidden sm:inline ml-1">Anterior</span>
-                          </Button>
-                          <span className="text-xs sm:text-sm text-muted-foreground px-2">
-                            {currentPage}/{totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="h-8 px-2 sm:px-3"
-                          >
-                            <span className="hidden sm:inline mr-1">Próximo</span>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
           </>
+        )}
+
+        {activeSection === "transacoes" && (
+          <Card>
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Receipt className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                Transações Globais
+                <Badge variant="secondary" className="ml-2 text-xs">{filteredTransactions.length}</Badge>
+              </CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
+                  <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs sm:text-sm">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="paid">Pago</SelectItem>
+                    <SelectItem value="generated">Gerado</SelectItem>
+                    <SelectItem value="expired">Expirado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
+                  <SelectTrigger className="w-[120px] sm:w-[150px] h-8 text-xs sm:text-sm">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <SelectValue placeholder="Período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="today">Hoje</SelectItem>
+                    <SelectItem value="7days">7 dias</SelectItem>
+                    <SelectItem value="month">Este mês</SelectItem>
+                    <SelectItem value="year">Este ano</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingTransactions ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredTransactions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma transação encontrada
+                </p>
+              ) : (
+                <>
+                  <div className="rounded-md border overflow-x-auto -mx-4 sm:mx-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs hidden lg:table-cell">Email</TableHead>
+                          <TableHead className="text-xs">Data</TableHead>
+                          <TableHead className="text-xs">Cliente</TableHead>
+                          <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
+                          <TableHead className="text-xs">Valor</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedTransactions.map((tx) => (
+                          <TableRow key={tx.id}>
+                            <TableCell className="text-xs text-muted-foreground hidden lg:table-cell max-w-[150px] truncate">
+                              {tx.user_email || '-'}
+                            </TableCell>
+                            <TableCell className="text-xs whitespace-nowrap">
+                              {formatDate(tx.created_at)}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium max-w-[80px] sm:max-w-none truncate">
+                              {tx.donor_name || '-'}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground hidden sm:table-cell max-w-[100px] truncate">
+                              {tx.product_name || '-'}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium whitespace-nowrap">
+                              {formatCurrency(tx.amount)}
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(tx.status)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
+                      </p>
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="h-8 px-2 sm:px-3"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-1">Anterior</span>
+                        </Button>
+                        <span className="text-xs sm:text-sm text-muted-foreground px-2">
+                          {currentPage}/{totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="h-8 px-2 sm:px-3"
+                        >
+                          <span className="hidden sm:inline mr-1">Próximo</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {activeSection === "ranking" && (
