@@ -190,7 +190,7 @@ export const PWAInstallPrompt = () => {
                 <Button 
                   variant="outline" 
                   onClick={handleDismiss}
-                  className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                  className="flex-1 border-zinc-700 text-white hover:text-white hover:bg-zinc-800 bg-zinc-800/50"
                 >
                   Agora não
                 </Button>
