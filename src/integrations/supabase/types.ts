@@ -154,57 +154,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cloakers: {
-        Row: {
-          block_bots: boolean
-          block_vpn: boolean
-          blocked_devices: string[] | null
-          country: string
-          created_at: string
-          domain: string
-          id: string
-          is_active: boolean
-          name: string
-          offer_url: string
-          safe_url: string
-          updated_at: string
-          user_id: string
-          verify_device: boolean
-        }
-        Insert: {
-          block_bots?: boolean
-          block_vpn?: boolean
-          blocked_devices?: string[] | null
-          country?: string
-          created_at?: string
-          domain: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          offer_url: string
-          safe_url: string
-          updated_at?: string
-          user_id: string
-          verify_device?: boolean
-        }
-        Update: {
-          block_bots?: boolean
-          block_vpn?: boolean
-          blocked_devices?: string[] | null
-          country?: string
-          created_at?: string
-          domain?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          offer_url?: string
-          safe_url?: string
-          updated_at?: string
-          user_id?: string
-          verify_device?: boolean
-        }
-        Relationships: []
-      }
       login_attempts: {
         Row: {
           attempt_count: number
