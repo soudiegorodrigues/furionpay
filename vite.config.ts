@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ["favicon.png", "robots.txt"],
       manifest: {
         name: "Plataforma FurionPay",
-        short_name: "FurionPay",
+        short_name: "Plataforma FurionPay",
         description: "Plataforma FurionPay | Receba suas vendas com tecnologia de API",
         theme_color: "#dc2626",
         background_color: "#000000",
