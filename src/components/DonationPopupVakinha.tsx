@@ -201,9 +201,18 @@ export const DonationPopupVakinha = ({
 
   if (!isOpen) return null;
 
+  // For preview mode (inside Dialog), don't render the overlay
+  const containerClass = isPreview 
+    ? "relative w-full bg-white rounded-xl" 
+    : "fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4";
+
+  const innerClass = isPreview
+    ? "w-full max-h-[80vh] overflow-y-auto"
+    : "relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
+    <div className={containerClass}>
+      <div className={innerClass}>
         {/* Close Button */}
         {showCloseButton && (
           <button
