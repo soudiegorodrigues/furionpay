@@ -29,16 +29,16 @@ import { supabase } from "@/integrations/supabase/client";
 interface Cloaker {
   id: string;
   name: string;
-  safeUrl: string;
-  offerUrl: string;
-  blockBots: boolean;
-  blockVpn: boolean;
-  verifyDevice: boolean;
+  safe_url: string;
+  offer_url: string;
+  block_bots: boolean;
+  block_vpn: boolean;
+  verify_device: boolean;
   country: string;
   domain: string;
-  blockedDevices: string[];
-  createdAt: Date;
-  isActive: boolean;
+  blocked_devices: string[];
+  created_at: string;
+  is_active: boolean;
 }
 
 interface AvailableDomain {
@@ -72,6 +72,7 @@ export default function AdminCloaker() {
 
   useEffect(() => {
     loadDomains();
+    loadCloakers();
   }, []);
 
   const loadDomains = async () => {
@@ -81,6 +82,21 @@ export default function AdminCloaker() {
       .eq('is_active', true)
       .order('domain');
     setAvailableDomains(data || []);
+  };
+
+  const loadCloakers = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('cloakers')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setCloakers(data as Cloaker[]);
+    }
   };
 
   const toggleDevice = (deviceId: string) => {
@@ -103,7 +119,7 @@ export default function AdminCloaker() {
     setBlockedDevices([]);
   };
 
-  const handleCreateCloaker = () => {
+  const handleCreateCloaker = async () => {
     if (!name || !safeUrl || !offerUrl || !selectedDomain) {
       toast({
         title: "Campos obrigatórios",
@@ -113,22 +129,43 @@ export default function AdminCloaker() {
       return;
     }
 
-    const newCloaker: Cloaker = {
-      id: crypto.randomUUID(),
-      name,
-      safeUrl,
-      offerUrl,
-      blockBots,
-      blockVpn,
-      verifyDevice,
-      country,
-      domain: selectedDomain,
-      blockedDevices,
-      createdAt: new Date(),
-      isActive: true,
-    };
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para criar um cloaker.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setCloakers([...cloakers, newCloaker]);
+    const { data, error } = await supabase
+      .from('cloakers')
+      .insert({
+        user_id: user.id,
+        safe_url: safeUrl,
+        offer_url: offerUrl,
+        block_bots: blockBots,
+        block_vpn: blockVpn,
+        verify_device: verifyDevice,
+        country,
+        domain: selectedDomain,
+        blocked_devices: blockedDevices,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Erro ao criar cloaker",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCloakers([data as Cloaker, ...cloakers]);
     resetForm();
     setIsDialogOpen(false);
     
@@ -138,7 +175,21 @@ export default function AdminCloaker() {
     });
   };
 
-  const handleDeleteCloaker = (id: string) => {
+  const handleDeleteCloaker = async (id: string) => {
+    const { error } = await supabase
+      .from('cloakers')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCloakers(cloakers.filter(c => c.id !== id));
     toast({
       title: "Cloaker excluído",
@@ -146,9 +197,26 @@ export default function AdminCloaker() {
     });
   };
 
-  const handleToggleActive = (id: string) => {
+  const handleToggleActive = async (id: string) => {
+    const cloaker = cloakers.find(c => c.id === id);
+    if (!cloaker) return;
+
+    const { error } = await supabase
+      .from('cloakers')
+      .update({ is_active: !cloaker.is_active })
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCloakers(cloakers.map(c => 
-      c.id === id ? { ...c, isActive: !c.isActive } : c
+      c.id === id ? { ...c, is_active: !c.is_active } : c
     ));
   };
 
