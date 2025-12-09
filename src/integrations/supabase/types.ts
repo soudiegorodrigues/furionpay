@@ -493,6 +493,7 @@ export type Database = {
           product_name: string
           status: Database["public"]["Enums"]["pix_status"]
           txid: string
+          user_email: string
         }[]
       }
       get_popup_model_stats: {
