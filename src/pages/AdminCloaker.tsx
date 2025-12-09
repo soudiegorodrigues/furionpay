@@ -135,7 +135,7 @@ export default function AdminCloaker() {
           <div>
             <h1 className="text-2xl font-bold">Cloaker</h1>
             <p className="text-muted-foreground">
-              Proteja seus links e redirecione tráfego indesejado
+              Copie seu link de checkout e camufle aqui para proteger contra bots e moderadores
             </p>
           </div>
           
@@ -182,15 +182,15 @@ export default function AdminCloaker() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="offer-url">URL da Oferta</Label>
+                  <Label htmlFor="offer-url">Link de Checkout (URL da Oferta)</Label>
                   <Input 
                     id="offer-url" 
-                    placeholder="https://exemplo.com/oferta"
+                    placeholder="Cole aqui seu link de checkout"
                     value={offerUrl}
                     onChange={(e) => setOfferUrl(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Página exibida para tráfego real qualificado
+                    Cole o link que você copiou na página de Checkout
                   </p>
                 </div>
                 
@@ -256,11 +256,12 @@ export default function AdminCloaker() {
                 <EyeOff className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold">O que é Cloaker?</h3>
+                <h3 className="font-semibold">Como funciona?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  O Cloaker é uma tecnologia de proteção que analisa o tráfego e redireciona 
-                  visitantes indesejados (bots, moderadores, VPNs) para uma página segura, 
-                  enquanto direciona o tráfego real para sua oferta.
+                  <strong>1.</strong> Vá até a página <strong>Checkout</strong> e copie seu link de checkout<br/>
+                  <strong>2.</strong> Volte aqui e crie um novo cloaker, colando o link como "URL da Oferta"<br/>
+                  <strong>3.</strong> Defina uma página segura (safe) para bots e moderadores verem<br/>
+                  <strong>4.</strong> Copie o link do cloaker e use nas suas campanhas
                 </p>
               </div>
             </div>
