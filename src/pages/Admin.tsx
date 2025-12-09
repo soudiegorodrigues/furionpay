@@ -144,6 +144,7 @@ interface Transaction {
   product_name: string | null;
   created_at: string;
   paid_at: string | null;
+  user_email: string | null;
 }
 
 interface Domain {
@@ -834,6 +835,7 @@ const Admin = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="text-xs hidden lg:table-cell">Email</TableHead>
                             <TableHead className="text-xs">Data</TableHead>
                             <TableHead className="text-xs">Cliente</TableHead>
                             <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
@@ -845,6 +847,9 @@ const Admin = () => {
                         <TableBody>
                           {paginatedTransactions.map((tx) => (
                             <TableRow key={tx.id}>
+                              <TableCell className="text-xs text-muted-foreground hidden lg:table-cell max-w-[150px] truncate">
+                                {tx.user_email || '-'}
+                              </TableCell>
                               <TableCell className="text-xs whitespace-nowrap">
                                 {formatDate(tx.created_at)}
                               </TableCell>
