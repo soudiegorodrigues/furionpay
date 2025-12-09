@@ -41,6 +41,7 @@ interface ChartData {
 
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
+type ChartFilter = '7days' | '15days' | '30days' | '60days';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -48,6 +49,7 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [chartFilter, setChartFilter] = useState<ChartFilter>('30days');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -131,6 +133,16 @@ const AdminDashboard = () => {
     }
   };
 
+  const getChartDays = (filter: ChartFilter): number => {
+    switch (filter) {
+      case '7days': return 7;
+      case '15days': return 15;
+      case '30days': return 30;
+      case '60days': return 60;
+      default: return 30;
+    }
+  };
+
   const filteredTransactions = useMemo(() => {
     if (dateFilter === 'all') return transactions;
     const now = new Date();
@@ -161,7 +173,7 @@ const AdminDashboard = () => {
   }, [transactions, dateFilter]);
 
   const chartData = useMemo((): ChartData[] => {
-    const days = getFilterDays(dateFilter);
+    const days = getChartDays(chartFilter);
     const data: ChartData[] = [];
     const now = new Date();
     
@@ -184,7 +196,7 @@ const AdminDashboard = () => {
     }
     
     return data;
-  }, [transactions, dateFilter]);
+  }, [transactions, chartFilter]);
 
   const filteredStats = useMemo(() => {
     const generated = filteredTransactions.length;
@@ -304,9 +316,23 @@ const AdminDashboard = () => {
       {/* Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            <CardTitle className="text-sm sm:text-lg">Evolução de Transações</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <CardTitle className="text-sm sm:text-lg">Evolução de Transações</CardTitle>
+            </div>
+            <Select value={chartFilter} onValueChange={(v) => setChartFilter(v as ChartFilter)}>
+              <SelectTrigger className="w-[120px] h-8 text-xs sm:text-sm">
+                <Calendar className="h-3 w-3 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7days">7 dias</SelectItem>
+                <SelectItem value="15days">15 dias</SelectItem>
+                <SelectItem value="30days">30 dias</SelectItem>
+                <SelectItem value="60days">60 dias</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
