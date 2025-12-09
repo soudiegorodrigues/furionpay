@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AdminHeader } from "@/components/AdminSidebar";
-import { EyeOff, Plus, Settings, Trash2, Copy, ExternalLink } from "lucide-react";
+import { EyeOff, Plus, Trash2, Copy, ExternalLink, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -24,15 +24,105 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 
+interface Cloaker {
+  id: string;
+  name: string;
+  safeUrl: string;
+  offerUrl: string;
+  blockBots: boolean;
+  blockVpn: boolean;
+  verifyDevice: boolean;
+  country: string;
+  createdAt: Date;
+  isActive: boolean;
+}
+
 export default function AdminCloaker() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [cloakers, setCloakers] = useState<Cloaker[]>([]);
+  
+  // Form state
+  const [name, setName] = useState("");
+  const [safeUrl, setSafeUrl] = useState("");
+  const [offerUrl, setOfferUrl] = useState("");
+  const [blockBots, setBlockBots] = useState(true);
+  const [blockVpn, setBlockVpn] = useState(true);
+  const [verifyDevice, setVerifyDevice] = useState(false);
+  const [country, setCountry] = useState("br");
 
-  const handleCopyLink = (link: string) => {
+  const resetForm = () => {
+    setName("");
+    setSafeUrl("");
+    setOfferUrl("");
+    setBlockBots(true);
+    setBlockVpn(true);
+    setVerifyDevice(false);
+    setCountry("br");
+  };
+
+  const handleCreateCloaker = () => {
+    if (!name || !safeUrl || !offerUrl) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos para criar o cloaker.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCloaker: Cloaker = {
+      id: crypto.randomUUID(),
+      name,
+      safeUrl,
+      offerUrl,
+      blockBots,
+      blockVpn,
+      verifyDevice,
+      country,
+      createdAt: new Date(),
+      isActive: true,
+    };
+
+    setCloakers([...cloakers, newCloaker]);
+    resetForm();
+    setIsDialogOpen(false);
+    
+    toast({
+      title: "Cloaker criado!",
+      description: "Seu cloaker foi configurado com sucesso.",
+    });
+  };
+
+  const handleDeleteCloaker = (id: string) => {
+    setCloakers(cloakers.filter(c => c.id !== id));
+    toast({
+      title: "Cloaker excluído",
+      description: "O cloaker foi removido com sucesso.",
+    });
+  };
+
+  const handleToggleActive = (id: string) => {
+    setCloakers(cloakers.map(c => 
+      c.id === id ? { ...c, isActive: !c.isActive } : c
+    ));
+  };
+
+  const handleCopyLink = (id: string) => {
+    const link = `${window.location.origin}/c/${id}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Link copiado!",
       description: "O link foi copiado para a área de transferência.",
     });
+  };
+
+  const getCountryLabel = (code: string) => {
+    const countries: Record<string, string> = {
+      br: "Brasil",
+      all: "Todos os países",
+      latam: "América Latina",
+    };
+    return countries[code] || code;
   };
 
   return (
@@ -49,7 +139,10 @@ export default function AdminCloaker() {
             </p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -67,12 +160,22 @@ export default function AdminCloaker() {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome do Cloaker</Label>
-                  <Input id="name" placeholder="Ex: Campanha Facebook" />
+                  <Input 
+                    id="name" 
+                    placeholder="Ex: Campanha Facebook" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="safe-url">URL Segura (Página Safe)</Label>
-                  <Input id="safe-url" placeholder="https://exemplo.com/pagina-segura" />
+                  <Input 
+                    id="safe-url" 
+                    placeholder="https://exemplo.com/pagina-segura"
+                    value={safeUrl}
+                    onChange={(e) => setSafeUrl(e.target.value)}
+                  />
                   <p className="text-xs text-muted-foreground">
                     Página exibida para bots, moderadores e tráfego suspeito
                   </p>
@@ -80,7 +183,12 @@ export default function AdminCloaker() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="offer-url">URL da Oferta</Label>
-                  <Input id="offer-url" placeholder="https://exemplo.com/oferta" />
+                  <Input 
+                    id="offer-url" 
+                    placeholder="https://exemplo.com/oferta"
+                    value={offerUrl}
+                    onChange={(e) => setOfferUrl(e.target.value)}
+                  />
                   <p className="text-xs text-muted-foreground">
                     Página exibida para tráfego real qualificado
                   </p>
@@ -94,28 +202,28 @@ export default function AdminCloaker() {
                         <p className="text-sm font-medium">Bloquear Bots</p>
                         <p className="text-xs text-muted-foreground">Google, Facebook, etc.</p>
                       </div>
-                      <Switch defaultChecked />
+                      <Switch checked={blockBots} onCheckedChange={setBlockBots} />
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Bloquear VPNs</p>
                         <p className="text-xs text-muted-foreground">Conexões via VPN/Proxy</p>
                       </div>
-                      <Switch defaultChecked />
+                      <Switch checked={blockVpn} onCheckedChange={setBlockVpn} />
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Verificar Dispositivo</p>
                         <p className="text-xs text-muted-foreground">Bloquear emuladores</p>
                       </div>
-                      <Switch />
+                      <Switch checked={verifyDevice} onCheckedChange={setVerifyDevice} />
                     </div>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label>País Permitido</Label>
-                  <Select defaultValue="br">
+                  <Select value={country} onValueChange={setCountry}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o país" />
                     </SelectTrigger>
@@ -132,13 +240,7 @@ export default function AdminCloaker() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Cloaker criado!",
-                    description: "Seu cloaker foi configurado com sucesso.",
-                  });
-                  setIsDialogOpen(false);
-                }}>
+                <Button onClick={handleCreateCloaker}>
                   Criar Cloaker
                 </Button>
               </div>
@@ -165,22 +267,93 @@ export default function AdminCloaker() {
           </CardContent>
         </Card>
 
-        {/* Empty State */}
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <EyeOff className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Nenhum cloaker configurado</h3>
-            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-              Crie seu primeiro cloaker para proteger seus links e melhorar a qualidade do seu tráfego.
-            </p>
-            <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Criar Primeiro Cloaker
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Cloakers List or Empty State */}
+        {cloakers.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <EyeOff className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Nenhum cloaker configurado</h3>
+              <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                Crie seu primeiro cloaker para proteger seus links e melhorar a qualidade do seu tráfego.
+              </p>
+              <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Criar Primeiro Cloaker
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {cloakers.map((cloaker) => (
+              <Card key={cloaker.id}>
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate">{cloaker.name}</h3>
+                        <Badge variant={cloaker.isActive ? "default" : "secondary"}>
+                          {cloaker.isActive ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p className="truncate">
+                          <span className="font-medium">Safe:</span> {cloaker.safeUrl}
+                        </p>
+                        <p className="truncate">
+                          <span className="font-medium">Oferta:</span> {cloaker.offerUrl}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {cloaker.blockBots && (
+                          <Badge variant="outline" className="text-xs">Anti-Bot</Badge>
+                        )}
+                        {cloaker.blockVpn && (
+                          <Badge variant="outline" className="text-xs">Anti-VPN</Badge>
+                        )}
+                        {cloaker.verifyDevice && (
+                          <Badge variant="outline" className="text-xs">Verificação</Badge>
+                        )}
+                        <Badge variant="outline" className="text-xs">
+                          {getCountryLabel(cloaker.country)}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Switch 
+                        checked={cloaker.isActive} 
+                        onCheckedChange={() => handleToggleActive(cloaker.id)}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => handleCopyLink(cloaker.id)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => window.open(cloaker.offerUrl, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="icon"
+                        onClick={() => handleDeleteCloaker(cloaker.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
