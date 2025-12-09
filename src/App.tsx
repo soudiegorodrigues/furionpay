@@ -12,6 +12,7 @@ import Admin from "./pages/Admin";
 import AdminSettings from "./pages/AdminSettings";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCheckout from "./pages/AdminCheckout";
+import AdminCheckoutGlobal from "./pages/AdminCheckoutGlobal";
 import AdminPersonalization from "./pages/AdminPersonalization";
 import AdminEmail from "./pages/AdminEmail";
 import AdminProfile from "./pages/AdminProfile";
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="checkout" element={<AdminCheckout />} />
+                <Route path="checkout-global" element={<AdminCheckoutGlobal />} />
                 <Route path="personalization" element={<AdminPersonalization />} />
                 <Route path="email" element={<AdminEmail />} />
                 <Route path="profile" element={<AdminProfile />} />
