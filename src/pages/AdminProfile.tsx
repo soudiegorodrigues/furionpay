@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/AdminSidebar";
-import { User, Save } from "lucide-react";
+import { User, Save, AlertTriangle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminProfile() {
   const { user } = useAdminAuth();
@@ -15,6 +26,7 @@ export default function AdminProfile() {
   
   const [displayName, setDisplayName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   // Load profile name from database
   useEffect(() => {
@@ -123,6 +135,85 @@ export default function AdminProfile() {
                 <Save className="h-4 w-4 mr-2" />
                 {savingName ? "Salvando..." : "Salvar Nome"}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Zona de Perigo */}
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Zona de Perigo
+              </CardTitle>
+              <CardDescription>
+                Ações irreversíveis para sua conta. Seus dados históricos permanecerão visíveis para administradores.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <h4 className="font-medium text-destructive mb-2">Resetar Minha Conta</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Esta ação irá apagar todas as suas transações e configurações pessoais. 
+                    Use isso se deseja iniciar um novo projeto do zero. 
+                    <strong className="text-foreground"> Seus dados históricos permanecerão registrados no sistema administrativo.</strong>
+                  </p>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={resetting}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {resetting ? "Resetando..." : "Resetar Minha Conta"}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. Isso irá apagar permanentemente suas transações e configurações pessoais.
+                          Os dados históricos continuarão visíveis para administradores do sistema.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={async () => {
+                            setResetting(true);
+                            try {
+                              // Reset user transactions
+                              const { error: txError } = await supabase.rpc('reset_user_transactions');
+                              if (txError) throw txError;
+
+                              // Reset user settings
+                              const { error: settingsError } = await supabase
+                                .from('admin_settings')
+                                .delete()
+                                .eq('user_id', user?.id);
+                              
+                              if (settingsError) throw settingsError;
+
+                              toast({
+                                title: "Conta resetada",
+                                description: "Suas transações e configurações foram removidas com sucesso.",
+                              });
+                            } catch (error: any) {
+                              toast({
+                                title: "Erro",
+                                description: error.message || "Erro ao resetar conta",
+                                variant: "destructive",
+                              });
+                            } finally {
+                              setResetting(false);
+                            }
+                          }}
+                        >
+                          Sim, resetar minha conta
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
             </CardContent>
           </Card>
       </div>
