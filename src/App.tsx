@@ -17,6 +17,7 @@ import AdminEmail from "./pages/AdminEmail";
 import AdminProfile from "./pages/AdminProfile";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminCloaker from "./pages/AdminCloaker";
+import CloakerRedirect from "./pages/CloakerRedirect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/c/:id" element={<CloakerRedirect />} />
               <Route path="/login" element={<AdminAuth />} />
               <Route path="/cadastro" element={<AdminAuth />} />
               
