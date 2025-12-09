@@ -1,1 +1,4 @@
 project_id = "qtlhwjotfkyyqzgxlmkg"
+
+[functions.check-pix-status]
+verify_jwt = false

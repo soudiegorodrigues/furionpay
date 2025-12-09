@@ -73,16 +73,20 @@ export const DonationPopupHot = ({
     return () => clearInterval(timer);
   }, [step, isPaid, timeLeft]);
 
-  // Poll for payment status using secure RPC function
+  // Poll for payment status using active SpedPay polling
   useEffect(() => {
     if (step !== "pix" || !pixData?.transactionId || isPaid) return;
 
     const pollInterval = setInterval(async () => {
       try {
-        const { data, error } = await supabase
-          .rpc("get_transaction_status_by_id", { p_id: pixData.transactionId });
+        // Use the new check-pix-status edge function that queries SpedPay directly
+        const { data, error } = await supabase.functions.invoke('check-pix-status', {
+          body: { transactionId: pixData.transactionId }
+        });
 
-        if (!error && data && data.length > 0 && data[0].status === "paid") {
+        console.log('PIX status check response:', data);
+
+        if (!error && data && data.status === "paid") {
           setIsPaid(true);
           trackEvent("Purchase", {
             value: fixedAmount,
