@@ -1078,7 +1078,7 @@ const Admin = () => {
                   if (cardDomains.length === 0) return null;
                   
                   return (
-                    <Card key={cardIndex} className="max-w-md">
+                    <Card key={cardIndex}>
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base">
                           <Globe className="h-4 w-4 text-primary" />
@@ -1138,7 +1138,7 @@ const Admin = () => {
                                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                                       domain.is_active ? 'bg-green-500' : 'bg-gray-400'
                                     }`} />
-                                    <div className="min-w-0 max-w-[120px]">
+                                    <div className="min-w-0 flex-1">
                                       <p className="font-medium text-sm truncate">{domain.domain}</p>
                                       {domain.name && (
                                         <p className="text-xs text-muted-foreground truncate">{domain.name}</p>
