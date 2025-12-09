@@ -658,7 +658,7 @@ const AdminAuth = () => {
         </div>
 
         {/* Footer text */}
-        <p className="text-center text-white/40 text-xs mt-8">
+        <p className="text-center text-white/40 text-[10px] md:text-xs mt-4 md:mt-8">
           © {new Date().getFullYear()} FurionPay. Todos os direitos reservados.
         </p>
       </div>
