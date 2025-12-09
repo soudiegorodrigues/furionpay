@@ -504,7 +504,7 @@ const AdminAuth = () => {
             {/* Header with icon */}
             <div className="text-center mb-8">
               
-              <h1 className="text-2xl font-bold text-white tracking-tight mb-2">
+              <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
                 {getTitle()}
               </h1>
               <p className="text-sm text-white/50 leading-relaxed">
