@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { TrendingUp, Eye, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -234,28 +233,24 @@ export const CheckoutGlobalSection = () => {
           showCloseButton={true}
         />
       )}
-      <Dialog open={previewModel === "landing"} onOpenChange={(open) => !open && setPreviewModel(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-0">
-          <DonationPopupLanding
-            isOpen={true}
-            onClose={() => setPreviewModel(null)}
-            recipientName="Preview"
-            userId=""
-            showCloseButton={true}
-          />
-        </DialogContent>
-      </Dialog>
-      <Dialog open={previewModel === "instituto"} onOpenChange={(open) => !open && setPreviewModel(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-0">
-          <DonationPopupInstituto
-            isOpen={true}
-            onClose={() => setPreviewModel(null)}
-            recipientName="Preview"
-            userId=""
-            showCloseButton={true}
-          />
-        </DialogContent>
-      </Dialog>
+      {previewModel === "landing" && (
+        <DonationPopupLanding
+          isOpen={true}
+          onClose={() => setPreviewModel(null)}
+          recipientName="Preview"
+          userId=""
+          showCloseButton={true}
+        />
+      )}
+      {previewModel === "instituto" && (
+        <DonationPopupInstituto
+          isOpen={true}
+          onClose={() => setPreviewModel(null)}
+          recipientName="Preview"
+          userId=""
+          showCloseButton={true}
+        />
+      )}
     </>
   );
 };
