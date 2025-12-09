@@ -81,8 +81,8 @@ export const PWAInstallPrompt = () => {
               className="h-10 w-10 rounded-lg"
             />
             <div className="text-left">
-              <p className="font-medium text-foreground">FurionPay</p>
-              <p className="text-sm text-muted-foreground">furionpay.com</p>
+              <p className="text-lg font-semibold text-foreground">FurionPay</p>
+              <p className="text-base text-muted-foreground">furionpay.com</p>
             </div>
           </DialogDescription>
         </DialogHeader>
