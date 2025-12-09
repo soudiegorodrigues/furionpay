@@ -263,11 +263,11 @@ export default function AdminCloaker() {
                 Novo Cloaker
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Criar Novo Cloaker</DialogTitle>
                 <DialogDescription>
-                  Configure as regras de redirecionamento para seu link
+                  Configure as regras de redirecionamento
                 </DialogDescription>
               </DialogHeader>
               
