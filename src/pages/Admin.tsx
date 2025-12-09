@@ -36,7 +36,8 @@ import {
   Trophy,
   Mail,
   AlertTriangle,
-  Search
+  Search,
+  CheckCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -225,6 +226,7 @@ const Admin = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [rankingDateFilter, setRankingDateFilter] = useState<DateFilter>('all');
   const [isLoadingRanking, setIsLoadingRanking] = useState(false);
+  const [isCheckingBatch, setIsCheckingBatch] = useState(false);
 
   useEffect(() => {
     if (activeSection === "faturamento") {
@@ -709,10 +711,47 @@ const Admin = () => {
                   <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   Faturamento Global
                 </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => { loadGlobalStats(); loadTransactions(); }} disabled={isLoading} className="w-full sm:w-auto">
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                  Atualizar
-                </Button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={async () => {
+                      setIsCheckingBatch(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('batch-check-pix-status');
+                        if (error) throw error;
+                        toast({
+                          title: "Verificação concluída",
+                          description: `${data?.checked || 0} verificadas, ${data?.updated || 0} atualizadas`
+                        });
+                        loadGlobalStats();
+                        loadTransactions();
+                      } catch (error) {
+                        console.error('Batch check error:', error);
+                        toast({
+                          title: "Erro",
+                          description: "Falha ao verificar transações",
+                          variant: "destructive"
+                        });
+                      } finally {
+                        setIsCheckingBatch(false);
+                      }
+                    }} 
+                    disabled={isCheckingBatch}
+                    className="flex-1 sm:flex-none"
+                  >
+                    {isCheckingBatch ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Verificar</span>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => { loadGlobalStats(); loadTransactions(); }} disabled={isLoading} className="flex-1 sm:flex-none">
+                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    <span className="ml-2 hidden sm:inline">Atualizar</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -922,16 +961,16 @@ const Admin = () => {
                 Ranking de Faturamentos
               </CardTitle>
               <Select value={rankingDateFilter} onValueChange={handleRankingFilterChange}>
-                <SelectTrigger className="w-full sm:w-[150px] h-8 text-xs sm:text-sm">
-                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <SelectTrigger className="w-[100px] h-7 text-xs">
+                  <Calendar className="h-3 w-3 mr-1" />
                   <SelectValue placeholder="Período" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="today">Hoje</SelectItem>
                   <SelectItem value="7days">7 dias</SelectItem>
-                  <SelectItem value="month">Este mês</SelectItem>
-                  <SelectItem value="year">Este ano</SelectItem>
+                  <SelectItem value="month">Mês</SelectItem>
+                  <SelectItem value="year">Ano</SelectItem>
                 </SelectContent>
               </Select>
             </CardHeader>
