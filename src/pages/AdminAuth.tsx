@@ -486,12 +486,12 @@ const AdminAuth = () => {
 
       <div className="w-full max-w-[440px] animate-fade-in relative z-10">
         {/* Logo with glow effect */}
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-6 md:mb-10">
           <div className="relative">
             <div className="absolute inset-0 blur-2xl opacity-60" style={{
             background: 'radial-gradient(circle, hsl(var(--primary) / 0.6) 0%, transparent 70%)'
           }} />
-            <img src={furionLogo} alt="FurionPay" className="h-20 relative z-10 drop-shadow-[0_0_40px_rgba(239,68,68,0.4)]" />
+            <img src={furionLogo} alt="FurionPay" className="h-16 md:h-20 relative z-10 drop-shadow-[0_0_40px_rgba(239,68,68,0.4)]" />
           </div>
         </div>
 
@@ -500,21 +500,20 @@ const AdminAuth = () => {
           {/* Card glow */}
           <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-3xl blur-xl opacity-60" />
           
-          <div className="relative bg-black/60 backdrop-blur-2xl rounded-2xl border border-white/10 p-8 md:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          <div className="relative bg-black/60 backdrop-blur-2xl rounded-2xl border border-white/10 p-6 md:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             {/* Header with icon */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-5 md:mb-8">
               
-              <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1 md:mb-2">
                 {getTitle()}
               </h1>
-              <p className="text-sm text-white/50 leading-relaxed">
+              <p className="text-xs md:text-sm text-white/50 leading-relaxed">
                 {getDescription()}
               </p>
             </div>
 
-
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
             {mode === 'signup' && <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium text-white/80">
                   Nome completo
