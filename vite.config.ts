@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.png", "robots.txt"],
       manifest: {
-        name: "FurionPay",
+        name: "Plataforma FurionPay",
         short_name: "FurionPay",
         description: "Plataforma FurionPay | Receba suas vendas com tecnologia de API",
         theme_color: "#dc2626",
