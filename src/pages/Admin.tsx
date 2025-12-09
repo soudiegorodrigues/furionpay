@@ -46,6 +46,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { PersonalizacaoSection } from "@/components/admin/PersonalizacaoSection";
 import { EmailSection } from "@/components/admin/EmailSection";
+import { CheckoutGlobalSection } from "@/components/admin/CheckoutGlobalSection";
 
 // Zona de Perigo Component
 const ZonaDePerigo = () => {
@@ -1709,6 +1710,10 @@ const Admin = () => {
 
         {activeSection === "zona-perigo" && (
           <ZonaDePerigo />
+        )}
+
+        {activeSection === "checkout-global" && (
+          <CheckoutGlobalSection />
         )}
 
         {activeSection === "personalizacao" && (
