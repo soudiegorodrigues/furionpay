@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
         name: "FurionPay - Plataforma de Pagamentos",
         short_name: "FurionPay",
         description: "Plataforma Furion Pay | Receba suas vendas com tecnologia de API",
-        theme_color: "#000000",
+        theme_color: "#dc2626",
         background_color: "#000000",
         display: "standalone",
         orientation: "portrait",
