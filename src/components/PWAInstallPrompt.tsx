@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Share } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import pwaLogo from "/pwa-512x512.png";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -21,6 +22,20 @@ export const PWAInstallPrompt = () => {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [canShowManualPrompt, setCanShowManualPrompt] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Check if already installed
@@ -90,8 +105,8 @@ export const PWAInstallPrompt = () => {
     localStorage.setItem("pwa-prompt-dismissed", "true");
   };
 
-  // Don't show if installed or if no way to show prompt
-  if (isInstalled || (!isIOS && !deferredPrompt && !canShowManualPrompt)) return null;
+  // Don't show if installed, authenticated, or if no way to show prompt
+  if (isInstalled || isAuthenticated || (!isIOS && !deferredPrompt && !canShowManualPrompt)) return null;
 
   const showManualDesktopInstructions = canShowManualPrompt && !deferredPrompt && !isIOS;
 
