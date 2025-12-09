@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import defaultBanner from "@/assets/dashboard-banner-preview.png";
 
 interface DashboardStats {
   total_generated: number;
@@ -83,9 +82,7 @@ const AdminDashboard = () => {
       if (settingsData) {
         const settings = settingsData as { key: string; value: string }[];
         const banner = settings.find(s => s.key === 'dashboard_banner_url');
-        setBannerUrl(banner?.value || defaultBanner);
-      } else {
-        setBannerUrl(defaultBanner);
+        setBannerUrl(banner?.value || null);
       }
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
