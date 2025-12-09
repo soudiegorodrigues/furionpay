@@ -253,6 +253,7 @@ const Admin = () => {
     if (!isAdmin) return; // Don't load data if not admin
     if (activeSection === "faturamento") {
       loadGlobalStats();
+      loadTransactions(); // Also load transactions for the chart
     } else if (activeSection === "transacoes") {
       loadTransactions();
     } else if (activeSection === "dominios") {
