@@ -1057,123 +1057,141 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            {/* Domains List */}
-            <Card className="max-w-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-primary" />
-                  Domínios Cadastrados
-                </CardTitle>
-                <CardDescription>
-                  {domains.length} domínio(s) cadastrado(s)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingDomains ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : domains.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">
+            {/* Domains List - Two Cards */}
+            {isLoadingDomains ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : domains.length === 0 ? (
+              <Card className="max-w-md">
+                <CardContent className="py-8">
+                  <p className="text-muted-foreground text-center">
                     Nenhum domínio cadastrado
                   </p>
-                ) : (
-                  <div className="space-y-3">
-                    {domains.map((domain) => (
-                      <div 
-                        key={domain.id} 
-                        className={`p-4 rounded-lg border ${
-                          domain.is_active ? 'bg-card' : 'bg-muted/50'
-                        }`}
-                      >
-                        {editingId === domain.id ? (
-                          /* Editing Mode */
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs">Domínio</Label>
-                                <Input
-                                  value={editDomain}
-                                  onChange={(e) => setEditDomain(e.target.value)}
-                                  placeholder="exemplo.com.br"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">Nome (opcional)</Label>
-                                <Input
-                                  value={editName}
-                                  onChange={(e) => setEditName(e.target.value)}
-                                  placeholder="Nome amigável"
-                                />
-                              </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[0, 1].map((cardIndex) => {
+                  const startIndex = cardIndex * 5;
+                  const cardDomains = domains.slice(startIndex, startIndex + 5);
+                  if (cardDomains.length === 0) return null;
+                  
+                  return (
+                    <Card key={cardIndex} className="max-w-md">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <Globe className="h-4 w-4 text-primary" />
+                          Domínios {cardIndex === 0 ? '1-5' : '6-10'}
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          {cardDomains.length} domínio(s)
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="space-y-2">
+                          {cardDomains.map((domain) => (
+                            <div 
+                              key={domain.id} 
+                              className={`p-3 rounded-lg border ${
+                                domain.is_active ? 'bg-card' : 'bg-muted/50'
+                              }`}
+                            >
+                              {editingId === domain.id ? (
+                                /* Editing Mode */
+                                <div className="space-y-2">
+                                  <div className="space-y-2">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Domínio</Label>
+                                      <Input
+                                        value={editDomain}
+                                        onChange={(e) => setEditDomain(e.target.value)}
+                                        placeholder="exemplo.com.br"
+                                        className="h-8 text-sm"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Nome (opcional)</Label>
+                                      <Input
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        placeholder="Nome amigável"
+                                        className="h-8 text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button size="sm" className="h-7 text-xs" onClick={() => saveEdit(domain.id)}>
+                                      <Check className="w-3 h-3 mr-1" />
+                                      Salvar
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={cancelEditing}>
+                                      <X className="w-3 h-3 mr-1" />
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                /* View Mode */
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                      domain.is_active ? 'bg-green-500' : 'bg-gray-400'
+                                    }`} />
+                                    <div className="min-w-0 max-w-[120px]">
+                                      <p className="font-medium text-sm truncate">{domain.domain}</p>
+                                      {domain.name && (
+                                        <p className="text-xs text-muted-foreground truncate">{domain.name}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => startEditing(domain)}
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </Button>
+                                    <Switch
+                                      checked={domain.is_active}
+                                      onCheckedChange={() => toggleDomainStatus(domain.id, domain.is_active)}
+                                      className="scale-75"
+                                    />
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Esta ação não pode ser desfeita. O domínio "{domain.domain}" será removido permanentemente.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => deleteDomain(domain.id)}>
+                                            Remover
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => saveEdit(domain.id)}>
-                                <Check className="w-4 h-4 mr-1" />
-                                Salvar
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={cancelEditing}>
-                                <X className="w-4 h-4 mr-1" />
-                                Cancelar
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          /* View Mode */
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-2 h-2 rounded-full ${
-                                domain.is_active ? 'bg-green-500' : 'bg-gray-400'
-                              }`} />
-                              <div className="max-w-[180px]">
-                                <p className="font-medium truncate">{domain.domain}</p>
-                                {domain.name && (
-                                  <p className="text-sm text-muted-foreground truncate">{domain.name}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => startEditing(domain)}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Switch
-                                checked={domain.is_active}
-                                onCheckedChange={() => toggleDomainStatus(domain.id, domain.is_active)}
-                              />
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Remover domínio?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Esta ação não pode ser desfeita. O domínio "{domain.domain}" será removido permanentemente.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => deleteDomain(domain.id)}>
-                                      Remover
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
