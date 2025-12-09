@@ -996,22 +996,22 @@ const Admin = () => {
                       <TableBody>
                         {rankingUsers.map((rankUser, index) => (
                           <TableRow key={rankUser.user_id || index}>
-                            <TableCell className="font-bold text-xs">
+                            <TableCell className="font-bold text-sm">
                               {(rankingPage - 1) * RANKING_PER_PAGE + index + 1}º
                             </TableCell>
-                            <TableCell className="truncate max-w-[120px] sm:max-w-[200px] text-xs">
+                            <TableCell className="truncate max-w-[120px] sm:max-w-[200px] text-sm">
                               {rankUser.user_email}
                             </TableCell>
-                            <TableCell className="text-center text-blue-400 text-xs hidden sm:table-cell">
+                            <TableCell className="text-center text-blue-400 text-sm hidden sm:table-cell">
                               {rankUser.total_generated}
                             </TableCell>
-                            <TableCell className="text-center text-green-400 text-xs">
+                            <TableCell className="text-center text-green-400 text-sm">
                               {rankUser.total_paid}
                             </TableCell>
-                            <TableCell className="text-center text-yellow-400 text-xs hidden sm:table-cell">
+                            <TableCell className="text-center text-yellow-400 text-sm hidden sm:table-cell">
                               {rankUser.conversion_rate}%
                             </TableCell>
-                            <TableCell className="text-right font-semibold text-primary text-xs whitespace-nowrap">
+                            <TableCell className="text-right font-semibold text-primary text-sm whitespace-nowrap">
                               {formatCurrency(rankUser.total_amount_paid)}
                             </TableCell>
                           </TableRow>
