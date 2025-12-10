@@ -34,13 +34,43 @@ function createMtlsClient(): Deno.HttpClient {
     throw new Error('Certificados mTLS do Banco Inter não configurados');
   }
 
-  // Decode base64 if certificates are stored as base64
-  const certPem = certificate.includes('-----BEGIN') 
-    ? certificate 
-    : atob(certificate);
-  const keyPem = privateKey.includes('-----BEGIN') 
-    ? privateKey 
-    : atob(privateKey);
+  console.log('Certificate length:', certificate.length);
+  console.log('Private key length:', privateKey.length);
+  console.log('Certificate starts with BEGIN:', certificate.includes('-----BEGIN'));
+  console.log('Private key starts with BEGIN:', privateKey.includes('-----BEGIN'));
+
+  let certPem: string;
+  let keyPem: string;
+
+  // Try to decode as base64 if not already in PEM format
+  try {
+    if (certificate.includes('-----BEGIN')) {
+      certPem = certificate;
+    } else {
+      // Try base64 decode
+      certPem = atob(certificate);
+    }
+  } catch (e) {
+    console.error('Failed to decode certificate:', e);
+    // If base64 fails, use as-is
+    certPem = certificate;
+  }
+
+  try {
+    if (privateKey.includes('-----BEGIN')) {
+      keyPem = privateKey;
+    } else {
+      // Try base64 decode  
+      keyPem = atob(privateKey);
+    }
+  } catch (e) {
+    console.error('Failed to decode private key:', e);
+    // If base64 fails, use as-is
+    keyPem = privateKey;
+  }
+
+  console.log('Cert PEM starts with BEGIN:', certPem.includes('-----BEGIN'));
+  console.log('Key PEM starts with BEGIN:', keyPem.includes('-----BEGIN'));
 
   return Deno.createHttpClient({
     cert: certPem,
