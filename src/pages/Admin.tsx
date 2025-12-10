@@ -1509,25 +1509,30 @@ const Admin = () => {
                       <Check className="w-3 h-3 mr-1" />
                       Integrado
                     </Badge>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => setShowInterConfigDialog(true)}
+                        className="text-xs px-2 sm:px-3"
                       >
-                        <Settings className="w-4 h-4 mr-1" />
-                        Configurar
+                        <Settings className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Configurar</span>
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={testInterConnection}
                         disabled={isTestingInter}
+                        className="text-xs px-2 sm:px-3"
                       >
                         {isTestingInter ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
                         ) : (
-                          "Testar"
+                          <>
+                            <span className="hidden sm:inline">Testar</span>
+                            <span className="sm:hidden">Test</span>
+                          </>
                         )}
                       </Button>
                     </div>
