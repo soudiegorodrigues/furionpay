@@ -76,11 +76,11 @@ export function AdminSidebar({
                     <NavLink 
                       to={item.url} 
                       end 
-                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-4 py-3.5 md:px-3 md:py-2.5 active:scale-95 transition-transform" 
+                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-4 py-3.5 active:scale-95 transition-transform" 
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
-                      <item.icon className="h-6 w-6 md:h-5 md:w-5 shrink-0" />
-                      <span className="text-base md:text-sm">{item.title}</span>
+                      <item.icon className="h-5 w-5 shrink-0" />
+                      <span className="text-sm">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -93,10 +93,10 @@ export function AdminSidebar({
                 <SidebarMenuButton asChild>
                   <button 
                     onClick={promptInstall}
-                    className="flex items-center gap-3 hover:bg-primary/10 rounded-lg px-4 py-3.5 md:px-3 md:py-2.5 active:scale-95 transition-transform w-full border border-primary/30 text-primary"
+                    className="flex items-center gap-3 hover:bg-primary/10 rounded-lg px-4 py-3.5 active:scale-95 transition-transform w-full border border-primary/30 text-primary"
                   >
-                    <Download className="h-6 w-6 md:h-5 md:w-5 shrink-0" />
-                    <span className="text-base md:text-sm">Instalar App</span>
+                    <Download className="h-5 w-5 shrink-0" />
+                    <span className="text-sm">Instalar App</span>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
