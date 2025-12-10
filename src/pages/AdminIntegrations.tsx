@@ -21,14 +21,24 @@ interface Integration {
   configurable?: boolean;
 }
 
-const integrations: Integration[] = [{
-  id: "spedpay",
-  name: "SpedPay",
-  description: "Gateway de pagamento PIX integrado",
-  status: "connected",
-  methods: ["PIX"],
-  configurable: true
-}];
+const integrations: Integration[] = [
+  {
+    id: "spedpay",
+    name: "SpedPay",
+    description: "Gateway de pagamento PIX integrado",
+    status: "connected",
+    methods: ["PIX"],
+    configurable: true
+  },
+  {
+    id: "banco_inter",
+    name: "Banco Inter",
+    description: "Gateway PIX via Banco Inter",
+    status: "connected",
+    methods: ["PIX"],
+    configurable: true
+  }
+];
 
 const AdminIntegrations = () => {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
@@ -108,8 +118,8 @@ const AdminIntegrations = () => {
         {/* Active Integrations */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold">Integrações Ativas</h2>
-            <Badge variant="secondary">1</Badge>
+            <h2 className="text-lg font-semibold">Adquirentes Ativos</h2>
+            <Badge variant="secondary">{integrations.filter(i => i.status === "connected").length}</Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
