@@ -84,7 +84,7 @@ const popupModels = [{
 }];
 
 const AdminCheckout = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
   const [previewModel, setPreviewModel] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("boost");
@@ -101,23 +101,43 @@ const AdminCheckout = () => {
   }, [isAuthenticated]);
 
   const loadData = async () => {
+    setIsLoading(false); // Remove loading state immediately
+    
     try {
-      // Load popup stats for current user only
-      const { data: statsData } = await supabase.rpc('get_user_popup_model_stats');
-      setPopupStats(statsData || []);
+      // Load all data in parallel for faster loading
+      const [offersResult, statsResult, domainsResult, settingsResult] = await Promise.all([
+        supabase
+          .from('checkout_offers')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase.rpc('get_user_popup_model_stats'),
+        supabase
+          .from('available_domains')
+          .select('id, domain, name')
+          .eq('is_active', true)
+          .order('domain'),
+        supabase.rpc('get_user_settings'),
+      ]);
 
-      // Load available domains
-      const { data: domainsData } = await supabase
-        .from('available_domains')
-        .select('id, domain, name')
-        .eq('is_active', true)
-        .order('domain');
-      setAvailableDomains(domainsData || []);
+      // Set offers first (priority)
+      if (!offersResult.error) {
+        setOffers((offersResult.data || []).map(o => ({
+          id: o.id,
+          name: o.name,
+          domain: o.domain || '',
+          popup_model: o.popup_model || 'landing',
+          product_name: o.product_name || '',
+          meta_pixel_ids: o.meta_pixel_ids || [],
+        })));
+      }
 
-      // Load user meta pixels
-      const { data: settingsData } = await supabase.rpc('get_user_settings');
-      if (settingsData) {
-        const settings = settingsData as { key: string; value: string; }[];
+      // Set other data
+      setPopupStats(statsResult.data || []);
+      setAvailableDomains(domainsResult.data || []);
+
+      // Parse meta pixels
+      if (settingsResult.data) {
+        const settings = settingsResult.data as { key: string; value: string; }[];
         const pixelsSetting = settings.find(s => s.key === 'meta_pixels');
         if (pixelsSetting?.value) {
           try {
@@ -128,29 +148,8 @@ const AdminCheckout = () => {
           }
         }
       }
-
-      // Load user's checkout offers
-      const { data: offersData, error: offersError } = await supabase
-        .from('checkout_offers')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (offersError) {
-        console.error('Error loading offers:', offersError);
-      } else {
-        setOffers((offersData || []).map(o => ({
-          id: o.id,
-          name: o.name,
-          domain: o.domain || '',
-          popup_model: o.popup_model || 'landing',
-          product_name: o.product_name || '',
-          meta_pixel_ids: o.meta_pixel_ids || [],
-        })));
-      }
     } catch (error) {
       console.error('Error loading data:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
