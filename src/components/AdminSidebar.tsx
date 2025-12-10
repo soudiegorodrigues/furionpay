@@ -86,22 +86,20 @@ export function AdminSidebar({
                 </SidebarMenuItem>
               ))}
               
-              {canInstall && !isInstalled && (
-                <SidebarMenuItem 
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${visibleMenuItems.length * 50}ms`, animationFillMode: 'both' }}
-                >
-                  <SidebarMenuButton asChild>
-                    <button 
-                      onClick={promptInstall}
-                      className="flex items-center gap-3 hover:bg-primary/10 rounded-lg px-4 py-3.5 md:px-3 md:py-2.5 active:scale-95 transition-transform w-full border border-primary/30 text-primary"
-                    >
-                      <Download className="h-6 w-6 md:h-5 md:w-5 shrink-0" />
-                      <span className="text-base md:text-sm">Instalar App</span>
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+              <SidebarMenuItem 
+                className="animate-fade-in"
+                style={{ animationDelay: `${visibleMenuItems.length * 50}ms`, animationFillMode: 'both' }}
+              >
+                <SidebarMenuButton asChild>
+                  <button 
+                    onClick={promptInstall}
+                    className="flex items-center gap-3 hover:bg-primary/10 rounded-lg px-4 py-3.5 md:px-3 md:py-2.5 active:scale-95 transition-transform w-full border border-primary/30 text-primary"
+                  >
+                    <Download className="h-6 w-6 md:h-5 md:w-5 shrink-0" />
+                    <span className="text-base md:text-sm">Instalar App</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
