@@ -59,7 +59,29 @@ export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: Insta
         {/* Content */}
         <div className="px-6 pb-6">
           {isIOS ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Features */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/30">
+                  <div className="flex items-center justify-center mb-2">
+                    <Zap className="h-6 w-6 text-yellow-500" />
+                  </div>
+                  <p className="text-xs text-zinc-400">Acesso Rápido</p>
+                </div>
+                <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/30">
+                  <div className="flex items-center justify-center mb-2">
+                    <Smartphone className="h-6 w-6 text-blue-500" />
+                  </div>
+                  <p className="text-xs text-zinc-400">Tela Cheia</p>
+                </div>
+                <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/30">
+                  <div className="flex items-center justify-center mb-2">
+                    <Bell className="h-6 w-6 text-green-500" />
+                  </div>
+                  <p className="text-xs text-zinc-400">Notificações</p>
+                </div>
+              </div>
+
               <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
                 <p className="text-sm text-zinc-300 mb-3 font-medium">
                   Para instalar no iPhone/iPad:
@@ -79,12 +101,24 @@ export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: Insta
                   </li>
                 </ol>
               </div>
-              <Button 
-                onClick={handleClose}
-                className="w-full bg-primary hover:bg-primary/90"
-              >
-                Entendi
-              </Button>
+              
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <Button 
+                  variant="ghost" 
+                  onClick={handleClose}
+                  className="flex-1 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-0"
+                >
+                  Fechar
+                </Button>
+                <Button 
+                  onClick={handleClose}
+                  className="flex-1 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Instalar Agora
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-5">
