@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Settings, Activity, Save, Loader2, Plus, Trash2, AlertTriangle, Pencil, ChevronDown } from "lucide-react";
+import { Settings, Activity, Save, Loader2, Plus, Trash2, AlertTriangle, Pencil, ChevronDown, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -280,6 +280,30 @@ const AdminSettings = () => {
                 <li><code>PixGenerated</code> - Quando o QR Code PIX é gerado</li>
                 <li><code>Purchase</code> - Quando o pagamento PIX é confirmado</li>
               </ul>
+            </div>
+
+            <Separator />
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Código de UTMs do Facebook</p>
+              <p className="text-xs text-muted-foreground">Use este código nas suas campanhas para rastrear a origem dos pagamentos</p>
+              <div className="flex gap-2">
+                <code className="flex-1 text-xs bg-secondary p-2 rounded break-all">
+                  utm_source=FB&utm_campaign={"{{campaign.name}}"}|{"{{campaign.id}}"}&utm_medium={"{{adset.name}}"}|{"{{adset.id}}"}&utm_content={"{{ad.name}}"}|{"{{ad.id}}"}&utm_term={"{{placement}}"}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText("utm_source=FB&utm_campaign={{campaign.name}}|{{campaign.id}}&utm_medium={{adset.name}}|{{adset.id}}&utm_content={{ad.name}}|{{ad.id}}&utm_term={{placement}}");
+                    toast({
+                      title: "Copiado!",
+                      description: "Código UTM copiado para a área de transferência"
+                    });
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
