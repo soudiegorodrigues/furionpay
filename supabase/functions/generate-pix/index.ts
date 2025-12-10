@@ -66,6 +66,26 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
+async function getUserAcquirer(userId?: string): Promise<string> {
+  if (!userId) return 'spedpay';
+  
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'user_acquirer')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (error || !data?.value) {
+    console.log('User acquirer not configured, defaulting to spedpay');
+    return 'spedpay';
+  }
+  
+  console.log('User acquirer:', data.value);
+  return data.value;
+}
+
 async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
   const supabase = getSupabaseClient();
   
@@ -80,7 +100,7 @@ async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
     .select('value')
     .eq('key', 'spedpay_api_key')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   
   if (userError || !userData?.value) {
     console.error('User does not have API key configured:', userError?.message || 'No key found');
@@ -168,6 +188,41 @@ serve(async (req) => {
     console.log('Popup Model:', popupModel);
     console.log('UTM params received:', utmParams);
 
+    // Check user's acquirer preference
+    const acquirer = await getUserAcquirer(userId);
+    console.log('Selected acquirer:', acquirer);
+
+    // If user has Inter configured, forward to generate-pix-inter
+    if (acquirer === 'inter') {
+      console.log('Redirecting to Banco Inter...');
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      
+      const interResponse = await fetch(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ 
+          amount, 
+          donorName: customerName, 
+          utmParams, 
+          userId, 
+          popupModel 
+        }),
+      });
+      
+      const interData = await interResponse.text();
+      console.log('Inter response:', interData);
+      
+      return new Response(interData, { 
+        status: interResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    // Continue with SpedPay flow
     // Get API key from database (user-specific if userId provided)
     let apiKey = await getApiKeyFromDatabase(userId);
     
