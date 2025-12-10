@@ -7,11 +7,15 @@ import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { supabase } from "@/integrations/supabase/client";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
+import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
 export function AdminLayoutWrapper() {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin } = useAdminAuth();
   const [userName, setUserName] = useState<string | null>(null);
+  const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
 
   // Redirect if not authenticated - only on initial load
@@ -77,7 +81,11 @@ export function AdminLayoutWrapper() {
             <SidebarTrigger className="mr-3">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            <span className="font-semibold text-foreground">FurionPay</span>
+            <img 
+              src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} 
+              alt="FurionPay" 
+              className="h-8 w-auto object-contain" 
+            />
           </header>
           <BlockedUserAlert isBlocked={isBlocked} />
           <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-auto">
