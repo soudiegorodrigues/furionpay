@@ -159,7 +159,7 @@ export type Database = {
           created_at: string
           domain: string | null
           id: string
-          meta_pixel_id: string | null
+          meta_pixel_ids: string[] | null
           name: string
           popup_model: string | null
           product_name: string | null
@@ -170,7 +170,7 @@ export type Database = {
           created_at?: string
           domain?: string | null
           id?: string
-          meta_pixel_id?: string | null
+          meta_pixel_ids?: string[] | null
           name?: string
           popup_model?: string | null
           product_name?: string | null
@@ -181,7 +181,7 @@ export type Database = {
           created_at?: string
           domain?: string | null
           id?: string
-          meta_pixel_id?: string | null
+          meta_pixel_ids?: string[] | null
           name?: string
           popup_model?: string | null
           product_name?: string | null

@@ -43,7 +43,7 @@ interface CheckoutOffer {
   domain: string;
   popup_model: string;
   product_name: string;
-  meta_pixel_id: string;
+  meta_pixel_ids: string[];
 }
 
 const popupModels = [{
@@ -144,7 +144,7 @@ const AdminCheckout = () => {
           domain: o.domain || '',
           popup_model: o.popup_model || 'landing',
           product_name: o.product_name || '',
-          meta_pixel_id: o.meta_pixel_id || '',
+          meta_pixel_ids: o.meta_pixel_ids || [],
         })));
       }
     } catch (error) {
@@ -161,7 +161,7 @@ const AdminCheckout = () => {
       domain: availableDomains[0]?.domain || '',
       popup_model: 'landing',
       product_name: '',
-      meta_pixel_id: '',
+      meta_pixel_ids: [],
     };
     setOffers([newOffer, ...offers]);
   };
@@ -179,7 +179,7 @@ const AdminCheckout = () => {
             domain: offer.domain || null,
             popup_model: offer.popup_model,
             product_name: offer.product_name || null,
-            meta_pixel_id: offer.meta_pixel_id || null,
+            meta_pixel_ids: offer.meta_pixel_ids || [],
           })
           .select()
           .single();
@@ -203,7 +203,7 @@ const AdminCheckout = () => {
             domain: offer.domain || null,
             popup_model: offer.popup_model,
             product_name: offer.product_name || null,
-            meta_pixel_id: offer.meta_pixel_id || null,
+            meta_pixel_ids: offer.meta_pixel_ids || [],
           })
           .eq('id', offer.id);
 

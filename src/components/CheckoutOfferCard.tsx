@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -17,6 +18,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface CheckoutOffer {
   id: string;
@@ -24,7 +30,7 @@ interface CheckoutOffer {
   domain: string;
   popup_model: string;
   product_name: string;
-  meta_pixel_id: string;
+  meta_pixel_ids: string[];
 }
 
 interface AvailableDomain {
@@ -86,17 +92,28 @@ export const CheckoutOfferCard = ({
   const [domain, setDomain] = useState(offer.domain);
   const [popupModel, setPopupModel] = useState(offer.popup_model);
   const [productName, setProductName] = useState(offer.product_name);
-  const [metaPixelId, setMetaPixelId] = useState(offer.meta_pixel_id);
+  const [metaPixelIds, setMetaPixelIds] = useState<string[]>(offer.meta_pixel_ids || []);
+
+  const togglePixel = (pixelId: string) => {
+    setMetaPixelIds(prev => 
+      prev.includes(pixelId) 
+        ? prev.filter(id => id !== pixelId)
+        : [...prev, pixelId]
+    );
+  };
 
   const generateLink = () => {
     let link = domain 
       ? `https://www.${domain}/?u=${userId}&m=${popupModel}` 
       : `${window.location.origin}/?u=${userId}&m=${popupModel}`;
     
-    if (metaPixelId) {
-      const pixel = metaPixels.find(p => p.id === metaPixelId);
-      if (pixel?.pixelId) {
-        link += `&pixel=${pixel.pixelId}`;
+    if (metaPixelIds.length > 0) {
+      const pixelValues = metaPixelIds
+        .map(id => metaPixels.find(p => p.id === id)?.pixelId)
+        .filter(Boolean)
+        .join(',');
+      if (pixelValues) {
+        link += `&pixel=${pixelValues}`;
       }
     }
     return link;
@@ -139,7 +156,7 @@ export const CheckoutOfferCard = ({
         domain,
         popup_model: popupModel,
         product_name: productName,
-        meta_pixel_id: metaPixelId,
+        meta_pixel_ids: metaPixelIds,
       });
       setIsEditing(false);
     } finally {
@@ -161,7 +178,7 @@ export const CheckoutOfferCard = ({
     setDomain(offer.domain);
     setPopupModel(offer.popup_model);
     setProductName(offer.product_name);
-    setMetaPixelId(offer.meta_pixel_id);
+    setMetaPixelIds(offer.meta_pixel_ids || []);
     setIsEditing(false);
     if (isNew) {
       onDelete(offer.id);
@@ -280,29 +297,74 @@ export const CheckoutOfferCard = ({
             </div>
           </div>
 
-          {/* Pixel Selector */}
+          {/* Pixel Selector - Multi Select */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
-              Meta Pixel
+              Meta Pixels
             </Label>
-            <Select 
-              value={metaPixelId || "none"} 
-              onValueChange={val => setMetaPixelId(val === "none" ? "" : val)}
-              disabled={!isEditing}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Nenhum pixel configurado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {metaPixels.filter(pixel => pixel.id).map(pixel => (
-                  <SelectItem key={pixel.id} value={pixel.id}>
-                    {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild disabled={!isEditing}>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between font-normal"
+                  disabled={!isEditing}
+                >
+                  {metaPixelIds.length === 0 
+                    ? "Selecione pixels..." 
+                    : `${metaPixelIds.length} pixel${metaPixelIds.length > 1 ? 's' : ''} selecionado${metaPixelIds.length > 1 ? 's' : ''}`}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-2" align="start">
+                {metaPixels.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-2">Nenhum pixel configurado</p>
+                ) : (
+                  <div className="space-y-2">
+                    {metaPixels.filter(pixel => pixel.id).map(pixel => (
+                      <div key={pixel.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={pixel.id}
+                          checked={metaPixelIds.includes(pixel.id)}
+                          onCheckedChange={() => togglePixel(pixel.id)}
+                        />
+                        <label 
+                          htmlFor={pixel.id}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+            {metaPixelIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {metaPixelIds.map(id => {
+                  const pixel = metaPixels.find(p => p.id === id);
+                  if (!pixel) return null;
+                  return (
+                    <span 
+                      key={id} 
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs"
+                    >
+                      {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
+                      {isEditing && (
+                        <button 
+                          onClick={() => togglePixel(id)}
+                          className="hover:text-destructive"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Product Name */}
