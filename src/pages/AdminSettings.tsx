@@ -228,12 +228,14 @@ const AdminSettings = () => {
                     <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setEditingPixelId(isEditing ? null : pixel.id)}>
                       <div className="flex items-center gap-2">
                         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isEditing ? 'rotate-180' : ''}`} />
-                        <span className="text-sm font-medium">
-                          {pixel.name || `Pixel #${index + 1}`}
-                        </span>
-                        {pixel.pixelId && <span className="text-xs text-muted-foreground">
-                            ({pixel.pixelId.slice(0, 8)}...)
-                          </span>}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {pixel.name || `Pixel #${index + 1}`}
+                          </span>
+                          {pixel.pixelId && <span className="text-xs text-muted-foreground">
+                              ID: {pixel.pixelId}
+                            </span>}
+                        </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={e => {
