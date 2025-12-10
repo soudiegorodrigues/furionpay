@@ -65,18 +65,18 @@ export function AdminSidebar({
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1 w-full">
+            <SidebarMenu className="space-y-2 w-full">
               {visibleMenuItems.map(item => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
                       end 
-                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-3 py-2.5" 
+                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-4 py-3.5 md:px-3 md:py-2.5" 
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      <span className="text-sm">{item.title}</span>
+                      <item.icon className="h-6 w-6 md:h-5 md:w-5 shrink-0" />
+                      <span className="text-base md:text-sm">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
