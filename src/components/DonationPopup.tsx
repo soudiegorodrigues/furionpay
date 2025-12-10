@@ -265,6 +265,43 @@ export const DonationPopup = ({
               >
                 Contribuir
               </Button>
+
+              {/* Social Proof - Supporters */}
+              <div className="flex items-center justify-center gap-3 mt-5 pt-4 border-t border-border">
+                <div className="flex -space-x-2">
+                  <img 
+                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&fit=crop&crop=face" 
+                    alt="Apoiador" 
+                    className="w-8 h-8 rounded-full border-2 border-card object-cover"
+                  />
+                  <img 
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" 
+                    alt="Apoiador" 
+                    className="w-8 h-8 rounded-full border-2 border-card object-cover"
+                  />
+                  <img 
+                    src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" 
+                    alt="Apoiador" 
+                    className="w-8 h-8 rounded-full border-2 border-card object-cover"
+                  />
+                  <img 
+                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" 
+                    alt="Apoiador" 
+                    className="w-8 h-8 rounded-full border-2 border-card object-cover"
+                  />
+                  <img 
+                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" 
+                    alt="Apoiador" 
+                    className="w-8 h-8 rounded-full border-2 border-card object-cover"
+                  />
+                  <img 
+                    src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=40&h=40&fit=crop&crop=face" 
+                    alt="Apoiador" 
+                    className="w-8 h-8 rounded-full border-2 border-card object-cover"
+                  />
+                </div>
+                <span className="text-sm text-muted-foreground font-medium">+1.542 apoiadores</span>
+              </div>
             </>
           )}
 
