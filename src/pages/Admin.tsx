@@ -228,6 +228,7 @@ const Admin = () => {
 
   // User states
   const [users, setUsers] = useState<User[]>([]);
+  const [userAcquirers, setUserAcquirers] = useState<Record<string, string>>({});
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [userCurrentPage, setUserCurrentPage] = useState(1);
@@ -534,6 +535,22 @@ const Admin = () => {
       const { data, error } = await supabase.rpc('get_all_users_auth');
       if (error) throw error;
       setUsers(data || []);
+      
+      // Fetch acquirers for all users
+      const { data: acquirerData } = await supabase
+        .from('admin_settings')
+        .select('user_id, value')
+        .eq('key', 'user_acquirer');
+      
+      if (acquirerData) {
+        const acquirersMap: Record<string, string> = {};
+        acquirerData.forEach(item => {
+          if (item.user_id) {
+            acquirersMap[item.user_id] = item.value || 'spedpay';
+          }
+        });
+        setUserAcquirers(acquirersMap);
+      }
     } catch (error: any) {
       toast({
         title: 'Erro',
@@ -1767,6 +1784,7 @@ const Admin = () => {
                           <TableHead className="text-xs">Nome</TableHead>
                           <TableHead className="text-xs hidden sm:table-cell">Email</TableHead>
                           <TableHead className="text-xs hidden md:table-cell">Cadastro</TableHead>
+                          <TableHead className="text-xs hidden lg:table-cell">Adquirente</TableHead>
                           <TableHead className="text-xs">Status</TableHead>
                           <TableHead className="text-right text-xs">Ações</TableHead>
                         </TableRow>
@@ -1774,7 +1792,7 @@ const Admin = () => {
                       <TableBody>
                         {paginatedUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
                               Nenhum usuário cadastrado
                             </TableCell>
                           </TableRow>
@@ -1786,6 +1804,11 @@ const Admin = () => {
                               </TableCell>
                               <TableCell className="text-xs hidden sm:table-cell max-w-[150px] truncate">{u.email}</TableCell>
                               <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">{formatDate(u.created_at)}</TableCell>
+                              <TableCell className="text-xs hidden lg:table-cell">
+                                <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
+                                  {userAcquirers[u.id] === 'inter' ? 'Banco Inter' : 'SpedPay'}
+                                </Badge>
+                              </TableCell>
                               <TableCell>
                                 <div className="flex gap-1">
                                   {u.is_blocked ? (
