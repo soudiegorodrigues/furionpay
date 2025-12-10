@@ -184,11 +184,18 @@ export default function AdminProfile() {
                               const { error: txError } = await supabase.rpc('reset_user_transactions');
                               if (txError) throw txError;
 
-                              // Reset user settings
+                              // Reset user settings (preserve integration settings)
+                              const integrationKeys = [
+                                'spedpay_api_key', 'spedpay_fee_rate', 'spedpay_fixed_fee',
+                                'inter_client_id', 'inter_client_secret', 'inter_certificate', 
+                                'inter_private_key', 'inter_pix_key'
+                              ];
+                              
                               const { error: settingsError } = await supabase
                                 .from('admin_settings')
                                 .delete()
-                                .eq('user_id', user?.id);
+                                .eq('user_id', user?.id)
+                                .not('key', 'in', `(${integrationKeys.join(',')})`);
                               
                               if (settingsError) throw settingsError;
 
