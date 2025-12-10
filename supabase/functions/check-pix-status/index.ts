@@ -45,13 +45,62 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
   return data.value;
 }
 
-async function getInterAccessToken(): Promise<string> {
+// Normalize PEM format for certificates
+function normalizePem(pem: string): string {
+  let normalized = pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  
+  const certMatch = normalized.match(/-----BEGIN CERTIFICATE-----([\s\S]*?)-----END CERTIFICATE-----/);
+  const privKeyMatch = normalized.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+  const rsaKeyMatch = normalized.match(/-----BEGIN RSA PRIVATE KEY-----([\s\S]*?)-----END RSA PRIVATE KEY-----/);
+  
+  if (certMatch) {
+    const base64Content = certMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN CERTIFICATE-----\n${wrappedContent}\n-----END CERTIFICATE-----`;
+  }
+  
+  if (privKeyMatch) {
+    const base64Content = privKeyMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN PRIVATE KEY-----\n${wrappedContent}\n-----END PRIVATE KEY-----`;
+  }
+  
+  if (rsaKeyMatch) {
+    const base64Content = rsaKeyMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN RSA PRIVATE KEY-----\n${wrappedContent}\n-----END RSA PRIVATE KEY-----`;
+  }
+  
+  return normalized;
+}
+
+// Create mTLS client for Banco Inter
+function createMtlsClient(): Deno.HttpClient {
+  const certificate = Deno.env.get('INTER_CERTIFICATE');
+  const privateKey = Deno.env.get('INTER_PRIVATE_KEY');
+
+  if (!certificate || !privateKey) {
+    throw new Error('Certificados mTLS do Banco Inter não configurados');
+  }
+
+  const certPem = normalizePem(certificate);
+  const keyPem = normalizePem(privateKey);
+
+  return Deno.createHttpClient({
+    cert: certPem,
+    key: keyPem,
+  });
+}
+
+async function getInterAccessToken(client: Deno.HttpClient): Promise<string> {
   const clientId = Deno.env.get('INTER_CLIENT_ID');
   const clientSecret = Deno.env.get('INTER_CLIENT_SECRET');
 
   if (!clientId || !clientSecret) {
     throw new Error('Credenciais do Banco Inter não configuradas');
   }
+
+  console.log('Obtendo token de acesso do Banco Inter...');
 
   const tokenUrl = `${INTER_API_URL}/oauth/v2/token`;
   
@@ -68,21 +117,27 @@ async function getInterAccessToken(): Promise<string> {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: body.toString(),
+    client,
   });
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error('Erro ao obter token Inter:', response.status, errorText);
     throw new Error(`Erro ao obter token Inter: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
+  console.log('Token Inter obtido com sucesso');
   return data.access_token;
 }
 
 async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Banco Inter, txid:', txid);
   
-  const accessToken = await getInterAccessToken();
+  // Create mTLS client
+  const mtlsClient = createMtlsClient();
+  
+  const accessToken = await getInterAccessToken(mtlsClient);
   const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
 
   const response = await fetch(cobUrl, {
@@ -91,6 +146,7 @@ async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: 
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
+    client: mtlsClient,
   });
 
   if (!response.ok) {
@@ -105,7 +161,6 @@ async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: 
   const isPaid = data.status === 'CONCLUIDA';
   
   if (isPaid) {
-    // Mark as paid in database
     const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
     if (error) {
       console.error('Erro ao marcar PIX como pago:', error);
