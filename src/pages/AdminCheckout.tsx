@@ -85,6 +85,7 @@ const popupModels = [{
 
 const AdminCheckout = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
   const [previewModel, setPreviewModel] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("boost");
@@ -148,8 +149,10 @@ const AdminCheckout = () => {
           }
         }
       }
+      setHasLoaded(true);
     } catch (error) {
       console.error('Error loading data:', error);
+      setHasLoaded(true);
     }
   };
 
@@ -300,7 +303,7 @@ const AdminCheckout = () => {
               </Button>
             </div>
 
-            {offers.length === 0 && !isLoading && (
+            {offers.length === 0 && hasLoaded && (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
