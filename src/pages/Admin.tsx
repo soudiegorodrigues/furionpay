@@ -241,6 +241,7 @@ const Admin = () => {
   const [isLoadingRanking, setIsLoadingRanking] = useState(false);
   const [chartFilter, setChartFilter] = useState<ChartFilter>('30days');
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
+  const [isTestingInter, setIsTestingInter] = useState(false);
 
   // Redirect non-admin users to dashboard
   useEffect(() => {
@@ -264,6 +265,39 @@ const Admin = () => {
       loadRanking();
     }
   }, [activeSection, isAdmin]);
+
+  const testInterConnection = async () => {
+    setIsTestingInter(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pix-inter', {
+        body: {
+          amount: 0.01,
+          donorName: 'Teste Conexão',
+          productName: 'Teste Inter'
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Conexão OK",
+          description: "Banco Inter está funcionando corretamente!"
+        });
+      } else {
+        throw new Error(data?.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error('Erro ao testar Inter:', error);
+      toast({
+        title: "Erro na conexão",
+        description: error.message || "Falha ao conectar com Banco Inter",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTestingInter(false);
+    }
+  };
 
   const loadGlobalStats = async () => {
     setIsLoading(true);
@@ -1466,6 +1500,18 @@ const Admin = () => {
                       <Check className="w-3 h-3 mr-1" />
                       Integrado
                     </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={testInterConnection}
+                      disabled={isTestingInter}
+                    >
+                      {isTestingInter ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Testar"
+                      )}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
