@@ -27,6 +27,8 @@ const AdminSettings = () => {
   });
   const [pixels, setPixels] = useState<MetaPixel[]>([]);
   const [editingPixelId, setEditingPixelId] = useState<string | null>(null);
+  const [pixelPage, setPixelPage] = useState(1);
+  const PIXELS_PER_PAGE = 5;
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -222,15 +224,17 @@ const AdminSettings = () => {
           <CardContent className="space-y-4">
             {pixels.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">
                 Nenhum pixel configurado. Clique em "Adicionar Pixel" para começar.
-              </p> : pixels.map((pixel, index) => {
-            const isEditing = editingPixelId === pixel.id;
-            return <div key={pixel.id} className="border rounded-lg overflow-hidden">
+              </p> : <>
+              {pixels.slice((pixelPage - 1) * PIXELS_PER_PAGE, pixelPage * PIXELS_PER_PAGE).map((pixel, index) => {
+                const actualIndex = (pixelPage - 1) * PIXELS_PER_PAGE + index;
+                const isEditing = editingPixelId === pixel.id;
+                return <div key={pixel.id} className="border rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setEditingPixelId(isEditing ? null : pixel.id)}>
                       <div className="flex items-center gap-2">
                         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isEditing ? 'rotate-180' : ''}`} />
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">
-                            {pixel.name || `Pixel #${index + 1}`}
+                            {pixel.name || `Pixel #${actualIndex + 1}`}
                           </span>
                           {pixel.pixelId && <span className="text-xs text-muted-foreground">
                               ID: {pixel.pixelId}
@@ -267,7 +271,33 @@ const AdminSettings = () => {
                         </div>
                       </div>}
                   </div>;
-          })}
+              })}
+              {pixels.length > PIXELS_PER_PAGE && (
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-xs text-muted-foreground">
+                    Página {pixelPage} de {Math.ceil(pixels.length / PIXELS_PER_PAGE)}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setPixelPage(p => Math.max(1, p - 1))}
+                      disabled={pixelPage === 1}
+                    >
+                      Anterior
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setPixelPage(p => Math.min(Math.ceil(pixels.length / PIXELS_PER_PAGE), p + 1))}
+                      disabled={pixelPage >= Math.ceil(pixels.length / PIXELS_PER_PAGE)}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>}
             
             <Button variant="outline" onClick={addPixel} className="w-full">
               <Plus className="w-4 h-4 mr-2" />
