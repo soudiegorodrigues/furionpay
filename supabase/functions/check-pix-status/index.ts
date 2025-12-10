@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
+const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -29,6 +30,133 @@ async function getApiKeyForUser(supabase: any, userId: string): Promise<string |
   return data.value;
 }
 
+async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'user_acquirer')
+    .eq('user_id', userId)
+    .single();
+  
+  if (error || !data?.value) {
+    return 'spedpay'; // Default to SpedPay
+  }
+  
+  return data.value;
+}
+
+async function getInterAccessToken(): Promise<string> {
+  const clientId = Deno.env.get('INTER_CLIENT_ID');
+  const clientSecret = Deno.env.get('INTER_CLIENT_SECRET');
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Credenciais do Banco Inter não configuradas');
+  }
+
+  const tokenUrl = `${INTER_API_URL}/oauth/v2/token`;
+  
+  const body = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    scope: 'cob.read pix.read',
+    grant_type: 'client_credentials',
+  });
+
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: body.toString(),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Erro ao obter token Inter: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
+  console.log('Verificando status no Banco Inter, txid:', txid);
+  
+  const accessToken = await getInterAccessToken();
+  const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
+
+  const response = await fetch(cobUrl, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Erro ao consultar PIX Inter:', response.status, errorText);
+    return { isPaid: false, status: 'error' };
+  }
+
+  const data = await response.json();
+  console.log('Status Inter:', data.status);
+
+  const isPaid = data.status === 'CONCLUIDA';
+  
+  if (isPaid) {
+    // Mark as paid in database
+    const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
+    if (error) {
+      console.error('Erro ao marcar PIX como pago:', error);
+    } else {
+      console.log('PIX marcado como pago com sucesso');
+    }
+  }
+
+  return {
+    isPaid,
+    status: isPaid ? 'paid' : data.status,
+    paidAt: data.pix?.[0]?.horario || undefined,
+  };
+}
+
+async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
+  console.log('Verificando status no SpedPay, txid:', txid);
+
+  const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${txid}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-secret': apiKey,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('SpedPay API error:', response.status, errorText);
+    return { isPaid: false, status: 'error' };
+  }
+
+  const data = await response.json();
+  const spedpayStatus = data.status?.toLowerCase() || '';
+  const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
+
+  if (isPaid) {
+    const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
+    if (error) {
+      console.error('Erro ao marcar PIX como pago:', error);
+    } else {
+      console.log('PIX marcado como pago com sucesso');
+    }
+  }
+
+  return {
+    isPaid,
+    status: isPaid ? 'paid' : spedpayStatus,
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -48,20 +176,41 @@ serve(async (req) => {
 
     const supabase = getSupabaseClient();
     
-    // Get transaction from database
-    const { data: transaction, error: txError } = await supabase
-      .from('pix_transactions')
-      .select('*')
-      .eq('id', transactionId)
-      .single();
+    // Get transaction from database - try by id first, then by txid
+    let transaction = null;
     
-    if (txError || !transaction) {
-      console.error('Transaction not found:', txError?.message);
+    // Check if transactionId is a valid UUID (for id lookup)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isUuid = uuidRegex.test(transactionId);
+    
+    if (isUuid) {
+      const result = await supabase
+        .from('pix_transactions')
+        .select('*')
+        .eq('id', transactionId)
+        .single();
+      transaction = result.data;
+    }
+    
+    // If not found by id, try by txid
+    if (!transaction) {
+      const result = await supabase
+        .from('pix_transactions')
+        .select('*')
+        .eq('txid', transactionId)
+        .single();
+      transaction = result.data;
+    }
+    
+    if (!transaction) {
+      console.error('Transaction not found for:', transactionId);
       return new Response(
         JSON.stringify({ error: 'Transaction not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('Found transaction:', transaction.id, 'txid:', transaction.txid, 'status:', transaction.status);
 
     // If already paid, return immediately
     if (transaction.status === 'paid') {
@@ -72,85 +221,52 @@ serve(async (req) => {
       );
     }
 
-    // Get API key for user
-    let apiKey: string | null = null;
-    if (transaction.user_id) {
-      apiKey = await getApiKeyForUser(supabase, transaction.user_id);
-    }
-    
-    if (!apiKey) {
-      apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
-    }
-    
-    if (!apiKey) {
-      console.error('No API key available');
-      return new Response(
-        JSON.stringify({ error: 'API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Query SpedPay API for transaction status using txid
-    const spedpayTxId = transaction.txid;
-    if (!spedpayTxId) {
-      console.error('No SpedPay transaction ID found');
+    const txid = transaction.txid;
+    if (!txid) {
       return new Response(
         JSON.stringify({ status: transaction.status }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Querying SpedPay for transaction:', spedpayTxId);
-
-    const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${spedpayTxId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-secret': apiKey,
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('SpedPay API error:', response.status, errorText);
-      return new Response(
-        JSON.stringify({ status: transaction.status, spedpay_error: errorText }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Determine which acquirer to use based on user settings
+    let acquirer = 'spedpay';
+    if (transaction.user_id) {
+      acquirer = await getUserAcquirer(supabase, transaction.user_id);
     }
 
-    const spedpayData = await response.json();
-    console.log('SpedPay transaction status:', JSON.stringify(spedpayData, null, 2));
+    console.log('Using acquirer:', acquirer);
 
-    // Check if payment is complete - SpedPay uses various status values
-    const spedpayStatus = spedpayData.status?.toLowerCase() || '';
-    const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
+    let result: { isPaid: boolean; status: string; paidAt?: string };
 
-    if (isPaid && transaction.status !== 'paid') {
-      console.log('Payment confirmed! Updating database...');
+    if (acquirer === 'inter') {
+      result = await checkInterStatus(txid, supabase);
+    } else {
+      // SpedPay
+      let apiKey: string | null = null;
+      if (transaction.user_id) {
+        apiKey = await getApiKeyForUser(supabase, transaction.user_id);
+      }
+      if (!apiKey) {
+        apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
+      }
       
-      // Mark as paid using RPC function
-      const { data: updated, error: updateError } = await supabase.rpc('mark_pix_paid', {
-        p_txid: spedpayTxId
-      });
-
-      if (updateError) {
-        console.error('Error updating payment status:', updateError);
-      } else {
-        console.log('Payment marked as paid:', updated);
+      if (!apiKey) {
+        console.error('No SpedPay API key available');
+        return new Response(
+          JSON.stringify({ error: 'API key not configured' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
-      return new Response(
-        JSON.stringify({ status: 'paid', paid_at: new Date().toISOString(), just_updated: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      result = await checkSpedPayStatus(txid, apiKey, supabase);
     }
 
     return new Response(
-      JSON.stringify({ 
-        status: transaction.status, 
-        spedpay_status: spedpayStatus,
-        spedpay_data: spedpayData 
+      JSON.stringify({
+        status: result.status,
+        isPaid: result.isPaid,
+        paid_at: result.paidAt || (result.isPaid ? new Date().toISOString() : undefined),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
