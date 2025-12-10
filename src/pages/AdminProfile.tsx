@@ -180,28 +180,13 @@ export default function AdminProfile() {
                           onClick={async () => {
                             setResetting(true);
                             try {
-                              // Reset user transactions
+                              // Reset user transactions only
                               const { error: txError } = await supabase.rpc('reset_user_transactions');
                               if (txError) throw txError;
 
-                              // Reset user settings (preserve integration settings)
-                              const integrationKeys = [
-                                'spedpay_api_key', 'spedpay_fee_rate', 'spedpay_fixed_fee',
-                                'inter_client_id', 'inter_client_secret', 'inter_certificate', 
-                                'inter_private_key', 'inter_pix_key'
-                              ];
-                              
-                              const { error: settingsError } = await supabase
-                                .from('admin_settings')
-                                .delete()
-                                .eq('user_id', user?.id)
-                                .not('key', 'in', `(${integrationKeys.join(',')})`);
-                              
-                              if (settingsError) throw settingsError;
-
                               toast({
                                 title: "Conta resetada",
-                                description: "Suas transações e configurações foram removidas com sucesso.",
+                                description: "Seu histórico de transações foi removido com sucesso.",
                               });
                             } catch (error: any) {
                               toast({
