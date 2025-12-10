@@ -27,21 +27,34 @@ function generateTxId(): string {
 }
 
 function normalizePem(pem: string): string {
-  // Remove Windows line endings and normalize to Unix
-  let normalized = pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // Remove all whitespace and line breaks first
+  let normalized = pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   
-  // Trim whitespace
-  normalized = normalized.trim();
+  // Detect the type of PEM
+  const certMatch = normalized.match(/-----BEGIN CERTIFICATE-----([\s\S]*?)-----END CERTIFICATE-----/);
+  const privKeyMatch = normalized.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+  const rsaKeyMatch = normalized.match(/-----BEGIN RSA PRIVATE KEY-----([\s\S]*?)-----END RSA PRIVATE KEY-----/);
   
-  // Ensure proper line endings after headers
-  normalized = normalized
-    .replace(/-----BEGIN CERTIFICATE-----\s*/g, '-----BEGIN CERTIFICATE-----\n')
-    .replace(/\s*-----END CERTIFICATE-----/g, '\n-----END CERTIFICATE-----')
-    .replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n')
-    .replace(/\s*-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----')
-    .replace(/-----BEGIN RSA PRIVATE KEY-----\s*/g, '-----BEGIN RSA PRIVATE KEY-----\n')
-    .replace(/\s*-----END RSA PRIVATE KEY-----/g, '\n-----END RSA PRIVATE KEY-----');
+  if (certMatch) {
+    // Extract base64 content, remove all whitespace, then wrap at 64 chars
+    const base64Content = certMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN CERTIFICATE-----\n${wrappedContent}\n-----END CERTIFICATE-----`;
+  }
   
+  if (privKeyMatch) {
+    const base64Content = privKeyMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN PRIVATE KEY-----\n${wrappedContent}\n-----END PRIVATE KEY-----`;
+  }
+  
+  if (rsaKeyMatch) {
+    const base64Content = rsaKeyMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN RSA PRIVATE KEY-----\n${wrappedContent}\n-----END RSA PRIVATE KEY-----`;
+  }
+  
+  // If no match, return as-is
   return normalized;
 }
 
