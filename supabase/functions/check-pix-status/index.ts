@@ -9,9 +9,6 @@ const corsHeaders = {
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 
-// Token cache to avoid rate limiting
-let cachedInterToken: { token: string; expiresAt: number } | null = null;
-
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -42,13 +39,58 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
     .single();
   
   if (error || !data?.value) {
-    return 'spedpay'; // Default to SpedPay
+    return 'spedpay';
   }
   
   return data.value;
 }
 
-// Normalize PEM format for certificates
+// Get cached Inter token from database
+async function getCachedInterToken(supabase: any): Promise<{ token: string; expiresAt: number } | null> {
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'inter_token_cache')
+    .is('user_id', null)
+    .single();
+  
+  if (error || !data?.value) {
+    return null;
+  }
+  
+  try {
+    const cached = JSON.parse(data.value);
+    if (cached.token && cached.expiresAt) {
+      return cached;
+    }
+  } catch {
+    return null;
+  }
+  
+  return null;
+}
+
+// Save Inter token to database cache
+async function saveInterTokenCache(supabase: any, token: string, expiresAt: number): Promise<void> {
+  const cacheValue = JSON.stringify({ token, expiresAt });
+  
+  // Upsert the token cache
+  const { error } = await supabase
+    .from('admin_settings')
+    .upsert({
+      key: 'inter_token_cache',
+      value: cacheValue,
+      user_id: null,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'key,user_id',
+    });
+  
+  if (error) {
+    console.error('Error saving token cache:', error);
+  }
+}
+
 function normalizePem(pem: string): string {
   let normalized = pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   
@@ -77,7 +119,6 @@ function normalizePem(pem: string): string {
   return normalized;
 }
 
-// Create mTLS client for Banco Inter
 function createMtlsClient(): Deno.HttpClient {
   const certificate = Deno.env.get('INTER_CERTIFICATE');
   const privateKey = Deno.env.get('INTER_PRIVATE_KEY');
@@ -95,12 +136,14 @@ function createMtlsClient(): Deno.HttpClient {
   });
 }
 
-async function getInterAccessToken(client: Deno.HttpClient): Promise<string> {
-  // Check if we have a valid cached token (with 60 second buffer)
+async function getInterAccessToken(client: Deno.HttpClient, supabase: any): Promise<string> {
   const now = Date.now();
-  if (cachedInterToken && cachedInterToken.expiresAt > now + 60000) {
-    console.log('Using cached Inter token');
-    return cachedInterToken.token;
+  
+  // Check database cache first (with 5 minute buffer)
+  const cached = await getCachedInterToken(supabase);
+  if (cached && cached.expiresAt > now + 300000) {
+    console.log('Using cached Inter token from database');
+    return cached.token;
   }
 
   const clientId = Deno.env.get('INTER_CLIENT_ID');
@@ -138,24 +181,21 @@ async function getInterAccessToken(client: Deno.HttpClient): Promise<string> {
 
   const data = await response.json();
   
-  // Cache the token (Inter tokens typically last 3600 seconds)
+  // Cache the token in database (Inter tokens typically last 3600 seconds)
   const expiresIn = data.expires_in || 3600;
-  cachedInterToken = {
-    token: data.access_token,
-    expiresAt: now + (expiresIn * 1000),
-  };
+  const expiresAt = now + (expiresIn * 1000);
   
-  console.log('Token Inter obtido e cacheado com sucesso');
+  await saveInterTokenCache(supabase, data.access_token, expiresAt);
+  
+  console.log('Token Inter obtido e salvo no cache');
   return data.access_token;
 }
 
 async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Banco Inter, txid:', txid);
   
-  // Create mTLS client
   const mtlsClient = createMtlsClient();
-  
-  const accessToken = await getInterAccessToken(mtlsClient);
+  const accessToken = await getInterAccessToken(mtlsClient, supabase);
   const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
 
   const response = await fetch(cobUrl, {
@@ -249,10 +289,7 @@ serve(async (req) => {
 
     const supabase = getSupabaseClient();
     
-    // Get transaction from database - try by id first, then by txid
     let transaction = null;
-    
-    // Check if transactionId is a valid UUID (for id lookup)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const isUuid = uuidRegex.test(transactionId);
     
@@ -265,7 +302,6 @@ serve(async (req) => {
       transaction = result.data;
     }
     
-    // If not found by id, try by txid
     if (!transaction) {
       const result = await supabase
         .from('pix_transactions')
@@ -285,7 +321,6 @@ serve(async (req) => {
 
     console.log('Found transaction:', transaction.id, 'txid:', transaction.txid, 'status:', transaction.status);
 
-    // If already paid, return immediately
     if (transaction.status === 'paid') {
       console.log('Transaction already marked as paid');
       return new Response(
@@ -302,7 +337,6 @@ serve(async (req) => {
       );
     }
 
-    // Determine which acquirer to use based on user settings
     let acquirer = 'spedpay';
     if (transaction.user_id) {
       acquirer = await getUserAcquirer(supabase, transaction.user_id);
@@ -315,7 +349,6 @@ serve(async (req) => {
     if (acquirer === 'inter') {
       result = await checkInterStatus(txid, supabase);
     } else {
-      // SpedPay
       let apiKey: string | null = null;
       if (transaction.user_id) {
         apiKey = await getApiKeyForUser(supabase, transaction.user_id);
