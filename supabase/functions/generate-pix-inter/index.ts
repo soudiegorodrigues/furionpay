@@ -129,10 +129,28 @@ async function getAccessToken(client: Deno.HttpClient): Promise<string> {
   return data.access_token;
 }
 
+// Sanitiza a chave PIX (remove pontuação de CNPJ/CPF)
+function sanitizePixKey(key: string): string {
+  // Remove todos os caracteres não-alfanuméricos exceto @ e +
+  // CNPJ: 52.027.770/0001-21 -> 52027770000121
+  // CPF: 123.456.789-00 -> 12345678900
+  // Telefone e email permanecem inalterados
+  if (key.includes('@') || key.startsWith('+')) {
+    return key; // Email ou telefone, não modificar
+  }
+  return key.replace(/[.\-\/]/g, '');
+}
+
 async function createPixCob(client: Deno.HttpClient, accessToken: string, amount: number, txid: string): Promise<any> {
   const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
   
   const expirationSeconds = 3600; // 1 hora
+  
+  const rawPixKey = Deno.env.get('INTER_PIX_KEY') || '';
+  const pixKey = sanitizePixKey(rawPixKey);
+  
+  console.log('Chave PIX original:', rawPixKey);
+  console.log('Chave PIX sanitizada:', pixKey);
   
   const payload = {
     calendario: {
@@ -141,7 +159,7 @@ async function createPixCob(client: Deno.HttpClient, accessToken: string, amount
     valor: {
       original: amount.toFixed(2),
     },
-    chave: Deno.env.get('INTER_PIX_KEY') || '', // Chave PIX cadastrada no Inter
+    chave: pixKey,
   };
 
   console.log('Criando cobrança PIX Inter:', JSON.stringify(payload));
