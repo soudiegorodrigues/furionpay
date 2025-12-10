@@ -120,35 +120,69 @@ const AdminCheckout = () => {
         supabase.rpc('get_user_settings'),
       ]);
 
-      // Set offers first (priority)
-      if (!offersResult.error) {
-        setOffers((offersResult.data || []).map(o => ({
-          id: o.id,
-          name: o.name,
-          domain: o.domain || '',
-          popup_model: o.popup_model || 'landing',
-          product_name: o.product_name || '',
-          meta_pixel_ids: o.meta_pixel_ids || [],
-        })));
-      }
-
-      // Set other data
-      setPopupStats(statsResult.data || []);
-      setAvailableDomains(domainsResult.data || []);
-
-      // Parse meta pixels
+      // Parse meta pixels first
+      let parsedPixels: MetaPixel[] = [];
       if (settingsResult.data) {
         const settings = settingsResult.data as { key: string; value: string; }[];
         const pixelsSetting = settings.find(s => s.key === 'meta_pixels');
         if (pixelsSetting?.value) {
           try {
-            const parsedPixels = JSON.parse(pixelsSetting.value);
-            setMetaPixels(Array.isArray(parsedPixels) ? parsedPixels : []);
+            const parsed = JSON.parse(pixelsSetting.value);
+            parsedPixels = Array.isArray(parsed) ? parsed : [];
           } catch {
-            setMetaPixels([]);
+            parsedPixels = [];
           }
         }
       }
+      setMetaPixels(parsedPixels);
+
+      // Get valid pixel IDs
+      const validPixelIds = new Set(parsedPixels.map(p => p.id));
+
+      // Process offers and clean invalid pixel IDs
+      if (!offersResult.error && offersResult.data) {
+        const processedOffers: CheckoutOffer[] = [];
+        const offersToUpdate: { id: string; validIds: string[] }[] = [];
+
+        for (const o of offersResult.data) {
+          const currentPixelIds = o.meta_pixel_ids || [];
+          const validIds = currentPixelIds.filter((id: string) => validPixelIds.has(id));
+          
+          // Check if any invalid pixels were removed
+          if (validIds.length !== currentPixelIds.length && !o.id.startsWith('temp-')) {
+            offersToUpdate.push({ id: o.id, validIds });
+          }
+
+          processedOffers.push({
+            id: o.id,
+            name: o.name,
+            domain: o.domain || '',
+            popup_model: o.popup_model || 'landing',
+            product_name: o.product_name || '',
+            meta_pixel_ids: validIds,
+          });
+        }
+
+        setOffers(processedOffers);
+
+        // Update offers with invalid pixels in background
+        if (offersToUpdate.length > 0) {
+          Promise.all(
+            offersToUpdate.map(({ id, validIds }) =>
+              supabase
+                .from('checkout_offers')
+                .update({ meta_pixel_ids: validIds })
+                .eq('id', id)
+            )
+          ).then(() => {
+            console.log('Cleaned invalid pixel IDs from offers');
+          });
+        }
+      }
+
+      // Set other data
+      setPopupStats(statsResult.data || []);
+      setAvailableDomains(domainsResult.data || []);
       setHasLoaded(true);
     } catch (error) {
       console.error('Error loading data:', error);
