@@ -231,12 +231,35 @@ serve(async (req) => {
       apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
     }
     
+    // If no SpedPay API key, fallback to Banco Inter
     if (!apiKey) {
-      console.error('SPEDPAY_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ error: 'API key not configured. Please configure it in the admin panel (/admin).' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('No SpedPay API key configured, falling back to Banco Inter...');
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      
+      const interResponse = await fetch(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ 
+          amount, 
+          donorName: customerName, 
+          utmData: utmParams, 
+          userId, 
+          popupModel,
+          productName: await getProductNameFromDatabase(userId)
+        }),
+      });
+      
+      const interData = await interResponse.text();
+      console.log('Inter fallback response:', interData);
+      
+      return new Response(interData, { 
+        status: interResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
     console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
