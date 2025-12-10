@@ -940,7 +940,7 @@ const Admin = () => {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : globalStats ? (
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
                       <div className="text-xl sm:text-3xl font-bold text-blue-500">
                         {globalStats.total_generated}
@@ -965,15 +965,9 @@ const Admin = () => {
                       </div>
                       <p className="text-xs sm:text-sm text-muted-foreground">Conversão</p>
                     </div>
-                    <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                      <div className="text-xl sm:text-3xl font-bold text-red-500">
-                        {globalStats.total_expired}
-                      </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground">Expirados</p>
-                    </div>
 
                     {/* Today Stats */}
-                    <div className="col-span-2 lg:col-span-4 mt-3 sm:mt-4">
+                    <div className="col-span-3 mt-3 sm:mt-4">
                       <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Hoje</h3>
                       <div className="grid grid-cols-3 gap-2 sm:gap-4">
                         <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
