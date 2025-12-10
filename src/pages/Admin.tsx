@@ -1058,24 +1058,24 @@ const Admin = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-xs hidden lg:table-cell">Email</TableHead>
+                          <TableHead className="text-xs">Email</TableHead>
                           <TableHead className="text-xs">Data</TableHead>
                           <TableHead className="text-xs">Cliente</TableHead>
                           <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                           <TableHead className="text-xs">Valor</TableHead>
-                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-xs hidden sm:table-cell">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {paginatedTransactions.map((tx) => (
                           <TableRow key={tx.id}>
-                            <TableCell className="text-xs text-muted-foreground hidden lg:table-cell max-w-[150px] truncate">
+                            <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate">
                               {tx.user_email || '-'}
                             </TableCell>
                             <TableCell className="text-xs whitespace-nowrap">
                               {formatDate(tx.created_at)}
                             </TableCell>
-                            <TableCell className="text-xs font-medium max-w-[80px] sm:max-w-none truncate">
+                            <TableCell className="text-xs font-medium max-w-[60px] truncate">
                               {tx.donor_name || '-'}
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground hidden sm:table-cell max-w-[100px] truncate">
@@ -1084,7 +1084,7 @@ const Admin = () => {
                             <TableCell className="text-xs font-medium whitespace-nowrap">
                               {formatCurrency(tx.amount)}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden sm:table-cell">
                               {getStatusBadge(tx.status)}
                             </TableCell>
                           </TableRow>
