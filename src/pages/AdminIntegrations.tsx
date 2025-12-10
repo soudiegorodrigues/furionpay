@@ -23,17 +23,17 @@ interface Integration {
 
 const integrations: Integration[] = [
   {
-    id: "spedpay",
-    name: "SpedPay",
-    description: "Gateway de pagamento PIX integrado",
+    id: "banco_inter",
+    name: "Banco Inter",
+    description: "Gateway PIX via Banco Inter",
     status: "connected",
     methods: ["PIX"],
     configurable: true
   },
   {
-    id: "banco_inter",
-    name: "Banco Inter",
-    description: "Gateway PIX via Banco Inter",
+    id: "spedpay",
+    name: "SpedPay",
+    description: "Gateway de pagamento PIX integrado",
     status: "connected",
     methods: ["PIX"],
     configurable: true
