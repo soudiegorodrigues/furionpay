@@ -301,24 +301,6 @@ const AdminCheckout = () => {
               </Button>
             </div>
 
-            {isLoading && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-muted rounded-full animate-pulse" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
-                      <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="w-8 h-8 bg-muted rounded animate-pulse" />
-                      <div className="w-8 h-8 bg-muted rounded animate-pulse" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {offers.length === 0 && !isLoading && (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
@@ -337,23 +319,21 @@ const AdminCheckout = () => {
               </Card>
             )}
 
-            {!isLoading && (
-              <div className="space-y-4">
-                {offers.map((offer) => (
-                  <CheckoutOfferCard
-                    key={offer.id}
-                    offer={offer}
-                    userId={user?.id || ''}
-                    availableDomains={availableDomains}
-                    metaPixels={metaPixels}
-                    popupModels={popupModels}
-                    onSave={handleSaveOffer}
-                    onDelete={handleDeleteOffer}
-                    isNew={offer.id.startsWith('temp-')}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="space-y-4">
+              {offers.map((offer) => (
+                <CheckoutOfferCard
+                  key={offer.id}
+                  offer={offer}
+                  userId={user?.id || ''}
+                  availableDomains={availableDomains}
+                  metaPixels={metaPixels}
+                  popupModels={popupModels}
+                  onSave={handleSaveOffer}
+                  onDelete={handleDeleteOffer}
+                  isNew={offer.id.startsWith('temp-')}
+                />
+              ))}
+            </div>
           </TabsContent>
 
           {/* Tab: Models Grid */}
