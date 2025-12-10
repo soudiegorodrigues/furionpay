@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { 
@@ -233,6 +234,10 @@ const Admin = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userSearch, setUserSearch] = useState("");
+  const [userDetailsOpen, setUserDetailsOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserAcquirer, setSelectedUserAcquirer] = useState<string>('spedpay');
+  const [isSavingUserAcquirer, setIsSavingUserAcquirer] = useState(false);
 
   // Ranking states
   const [rankingUsers, setRankingUsers] = useState<RankingUser[]>([]);
@@ -616,6 +621,45 @@ const Admin = () => {
   const openDeleteDialog = (u: User) => {
     setUserToDelete(u);
     setDeleteDialogOpen(true);
+  };
+
+  const openUserDetails = async (u: User) => {
+    setSelectedUser(u);
+    setUserDetailsOpen(true);
+    // Load user's acquirer setting
+    try {
+      const { data } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('user_id', u.id)
+        .eq('key', 'user_acquirer')
+        .single();
+      setSelectedUserAcquirer(data?.value || 'spedpay');
+    } catch {
+      setSelectedUserAcquirer('spedpay');
+    }
+  };
+
+  const saveUserAcquirer = async () => {
+    if (!selectedUser) return;
+    setIsSavingUserAcquirer(true);
+    try {
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert({
+          user_id: selectedUser.id,
+          key: 'user_acquirer',
+          value: selectedUserAcquirer,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,user_id' });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Adquirente do usuário atualizado' });
+      setUserDetailsOpen(false);
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao salvar', variant: 'destructive' });
+    } finally {
+      setIsSavingUserAcquirer(false);
+    }
   };
 
   // Ranking functions
@@ -1758,6 +1802,15 @@ const Admin = () => {
                                   <span className="text-xs text-muted-foreground">Você</span>
                                 ) : (
                                   <div className="flex items-center justify-end gap-1">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 w-7 p-0"
+                                      onClick={() => openUserDetails(u)}
+                                      title="Editar"
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
                                     {u.is_admin ? (
                                       <Button
                                         variant="outline"
@@ -1880,6 +1933,100 @@ const Admin = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* User Details Dialog */}
+        <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Detalhes do Usuário</DialogTitle>
+              <DialogDescription>
+                Configure as opções do usuário
+              </DialogDescription>
+            </DialogHeader>
+            {selectedUser && (
+              <div className="space-y-6">
+                {/* User Info Header */}
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
+                    {selectedUser.full_name?.[0]?.toUpperCase() || selectedUser.email[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-lg truncate">
+                      {selectedUser.full_name || selectedUser.email.split('@')[0]}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">{selectedUser.email}</p>
+                    <div className="flex gap-2 mt-1">
+                      {selectedUser.is_admin ? (
+                        <Badge className="bg-primary text-[10px]">Admin</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px]">User</Badge>
+                      )}
+                      {selectedUser.is_blocked ? (
+                        <Badge variant="destructive" className="text-[10px]">Bloqueado</Badge>
+                      ) : (
+                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">Ativo</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* User Details */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">Cadastro</p>
+                    <p className="font-medium">{formatDate(selectedUser.created_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Último Acesso</p>
+                    <p className="font-medium">{formatDate(selectedUser.last_sign_in_at)}</p>
+                  </div>
+                </div>
+
+                {/* Acquirer Selection */}
+                <div className="space-y-2 pt-2 border-t">
+                  <Label className="text-sm font-medium">Adquirente</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Selecione qual gateway de pagamento este usuário irá utilizar
+                  </p>
+                  <Select value={selectedUserAcquirer} onValueChange={setSelectedUserAcquirer}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o adquirente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="spedpay">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-primary/10 rounded flex items-center justify-center">
+                            <CreditCard className="w-3 h-3 text-primary" />
+                          </div>
+                          SpedPay
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="inter">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-orange-500/10 rounded flex items-center justify-center text-orange-500 text-[10px] font-bold">I</div>
+                          Banco Inter
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setUserDetailsOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={saveUserAcquirer} disabled={isSavingUserAcquirer}>
+                {isSavingUserAcquirer ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Check className="h-4 w-4 mr-2" />
+                )}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {activeSection === "documentos" && (
           <Card>
