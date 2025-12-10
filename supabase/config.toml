@@ -5,3 +5,33 @@ verify_jwt = false
 
 [functions.batch-check-pix-status]
 verify_jwt = false
+
+[functions.generate-pix]
+verify_jwt = false
+
+[functions.generate-pix-inter]
+verify_jwt = false
+
+[functions.check-pix-status-inter]
+verify_jwt = false
+
+[functions.pix-webhook]
+verify_jwt = false
+
+[functions.get-popup-model]
+verify_jwt = false
+
+[functions.get-pixel-config]
+verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[functions.check-login-attempt]
+verify_jwt = false
+
+[functions.verify-reset-code]
+verify_jwt = false
+
+[functions.verify-unlock-code]
+verify_jwt = false
