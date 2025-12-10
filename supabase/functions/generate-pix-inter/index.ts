@@ -249,8 +249,9 @@ serve(async (req) => {
     // Criar cobrança PIX
     const cobData = await createPixCob(mtlsClient, accessToken, amount, txid);
 
-    const pixCode = cobData.pixCopiaECola || cobData.location;
-    const qrCodeUrl = cobData.location ? `${INTER_API_URL}/pix/v2/loc/${cobData.loc?.id}/qrcode` : null;
+    const pixCode = cobData.pixCopiaECola;
+    // Banco Inter não retorna QR code acessível publicamente, geramos no cliente
+    const qrCodeUrl = null;
 
     // Criar cliente Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
