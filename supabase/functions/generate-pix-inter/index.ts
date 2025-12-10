@@ -26,13 +26,33 @@ function generateTxId(): string {
   return result;
 }
 
-async function getAccessToken(): Promise<string> {
-  const clientId = Deno.env.get('INTER_CLIENT_ID');
-  const clientSecret = Deno.env.get('INTER_CLIENT_SECRET');
+function createMtlsClient(): Deno.HttpClient {
   const certificate = Deno.env.get('INTER_CERTIFICATE');
   const privateKey = Deno.env.get('INTER_PRIVATE_KEY');
 
-  if (!clientId || !clientSecret || !certificate || !privateKey) {
+  if (!certificate || !privateKey) {
+    throw new Error('Certificados mTLS do Banco Inter não configurados');
+  }
+
+  // Decode base64 if certificates are stored as base64
+  const certPem = certificate.includes('-----BEGIN') 
+    ? certificate 
+    : atob(certificate);
+  const keyPem = privateKey.includes('-----BEGIN') 
+    ? privateKey 
+    : atob(privateKey);
+
+  return Deno.createHttpClient({
+    cert: certPem,
+    key: keyPem,
+  });
+}
+
+async function getAccessToken(client: Deno.HttpClient): Promise<string> {
+  const clientId = Deno.env.get('INTER_CLIENT_ID');
+  const clientSecret = Deno.env.get('INTER_CLIENT_SECRET');
+
+  if (!clientId || !clientSecret) {
     throw new Error('Credenciais do Banco Inter não configuradas');
   }
 
@@ -53,8 +73,7 @@ async function getAccessToken(): Promise<string> {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: body.toString(),
-    // Note: mTLS requires certificate and key to be configured at the system level
-    // For Deno/edge functions, we pass them via fetch options when supported
+    client,
   });
 
   if (!response.ok) {
@@ -68,7 +87,7 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-async function createPixCob(accessToken: string, amount: number, txid: string): Promise<any> {
+async function createPixCob(client: Deno.HttpClient, accessToken: string, amount: number, txid: string): Promise<any> {
   const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
   
   const expirationSeconds = 3600; // 1 hora
@@ -92,6 +111,7 @@ async function createPixCob(accessToken: string, amount: number, txid: string): 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
+    client,
   });
 
   if (!response.ok) {
@@ -157,14 +177,17 @@ serve(async (req) => {
       );
     }
 
+    // Criar cliente mTLS
+    const mtlsClient = createMtlsClient();
+
     // Obter token de acesso
-    const accessToken = await getAccessToken();
+    const accessToken = await getAccessToken(mtlsClient);
 
     // Gerar txid único
     const txid = generateTxId();
 
     // Criar cobrança PIX
-    const cobData = await createPixCob(accessToken, amount, txid);
+    const cobData = await createPixCob(mtlsClient, accessToken, amount, txid);
 
     const pixCode = cobData.pixCopiaECola || cobData.location;
     const qrCodeUrl = cobData.location ? `${INTER_API_URL}/pix/v2/loc/${cobData.loc?.id}/qrcode` : null;
