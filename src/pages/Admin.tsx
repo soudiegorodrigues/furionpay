@@ -1799,7 +1799,18 @@ const Admin = () => {
                               </TableCell>
                               <TableCell className="text-right">
                                 {u.id === user?.id ? (
-                                  <span className="text-xs text-muted-foreground">Você</span>
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 w-7 p-0"
+                                      onClick={() => openUserDetails(u)}
+                                      title="Editar"
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
+                                    <span className="text-xs text-muted-foreground ml-1">Você</span>
+                                  </div>
                                 ) : (
                                   <div className="flex items-center justify-end gap-1">
                                     <Button
