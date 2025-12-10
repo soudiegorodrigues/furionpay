@@ -39,7 +39,8 @@ import {
   Mail,
   AlertTriangle,
   Search,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -242,6 +243,14 @@ const Admin = () => {
   const [chartFilter, setChartFilter] = useState<ChartFilter>('30days');
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
   const [isTestingInter, setIsTestingInter] = useState(false);
+  const [showInterConfigDialog, setShowInterConfigDialog] = useState(false);
+  const [interConfig, setInterConfig] = useState({
+    clientId: '',
+    clientSecret: '',
+    certificate: '',
+    privateKey: '',
+    pixKey: ''
+  });
 
   // Redirect non-admin users to dashboard
   useEffect(() => {
@@ -1500,21 +1509,113 @@ const Admin = () => {
                       <Check className="w-3 h-3 mr-1" />
                       Integrado
                     </Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={testInterConnection}
-                      disabled={isTestingInter}
-                    >
-                      {isTestingInter ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        "Testar"
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowInterConfigDialog(true)}
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        Configurar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={testInterConnection}
+                        disabled={isTestingInter}
+                      >
+                        {isTestingInter ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          "Testar"
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Dialog de Configuração do Banco Inter */}
+              <AlertDialog open={showInterConfigDialog} onOpenChange={setShowInterConfigDialog}>
+                <AlertDialogContent className="max-w-lg">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <Settings className="w-5 h-5" />
+                      Configurar Banco Inter
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Atualize as credenciais do Banco Inter para usar outra conta.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="inter-client-id">Client ID</Label>
+                      <Input
+                        id="inter-client-id"
+                        placeholder="Digite o Client ID"
+                        value={interConfig.clientId}
+                        onChange={(e) => setInterConfig(prev => ({ ...prev, clientId: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="inter-client-secret">Client Secret</Label>
+                      <Input
+                        id="inter-client-secret"
+                        type="password"
+                        placeholder="Digite o Client Secret"
+                        value={interConfig.clientSecret}
+                        onChange={(e) => setInterConfig(prev => ({ ...prev, clientSecret: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="inter-certificate">Certificado (.crt)</Label>
+                      <textarea
+                        id="inter-certificate"
+                        className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none"
+                        placeholder="Cole o conteúdo do certificado"
+                        value={interConfig.certificate}
+                        onChange={(e) => setInterConfig(prev => ({ ...prev, certificate: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="inter-private-key">Chave Privada (.key)</Label>
+                      <textarea
+                        id="inter-private-key"
+                        className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none"
+                        placeholder="Cole o conteúdo da chave privada"
+                        value={interConfig.privateKey}
+                        onChange={(e) => setInterConfig(prev => ({ ...prev, privateKey: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="inter-pix-key">Chave PIX (CNPJ/CPF/Email/Telefone)</Label>
+                      <Input
+                        id="inter-pix-key"
+                        placeholder="Ex: 52027770000121"
+                        value={interConfig.pixKey}
+                        onChange={(e) => setInterConfig(prev => ({ ...prev, pixKey: e.target.value }))}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Para CNPJ/CPF, digite apenas números (sem pontos, traços ou barras)
+                      </p>
+                    </div>
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => {
+                        toast({
+                          title: "Importante",
+                          description: "Para atualizar as credenciais, use o painel de Secrets no Lovable Cloud (View Backend → Secrets)"
+                        });
+                        setShowInterConfigDialog(false);
+                      }}
+                    >
+                      Entendi
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
               {/* SPEDPAY Card */}
               <Card className="border-primary/50">
