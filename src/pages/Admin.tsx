@@ -1504,35 +1504,32 @@ const Admin = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <Badge variant="outline" className="text-emerald-600 border-emerald-600/30 bg-emerald-600/10">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+                    <Badge variant="outline" className="text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs">
                       <Check className="w-3 h-3 mr-1" />
                       Integrado
                     </Badge>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => setShowInterConfigDialog(true)}
-                        className="text-xs px-2 sm:px-3"
+                        className="h-7 text-xs px-2"
                       >
-                        <Settings className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-                        <span className="hidden sm:inline">Configurar</span>
+                        <Settings className="w-3 h-3 mr-1" />
+                        Config
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={testInterConnection}
                         disabled={isTestingInter}
-                        className="text-xs px-2 sm:px-3"
+                        className="h-7 text-xs px-2"
                       >
                         {isTestingInter ? (
-                          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
-                          <>
-                            <span className="hidden sm:inline">Testar</span>
-                            <span className="sm:hidden">Test</span>
-                          </>
+                          "Testar"
                         )}
                       </Button>
                     </div>
