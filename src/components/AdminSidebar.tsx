@@ -7,6 +7,7 @@ import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { InstallAppDialog } from "@/components/InstallAppDialog";
 
 const menuItems = [{
   title: "Admin",
@@ -49,7 +50,7 @@ export function AdminSidebar({
   isAdmin = false
 }: AdminSidebarProps) {
   const { theme } = useTheme();
-  const { canInstall, isInstalled, promptInstall } = usePWAInstall();
+  const { promptInstall, showInstallDialog, openInstallDialog, closeInstallDialog, isIOS } = usePWAInstall();
   
   const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
   const logoSrc = theme === "dark" ? furionPayLogoDark : furionPayLogoLight;
@@ -92,7 +93,7 @@ export function AdminSidebar({
               >
                 <SidebarMenuButton asChild>
                   <button 
-                    onClick={promptInstall}
+                    onClick={openInstallDialog}
                     className="flex items-center gap-3 hover:bg-primary/10 rounded-lg px-4 py-3.5 active:scale-95 transition-transform w-full border border-primary/30 text-primary"
                   >
                     <Download className="h-5 w-5 shrink-0" />
@@ -137,6 +138,13 @@ export function AdminSidebar({
           </div>
         </div>
       </SidebarFooter>
+
+      <InstallAppDialog 
+        open={showInstallDialog} 
+        onOpenChange={closeInstallDialog}
+        isIOS={isIOS}
+        onInstall={promptInstall}
+      />
     </Sidebar>
   );
 }

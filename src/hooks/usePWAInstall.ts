@@ -10,6 +10,8 @@ let deferredPromptGlobal: BeforeInstallPromptEvent | null = null;
 export const usePWAInstall = () => {
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     // Check if already installed
@@ -17,6 +19,16 @@ export const usePWAInstall = () => {
       setIsInstalled(true);
       return;
     }
+
+    // Check if running as standalone on iOS
+    if ((navigator as any).standalone === true) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // Detect iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIOSDevice);
 
     // Check if we already have a deferred prompt
     if (deferredPromptGlobal) {
@@ -45,7 +57,11 @@ export const usePWAInstall = () => {
   }, []);
 
   const promptInstall = useCallback(async () => {
-    if (!deferredPromptGlobal) return false;
+    if (!deferredPromptGlobal) {
+      // Show custom dialog for platforms without native prompt
+      setShowInstallDialog(true);
+      return false;
+    }
 
     await deferredPromptGlobal.prompt();
     const { outcome } = await deferredPromptGlobal.userChoice;
@@ -59,5 +75,21 @@ export const usePWAInstall = () => {
     return outcome === "accepted";
   }, []);
 
-  return { canInstall, isInstalled, promptInstall };
+  const openInstallDialog = useCallback(() => {
+    setShowInstallDialog(true);
+  }, []);
+
+  const closeInstallDialog = useCallback(() => {
+    setShowInstallDialog(false);
+  }, []);
+
+  return { 
+    canInstall, 
+    isInstalled, 
+    promptInstall, 
+    showInstallDialog, 
+    openInstallDialog, 
+    closeInstallDialog,
+    isIOS 
+  };
 };
