@@ -282,7 +282,8 @@ const Admin = () => {
         body: {
           amount: 0.01,
           donorName: 'Teste Conexão',
-          productName: 'Teste Inter'
+          productName: 'Teste Inter',
+          userId: user?.id
         }
       });
       
