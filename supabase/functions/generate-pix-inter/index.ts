@@ -26,6 +26,25 @@ function generateTxId(): string {
   return result;
 }
 
+function normalizePem(pem: string): string {
+  // Remove Windows line endings and normalize to Unix
+  let normalized = pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  // Trim whitespace
+  normalized = normalized.trim();
+  
+  // Ensure proper line endings after headers
+  normalized = normalized
+    .replace(/-----BEGIN CERTIFICATE-----\s*/g, '-----BEGIN CERTIFICATE-----\n')
+    .replace(/\s*-----END CERTIFICATE-----/g, '\n-----END CERTIFICATE-----')
+    .replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n')
+    .replace(/\s*-----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----')
+    .replace(/-----BEGIN RSA PRIVATE KEY-----\s*/g, '-----BEGIN RSA PRIVATE KEY-----\n')
+    .replace(/\s*-----END RSA PRIVATE KEY-----/g, '\n-----END RSA PRIVATE KEY-----');
+  
+  return normalized;
+}
+
 function createMtlsClient(): Deno.HttpClient {
   const certificate = Deno.env.get('INTER_CERTIFICATE');
   const privateKey = Deno.env.get('INTER_PRIVATE_KEY');
@@ -36,41 +55,21 @@ function createMtlsClient(): Deno.HttpClient {
 
   console.log('Certificate length:', certificate.length);
   console.log('Private key length:', privateKey.length);
-  console.log('Certificate starts with BEGIN:', certificate.includes('-----BEGIN'));
-  console.log('Private key starts with BEGIN:', privateKey.includes('-----BEGIN'));
 
-  let certPem: string;
-  let keyPem: string;
+  // Normalize PEM format
+  const certPem = normalizePem(certificate);
+  const keyPem = normalizePem(privateKey);
 
-  // Try to decode as base64 if not already in PEM format
-  try {
-    if (certificate.includes('-----BEGIN')) {
-      certPem = certificate;
-    } else {
-      // Try base64 decode
-      certPem = atob(certificate);
-    }
-  } catch (e) {
-    console.error('Failed to decode certificate:', e);
-    // If base64 fails, use as-is
-    certPem = certificate;
-  }
+  console.log('Normalized cert length:', certPem.length);
+  console.log('Normalized key length:', keyPem.length);
+  console.log('Cert starts with BEGIN CERTIFICATE:', certPem.startsWith('-----BEGIN CERTIFICATE-----'));
+  console.log('Key starts with BEGIN:', keyPem.startsWith('-----BEGIN'));
 
-  try {
-    if (privateKey.includes('-----BEGIN')) {
-      keyPem = privateKey;
-    } else {
-      // Try base64 decode  
-      keyPem = atob(privateKey);
-    }
-  } catch (e) {
-    console.error('Failed to decode private key:', e);
-    // If base64 fails, use as-is
-    keyPem = privateKey;
-  }
-
-  console.log('Cert PEM starts with BEGIN:', certPem.includes('-----BEGIN'));
-  console.log('Key PEM starts with BEGIN:', keyPem.includes('-----BEGIN'));
+  // Log first and last 50 chars for debugging (without exposing full content)
+  console.log('Cert first 60 chars:', certPem.substring(0, 60));
+  console.log('Cert last 60 chars:', certPem.substring(certPem.length - 60));
+  console.log('Key first 60 chars:', keyPem.substring(0, 60));
+  console.log('Key last 60 chars:', keyPem.substring(keyPem.length - 60));
 
   return Deno.createHttpClient({
     cert: certPem,
