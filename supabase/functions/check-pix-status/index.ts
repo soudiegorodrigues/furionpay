@@ -9,6 +9,9 @@ const corsHeaders = {
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 
+// Token cache to avoid rate limiting
+let cachedInterToken: { token: string; expiresAt: number } | null = null;
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -93,6 +96,13 @@ function createMtlsClient(): Deno.HttpClient {
 }
 
 async function getInterAccessToken(client: Deno.HttpClient): Promise<string> {
+  // Check if we have a valid cached token (with 60 second buffer)
+  const now = Date.now();
+  if (cachedInterToken && cachedInterToken.expiresAt > now + 60000) {
+    console.log('Using cached Inter token');
+    return cachedInterToken.token;
+  }
+
   const clientId = Deno.env.get('INTER_CLIENT_ID');
   const clientSecret = Deno.env.get('INTER_CLIENT_SECRET');
 
@@ -100,7 +110,7 @@ async function getInterAccessToken(client: Deno.HttpClient): Promise<string> {
     throw new Error('Credenciais do Banco Inter não configuradas');
   }
 
-  console.log('Obtendo token de acesso do Banco Inter...');
+  console.log('Obtendo novo token de acesso do Banco Inter...');
 
   const tokenUrl = `${INTER_API_URL}/oauth/v2/token`;
   
@@ -127,7 +137,15 @@ async function getInterAccessToken(client: Deno.HttpClient): Promise<string> {
   }
 
   const data = await response.json();
-  console.log('Token Inter obtido com sucesso');
+  
+  // Cache the token (Inter tokens typically last 3600 seconds)
+  const expiresIn = data.expires_in || 3600;
+  cachedInterToken = {
+    token: data.access_token,
+    expiresAt: now + (expiresIn * 1000),
+  };
+  
+  console.log('Token Inter obtido e cacheado com sucesso');
   return data.access_token;
 }
 
