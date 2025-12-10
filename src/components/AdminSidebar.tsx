@@ -66,13 +66,17 @@ export function AdminSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2 w-full">
-              {visibleMenuItems.map(item => (
-                <SidebarMenuItem key={item.title}>
+              {visibleMenuItems.map((item, index) => (
+                <SidebarMenuItem 
+                  key={item.title}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                >
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
                       end 
-                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-4 py-3.5 md:px-3 md:py-2.5" 
+                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg px-4 py-3.5 md:px-3 md:py-2.5 active:scale-95 transition-transform" 
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
                       <item.icon className="h-6 w-6 md:h-5 md:w-5 shrink-0" />
