@@ -1781,8 +1781,7 @@ const Admin = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-xs">Nome</TableHead>
-                          <TableHead className="text-xs hidden sm:table-cell">Email</TableHead>
+                          <TableHead className="text-xs">Email</TableHead>
                           <TableHead className="text-xs hidden md:table-cell">Cadastro</TableHead>
                           <TableHead className="text-xs hidden lg:table-cell">Adquirente</TableHead>
                           <TableHead className="text-xs">Status</TableHead>
@@ -1792,17 +1791,14 @@ const Admin = () => {
                       <TableBody>
                         {paginatedUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
                               Nenhum usuário cadastrado
                             </TableCell>
                           </TableRow>
                         ) : (
                           paginatedUsers.map((u) => (
                             <TableRow key={u.id}>
-                              <TableCell className="font-medium text-xs max-w-[100px] truncate">
-                                {u.full_name || u.email.split('@')[0]}
-                              </TableCell>
-                              <TableCell className="text-xs hidden sm:table-cell max-w-[150px] truncate">{u.email}</TableCell>
+                              <TableCell className="text-xs max-w-[180px] truncate">{u.email}</TableCell>
                               <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">{formatDate(u.created_at)}</TableCell>
                               <TableCell className="text-xs hidden lg:table-cell">
                                 <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
