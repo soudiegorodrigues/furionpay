@@ -12,6 +12,7 @@ import {
   CheckoutTemplateAfilia,
   CheckoutTemplateMultistep,
   CheckoutPixPayment,
+  ExitIntentPopup,
   ProductOffer,
   Product,
   CheckoutConfig,
@@ -286,14 +287,29 @@ export default function PublicCheckout() {
   // Render the appropriate template based on config
   const template = config?.template || "padrao";
 
-  switch (template) {
-    case "vega":
-      return <CheckoutTemplateVega {...templateProps} />;
-    case "afilia":
-      return <CheckoutTemplateAfilia {...templateProps} />;
-    case "multistep":
-      return <CheckoutTemplateMultistep {...templateProps} />;
-    default:
-      return <CheckoutTemplatePadrao {...templateProps} />;
-  }
+  const renderTemplate = () => {
+    switch (template) {
+      case "vega":
+        return <CheckoutTemplateVega {...templateProps} />;
+      case "afilia":
+        return <CheckoutTemplateAfilia {...templateProps} />;
+      case "multistep":
+        return <CheckoutTemplateMultistep {...templateProps} />;
+      default:
+        return <CheckoutTemplatePadrao {...templateProps} />;
+    }
+  };
+
+  return (
+    <>
+      {renderTemplate()}
+      <ExitIntentPopup
+        isEnabled={config?.show_discount_popup || false}
+        title={config?.discount_popup_title || undefined}
+        message={config?.discount_popup_message || undefined}
+        ctaText={config?.discount_popup_cta || undefined}
+        primaryColor={config?.primary_color || "#16A34A"}
+      />
+    </>
+  );
 }
