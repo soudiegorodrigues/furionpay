@@ -273,7 +273,7 @@ export default function AdminProducts() {
         </Tabs>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredProducts
             .filter(product => {
               if (activeTab === "active") return product.is_active;
@@ -281,45 +281,51 @@ export default function AdminProducts() {
               return true;
             })
             .map((product) => (
-              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="flex">
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-muted flex items-center justify-center shrink-0">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Image className="h-8 w-8 text-muted-foreground" />
-                    )}
+              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+                {/* Image */}
+                <div className="aspect-video bg-muted flex items-center justify-center relative">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image className="h-12 w-12 text-muted-foreground" />
+                  )}
+                  {/* Action buttons overlay */}
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="secondary" size="icon" className="h-8 w-8">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteProduct(product.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div className="flex-1 p-4 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-semibold truncate">{product.name}</h3>
-                      <Badge variant="secondary" className="mt-1 text-xs">
-                        Produto digital
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-1 text-emerald-500 text-sm">
-                        <CheckCircle className="h-4 w-4" />
-                        <span>{product.is_active ? "Ativo" : "Inativo"}</span>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteProduct(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                </div>
+                
+                {/* Content */}
+                <div className="p-4 space-y-2">
+                  <h3 className="font-semibold text-lg line-clamp-2">{product.name}</h3>
+                  {product.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {product.description}
+                    </p>
+                  )}
+                  
+                  <div className="pt-2 space-y-1">
+                    <p className="text-sm text-muted-foreground">Receba até</p>
+                    <p className="text-xl font-bold text-emerald-500">
+                      R$ {(product.price * 0.55).toFixed(2).replace('.', ',')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Preço máximo do produto: R$ {product.price.toFixed(2).replace('.', ',')}
+                    </p>
                   </div>
                 </div>
               </Card>
