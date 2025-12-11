@@ -169,7 +169,7 @@ export const PixQRCode = ({
           {/* QR Code */}
           <div className="flex flex-col items-center gap-2 sm:gap-3">
             <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-white border-2 border-border shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
-              {qrCodeUrl ? (
+              {qrCodeUrl && qrCodeUrl.startsWith('http') ? (
                 <img src={qrCodeUrl} alt="QR Code PIX" className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl" loading="eager" />
               ) : pixCode ? (
                 <QRCodeSVG 
