@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import { TemplateEditorPreview } from "./TemplateEditorPreview";
+import { TemplateInteractivePreview } from "./TemplateInteractivePreview";
 
 export interface TemplateConfig {
   type: string;
@@ -414,9 +415,15 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
               ))}
             </div>
 
-            {/* Live Preview */}
+            {/* Live Interactive Preview */}
             <div className="bg-white rounded-xl overflow-hidden shadow-2xl">
-              <TemplateEditorPreview config={config} previewMode={previewMode} />
+              <TemplateInteractivePreview 
+                config={config} 
+                previewMode={previewMode}
+                onUpdateLabel={updateLabel}
+                onUpdateColor={updateColor}
+                onUpdateSetting={updateSetting}
+              />
             </div>
           </div>
         </div>
