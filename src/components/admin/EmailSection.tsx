@@ -27,7 +27,8 @@ export function EmailSection() {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_settings');
+      // Use admin settings function to get global settings (user_id IS NULL)
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
       if (error) throw error;
 
       if (data) {
@@ -74,7 +75,8 @@ export function EmailSection() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.rpc('update_user_setting', {
+      // Use admin settings function to save global settings
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'resend_api_key',
         setting_value: resendApiKey
       });
@@ -113,7 +115,8 @@ export function EmailSection() {
 
     setIsSavingSender(true);
     try {
-      const { error } = await supabase.rpc('update_user_setting', {
+      // Use admin settings function to save global settings
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'resend_sender_email',
         setting_value: senderEmail
       });
@@ -185,8 +188,8 @@ export function EmailSection() {
       const logoUrl = urlData.publicUrl;
       setEmailLogoUrl(logoUrl);
 
-      // Save URL to settings
-      const { error } = await supabase.rpc('update_user_setting', {
+      // Save URL to global settings
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'email_logo_url',
         setting_value: logoUrl
       });
@@ -225,7 +228,8 @@ export function EmailSection() {
 
     setIsSavingLogo(true);
     try {
-      const { error } = await supabase.rpc('update_user_setting', {
+      // Use admin settings function to save global settings
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'email_logo_url',
         setting_value: emailLogoUrl
       });
@@ -252,7 +256,8 @@ export function EmailSection() {
   const handleRemoveLogo = async () => {
     setIsSavingLogo(true);
     try {
-      const { error } = await supabase.rpc('update_user_setting', {
+      // Use admin settings function to clear global settings
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'email_logo_url',
         setting_value: ''
       });
