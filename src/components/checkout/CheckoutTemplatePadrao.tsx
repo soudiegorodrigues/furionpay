@@ -33,6 +33,17 @@ export function CheckoutTemplatePadrao({
       className="min-h-screen"
       style={{ backgroundColor: config?.background_color || '#f8fafc' }}
     >
+      {/* Banner Image */}
+      {config?.show_banners && config?.header_logo_url && (
+        <div className="w-full">
+          <img 
+            src={config.header_logo_url} 
+            alt="Banner" 
+            className="w-full h-auto object-cover"
+          />
+        </div>
+      )}
+
       {/* Urgency Banner */}
       {config?.show_countdown && countdown !== null && countdown > 0 && (
         <div 

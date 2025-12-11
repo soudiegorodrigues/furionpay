@@ -225,7 +225,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     return () => {
       delete (window as any).__checkoutSaveConfig;
     };
-  }, [selectedTemplateId, primaryColor, customizations]);
+  }, [selectedTemplateId, primaryColor, customizations, bannerImageUrl]);
 
   const colors = [
     "#16a34a", "#dc2626", "#ea580c", "#eab308", "#06b6d4", "#3b82f6",
