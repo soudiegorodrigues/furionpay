@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  ShoppingCart, Lock, CreditCard, CheckCircle, Shield, Clock, MapPin, Phone, Calendar, User, Zap, Users, Gift, MessageCircle, Star
+  ShoppingCart, Lock, CreditCard, CheckCircle, Shield, ShieldCheck, Clock, MapPin, Phone, Calendar, User, Zap, Users, Gift, MessageCircle, Star
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
@@ -434,11 +434,66 @@ export function CheckoutTemplatePadrao({
         )}
       </main>
 
-      <footer className="border-t bg-white mt-8">
-        <div className="container max-w-4xl mx-auto px-4 py-4 text-center text-xs text-gray-400">
-          <p>{config?.footer_text || "Pagamento processado com segurança"}</p>
+      {/* Trust Section */}
+      <div className="bg-white border-t py-8">
+        <div className="container max-w-4xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Dados protegidos</p>
+                <p className="text-sm text-gray-500">Suas informações são confidenciais e seguras</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Pagamento 100% Seguro</p>
+                <p className="text-sm text-gray-500">Todas as transações são criptografadas</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Conteúdo Aprovado</p>
+                <p className="text-sm text-gray-500">Revisado e validado por especialistas</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <Gift className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Garantia de 7 dias</p>
+                <p className="text-sm text-gray-500">Você tem 7 dias para testar o produto</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center border-t pt-6">
+            <div className="flex items-center justify-center gap-6 text-gray-500 mb-4">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm">Pagamento Seguro</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <span className="text-sm">Compra Garantida</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400">{config?.footer_text || "Pagamento processado com segurança"}</p>
+          </div>
         </div>
-      </footer>
+      </div>
 
       {/* Floating WhatsApp Button */}
       {config?.show_whatsapp_button && config?.whatsapp_number && (
