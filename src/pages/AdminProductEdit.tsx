@@ -505,162 +505,21 @@ function ProductDetailsSection({
   );
 }
 
-// Checkout Section Component
+// Checkout Builder Section Component
 function CheckoutSection({ productId, productName }: { productId: string; productName: string }) {
-  const [selectedModel, setSelectedModel] = useState("boost");
-  const [selectedDomain, setSelectedDomain] = useState("");
-  const [availableDomains, setAvailableDomains] = useState<{ id: string; domain: string; name: string | null }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const popupModels = [
-    { id: "boost", name: "Boost", description: "Modelo com animações e destaque visual", hasDynamicAmount: false },
-    { id: "simple", name: "Simples", description: "Modelo minimalista e direto", hasDynamicAmount: false },
-    { id: "clean", name: "Clean", description: "Design limpo e moderno", hasDynamicAmount: false },
-    { id: "direct", name: "Direto", description: "Foco no pagamento rápido", hasDynamicAmount: true },
-    { id: "hot", name: "Hot", description: "Design com urgência e destaque", hasDynamicAmount: true },
-    { id: "landing", name: "Modelo Vakinha", description: "Estilo página de vendas", hasDynamicAmount: false },
-    { id: "instituto", name: "Instituto", description: "Modelo institucional", hasDynamicAmount: false },
-  ];
-
-  useEffect(() => {
-    loadDomains();
-  }, []);
-
-  const loadDomains = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("available_domains")
-        .select("*")
-        .eq("is_active", true);
-
-      if (error) throw error;
-      setAvailableDomains(data || []);
-      if (data && data.length > 0) {
-        setSelectedDomain(data[0].domain);
-      }
-    } catch (error) {
-      console.error("Error loading domains:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateCheckoutLink = () => {
-    if (!selectedDomain) return "";
-    const baseUrl = `https://${selectedDomain}`;
-    const params = new URLSearchParams();
-    params.set("p", productName);
-    params.set("m", selectedModel);
-    return `${baseUrl}?${params.toString()}`;
-  };
-
-  const copyToClipboard = () => {
-    const link = generateCheckoutLink();
-    if (link) {
-      navigator.clipboard.writeText(link);
-      toast.success("Link copiado para a área de transferência");
-    }
-  };
-
-  const currentModel = popupModels.find(m => m.id === selectedModel);
-  const checkoutLink = generateCheckoutLink();
-
   return (
-    <div className="space-y-6">
-      {/* Popup Model Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Modelo de Checkout</CardTitle>
-          <CardDescription>Selecione o modelo de popup que será exibido no checkout</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {popupModels.map((model) => (
-              <button
-                key={model.id}
-                onClick={() => setSelectedModel(model.id)}
-                className={cn(
-                  "p-4 rounded-lg border-2 text-left transition-all",
-                  selectedModel === model.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                )}
-              >
-                <p className="font-medium text-sm">{model.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{model.description}</p>
-                {model.hasDynamicAmount && (
-                  <Badge variant="secondary" className="mt-2 text-xs">
-                    Valor dinâmico
-                  </Badge>
-                )}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Domain Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Domínio</CardTitle>
-          <CardDescription>Selecione o domínio para o link de checkout</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="animate-pulse h-10 bg-muted rounded" />
-          ) : availableDomains.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum domínio disponível. Configure domínios no painel de administração.</p>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {availableDomains.map((domain) => (
-                <button
-                  key={domain.id}
-                  onClick={() => setSelectedDomain(domain.domain)}
-                  className={cn(
-                    "p-3 rounded-lg border-2 text-left transition-all",
-                    selectedDomain === domain.domain
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  <p className="font-medium text-sm truncate">{domain.name || domain.domain}</p>
-                  <p className="text-xs text-muted-foreground truncate">{domain.domain}</p>
-                </button>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Generated Link */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Link de Checkout</CardTitle>
-          <CardDescription>Copie e compartilhe este link para vender seu produto</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Input
-              value={checkoutLink}
-              readOnly
-              className="font-mono text-sm"
-            />
-            <Button onClick={copyToClipboard} disabled={!checkoutLink} className="shrink-0 gap-2">
-              <Copy className="h-4 w-4" />
-              Copiar
-            </Button>
-          </div>
-          
-          {currentModel?.hasDynamicAmount && (
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Dica:</strong> Este modelo suporta valor dinâmico. Adicione <code className="bg-muted px-1 rounded">&amount=VALOR</code> ao link para definir o valor.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardContent className="p-12 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+          <CreditCard className="h-8 w-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">Checkout Builder</h3>
+        <p className="text-muted-foreground mb-4">
+          Crie e personalize páginas de checkout exclusivas para seu produto com nosso construtor visual.
+        </p>
+        <Badge variant="secondary">Em breve</Badge>
+      </CardContent>
+    </Card>
   );
 }
 
