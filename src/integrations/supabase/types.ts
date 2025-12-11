@@ -379,6 +379,56 @@ export type Database = {
         }
         Relationships: []
       }
+      product_offers: {
+        Row: {
+          created_at: string
+          domain: string | null
+          id: string
+          is_active: boolean
+          name: string
+          offer_code: string | null
+          price: number
+          product_id: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          offer_code?: string | null
+          price?: number
+          product_id: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          offer_code?: string | null
+          price?: number
+          product_id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string
