@@ -33,6 +33,14 @@ interface GeneratePixRequest {
   popupModel?: string;
 }
 
+interface InterCredentials {
+  clientId: string;
+  clientSecret: string;
+  certificate: string;
+  privateKey: string;
+  pixKey: string;
+}
+
 function generateTxId(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -42,17 +50,56 @@ function generateTxId(): string {
   return result;
 }
 
+// Get Inter credentials from admin_settings or fall back to env vars
+async function getInterCredentials(supabase: any, userId?: string): Promise<InterCredentials> {
+  // Try to get credentials from admin_settings first
+  if (userId) {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('key, value')
+      .eq('user_id', userId)
+      .in('key', ['inter_client_id', 'inter_client_secret', 'inter_certificate', 'inter_private_key', 'inter_pix_key']);
+    
+    if (!error && data && data.length > 0) {
+      const settings: Record<string, string> = {};
+      data.forEach((item: { key: string; value: string }) => {
+        settings[item.key] = item.value;
+      });
+      
+      // Check if all credentials are present in database
+      if (settings.inter_client_id && settings.inter_client_secret && 
+          settings.inter_certificate && settings.inter_private_key && settings.inter_pix_key) {
+        console.log('Using Inter credentials from admin_settings for user:', userId);
+        return {
+          clientId: settings.inter_client_id,
+          clientSecret: settings.inter_client_secret,
+          certificate: settings.inter_certificate,
+          privateKey: settings.inter_private_key,
+          pixKey: settings.inter_pix_key,
+        };
+      }
+    }
+  }
+  
+  // Fall back to environment variables
+  console.log('Using Inter credentials from environment variables');
+  return {
+    clientId: Deno.env.get('INTER_CLIENT_ID') || '',
+    clientSecret: Deno.env.get('INTER_CLIENT_SECRET') || '',
+    certificate: Deno.env.get('INTER_CERTIFICATE') || '',
+    privateKey: Deno.env.get('INTER_PRIVATE_KEY') || '',
+    pixKey: Deno.env.get('INTER_PIX_KEY') || '',
+  };
+}
+
 function normalizePem(pem: string): string {
-  // Remove all whitespace and line breaks first
   let normalized = pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   
-  // Detect the type of PEM
   const certMatch = normalized.match(/-----BEGIN CERTIFICATE-----([\s\S]*?)-----END CERTIFICATE-----/);
   const privKeyMatch = normalized.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
   const rsaKeyMatch = normalized.match(/-----BEGIN RSA PRIVATE KEY-----([\s\S]*?)-----END RSA PRIVATE KEY-----/);
   
   if (certMatch) {
-    // Extract base64 content, remove all whitespace, then wrap at 64 chars
     const base64Content = certMatch[1].replace(/\s/g, '');
     const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
     return `-----BEGIN CERTIFICATE-----\n${wrappedContent}\n-----END CERTIFICATE-----`;
@@ -70,35 +117,22 @@ function normalizePem(pem: string): string {
     return `-----BEGIN RSA PRIVATE KEY-----\n${wrappedContent}\n-----END RSA PRIVATE KEY-----`;
   }
   
-  // If no match, return as-is
   return normalized;
 }
 
-function createMtlsClient(): Deno.HttpClient {
-  const certificate = Deno.env.get('INTER_CERTIFICATE');
-  const privateKey = Deno.env.get('INTER_PRIVATE_KEY');
-
-  if (!certificate || !privateKey) {
+function createMtlsClient(credentials: InterCredentials): Deno.HttpClient {
+  if (!credentials.certificate || !credentials.privateKey) {
     throw new Error('Certificados mTLS do Banco Inter não configurados');
   }
 
-  console.log('Certificate length:', certificate.length);
-  console.log('Private key length:', privateKey.length);
+  console.log('Certificate length:', credentials.certificate.length);
+  console.log('Private key length:', credentials.privateKey.length);
 
-  // Normalize PEM format
-  const certPem = normalizePem(certificate);
-  const keyPem = normalizePem(privateKey);
+  const certPem = normalizePem(credentials.certificate);
+  const keyPem = normalizePem(credentials.privateKey);
 
   console.log('Normalized cert length:', certPem.length);
   console.log('Normalized key length:', keyPem.length);
-  console.log('Cert starts with BEGIN CERTIFICATE:', certPem.startsWith('-----BEGIN CERTIFICATE-----'));
-  console.log('Key starts with BEGIN:', keyPem.startsWith('-----BEGIN'));
-
-  // Log first and last 50 chars for debugging (without exposing full content)
-  console.log('Cert first 60 chars:', certPem.substring(0, 60));
-  console.log('Cert last 60 chars:', certPem.substring(certPem.length - 60));
-  console.log('Key first 60 chars:', keyPem.substring(0, 60));
-  console.log('Key last 60 chars:', keyPem.substring(keyPem.length - 60));
 
   return Deno.createHttpClient({
     cert: certPem,
@@ -106,11 +140,8 @@ function createMtlsClient(): Deno.HttpClient {
   });
 }
 
-async function getAccessToken(client: Deno.HttpClient): Promise<string> {
-  const clientId = Deno.env.get('INTER_CLIENT_ID');
-  const clientSecret = Deno.env.get('INTER_CLIENT_SECRET');
-
-  if (!clientId || !clientSecret) {
+async function getAccessToken(client: Deno.HttpClient, credentials: InterCredentials): Promise<string> {
+  if (!credentials.clientId || !credentials.clientSecret) {
     throw new Error('Credenciais do Banco Inter não configuradas');
   }
 
@@ -119,8 +150,8 @@ async function getAccessToken(client: Deno.HttpClient): Promise<string> {
   const tokenUrl = `${INTER_API_URL}/oauth/v2/token`;
   
   const body = new URLSearchParams({
-    client_id: clientId,
-    client_secret: clientSecret,
+    client_id: credentials.clientId,
+    client_secret: credentials.clientSecret,
     scope: 'cob.write cob.read cobv.write cobv.read pix.write pix.read webhook.read webhook.write payloadlocation.write payloadlocation.read',
     grant_type: 'client_credentials',
   });
@@ -145,28 +176,21 @@ async function getAccessToken(client: Deno.HttpClient): Promise<string> {
   return data.access_token;
 }
 
-// Sanitiza a chave PIX (remove pontuação de CNPJ/CPF)
 function sanitizePixKey(key: string): string {
-  // Remove todos os caracteres não-alfanuméricos exceto @ e +
-  // CNPJ: 52.027.770/0001-21 -> 52027770000121
-  // CPF: 123.456.789-00 -> 12345678900
-  // Telefone e email permanecem inalterados
   if (key.includes('@') || key.startsWith('+')) {
-    return key; // Email ou telefone, não modificar
+    return key;
   }
   return key.replace(/[.\-\/]/g, '');
 }
 
-async function createPixCob(client: Deno.HttpClient, accessToken: string, amount: number, txid: string): Promise<any> {
+async function createPixCob(client: Deno.HttpClient, accessToken: string, amount: number, txid: string, pixKey: string): Promise<any> {
   const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
   
-  const expirationSeconds = 3600; // 1 hora
+  const expirationSeconds = 3600;
+  const sanitizedPixKey = sanitizePixKey(pixKey);
   
-  const rawPixKey = Deno.env.get('INTER_PIX_KEY') || '';
-  const pixKey = sanitizePixKey(rawPixKey);
-  
-  console.log('Chave PIX original:', rawPixKey);
-  console.log('Chave PIX sanitizada:', pixKey);
+  console.log('Chave PIX original:', pixKey);
+  console.log('Chave PIX sanitizada:', sanitizedPixKey);
   
   const payload = {
     calendario: {
@@ -175,7 +199,7 @@ async function createPixCob(client: Deno.HttpClient, accessToken: string, amount
     valor: {
       original: amount.toFixed(2),
     },
-    chave: pixKey,
+    chave: sanitizedPixKey,
   };
 
   console.log('Criando cobrança PIX Inter:', JSON.stringify(payload));
@@ -239,7 +263,6 @@ async function logPixGenerated(
 async function getProductNameFromOffer(supabase: any, userId?: string, popupModel?: string): Promise<string> {
   const DEFAULT_PRODUCT_NAME = 'Anônimo';
   
-  // First try to get product_name from checkout_offers using userId + popup_model
   if (userId && popupModel) {
     const { data: offerData, error: offerError } = await supabase
       .from('checkout_offers')
@@ -256,7 +279,6 @@ async function getProductNameFromOffer(supabase: any, userId?: string, popupMode
     }
   }
   
-  // Fallback: try to get any checkout offer from this user with product_name
   if (userId) {
     const { data: anyOfferData, error: anyOfferError } = await supabase
       .from('checkout_offers')
@@ -294,26 +316,28 @@ serve(async (req) => {
       );
     }
 
+    // Criar cliente Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get Inter credentials (from admin_settings or env vars)
+    const credentials = await getInterCredentials(supabase, userId);
+
     // Criar cliente mTLS
-    const mtlsClient = createMtlsClient();
+    const mtlsClient = createMtlsClient(credentials);
 
     // Obter token de acesso
-    const accessToken = await getAccessToken(mtlsClient);
+    const accessToken = await getAccessToken(mtlsClient, credentials);
 
     // Gerar txid único
     const txid = generateTxId();
 
     // Criar cobrança PIX
-    const cobData = await createPixCob(mtlsClient, accessToken, amount, txid);
+    const cobData = await createPixCob(mtlsClient, accessToken, amount, txid, credentials.pixKey);
 
     const pixCode = cobData.pixCopiaECola;
-    // Banco Inter não retorna QR code acessível publicamente, geramos no cliente
     const qrCodeUrl = null;
-
-    // Criar cliente Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get product name from checkout_offers if not provided
     const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);

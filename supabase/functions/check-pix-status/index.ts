@@ -45,6 +45,43 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
   return data.value;
 }
 
+// Get Inter credentials from admin_settings or fall back to env vars
+async function getInterCredentialsFromDb(supabase: any, userId?: string): Promise<{
+  clientId: string;
+  clientSecret: string;
+  certificate: string;
+  privateKey: string;
+  pixKey: string;
+} | null> {
+  if (!userId) return null;
+  
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('key, value')
+    .eq('user_id', userId)
+    .in('key', ['inter_client_id', 'inter_client_secret', 'inter_certificate', 'inter_private_key', 'inter_pix_key']);
+  
+  if (error || !data || data.length === 0) return null;
+  
+  const settings: Record<string, string> = {};
+  data.forEach((item: { key: string; value: string }) => {
+    settings[item.key] = item.value;
+  });
+  
+  if (settings.inter_client_id && settings.inter_client_secret && 
+      settings.inter_certificate && settings.inter_private_key && settings.inter_pix_key) {
+    return {
+      clientId: settings.inter_client_id,
+      clientSecret: settings.inter_client_secret,
+      certificate: settings.inter_certificate,
+      privateKey: settings.inter_private_key,
+      pixKey: settings.inter_pix_key,
+    };
+  }
+  
+  return null;
+}
+
 // Get cached Inter token from database
 async function getCachedInterToken(supabase: any): Promise<{ token: string; expiresAt: number } | null> {
   const { data, error } = await supabase
