@@ -363,23 +363,47 @@ export function CheckoutBuilder({ productId, userId, productName, productPrice =
 
               {/* Image Preview */}
               {components.find(c => c.id === "imagem")?.enabled && (
-                <div className="p-4 border-b">
+                <div 
+                  className="border-b cursor-pointer group relative"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   {bannerImageUrl ? (
-                    <img 
-                      src={bannerImageUrl} 
-                      alt="Banner" 
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="bg-muted rounded-lg h-32 flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
-                      <div className="text-center">
-                        <Image className="h-8 w-8 text-muted-foreground mx-auto mb-1" />
-                        <span className="text-xs text-muted-foreground">Imagem do banner</span>
+                    <div className="relative">
+                      <img 
+                        src={bannerImageUrl} 
+                        alt="Banner" 
+                        className="w-full h-32 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Upload className="h-6 w-6 text-white" />
+                        <span className="text-white text-sm ml-2">Trocar imagem</span>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="bg-muted h-32 flex items-center justify-center border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-muted/50 transition-all">
+                      {isUploadingImage ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      ) : (
+                        <div className="text-center">
+                          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-1 group-hover:text-primary transition-colors" />
+                          <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
+                            Clique para adicionar imagem
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
+              
+              {/* Hidden file input for image upload */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
 
               {/* Vantagens Preview */}
               {components.find(c => c.id === "vantagens")?.enabled && (
@@ -620,67 +644,6 @@ export function CheckoutBuilder({ productId, userId, productName, productPrice =
                 ))}
               </div>
 
-              {/* Image Upload Section - Shows when Imagem is enabled */}
-              {components.find(c => c.id === "imagem")?.enabled && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Upload de Imagem</p>
-                    
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
-
-                    {bannerImageUrl ? (
-                      <div className="space-y-2">
-                        <img 
-                          src={bannerImageUrl} 
-                          alt="Preview" 
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploadingImage}
-                        >
-                          {isUploadingImage ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <Upload className="h-4 w-4 mr-2" />
-                          )}
-                          Trocar imagem
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="w-full h-20 border-dashed"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploadingImage}
-                      >
-                        {isUploadingImage ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <div className="text-center">
-                            <Upload className="h-5 w-5 mx-auto mb-1" />
-                            <span className="text-xs">Carregar imagem</span>
-                          </div>
-                        )}
-                      </Button>
-                    )}
-                    
-                    <p className="text-xs text-muted-foreground">
-                      Formatos: JPG, PNG, WEBP. Máx: 2MB
-                    </p>
-                  </div>
-                </>
-              )}
 
               <Separator />
 
