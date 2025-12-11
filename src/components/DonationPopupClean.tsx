@@ -376,7 +376,7 @@ export const DonationPopupClean = ({
                     
                     <div className="flex justify-center">
                       <div className="p-4 bg-white border-2 border-slate-100 rounded-xl">
-                        {pixData.qrCodeUrl ? (
+                        {pixData.qrCodeUrl && pixData.qrCodeUrl.startsWith('http') ? (
                           <img
                             src={pixData.qrCodeUrl}
                             alt="QR Code PIX"

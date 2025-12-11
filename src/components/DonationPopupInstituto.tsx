@@ -388,7 +388,7 @@ export const DonationPopupInstituto = ({
                 {/* QR Code */}
                 <div className="flex justify-center">
                   <div className="p-4 bg-white rounded-2xl shadow-lg border border-gray-100">
-                    {pixData.qrCodeUrl ? (
+                    {pixData.qrCodeUrl && pixData.qrCodeUrl.startsWith('http') ? (
                       <img 
                         src={pixData.qrCodeUrl} 
                         alt="QR Code PIX" 
