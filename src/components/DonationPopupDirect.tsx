@@ -14,6 +14,7 @@ interface DonationPopupDirectProps {
   userId?: string;
   fixedAmount?: number;
   showCloseButton?: boolean;
+  productName?: string;
 }
 
 type Step = "loading" | "pix" | "success";
@@ -23,7 +24,8 @@ export const DonationPopupDirect = ({
   onClose,
   userId,
   fixedAmount = 100,
-  showCloseButton = false
+  showCloseButton = false,
+  productName,
 }: DonationPopupDirectProps) => {
   const [step, setStep] = useState<Step>("loading");
   const [pixData, setPixData] = useState<{
@@ -131,6 +133,7 @@ export const DonationPopupDirect = ({
           utmParams: utmParams,
           userId: userId,
           popupModel: 'direct',
+          productName: productName,
         },
       });
 
