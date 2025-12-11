@@ -21,6 +21,8 @@ interface CheckoutPreviewMiniProps {
   showCountdown?: boolean;
   countdownMinutes?: number;
   showTestimonials?: boolean;
+  showBanner?: boolean;
+  bannerImageUrl?: string | null;
   previewMode?: "desktop" | "mobile";
 }
 
@@ -32,6 +34,8 @@ export function CheckoutPreviewMini({
   showCountdown = false,
   countdownMinutes = 15,
   showTestimonials = false,
+  showBanner = false,
+  bannerImageUrl = null,
   previewMode = "desktop",
 }: CheckoutPreviewMiniProps) {
   const formatPrice = (price: number) => {
@@ -299,6 +303,17 @@ export function CheckoutPreviewMini({
   // Render Padrão (Default Kiwify-style)
   return (
     <div className="bg-gray-50 min-h-[500px]">
+      {/* Banner */}
+      {showBanner && bannerImageUrl && (
+        <div className="w-full">
+          <img 
+            src={bannerImageUrl} 
+            alt="Banner" 
+            className="w-full h-auto object-cover"
+          />
+        </div>
+      )}
+
       {/* Countdown */}
       {showCountdown && (
         <div 

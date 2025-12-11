@@ -114,6 +114,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     if (config) {
       setSelectedTemplateId(config.template_id || null);
       setPrimaryColor(config.primary_color || "#16A34A");
+      setBannerImageUrl(config.header_logo_url || null);
       setCustomizations({
         showBanner: config.show_banners || false,
         showCountdown: config.show_countdown || false,
@@ -193,6 +194,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         template_id: selectedTemplateId,
         template: templateString, // Also save template name for backwards compatibility
         primary_color: primaryColor,
+        header_logo_url: bannerImageUrl, // Save banner URL
         show_banners: customizations.showBanner,
         show_countdown: customizations.showCountdown,
         countdown_minutes: customizations.countdownMinutes,
@@ -280,6 +282,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   showCountdown={customizations.showCountdown}
                   countdownMinutes={customizations.countdownMinutes}
                   showTestimonials={customizations.showTestimonials}
+                  showBanner={customizations.showBanner}
+                  bannerImageUrl={bannerImageUrl}
                   previewMode={previewMode}
                 />
               </ScrollArea>
