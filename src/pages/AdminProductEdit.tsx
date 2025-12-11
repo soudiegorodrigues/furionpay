@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { CheckoutBuilder } from "@/components/checkout/CheckoutBuilder";
+import { CheckoutBuilderSimple } from "@/components/checkout/CheckoutBuilderSimple";
 import { 
   Package, 
   ArrowLeft, 
@@ -209,7 +209,7 @@ export default function AdminProductEdit() {
       case "details":
         return <ProductDetailsSection formData={formData} setFormData={setFormData} product={product} copyToClipboard={copyToClipboard} />;
       case "checkout":
-        return <CheckoutBuilder productId={product.id} userId={product.user_id} productName={product.name} productPrice={product.price} />;
+        return <CheckoutBuilderSimple productId={product.id} userId={product.user_id} productName={product.name} productPrice={product.price} />;
       case "offers":
         return <OffersSection productId={product.id} userId={product.user_id} />;
       case "domains":
