@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CheckoutPreviewMini } from "./CheckoutPreviewMini";
 import {
   Collapsible,
   CollapsibleContent,
@@ -263,201 +264,25 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
             </div>
           </CardHeader>
           <CardContent className="p-4">
-            {/* Preview Container */}
+            {/* Dynamic Preview based on selected template */}
             <div 
               className={cn(
-                "mx-auto border rounded-lg overflow-hidden transition-all duration-300 bg-gray-100",
+                "mx-auto border rounded-lg overflow-hidden transition-all duration-300",
                 previewMode === "mobile" ? "max-w-[375px]" : "w-full"
               )}
             >
-              {/* Countdown Preview */}
-              {customizations.showCountdown && (
-                <div 
-                  className="py-3 px-4 text-white text-center flex items-center justify-center gap-2"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  <Clock className="h-4 w-4" />
-                  <span className="font-bold">{customizations.countdownMinutes}:00</span>
-                  <span className="text-sm">Oferta por tempo limitado</span>
-                </div>
-              )}
-
-              {/* Banner Preview */}
-              {customizations.showBanner && (
-                <div 
-                  className="border-b cursor-pointer group relative"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {bannerImageUrl ? (
-                    <div className="relative">
-                      <img 
-                        src={bannerImageUrl} 
-                        alt="Banner" 
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Upload className="h-6 w-6 text-white" />
-                        <span className="text-white text-sm ml-2">Trocar imagem</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-white h-32 flex items-center justify-center border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-muted/50 transition-all">
-                      {isUploadingImage ? (
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      ) : (
-                        <div className="text-center">
-                          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-1" />
-                          <span className="text-xs text-muted-foreground">
-                            Clique para adicionar banner
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-
-              {/* Header */}
-              <div className="p-4 border-b bg-white">
-                <h2 className="text-lg font-semibold">Finalizar Compra</h2>
-              </div>
-
-              {/* Product Summary */}
-              <div className="p-4 bg-white">
-                <div className="flex items-start gap-3">
-                  <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center shrink-0">
-                    <Image className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{productName}</p>
-                    <p className="font-bold" style={{ color: primaryColor }}>
-                      1 X de {formatPrice(productPrice)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      ou {formatPrice(productPrice)} à vista
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Form */}
-              <div className="p-4 space-y-4 bg-white">
-                <h3 className="font-medium flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                    <User className="h-3 w-3 text-white" />
-                  </span>
-                  Dados do comprador
-                </h3>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Nome completo</Label>
-                    <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-muted-foreground">
-                      Digite seu nome
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">E-mail</Label>
-                    <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-muted-foreground">
-                      seu@email.com
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Telefone</Label>
-                    <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-muted-foreground">
-                      (00) 00000-0000
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment */}
-              <div className="p-4 space-y-4 bg-white border-t">
-                <h3 className="font-medium flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                    <CreditCard className="h-3 w-3 text-white" />
-                  </span>
-                  Forma de pagamento
-                </h3>
-                <div 
-                  className="p-3 border-2 rounded-lg flex items-center gap-3"
-                  style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}10` }}
-                >
-                  <div 
-                    className="w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <CheckCircle className="h-3 w-3 text-white" />
-                  </div>
-                  <span className="font-medium">Pix</span>
-                </div>
-                <Button 
-                  className="w-full h-12 font-semibold"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  Finalizar Compra
-                </Button>
-              </div>
-
-              {/* Testimonials */}
-              {customizations.showTestimonials && (
-                <div className="p-4 bg-white border-t">
-                  <h4 className="font-medium text-sm mb-3">O que dizem nossos clientes</h4>
-                  <div className="space-y-2">
-                    {[
-                      { name: "Maria S.", text: "Produto excelente!" },
-                      { name: "João P.", text: "Recomendo muito!" },
-                    ].map((item, i) => (
-                      <div key={i} className="p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div 
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                            style={{ backgroundColor: primaryColor }}
-                          >
-                            {item.name[0]}
-                          </div>
-                          <span className="text-xs font-medium">{item.name}</span>
-                          <span className="text-[10px] text-yellow-500">⭐⭐⭐⭐⭐</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">"{item.text}"</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Security badges */}
-              <div className="p-4 bg-white border-t">
-                <div className="flex items-center justify-center gap-4 text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <Shield className="h-4 w-4" />
-                    <span className="text-xs">Pagamento Seguro</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Lock className="h-4 w-4" />
-                    <span className="text-xs">Compra Garantida</span>
-                  </div>
-                </div>
-                <p className="text-xs text-center text-muted-foreground mt-3">
-                  Pagamento processado com segurança
-                </p>
-              </div>
-
-              {/* WhatsApp Button */}
-              {customizations.showWhatsappButton && (
-                <div className="fixed bottom-4 right-4 z-50">
-                  <Button className="rounded-full h-14 w-14 bg-green-500 hover:bg-green-600">
-                    <MessageCircle className="h-6 w-6" />
-                  </Button>
-                </div>
-              )}
+              <ScrollArea className="h-[600px]">
+                <CheckoutPreviewMini
+                  templateName={selectedTemplate?.name || "Padrão"}
+                  productName={productName}
+                  productPrice={productPrice}
+                  primaryColor={primaryColor}
+                  showCountdown={customizations.showCountdown}
+                  countdownMinutes={customizations.countdownMinutes}
+                  showTestimonials={customizations.showTestimonials}
+                  previewMode={previewMode}
+                />
+              </ScrollArea>
             </div>
           </CardContent>
         </Card>

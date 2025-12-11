@@ -6,3 +6,4 @@ export * from "./CheckoutTemplateMultistep";
 export * from "./CheckoutPixPayment";
 export * from "./CheckoutBuilder";
 export * from "./CheckoutBuilderSimple";
+export * from "./CheckoutPreviewMini";
