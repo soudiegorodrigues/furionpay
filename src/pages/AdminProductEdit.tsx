@@ -720,11 +720,9 @@ function OffersSection({ productId, userId }: { productId: string; userId: strin
   });
 
   const generateLink = (offer: ProductOffer) => {
-    // Use the offer's domain if configured, otherwise fallback to origin
-    const baseDomain = offer.domain 
-      ? `https://${offer.domain}` 
-      : window.location.origin;
-    return `${baseDomain}/checkout/${offer.offer_code}`;
+    // Always use the current origin (staging domain) since custom domains require DNS configuration
+    // Custom domains (linkpages.shop, etc.) will only work after proper DNS setup in Lovable settings
+    return `${window.location.origin}/checkout/${offer.offer_code}`;
   };
 
   const copyLink = (offer: ProductOffer) => {
