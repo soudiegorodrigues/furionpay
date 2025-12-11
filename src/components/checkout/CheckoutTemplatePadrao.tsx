@@ -49,11 +49,11 @@ export function CheckoutTemplatePadrao({
 
       {/* Banner Image */}
       {config?.show_banners && config?.header_logo_url && (
-        <div className="w-full flex justify-center pt-2 pb-4 md:pt-4 md:pb-6">
+        <div className="w-full flex justify-center pt-1 pb-4 md:pt-2 md:pb-6">
           <img 
             src={config.header_logo_url} 
             alt="Banner" 
-            className="w-full md:max-w-3xl md:rounded-lg object-contain"
+            className="w-full md:max-w-5xl md:rounded-lg object-contain"
           />
         </div>
       )}
