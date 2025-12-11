@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.send-approval-notification]
 verify_jwt = false
+
+[functions.generate-pix-ativus]
+verify_jwt = false

@@ -14,15 +14,21 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 export const MultiAcquirersSection = () => {
   const { user, isAdmin } = useAdminAuth();
   const [isTestingInter, setIsTestingInter] = useState(false);
+  const [isTestingAtivus, setIsTestingAtivus] = useState(false);
   const [showInterConfigDialog, setShowInterConfigDialog] = useState(false);
+  const [showAtivusConfigDialog, setShowAtivusConfigDialog] = useState(false);
   const [isLoadingInterConfig, setIsLoadingInterConfig] = useState(false);
   const [isLoadingStates, setIsLoadingStates] = useState(true);
   const [interEnabled, setInterEnabled] = useState<boolean | null>(null);
   const [spedpayEnabled, setSpedpayEnabled] = useState<boolean | null>(null);
+  const [ativusEnabled, setAtivusEnabled] = useState<boolean | null>(null);
   const [interFeeRate, setInterFeeRate] = useState('');
   const [interFixedFee, setInterFixedFee] = useState('');
   const [spedpayFeeRate, setSpedpayFeeRate] = useState('');
   const [spedpayFixedFee, setSpedpayFixedFee] = useState('');
+  const [ativusFeeRate, setAtivusFeeRate] = useState('');
+  const [ativusFixedFee, setAtivusFixedFee] = useState('');
+  const [ativusApiKey, setAtivusApiKey] = useState('');
   const [interConfig, setInterConfig] = useState({
     clientId: '',
     clientSecret: '',
@@ -78,33 +84,43 @@ export const MultiAcquirersSection = () => {
         const settings = data as { key: string; value: string }[];
         const interState = settings.find(s => s.key === 'inter_enabled');
         const spedpayState = settings.find(s => s.key === 'spedpay_enabled');
+        const ativusState = settings.find(s => s.key === 'ativus_enabled');
         const interFee = settings.find(s => s.key === 'inter_fee_rate');
         const interFixed = settings.find(s => s.key === 'inter_fixed_fee');
         const spedpayFee = settings.find(s => s.key === 'spedpay_fee_rate');
         const spedpayFixed = settings.find(s => s.key === 'spedpay_fixed_fee');
+        const ativusFee = settings.find(s => s.key === 'ativus_fee_rate');
+        const ativusFixed = settings.find(s => s.key === 'ativus_fixed_fee');
+        const ativusKey = settings.find(s => s.key === 'ativus_api_key');
         
         // Default to true if not set, false only if explicitly set to 'false'
         setInterEnabled(interState?.value !== 'false');
         setSpedpayEnabled(spedpayState?.value !== 'false');
+        setAtivusEnabled(ativusState?.value !== 'false');
         setInterFeeRate(interFee?.value || '');
         setInterFixedFee(interFixed?.value || '');
         setSpedpayFeeRate(spedpayFee?.value || '');
         setSpedpayFixedFee(spedpayFixed?.value || '');
+        setAtivusFeeRate(ativusFee?.value || '');
+        setAtivusFixedFee(ativusFixed?.value || '');
+        setAtivusApiKey(ativusKey?.value || '');
       } else {
         // No data, default to enabled
         setInterEnabled(true);
         setSpedpayEnabled(true);
+        setAtivusEnabled(true);
       }
     } catch (error) {
       console.error('Error loading acquirer states:', error);
       setInterEnabled(true);
       setSpedpayEnabled(true);
+      setAtivusEnabled(true);
     } finally {
       setIsLoadingStates(false);
     }
   };
 
-  const toggleAcquirer = async (acquirer: 'inter' | 'spedpay', enabled: boolean) => {
+  const toggleAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus', enabled: boolean) => {
     try {
       const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: `${acquirer}_enabled`,
@@ -115,13 +131,17 @@ export const MultiAcquirersSection = () => {
       
       if (acquirer === 'inter') {
         setInterEnabled(enabled);
-      } else {
+      } else if (acquirer === 'spedpay') {
         setSpedpayEnabled(enabled);
+      } else {
+        setAtivusEnabled(enabled);
       }
+      
+      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
       
       toast({
         title: enabled ? "Adquirente Ativada" : "Adquirente Desativada",
-        description: `${acquirer === 'inter' ? 'Banco Inter' : 'SpedPay'} foi ${enabled ? 'ativada' : 'desativada'} com sucesso.`
+        description: `${acquirerNames[acquirer]} foi ${enabled ? 'ativada' : 'desativada'} com sucesso.`
       });
     } catch (error) {
       console.error('Error toggling acquirer:', error);
@@ -133,7 +153,7 @@ export const MultiAcquirersSection = () => {
     }
   };
 
-  const saveFeeSettings = async (acquirer: 'inter' | 'spedpay', feeRate: string, fixedFee: string) => {
+  const saveFeeSettings = async (acquirer: 'inter' | 'spedpay' | 'ativus', feeRate: string, fixedFee: string) => {
     try {
       const updates = [
         { key: `${acquirer}_fee_rate`, value: feeRate },
@@ -148,9 +168,11 @@ export const MultiAcquirersSection = () => {
         if (error) throw error;
       }
       
+      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
+      
       toast({
         title: "Taxas Atualizadas",
-        description: `Taxas do ${acquirer === 'inter' ? 'Banco Inter' : 'SpedPay'} salvas com sucesso.`
+        description: `Taxas do ${acquirerNames[acquirer]} salvas com sucesso.`
       });
     } catch (error) {
       console.error('Error saving fees:', error);
@@ -159,6 +181,64 @@ export const MultiAcquirersSection = () => {
         description: "Falha ao salvar taxas",
         variant: "destructive"
       });
+    }
+  };
+
+  const saveAtivusApiKey = async () => {
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'ativus_api_key',
+        setting_value: ativusApiKey
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Chave API do Ativus Hub atualizada!"
+      });
+      setShowAtivusConfigDialog(false);
+    } catch (error) {
+      console.error('Error saving Ativus API key:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar chave API",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const testAtivusConnection = async () => {
+    setIsTestingAtivus(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pix-ativus', {
+        body: {
+          amount: 0.01,
+          donorName: 'Teste Conexão',
+          productName: 'Teste Ativus',
+          userId: user?.id
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Conexão OK",
+          description: "Ativus Hub está funcionando corretamente!"
+        });
+      } else {
+        throw new Error(data?.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error('Erro ao testar Ativus:', error);
+      toast({
+        title: "Erro na conexão",
+        description: error.message || "Falha ao conectar com Ativus Hub",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTestingAtivus(false);
     }
   };
 
@@ -262,7 +342,7 @@ export const MultiAcquirersSection = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
-          <Badge variant="secondary" className="text-xs">2</Badge>
+          <Badge variant="secondary" className="text-xs">3</Badge>
         </div>
         <Button variant="outline" disabled>
           <Plus className="w-4 h-4 mr-2" />
@@ -565,6 +645,165 @@ export const MultiAcquirersSection = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* ATIVUS HUB Card */}
+        <Card className={`border-primary/50 transition-opacity ${ativusEnabled === false ? 'opacity-60' : ''}`}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold text-primary">ATIVUS HUB</CardTitle>
+                <CardDescription className="text-sm">
+                  Gateway PIX via Ativus Hub
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                {isLoadingStates ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <Switch
+                    checked={ativusEnabled ?? true}
+                    onCheckedChange={(checked) => toggleAcquirer('ativus', checked)}
+                  />
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">Métodos de pagamento disponíveis:</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-emerald-500/10 rounded flex items-center justify-center">
+                      <svg width="12" height="12" viewBox="0 0 32 32" fill="none">
+                        <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                        <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
+                        <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
+                        <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium">PIX</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{ativusEnabled !== false ? 'Ativo' : 'Inativo'}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Fee Configuration */}
+            <div className="space-y-3 pt-2 border-t">
+              <p className="text-sm font-medium text-muted-foreground">Taxas:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Taxa (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={ativusFeeRate}
+                    onChange={(e) => setAtivusFeeRate(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={ativusEnabled === false}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={ativusFixedFee}
+                    onChange={(e) => setAtivusFixedFee(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={ativusEnabled === false}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveFeeSettings('ativus', ativusFeeRate, ativusFixedFee)}
+                className="w-full h-7 text-xs"
+                disabled={ativusEnabled === false}
+              >
+                Salvar Taxas
+              </Button>
+            </div>
+            
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+              <Badge 
+                variant="outline" 
+                className={ativusEnabled !== false
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-xs"
+                }
+              >
+                {ativusEnabled !== false ? <Check className="w-3 h-3 mr-1" /> : <Power className="w-3 h-3 mr-1" />}
+                {ativusEnabled !== false ? 'Integrado' : 'Desativado'}
+              </Badge>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowAtivusConfigDialog(true)}
+                  className="h-7 text-xs px-2"
+                  disabled={ativusEnabled === false}
+                >
+                  <Settings className="w-3 h-3 mr-1" />
+                  Config
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={testAtivusConnection}
+                  disabled={isTestingAtivus || ativusEnabled === false}
+                  className="h-7 text-xs px-2"
+                >
+                  {isTestingAtivus ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    "Testar"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dialog de Configuração do Ativus Hub */}
+        <AlertDialog open={showAtivusConfigDialog} onOpenChange={setShowAtivusConfigDialog}>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Configurar Ativus Hub
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Configure sua chave API do Ativus Hub para usar a integração.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="ativus-api-key">Chave API</Label>
+                <Input
+                  id="ativus-api-key"
+                  type="password"
+                  placeholder="Digite sua chave API do Ativus Hub"
+                  value={ativusApiKey}
+                  onChange={(e) => setAtivusApiKey(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Obtenha sua chave API no painel do Ativus Hub
+                </p>
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={saveAtivusApiKey}>
+                Salvar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Add New Acquirer Card (Placeholder) */}
         <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-not-allowed opacity-50">
