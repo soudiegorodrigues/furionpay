@@ -39,6 +39,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CheckoutPreviewMini } from "./CheckoutPreviewMini";
 
 interface CheckoutBuilderProps {
   productId: string;
@@ -331,276 +332,23 @@ export function CheckoutBuilder({ productId, userId, productName, productPrice =
             </div>
           </CardHeader>
           <CardContent className="p-4">
-            {/* Preview Container */}
+            {/* Preview Container - Uses dynamic template preview */}
             <div 
               className={cn(
                 "mx-auto border rounded-lg overflow-hidden transition-all duration-300",
                 previewMode === "mobile" ? "max-w-[375px]" : "w-full"
               )}
-              style={{ backgroundColor }}
             >
-              {/* Countdown Preview */}
-              {components.find(c => c.id === "cronometro")?.enabled && (
-                <div 
-                  className="py-3 px-4 text-white text-center flex items-center justify-center gap-2"
-                  style={{ backgroundColor: selectedColor }}
-                >
-                  <Clock className="h-4 w-4" />
-                  <span className="font-bold">04:33</span>
-                  <span className="text-sm">Preencha seus dados corretamente</span>
-                </div>
-              )}
-
-              {/* Header Preview */}
-              {components.find(c => c.id === "header")?.enabled && (
-                <div className="p-4 border-b bg-background">
-                  <h2 className="text-lg font-semibold">{texts.checkoutTitle}</h2>
-                  {texts.checkoutSubtitle && (
-                    <p className="text-sm text-muted-foreground">{texts.checkoutSubtitle}</p>
-                  )}
-                </div>
-              )}
-
-              {/* Image Preview */}
-              {components.find(c => c.id === "imagem")?.enabled && (
-                <div 
-                  className="border-b cursor-pointer group relative"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {bannerImageUrl ? (
-                    <div className="relative">
-                      <img 
-                        src={bannerImageUrl} 
-                        alt="Banner" 
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Upload className="h-6 w-6 text-white" />
-                        <span className="text-white text-sm ml-2">Trocar imagem</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-muted h-32 flex items-center justify-center border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-muted/50 transition-all">
-                      {isUploadingImage ? (
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      ) : (
-                        <div className="text-center">
-                          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-1 group-hover:text-primary transition-colors" />
-                          <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
-                            Clique para adicionar imagem
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Hidden file input for image upload */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageUpload}
+              <CheckoutPreviewMini
+                templateName={selectedTemplate}
+                productName={productName}
+                productPrice={productPrice}
+                primaryColor={selectedColor}
+                showCountdown={components.find(c => c.id === "cronometro")?.enabled}
+                countdownMinutes={15}
+                showTestimonials={components.find(c => c.id === "depoimento")?.enabled}
+                previewMode={previewMode}
               />
-
-              {/* Vantagens Preview */}
-              {components.find(c => c.id === "vantagens")?.enabled && (
-                <div className="p-4 border-b bg-background">
-                  <div className="space-y-2">
-                    {["Entrega imediata", "Acesso vitalício", "Suporte 24h"].map((item, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4" style={{ color: selectedColor }} />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Product Summary */}
-              <div className="p-4 bg-background">
-                <div className="flex items-start gap-3">
-                  {settings.showProductImage && (
-                    <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center shrink-0">
-                      <Image className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-medium">{productName}</p>
-                    <p className="font-bold" style={{ color: selectedColor }}>
-                      1 X de {formatPrice(productPrice)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      ou {formatPrice(productPrice)} à vista
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Form Preview - Complete */}
-              <div className="p-4 space-y-4 bg-background">
-                <h3 className="font-medium flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: selectedColor }}>
-                    <User className="h-3 w-3 text-white" />
-                  </span>
-                  {texts.buyerSectionTitle}
-                </h3>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Nome completo</Label>
-                    <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                      Digite seu nome
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">E-mail</Label>
-                    <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                      seu@email.com
-                    </div>
-                  </div>
-                  {settings.confirmacaoEmail && (
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Confirmar e-mail</Label>
-                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                        Confirme seu e-mail
-                      </div>
-                    </div>
-                  )}
-                  {requiredFields.cpf && (
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">CPF</Label>
-                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                        000.000.000-00
-                      </div>
-                    </div>
-                  )}
-                  {requiredFields.telefone && (
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Telefone</Label>
-                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                        (00) 00000-0000
-                      </div>
-                    </div>
-                  )}
-                  {requiredFields.dataNascimento && (
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Data de nascimento</Label>
-                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                        DD/MM/AAAA
-                      </div>
-                    </div>
-                  )}
-                  {requiredFields.endereco && (
-                    <>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">CEP</Label>
-                        <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                          00000-000
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Cidade</Label>
-                          <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                            Cidade
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Estado</Label>
-                          <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
-                            UF
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <h3 className="font-medium flex items-center gap-2 pt-4">
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: selectedColor }}>
-                    <CreditCard className="h-3 w-3 text-white" />
-                  </span>
-                  {texts.paymentSectionTitle}
-                </h3>
-                <div className="flex gap-2">
-                  <Button size="sm" style={{ backgroundColor: selectedColor }} className="text-white">
-                    <CreditCard className="h-4 w-4 mr-1" />
-                    Pix
-                  </Button>
-                </div>
-
-                {/* CTA Button */}
-                <Button 
-                  className="w-full mt-4 text-white font-semibold"
-                  style={{ backgroundColor: selectedColor }}
-                >
-                  {texts.customButtonText || "Finalizar Compra"}
-                </Button>
-              </div>
-
-              {/* Depoimento Preview */}
-              {components.find(c => c.id === "depoimento")?.enabled && (
-                <div className="p-4 border-t bg-background">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-muted" />
-                    <div>
-                      <p className="text-sm font-medium">Cliente Satisfeito</p>
-                      <div className="flex text-yellow-500">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    "Produto excelente, superou minhas expectativas!"
-                  </p>
-                </div>
-              )}
-
-              {/* Lista Preview */}
-              {components.find(c => c.id === "lista")?.enabled && (
-                <div className="p-4 border-t bg-background">
-                  <p className="text-sm font-medium mb-2">O que está incluso:</p>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
-                      Item 1 do produto
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
-                      Item 2 do produto
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
-                      Item 3 do produto
-                    </li>
-                  </ul>
-                </div>
-              )}
-
-              {/* Selo Preview */}
-              {components.find(c => c.id === "selo")?.enabled && settings.showSecurityBadges && (
-                <div className="p-4 border-t bg-background">
-                  <div className="flex items-center justify-center gap-4">
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Shield className="h-4 w-4" style={{ color: selectedColor }} />
-                      <span>{texts.securityBadgeText}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
-                      <span>Compra Garantida</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Footer Preview */}
-              <div className="p-3 border-t text-center text-xs text-muted-foreground bg-background">
-                {texts.footerText}
-              </div>
             </div>
           </CardContent>
         </Card>
