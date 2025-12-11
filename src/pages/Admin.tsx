@@ -41,7 +41,9 @@ import {
   AlertTriangle,
   Search,
   CheckCircle,
-  Settings
+  Settings,
+  UserCheck,
+  UserX
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -169,6 +171,7 @@ interface User {
   is_admin: boolean;
   is_blocked: boolean;
   full_name: string | null;
+  is_approved: boolean;
 }
 
 interface RankingUser {
@@ -630,6 +633,34 @@ const Admin = () => {
       loadUsers();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao excluir usuário', variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleApproveUser = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      const { error } = await supabase.rpc('approve_user' as any, { target_user_id: userId });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Usuário aprovado com sucesso' });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao aprovar usuário', variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRevokeApproval = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      const { error } = await supabase.rpc('revoke_user_approval' as any, { target_user_id: userId });
+      if (error) throw error;
+      toast({ title: 'Sucesso', description: 'Aprovação revogada' });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao revogar aprovação', variant: 'destructive' });
     } finally {
       setActionLoading(null);
     }
@@ -1800,13 +1831,20 @@ const Admin = () => {
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 flex-wrap">
                                   {u.is_blocked ? (
                                     <Badge variant="destructive" className="text-[10px] px-1.5">Bloq.</Badge>
                                   ) : u.is_admin ? (
                                     <Badge className="bg-primary text-[10px] px-1.5">Admin</Badge>
                                   ) : (
                                     <Badge variant="secondary" className="text-[10px] px-1.5">User</Badge>
+                                  )}
+                                  {!u.is_admin && (
+                                    u.is_approved ? (
+                                      <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] px-1.5">Aprovado</Badge>
+                                    ) : (
+                                      <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-[10px] px-1.5">Pendente</Badge>
+                                    )
                                   )}
                                 </div>
                               </TableCell>
@@ -1835,6 +1873,32 @@ const Admin = () => {
                                     >
                                       <Pencil className="h-3 w-3" />
                                     </Button>
+                                    {/* Approve/Revoke Approval - only for non-admin users */}
+                                    {!u.is_admin && (
+                                      u.is_approved ? (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-7 w-7 p-0"
+                                          onClick={() => handleRevokeApproval(u.id)}
+                                          disabled={actionLoading === u.id}
+                                          title="Revogar Aprovação"
+                                        >
+                                          {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-7 w-7 p-0 text-green-600 hover:text-green-700 border-green-500/50 hover:bg-green-50 dark:hover:bg-green-950"
+                                          onClick={() => handleApproveUser(u.id)}
+                                          disabled={actionLoading === u.id}
+                                          title="Aprovar Usuário"
+                                        >
+                                          {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserCheck className="h-3 w-3" />}
+                                        </Button>
+                                      )
+                                    )}
                                     {u.is_admin ? (
                                       <Button
                                         variant="outline"

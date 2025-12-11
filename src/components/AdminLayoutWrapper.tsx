@@ -5,15 +5,16 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { supabase } from "@/integrations/supabase/client";
-import { Menu } from "lucide-react";
+import { Menu, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
 export function AdminLayoutWrapper() {
   const navigate = useNavigate();
-  const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin } = useAdminAuth();
+  const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin, isApproved } = useAdminAuth();
   const [userName, setUserName] = useState<string | null>(null);
   const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
@@ -64,6 +65,38 @@ export function AdminLayoutWrapper() {
 
   if (!isAuthenticated && !loading) {
     return null;
+  }
+
+  // Show pending approval screen for non-approved users (except admins)
+  if (!isApproved && !isAdmin && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500/10 flex items-center justify-center">
+              <Clock className="w-8 h-8 text-yellow-500" />
+            </div>
+            <CardTitle className="text-xl">Aguardando Aprovação</CardTitle>
+            <CardDescription className="text-base">
+              Sua conta foi criada com sucesso! No entanto, você precisa aguardar a aprovação de um administrador para acessar o sistema.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center text-sm text-muted-foreground">
+              <p>Email: <span className="font-medium text-foreground">{user?.email}</span></p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

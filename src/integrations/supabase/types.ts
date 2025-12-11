@@ -500,6 +500,7 @@ export type Database = {
           full_name: string
           id: string
           is_admin: boolean
+          is_approved: boolean
           is_blocked: boolean
           last_sign_in_at: string
         }[]
