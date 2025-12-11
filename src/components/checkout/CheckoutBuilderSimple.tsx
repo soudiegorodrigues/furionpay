@@ -104,6 +104,22 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     },
   });
 
+  // Fetch testimonials for preview
+  const { data: testimonials = [] } = useQuery({
+    queryKey: ["product-testimonials", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_testimonials")
+        .select("*")
+        .eq("product_id", productId)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch existing config
   const { data: config } = useQuery({
     queryKey: ["checkout-config", productId],
@@ -296,6 +312,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   showBanner={customizations.showBanner}
                   bannerImageUrl={bannerImageUrl}
                   previewMode={previewMode}
+                  testimonials={testimonials}
                 />
               </ScrollArea>
             </div>
