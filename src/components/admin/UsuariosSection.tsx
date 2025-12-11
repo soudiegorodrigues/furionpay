@@ -320,7 +320,7 @@ export const UsuariosSection = () => {
                           <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">{formatDate(u.created_at)}</TableCell>
                           <TableCell className="text-xs hidden lg:table-cell">
                             <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
-                              {userAcquirers[u.id] === 'inter' ? 'Banco Inter' : 'SpedPay'}
+                              {userAcquirers[u.id] === 'inter' ? 'Banco Inter' : userAcquirers[u.id] === 'ativus' ? 'Ativus Hub' : 'SpedPay'}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -503,6 +503,12 @@ export const UsuariosSection = () => {
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-orange-500/10 rounded flex items-center justify-center text-orange-500 text-[10px] font-bold">I</div>
                         Banco Inter
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ativus">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-purple-500/10 rounded flex items-center justify-center text-purple-500 text-[10px] font-bold">A</div>
+                        Ativus Hub
                       </div>
                     </SelectItem>
                   </SelectContent>
