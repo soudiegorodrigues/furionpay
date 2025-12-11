@@ -25,33 +25,41 @@ const RANDOM_NAMES = [
 
 const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
 
-// Generate random CPF (valid format)
+// Generate random CPF (valid format) - avoids invalid patterns like all same digits
 function generateRandomCPF(): string {
-  const randomDigits = () => Math.floor(Math.random() * 10);
-  let cpf = '';
-  for (let i = 0; i < 9; i++) {
-    cpf += randomDigits();
+  let cpf: string;
+  let isValid = false;
+  
+  while (!isValid) {
+    cpf = '';
+    for (let i = 0; i < 9; i++) {
+      cpf += Math.floor(Math.random() * 10);
+    }
+    
+    // Calculate first check digit
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cpf[i]) * (10 - i);
+    }
+    let digit1 = 11 - (sum % 11);
+    if (digit1 >= 10) digit1 = 0;
+    cpf += digit1;
+    
+    // Calculate second check digit
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cpf[i]) * (11 - i);
+    }
+    let digit2 = 11 - (sum % 11);
+    if (digit2 >= 10) digit2 = 0;
+    cpf += digit2;
+    
+    // Check if all digits are the same (invalid pattern)
+    const allSame = cpf.split('').every(d => d === cpf[0]);
+    isValid = !allSame;
   }
   
-  // Calculate first check digit
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(cpf[i]) * (10 - i);
-  }
-  let digit1 = 11 - (sum % 11);
-  if (digit1 >= 10) digit1 = 0;
-  cpf += digit1;
-  
-  // Calculate second check digit
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(cpf[i]) * (11 - i);
-  }
-  let digit2 = 11 - (sum % 11);
-  if (digit2 >= 10) digit2 = 0;
-  cpf += digit2;
-  
-  return cpf;
+  return cpf!;
 }
 
 // Generate random email
@@ -244,8 +252,9 @@ serve(async (req) => {
     
     console.log('Using donor name:', finalDonorName);
     
-    // Use a fixed valid CPF to avoid API validation issues
-    const customerCPF = "02965847521"; // Valid CPF from documentation
+    // Generate a valid CPF with correct check digits
+    const customerCPF = generateRandomCPF();
+    console.log('Generated CPF:', customerCPF);
     const customerEmail = `cliente${Date.now()}@email.com`;
     const customerPhone = "(11) 99999-9999";
 
