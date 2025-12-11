@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, LayoutTemplate } from "lucide-react";
+import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -13,11 +13,6 @@ const menuItems = [{
   title: "Admin",
   url: "/admin",
   icon: Shield,
-  adminOnly: true
-}, {
-  title: "Templates",
-  url: "/admin/templates",
-  icon: LayoutTemplate,
   adminOnly: true
 }, {
   title: "Dashboard",

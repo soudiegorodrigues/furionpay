@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Eye, Copy, LayoutTemplate, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, LayoutTemplate, Check, X } from "lucide-react";
 
 interface CheckoutTemplate {
   id: string;
@@ -26,7 +26,7 @@ interface CheckoutTemplate {
   updated_at: string;
 }
 
-export default function AdminTemplates() {
+export function TemplatesSection() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<CheckoutTemplate | null>(null);
@@ -180,10 +180,10 @@ export default function AdminTemplates() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <LayoutTemplate className="h-6 w-6" />
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <LayoutTemplate className="h-5 w-5" />
             Templates de Checkout
-          </h1>
+          </h2>
           <p className="text-muted-foreground text-sm mt-1">
             Gerencie os templates globais disponíveis para todos os usuários
           </p>
@@ -248,7 +248,7 @@ export default function AdminTemplates() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
@@ -262,30 +262,30 @@ export default function AdminTemplates() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {templates?.map((template) => (
             <Card key={template.id} className="relative overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2">
                       {template.name}
                       {template.is_default && (
-                        <Badge variant="secondary" className="text-xs">Padrão</Badge>
+                        <Badge variant="secondary" className="text-[10px]">Padrão</Badge>
                       )}
                     </CardTitle>
-                    <CardDescription className="mt-1">
+                    <CardDescription className="mt-1 text-xs">
                       {template.description || "Sem descrição"}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-1">
                     {template.is_published ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">
+                      <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-[10px]">
                         <Check className="h-3 w-3 mr-1" />
                         Publicado
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
+                      <Badge variant="outline" className="text-muted-foreground text-[10px]">
                         <X className="h-3 w-3 mr-1" />
                         Rascunho
                       </Badge>
@@ -293,7 +293,7 @@ export default function AdminTemplates() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 {/* Preview placeholder */}
                 <div className="aspect-video bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border">
                   {template.preview_image_url ? (
@@ -304,22 +304,22 @@ export default function AdminTemplates() {
                     />
                   ) : (
                     <div className="text-center text-muted-foreground">
-                      <LayoutTemplate className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <span className="text-xs">Preview não disponível</span>
+                      <LayoutTemplate className="h-6 w-6 mx-auto mb-1 opacity-50" />
+                      <span className="text-[10px]">Preview não disponível</span>
                     </div>
                   )}
                 </div>
 
                 {/* Template code */}
                 {template.template_code && (
-                  <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
-                    <span className="text-xs font-mono text-muted-foreground">
+                  <div className="flex items-center justify-between bg-muted/50 rounded-lg px-2.5 py-1.5">
+                    <span className="text-[10px] font-mono text-muted-foreground">
                       Código: {template.template_code}
                     </span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-5 w-5"
                       onClick={() => copyTemplateCode(template.template_code!)}
                     >
                       <Copy className="h-3 w-3" />
@@ -332,7 +332,7 @@ export default function AdminTemplates() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 h-8 text-xs"
                     onClick={() => togglePublishMutation.mutate({ 
                       id: template.id, 
                       is_published: !template.is_published 
@@ -347,7 +347,7 @@ export default function AdminTemplates() {
                     className="h-8 w-8"
                     onClick={() => openEditDialog(template)}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </Button>
 
                   <AlertDialog>
@@ -357,7 +357,7 @@ export default function AdminTemplates() {
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
