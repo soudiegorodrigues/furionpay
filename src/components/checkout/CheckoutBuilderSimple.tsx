@@ -70,6 +70,13 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [primaryColor, setPrimaryColor] = useState("#16A34A");
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   
+  // Separate states for section expansion (visual toggle)
+  const [expandedSections, setExpandedSections] = useState({
+    banner: true,
+    countdown: true,
+    whatsapp: true,
+  });
+  
   const [customizations, setCustomizations] = useState({
     showBanner: false,
     showCountdown: false,
@@ -425,14 +432,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
             />
 
             {/* Banner */}
-            <Collapsible open={customizations.showBanner}>
+            <Collapsible 
+              open={customizations.showBanner && expandedSections.banner}
+              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, banner: isOpen }))}
+            >
               <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild disabled={!customizations.showBanner}>
-                  <div className="flex items-center gap-2 cursor-pointer flex-1">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.showBanner ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
                     <Image className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm cursor-pointer">Banner</Label>
+                    <Label className="text-sm">Banner</Label>
                     {customizations.showBanner && (
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        expandedSections.banner && "rotate-180"
+                      )} />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -493,14 +509,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
             </Collapsible>
 
             {/* Countdown */}
-            <Collapsible open={customizations.showCountdown}>
+            <Collapsible 
+              open={customizations.showCountdown && expandedSections.countdown}
+              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, countdown: isOpen }))}
+            >
               <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild disabled={!customizations.showCountdown}>
-                  <div className="flex items-center gap-2 cursor-pointer flex-1">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.showCountdown ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm cursor-pointer">Cronômetro</Label>
+                    <Label className="text-sm">Cronômetro</Label>
                     {customizations.showCountdown && (
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        expandedSections.countdown && "rotate-180"
+                      )} />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -551,14 +576,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
             </div>
 
             {/* WhatsApp Button */}
-            <Collapsible open={customizations.showWhatsappButton}>
+            <Collapsible 
+              open={customizations.showWhatsappButton && expandedSections.whatsapp}
+              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, whatsapp: isOpen }))}
+            >
               <div className="flex items-center justify-between py-2">
-                <CollapsibleTrigger asChild disabled={!customizations.showWhatsappButton}>
-                  <div className="flex items-center gap-2 cursor-pointer flex-1">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.showWhatsappButton ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
                     <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm cursor-pointer">Botão WhatsApp</Label>
+                    <Label className="text-sm">Botão WhatsApp</Label>
                     {customizations.showWhatsappButton && (
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        expandedSections.whatsapp && "rotate-180"
+                      )} />
                     )}
                   </div>
                 </CollapsibleTrigger>
