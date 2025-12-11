@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ATIVUS_API_URL = 'https://api.ativushub.com.br';
+// Correct Ativus Hub API URL
+const ATIVUS_API_URL = 'https://api.ativushub.com.br/v1/gateway/api/';
 
 // Random names for anonymous donations
 const RANDOM_NAMES = [
@@ -23,6 +24,53 @@ const RANDOM_NAMES = [
 ];
 
 const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
+
+// Generate random CPF (valid format)
+function generateRandomCPF(): string {
+  const randomDigits = () => Math.floor(Math.random() * 10);
+  let cpf = '';
+  for (let i = 0; i < 9; i++) {
+    cpf += randomDigits();
+  }
+  
+  // Calculate first check digit
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf[i]) * (10 - i);
+  }
+  let digit1 = 11 - (sum % 11);
+  if (digit1 >= 10) digit1 = 0;
+  cpf += digit1;
+  
+  // Calculate second check digit
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf[i]) * (11 - i);
+  }
+  let digit2 = 11 - (sum % 11);
+  if (digit2 >= 10) digit2 = 0;
+  cpf += digit2;
+  
+  return cpf;
+}
+
+// Generate random email
+function generateRandomEmail(name: string): string {
+  const cleanName = name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '.')
+    .replace(/[^a-z.]/g, '');
+  const randomNum = Math.floor(Math.random() * 1000);
+  return `${cleanName}${randomNum}@email.com`;
+}
+
+// Generate random phone
+function generateRandomPhone(): string {
+  const ddd = Math.floor(Math.random() * 89) + 11;
+  const part1 = Math.floor(Math.random() * 90000) + 10000;
+  const part2 = Math.floor(Math.random() * 9000) + 1000;
+  return `(${ddd}) 9${part1.toString().slice(0, 4)}-${part2}`;
+}
 
 interface GeneratePixRequest {
   amount: number;
@@ -59,7 +107,7 @@ async function getAtivusApiKey(supabase: any, userId?: string): Promise<string> 
     }
   }
   
-  // Try global setting
+  // Try global setting (user_id is NULL)
   const { data: globalData, error: globalError } = await supabase
     .from('admin_settings')
     .select('value')
@@ -187,41 +235,109 @@ serve(async (req) => {
     // Get product name from checkout_offers if not provided
     const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
     const finalDonorName = donorName || getRandomName();
+    const customerCPF = generateRandomCPF();
+    const customerEmail = generateRandomEmail(finalDonorName);
+    const customerPhone = generateRandomPhone();
 
-    // Criar cobrança PIX via Ativus Hub API
+    // Build request payload according to Ativus Hub API spec
     const payload = {
-      valor: amount.toFixed(2),
-      descricao: finalProductName,
-      external_id: txid,
+      amount: amount,
+      id_seller: `seller_${userId || 'default'}`,
+      customer: {
+        name: finalDonorName,
+        email: customerEmail,
+        cpf: customerCPF,
+        phone: customerPhone,
+        externaRef: txid,
+        address: {
+          street: "Rua Exemplo",
+          streetNumber: "100",
+          complement: "",
+          zipCode: "01001000",
+          neighborhood: "Centro",
+          city: "São Paulo",
+          state: "SP",
+          country: "br"
+        }
+      },
+      checkout: utmData ? {
+        utm_source: utmData.utm_source || '',
+        utm_medium: utmData.utm_medium || '',
+        utm_campaign: utmData.utm_campaign || '',
+        utm_term: utmData.utm_term || '',
+        utm_content: utmData.utm_content || ''
+      } : undefined,
+      pix: {
+        expiresInDays: 1
+      },
+      items: [
+        {
+          title: finalProductName,
+          quantity: 1,
+          unitPrice: amount,
+          tangible: false
+        }
+      ],
+      metadata: JSON.stringify({ popup_model: popupModel, user_id: userId }),
+      traceable: true
     };
 
     console.log('Criando cobrança PIX Ativus:', JSON.stringify(payload));
 
-    const response = await fetch(`${ATIVUS_API_URL}/pix/cobranca`, {
+    // Convert API key to Base64 for Basic auth
+    const apiKeyBase64 = btoa(apiKey);
+
+    const response = await fetch(ATIVUS_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Basic ${apiKeyBase64}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
+    const responseText = await response.text();
+    console.log('Resposta Ativus (raw):', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Erro ao criar cobrança Ativus:', response.status, errorText);
-      throw new Error(`Erro ao criar cobrança: ${response.status} - ${errorText}`);
+      console.error('Erro ao criar cobrança Ativus:', response.status, responseText);
+      throw new Error(`Erro ao criar cobrança: ${response.status} - ${responseText}`);
     }
 
-    const data = await response.json();
-    console.log('Resposta Ativus:', JSON.stringify(data));
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Erro ao parsear resposta JSON:', e);
+      throw new Error('Resposta inválida da API Ativus');
+    }
 
-    // Extract PIX code from response (adjust based on actual API response structure)
-    const pixCode = data.pix_copia_e_cola || data.pixCopiaECola || data.codigo_pix || data.qrcode;
-    const qrCodeUrl = data.qrcode_url || data.qrcodeUrl || null;
+    console.log('Resposta Ativus (parsed):', JSON.stringify(data));
+
+    // Extract PIX code from response - try multiple possible field names
+    const pixCode = data.pix_copia_e_cola || 
+                    data.pixCopiaECola || 
+                    data.codigo_pix || 
+                    data.qrcode || 
+                    data.qr_code ||
+                    data.brcode ||
+                    data.pix?.brcode ||
+                    data.pix?.qrcode ||
+                    data.transaction?.pix_copia_e_cola ||
+                    data.transaction?.brcode;
+                    
+    const qrCodeUrl = data.qrcode_url || 
+                      data.qrcodeUrl || 
+                      data.qr_code_url ||
+                      data.pix?.qrcode_url ||
+                      data.transaction?.qrcode_url ||
+                      null;
+                      
+    const transactionId = data.id || data.transaction_id || data.id_transaction || txid;
 
     if (!pixCode) {
-      console.error('PIX code not found in response:', data);
-      throw new Error('Código PIX não encontrado na resposta');
+      console.error('PIX code not found in response:', JSON.stringify(data));
+      throw new Error('Código PIX não encontrado na resposta. Campos retornados: ' + Object.keys(data).join(', '));
     }
 
     // Registrar transação
@@ -230,7 +346,7 @@ serve(async (req) => {
     await logPixGenerated(
       supabase,
       amount,
-      txid,
+      transactionId,
       pixCode,
       finalDonorName,
       utmData,
@@ -244,8 +360,8 @@ serve(async (req) => {
         success: true,
         pixCode,
         qrCodeUrl,
-        txid,
-        transactionId: txid,
+        txid: transactionId,
+        transactionId: transactionId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
