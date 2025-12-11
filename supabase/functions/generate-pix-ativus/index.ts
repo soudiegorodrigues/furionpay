@@ -315,8 +315,9 @@ serve(async (req) => {
 
     console.log('Resposta Ativus (parsed):', JSON.stringify(data));
 
-    // Extract PIX code from response - try multiple possible field names
-    const pixCode = data.pix_copia_e_cola || 
+    // Extract PIX code from response - Ativus Hub uses paymentCode
+    const pixCode = data.paymentCode || 
+                    data.pix_copia_e_cola || 
                     data.pixCopiaECola || 
                     data.codigo_pix || 
                     data.qrcode || 
@@ -327,14 +328,15 @@ serve(async (req) => {
                     data.transaction?.pix_copia_e_cola ||
                     data.transaction?.brcode;
                     
-    const qrCodeUrl = data.qrcode_url || 
+    const qrCodeUrl = data.paymentCodeBase64 ||
+                      data.qrcode_url || 
                       data.qrcodeUrl || 
                       data.qr_code_url ||
                       data.pix?.qrcode_url ||
                       data.transaction?.qrcode_url ||
                       null;
                       
-    const transactionId = data.id || data.transaction_id || data.id_transaction || txid;
+    const transactionId = data.idTransaction || data.id || data.transaction_id || data.id_transaction || txid;
 
     if (!pixCode) {
       console.error('PIX code not found in response:', JSON.stringify(data));
