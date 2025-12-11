@@ -51,7 +51,6 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { PersonalizacaoSection } from "@/components/admin/PersonalizacaoSection";
 import { EmailSection } from "@/components/admin/EmailSection";
 import { CheckoutGlobalSection } from "@/components/admin/CheckoutGlobalSection";
-import { TemplatesSection } from "@/components/admin/TemplatesSection";
 
 // Zona de Perigo Component
 const ZonaDePerigo = () => {
@@ -2243,9 +2242,6 @@ const Admin = () => {
           <EmailSection />
         )}
 
-        {activeSection === "templates" && (
-          <TemplatesSection />
-        )}
       </div>
   );
 };
