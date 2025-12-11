@@ -161,16 +161,20 @@ export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: Insta
               </div>
               
               {/* Buttons */}
-              <div className="flex flex-col gap-3">
-                <p className="text-xs text-center text-zinc-500">
-                  Siga os passos acima para instalar o app
-                </p>
+              <div className="flex gap-3">
                 <Button 
                   variant="ghost" 
                   onClick={handleClose}
-                  className="w-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-0"
+                  className="flex-1 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-0"
                 >
-                  Entendi
+                  Fechar
+                </Button>
+                <Button 
+                  onClick={handleInstall}
+                  className="flex-1 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Instalar
                 </Button>
               </div>
             </div>
