@@ -19,6 +19,8 @@ export interface Product {
 }
 
 export interface CheckoutConfig {
+  discount_popup_color?: string | null;
+  discount_popup_image_url?: string | null;
   primary_color: string | null;
   template: string | null;
   template_id: string | null;

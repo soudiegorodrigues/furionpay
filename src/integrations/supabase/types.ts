@@ -403,7 +403,9 @@ export type Database = {
           countdown_minutes: number | null
           created_at: string
           custom_button_text: string | null
+          discount_popup_color: string | null
           discount_popup_cta: string | null
+          discount_popup_image_url: string | null
           discount_popup_message: string | null
           discount_popup_percentage: number | null
           discount_popup_title: string | null
@@ -441,7 +443,9 @@ export type Database = {
           countdown_minutes?: number | null
           created_at?: string
           custom_button_text?: string | null
+          discount_popup_color?: string | null
           discount_popup_cta?: string | null
+          discount_popup_image_url?: string | null
           discount_popup_message?: string | null
           discount_popup_percentage?: number | null
           discount_popup_title?: string | null
@@ -479,7 +483,9 @@ export type Database = {
           countdown_minutes?: number | null
           created_at?: string
           custom_button_text?: string | null
+          discount_popup_color?: string | null
           discount_popup_cta?: string | null
+          discount_popup_image_url?: string | null
           discount_popup_message?: string | null
           discount_popup_percentage?: number | null
           discount_popup_title?: string | null
