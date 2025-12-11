@@ -234,7 +234,16 @@ serve(async (req) => {
 
     // Get product name from checkout_offers if not provided
     const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
-    const finalDonorName = donorName || getRandomName();
+    // Use donor name without special characters to avoid API issues
+    const rawDonorName = donorName || getRandomName();
+    // Remove accents and special characters from name
+    const finalDonorName = rawDonorName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z\s]/g, '');
+    
+    console.log('Using donor name:', finalDonorName);
+    
     const customerCPF = generateRandomCPF();
     const customerEmail = generateRandomEmail(finalDonorName);
     const customerPhone = generateRandomPhone();
