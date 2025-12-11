@@ -283,7 +283,7 @@ export default function AdminProducts() {
             .map((product) => (
               <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
                 {/* Image */}
-                <div className="aspect-square bg-muted flex items-center justify-center relative">
+                <div className="aspect-[5/4] bg-muted flex items-center justify-center relative">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
