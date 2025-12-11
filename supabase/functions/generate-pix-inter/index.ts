@@ -220,6 +220,47 @@ async function logPixGenerated(
   }
 }
 
+async function getProductNameFromOffer(supabase: any, userId?: string, popupModel?: string): Promise<string> {
+  const DEFAULT_PRODUCT_NAME = 'Anônimo';
+  
+  // First try to get product_name from checkout_offers using userId + popup_model
+  if (userId && popupModel) {
+    const { data: offerData, error: offerError } = await supabase
+      .from('checkout_offers')
+      .select('product_name')
+      .eq('user_id', userId)
+      .eq('popup_model', popupModel)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (!offerError && offerData?.product_name && offerData.product_name.trim() !== '') {
+      console.log('Using product name from checkout offer:', offerData.product_name);
+      return offerData.product_name;
+    }
+  }
+  
+  // Fallback: try to get any checkout offer from this user with product_name
+  if (userId) {
+    const { data: anyOfferData, error: anyOfferError } = await supabase
+      .from('checkout_offers')
+      .select('product_name')
+      .eq('user_id', userId)
+      .not('product_name', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (!anyOfferError && anyOfferData?.product_name && anyOfferData.product_name.trim() !== '') {
+      console.log('Using product name from user checkout offer (fallback):', anyOfferData.product_name);
+      return anyOfferData.product_name;
+    }
+  }
+  
+  console.log('Using default product name:', DEFAULT_PRODUCT_NAME);
+  return DEFAULT_PRODUCT_NAME;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -258,6 +299,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Get product name from checkout_offers if not provided
+    const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
+
     // Registrar transação
     await logPixGenerated(
       supabase,
@@ -266,7 +310,7 @@ serve(async (req) => {
       pixCode,
       donorName || 'Anônimo',
       utmData,
-      productName,
+      finalProductName,
       userId,
       popupModel
     );
