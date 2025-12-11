@@ -639,10 +639,28 @@ const Admin = () => {
   };
 
   const handleApproveUser = async (userId: string) => {
+    const userToApprove = users.find(u => u.id === userId);
     try {
       setActionLoading(userId);
       const { error } = await supabase.rpc('approve_user' as any, { target_user_id: userId });
       if (error) throw error;
+      
+      // Send approval notification email
+      if (userToApprove) {
+        try {
+          await supabase.functions.invoke('send-approval-notification', {
+            body: {
+              userId: userId,
+              userEmail: userToApprove.email,
+              userName: userToApprove.full_name
+            }
+          });
+        } catch (emailError) {
+          console.error('Failed to send approval notification:', emailError);
+          // Don't fail the approval if email fails
+        }
+      }
+      
       toast({ title: 'Sucesso', description: 'Usuário aprovado com sucesso' });
       loadUsers();
     } catch (error: any) {
