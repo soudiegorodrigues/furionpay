@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, DragEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,22 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { 
   ArrowLeft, 
   Save, 
-  Palette, 
-  LayoutGrid, 
-  Type, 
   Monitor, 
   Smartphone,
-  GripVertical,
   Eye,
-  EyeOff,
-  Settings2,
-  Sparkles,
+  Type,
   Image,
   Clock,
   Users,
@@ -31,13 +24,20 @@ import {
   FileText,
   MessageSquare,
   Check,
-  ChevronDown,
-  ChevronRight,
+  Plus,
+  Trash2,
+  GripVertical,
+  Settings,
   Layers,
-  Paintbrush,
-  Square,
-  Circle,
+  Sparkles,
+  Video,
+  List,
+  Star,
+  BadgeCheck,
+  Facebook,
+  MapPin,
   Loader2,
+  X,
 } from "lucide-react";
 import { TemplateEditorPreview } from "./TemplateEditorPreview";
 
@@ -91,7 +91,7 @@ const defaultConfig: TemplateConfig = {
   type: "custom",
   colors: {
     primary: "#16A34A",
-    background: "#f3f4f6",
+    background: "#f8fafc",
     cardBackground: "#ffffff",
     text: "#1f2937",
     mutedText: "#6b7280",
@@ -111,30 +111,34 @@ const defaultConfig: TemplateConfig = {
   labels: {
     checkoutTitle: "Finalizar Compra",
     checkoutSubtitle: "",
-    buyerSectionTitle: "Dados do comprador",
-    paymentSectionTitle: "Forma de pagamento",
-    buttonText: "FINALIZAR COMPRA",
+    buyerSectionTitle: "Seus dados",
+    paymentSectionTitle: "Pagamento",
+    buttonText: "COMPRAR AGORA",
     footerText: "Pagamento processado com segurança",
-    securityBadgeText: "Pagamento Seguro",
+    securityBadgeText: "Compra Segura",
   },
   settings: {
     showLogo: true,
     logoUrl: "",
     showProductImage: true,
-    borderRadius: "12px",
+    borderRadius: "8px",
   },
 };
 
-const componentIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  header: Image,
-  productInfo: FileText,
-  countdown: Clock,
-  buyerForm: Users,
-  payment: CreditCard,
-  testimonials: MessageSquare,
-  securityBadges: ShieldCheck,
-  footer: FileText,
-};
+// Available components for the palette
+const componentPalette = [
+  { type: "text", name: "Texto", icon: Type },
+  { type: "image", name: "Imagem", icon: Image },
+  { type: "benefits", name: "Vantagens", icon: Check },
+  { type: "badge", name: "Selo", icon: BadgeCheck },
+  { type: "header", name: "Header", icon: Layers },
+  { type: "list", name: "Lista", icon: List },
+  { type: "countdown", name: "Cronômetro", icon: Clock },
+  { type: "testimonials", name: "Depoimento", icon: MessageSquare },
+  { type: "video", name: "Vídeo", icon: Video },
+  { type: "facebook", name: "Facebook", icon: Facebook },
+  { type: "map", name: "Mapa", icon: MapPin },
+];
 
 const presetColors = [
   { name: "Esmeralda", value: "#10B981" },
@@ -150,8 +154,9 @@ const presetColors = [
 export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
   const queryClient = useQueryClient();
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
-  const [activeSection, setActiveSection] = useState<"layers" | "design" | "content">("layers");
-  const [expandedComponent, setExpandedComponent] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"components" | "config">("components");
+  const [draggedComponent, setDraggedComponent] = useState<string | null>(null);
+  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   
   const [config, setConfig] = useState<TemplateConfig>(() => {
     const existingConfig = template.layout_config as Partial<TemplateConfig>;
@@ -215,13 +220,66 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
     }));
   };
 
-  const enabledCount = config.components.filter(c => c.enabled).length;
+  const removeComponent = (componentId: string) => {
+    setConfig(prev => ({
+      ...prev,
+      components: prev.components.filter(comp => comp.id !== componentId),
+    }));
+    if (selectedComponent === componentId) {
+      setSelectedComponent(null);
+    }
+  };
+
+  const addComponent = (type: string, name: string) => {
+    const newId = `${type}-${Date.now()}`;
+    setConfig(prev => ({
+      ...prev,
+      components: [...prev.components, {
+        id: newId,
+        type,
+        name,
+        enabled: true,
+        config: {},
+      }],
+    }));
+  };
+
+  const handleDragStart = (e: DragEvent, type: string, name: string) => {
+    setDraggedComponent(type);
+    e.dataTransfer.setData("componentType", type);
+    e.dataTransfer.setData("componentName", name);
+  };
+
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    const type = e.dataTransfer.getData("componentType");
+    const name = e.dataTransfer.getData("componentName");
+    if (type && name) {
+      addComponent(type, name);
+    }
+    setDraggedComponent(null);
+  };
+
+  const moveComponent = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= config.components.length) return;
+    
+    setConfig(prev => {
+      const newComponents = [...prev.components];
+      const [removed] = newComponents.splice(fromIndex, 1);
+      newComponents.splice(toIndex, 0, removed);
+      return { ...prev, components: newComponents };
+    });
+  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0a] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[#1a1a1a] flex flex-col">
       {/* Header */}
-      <header className="h-14 border-b border-white/10 flex items-center justify-between px-4 bg-[#111111] shrink-0">
-        <div className="flex items-center gap-3">
+      <header className="h-14 border-b border-white/10 flex items-center justify-between px-4 bg-[#111] shrink-0">
+        <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -231,301 +289,331 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           
-          <div className="h-5 w-px bg-white/10" />
-          
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-              <Layers className="h-3.5 w-3.5 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-white" />
             </div>
             <span className="text-sm font-medium text-white">{template.name}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Preview Mode Toggle */}
-          <div className="flex items-center bg-white/5 rounded-lg p-0.5 border border-white/10">
+          <div className="flex items-center bg-[#222] rounded-lg p-1 border border-white/10">
             <button
               onClick={() => setPreviewMode("desktop")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                "p-2 rounded-md transition-all",
                 previewMode === "desktop"
-                  ? "bg-white text-black"
-                  : "text-white/60 hover:text-white"
+                  ? "bg-white/10 text-white"
+                  : "text-white/40 hover:text-white"
               )}
             >
-              <Monitor className="h-3.5 w-3.5" />
-              Desktop
+              <Monitor className="h-4 w-4" />
             </button>
             <button
               onClick={() => setPreviewMode("mobile")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                "p-2 rounded-md transition-all",
                 previewMode === "mobile"
-                  ? "bg-white text-black"
-                  : "text-white/60 hover:text-white"
+                  ? "bg-white/10 text-white"
+                  : "text-white/40 hover:text-white"
               )}
             >
-              <Smartphone className="h-3.5 w-3.5" />
-              Mobile
+              <Smartphone className="h-4 w-4" />
             </button>
           </div>
-
-          <div className="h-5 w-px bg-white/10" />
 
           <Button 
             onClick={() => saveMutation.mutate()} 
             disabled={saveMutation.isPending}
-            size="sm"
-            className="bg-emerald-600 hover:bg-emerald-500 text-white h-8 px-4 text-xs font-medium"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white h-9 px-4 text-sm font-medium"
           >
             {saveMutation.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <Save className="h-3.5 w-3.5 mr-1.5" />
+                <Save className="h-4 w-4 mr-2" />
                 Salvar
               </>
             )}
+          </Button>
+
+          <Button 
+            variant="outline"
+            className="border-white/20 text-white h-9 px-4 text-sm hover:bg-white/10"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Preview
           </Button>
         </div>
       </header>
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel */}
-        <div className="w-[300px] border-r border-white/10 bg-[#111111] flex flex-col shrink-0">
-          {/* Section Tabs */}
+        {/* Preview Area */}
+        <div className="flex-1 bg-[#0d0d0d] overflow-auto p-6">
+          <div className={cn(
+            "mx-auto transition-all duration-300",
+            previewMode === "mobile" ? "max-w-md" : "max-w-5xl"
+          )}>
+            {/* Drop Zone */}
+            <div 
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className={cn(
+                "mb-6 border-2 border-dashed rounded-xl p-8 text-center transition-all",
+                draggedComponent 
+                  ? "border-emerald-500 bg-emerald-500/10" 
+                  : "border-white/20 bg-white/5"
+              )}
+            >
+              <p className="text-white/40 text-sm">
+                {draggedComponent ? "Solte o componente aqui" : "Arraste componentes aqui"}
+              </p>
+            </div>
+
+            {/* Active Components */}
+            <div className="space-y-2 mb-6">
+              {config.components.filter(c => c.enabled).map((component, index) => (
+                <div 
+                  key={component.id}
+                  onClick={() => setSelectedComponent(component.id)}
+                  className={cn(
+                    "group flex items-center gap-3 p-3 bg-white/5 rounded-lg border transition-all cursor-pointer",
+                    selectedComponent === component.id
+                      ? "border-emerald-500 bg-emerald-500/10"
+                      : "border-white/10 hover:border-white/20"
+                  )}
+                >
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); moveComponent(index, index - 1); }}
+                      className="p-1 text-white/30 hover:text-white"
+                    >
+                      <GripVertical className="h-4 w-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="w-8 h-8 rounded bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  
+                  <span className="flex-1 text-sm text-white">{component.name}</span>
+                  
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeComponent(component.id); }}
+                    className="p-1 text-white/30 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Live Preview */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-2xl">
+              <TemplateEditorPreview config={config} previewMode={previewMode} />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="w-[320px] border-l border-white/10 bg-[#111] flex flex-col shrink-0">
+          {/* Tabs */}
           <div className="flex border-b border-white/10">
-            {[
-              { id: "layers", icon: Layers, label: "Camadas" },
-              { id: "design", icon: Paintbrush, label: "Design" },
-              { id: "content", icon: Type, label: "Conteúdo" },
-            ].map((section) => (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id as typeof activeSection)}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-all border-b-2 -mb-px",
-                  activeSection === section.id
-                    ? "text-white border-emerald-500"
-                    : "text-white/50 border-transparent hover:text-white/80"
-                )}
-              >
-                <section.icon className="h-3.5 w-3.5" />
-                {section.label}
-              </button>
-            ))}
+            <button
+              onClick={() => setActiveTab("components")}
+              className={cn(
+                "flex-1 py-3 text-sm font-medium transition-all border-b-2 -mb-px",
+                activeTab === "components"
+                  ? "text-emerald-400 border-emerald-400"
+                  : "text-white/50 border-transparent hover:text-white"
+              )}
+            >
+              Componentes
+            </button>
+            <button
+              onClick={() => setActiveTab("config")}
+              className={cn(
+                "flex-1 py-3 text-sm font-medium transition-all border-b-2 -mb-px",
+                activeTab === "config"
+                  ? "text-emerald-400 border-emerald-400"
+                  : "text-white/50 border-transparent hover:text-white"
+              )}
+            >
+              Configurações
+            </button>
           </div>
 
           <ScrollArea className="flex-1">
-            {/* Layers Section */}
-            {activeSection === "layers" && (
-              <div className="p-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">
-                    Componentes
-                  </span>
-                  <span className="text-[10px] text-white/30">
-                    {enabledCount}/{config.components.length}
-                  </span>
-                </div>
+            {/* Components Tab */}
+            {activeTab === "components" && (
+              <div className="p-4">
+                <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
+                  Componentes
+                </p>
 
-                <div className="space-y-1">
-                  {config.components.map((component) => {
-                    const Icon = componentIcons[component.type] || FileText;
-                    const isExpanded = expandedComponent === component.id;
-                    
+                <div className="grid grid-cols-2 gap-2">
+                  {componentPalette.map((comp) => {
+                    const Icon = comp.icon;
                     return (
-                      <div key={component.id}>
-                        <div 
-                          className={cn(
-                            "group flex items-center gap-2 px-2 py-2 rounded-lg transition-all cursor-pointer",
-                            component.enabled
-                              ? "hover:bg-white/5"
-                              : "opacity-40"
-                          )}
-                        >
-                          <button className="text-white/20 hover:text-white/40 cursor-grab">
-                            <GripVertical className="h-3 w-3" />
-                          </button>
-                          
-                          <button
-                            onClick={() => setExpandedComponent(isExpanded ? null : component.id)}
-                            className="text-white/30"
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="h-3 w-3" />
-                            ) : (
-                              <ChevronRight className="h-3 w-3" />
-                            )}
-                          </button>
-
-                          <div className={cn(
-                            "w-6 h-6 rounded flex items-center justify-center",
-                            component.enabled
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-white/5 text-white/30"
-                          )}>
-                            <Icon className="h-3 w-3" />
-                          </div>
-
-                          <span className={cn(
-                            "flex-1 text-xs",
-                            component.enabled ? "text-white" : "text-white/40"
-                          )}>
-                            {component.name}
-                          </span>
-
-                          <button
-                            onClick={() => toggleComponent(component.id)}
-                            className={cn(
-                              "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                              component.enabled
-                                ? "bg-emerald-500 border-emerald-500"
-                                : "border-white/20 hover:border-white/40"
-                            )}
-                          >
-                            {component.enabled && <Check className="h-2.5 w-2.5 text-white" />}
-                          </button>
-                        </div>
-
-                        {/* Expanded Component Settings */}
-                        {isExpanded && component.enabled && (
-                          <div className="ml-9 mr-2 mt-1 mb-2 p-2 bg-white/5 rounded-lg border border-white/5">
-                            <p className="text-[10px] text-white/40">
-                              Configurações específicas do componente em breve.
-                            </p>
-                          </div>
-                        )}
+                      <div
+                        key={comp.type}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, comp.type, comp.name)}
+                        onClick={() => addComponent(comp.type, comp.name)}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl cursor-grab transition-all active:cursor-grabbing"
+                      >
+                        <Icon className="h-6 w-6 text-white/60" />
+                        <span className="text-xs text-white/80">{comp.name}</span>
                       </div>
                     );
                   })}
                 </div>
+
+                <div className="mt-6">
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
+                    Componentes Ativos
+                  </p>
+
+                  <div className="space-y-1">
+                    {config.components.map((component) => (
+                      <div 
+                        key={component.id}
+                        className={cn(
+                          "flex items-center gap-2 p-2 rounded-lg transition-all",
+                          component.enabled
+                            ? "bg-emerald-500/10 text-white"
+                            : "bg-white/5 text-white/40"
+                        )}
+                      >
+                        <button
+                          onClick={() => toggleComponent(component.id)}
+                          className={cn(
+                            "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                            component.enabled
+                              ? "bg-emerald-500 border-emerald-500"
+                              : "border-white/30"
+                          )}
+                        >
+                          {component.enabled && <Check className="h-2.5 w-2.5 text-white" />}
+                        </button>
+                        <span className="text-xs flex-1">{component.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Design Section */}
-            {activeSection === "design" && (
-              <div className="p-3 space-y-4">
-                {/* Primary Color */}
+            {/* Config Tab */}
+            {activeTab === "config" && (
+              <div className="p-4 space-y-6">
+                {/* Colors */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">
-                      Cor Principal
-                    </span>
-                  </div>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
+                    Cor Principal
+                  </p>
                   
-                  <div className="grid grid-cols-4 gap-1.5 mb-2">
+                  <div className="grid grid-cols-4 gap-2 mb-3">
                     {presetColors.map((color) => (
                       <button
                         key={color.value}
                         onClick={() => updateColor("primary", color.value)}
                         className={cn(
-                          "h-8 rounded-lg transition-all relative group",
+                          "h-10 rounded-lg transition-all relative",
                           config.colors.primary === color.value
                             ? "ring-2 ring-white ring-offset-2 ring-offset-[#111]"
                             : "hover:scale-105"
                         )}
                         style={{ backgroundColor: color.value }}
-                        title={color.name}
                       >
                         {config.colors.primary === color.value && (
-                          <Check className="h-3 w-3 text-white absolute inset-0 m-auto" />
+                          <Check className="h-4 w-4 text-white absolute inset-0 m-auto" />
                         )}
                       </button>
                     ))}
                   </div>
 
                   <div className="flex gap-2">
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={config.colors.primary}
-                        onChange={(e) => updateColor("primary", e.target.value)}
-                        className="w-10 h-8 rounded-lg cursor-pointer border border-white/10"
-                      />
-                    </div>
+                    <input
+                      type="color"
+                      value={config.colors.primary}
+                      onChange={(e) => updateColor("primary", e.target.value)}
+                      className="w-12 h-10 rounded-lg cursor-pointer border border-white/10"
+                    />
                     <Input
                       value={config.colors.primary}
                       onChange={(e) => updateColor("primary", e.target.value)}
-                      className="h-8 bg-white/5 border-white/10 text-white font-mono text-xs flex-1"
+                      className="h-10 bg-white/5 border-white/10 text-white font-mono text-sm flex-1"
                     />
                   </div>
                 </div>
 
-                <Separator className="bg-white/10" />
-
-                {/* Other Colors */}
+                {/* Texts */}
                 <div>
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider block mb-3">
-                    Cores do Layout
-                  </span>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
+                    Textos
+                  </p>
                   
-                  <div className="space-y-2">
-                    {[
-                      { key: "background" as const, label: "Fundo" },
-                      { key: "cardBackground" as const, label: "Cards" },
-                      { key: "text" as const, label: "Texto" },
-                      { key: "mutedText" as const, label: "Texto secundário" },
-                      { key: "border" as const, label: "Bordas" },
-                      { key: "buttonText" as const, label: "Texto do botão" },
-                    ].map(({ key, label }) => (
-                      <div key={key} className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={config.colors[key]}
-                          onChange={(e) => updateColor(key, e.target.value)}
-                          className="w-7 h-7 rounded cursor-pointer border border-white/10 shrink-0"
-                        />
-                        <span className="text-xs text-white/60 flex-1">{label}</span>
-                        <Input
-                          value={config.colors[key]}
-                          onChange={(e) => updateColor(key, e.target.value)}
-                          className="h-7 w-20 bg-white/5 border-white/10 text-white font-mono text-[10px]"
-                        />
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-white/60 mb-1 block">Título</Label>
+                      <Input
+                        value={config.labels.checkoutTitle}
+                        onChange={(e) => updateLabel("checkoutTitle", e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-white text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-white/60 mb-1 block">Seção: Dados</Label>
+                      <Input
+                        value={config.labels.buyerSectionTitle}
+                        onChange={(e) => updateLabel("buyerSectionTitle", e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-white text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-white/60 mb-1 block">Seção: Pagamento</Label>
+                      <Input
+                        value={config.labels.paymentSectionTitle}
+                        onChange={(e) => updateLabel("paymentSectionTitle", e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-white text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-white/60 mb-1 block">Botão</Label>
+                      <Input
+                        value={config.labels.buttonText}
+                        onChange={(e) => updateLabel("buttonText", e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-white text-sm font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-white/60 mb-1 block">Rodapé</Label>
+                      <Input
+                        value={config.labels.footerText}
+                        onChange={(e) => updateLabel("footerText", e.target.value)}
+                        className="h-9 bg-white/5 border-white/10 text-white text-sm"
+                      />
+                    </div>
                   </div>
                 </div>
-
-                <Separator className="bg-white/10" />
-
-                {/* Border Radius */}
-                <div>
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider block mb-3">
-                    Arredondamento
-                  </span>
-                  
-                  <div className="flex gap-1">
-                    {["0px", "4px", "8px", "12px", "16px", "24px"].map((radius) => (
-                      <button
-                        key={radius}
-                        onClick={() => updateSetting("borderRadius", radius)}
-                        className={cn(
-                          "flex-1 h-8 border transition-all text-[10px] font-medium",
-                          config.settings.borderRadius === radius
-                            ? "bg-white text-black border-white"
-                            : "border-white/20 text-white/60 hover:border-white/40"
-                        )}
-                        style={{ borderRadius: radius }}
-                      >
-                        {parseInt(radius)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <Separator className="bg-white/10" />
 
                 {/* Settings */}
                 <div>
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider block mb-3">
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
                     Opções
-                  </span>
+                  </p>
                   
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between py-1.5">
-                      <span className="text-xs text-white/80">Mostrar logo</span>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/80">Mostrar logo</span>
                       <Switch
                         checked={config.settings.showLogo}
                         onCheckedChange={(v) => updateSetting("showLogo", v)}
@@ -537,13 +625,13 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
                       <Input
                         value={config.settings.logoUrl}
                         onChange={(e) => updateSetting("logoUrl", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs"
+                        className="h-9 bg-white/5 border-white/10 text-white text-sm"
                         placeholder="URL do logo..."
                       />
                     )}
 
-                    <div className="flex items-center justify-between py-1.5">
-                      <span className="text-xs text-white/80">Imagem do produto</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/80">Imagem do produto</span>
                       <Switch
                         checked={config.settings.showProductImage}
                         onCheckedChange={(v) => updateSetting("showProductImage", v)}
@@ -552,145 +640,34 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* Content Section */}
-            {activeSection === "content" && (
-              <div className="p-3 space-y-4">
+                {/* Border Radius */}
                 <div>
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider block mb-3">
-                    Títulos
-                  </span>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
+                    Arredondamento
+                  </p>
                   
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-[10px] text-white/50 mb-1 block">Título principal</Label>
-                      <Input
-                        value={config.labels.checkoutTitle}
-                        onChange={(e) => updateLabel("checkoutTitle", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-[10px] text-white/50 mb-1 block">Subtítulo</Label>
-                      <Input
-                        value={config.labels.checkoutSubtitle}
-                        onChange={(e) => updateLabel("checkoutSubtitle", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs"
-                        placeholder="Opcional"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="bg-white/10" />
-
-                <div>
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider block mb-3">
-                    Seções
-                  </span>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-[10px] text-white/50 mb-1 block">Dados do comprador</Label>
-                      <Input
-                        value={config.labels.buyerSectionTitle}
-                        onChange={(e) => updateLabel("buyerSectionTitle", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-[10px] text-white/50 mb-1 block">Pagamento</Label>
-                      <Input
-                        value={config.labels.paymentSectionTitle}
-                        onChange={(e) => updateLabel("paymentSectionTitle", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="bg-white/10" />
-
-                <div>
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider block mb-3">
-                    Botão e Rodapé
-                  </span>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-[10px] text-white/50 mb-1 block">Texto do botão</Label>
-                      <Input
-                        value={config.labels.buttonText}
-                        onChange={(e) => updateLabel("buttonText", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs font-medium"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-[10px] text-white/50 mb-1 block">Selo de segurança</Label>
-                      <Input
-                        value={config.labels.securityBadgeText}
-                        onChange={(e) => updateLabel("securityBadgeText", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-[10px] text-white/50 mb-1 block">Rodapé</Label>
-                      <Input
-                        value={config.labels.footerText}
-                        onChange={(e) => updateLabel("footerText", e.target.value)}
-                        className="h-8 bg-white/5 border-white/10 text-white text-xs"
-                      />
-                    </div>
+                  <div className="flex gap-1">
+                    {["0px", "4px", "8px", "12px", "16px"].map((radius) => (
+                      <button
+                        key={radius}
+                        onClick={() => updateSetting("borderRadius", radius)}
+                        className={cn(
+                          "flex-1 h-9 border text-xs font-medium transition-all",
+                          config.settings.borderRadius === radius
+                            ? "bg-emerald-500 text-white border-emerald-500"
+                            : "border-white/20 text-white/60 hover:border-white/40"
+                        )}
+                        style={{ borderRadius: radius }}
+                      >
+                        {parseInt(radius)}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             )}
           </ScrollArea>
-        </div>
-
-        {/* Preview Panel */}
-        <div className="flex-1 bg-[#0a0a0a] overflow-auto flex items-start justify-center p-8">
-          <div 
-            className={cn(
-              "transition-all duration-300",
-              previewMode === "mobile" ? "w-[375px]" : "w-full max-w-[1100px]"
-            )}
-          >
-            {/* Device Frame */}
-            <div className={cn(
-              "rounded-2xl overflow-hidden shadow-2xl",
-              previewMode === "mobile"
-                ? "bg-[#1a1a1a] p-3 border border-white/10"
-                : "border border-white/5"
-            )}>
-              {/* Mobile Notch */}
-              {previewMode === "mobile" && (
-                <div className="flex justify-center mb-2">
-                  <div className="w-24 h-5 bg-black rounded-full" />
-                </div>
-              )}
-              
-              <div className={cn(
-                "overflow-hidden bg-white",
-                previewMode === "mobile" && "rounded-2xl"
-              )}>
-                <TemplateEditorPreview config={config} previewMode={previewMode} />
-              </div>
-
-              {/* Mobile Home Indicator */}
-              {previewMode === "mobile" && (
-                <div className="flex justify-center mt-2">
-                  <div className="w-28 h-1 bg-white/20 rounded-full" />
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>
