@@ -379,84 +379,88 @@ function ProductDetailsSection({
       {/* Product Overview Card */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Product Image with Upload */}
-            <div className="shrink-0">
-              <div 
-                className="relative w-48 h-48 bg-muted rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group border-2 border-dashed border-transparent hover:border-primary/50 transition-colors"
-                onClick={() => !isUploading && fileInputRef.current?.click()}
-              >
-                {formData.image_url ? (
-                  <>
-                    <img
-                      src={formData.image_url}
-                      alt={formData.name}
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Upload className="h-8 w-8 text-white" />
+          <div className="flex flex-col gap-6">
+            {/* Top row: Image, ID and Status */}
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Product Image with Upload */}
+              <div className="shrink-0">
+                <div 
+                  className="relative w-48 h-48 bg-muted rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group border-2 border-dashed border-transparent hover:border-primary/50 transition-colors"
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                >
+                  {formData.image_url ? (
+                    <>
+                      <img
+                        src={formData.image_url}
+                        alt={formData.name}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Overlay on hover */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Upload className="h-8 w-8 text-white" />
+                      </div>
+                      {/* Remove button */}
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage();
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      {isUploading ? (
+                        <div className="animate-pulse text-muted-foreground text-sm">Enviando...</div>
+                      ) : (
+                        <>
+                          <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-2 group-hover:text-primary transition-colors" />
+                          <p className="text-xs text-muted-foreground">Clique para enviar</p>
+                        </>
+                      )}
                     </div>
-                    {/* Remove button */}
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveImage();
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <div className="text-center">
-                    {isUploading ? (
-                      <div className="animate-pulse text-muted-foreground text-sm">Enviando...</div>
-                    ) : (
-                      <>
-                        <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-2 group-hover:text-primary transition-colors" />
-                        <p className="text-xs text-muted-foreground">Clique para enviar</p>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Product Info */}
-            <div className="flex-1 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">ID do Produto</p>
-                  <div className="flex items-center gap-2">
-                    <p className="font-mono text-sm truncate">{product.id}</p>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 shrink-0"
-                      onClick={() => copyToClipboard(product.id)}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Status</p>
-                  <Badge variant={product.is_active ? "default" : "secondary"}>
-                    {product.is_active ? "Ativo" : "Inativo"}
-                  </Badge>
+                  )}
                 </div>
               </div>
 
-              {formData.description && (
-                <div className="p-4 border rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Descrição</p>
-                  <p className="text-sm">{formData.description}</p>
+              {/* Product ID and Status */}
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">ID do Produto</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-sm truncate">{product.id}</p>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => copyToClipboard(product.id)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Status</p>
+                    <Badge variant={product.is_active ? "default" : "secondary"}>
+                      {product.is_active ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
+
+            {/* Description below image */}
+            {formData.description && (
+              <div className="p-4 border rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Descrição</p>
+                <p className="text-sm whitespace-pre-wrap">{formData.description}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
