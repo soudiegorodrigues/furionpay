@@ -272,7 +272,7 @@ serve(async (req) => {
         body: JSON.stringify({ 
           amount, 
           donorName: customerName, 
-          utmParams, 
+          utmData: utmParams, 
           userId, 
           popupModel 
         }),
