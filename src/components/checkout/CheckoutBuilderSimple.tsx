@@ -420,6 +420,53 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBanner: v }))}
               />
             </div>
+            {customizations.showBanner && (
+              <div className="pl-6 space-y-2">
+                <Label className="text-xs text-muted-foreground">Imagem do Banner</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {bannerImageUrl ? (
+                  <div className="relative">
+                    <img
+                      src={bannerImageUrl}
+                      alt="Banner"
+                      className="w-full h-20 object-cover rounded-lg"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-1 right-1 h-6 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                    >
+                      {isUploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-16 flex flex-col gap-1"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                  >
+                    {isUploadingImage ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        <span className="text-xs">Fazer upload</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
