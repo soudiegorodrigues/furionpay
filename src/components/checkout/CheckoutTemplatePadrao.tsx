@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  ShoppingCart, Lock, CreditCard, CheckCircle, Shield, Clock, MapPin, Phone, Calendar, User, Zap, Users, Gift
+  ShoppingCart, Lock, CreditCard, CheckCircle, Shield, Clock, MapPin, Phone, Calendar, User, Zap, Users, Gift, MessageCircle
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
@@ -374,6 +374,19 @@ export function CheckoutTemplatePadrao({
           <p>{config?.footer_text || "Pagamento processado com segurança"}</p>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Button */}
+      {config?.show_whatsapp_button && config?.whatsapp_number && (
+        <a
+          href={`https://wa.me/${config.whatsapp_number.replace(/\D/g, '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-110"
+          aria-label="Fale pelo WhatsApp"
+        >
+          <MessageCircle className="h-7 w-7 text-white" />
+        </a>
+      )}
     </div>
   );
 }
