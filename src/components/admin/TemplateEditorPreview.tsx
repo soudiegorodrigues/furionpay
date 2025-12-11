@@ -1,5 +1,6 @@
 import { TemplateConfig } from "./TemplateEditor";
 import { CreditCard, Shield, Lock, Clock, User, Mail, Phone, FileText, CheckCircle, Star, Truck, Gift, Zap, Users, TrendingUp, Play, Award, EyeOff } from "lucide-react";
+import { DynamicComponentsList } from "./TemplateComponentRenderer";
 
 interface TemplateEditorPreviewProps {
   config: TemplateConfig;
@@ -127,6 +128,11 @@ function PreviewPadrao({ config, previewMode }: { config: TemplateConfig; previe
             </div>
           </div>
         )}
+      </div>
+
+      {/* Dynamic Components */}
+      <div className="p-3">
+        <DynamicComponentsList config={config} />
       </div>
 
       {/* Testimonials */}
@@ -294,6 +300,11 @@ function PreviewVega({ config, previewMode }: { config: TemplateConfig; previewM
         )}
       </div>
 
+      {/* Dynamic Components */}
+      <div className="p-4">
+        <DynamicComponentsList config={config} />
+      </div>
+
       {/* Footer */}
       {isComponentEnabled("footer") && (
         <div className="p-2 border-t text-center" style={{ borderColor: vegaBorder }}>
@@ -408,6 +419,11 @@ function PreviewAfilia({ config, previewMode }: { config: TemplateConfig; previe
             </div>
           )}
         </div>
+      </div>
+
+      {/* Dynamic Components */}
+      <div className="p-3">
+        <DynamicComponentsList config={config} />
       </div>
 
       {/* Trust badges */}
@@ -526,6 +542,11 @@ function PreviewMultistep({ config, previewMode }: { config: TemplateConfig; pre
           </div>
           <span className="text-[10px]" style={{ color: colors.mutedText }}>+847 alunos já inscritos</span>
         </div>
+      </div>
+
+      {/* Dynamic Components */}
+      <div className="p-3">
+        <DynamicComponentsList config={config} />
       </div>
 
       {/* Trust footer */}
