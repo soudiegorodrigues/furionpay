@@ -434,7 +434,7 @@ function ProductDetailsSection({
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">ID do Produto</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-lg font-bold">{product.product_code || product.id.substring(0, 8)}</p>
+                      <p className="font-mono text-sm">{product.product_code || product.id.substring(0, 8)}</p>
                       <Button 
                         variant="ghost" 
                         size="icon" 
