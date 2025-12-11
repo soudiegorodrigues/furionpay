@@ -209,7 +209,7 @@ export default function AdminProductEdit() {
       case "details":
         return <ProductDetailsSection formData={formData} setFormData={setFormData} product={product} copyToClipboard={copyToClipboard} />;
       case "checkout":
-        return <CheckoutBuilder productId={product.id} userId={product.user_id} productName={product.name} />;
+        return <CheckoutBuilder productId={product.id} userId={product.user_id} productName={product.name} productPrice={product.price} />;
       case "offers":
         return <OffersSection productId={product.id} userId={product.user_id} />;
       case "domains":

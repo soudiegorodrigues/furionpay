@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +32,11 @@ import {
   Phone,
   Calendar,
   CreditCard,
+  Upload,
+  Check,
+  Mail,
+  User,
+  Loader2,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -39,6 +44,7 @@ interface CheckoutBuilderProps {
   productId: string;
   userId: string;
   productName: string;
+  productPrice?: number;
 }
 
 interface CheckoutComponent {
@@ -49,11 +55,15 @@ interface CheckoutComponent {
   description: string;
 }
 
-export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuilderProps) {
+export function CheckoutBuilder({ productId, userId, productName, productPrice = 25 }: CheckoutBuilderProps) {
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [activeTab, setActiveTab] = useState("componentes");
+  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Components state
   const [components, setComponents] = useState<CheckoutComponent[]>([
@@ -107,6 +117,46 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
     securityBadgeText: "Pagamento Seguro",
     customButtonText: "",
   });
+
+  // Handle image upload
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userId}/${productId}-banner.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      setBannerImageUrl(publicUrl);
+      toast.success("Imagem carregada");
+    } catch (error) {
+      console.error("Erro ao carregar imagem:", error);
+      toast.error("Erro ao carregar imagem");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   // Fetch existing config
   const { data: config } = useQuery({
@@ -224,6 +274,7 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
     setComponents(prev => prev.map(comp => 
       comp.id === id ? { ...comp, enabled: !comp.enabled } : comp
     ));
+    setSelectedComponent(id);
   };
 
   const toggleExtraComponent = (id: string) => {
@@ -243,6 +294,13 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
     { id: "afilia", name: "Afilia" },
     { id: "multistep", name: "Multistep" },
   ];
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(price);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -306,8 +364,33 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
               {/* Image Preview */}
               {components.find(c => c.id === "imagem")?.enabled && (
                 <div className="p-4 border-b">
-                  <div className="bg-muted rounded-lg h-32 flex items-center justify-center">
-                    <Image className="h-8 w-8 text-muted-foreground" />
+                  {bannerImageUrl ? (
+                    <img 
+                      src={bannerImageUrl} 
+                      alt="Banner" 
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="bg-muted rounded-lg h-32 flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+                      <div className="text-center">
+                        <Image className="h-8 w-8 text-muted-foreground mx-auto mb-1" />
+                        <span className="text-xs text-muted-foreground">Imagem do banner</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Vantagens Preview */}
+              {components.find(c => c.id === "vantagens")?.enabled && (
+                <div className="p-4 border-b bg-background">
+                  <div className="space-y-2">
+                    {["Entrega imediata", "Acesso vitalício", "Suporte 24h"].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4" style={{ color: selectedColor }} />
+                        <span>{item}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -322,27 +405,99 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
                   )}
                   <div>
                     <p className="font-medium">{productName}</p>
-                    <p className="text-primary font-bold">1 X de R$ 25,00</p>
-                    <p className="text-xs text-muted-foreground">ou R$ 25,00 à vista</p>
+                    <p className="font-bold" style={{ color: selectedColor }}>
+                      1 X de {formatPrice(productPrice)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      ou {formatPrice(productPrice)} à vista
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Form Preview */}
+              {/* Form Preview - Complete */}
               <div className="p-4 space-y-4 bg-background">
                 <h3 className="font-medium flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs">👤</span>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: selectedColor }}>
+                    <User className="h-3 w-3 text-white" />
+                  </span>
                   {texts.buyerSectionTitle}
                 </h3>
-                <div className="space-y-2">
-                  <div className="h-10 bg-muted rounded border" />
-                  <div className="h-10 bg-muted rounded border" />
-                  {requiredFields.cpf && <div className="h-10 bg-muted rounded border" />}
-                  {requiredFields.telefone && <div className="h-10 bg-muted rounded border" />}
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Nome completo</Label>
+                    <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                      Digite seu nome
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">E-mail</Label>
+                    <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                      seu@email.com
+                    </div>
+                  </div>
+                  {settings.confirmacaoEmail && (
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Confirmar e-mail</Label>
+                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                        Confirme seu e-mail
+                      </div>
+                    </div>
+                  )}
+                  {requiredFields.cpf && (
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">CPF</Label>
+                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                        000.000.000-00
+                      </div>
+                    </div>
+                  )}
+                  {requiredFields.telefone && (
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Telefone</Label>
+                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                        (00) 00000-0000
+                      </div>
+                    </div>
+                  )}
+                  {requiredFields.dataNascimento && (
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Data de nascimento</Label>
+                      <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                        DD/MM/AAAA
+                      </div>
+                    </div>
+                  )}
+                  {requiredFields.endereco && (
+                    <>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">CEP</Label>
+                        <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                          00000-000
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Cidade</Label>
+                          <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                            Cidade
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Estado</Label>
+                          <div className="h-10 bg-muted rounded border px-3 flex items-center text-sm text-muted-foreground">
+                            UF
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <h3 className="font-medium flex items-center gap-2 pt-4">
-                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs">💳</span>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: selectedColor }}>
+                    <CreditCard className="h-3 w-3 text-white" />
+                  </span>
                   {texts.paymentSectionTitle}
                 </h3>
                 <div className="flex gap-2">
@@ -351,6 +506,14 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
                     Pix
                   </Button>
                 </div>
+
+                {/* CTA Button */}
+                <Button 
+                  className="w-full mt-4 text-white font-semibold"
+                  style={{ backgroundColor: selectedColor }}
+                >
+                  {texts.customButtonText || "Finalizar Compra"}
+                </Button>
               </div>
 
               {/* Depoimento Preview */}
@@ -367,15 +530,45 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
                       </div>
                     </div>
                   </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    "Produto excelente, superou minhas expectativas!"
+                  </p>
+                </div>
+              )}
+
+              {/* Lista Preview */}
+              {components.find(c => c.id === "lista")?.enabled && (
+                <div className="p-4 border-t bg-background">
+                  <p className="text-sm font-medium mb-2">O que está incluso:</p>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
+                      Item 1 do produto
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
+                      Item 2 do produto
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
+                      Item 3 do produto
+                    </li>
+                  </ul>
                 </div>
               )}
 
               {/* Selo Preview */}
               {components.find(c => c.id === "selo")?.enabled && settings.showSecurityBadges && (
                 <div className="p-4 border-t bg-background">
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Shield className="h-4 w-4" />
-                    <span>{texts.securityBadgeText}</span>
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Shield className="h-4 w-4" style={{ color: selectedColor }} />
+                      <span>{texts.securityBadgeText}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4" style={{ color: selectedColor }} />
+                      <span>Compra Garantida</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -426,6 +619,68 @@ export function CheckoutBuilder({ productId, userId, productName }: CheckoutBuil
                   </button>
                 ))}
               </div>
+
+              {/* Image Upload Section - Shows when Imagem is selected */}
+              {selectedComponent === "imagem" && components.find(c => c.id === "imagem")?.enabled && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Upload de Imagem</p>
+                    
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+
+                    {bannerImageUrl ? (
+                      <div className="space-y-2">
+                        <img 
+                          src={bannerImageUrl} 
+                          alt="Preview" 
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                        >
+                          {isUploadingImage ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          Trocar imagem
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full h-20 border-dashed"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingImage}
+                      >
+                        {isUploadingImage ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <div className="text-center">
+                            <Upload className="h-5 w-5 mx-auto mb-1" />
+                            <span className="text-xs">Carregar imagem</span>
+                          </div>
+                        )}
+                      </Button>
+                    )}
+                    
+                    <p className="text-xs text-muted-foreground">
+                      Formatos: JPG, PNG, WEBP. Máx: 2MB
+                    </p>
+                  </div>
+                </>
+              )}
 
               <Separator />
 
