@@ -9,6 +9,7 @@ export const useAdminAuth = () => {
   const [adminLoading, setAdminLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -59,6 +60,25 @@ export const useAdminAuth = () => {
     }
   }, []);
 
+  const checkIfApproved = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('check_user_approved' as any);
+      
+      if (error) {
+        console.error('Error checking approved status:', error);
+        setIsApproved(false);
+        return false;
+      }
+      
+      setIsApproved(data === true);
+      return data === true;
+    } catch (err) {
+      console.error('Error in checkIfApproved:', err);
+      setIsApproved(false);
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -67,14 +87,16 @@ export const useAdminAuth = () => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Check if user is blocked and admin when they sign in
+        // Check if user is blocked, admin, and approved when they sign in
         if (event === 'SIGNED_IN' && session?.user) {
           checkIfBlocked();
           checkIfAdmin();
+          checkIfApproved();
         }
         
         if (event === 'SIGNED_OUT') {
           setIsAdmin(false);
+          setIsApproved(false);
           setAdminLoading(false);
         }
       }
@@ -86,18 +108,20 @@ export const useAdminAuth = () => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Check if existing user is blocked and admin
+      // Check if existing user is blocked, admin, and approved
       if (session?.user) {
         checkIfBlocked();
         await checkIfAdmin();
+        await checkIfApproved();
       } else {
         setIsAdmin(false);
+        setIsApproved(false);
         setAdminLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [checkIfBlocked, checkIfAdmin]);
+  }, [checkIfBlocked, checkIfAdmin, checkIfApproved]);
 
   // Periodically check if user is blocked (every 30 seconds)
   useEffect(() => {
@@ -186,6 +210,7 @@ export const useAdminAuth = () => {
     loading: loading || adminLoading,
     isBlocked,
     isAdmin,
+    isApproved,
     signIn,
     signUp,
     signOut,
@@ -195,6 +220,7 @@ export const useAdminAuth = () => {
     updatePassword,
     checkIfBlocked,
     checkIfAdmin,
+    checkIfApproved,
     isAuthenticated: !!session
   };
 };
