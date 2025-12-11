@@ -64,7 +64,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingPopupImage, setIsUploadingPopupImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const popupImageInputRef = useRef<HTMLInputElement>(null);
 
   // States
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -214,6 +216,48 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       toast.error("Erro ao carregar imagem");
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+
+  // Handle popup image upload
+  const handlePopupImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setIsUploadingPopupImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userId}/${productId}-popup.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      // Add cache-busting parameter to force reload
+      const imageUrl = `${publicUrl}?t=${Date.now()}`;
+      setCustomizations(p => ({ ...p, discountPopupImageUrl: imageUrl }));
+      toast.success("Imagem do popup carregada!");
+    } catch (error) {
+      console.error("Erro ao carregar imagem:", error);
+      toast.error("Erro ao carregar imagem");
+    } finally {
+      setIsUploadingPopupImage(false);
     }
   };
 
@@ -702,15 +746,61 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </div>
                   </div>
                   
-                  {/* Image URL */}
+                  {/* Popup Image Upload */}
                   <div>
-                    <Label className="text-xs text-muted-foreground">URL da Imagem (opcional)</Label>
-                    <Input
-                      value={customizations.discountPopupImageUrl}
-                      onChange={(e) => setCustomizations(p => ({ ...p, discountPopupImageUrl: e.target.value }))}
-                      className="h-8 text-xs mt-1"
-                      placeholder="https://exemplo.com/imagem.png"
+                    <Label className="text-xs text-muted-foreground">Imagem do Popup (opcional)</Label>
+                    <input
+                      type="file"
+                      ref={popupImageInputRef}
+                      onChange={handlePopupImageUpload}
+                      accept="image/*"
+                      className="hidden"
                     />
+                    {customizations.discountPopupImageUrl ? (
+                      <div className="relative mt-1">
+                        <img
+                          src={customizations.discountPopupImageUrl}
+                          alt="Popup"
+                          className="w-full h-16 object-cover rounded-lg"
+                        />
+                        <div className="absolute top-1 right-1 flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-6 text-xs px-2"
+                            onClick={() => popupImageInputRef.current?.click()}
+                            disabled={isUploadingPopupImage}
+                          >
+                            {isUploadingPopupImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setCustomizations(p => ({ ...p, discountPopupImageUrl: "" }))}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-10 flex gap-2 mt-1"
+                        onClick={() => popupImageInputRef.current?.click()}
+                        disabled={isUploadingPopupImage}
+                      >
+                        {isUploadingPopupImage ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            <span className="text-xs">Upload Imagem</span>
+                          </>
+                        )}
+                      </Button>
+                    )}
                     <p className="text-[10px] text-muted-foreground mt-1">Se preenchido, substitui o badge de desconto</p>
                   </div>
                   
