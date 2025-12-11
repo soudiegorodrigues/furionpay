@@ -65,6 +65,14 @@ export interface PixData {
   transactionId: string;
 }
 
+export interface Testimonial {
+  id: string;
+  author_name: string;
+  author_photo_url: string | null;
+  rating: number;
+  content: string;
+}
+
 export interface CheckoutTemplateProps {
   offer: ProductOffer;
   product: Product | null;
@@ -78,4 +86,5 @@ export interface CheckoutTemplateProps {
   onGeneratePix: () => void;
   formatPrice: (price: number) => string;
   formatCountdown: (seconds: number) => string;
+  testimonials?: Testimonial[];
 }

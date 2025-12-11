@@ -5,10 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  ShoppingCart, Lock, CreditCard, CheckCircle, Shield, Clock, MapPin, Phone, Calendar, User, Zap, Users, Gift, MessageCircle
+  ShoppingCart, Lock, CreditCard, CheckCircle, Shield, Clock, MapPin, Phone, Calendar, User, Zap, Users, Gift, MessageCircle, Star
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
+import { cn } from "@/lib/utils";
 
 // Template PADRÃO - Inspirado no checkout da Kiwify
 // Foco em: Simplicidade, confiança e conversão
@@ -25,8 +26,38 @@ export function CheckoutTemplatePadrao({
   onGeneratePix,
   formatPrice,
   formatCountdown,
+  testimonials = [],
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#22C55E";
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      "#ef4444", "#3b82f6", "#22c55e", "#eab308", 
+      "#a855f7", "#ec4899", "#6366f1", "#14b8a6"
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={cn(
+              "h-3 w-3",
+              star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+            )}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div 
@@ -274,6 +305,32 @@ export function CheckoutTemplatePadrao({
                       <span>Dados Protegidos</span>
                     </div>
                   </div>
+
+                  {/* Testimonials Section */}
+                  {config?.show_notifications && testimonials && testimonials.length > 0 && (
+                    <div className="mt-6 pt-4 border-t">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">O que dizem nossos clientes</h3>
+                      <div className="space-y-3">
+                        {testimonials.slice(0, 3).map((testimonial) => (
+                          <div key={testimonial.id} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
+                            <div 
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                              style={{ backgroundColor: getAvatarColor(testimonial.author_name) }}
+                            >
+                              {getInitials(testimonial.author_name)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-800">{testimonial.author_name}</span>
+                                {renderStars(testimonial.rating)}
+                              </div>
+                              <p className="text-xs text-gray-600 mt-0.5">"{testimonial.content}"</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
