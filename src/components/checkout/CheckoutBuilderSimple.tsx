@@ -77,6 +77,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     countdown: true,
     whatsapp: true,
     testimonials: true,
+    discountPopup: true,
   });
   
   const [customizations, setCustomizations] = useState({
@@ -85,6 +86,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     countdownMinutes: 15,
     showTestimonials: false,
     showDiscountPopup: false,
+    discountPopupTitle: "Que tal um desconto para comprar agora?",
+    discountPopupMessage: "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
+    discountPopupCta: "Aproveitar oferta",
     showWhatsappButton: false,
     whatsappNumber: "",
   });
@@ -147,6 +151,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         countdownMinutes: config.countdown_minutes || 15,
         showTestimonials: config.show_notifications || false,
         showDiscountPopup: false, // TODO: add column
+        discountPopupTitle: "Que tal um desconto para comprar agora?",
+        discountPopupMessage: "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
+        discountPopupCta: "Aproveitar oferta",
         showWhatsappButton: config.show_whatsapp_button || false,
         whatsappNumber: config.whatsapp_number || "",
       });
@@ -604,16 +611,93 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
             </Collapsible>
 
             {/* Discount Popup */}
-            <div className="flex items-center justify-between py-2 border-b">
-              <div className="flex items-center gap-2">
-                <Percent className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">Popup de Desconto</Label>
+            <Collapsible 
+              open={customizations.showDiscountPopup && expandedSections.discountPopup}
+              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, discountPopup: isOpen }))}
+            >
+              <div className="flex items-center justify-between py-2 border-b">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.showDiscountPopup ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
+                    <Percent className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm">Popup de Desconto</Label>
+                    {customizations.showDiscountPopup && (
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        expandedSections.discountPopup && "rotate-180"
+                      )} />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={customizations.showDiscountPopup}
+                  onCheckedChange={(v) => {
+                    setCustomizations(p => ({ ...p, showDiscountPopup: v }));
+                    if (v) setExpandedSections(p => ({ ...p, discountPopup: true }));
+                  }}
+                />
               </div>
-              <Switch
-                checked={customizations.showDiscountPopup}
-                onCheckedChange={(v) => setCustomizations(p => ({ ...p, showDiscountPopup: v }))}
-              />
-            </div>
+              <CollapsibleContent>
+                <div className="py-3 pl-6 space-y-3">
+                  {/* Preview */}
+                  <div className="p-4 bg-muted/50 rounded-lg border text-center space-y-2">
+                    <div className="w-10 h-10 mx-auto rounded-full border-2 border-amber-400 flex items-center justify-center">
+                      <span className="text-amber-400 text-xl font-bold">!</span>
+                    </div>
+                    <p className="font-semibold text-sm">{customizations.discountPopupTitle || "Título"}</p>
+                    <p className="text-xs text-muted-foreground">{customizations.discountPopupMessage || "Mensagem"}</p>
+                    <Button 
+                      size="sm" 
+                      className="mt-2"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {customizations.discountPopupCta || "CTA"}
+                    </Button>
+                  </div>
+                  
+                  {/* Fields */}
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Título</Label>
+                      <Input
+                        value={customizations.discountPopupTitle}
+                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupTitle: e.target.value }))}
+                        className="h-8 text-xs mt-1"
+                        placeholder="Que tal um desconto?"
+                        maxLength={100}
+                      />
+                    </div>
+                    <div>
+                      <div className="flex justify-between">
+                        <Label className="text-xs text-muted-foreground">Mensagem</Label>
+                        <span className="text-[10px] text-muted-foreground">
+                          {customizations.discountPopupMessage?.length || 0}/500
+                        </span>
+                      </div>
+                      <textarea
+                        value={customizations.discountPopupMessage}
+                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupMessage: e.target.value }))}
+                        className="w-full h-20 mt-1 text-xs p-2 border rounded-md resize-none bg-background"
+                        placeholder="Você só tem até..."
+                        maxLength={500}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Texto CTA</Label>
+                      <Input
+                        value={customizations.discountPopupCta}
+                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupCta: e.target.value }))}
+                        className="h-8 text-xs mt-1"
+                        placeholder="Aproveitar oferta"
+                        maxLength={50}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* WhatsApp Button */}
             <Collapsible 
