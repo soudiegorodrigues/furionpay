@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CheckoutPreviewMini } from "./CheckoutPreviewMini";
+import { TestimonialsManager } from "./TestimonialsManager";
 import {
   Collapsible,
   CollapsibleContent,
@@ -75,6 +76,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     banner: true,
     countdown: true,
     whatsapp: true,
+    testimonials: true,
   });
   
   const [customizations, setCustomizations] = useState({
@@ -552,16 +554,37 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
             </Collapsible>
 
             {/* Testimonials */}
-            <div className="flex items-center justify-between py-2 border-b">
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">Depoimentos</Label>
+            <Collapsible 
+              open={customizations.showTestimonials && expandedSections.testimonials}
+              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, testimonials: isOpen }))}
+            >
+              <div className="flex items-center justify-between py-2 border-b">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.showTestimonials ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
+                    <Star className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm">Depoimentos</Label>
+                    {customizations.showTestimonials && (
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        expandedSections.testimonials && "rotate-180"
+                      )} />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={customizations.showTestimonials}
+                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showTestimonials: v }))}
+                />
               </div>
-              <Switch
-                checked={customizations.showTestimonials}
-                onCheckedChange={(v) => setCustomizations(p => ({ ...p, showTestimonials: v }))}
-              />
-            </div>
+              <CollapsibleContent>
+                <div className="py-2 pl-6">
+                  <TestimonialsManager productId={productId} userId={userId} />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Discount Popup */}
             <div className="flex items-center justify-between py-2 border-b">

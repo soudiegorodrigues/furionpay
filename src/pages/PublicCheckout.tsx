@@ -17,6 +17,7 @@ import {
   CheckoutConfig,
   FormData,
   PixData,
+  Testimonial,
 } from "@/components/checkout";
 
 export default function PublicCheckout() {
@@ -104,6 +105,25 @@ export default function PublicCheckout() {
       }
       
       return data as CheckoutConfig | null;
+    },
+    enabled: !!offer?.product_id,
+  });
+
+  // Fetch testimonials
+  const { data: testimonials } = useQuery({
+    queryKey: ["checkout-testimonials", offer?.product_id],
+    queryFn: async () => {
+      if (!offer?.product_id) return [];
+      
+      const { data, error } = await supabase
+        .from("product_testimonials")
+        .select("id, author_name, author_photo_url, rating, content")
+        .eq("product_id", offer.product_id)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      
+      if (error) throw error;
+      return data as Testimonial[];
     },
     enabled: !!offer?.product_id,
   });
@@ -247,6 +267,7 @@ export default function PublicCheckout() {
     onGeneratePix: handleGeneratePix,
     formatPrice,
     formatCountdown,
+    testimonials: testimonials || [],
   };
 
   // If PIX is generated, show the payment page
