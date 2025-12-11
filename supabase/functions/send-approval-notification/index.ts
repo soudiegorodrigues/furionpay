@@ -104,9 +104,6 @@ const handler = async (req: Request): Promise<Response> => {
                   <tr>
                     <td style="padding: 40px 32px;">
                       <div style="text-align: center; margin-bottom: 24px;">
-                        <div style="width: 64px; height: 64px; background-color: #dcfce7; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                          <span style="font-size: 32px;">✓</span>
-                        </div>
                         <h2 style="margin: 0 0 8px 0; color: #18181b; font-size: 24px; font-weight: 600;">Conta Aprovada!</h2>
                         <p style="margin: 0; color: #71717a; font-size: 16px;">Bem-vindo ao FurionPay, ${displayName}!</p>
                       </div>
