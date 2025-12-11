@@ -645,24 +645,23 @@ const Admin = () => {
       const { error } = await supabase.rpc('approve_user' as any, { target_user_id: userId });
       if (error) throw error;
       
-      // Send approval notification email
+      // Update local state immediately
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: true } : u));
+      
+      // Send approval notification email in background
       if (userToApprove) {
-        try {
-          await supabase.functions.invoke('send-approval-notification', {
-            body: {
-              userId: userId,
-              userEmail: userToApprove.email,
-              userName: userToApprove.full_name
-            }
-          });
-        } catch (emailError) {
+        supabase.functions.invoke('send-approval-notification', {
+          body: {
+            userId: userId,
+            userEmail: userToApprove.email,
+            userName: userToApprove.full_name
+          }
+        }).catch(emailError => {
           console.error('Failed to send approval notification:', emailError);
-          // Don't fail the approval if email fails
-        }
+        });
       }
       
       toast({ title: 'Sucesso', description: 'Usuário aprovado com sucesso' });
-      loadUsers();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao aprovar usuário', variant: 'destructive' });
     } finally {
@@ -675,8 +674,11 @@ const Admin = () => {
       setActionLoading(userId);
       const { error } = await supabase.rpc('revoke_user_approval' as any, { target_user_id: userId });
       if (error) throw error;
+      
+      // Update local state immediately
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: false } : u));
+      
       toast({ title: 'Sucesso', description: 'Aprovação revogada' });
-      loadUsers();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao revogar aprovação', variant: 'destructive' });
     } finally {
