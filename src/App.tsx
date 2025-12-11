@@ -17,6 +17,7 @@ import AdminEmail from "./pages/AdminEmail";
 import AdminProfile from "./pages/AdminProfile";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminProducts from "./pages/AdminProducts";
+import AdminProductEdit from "./pages/AdminProductEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="profile" element={<AdminProfile />} />
                 <Route path="integrations" element={<AdminIntegrations />} />
                 <Route path="products" element={<AdminProducts />} />
+                <Route path="products/:id" element={<AdminProductEdit />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
