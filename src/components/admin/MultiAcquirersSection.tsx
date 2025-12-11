@@ -19,6 +19,10 @@ export const MultiAcquirersSection = () => {
   const [isLoadingStates, setIsLoadingStates] = useState(true);
   const [interEnabled, setInterEnabled] = useState<boolean | null>(null);
   const [spedpayEnabled, setSpedpayEnabled] = useState<boolean | null>(null);
+  const [interFeeRate, setInterFeeRate] = useState('');
+  const [interFixedFee, setInterFixedFee] = useState('');
+  const [spedpayFeeRate, setSpedpayFeeRate] = useState('');
+  const [spedpayFixedFee, setSpedpayFixedFee] = useState('');
   const [interConfig, setInterConfig] = useState({
     clientId: '',
     clientSecret: '',
@@ -74,10 +78,18 @@ export const MultiAcquirersSection = () => {
         const settings = data as { key: string; value: string }[];
         const interState = settings.find(s => s.key === 'inter_enabled');
         const spedpayState = settings.find(s => s.key === 'spedpay_enabled');
+        const interFee = settings.find(s => s.key === 'inter_fee_rate');
+        const interFixed = settings.find(s => s.key === 'inter_fixed_fee');
+        const spedpayFee = settings.find(s => s.key === 'spedpay_fee_rate');
+        const spedpayFixed = settings.find(s => s.key === 'spedpay_fixed_fee');
         
         // Default to true if not set, false only if explicitly set to 'false'
         setInterEnabled(interState?.value !== 'false');
         setSpedpayEnabled(spedpayState?.value !== 'false');
+        setInterFeeRate(interFee?.value || '');
+        setInterFixedFee(interFixed?.value || '');
+        setSpedpayFeeRate(spedpayFee?.value || '');
+        setSpedpayFixedFee(spedpayFixed?.value || '');
       } else {
         // No data, default to enabled
         setInterEnabled(true);
@@ -116,6 +128,35 @@ export const MultiAcquirersSection = () => {
       toast({
         title: "Erro",
         description: "Falha ao alterar estado da adquirente",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const saveFeeSettings = async (acquirer: 'inter' | 'spedpay', feeRate: string, fixedFee: string) => {
+    try {
+      const updates = [
+        { key: `${acquirer}_fee_rate`, value: feeRate },
+        { key: `${acquirer}_fixed_fee`, value: fixedFee }
+      ];
+      
+      for (const { key, value } of updates) {
+        const { error } = await supabase.rpc('update_admin_setting_auth', {
+          setting_key: key,
+          setting_value: value
+        });
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Taxas Atualizadas",
+        description: `Taxas do ${acquirer === 'inter' ? 'Banco Inter' : 'SpedPay'} salvas com sucesso.`
+      });
+    } catch (error) {
+      console.error('Error saving fees:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar taxas",
         variant: "destructive"
       });
     }
@@ -273,6 +314,46 @@ export const MultiAcquirersSection = () => {
               </div>
             </div>
             
+            {/* Fee Configuration */}
+            <div className="space-y-3 pt-2 border-t">
+              <p className="text-sm font-medium text-muted-foreground">Taxas:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Taxa (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={interFeeRate}
+                    onChange={(e) => setInterFeeRate(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={interEnabled === false}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={interFixedFee}
+                    onChange={(e) => setInterFixedFee(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={interEnabled === false}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveFeeSettings('inter', interFeeRate, interFixedFee)}
+                className="w-full h-7 text-xs"
+                disabled={interEnabled === false}
+              >
+                Salvar Taxas
+              </Button>
+            </div>
+            
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
               <Badge 
                 variant="outline" 
@@ -428,6 +509,46 @@ export const MultiAcquirersSection = () => {
                   <span className="text-xs text-muted-foreground">{spedpayEnabled !== false ? 'Ativo' : 'Inativo'}</span>
                 </div>
               </div>
+            </div>
+            
+            {/* Fee Configuration */}
+            <div className="space-y-3 pt-2 border-t">
+              <p className="text-sm font-medium text-muted-foreground">Taxas:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Taxa (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={spedpayFeeRate}
+                    onChange={(e) => setSpedpayFeeRate(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={spedpayEnabled === false}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={spedpayFixedFee}
+                    onChange={(e) => setSpedpayFixedFee(e.target.value)}
+                    className="h-8 text-sm"
+                    disabled={spedpayEnabled === false}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveFeeSettings('spedpay', spedpayFeeRate, spedpayFixedFee)}
+                className="w-full h-7 text-xs"
+                disabled={spedpayEnabled === false}
+              >
+                Salvar Taxas
+              </Button>
             </div>
             
             <div className="flex items-center justify-between pt-2 border-t">
