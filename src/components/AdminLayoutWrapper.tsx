@@ -80,23 +80,12 @@ export function AdminLayoutWrapper() {
         <Card className="max-w-md w-full relative z-10 border-border/50 shadow-2xl backdrop-blur-sm bg-card/95">
           <CardHeader className="text-center pb-2">
             {/* Logo */}
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-8">
               <img 
                 src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} 
                 alt="FurionPay" 
-                className="h-10 w-auto object-contain" 
+                className="h-16 w-auto object-contain" 
               />
-            </div>
-            
-            {/* Animated clock icon */}
-            <div className="relative w-20 h-20 mx-auto mb-6">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400/20 to-orange-500/20 animate-pulse" />
-              <div className="absolute inset-1 rounded-full bg-gradient-to-br from-yellow-400/10 to-orange-500/10" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-500/25">
-                  <Clock className="w-7 h-7 text-white animate-[spin_8s_linear_infinite]" />
-                </div>
-              </div>
             </div>
             
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
