@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Plus, Star, Trash2, Loader2, GripVertical } from "lucide-react";
+import { Plus, Star, Trash2, Loader2, Pencil, Upload, X } from "lucide-react";
 
 interface Testimonial {
   id: string;
@@ -26,10 +26,14 @@ interface TestimonialsManagerProps {
 
 export function TestimonialsManager({ productId, userId }: TestimonialsManagerProps) {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [newTestimonial, setNewTestimonial] = useState({
+  const [isUploading, setIsUploading] = useState(false);
+  const [formData, setFormData] = useState({
     author_name: "",
+    author_photo_url: "" as string | null,
     rating: 5,
     content: "",
   });
@@ -48,35 +52,109 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
     },
   });
 
-  const handleAddTestimonial = async () => {
-    if (!newTestimonial.author_name.trim() || !newTestimonial.content.trim()) {
+  const resetForm = () => {
+    setFormData({ author_name: "", author_photo_url: null, rating: 5, content: "" });
+    setIsAdding(false);
+    setEditingId(null);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem válida");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userId}/${productId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      setFormData(p => ({ ...p, author_photo_url: `${publicUrl}?t=${Date.now()}` }));
+      toast.success("Foto enviada!");
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast.error("Erro ao enviar foto");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSaveTestimonial = async () => {
+    if (!formData.author_name.trim() || !formData.content.trim()) {
       toast.error("Preencha nome e depoimento");
       return;
     }
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("product_testimonials").insert({
-        product_id: productId,
-        user_id: userId,
-        author_name: newTestimonial.author_name,
-        rating: newTestimonial.rating,
-        content: newTestimonial.content,
-        display_order: (testimonials?.length || 0) + 1,
-      });
+      if (editingId) {
+        // Update existing
+        const { error } = await supabase
+          .from("product_testimonials")
+          .update({
+            author_name: formData.author_name,
+            author_photo_url: formData.author_photo_url,
+            rating: formData.rating,
+            content: formData.content,
+          })
+          .eq("id", editingId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Depoimento atualizado!");
+      } else {
+        // Create new
+        const { error } = await supabase.from("product_testimonials").insert({
+          product_id: productId,
+          user_id: userId,
+          author_name: formData.author_name,
+          author_photo_url: formData.author_photo_url,
+          rating: formData.rating,
+          content: formData.content,
+          display_order: (testimonials?.length || 0) + 1,
+        });
+
+        if (error) throw error;
+        toast.success("Depoimento adicionado!");
+      }
       
-      toast.success("Depoimento adicionado!");
-      setNewTestimonial({ author_name: "", rating: 5, content: "" });
-      setIsAdding(false);
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ["product-testimonials", productId] });
     } catch (error) {
-      console.error("Error adding testimonial:", error);
-      toast.error("Erro ao adicionar depoimento");
+      console.error("Error saving testimonial:", error);
+      toast.error("Erro ao salvar depoimento");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEditTestimonial = (testimonial: Testimonial) => {
+    setFormData({
+      author_name: testimonial.author_name,
+      author_photo_url: testimonial.author_photo_url,
+      rating: testimonial.rating,
+      content: testimonial.content,
+    });
+    setEditingId(testimonial.id);
+    setIsAdding(false);
   };
 
   const handleDeleteTestimonial = async (id: string) => {
@@ -109,24 +187,6 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
     return colors[index];
   };
 
-  const renderStars = (rating: number, interactive = false, onChange?: (r: number) => void) => {
-    return (
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={cn(
-              "h-3 w-3",
-              star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300",
-              interactive && "cursor-pointer hover:text-yellow-400"
-            )}
-            onClick={() => interactive && onChange?.(star)}
-          />
-        ))}
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
@@ -135,10 +195,21 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
     );
   }
 
+  const isFormOpen = isAdding || editingId;
+
   return (
     <div className="space-y-3">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handlePhotoUpload}
+      />
+
       {/* Existing Testimonials */}
-      {testimonials && testimonials.length > 0 && (
+      {testimonials && testimonials.length > 0 && !isFormOpen && (
         <div className="space-y-2">
           {testimonials.map((testimonial) => (
             <div
@@ -146,46 +217,123 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
               className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg group"
             >
               {/* Avatar */}
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0",
-                getAvatarColor(testimonial.author_name)
-              )}>
-                {getInitials(testimonial.author_name)}
-              </div>
+              {testimonial.author_photo_url ? (
+                <img
+                  src={testimonial.author_photo_url}
+                  alt={testimonial.author_name}
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0",
+                  getAvatarColor(testimonial.author_name)
+                )}>
+                  {getInitials(testimonial.author_name)}
+                </div>
+              )}
               
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium truncate">{testimonial.author_name}</span>
-                  {renderStars(testimonial.rating)}
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={cn(
+                          "h-3 w-3",
+                          star <= testimonial.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                        )}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                   "{testimonial.content}"
                 </p>
               </div>
               
-              {/* Delete */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleDeleteTestimonial(testimonial.id)}
-              >
-                <Trash2 className="h-3 w-3 text-destructive" />
-              </Button>
+              {/* Actions */}
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => handleEditTestimonial(testimonial)}
+                >
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => handleDeleteTestimonial(testimonial.id)}
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Add New Form */}
-      {isAdding ? (
+      {/* Add/Edit Form */}
+      {isFormOpen ? (
         <div className="space-y-2 p-2 border rounded-lg bg-background">
+          {/* Photo Upload */}
+          <div className="space-y-1">
+            <Label className="text-xs">Foto (opcional)</Label>
+            <div className="flex items-center gap-2">
+              {formData.author_photo_url ? (
+                <div className="relative">
+                  <img
+                    src={formData.author_photo_url}
+                    alt="Preview"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData(p => ({ ...p, author_photo_url: null }))}
+                    className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold",
+                    formData.author_name ? getAvatarColor(formData.author_name) : "bg-muted"
+                  )}
+                >
+                  {formData.author_name ? getInitials(formData.author_name) : "?"}
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <>
+                    <Upload className="h-3 w-3" />
+                    Enviar foto
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-1">
             <Label className="text-xs">Nome</Label>
             <Input
-              value={newTestimonial.author_name}
-              onChange={(e) => setNewTestimonial(p => ({ ...p, author_name: e.target.value }))}
+              value={formData.author_name}
+              onChange={(e) => setFormData(p => ({ ...p, author_name: e.target.value }))}
               placeholder="Maria Silva"
               className="h-7 text-xs"
             />
@@ -199,11 +347,11 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
                   key={star}
                   className={cn(
                     "h-5 w-5 cursor-pointer transition-colors",
-                    star <= newTestimonial.rating 
+                    star <= formData.rating 
                       ? "fill-yellow-400 text-yellow-400" 
                       : "text-gray-300 hover:text-yellow-400"
                   )}
-                  onClick={() => setNewTestimonial(p => ({ ...p, rating: star }))}
+                  onClick={() => setFormData(p => ({ ...p, rating: star }))}
                 />
               ))}
             </div>
@@ -212,8 +360,8 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
           <div className="space-y-1">
             <Label className="text-xs">Depoimento</Label>
             <Textarea
-              value={newTestimonial.content}
-              onChange={(e) => setNewTestimonial(p => ({ ...p, content: e.target.value }))}
+              value={formData.content}
+              onChange={(e) => setFormData(p => ({ ...p, content: e.target.value }))}
               placeholder="Produto excelente! Recomendo muito..."
               className="text-xs min-h-[60px] resize-none"
             />
@@ -223,19 +371,16 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
             <Button
               size="sm"
               className="h-7 text-xs flex-1"
-              onClick={handleAddTestimonial}
+              onClick={handleSaveTestimonial}
               disabled={isSaving}
             >
-              {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar"}
+              {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : (editingId ? "Atualizar" : "Salvar")}
             </Button>
             <Button
               variant="outline"
               size="sm"
               className="h-7 text-xs"
-              onClick={() => {
-                setIsAdding(false);
-                setNewTestimonial({ author_name: "", rating: 5, content: "" });
-              }}
+              onClick={resetForm}
             >
               Cancelar
             </Button>

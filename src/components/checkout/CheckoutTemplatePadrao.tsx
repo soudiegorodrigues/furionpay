@@ -313,12 +313,20 @@ export function CheckoutTemplatePadrao({
                       <div className="space-y-3">
                         {testimonials.slice(0, 3).map((testimonial) => (
                           <div key={testimonial.id} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
-                            <div 
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                              style={{ backgroundColor: getAvatarColor(testimonial.author_name) }}
-                            >
-                              {getInitials(testimonial.author_name)}
-                            </div>
+                            {testimonial.author_photo_url ? (
+                              <img
+                                src={testimonial.author_photo_url}
+                                alt={testimonial.author_name}
+                                className="w-8 h-8 rounded-full object-cover shrink-0"
+                              />
+                            ) : (
+                              <div 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                                style={{ backgroundColor: getAvatarColor(testimonial.author_name) }}
+                              >
+                                {getInitials(testimonial.author_name)}
+                              </div>
+                            )}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-gray-800">{testimonial.author_name}</span>
