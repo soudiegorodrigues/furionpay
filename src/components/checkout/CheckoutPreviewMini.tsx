@@ -419,32 +419,34 @@ export function CheckoutPreviewMini({
 
       {/* Testimonials */}
       {showTestimonials && testimonials.length > 0 && (
-        <div className="p-4 bg-white border-t">
-          <h4 className="font-medium text-sm mb-3">O que dizem nossos clientes</h4>
-          <div className="space-y-2">
+        <div className="p-5 bg-white border-t">
+          <h4 className="font-semibold text-base mb-4">O que dizem nossos clientes</h4>
+          <div className="space-y-3">
             {testimonials.slice(0, 3).map((item) => (
-              <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
+              <div key={item.id} className="p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-2">
                   {item.author_photo_url ? (
                     <img
                       src={item.author_photo_url}
                       alt={item.author_name}
-                      className="w-6 h-6 rounded-full object-cover"
+                      className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
                     <div 
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
                       style={{ backgroundColor: getAvatarColor(item.author_name) }}
                     >
                       {getInitials(item.author_name)}
                     </div>
                   )}
-                  <span className="text-xs font-medium">{item.author_name}</span>
-                  <span className="text-[10px] text-yellow-500">
-                    {"★".repeat(item.rating)}{"☆".repeat(5 - item.rating)}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{item.author_name}</span>
+                    <span className="text-sm text-yellow-500">
+                      {"★".repeat(item.rating)}{"☆".repeat(5 - item.rating)}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500">"{item.content}"</p>
+                <p className="text-sm text-gray-600">"{item.content}"</p>
               </div>
             ))}
           </div>
