@@ -168,7 +168,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         .from("product-images")
         .getPublicUrl(fileName);
 
-      setBannerImageUrl(publicUrl);
+      // Add cache-busting parameter to force reload
+      setBannerImageUrl(`${publicUrl}?t=${Date.now()}`);
       toast.success("Banner carregado!");
     } catch (error) {
       console.error("Erro ao carregar imagem:", error);
