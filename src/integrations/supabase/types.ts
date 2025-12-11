@@ -354,10 +354,17 @@ export type Database = {
       }
       product_checkout_configs: {
         Row: {
+          background_color: string | null
+          buyer_section_title: string | null
+          checkout_subtitle: string | null
+          checkout_title: string | null
           countdown_minutes: number | null
           created_at: string
           custom_button_text: string | null
+          footer_text: string | null
+          header_logo_url: string | null
           id: string
+          payment_section_title: string | null
           primary_color: string | null
           product_id: string
           require_address: boolean | null
@@ -365,9 +372,12 @@ export type Database = {
           require_cpf: boolean | null
           require_email_confirmation: boolean | null
           require_phone: boolean | null
+          security_badge_text: string | null
           show_banners: boolean | null
           show_countdown: boolean | null
           show_notifications: boolean | null
+          show_product_image: boolean | null
+          show_security_badges: boolean | null
           show_whatsapp_button: boolean | null
           template: string | null
           thank_you_url: string | null
@@ -376,10 +386,17 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          background_color?: string | null
+          buyer_section_title?: string | null
+          checkout_subtitle?: string | null
+          checkout_title?: string | null
           countdown_minutes?: number | null
           created_at?: string
           custom_button_text?: string | null
+          footer_text?: string | null
+          header_logo_url?: string | null
           id?: string
+          payment_section_title?: string | null
           primary_color?: string | null
           product_id: string
           require_address?: boolean | null
@@ -387,9 +404,12 @@ export type Database = {
           require_cpf?: boolean | null
           require_email_confirmation?: boolean | null
           require_phone?: boolean | null
+          security_badge_text?: string | null
           show_banners?: boolean | null
           show_countdown?: boolean | null
           show_notifications?: boolean | null
+          show_product_image?: boolean | null
+          show_security_badges?: boolean | null
           show_whatsapp_button?: boolean | null
           template?: string | null
           thank_you_url?: string | null
@@ -398,10 +418,17 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          background_color?: string | null
+          buyer_section_title?: string | null
+          checkout_subtitle?: string | null
+          checkout_title?: string | null
           countdown_minutes?: number | null
           created_at?: string
           custom_button_text?: string | null
+          footer_text?: string | null
+          header_logo_url?: string | null
           id?: string
+          payment_section_title?: string | null
           primary_color?: string | null
           product_id?: string
           require_address?: boolean | null
@@ -409,9 +436,12 @@ export type Database = {
           require_cpf?: boolean | null
           require_email_confirmation?: boolean | null
           require_phone?: boolean | null
+          security_badge_text?: string | null
           show_banners?: boolean | null
           show_countdown?: boolean | null
           show_notifications?: boolean | null
+          show_product_image?: boolean | null
+          show_security_badges?: boolean | null
           show_whatsapp_button?: boolean | null
           template?: string | null
           thank_you_url?: string | null

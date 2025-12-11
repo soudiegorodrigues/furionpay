@@ -567,6 +567,7 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
   const [isSaving, setIsSaving] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("padrao");
   const [selectedColor, setSelectedColor] = useState("#16A34A");
+  const [backgroundColor, setBackgroundColor] = useState("#f3f4f6");
   const [requiredFields, setRequiredFields] = useState({
     endereco: false,
     telefone: true,
@@ -581,6 +582,17 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
     banners: false,
     paginaObrigado: false,
     botaoWhatsapp: false,
+    showSecurityBadges: true,
+    showProductImage: true,
+  });
+  const [texts, setTexts] = useState({
+    checkoutTitle: "Finalizar Compra",
+    checkoutSubtitle: "",
+    buyerSectionTitle: "Dados do comprador",
+    paymentSectionTitle: "Forma de pagamento",
+    footerText: "Pagamento processado com segurança",
+    securityBadgeText: "Pagamento Seguro",
+    customButtonText: "",
   });
 
   // Load existing config
@@ -602,6 +614,7 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
   useEffect(() => {
     if (config) {
       setSelectedColor(config.primary_color || "#16A34A");
+      setBackgroundColor(config.background_color || "#f3f4f6");
       setSelectedTemplate(config.template || "padrao");
       setRequiredFields({
         endereco: config.require_address || false,
@@ -617,6 +630,17 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
         banners: config.show_banners || false,
         paginaObrigado: !!config.thank_you_url,
         botaoWhatsapp: config.show_whatsapp_button || false,
+        showSecurityBadges: config.show_security_badges !== false,
+        showProductImage: config.show_product_image !== false,
+      });
+      setTexts({
+        checkoutTitle: config.checkout_title || "Finalizar Compra",
+        checkoutSubtitle: config.checkout_subtitle || "",
+        buyerSectionTitle: config.buyer_section_title || "Dados do comprador",
+        paymentSectionTitle: config.payment_section_title || "Forma de pagamento",
+        footerText: config.footer_text || "Pagamento processado com segurança",
+        securityBadgeText: config.security_badge_text || "Pagamento Seguro",
+        customButtonText: config.custom_button_text || "",
       });
     }
   }, [config]);
@@ -629,6 +653,7 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
         product_id: productId,
         user_id: userId,
         primary_color: selectedColor,
+        background_color: backgroundColor,
         template: selectedTemplate,
         require_address: requiredFields.endereco,
         require_phone: requiredFields.telefone,
@@ -639,6 +664,15 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
         show_notifications: settings.notificacoes,
         show_banners: settings.banners,
         show_whatsapp_button: settings.botaoWhatsapp,
+        show_security_badges: settings.showSecurityBadges,
+        show_product_image: settings.showProductImage,
+        checkout_title: texts.checkoutTitle,
+        checkout_subtitle: texts.checkoutSubtitle || null,
+        buyer_section_title: texts.buyerSectionTitle,
+        payment_section_title: texts.paymentSectionTitle,
+        footer_text: texts.footerText,
+        security_badge_text: texts.securityBadgeText,
+        custom_button_text: texts.customButtonText || null,
       };
 
       const { error } = await supabase
@@ -684,7 +718,7 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
     return () => {
       delete (window as any).__checkoutSaveConfig;
     };
-  }, [selectedColor, selectedTemplate, requiredFields, settings]);
+  }, [selectedColor, backgroundColor, selectedTemplate, requiredFields, settings, texts]);
 
   return (
     <div className="space-y-6">
@@ -896,7 +930,107 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
         </CardContent>
       </Card>
 
-      {/* Reviews/depoimentos */}
+      {/* Textos Personalizados */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg text-primary">Textos do Checkout</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Título principal</Label>
+              <Input
+                value={texts.checkoutTitle}
+                onChange={(e) => setTexts(prev => ({ ...prev, checkoutTitle: e.target.value }))}
+                placeholder="Finalizar Compra"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Subtítulo (opcional)</Label>
+              <Input
+                value={texts.checkoutSubtitle}
+                onChange={(e) => setTexts(prev => ({ ...prev, checkoutSubtitle: e.target.value }))}
+                placeholder="Preencha seus dados abaixo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Título seção dados</Label>
+              <Input
+                value={texts.buyerSectionTitle}
+                onChange={(e) => setTexts(prev => ({ ...prev, buyerSectionTitle: e.target.value }))}
+                placeholder="Dados do comprador"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Título seção pagamento</Label>
+              <Input
+                value={texts.paymentSectionTitle}
+                onChange={(e) => setTexts(prev => ({ ...prev, paymentSectionTitle: e.target.value }))}
+                placeholder="Forma de pagamento"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Texto do botão de compra</Label>
+              <Input
+                value={texts.customButtonText}
+                onChange={(e) => setTexts(prev => ({ ...prev, customButtonText: e.target.value }))}
+                placeholder="Pagar R$ XX,XX"
+              />
+              <p className="text-xs text-muted-foreground">Deixe vazio para usar o padrão</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Badge de segurança</Label>
+              <Input
+                value={texts.securityBadgeText}
+                onChange={(e) => setTexts(prev => ({ ...prev, securityBadgeText: e.target.value }))}
+                placeholder="Pagamento Seguro"
+              />
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label>Texto do rodapé</Label>
+              <Input
+                value={texts.footerText}
+                onChange={(e) => setTexts(prev => ({ ...prev, footerText: e.target.value }))}
+                placeholder="Pagamento processado com segurança"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4 pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <Switch 
+                checked={settings.showSecurityBadges} 
+                onCheckedChange={() => toggleSetting("showSecurityBadges")} 
+              />
+              <Label className="text-sm">Mostrar badges de segurança</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch 
+                checked={settings.showProductImage} 
+                onCheckedChange={() => toggleSetting("showProductImage")} 
+              />
+              <Label className="text-sm">Mostrar imagem do produto</Label>
+            </div>
+          </div>
+
+          {/* Background Color */}
+          <div className="pt-4 border-t space-y-3">
+            <Label>Cor de fundo</Label>
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-8 h-8 rounded border cursor-pointer"
+                style={{ backgroundColor: backgroundColor }}
+              />
+              <Input 
+                value={backgroundColor} 
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="w-28 font-mono text-sm"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-lg text-primary">Reviews/depoimento</CardTitle>

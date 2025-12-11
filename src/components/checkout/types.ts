@@ -34,6 +34,17 @@ export interface CheckoutConfig {
   thank_you_url: string | null;
   show_whatsapp_button: boolean;
   whatsapp_number: string | null;
+  // New customization fields
+  checkout_title: string | null;
+  checkout_subtitle: string | null;
+  buyer_section_title: string | null;
+  payment_section_title: string | null;
+  footer_text: string | null;
+  security_badge_text: string | null;
+  show_security_badges: boolean;
+  show_product_image: boolean;
+  background_color: string | null;
+  header_logo_url: string | null;
 }
 
 export interface FormData {
