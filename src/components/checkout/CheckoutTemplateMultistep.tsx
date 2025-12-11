@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
-  ShoppingCart, Lock, CheckCircle, Shield, Clock, MapPin, Phone, Calendar, User, ChevronRight, ArrowLeft
+  ShoppingCart, Lock, CheckCircle, Shield, Clock, MapPin, Phone, Calendar, User, ChevronRight, ArrowLeft, Zap, Gift, Star
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
@@ -13,6 +13,9 @@ import { cn } from "@/lib/utils";
 
 type MultiStep = "info" | "contact" | "payment";
 
+// Template MULTISTEP - Checkout em Etapas
+// Inspirado em: Eduzz, Monetizze, Braip
+// Foco em: Reduzir fricção, progressão visual, foco em cada etapa
 export function CheckoutTemplateMultistep({
   offer,
   product,
@@ -28,10 +31,10 @@ export function CheckoutTemplateMultistep({
   formatCountdown,
 }: CheckoutTemplateProps) {
   const [currentStep, setCurrentStep] = useState<MultiStep>("info");
-  const primaryColor = config?.primary_color || "#2563EB";
+  const primaryColor = config?.primary_color || "#8B5CF6";
 
   const steps: { id: MultiStep; label: string; icon: typeof User }[] = [
-    { id: "info", label: "Identificação", icon: User },
+    { id: "info", label: "Seus Dados", icon: User },
     { id: "contact", label: "Contato", icon: Phone },
     { id: "payment", label: "Pagamento", icon: Lock },
   ];
@@ -40,7 +43,7 @@ export function CheckoutTemplateMultistep({
 
   const canProceed = () => {
     if (currentStep === "info") {
-      return formData.name.trim().length > 0 && formData.email.includes("@");
+      return formData.name.trim().length > 2 && formData.email.includes("@") && formData.email.includes(".");
     }
     if (currentStep === "contact") {
       if (config?.require_phone && !formData.phone.trim()) return false;
@@ -62,18 +65,14 @@ export function CheckoutTemplateMultistep({
 
   if (step === "payment") {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardContent className="p-8">
-            <div className="text-center mb-6">
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ backgroundColor: `${primaryColor}15` }}
-              >
-                <Clock className="h-8 w-8" style={{ color: primaryColor }} />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900">Aguardando Pagamento</h2>
-              <p className="text-gray-500 text-sm mt-1">Escaneie o QR Code para pagar</p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border-0 rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 py-4 px-6 text-center">
+            <h2 className="text-xl font-bold text-white">Aguardando Pagamento</h2>
+          </div>
+          <CardContent className="p-6">
+            <div className="text-center mb-4">
+              <p className="text-gray-600 text-sm">Escaneie o QR Code ou copie o código PIX</p>
             </div>
             {pixData && (
               <PixQRCode
@@ -90,28 +89,30 @@ export function CheckoutTemplateMultistep({
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Countdown Banner */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50">
+      {/* Urgency Banner */}
       {config?.show_countdown && countdown !== null && countdown > 0 && (
-        <div 
-          className="py-2.5 text-center text-white text-sm font-medium"
-          style={{ backgroundColor: primaryColor }}
-        >
-          <Clock className="h-4 w-4 inline mr-2" />
-          Oferta expira em: {formatCountdown(countdown)}
+        <div className="py-3 text-center text-white text-sm font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600">
+          <div className="flex items-center justify-center gap-2">
+            <Zap className="h-4 w-4 animate-pulse" />
+            <span>OFERTA POR TEMPO LIMITADO: {formatCountdown(countdown)}</span>
+            <Zap className="h-4 w-4 animate-pulse" />
+          </div>
         </div>
       )}
 
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
+      {/* Header with Progress */}
+      <header className="bg-white border-b shadow-sm sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <Badge variant="outline" className="gap-1">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+                <Lock className="h-4 w-4" style={{ color: primaryColor }} />
+              </div>
+              <span className="font-semibold text-gray-800">Checkout Seguro</span>
+            </div>
+            <Badge className="bg-green-100 text-green-700 gap-1">
               <Shield className="h-3 w-3" />
-              Checkout Seguro
-            </Badge>
-            <Badge variant="outline" className="gap-1">
-              <Lock className="h-3 w-3" />
               SSL
             </Badge>
           </div>
@@ -128,27 +129,27 @@ export function CheckoutTemplateMultistep({
                   <div className="flex flex-col items-center flex-1">
                     <div 
                       className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                        isActive && "ring-4",
-                        isCompleted ? "bg-green-500 text-white" : isActive ? "text-white" : "bg-gray-200 text-gray-500"
+                        "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg",
+                        isCompleted ? "bg-green-500 text-white" : 
+                        isActive ? "text-white scale-110" : "bg-gray-100 text-gray-400"
                       )}
                       style={{ 
-                        backgroundColor: isActive ? primaryColor : isCompleted ? undefined : undefined,
-                        boxShadow: isActive ? `0 0 0 4px ${primaryColor}30` : undefined
+                        backgroundColor: isActive ? primaryColor : undefined,
+                        boxShadow: isActive ? `0 8px 20px ${primaryColor}40` : undefined
                       }}
                     >
-                      {isCompleted ? <CheckCircle className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                      {isCompleted ? <CheckCircle className="h-6 w-6" /> : <Icon className="h-6 w-6" />}
                     </div>
                     <span className={cn(
-                      "text-xs mt-1.5 font-medium",
-                      isActive ? "text-gray-900" : "text-gray-500"
+                      "text-xs mt-2 font-semibold transition-colors",
+                      isActive ? "text-gray-900" : isCompleted ? "text-green-600" : "text-gray-400"
                     )}>
                       {s.label}
                     </span>
                   </div>
                   {index < steps.length - 1 && (
                     <div className={cn(
-                      "h-0.5 w-full mx-2 rounded",
+                      "h-1 w-full mx-3 rounded-full transition-colors",
                       index < currentIndex ? "bg-green-500" : "bg-gray-200"
                     )} />
                   )}
@@ -161,19 +162,28 @@ export function CheckoutTemplateMultistep({
 
       <main className="container max-w-2xl mx-auto px-4 py-6">
         {/* Product Summary */}
-        <Card className="mb-6 shadow-sm">
+        <Card className="mb-6 shadow-lg border-0 rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 py-3 px-4">
+            <p className="text-white/90 text-xs font-medium text-center">🎉 Você está a poucos passos de garantir seu acesso!</p>
+          </div>
           <CardContent className="p-4">
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-center">
               {product?.image_url ? (
-                <img src={product.image_url} alt={product.name} className="w-16 h-16 object-cover rounded-lg" />
+                <img src={product.image_url} alt={product.name} className="w-20 h-20 object-cover rounded-xl shadow-md" />
               ) : (
-                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <ShoppingCart className="h-6 w-6 text-gray-400" />
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl flex items-center justify-center">
+                  <ShoppingCart className="h-8 w-8 text-purple-400" />
                 </div>
               )}
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{offer.name}</h3>
-                <p className="text-2xl font-bold mt-1" style={{ color: primaryColor }}>
+                <h3 className="font-bold text-gray-900">{offer.name}</h3>
+                <div className="flex items-center gap-1 mt-1">
+                  {[1,2,3,4,5].map((i) => (
+                    <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  ))}
+                  <span className="text-xs text-gray-500 ml-1">(4.9)</span>
+                </div>
+                <p className="text-2xl font-black mt-1" style={{ color: primaryColor }}>
                   {formatPrice(offer.price)}
                 </p>
               </div>
@@ -182,158 +192,174 @@ export function CheckoutTemplateMultistep({
         </Card>
 
         {/* Step Content */}
-        <Card className="shadow-sm">
+        <Card className="shadow-lg border-0 rounded-2xl">
           <CardContent className="p-6">
             {currentStep === "info" && (
-              <div className="space-y-4">
-                <div className="mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Seus dados pessoais</h2>
-                  <p className="text-sm text-gray-500">Informe seus dados para continuar</p>
+              <div className="space-y-5">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Quem é você?</h2>
+                  <p className="text-sm text-gray-500 mt-1">Precisamos dessas informações para liberar seu acesso</p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-gray-700">Nome completo *</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Seu nome completo"
-                    className="h-12"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-700">E-mail *</Label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="seu@email.com"
-                    className="h-12"
-                  />
-                </div>
-
-                {config?.require_email_confirmation && (
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-gray-700">Confirmar e-mail *</Label>
+                    <Label className="text-gray-700 font-medium">Seu nome completo *</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Digite seu nome completo"
+                      className="h-14 text-base rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 font-medium">Seu melhor e-mail *</Label>
                     <Input
                       type="email"
-                      value={formData.emailConfirm}
-                      onChange={(e) => setFormData({ ...formData, emailConfirm: e.target.value })}
-                      placeholder="Confirme seu e-mail"
-                      className="h-12"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="seu@email.com"
+                      className="h-14 text-base rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500"
                     />
+                    <p className="text-xs text-gray-400">Você receberá seu acesso por esse e-mail</p>
                   </div>
-                )}
 
-                {config?.require_birthdate && (
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">Data de nascimento *</Label>
-                    <Input
-                      type="date"
-                      value={formData.birthdate}
-                      onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
-                      className="h-12"
-                    />
-                  </div>
-                )}
+                  {config?.require_email_confirmation && (
+                    <div className="space-y-2">
+                      <Label className="text-gray-700 font-medium">Confirmar e-mail *</Label>
+                      <Input
+                        type="email"
+                        value={formData.emailConfirm}
+                        onChange={(e) => setFormData({ ...formData, emailConfirm: e.target.value })}
+                        placeholder="Confirme seu e-mail"
+                        className="h-14 text-base rounded-xl border-gray-200"
+                      />
+                    </div>
+                  )}
+
+                  {config?.require_birthdate && (
+                    <div className="space-y-2">
+                      <Label className="text-gray-700 font-medium">Data de nascimento *</Label>
+                      <Input
+                        type="date"
+                        value={formData.birthdate}
+                        onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+                        className="h-14 rounded-xl border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {currentStep === "contact" && (
-              <div className="space-y-4">
-                <div className="mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Informações de contato</h2>
-                  <p className="text-sm text-gray-500">Como podemos entrar em contato?</p>
+              <div className="space-y-5">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Como podemos falar com você?</h2>
+                  <p className="text-sm text-gray-500 mt-1">Só usaremos para enviar informações importantes</p>
                 </div>
 
-                {(config?.require_phone !== false) && (
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">Telefone {config?.require_phone && "*"}</Label>
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="(00) 00000-0000"
-                      className="h-12"
-                    />
-                  </div>
-                )}
+                <div className="space-y-4">
+                  {(config?.require_phone !== false) && (
+                    <div className="space-y-2">
+                      <Label className="text-gray-700 font-medium">Seu WhatsApp {config?.require_phone && "*"}</Label>
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="(00) 00000-0000"
+                        className="h-14 text-base rounded-xl border-gray-200"
+                      />
+                    </div>
+                  )}
 
-                {config?.require_cpf && (
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">CPF *</Label>
-                    <Input
-                      value={formData.cpf}
-                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                      placeholder="000.000.000-00"
-                      className="h-12"
-                    />
-                  </div>
-                )}
+                  {config?.require_cpf && (
+                    <div className="space-y-2">
+                      <Label className="text-gray-700 font-medium">CPF *</Label>
+                      <Input
+                        value={formData.cpf}
+                        onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                        placeholder="000.000.000-00"
+                        className="h-14 text-base rounded-xl border-gray-200"
+                      />
+                    </div>
+                  )}
 
-                {config?.require_address && (
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">Endereço completo *</Label>
-                    <Input
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="Rua, número, bairro, cidade"
-                      className="h-12"
-                    />
-                  </div>
-                )}
+                  {config?.require_address && (
+                    <div className="space-y-2">
+                      <Label className="text-gray-700 font-medium">Endereço completo *</Label>
+                      <Input
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="Rua, número, bairro, cidade - UF"
+                        className="h-14 text-base rounded-xl border-gray-200"
+                      />
+                    </div>
+                  )}
 
-                {!config?.require_phone && !config?.require_cpf && !config?.require_address && (
-                  <div className="text-center py-8 text-gray-500">
-                    <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-500" />
-                    <p>Nenhum dado adicional necessário!</p>
-                    <p className="text-sm">Clique em continuar para finalizar</p>
-                  </div>
-                )}
+                  {!config?.require_phone && !config?.require_cpf && !config?.require_address && (
+                    <div className="text-center py-10">
+                      <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle className="h-8 w-8 text-green-500" />
+                      </div>
+                      <p className="font-semibold text-gray-800">Tudo certo!</p>
+                      <p className="text-sm text-gray-500 mt-1">Clique em continuar para finalizar</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {currentStep === "payment" && (
-              <div className="space-y-4">
-                <div className="mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Método de pagamento</h2>
-                  <p className="text-sm text-gray-500">Selecione como deseja pagar</p>
+              <div className="space-y-5">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Último passo!</h2>
+                  <p className="text-sm text-gray-500 mt-1">Escolha como deseja pagar</p>
                 </div>
 
                 <div 
-                  className="p-4 rounded-lg border-2 flex items-center gap-4"
+                  className="p-5 rounded-2xl border-2 flex items-center gap-4"
                   style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
                 >
-                  <div 
-                    className="w-12 h-12 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${primaryColor}15` }}
-                  >
-                    <img src="/pix-logo.png" alt="PIX" className="w-7 h-7" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-[#32BCAD]">
+                    <img src="/pix-logo.png" alt="PIX" className="w-8 h-8" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900">PIX</p>
-                    <p className="text-sm text-gray-500">Aprovação instantânea</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-lg">PIX</p>
+                      <Badge className="bg-green-100 text-green-700 text-xs">Aprovação Imediata</Badge>
+                    </div>
+                    <p className="text-sm text-gray-500">Pague e receba acesso na hora</p>
                   </div>
-                  <CheckCircle className="h-6 w-6" style={{ color: primaryColor }} />
+                  <CheckCircle className="h-7 w-7" style={{ color: primaryColor }} />
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                <div className="bg-gray-50 rounded-xl p-4">
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-600">Subtotal</span>
-                    <span>{formatPrice(offer.price)}</span>
+                    <span className="text-gray-800">{formatPrice(offer.price)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
+                    <span className="text-gray-900">Total</span>
                     <span style={{ color: primaryColor }}>{formatPrice(offer.price)}</span>
                   </div>
+                </div>
+
+                {/* Bonus Section */}
+                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-amber-700 font-semibold">
+                    <Gift className="h-5 w-5" />
+                    <span>Bônus exclusivos inclusos!</span>
+                  </div>
+                  <p className="text-sm text-amber-600 mt-1">Você também receberá materiais extras após a compra</p>
                 </div>
               </div>
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex gap-3 mt-6 pt-4 border-t">
+            <div className="flex gap-3 mt-8">
               {currentIndex > 0 && (
-                <Button variant="outline" onClick={prevStep} className="flex-1 h-12">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                <Button variant="outline" onClick={prevStep} className="flex-1 h-14 rounded-xl text-base">
+                  <ArrowLeft className="h-5 w-5 mr-2" />
                   Voltar
                 </Button>
               )}
@@ -342,23 +368,28 @@ export function CheckoutTemplateMultistep({
                 <Button 
                   onClick={nextStep}
                   disabled={!canProceed()}
-                  className="flex-1 h-12"
+                  className="flex-1 h-14 rounded-xl text-base font-bold shadow-lg transition-all hover:shadow-xl"
                   style={{ backgroundColor: primaryColor }}
                 >
                   Continuar
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                  <ChevronRight className="h-5 w-5 ml-2" />
                 </Button>
               ) : (
                 <Button 
                   onClick={onGeneratePix}
                   disabled={isGeneratingPix}
-                  className="flex-1 h-12"
+                  className="flex-1 h-14 rounded-xl text-base font-bold shadow-lg transition-all hover:shadow-xl"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  {isGeneratingPix ? "Gerando PIX..." : (
+                  {isGeneratingPix ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Gerando PIX...
+                    </span>
+                  ) : (
                     <>
-                      <Lock className="h-4 w-4 mr-2" />
-                      {config?.custom_button_text || `Pagar ${formatPrice(offer.price)}`}
+                      <Lock className="h-5 w-5 mr-2" />
+                      {config?.custom_button_text || `GARANTIR ACESSO`}
                     </>
                   )}
                 </Button>
@@ -369,13 +400,17 @@ export function CheckoutTemplateMultistep({
 
         {/* Trust badges */}
         <div className="flex justify-center gap-6 mt-6 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <Shield className="h-4 w-4 text-green-600" />
-            Compra segura
+          <div className="flex items-center gap-1.5">
+            <Shield className="h-4 w-4 text-green-500" />
+            Garantia 7 dias
           </div>
-          <div className="flex items-center gap-1">
-            <Lock className="h-4 w-4 text-green-600" />
-            Dados protegidos
+          <div className="flex items-center gap-1.5">
+            <Lock className="h-4 w-4 text-green-500" />
+            Pagamento seguro
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Zap className="h-4 w-4 text-green-500" />
+            Acesso imediato
           </div>
         </div>
       </main>
