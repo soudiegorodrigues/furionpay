@@ -244,6 +244,20 @@ const AdminDashboard = () => {
     return { generated, paid, amountPaid };
   }, [transactions]);
 
+  // Month's stats
+  const monthStats = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthTransactions = transactions.filter(tx => new Date(tx.created_at) >= startOfMonth);
+    const amountPaid = monthTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+    return { amountPaid };
+  }, [transactions]);
+
+  // Total balance (all paid transactions)
+  const totalBalance = useMemo(() => {
+    return transactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+  }, [transactions]);
+
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -334,91 +348,146 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Chart - Visão Geral Style */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
-            <div className="flex items-center bg-muted rounded-full p-1">
-              {[
-                { value: 'today', label: 'Hoje' },
-                { value: '7days', label: '7 dias' },
-                { value: '14days', label: '14 dias' },
-                { value: '30days', label: '30 dias' },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setChartFilter(option.value as ChartFilter)}
-                  className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
-                    chartFilter === option.value
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+      {/* Chart + Side Cards Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Chart - Visão Geral Style */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
+              <div className="flex items-center bg-muted rounded-full p-1">
+                {[
+                  { value: 'today', label: 'Hoje' },
+                  { value: '7days', label: '7 dias' },
+                  { value: '14days', label: '14 dias' },
+                  { value: '30days', label: '30 dias' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setChartFilter(option.value as ChartFilter)}
+                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
+                      chartFilter === option.value
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[250px] sm:h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorGerados" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  className="stroke-muted" 
-                  opacity={0.3} 
-                  horizontal={true}
-                  vertical={false}
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px] sm:h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorGerados" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    className="stroke-muted" 
+                    opacity={0.3} 
+                    horizontal={true}
+                    vertical={false}
+                  />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                    tickLine={false}
+                    axisLine={false}
+                    interval={chartFilter === 'today' ? 1 : 'preserveStartEnd'}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    formatter={(value: number, name: string) => [
+                      name === 'valorPago' ? formatCurrency(value) : value,
+                      name === 'valorPago' ? 'Valor Pago' : name === 'gerados' ? 'Gerados' : 'Pagos'
+                    ]}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="valorPago" 
+                    name="valorPago"
+                    stroke="hsl(var(--primary))" 
+                    fillOpacity={1} 
+                    fill="url(#colorGerados)" 
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Side Cards */}
+        <div className="flex flex-col gap-4">
+          {/* Vendas hoje + Vendas este mês */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Vendas hoje</p>
+                  <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Vendas este mês</p>
+                  <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Saldo disponível */}
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Saldo disponível</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(totalBalance)}</p>
+            </CardContent>
+          </Card>
+
+          {/* Progresso de Recompensas */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-primary">🏆</span>
+                  <span className="text-sm font-semibold text-primary">Progresso de Recompensas</span>
+                </div>
+                <Button variant="outline" size="sm" className="h-7 text-xs">
+                  🎁 Resgatar
+                </Button>
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                <span>Progresso atual</span>
+                <span>{formatCurrency(totalBalance)} / 100K</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2">
+                <div 
+                  className="bg-primary h-2 rounded-full transition-all"
+                  style={{ width: `${Math.min((totalBalance / 100000) * 100, 100)}%` }}
                 />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                  tickLine={false}
-                  axisLine={false}
-                  interval={chartFilter === 'today' ? 1 : 'preserveStartEnd'}
-                />
-                <YAxis 
-                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                  tickLine={false}
-                  axisLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    fontSize: '12px'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number, name: string) => [
-                    name === 'valorPago' ? formatCurrency(value) : value,
-                    name === 'valorPago' ? 'Valor Pago' : name === 'gerados' ? 'Gerados' : 'Pagos'
-                  ]}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="valorPago" 
-                  name="valorPago"
-                  stroke="hsl(var(--primary))" 
-                  fillOpacity={1} 
-                  fill="url(#colorGerados)" 
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Transactions Table */}
       <Card>
