@@ -64,7 +64,6 @@ interface CheckoutOfferCardProps {
   isNew?: boolean;
 }
 
-// Blocked product names list
 const blockedProductNames = ['doação', 'doacao', 'golpe', 'falso', 'fraude', 'fake', 'scam'];
 
 const isProductNameBlocked = (name: string): boolean => {
@@ -242,7 +241,6 @@ export const CheckoutOfferCard = ({
 
       {(isExpanded || isEditing) && (
         <CardContent className="space-y-4 pt-0">
-          {/* Nome da Oferta */}
           <div className="space-y-2">
             <Label>Nome da Oferta</Label>
             <Input 
@@ -254,7 +252,6 @@ export const CheckoutOfferCard = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Domain Selector */}
             {availableDomains.length > 0 && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
@@ -276,7 +273,6 @@ export const CheckoutOfferCard = ({
               </div>
             )}
 
-            {/* Model Selector */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Link className="w-4 h-4" />
@@ -297,7 +293,6 @@ export const CheckoutOfferCard = ({
             </div>
           </div>
 
-          {/* Pixel Selector - Multi Select */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
@@ -367,7 +362,6 @@ export const CheckoutOfferCard = ({
             )}
           </div>
 
-          {/* Product Name */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Package className="w-4 h-4" />
@@ -384,7 +378,6 @@ export const CheckoutOfferCard = ({
             </p>
           </div>
 
-          {/* Generated Link */}
           {!isEditing && (
             <div className="space-y-2">
               <Label>Seu link</Label>
@@ -397,7 +390,6 @@ export const CheckoutOfferCard = ({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-2 pt-2">
             {isEditing ? (
               <>
