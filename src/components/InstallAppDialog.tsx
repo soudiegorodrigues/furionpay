@@ -13,7 +13,7 @@ interface InstallAppDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isIOS: boolean;
-  onInstall?: () => void;
+  onInstall?: () => Promise<boolean>;
 }
 
 export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: InstallAppDialogProps) => {
@@ -21,11 +21,14 @@ export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: Insta
     onOpenChange(false);
   };
 
-  const handleInstall = () => {
+  const handleInstall = async () => {
     if (onInstall) {
-      onInstall();
+      const installed = await onInstall();
+      if (installed) {
+        handleClose();
+      }
+      // If not installed (no native prompt), keep dialog open to show instructions
     }
-    handleClose();
   };
 
   return (
