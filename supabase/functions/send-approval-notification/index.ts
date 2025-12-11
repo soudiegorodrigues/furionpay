@@ -95,8 +95,8 @@ const handler = async (req: Request): Promise<Response> => {
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                   <!-- Header -->
                   <tr>
-                    <td style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 32px; text-align: center;">
-                      ${logoUrl ? `<img src="${logoUrl}" alt="FurionPay" style="max-height: 48px; width: auto; margin-bottom: 16px;">` : `<h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">FurionPay</h1>`}
+                    <td style="background-color: #ffffff; padding: 32px; text-align: center; border-bottom: 3px solid #dc2626;">
+                      ${logoUrl ? `<img src="${logoUrl}" alt="FurionPay" style="max-height: 56px; width: auto;">` : `<h1 style="margin: 0; color: #dc2626; font-size: 28px; font-weight: 700;">FurionPay</h1>`}
                     </td>
                   </tr>
                   
