@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, Copy, LayoutTemplate, Check, X, Settings2, Eye } from "lucide-react";
 import { TemplateEditor } from "./TemplateEditor";
 import { TemplateEditorPreview } from "./TemplateEditorPreview";
-import type { TemplateConfig, ComponentConfig } from "./TemplateEditor";
+import type { TemplateConfig } from "./TemplateEditor";
 
 interface CheckoutTemplate {
   id: string;
