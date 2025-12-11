@@ -285,13 +285,17 @@ serve(async (req) => {
 
     console.log('Criando cobrança PIX Ativus:', JSON.stringify(payload));
 
-    // Convert API key to Base64 for Basic auth
-    const apiKeyBase64 = btoa(apiKey);
+    // Check if API key is already Base64 encoded or needs encoding
+    // If key contains only valid base64 chars and is long enough, assume it's already encoded
+    const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
+    const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
+    
+    console.log('Auth type:', isAlreadyBase64 ? 'Key already Base64' : 'Key encoded to Base64');
 
     const response = await fetch(ATIVUS_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${apiKeyBase64}`,
+        'Authorization': `Basic ${authHeader}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
