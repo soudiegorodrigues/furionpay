@@ -41,7 +41,7 @@ interface ChartData {
 
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
-type ChartFilter = 'today' | '7days' | '15days' | '30days' | 'month' | 'year';
+type ChartFilter = 'today' | '7days' | '14days' | '30days';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -137,10 +137,8 @@ const AdminDashboard = () => {
     switch (filter) {
       case 'today': return 1;
       case '7days': return 7;
-      case '15days': return 15;
+      case '14days': return 14;
       case '30days': return 30;
-      case 'month': return 30;
-      case 'year': return 365;
       default: return 30;
     }
   };
@@ -175,26 +173,47 @@ const AdminDashboard = () => {
   }, [transactions, dateFilter]);
 
   const chartData = useMemo((): ChartData[] => {
-    const days = getChartDays(chartFilter);
     const data: ChartData[] = [];
     const now = new Date();
     
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    if (chartFilter === 'today') {
+      // Hourly data for today
+      for (let hour = 0; hour < 24; hour++) {
+        const hourStr = hour.toString().padStart(2, '0') + ':00';
+        
+        const hourTransactions = transactions.filter(tx => {
+          const txDate = new Date(tx.created_at);
+          const today = new Date();
+          return txDate.toDateString() === today.toDateString() && txDate.getHours() === hour;
+        });
+        
+        const gerados = hourTransactions.length;
+        const pagos = hourTransactions.filter(tx => tx.status === 'paid').length;
+        const valorPago = hourTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+        
+        data.push({ date: hourStr, gerados, pagos, valorPago });
+      }
+    } else {
+      // Daily data for other filters
+      const days = getChartDays(chartFilter);
       
-      const dayTransactions = transactions.filter(tx => {
-        const txDate = new Date(tx.created_at).toISOString().split('T')[0];
-        return txDate === dateStr;
-      });
-      
-      const gerados = dayTransactions.length;
-      const pagos = dayTransactions.filter(tx => tx.status === 'paid').length;
-      const valorPago = dayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
-      
-      data.push({ date: displayDate, gerados, pagos, valorPago });
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        
+        const dayTransactions = transactions.filter(tx => {
+          const txDate = new Date(tx.created_at).toISOString().split('T')[0];
+          return txDate === dateStr;
+        });
+        
+        const gerados = dayTransactions.length;
+        const pagos = dayTransactions.filter(tx => tx.status === 'paid').length;
+        const valorPago = dayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+        
+        data.push({ date: displayDate, gerados, pagos, valorPago });
+      }
     }
     
     return data;
@@ -315,28 +334,31 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Chart */}
+      {/* Chart - Visão Geral Style */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <CardTitle className="text-sm sm:text-lg">Evolução de Transações</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
+            <div className="flex items-center bg-muted rounded-full p-1">
+              {[
+                { value: 'today', label: 'Hoje' },
+                { value: '7days', label: '7 dias' },
+                { value: '14days', label: '14 dias' },
+                { value: '30days', label: '30 dias' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setChartFilter(option.value as ChartFilter)}
+                  className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
+                    chartFilter === option.value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
-            <Select value={chartFilter} onValueChange={(v) => setChartFilter(v as ChartFilter)}>
-              <SelectTrigger className="w-[120px] h-8 text-xs sm:text-sm">
-                <Calendar className="h-3 w-3 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Hoje</SelectItem>
-                <SelectItem value="7days">7 dias</SelectItem>
-                <SelectItem value="15days">15 dias</SelectItem>
-                <SelectItem value="30days">30 dias</SelectItem>
-                <SelectItem value="month">Este mês</SelectItem>
-                <SelectItem value="year">Este ano</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardHeader>
         <CardContent>
@@ -345,27 +367,29 @@ const AdminDashboard = () => {
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorGerados" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
                     <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="colorPagos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                  </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  className="stroke-muted" 
+                  opacity={0.3} 
+                  horizontal={true}
+                  vertical={false}
+                />
                 <XAxis 
                   dataKey="date" 
-                  tick={{ fontSize: 10 }} 
-                  className="text-muted-foreground"
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                   tickLine={false}
                   axisLine={false}
+                  interval={chartFilter === 'today' ? 1 : 'preserveStartEnd'}
                 />
                 <YAxis 
-                  tick={{ fontSize: 10 }} 
-                  className="text-muted-foreground"
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                   tickLine={false}
                   axisLine={false}
+                  allowDecimals={false}
                 />
                 <Tooltip 
                   contentStyle={{ 
@@ -375,31 +399,20 @@ const AdminDashboard = () => {
                     fontSize: '12px'
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number, name: string) => [
+                    name === 'valorPago' ? formatCurrency(value) : value,
+                    name === 'valorPago' ? 'Valor Pago' : name === 'gerados' ? 'Gerados' : 'Pagos'
+                  ]}
                 />
                 <Area 
                   type="monotone" 
-                  dataKey="gerados" 
-                  name="Gerados"
+                  dataKey="valorPago" 
+                  name="valorPago"
                   stroke="hsl(var(--primary))" 
                   fillOpacity={1} 
                   fill="url(#colorGerados)" 
                   strokeWidth={2}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="pagos" 
-                  name="Pagos"
-                  stroke="#22c55e" 
-                  fillOpacity={1} 
-                  fill="url(#colorPagos)" 
-                  strokeWidth={2}
-                />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                  formatter={(value) => (
-                    <span className="text-xs text-foreground">{value}</span>
-                  )}
+                  dot={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
