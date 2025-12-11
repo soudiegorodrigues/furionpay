@@ -7,7 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ExitIntentPopupProps {
   isEnabled: boolean;
@@ -15,6 +15,7 @@ interface ExitIntentPopupProps {
   message?: string;
   ctaText?: string;
   primaryColor?: string;
+  discountPercentage?: number;
   onCtaClick?: () => void;
 }
 
@@ -24,6 +25,7 @@ export function ExitIntentPopup({
   message = "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
   ctaText = "Aproveitar oferta",
   primaryColor = "#16A34A",
+  discountPercentage = 10,
   onCtaClick,
 }: ExitIntentPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -128,10 +130,13 @@ export function ExitIntentPopup({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md text-center">
         <DialogHeader className="items-center space-y-4">
-          {/* Alert Icon */}
-          <div className="w-16 h-16 rounded-full border-2 border-amber-400 flex items-center justify-center mx-auto">
-            <span className="text-amber-400 text-3xl font-bold">!</span>
-          </div>
+          {/* Discount Badge */}
+          <Badge 
+            className="text-lg px-4 py-2 font-bold"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {discountPercentage}% OFF
+          </Badge>
           
           <DialogTitle className="text-xl font-bold text-center">
             {title}
@@ -144,12 +149,15 @@ export function ExitIntentPopup({
         
         <div className="mt-4">
           <Button
-            className="w-full font-semibold"
+            className="w-full font-semibold text-lg py-6"
             style={{ backgroundColor: primaryColor }}
             onClick={handleCtaClick}
           >
             {ctaText}
           </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            Desconto aplicado automaticamente
+          </p>
         </div>
       </DialogContent>
     </Dialog>

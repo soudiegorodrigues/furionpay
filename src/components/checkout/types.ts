@@ -51,6 +51,7 @@ export interface CheckoutConfig {
   discount_popup_title?: string | null;
   discount_popup_message?: string | null;
   discount_popup_cta?: string | null;
+  discount_popup_percentage?: number | null;
 }
 
 export interface FormData {
@@ -92,4 +93,7 @@ export interface CheckoutTemplateProps {
   formatPrice: (price: number) => string;
   formatCountdown: (seconds: number) => string;
   testimonials?: Testimonial[];
+  // Discount related props
+  originalPrice?: number;
+  discountApplied?: boolean;
 }

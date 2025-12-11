@@ -27,6 +27,8 @@ export function CheckoutTemplatePadrao({
   formatPrice,
   formatCountdown,
   testimonials = [],
+  originalPrice,
+  discountApplied,
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#22C55E";
 
@@ -370,8 +372,21 @@ export function CheckoutTemplatePadrao({
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Subtotal</span>
-                      <span className="text-gray-700">{formatPrice(offer.price)}</span>
+                      <div className="flex items-center gap-2">
+                        {discountApplied && originalPrice && (
+                          <span className="text-gray-400 line-through text-xs">{formatPrice(originalPrice)}</span>
+                        )}
+                        <span className="text-gray-700">{formatPrice(offer.price)}</span>
+                      </div>
                     </div>
+                    {discountApplied && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-600 font-medium">Desconto aplicado</span>
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                          -{Math.round(((originalPrice! - offer.price) / originalPrice!) * 100)}% OFF
+                        </Badge>
+                      </div>
+                    )}
                     <div className="flex justify-between font-bold text-lg">
                       <span className="text-gray-900">Total</span>
                       <span style={{ color: primaryColor }}>{formatPrice(offer.price)}</span>

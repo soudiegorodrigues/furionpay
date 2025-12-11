@@ -405,6 +405,7 @@ export type Database = {
           custom_button_text: string | null
           discount_popup_cta: string | null
           discount_popup_message: string | null
+          discount_popup_percentage: number | null
           discount_popup_title: string | null
           footer_text: string | null
           header_logo_url: string | null
@@ -442,6 +443,7 @@ export type Database = {
           custom_button_text?: string | null
           discount_popup_cta?: string | null
           discount_popup_message?: string | null
+          discount_popup_percentage?: number | null
           discount_popup_title?: string | null
           footer_text?: string | null
           header_logo_url?: string | null
@@ -479,6 +481,7 @@ export type Database = {
           custom_button_text?: string | null
           discount_popup_cta?: string | null
           discount_popup_message?: string | null
+          discount_popup_percentage?: number | null
           discount_popup_title?: string | null
           footer_text?: string | null
           header_logo_url?: string | null
