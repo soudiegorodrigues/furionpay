@@ -38,14 +38,22 @@ export const MultiAcquirersSection = () => {
 
   const loadAcquirerStates = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      // Fetch directly from admin_settings table for global settings (user_id IS NULL)
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('key, value')
+        .is('user_id', null)
+        .in('key', ['inter_enabled', 'spedpay_enabled']);
+      
       if (error) throw error;
       
+      console.log('Loaded acquirer states:', data);
+      
       if (data) {
-        const settings = data as { key: string; value: string }[];
-        const interState = settings.find(s => s.key === 'inter_enabled');
-        const spedpayState = settings.find(s => s.key === 'spedpay_enabled');
+        const interState = data.find(s => s.key === 'inter_enabled');
+        const spedpayState = data.find(s => s.key === 'spedpay_enabled');
         
+        // Default to true if not set, false only if explicitly set to 'false'
         setInterEnabled(interState?.value !== 'false');
         setSpedpayEnabled(spedpayState?.value !== 'false');
       }

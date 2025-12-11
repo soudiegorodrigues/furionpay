@@ -66,6 +66,26 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
+async function isAcquirerEnabled(acquirer: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', `${acquirer}_enabled`)
+    .is('user_id', null)
+    .maybeSingle();
+  
+  if (error) {
+    console.log(`Error checking if ${acquirer} is enabled:`, error);
+    return true; // Default to enabled if error
+  }
+  
+  // Default to enabled (true) if not set, disabled only if explicitly 'false'
+  const enabled = data?.value !== 'false';
+  console.log(`Acquirer ${acquirer} enabled:`, enabled);
+  return enabled;
+}
+
 async function getUserAcquirer(userId?: string): Promise<string> {
   if (!userId) return 'spedpay';
   
@@ -196,6 +216,16 @@ serve(async (req) => {
     const acquirer = await getUserAcquirer(userId);
     console.log('Selected acquirer:', acquirer);
 
+    // Check if the selected acquirer is enabled
+    const isEnabled = await isAcquirerEnabled(acquirer);
+    if (!isEnabled) {
+      console.log(`Acquirer ${acquirer} is disabled`);
+      return new Response(
+        JSON.stringify({ error: `Adquirente ${acquirer === 'inter' ? 'Banco Inter' : 'SpedPay'} está desativada. Ative-a no painel admin ou selecione outra adquirente.` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // If user has Inter configured, forward to generate-pix-inter
     if (acquirer === 'inter') {
       console.log('Redirecting to Banco Inter...');
@@ -237,7 +267,18 @@ serve(async (req) => {
     
     // If no SpedPay API key, fallback to Banco Inter
     if (!apiKey) {
-      console.log('No SpedPay API key configured, falling back to Banco Inter...');
+      console.log('No SpedPay API key configured, checking if Banco Inter is enabled for fallback...');
+      
+      // Check if Banco Inter is enabled before falling back
+      const interEnabled = await isAcquirerEnabled('inter');
+      if (!interEnabled) {
+        return new Response(
+          JSON.stringify({ error: 'Nenhuma adquirente disponível. SpedPay não configurado e Banco Inter está desativado.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('Falling back to Banco Inter...');
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
       
