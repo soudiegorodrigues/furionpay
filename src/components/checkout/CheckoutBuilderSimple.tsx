@@ -229,9 +229,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
+    <div className="flex flex-col xl:flex-row gap-6">
       {/* Preview Panel - Left Side */}
-      <div className="flex-1 min-w-0 order-2 lg:order-1">
+      <div className="flex-1 min-w-0 order-1 xl:order-1">
         <Card className="h-full">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-base">{productName}</CardTitle>
@@ -456,7 +456,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       </div>
 
       {/* Config Panel - Right Side */}
-      <div className="w-full lg:w-80 shrink-0 order-1 lg:order-2 space-y-4">
+      <div className="w-full xl:w-80 shrink-0 order-2 xl:order-2 space-y-4">
         {/* Template Selection */}
         <Card>
           <Collapsible open={isTemplateOpen} onOpenChange={setIsTemplateOpen}>
