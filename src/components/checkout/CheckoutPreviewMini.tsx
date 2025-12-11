@@ -13,6 +13,14 @@ import {
   Gift,
 } from "lucide-react";
 
+interface Testimonial {
+  id: string;
+  author_name: string;
+  author_photo_url: string | null;
+  rating: number;
+  content: string;
+}
+
 interface CheckoutPreviewMiniProps {
   templateName: string;
   productName: string;
@@ -24,6 +32,7 @@ interface CheckoutPreviewMiniProps {
   showBanner?: boolean;
   bannerImageUrl?: string | null;
   previewMode?: "desktop" | "mobile";
+  testimonials?: Testimonial[];
 }
 
 export function CheckoutPreviewMini({
@@ -37,7 +46,17 @@ export function CheckoutPreviewMini({
   showBanner = false,
   bannerImageUrl = null,
   previewMode = "desktop",
+  testimonials = [],
 }: CheckoutPreviewMiniProps) {
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#ec4899"];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -399,26 +418,33 @@ export function CheckoutPreviewMini({
       </div>
 
       {/* Testimonials */}
-      {showTestimonials && (
+      {showTestimonials && testimonials.length > 0 && (
         <div className="p-4 bg-white border-t">
           <h4 className="font-medium text-sm mb-3">O que dizem nossos clientes</h4>
           <div className="space-y-2">
-            {[
-              { name: "Maria S.", text: "Produto excelente!" },
-              { name: "João P.", text: "Recomendo muito!" },
-            ].map((item, i) => (
-              <div key={i} className="p-3 bg-gray-50 rounded-lg">
+            {testimonials.slice(0, 3).map((item) => (
+              <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
-                  <div 
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    {item.name[0]}
-                  </div>
-                  <span className="text-xs font-medium">{item.name}</span>
-                  <span className="text-[10px] text-yellow-500">★★★★★</span>
+                  {item.author_photo_url ? (
+                    <img
+                      src={item.author_photo_url}
+                      alt={item.author_name}
+                      className="w-6 h-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div 
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                      style={{ backgroundColor: getAvatarColor(item.author_name) }}
+                    >
+                      {getInitials(item.author_name)}
+                    </div>
+                  )}
+                  <span className="text-xs font-medium">{item.author_name}</span>
+                  <span className="text-[10px] text-yellow-500">
+                    {"★".repeat(item.rating)}{"☆".repeat(5 - item.rating)}
+                  </span>
                 </div>
-                <p className="text-xs text-gray-500">"{item.text}"</p>
+                <p className="text-xs text-gray-500">"{item.content}"</p>
               </div>
             ))}
           </div>
