@@ -11,7 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Copy, LayoutTemplate, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, LayoutTemplate, Check, X, Settings2 } from "lucide-react";
+import { TemplateEditor } from "./TemplateEditor";
 
 interface CheckoutTemplate {
   id: string;
@@ -30,6 +31,7 @@ export function TemplatesSection() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<CheckoutTemplate | null>(null);
+  const [editorTemplate, setEditorTemplate] = useState<CheckoutTemplate | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -330,9 +332,19 @@ export function TemplatesSection() {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     className="flex-1 h-8 text-xs"
+                    onClick={() => setEditorTemplate(template)}
+                  >
+                    <Settings2 className="h-3.5 w-3.5 mr-1" />
+                    Editar Layout
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs px-2"
                     onClick={() => togglePublishMutation.mutate({ 
                       id: template.id, 
                       is_published: !template.is_published 
@@ -437,6 +449,14 @@ export function TemplatesSection() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Template Editor */}
+      {editorTemplate && (
+        <TemplateEditor
+          template={editorTemplate}
+          onClose={() => setEditorTemplate(null)}
+        />
+      )}
     </div>
   );
 }
