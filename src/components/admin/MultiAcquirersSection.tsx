@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Loader2, Check, Settings } from "lucide-react";
+import { Plus, Loader2, Check, Settings, Power } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -15,6 +16,8 @@ export const MultiAcquirersSection = () => {
   const [isTestingInter, setIsTestingInter] = useState(false);
   const [showInterConfigDialog, setShowInterConfigDialog] = useState(false);
   const [isLoadingInterConfig, setIsLoadingInterConfig] = useState(false);
+  const [interEnabled, setInterEnabled] = useState(true);
+  const [spedpayEnabled, setSpedpayEnabled] = useState(true);
   const [interConfig, setInterConfig] = useState({
     clientId: '',
     clientSecret: '',
@@ -24,10 +27,61 @@ export const MultiAcquirersSection = () => {
   });
 
   useEffect(() => {
+    loadAcquirerStates();
+  }, []);
+
+  useEffect(() => {
     if (showInterConfigDialog) {
       loadInterCredentials();
     }
   }, [showInterConfigDialog]);
+
+  const loadAcquirerStates = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      if (error) throw error;
+      
+      if (data) {
+        const settings = data as { key: string; value: string }[];
+        const interState = settings.find(s => s.key === 'inter_enabled');
+        const spedpayState = settings.find(s => s.key === 'spedpay_enabled');
+        
+        setInterEnabled(interState?.value !== 'false');
+        setSpedpayEnabled(spedpayState?.value !== 'false');
+      }
+    } catch (error) {
+      console.error('Error loading acquirer states:', error);
+    }
+  };
+
+  const toggleAcquirer = async (acquirer: 'inter' | 'spedpay', enabled: boolean) => {
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: `${acquirer}_enabled`,
+        setting_value: enabled ? 'true' : 'false'
+      });
+      
+      if (error) throw error;
+      
+      if (acquirer === 'inter') {
+        setInterEnabled(enabled);
+      } else {
+        setSpedpayEnabled(enabled);
+      }
+      
+      toast({
+        title: enabled ? "Adquirente Ativada" : "Adquirente Desativada",
+        description: `${acquirer === 'inter' ? 'Banco Inter' : 'SpedPay'} foi ${enabled ? 'ativada' : 'desativada'} com sucesso.`
+      });
+    } catch (error) {
+      console.error('Error toggling acquirer:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao alterar estado da adquirente",
+        variant: "destructive"
+      });
+    }
+  };
 
   const loadInterCredentials = async () => {
     setIsLoadingInterConfig(true);
@@ -139,12 +193,22 @@ export const MultiAcquirersSection = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* BANCO INTER Card */}
-        <Card className="border-primary/50">
+        <Card className={`border-primary/50 transition-opacity ${!interEnabled ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-bold text-primary">BANCO INTER</CardTitle>
-            <CardDescription className="text-sm">
-              Gateway PIX via Banco Inter
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold text-primary">BANCO INTER</CardTitle>
+                <CardDescription className="text-sm">
+                  Gateway PIX via Banco Inter
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={interEnabled}
+                  onCheckedChange={(checked) => toggleAcquirer('inter', checked)}
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -162,15 +226,21 @@ export const MultiAcquirersSection = () => {
                     </div>
                     <span className="text-sm font-medium">PIX</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Ativo</span>
+                  <span className="text-xs text-muted-foreground">{interEnabled ? 'Ativo' : 'Inativo'}</span>
                 </div>
               </div>
             </div>
             
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
-              <Badge variant="outline" className="text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs">
-                <Check className="w-3 h-3 mr-1" />
-                Integrado
+              <Badge 
+                variant="outline" 
+                className={interEnabled 
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-xs"
+                }
+              >
+                {interEnabled ? <Check className="w-3 h-3 mr-1" /> : <Power className="w-3 h-3 mr-1" />}
+                {interEnabled ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
                 <Button 
@@ -178,6 +248,7 @@ export const MultiAcquirersSection = () => {
                   size="sm" 
                   onClick={() => setShowInterConfigDialog(true)}
                   className="h-7 text-xs px-2"
+                  disabled={!interEnabled}
                 >
                   <Settings className="w-3 h-3 mr-1" />
                   Config
@@ -186,7 +257,7 @@ export const MultiAcquirersSection = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={testInterConnection}
-                  disabled={isTestingInter}
+                  disabled={isTestingInter || !interEnabled}
                   className="h-7 text-xs px-2"
                 >
                   {isTestingInter ? (
@@ -275,12 +346,22 @@ export const MultiAcquirersSection = () => {
         </AlertDialog>
 
         {/* SPEDPAY Card */}
-        <Card className="border-primary/50">
+        <Card className={`border-primary/50 transition-opacity ${!spedpayEnabled ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-bold text-primary">SPEDPAY</CardTitle>
-            <CardDescription className="text-sm">
-              Adquirente principal integrada ao sistema
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold text-primary">SPEDPAY</CardTitle>
+                <CardDescription className="text-sm">
+                  Adquirente principal integrada ao sistema
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={spedpayEnabled}
+                  onCheckedChange={(checked) => toggleAcquirer('spedpay', checked)}
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -298,15 +379,21 @@ export const MultiAcquirersSection = () => {
                     </div>
                     <span className="text-sm font-medium">PIX</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Ativo</span>
+                  <span className="text-xs text-muted-foreground">{spedpayEnabled ? 'Ativo' : 'Inativo'}</span>
                 </div>
               </div>
             </div>
             
             <div className="flex items-center justify-between pt-2 border-t">
-              <Badge variant="outline" className="text-emerald-600 border-emerald-600/30 bg-emerald-600/10">
-                <Check className="w-3 h-3 mr-1" />
-                Integrado
+              <Badge 
+                variant="outline" 
+                className={spedpayEnabled 
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted"
+                }
+              >
+                {spedpayEnabled ? <Check className="w-3 h-3 mr-1" /> : <Power className="w-3 h-3 mr-1" />}
+                {spedpayEnabled ? 'Integrado' : 'Desativado'}
               </Badge>
             </div>
           </CardContent>
