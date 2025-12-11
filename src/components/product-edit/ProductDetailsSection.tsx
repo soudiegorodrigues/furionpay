@@ -1,0 +1,269 @@
+import { useState, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { FileText, Globe, Copy, Upload, X } from "lucide-react";
+
+interface Product {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image_url: string | null;
+  website_url: string | null;
+  is_active: boolean;
+  folder_id: string | null;
+  product_code: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ProductFormData {
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  website_url: string;
+}
+
+interface ProductDetailsSectionProps {
+  formData: ProductFormData;
+  setFormData: React.Dispatch<React.SetStateAction<ProductFormData>>;
+  product: Product;
+  copyToClipboard: (text: string) => void;
+}
+
+export function ProductDetailsSection({ 
+  formData, 
+  setFormData, 
+  product, 
+  copyToClipboard 
+}: ProductDetailsSectionProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${product.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${product.user_id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, image_url: publicUrl });
+      toast.success("Imagem enviada com sucesso");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({ ...formData, image_url: "" });
+  };
+
+  return (
+    <div className="space-y-6">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
+      {/* Product Overview Card */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Product Image with Upload */}
+              <div className="shrink-0">
+                <div 
+                  className="relative w-48 h-48 bg-muted rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group border-2 border-dashed border-transparent hover:border-primary/50 transition-colors"
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                >
+                  {formData.image_url ? (
+                    <>
+                      <img
+                        src={formData.image_url}
+                        alt={formData.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Upload className="h-8 w-8 text-white" />
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage();
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      {isUploading ? (
+                        <div className="animate-pulse text-muted-foreground text-sm">Enviando...</div>
+                      ) : (
+                        <>
+                          <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-2 group-hover:text-primary transition-colors" />
+                          <p className="text-xs text-muted-foreground">Clique para enviar</p>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Product ID and Status */}
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">ID do Produto</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-sm">{product.product_code || product.id.substring(0, 8)}</p>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => copyToClipboard(product.product_code || product.id)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Status</p>
+                    <Badge variant={product.is_active ? "default" : "secondary"}>
+                      {product.is_active ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </div>
+                  {formData.website_url && (
+                    <div className="p-4 bg-muted/50 rounded-lg md:col-span-2">
+                      <p className="text-xs text-muted-foreground mb-1">Site do produto</p>
+                      <a 
+                        href={formData.website_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                      >
+                        <Globe className="h-3 w-3 shrink-0" />
+                        {formData.website_url}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {formData.description && (
+              <div className="p-4 border rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Descrição</p>
+                <p className="text-sm whitespace-pre-wrap">{formData.description}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* General Information Form */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            <CardTitle>Informações Gerais</CardTitle>
+          </div>
+          <CardDescription>Atualize as informações básicas do seu produto</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome do produto</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Nome do produto"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Descrição do produto</Label>
+              <span className="text-xs text-muted-foreground">
+                {formData.description.length}/500
+              </span>
+            </div>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
+              placeholder="Descreva seu produto..."
+              className="min-h-[120px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="price">Preço (R$)</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+              placeholder="0,00"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="website_url">Site do produto</Label>
+            <Input
+              id="website_url"
+              type="url"
+              value={formData.website_url}
+              onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+              placeholder="https://seuproduto.com"
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
