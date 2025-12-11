@@ -213,7 +213,7 @@ export const MultiAcquirersSection = () => {
     try {
       const { data, error } = await supabase.functions.invoke('generate-pix-ativus', {
         body: {
-          amount: 0.01,
+          amount: 0.50,
           donorName: 'Teste Conexão',
           productName: 'Teste Ativus',
           userId: user?.id
