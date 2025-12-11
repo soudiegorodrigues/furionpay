@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Share, Smartphone, Zap, Bell } from "lucide-react";
+import { Download, Share, Smartphone, Zap, Bell, CheckCircle } from "lucide-react";
 import pwaLogo from "/pwa-512x512.png";
 
 interface InstallAppDialogProps {
@@ -17,8 +18,11 @@ interface InstallAppDialogProps {
 }
 
 export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: InstallAppDialogProps) => {
+  const [showManualInstructions, setShowManualInstructions] = useState(false);
+  
   const handleClose = () => {
     onOpenChange(false);
+    setShowManualInstructions(false);
   };
 
   const handleInstall = async () => {
@@ -26,8 +30,10 @@ export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: Insta
       const installed = await onInstall();
       if (installed) {
         handleClose();
+      } else {
+        // No native prompt available, show manual instructions
+        setShowManualInstructions(true);
       }
-      // If not installed (no native prompt), keep dialog open to show instructions
     }
   };
 
@@ -161,22 +167,38 @@ export const InstallAppDialog = ({ open, onOpenChange, isIOS, onInstall }: Insta
               </div>
               
               {/* Buttons */}
-              <div className="flex gap-3">
-                <Button 
-                  variant="ghost" 
-                  onClick={handleClose}
-                  className="flex-1 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-0"
-                >
-                  Fechar
-                </Button>
-                <Button 
-                  onClick={handleInstall}
-                  className="flex-1 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Instalar
-                </Button>
-              </div>
+              {showManualInstructions ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-center gap-2 text-emerald-400 bg-emerald-500/10 rounded-lg p-3 border border-emerald-500/20">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium">Siga os passos acima para instalar</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleClose}
+                    className="w-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-0"
+                  >
+                    Entendi
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleClose}
+                    className="flex-1 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border-0"
+                  >
+                    Fechar
+                  </Button>
+                  <Button 
+                    onClick={handleInstall}
+                    className="flex-1 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Instalar
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
