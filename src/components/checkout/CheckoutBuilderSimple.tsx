@@ -466,6 +466,11 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   <CardTitle className="text-sm flex items-center gap-2">
                     <LayoutTemplate className="h-4 w-4" />
                     Template
+                    {templates && templates.length > 0 && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {templates.length}
+                      </Badge>
+                    )}
                   </CardTitle>
                   <ChevronDown className={cn(
                     "h-4 w-4 text-muted-foreground transition-transform",
