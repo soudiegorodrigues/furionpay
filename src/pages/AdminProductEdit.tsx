@@ -1107,7 +1107,7 @@ function OffersSection({ productId, userId }: { productId: string; userId: strin
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ex: 3 FRASCOS - PROMOÇÃO"
+                      placeholder="Nome da oferta"
                     />
                   </div>
                   <div className="space-y-2">
