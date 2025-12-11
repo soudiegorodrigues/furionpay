@@ -50,6 +50,7 @@ interface Product {
   description: string | null;
   price: number;
   image_url: string | null;
+  website_url: string | null;
   is_active: boolean;
   folder_id: string | null;
   product_code: string | null;
@@ -92,6 +93,7 @@ export default function AdminProductEdit() {
     description: "",
     price: 0,
     image_url: "",
+    website_url: "",
   });
 
   const { data: product, isLoading } = useQuery({
@@ -118,6 +120,7 @@ export default function AdminProductEdit() {
         description: product.description || "",
         price: product.price,
         image_url: product.image_url || "",
+        website_url: product.website_url || "",
       });
     }
   }, [product]);
@@ -133,6 +136,7 @@ export default function AdminProductEdit() {
           description: data.description || null,
           price: data.price,
           image_url: data.image_url || null,
+          website_url: data.website_url || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id);
@@ -309,7 +313,7 @@ function ProductDetailsSection({
   product, 
   copyToClipboard 
 }: { 
-  formData: { name: string; description: string; price: number; image_url: string };
+  formData: { name: string; description: string; price: number; image_url: string; website_url: string };
   setFormData: React.Dispatch<React.SetStateAction<typeof formData>>;
   product: Product;
   copyToClipboard: (text: string) => void;
@@ -511,6 +515,17 @@ function ProductDetailsSection({
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
               placeholder="0,00"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="website_url">Site do produto</Label>
+            <Input
+              id="website_url"
+              type="url"
+              value={formData.website_url}
+              onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+              placeholder="https://seuproduto.com"
             />
           </div>
         </CardContent>
