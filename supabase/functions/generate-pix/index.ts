@@ -220,8 +220,9 @@ serve(async (req) => {
     const isEnabled = await isAcquirerEnabled(acquirer);
     if (!isEnabled) {
       console.log(`Acquirer ${acquirer} is disabled`);
+      const acquirerName = acquirer === 'inter' ? 'Banco Inter' : acquirer === 'ativus' ? 'Ativus Hub' : 'SpedPay';
       return new Response(
-        JSON.stringify({ error: `Adquirente ${acquirer === 'inter' ? 'Banco Inter' : 'SpedPay'} está desativada. Ative-a no painel admin ou selecione outra adquirente.` }),
+        JSON.stringify({ error: `Adquirente ${acquirerName} está desativada. Ative-a no painel admin ou selecione outra adquirente.` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -252,6 +253,36 @@ serve(async (req) => {
       
       return new Response(interData, { 
         status: interResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    // If user has Ativus configured, forward to generate-pix-ativus
+    if (acquirer === 'ativus') {
+      console.log('Redirecting to Ativus Hub...');
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      
+      const ativusResponse = await fetch(`${supabaseUrl}/functions/v1/generate-pix-ativus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ 
+          amount, 
+          donorName: customerName, 
+          utmParams, 
+          userId, 
+          popupModel 
+        }),
+      });
+      
+      const ativusData = await ativusResponse.text();
+      console.log('Ativus response:', ativusData);
+      
+      return new Response(ativusData, { 
+        status: ativusResponse.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
