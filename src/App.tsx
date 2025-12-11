@@ -18,7 +18,6 @@ import AdminProfile from "./pages/AdminProfile";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminProducts from "./pages/AdminProducts";
 import AdminProductEdit from "./pages/AdminProductEdit";
-import AdminTemplates from "./pages/AdminTemplates";
 import PublicCheckout from "./pages/PublicCheckout";
 import NotFound from "./pages/NotFound";
 
@@ -52,7 +51,6 @@ const App = () => (
                 <Route path="integrations" element={<AdminIntegrations />} />
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="products/:id" element={<AdminProductEdit />} />
-                <Route path="templates" element={<AdminTemplates />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
