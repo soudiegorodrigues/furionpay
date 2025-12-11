@@ -455,6 +455,20 @@ function ProductDetailsSection({
                       {product.is_active ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>
+                  {formData.website_url && (
+                    <div className="p-4 bg-muted/50 rounded-lg md:col-span-2">
+                      <p className="text-xs text-muted-foreground mb-1">Site do produto</p>
+                      <a 
+                        href={formData.website_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                      >
+                        <Globe className="h-3 w-3 shrink-0" />
+                        {formData.website_url}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
