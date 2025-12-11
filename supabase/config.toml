@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.generate-pix-ativus]
 verify_jwt = false
+
+[functions.check-pix-status-ativus]
+verify_jwt = false

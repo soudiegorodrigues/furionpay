@@ -42,6 +42,28 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
     return 'spedpay';
   }
   
+  return data.value || 'spedpay';
+}
+
+async function getAtivusApiKey(supabase: any, userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'ativus_api_key')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (error || !data?.value) {
+    // Try global setting
+    const { data: globalData } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'ativus_api_key')
+      .is('user_id', null)
+      .maybeSingle();
+    return globalData?.value || null;
+  }
+  
   return data.value;
 }
 
@@ -307,6 +329,47 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
   };
 }
 
+async function checkAtivusStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
+  console.log('Verificando status no Ativus Hub, txid:', txid);
+
+  const apiKeyBase64 = btoa(apiKey);
+  const statusUrl = `https://api.ativushub.com.br/v1/gateway/api/transaction/${txid}`;
+
+  const response = await fetch(statusUrl, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Basic ${apiKeyBase64}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Ativus API error:', response.status, errorText);
+    return { isPaid: false, status: 'error' };
+  }
+
+  const data = await response.json();
+  const ativusStatus = (data.status || data.status_transaction || '').toString().toLowerCase();
+  
+  const paidStatuses = ['paid', 'pago', 'approved', 'aprovado', 'completed', 'concluida'];
+  const isPaid = paidStatuses.some(s => ativusStatus.includes(s));
+
+  if (isPaid) {
+    const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
+    if (error) {
+      console.error('Erro ao marcar PIX como pago:', error);
+    } else {
+      console.log('PIX marcado como pago com sucesso');
+    }
+  }
+
+  return {
+    isPaid,
+    status: isPaid ? 'paid' : ativusStatus || 'pending',
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -385,6 +448,19 @@ serve(async (req) => {
 
     if (acquirer === 'inter') {
       result = await checkInterStatus(txid, supabase);
+    } else if (acquirer === 'ativus') {
+      let apiKey: string | null = null;
+      if (transaction.user_id) {
+        apiKey = await getAtivusApiKey(supabase, transaction.user_id);
+      }
+      if (!apiKey) {
+        console.error('No Ativus API key available');
+        return new Response(
+          JSON.stringify({ error: 'Ativus API key not configured' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      result = await checkAtivusStatus(txid, apiKey, supabase);
     } else {
       let apiKey: string | null = null;
       if (transaction.user_id) {
