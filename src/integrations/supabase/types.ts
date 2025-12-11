@@ -476,9 +476,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_user: { Args: { target_user_id: string }; Returns: boolean }
       block_user: { Args: { target_user_id: string }; Returns: boolean }
       bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
       check_login_blocked: { Args: { p_email: string }; Returns: Json }
+      check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
       get_admin_settings: {
@@ -697,6 +699,10 @@ export type Database = {
       reset_pix_transactions_auth: { Args: never; Returns: boolean }
       reset_user_transactions: { Args: never; Returns: boolean }
       revoke_admin_role: { Args: { target_user_id: string }; Returns: boolean }
+      revoke_user_approval: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       unblock_user: { Args: { target_user_id: string }; Returns: boolean }
       update_admin_setting: {
         Args: {
