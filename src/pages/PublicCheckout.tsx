@@ -11,6 +11,7 @@ import {
   CheckoutTemplateVega,
   CheckoutTemplateAfilia,
   CheckoutTemplateMultistep,
+  CheckoutPixPayment,
   ProductOffer,
   Product,
   CheckoutConfig,
@@ -230,6 +231,19 @@ export default function PublicCheckout() {
     formatPrice,
     formatCountdown,
   };
+
+  // If PIX is generated, show the payment page
+  if (step === "payment" && pixData) {
+    return (
+      <CheckoutPixPayment
+        amount={offer.price}
+        pixCode={pixData.pixCode}
+        qrCodeUrl={pixData.qrCode}
+        transactionId={pixData.transactionId}
+        primaryColor={config?.primary_color || "#16A34A"}
+      />
+    );
+  }
 
   // Render the appropriate template based on config
   const template = config?.template || "padrao";
