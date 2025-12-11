@@ -181,7 +181,7 @@ export const CheckoutPixPayment = ({
           {/* Right Column - QR Code */}
           <div className="flex flex-col items-center justify-start">
             <div className="bg-white p-3 border border-gray-200 rounded-lg">
-              {qrCodeUrl ? (
+              {qrCodeUrl && qrCodeUrl.startsWith('http') ? (
                 <img
                   src={qrCodeUrl}
                   alt="QR Code PIX"
