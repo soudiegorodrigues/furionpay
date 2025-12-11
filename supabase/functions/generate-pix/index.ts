@@ -51,7 +51,6 @@ interface GeneratePixRequest {
   customerDocument?: string;
   userId?: string;
   popupModel?: string;
-  productName?: string;
   utmParams?: {
     utm_source?: string;
     utm_medium?: string;
@@ -183,11 +182,10 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, customerName, customerEmail, customerDocument, utmParams, userId, popupModel, productName: requestProductName }: GeneratePixRequest = await req.json();
+    const { amount, customerName, customerEmail, customerDocument, utmParams, userId, popupModel }: GeneratePixRequest = await req.json();
 
     console.log('User ID:', userId);
     console.log('Popup Model:', popupModel);
-    console.log('Product Name from request:', requestProductName);
     console.log('UTM params received:', utmParams);
 
     // Check user's acquirer preference
@@ -211,8 +209,7 @@ serve(async (req) => {
           donorName: customerName, 
           utmParams, 
           userId, 
-          popupModel,
-          productName: requestProductName
+          popupModel 
         }),
       });
       
@@ -252,7 +249,7 @@ serve(async (req) => {
           utmData: utmParams, 
           userId, 
           popupModel,
-          productName: requestProductName || await getProductNameFromDatabase(userId)
+          productName: await getProductNameFromDatabase(userId)
         }),
       });
       
@@ -267,8 +264,8 @@ serve(async (req) => {
 
     console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
 
-    // Use product name from request first, then fallback to database
-    const productName = requestProductName || await getProductNameFromDatabase(userId);
+    // Get product name from database (user-specific)
+    const productName = await getProductNameFromDatabase(userId);
     console.log('Product name:', productName);
 
     if (!amount || amount <= 0) {

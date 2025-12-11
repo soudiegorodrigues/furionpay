@@ -18,7 +18,6 @@ interface DonationPopupLandingProps {
   userId?: string;
   showCloseButton?: boolean;
   isPreview?: boolean;
-  productName?: string;
 }
 
 const DONATION_AMOUNTS = [
@@ -47,7 +46,6 @@ export const DonationPopupLanding = ({
   userId,
   showCloseButton = false,
   isPreview = false,
-  productName,
 }: DonationPopupLandingProps) => {
   const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -157,7 +155,6 @@ export const DonationPopupLanding = ({
           utmParams: utmParams,
           userId: userId,
           popupModel: 'landing',
-          productName: productName,
         },
       });
 

@@ -13,7 +13,6 @@ interface DonationPopupHotProps {
   userId?: string;
   fixedAmount?: number;
   showCloseButton?: boolean;
-  productName?: string;
 }
 
 type Step = "email" | "loading" | "pix";
@@ -23,8 +22,7 @@ export const DonationPopupHot = ({
   onClose,
   userId,
   fixedAmount = 19.90,
-  showCloseButton = false,
-  productName,
+  showCloseButton = false
 }: DonationPopupHotProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -159,7 +157,6 @@ export const DonationPopupHot = ({
           customerEmail: email,
           customerPhone: phone,
           popupModel: 'hot',
-          productName: productName,
         },
       });
 

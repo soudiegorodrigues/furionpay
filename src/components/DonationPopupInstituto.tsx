@@ -25,7 +25,6 @@ interface DonationPopupInstitutoProps {
   showCloseButton?: boolean;
   fixedAmount?: number;
   isPreview?: boolean;
-  productName?: string;
 }
 
 const DONATION_AMOUNTS = [
@@ -51,7 +50,6 @@ export const DonationPopupInstituto = ({
   showCloseButton = false,
   fixedAmount,
   isPreview = false,
-  productName,
 }: DonationPopupInstitutoProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [step, setStep] = useState<Step>("select");
@@ -188,7 +186,6 @@ export const DonationPopupInstituto = ({
           utmParams: utmParams,
           userId: userId,
           popupModel: 'instituto',
-          productName: productName,
         },
       });
 

@@ -16,8 +16,6 @@ const Index = () => {
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   // Lê o modelo da URL para evitar flash - PRIORIDADE MÁXIMA
   const urlModel = searchParams.get('m') || searchParams.get('model');
-  // Lê o nome do produto da URL
-  const urlProduct = searchParams.get('product');
   
   // Redireciona para admin se não houver userId
   useEffect(() => {
@@ -29,7 +27,6 @@ const Index = () => {
   // Usa o modelo da URL se disponível, senão usa 'boost' como fallback temporário
   const [popupModel, setPopupModel] = useState<string>(urlModel || 'boost');
   const [fixedAmount, setFixedAmount] = useState<number>(urlAmount ? parseFloat(urlAmount) : 100);
-  const [productName, setProductName] = useState<string | undefined>(urlProduct ? decodeURIComponent(urlProduct) : undefined);
 
   useEffect(() => {
     // Se já temos o modelo da URL, não precisa buscar do banco
@@ -72,14 +69,12 @@ const Index = () => {
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
-          productName={productName}
         />
       ) : popupModel === 'clean' ? (
         <DonationPopupClean
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
-          productName={productName}
         />
       ) : popupModel === 'direct' ? (
         <DonationPopupDirect
@@ -87,7 +82,6 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           fixedAmount={fixedAmount}
-          productName={productName}
         />
       ) : popupModel === 'hot' ? (
         <DonationPopupHot
@@ -95,14 +89,12 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           fixedAmount={fixedAmount}
-          productName={productName}
         />
       ) : popupModel === 'landing' ? (
         <DonationPopupLanding
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
-          productName={productName}
         />
       ) : popupModel === 'instituto' ? (
         <DonationPopupInstituto
@@ -110,14 +102,12 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           fixedAmount={fixedAmount}
-          productName={productName}
         />
       ) : (
         <DonationPopup
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
-          productName={productName}
         />
       )}
     </div>
