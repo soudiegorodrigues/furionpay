@@ -253,6 +253,7 @@ const Admin = () => {
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
   const [isTestingInter, setIsTestingInter] = useState(false);
   const [showInterConfigDialog, setShowInterConfigDialog] = useState(false);
+  const [isLoadingInterConfig, setIsLoadingInterConfig] = useState(false);
   const [interConfig, setInterConfig] = useState({
     clientId: '',
     clientSecret: '',
@@ -260,6 +261,69 @@ const Admin = () => {
     privateKey: '',
     pixKey: ''
   });
+
+  // Load Inter credentials when dialog opens
+  useEffect(() => {
+    if (showInterConfigDialog) {
+      loadInterCredentials();
+    }
+  }, [showInterConfigDialog]);
+
+  const loadInterCredentials = async () => {
+    setIsLoadingInterConfig(true);
+    try {
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      if (error) throw error;
+      
+      const settings = data as { key: string; value: string }[] || [];
+      const getValue = (key: string) => settings.find(s => s.key === key)?.value || '';
+      
+      setInterConfig({
+        clientId: getValue('inter_client_id'),
+        clientSecret: getValue('inter_client_secret'),
+        certificate: getValue('inter_certificate'),
+        privateKey: getValue('inter_private_key'),
+        pixKey: getValue('inter_pix_key')
+      });
+    } catch (error) {
+      console.error('Error loading Inter credentials:', error);
+    } finally {
+      setIsLoadingInterConfig(false);
+    }
+  };
+
+  const saveInterCredentials = async () => {
+    try {
+      const updates = [
+        { key: 'inter_client_id', value: interConfig.clientId },
+        { key: 'inter_client_secret', value: interConfig.clientSecret },
+        { key: 'inter_certificate', value: interConfig.certificate },
+        { key: 'inter_private_key', value: interConfig.privateKey },
+        { key: 'inter_pix_key', value: interConfig.pixKey }
+      ];
+      
+      for (const { key, value } of updates) {
+        const { error } = await supabase.rpc('update_admin_setting_auth', {
+          setting_key: key,
+          setting_value: value
+        });
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Sucesso",
+        description: "Credenciais do Banco Inter atualizadas!"
+      });
+      setShowInterConfigDialog(false);
+    } catch (error) {
+      console.error('Error saving Inter credentials:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar credenciais",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Redirect non-admin users to dashboard
   useEffect(() => {
@@ -1711,16 +1775,8 @@ const Admin = () => {
                   </div>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={() => {
-                        toast({
-                          title: "Importante",
-                          description: "Para atualizar as credenciais, use o painel de Secrets no Lovable Cloud (View Backend → Secrets)"
-                        });
-                        setShowInterConfigDialog(false);
-                      }}
-                    >
-                      Entendi
+                    <AlertDialogAction onClick={saveInterCredentials}>
+                      Salvar
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
