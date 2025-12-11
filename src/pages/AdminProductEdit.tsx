@@ -234,7 +234,7 @@ export default function AdminProductEdit() {
               <p className="text-muted-foreground">Gerencie os detalhes e configurações do seu produto</p>
             </div>
             
-            <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2">
+            <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2 lg:mr-16">
               <Save className="h-4 w-4" />
               {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
             </Button>
