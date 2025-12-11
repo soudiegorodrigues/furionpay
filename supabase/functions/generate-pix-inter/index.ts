@@ -8,6 +8,22 @@ const corsHeaders = {
 
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 
+// Random names for anonymous donations
+const RANDOM_NAMES = [
+  'João Pedro Silva', 'Carlos Eduardo Santos', 'Rafael Henrique Oliveira', 
+  'Lucas Gabriel Costa', 'Fernando Augusto Souza', 'Marcos Vinicius Lima',
+  'Bruno Felipe Alves', 'Gustavo Henrique Rocha', 'Diego Rodrigues Ferreira',
+  'André Luis Gomes', 'Thiago Martins Barbosa', 'Ricardo Almeida Pereira',
+  'Paulo Roberto Nascimento', 'Matheus Henrique Carvalho', 'Leonardo Silva Ribeiro',
+  'Maria Eduarda Santos', 'Ana Carolina Oliveira', 'Juliana Cristina Costa',
+  'Camila Fernanda Souza', 'Beatriz Helena Lima', 'Larissa Cristiane Alves',
+  'Patricia Regina Rocha', 'Fernanda Aparecida Ferreira', 'Amanda Cristina Gomes',
+  'Gabriela Santos Martins', 'Mariana Silva Barbosa', 'Carolina Almeida Pereira',
+  'Isabela Nascimento Costa', 'Leticia Carvalho Ribeiro', 'Vanessa Lima Santos'
+];
+
+const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
+
 interface GeneratePixRequest {
   amount: number;
   donorName?: string;
@@ -302,13 +318,16 @@ serve(async (req) => {
     // Get product name from checkout_offers if not provided
     const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
 
-    // Registrar transação
+    // Registrar transação - usa nome aleatório se não fornecido
+    const finalDonorName = donorName || getRandomName();
+    console.log('Using donor name:', finalDonorName);
+    
     await logPixGenerated(
       supabase,
       amount,
       txid,
       pixCode,
-      donorName || 'Anônimo',
+      finalDonorName,
       utmData,
       finalProductName,
       userId,
