@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,12 +28,15 @@ import {
   Save,
   Copy,
   CheckCircle,
-  Image
+  Image,
+  Upload,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
+  user_id: string;
   name: string;
   description: string | null;
   price: number;
@@ -301,6 +304,58 @@ function ProductDetailsSection({
   product: Product;
   copyToClipboard: (text: string) => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${product.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${product.user_id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, image_url: publicUrl });
+      toast.success("Imagem enviada com sucesso");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({ ...formData, image_url: "" });
+  };
+
   return (
     <div className="space-y-6">
       {/* Product Overview Card */}
@@ -358,6 +413,84 @@ function ProductDetailsSection({
         </CardContent>
       </Card>
 
+      {/* Product Cover Image Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Image className="h-5 w-5 text-primary" />
+            <CardTitle>Capa do Produto</CardTitle>
+          </div>
+          <CardDescription>Adicione uma imagem de capa para o seu produto</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Image Preview */}
+            <div className="relative">
+              <div className="w-full md:w-64 aspect-[4/3] bg-muted rounded-lg overflow-hidden flex items-center justify-center border-2 border-dashed border-border">
+                {formData.image_url ? (
+                  <>
+                    <img
+                      src={formData.image_url}
+                      alt={formData.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <Image className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhuma imagem</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Upload Options */}
+            <div className="flex-1 space-y-4">
+              <div>
+                <Label className="mb-2 block">Fazer upload de imagem</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full md:w-auto"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {isUploading ? "Enviando..." : "Selecionar arquivo"}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Formatos aceitos: JPG, PNG, GIF, WebP. Máximo: 2MB
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="image_url">Ou cole a URL da imagem</Label>
+                <Input
+                  id="image_url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  placeholder="https://exemplo.com/imagem.jpg"
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* General Information Form */}
       <Card>
         <CardHeader>
@@ -394,28 +527,16 @@ function ProductDetailsSection({
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Preço (R$)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                placeholder="0,00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="image_url">URL da imagem</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Preço (R$)</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+              placeholder="0,00"
+            />
           </div>
         </CardContent>
       </Card>
