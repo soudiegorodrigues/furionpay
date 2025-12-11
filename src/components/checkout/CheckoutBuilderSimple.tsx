@@ -431,6 +431,49 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
               className="hidden"
             />
 
+            {/* Countdown */}
+            <Collapsible 
+              open={customizations.showCountdown && expandedSections.countdown}
+              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, countdown: isOpen }))}
+            >
+              <div className="flex items-center justify-between py-2 border-b">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.showCountdown ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm">Contador</Label>
+                    {customizations.showCountdown && (
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        expandedSections.countdown && "rotate-180"
+                      )} />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={customizations.showCountdown}
+                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showCountdown: v }))}
+                />
+              </div>
+              <CollapsibleContent>
+                <div className="py-2 pl-6">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs text-muted-foreground">Minutos:</Label>
+                    <Input
+                      type="number"
+                      value={customizations.countdownMinutes}
+                      onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
+                      className="h-7 w-16 text-xs"
+                      min={1}
+                      max={60}
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
             {/* Banner */}
             <Collapsible 
               open={customizations.showBanner && expandedSections.banner}
@@ -504,49 +547,6 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       )}
                     </Button>
                   )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Countdown */}
-            <Collapsible 
-              open={customizations.showCountdown && expandedSections.countdown}
-              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, countdown: isOpen }))}
-            >
-              <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild>
-                  <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showCountdown ? "cursor-pointer" : "cursor-default opacity-60"
-                  )}>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Contador</Label>
-                    {customizations.showCountdown && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        expandedSections.countdown && "rotate-180"
-                      )} />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showCountdown}
-                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showCountdown: v }))}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-2 pl-6">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground">Minutos:</Label>
-                    <Input
-                      type="number"
-                      value={customizations.countdownMinutes}
-                      onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
-                      className="h-7 w-16 text-xs"
-                      min={1}
-                      max={60}
-                    />
-                  </div>
                 </div>
               </CollapsibleContent>
             </Collapsible>
