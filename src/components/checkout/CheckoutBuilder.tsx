@@ -620,8 +620,8 @@ export function CheckoutBuilder({ productId, userId, productName, productPrice =
                 ))}
               </div>
 
-              {/* Image Upload Section - Shows when Imagem is selected */}
-              {selectedComponent === "imagem" && components.find(c => c.id === "imagem")?.enabled && (
+              {/* Image Upload Section - Shows when Imagem is enabled */}
+              {components.find(c => c.id === "imagem")?.enabled && (
                 <>
                   <Separator />
                   <div className="space-y-3">
