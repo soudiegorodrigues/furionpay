@@ -403,6 +403,9 @@ export type Database = {
           countdown_minutes: number | null
           created_at: string
           custom_button_text: string | null
+          discount_popup_cta: string | null
+          discount_popup_message: string | null
+          discount_popup_title: string | null
           footer_text: string | null
           header_logo_url: string | null
           id: string
@@ -417,6 +420,7 @@ export type Database = {
           security_badge_text: string | null
           show_banners: boolean | null
           show_countdown: boolean | null
+          show_discount_popup: boolean | null
           show_notifications: boolean | null
           show_product_image: boolean | null
           show_security_badges: boolean | null
@@ -436,6 +440,9 @@ export type Database = {
           countdown_minutes?: number | null
           created_at?: string
           custom_button_text?: string | null
+          discount_popup_cta?: string | null
+          discount_popup_message?: string | null
+          discount_popup_title?: string | null
           footer_text?: string | null
           header_logo_url?: string | null
           id?: string
@@ -450,6 +457,7 @@ export type Database = {
           security_badge_text?: string | null
           show_banners?: boolean | null
           show_countdown?: boolean | null
+          show_discount_popup?: boolean | null
           show_notifications?: boolean | null
           show_product_image?: boolean | null
           show_security_badges?: boolean | null
@@ -469,6 +477,9 @@ export type Database = {
           countdown_minutes?: number | null
           created_at?: string
           custom_button_text?: string | null
+          discount_popup_cta?: string | null
+          discount_popup_message?: string | null
+          discount_popup_title?: string | null
           footer_text?: string | null
           header_logo_url?: string | null
           id?: string
@@ -483,6 +494,7 @@ export type Database = {
           security_badge_text?: string | null
           show_banners?: boolean | null
           show_countdown?: boolean | null
+          show_discount_popup?: boolean | null
           show_notifications?: boolean | null
           show_product_image?: boolean | null
           show_security_badges?: boolean | null

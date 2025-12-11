@@ -46,11 +46,11 @@ export interface CheckoutConfig {
   show_product_image: boolean;
   background_color: string | null;
   header_logo_url: string | null;
-  // Exit intent popup fields
-  show_discount_popup: boolean;
-  discount_popup_title: string | null;
-  discount_popup_message: string | null;
-  discount_popup_cta: string | null;
+  // Exit intent popup fields (optional for backwards compatibility)
+  show_discount_popup?: boolean;
+  discount_popup_title?: string | null;
+  discount_popup_message?: string | null;
+  discount_popup_cta?: string | null;
 }
 
 export interface FormData {

@@ -150,10 +150,10 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         showCountdown: config.show_countdown || false,
         countdownMinutes: config.countdown_minutes || 15,
         showTestimonials: config.show_notifications || false,
-        showDiscountPopup: false, // TODO: add column
-        discountPopupTitle: "Que tal um desconto para comprar agora?",
-        discountPopupMessage: "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
-        discountPopupCta: "Aproveitar oferta",
+        showDiscountPopup: config.show_discount_popup || false,
+        discountPopupTitle: config.discount_popup_title || "Que tal um desconto para comprar agora?",
+        discountPopupMessage: config.discount_popup_message || "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
+        discountPopupCta: config.discount_popup_cta || "Aproveitar oferta",
         showWhatsappButton: config.show_whatsapp_button || false,
         whatsappNumber: config.whatsapp_number || "",
       });
@@ -235,6 +235,11 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         show_notifications: customizations.showTestimonials,
         show_whatsapp_button: customizations.showWhatsappButton,
         whatsapp_number: customizations.whatsappNumber || null,
+        // Discount popup settings
+        show_discount_popup: customizations.showDiscountPopup,
+        discount_popup_title: customizations.discountPopupTitle || null,
+        discount_popup_message: customizations.discountPopupMessage || null,
+        discount_popup_cta: customizations.discountPopupCta || null,
       };
 
       const { error } = await supabase
