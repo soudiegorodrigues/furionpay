@@ -11,6 +11,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   LayoutTemplate,
   Clock,
   Star,
@@ -29,6 +34,7 @@ import {
   Settings2,
   CheckCircle,
   Percent,
+  ChevronDown,
 } from "lucide-react";
 
 interface CheckoutBuilderSimpleProps {
@@ -60,6 +66,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   // States
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState("#16A34A");
+  const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   
   const [customizations, setCustomizations] = useState({
     showBanner: false,
@@ -452,44 +459,70 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       <div className="w-full lg:w-80 shrink-0 order-1 lg:order-2 space-y-4">
         {/* Template Selection */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <LayoutTemplate className="h-4 w-4" />
-              Template
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Selecione um template de checkout
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {templates?.map((template) => (
-              <div
-                key={template.id}
-                className={cn(
-                  "p-3 border rounded-lg cursor-pointer transition-all",
-                  selectedTemplateId === template.id
-                    ? "border-primary bg-primary/5"
-                    : "hover:border-muted-foreground/50"
-                )}
-                onClick={() => setSelectedTemplateId(template.id)}
-              >
+          <Collapsible open={isTemplateOpen} onOpenChange={setIsTemplateOpen}>
+            <CardHeader className="pb-3">
+              <CollapsibleTrigger className="w-full">
                 <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <LayoutTemplate className="h-4 w-4" />
+                    Template
+                  </CardTitle>
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform",
+                    isTemplateOpen && "rotate-180"
+                  )} />
+                </div>
+              </CollapsibleTrigger>
+              {!isTemplateOpen && selectedTemplate && (
+                <div className="mt-2 p-3 border rounded-lg border-primary bg-primary/5">
                   <div className="flex items-center gap-2">
-                    {selectedTemplateId === template.id && (
-                      <Check className="h-4 w-4 text-primary" />
-                    )}
-                    <span className="font-medium text-sm">{template.name}</span>
-                    {template.is_default && (
+                    <Check className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">{selectedTemplate.name}</span>
+                    {selectedTemplate.is_default && (
                       <Badge variant="secondary" className="text-[10px]">Padrão</Badge>
                     )}
                   </div>
+                  {selectedTemplate.description && (
+                    <p className="text-xs text-muted-foreground mt-1">{selectedTemplate.description}</p>
+                  )}
                 </div>
-                {template.description && (
-                  <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
-                )}
-              </div>
-            ))}
-          </CardContent>
+              )}
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-2 pt-0">
+                {templates?.map((template) => (
+                  <div
+                    key={template.id}
+                    className={cn(
+                      "p-3 border rounded-lg cursor-pointer transition-all",
+                      selectedTemplateId === template.id
+                        ? "border-primary bg-primary/5"
+                        : "hover:border-muted-foreground/50"
+                    )}
+                    onClick={() => {
+                      setSelectedTemplateId(template.id);
+                      setIsTemplateOpen(false);
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {selectedTemplateId === template.id && (
+                          <Check className="h-4 w-4 text-primary" />
+                        )}
+                        <span className="font-medium text-sm">{template.name}</span>
+                        {template.is_default && (
+                          <Badge variant="secondary" className="text-[10px]">Padrão</Badge>
+                        )}
+                      </div>
+                    </div>
+                    {template.description && (
+                      <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
 
         {/* Color */}
