@@ -37,6 +37,7 @@ export default function PublicCheckout() {
   const [pixData, setPixData] = useState<PixData | null>(null);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [discountApplied, setDiscountApplied] = useState(false);
 
   // Fetch offer by code
   const { data: offer, isLoading: offerLoading, error: offerError } = useQuery({
@@ -191,14 +192,31 @@ export default function PublicCheckout() {
     return true;
   };
 
+  // Calculate current price (with discount if applied)
+  const getCurrentPrice = () => {
+    if (!offer) return 0;
+    if (discountApplied && config?.discount_popup_percentage) {
+      const discountMultiplier = 1 - (config.discount_popup_percentage / 100);
+      return offer.price * discountMultiplier;
+    }
+    return offer.price;
+  };
+
+  const handleApplyDiscount = () => {
+    setDiscountApplied(true);
+    toast.success(`Desconto de ${config?.discount_popup_percentage || 10}% aplicado!`);
+  };
+
   const handleGeneratePix = async () => {
     if (!validateForm() || !offer) return;
 
     setIsGeneratingPix(true);
     try {
+      const finalPrice = getCurrentPrice();
+      
       const { data, error } = await supabase.functions.invoke("generate-pix", {
         body: {
-          amount: offer.price,
+          amount: finalPrice,
           donorName: formData.name,
           userId: offer.user_id,
           productName: offer.name,
@@ -255,8 +273,14 @@ export default function PublicCheckout() {
     );
   }
 
+  // Create modified offer with discounted price if applicable
+  const effectiveOffer = {
+    ...offer,
+    price: getCurrentPrice(),
+  };
+
   const templateProps = {
-    offer,
+    offer: effectiveOffer,
     product,
     config,
     formData,
@@ -269,13 +293,16 @@ export default function PublicCheckout() {
     formatPrice,
     formatCountdown,
     testimonials: testimonials || [],
+    // Pass original price and discount info for display
+    originalPrice: discountApplied ? offer.price : undefined,
+    discountApplied,
   };
 
   // If PIX is generated, show the payment page
   if (step === "payment" && pixData) {
     return (
       <CheckoutPixPayment
-        amount={offer.price}
+        amount={getCurrentPrice()}
         pixCode={pixData.pixCode}
         qrCodeUrl={pixData.qrCode}
         transactionId={pixData.transactionId}
@@ -309,6 +336,8 @@ export default function PublicCheckout() {
         message={config?.discount_popup_message || undefined}
         ctaText={config?.discount_popup_cta || undefined}
         primaryColor={config?.primary_color || "#16A34A"}
+        discountPercentage={config?.discount_popup_percentage || 10}
+        onCtaClick={handleApplyDiscount}
       />
     </>
   );

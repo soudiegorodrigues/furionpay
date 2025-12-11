@@ -89,6 +89,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     discountPopupTitle: "Que tal um desconto para comprar agora?",
     discountPopupMessage: "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
     discountPopupCta: "Aproveitar oferta",
+    discountPopupPercentage: 10,
     showWhatsappButton: false,
     whatsappNumber: "",
   });
@@ -154,6 +155,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discountPopupTitle: config.discount_popup_title || "Que tal um desconto para comprar agora?",
         discountPopupMessage: config.discount_popup_message || "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
         discountPopupCta: config.discount_popup_cta || "Aproveitar oferta",
+        discountPopupPercentage: config.discount_popup_percentage || 10,
         showWhatsappButton: config.show_whatsapp_button || false,
         whatsappNumber: config.whatsapp_number || "",
       });
@@ -240,6 +242,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discount_popup_title: customizations.discountPopupTitle || null,
         discount_popup_message: customizations.discountPopupMessage || null,
         discount_popup_cta: customizations.discountPopupCta || null,
+        discount_popup_percentage: customizations.discountPopupPercentage || 10,
       };
 
       const { error } = await supabase
@@ -698,6 +701,20 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                         placeholder="Aproveitar oferta"
                         maxLength={50}
                       />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Porcentagem de Desconto</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          type="number"
+                          value={customizations.discountPopupPercentage}
+                          onChange={(e) => setCustomizations(p => ({ ...p, discountPopupPercentage: Number(e.target.value) }))}
+                          className="h-8 text-xs flex-1"
+                          min={1}
+                          max={100}
+                        />
+                        <span className="text-sm text-muted-foreground">%</span>
+                      </div>
                     </div>
                   </div>
                 </div>
