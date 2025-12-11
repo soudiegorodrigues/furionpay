@@ -61,19 +61,16 @@ async function checkAtivusStatus(
 ): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Ativus Hub, txid:', txid);
 
-  // Convert API key to Base64 for Basic auth
-  const apiKeyBase64 = btoa(apiKey);
-
-  // Try to get transaction details from Ativus API
-  // Based on common API patterns, the endpoint might be GET /transaction/:id
-  const statusUrl = `${ATIVUS_API_URL}/transaction/${txid}`;
+  // Ativus uses x-api-key header authentication
+  const statusUrl = `https://api.ativushub.com.br/api/user/transactions/${txid}`;
   
   console.log('Checking Ativus status URL:', statusUrl);
 
   const response = await fetch(statusUrl, {
     method: 'GET',
     headers: {
-      'Authorization': `Basic ${apiKeyBase64}`,
+      'x-api-key': apiKey,
+      'User-Agent': 'AtivoB2B/1.0',
       'Content-Type': 'application/json',
     },
   });
@@ -94,19 +91,14 @@ async function checkAtivusStatus(
     return { isPaid: false, status: 'error' };
   }
 
-  // Check status - Ativus may use different status codes
-  // Common patterns: "paid", "approved", "completed", "PAGO", "CONCLUIDA"
-  const ativusStatus = (
-    data.status || 
-    data.status_transaction || 
-    data.transaction_status || 
-    ''
-  ).toString().toLowerCase();
+  // Ativus returns data in a nested structure: { status: 200, data: { status: "PAID" } }
+  const transactionData = data.data || data;
+  const ativusStatus = (transactionData.status || '').toString().toUpperCase();
   
   console.log('Ativus transaction status:', ativusStatus);
   
-  const paidStatuses = ['paid', 'pago', 'approved', 'aprovado', 'completed', 'concluida', 'confirmed', 'success'];
-  const isPaid = paidStatuses.some(s => ativusStatus.includes(s));
+  // Ativus uses these status values: PROCESSING, AUTHORIZED, PAID, REFUNDED, WAITING_PAYMENT, REFUSED, CHARGEDBACK, CANCELED
+  const isPaid = ['PAID', 'AUTHORIZED'].includes(ativusStatus);
 
   if (isPaid) {
     console.log('Transaction is paid, marking as paid in database');
@@ -120,8 +112,8 @@ async function checkAtivusStatus(
 
   return {
     isPaid,
-    status: isPaid ? 'paid' : ativusStatus || 'pending',
-    paidAt: data.paid_at || data.paidAt || data.payment_date || undefined,
+    status: isPaid ? 'paid' : ativusStatus.toLowerCase() || 'pending',
+    paidAt: transactionData.paidAt || undefined,
   };
 }
 

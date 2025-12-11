@@ -106,6 +106,8 @@ async function getInterCredentialsFromDb(supabase: any, userId?: string): Promis
 
 // Get cached Inter token from database (check any recent valid token)
 async function getCachedInterToken(supabase: any): Promise<{ token: string; expiresAt: number } | null> {
+  console.log('[TOKEN CACHE] Checking for cached Inter token...');
+  
   // Get all inter_token_cache entries and find the most recent valid one
   const { data, error } = await supabase
     .from('admin_settings')
@@ -114,25 +116,38 @@ async function getCachedInterToken(supabase: any): Promise<{ token: string; expi
     .order('updated_at', { ascending: false })
     .limit(10);
   
-  if (error || !data || data.length === 0) {
+  if (error) {
+    console.error('[TOKEN CACHE] Error fetching cache:', error);
     return null;
   }
+  
+  if (!data || data.length === 0) {
+    console.log('[TOKEN CACHE] No cached tokens found');
+    return null;
+  }
+  
+  console.log(`[TOKEN CACHE] Found ${data.length} cached entries`);
   
   const now = Date.now();
   
   for (const item of data) {
     try {
       const cached = JSON.parse(item.value);
-      // Check if token is still valid with 5 minute buffer
-      if (cached.token && cached.expiresAt && cached.expiresAt > now + 300000) {
-        console.log('Found valid cached token, expires in', Math.round((cached.expiresAt - now) / 1000), 'seconds');
+      const timeLeft = cached.expiresAt - now;
+      console.log(`[TOKEN CACHE] Token expires in ${Math.round(timeLeft / 1000)} seconds`);
+      
+      // Use token if it has at least 1 minute left (reduced from 5 minutes)
+      if (cached.token && cached.expiresAt && timeLeft > 60000) {
+        console.log('[TOKEN CACHE] Using valid cached token');
         return cached;
       }
-    } catch {
+    } catch (e) {
+      console.error('[TOKEN CACHE] Error parsing cache entry:', e);
       continue;
     }
   }
   
+  console.log('[TOKEN CACHE] No valid tokens found in cache');
   return null;
 }
 
@@ -360,28 +375,44 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
 async function checkAtivusStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Ativus Hub, txid:', txid);
 
-  const apiKeyBase64 = btoa(apiKey);
-  const statusUrl = `https://api.ativushub.com.br/v1/gateway/api/transaction/${txid}`;
+  // Ativus uses x-api-key header authentication and different endpoint
+  const statusUrl = `https://api.ativushub.com.br/api/user/transactions/${txid}`;
+  
+  console.log('Checking Ativus status URL:', statusUrl);
 
   const response = await fetch(statusUrl, {
     method: 'GET',
     headers: {
-      'Authorization': `Basic ${apiKeyBase64}`,
+      'x-api-key': apiKey,
+      'User-Agent': 'AtivoB2B/1.0',
       'Content-Type': 'application/json',
     },
   });
 
+  const responseText = await response.text();
+  console.log('Ativus status response:', response.status, responseText);
+
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Ativus API error:', response.status, errorText);
+    console.error('Ativus API error:', response.status, responseText);
     return { isPaid: false, status: 'error' };
   }
 
-  const data = await response.json();
-  const ativusStatus = (data.status || data.status_transaction || '').toString().toLowerCase();
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    console.error('Failed to parse Ativus response');
+    return { isPaid: false, status: 'error' };
+  }
+
+  // Ativus returns data in a nested structure: { status: 200, data: { status: "PAID" } }
+  const transactionData = data.data || data;
+  const ativusStatus = (transactionData.status || '').toString().toUpperCase();
   
-  const paidStatuses = ['paid', 'pago', 'approved', 'aprovado', 'completed', 'concluida'];
-  const isPaid = paidStatuses.some(s => ativusStatus.includes(s));
+  console.log('Ativus transaction status:', ativusStatus);
+  
+  // Ativus uses these status values: PROCESSING, AUTHORIZED, PAID, REFUNDED, WAITING_PAYMENT, REFUSED, CHARGEDBACK, CANCELED
+  const isPaid = ['PAID', 'AUTHORIZED'].includes(ativusStatus);
 
   if (isPaid) {
     const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
@@ -394,7 +425,8 @@ async function checkAtivusStatus(txid: string, apiKey: string, supabase: any): P
 
   return {
     isPaid,
-    status: isPaid ? 'paid' : ativusStatus || 'pending',
+    status: isPaid ? 'paid' : ativusStatus.toLowerCase() || 'pending',
+    paidAt: transactionData.paidAt || undefined,
   };
 }
 
