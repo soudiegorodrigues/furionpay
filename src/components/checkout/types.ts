@@ -21,6 +21,7 @@ export interface Product {
 export interface CheckoutConfig {
   primary_color: string | null;
   template: string | null;
+  template_id: string | null;
   require_address: boolean;
   require_phone: boolean;
   require_birthdate: boolean;
