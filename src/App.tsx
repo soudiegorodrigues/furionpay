@@ -18,6 +18,7 @@ import AdminProfile from "./pages/AdminProfile";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminProducts from "./pages/AdminProducts";
 import AdminProductEdit from "./pages/AdminProductEdit";
+import PublicCheckout from "./pages/PublicCheckout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,9 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<AdminAuth />} />
               <Route path="/cadastro" element={<AdminAuth />} />
+              
+              {/* Public checkout route */}
+              <Route path="/checkout/:offerCode" element={<PublicCheckout />} />
               
               {/* Admin routes with shared layout */}
               <Route path="/admin" element={<AdminLayoutWrapper />}>
