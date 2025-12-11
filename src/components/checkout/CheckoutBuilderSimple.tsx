@@ -179,10 +179,18 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const saveConfig = async () => {
     setIsSaving(true);
     try {
+      // Get template name to save as template string
+      let templateString = "padrao";
+      if (selectedTemplate) {
+        const name = selectedTemplate.name.toLowerCase();
+        templateString = name === "padrão" ? "padrao" : name;
+      }
+
       const configData = {
         product_id: productId,
         user_id: userId,
         template_id: selectedTemplateId,
+        template: templateString, // Also save template name for backwards compatibility
         primary_color: primaryColor,
         show_banners: customizations.showBanner,
         show_countdown: customizations.showCountdown,

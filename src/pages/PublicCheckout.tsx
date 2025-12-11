@@ -73,7 +73,7 @@ export default function PublicCheckout() {
     enabled: !!offer?.product_id,
   });
 
-  // Fetch checkout config
+  // Fetch checkout config with template info
   const { data: config } = useQuery({
     queryKey: ["checkout-config", offer?.product_id],
     queryFn: async () => {
@@ -86,6 +86,23 @@ export default function PublicCheckout() {
         .maybeSingle();
       
       if (error) throw error;
+      
+      // If template_id is set, fetch the template to get template_code
+      if (data?.template_id) {
+        const { data: templateData } = await supabase
+          .from("checkout_templates")
+          .select("template_code, name")
+          .eq("id", data.template_id)
+          .eq("is_published", true)
+          .maybeSingle();
+        
+        if (templateData) {
+          // Map template name to template code for backwards compatibility
+          const templateName = templateData.name.toLowerCase();
+          data.template = templateName === "padrão" ? "padrao" : templateName;
+        }
+      }
+      
       return data as CheckoutConfig | null;
     },
     enabled: !!offer?.product_id,
