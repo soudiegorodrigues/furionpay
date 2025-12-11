@@ -520,7 +520,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     customizations.showCountdown ? "cursor-pointer" : "cursor-default opacity-60"
                   )}>
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Cronômetro</Label>
+                    <Label className="text-sm">Contador</Label>
                     {customizations.showCountdown && (
                       <ChevronDown className={cn(
                         "h-3 w-3 text-muted-foreground transition-transform",
