@@ -252,7 +252,7 @@ serve(async (req) => {
         address: {
           street: "Rua Exemplo",
           streetNumber: "100",
-          complement: "",
+          complement: "N/A",
           zipCode: "01001000",
           neighborhood: "Centro",
           city: "São Paulo",
@@ -260,13 +260,13 @@ serve(async (req) => {
           country: "br"
         }
       },
-      checkout: utmData ? {
-        utm_source: utmData.utm_source || '',
-        utm_medium: utmData.utm_medium || '',
-        utm_campaign: utmData.utm_campaign || '',
-        utm_term: utmData.utm_term || '',
-        utm_content: utmData.utm_content || ''
-      } : undefined,
+      checkout: {
+        utm_source: utmData?.utm_source || '',
+        utm_medium: utmData?.utm_medium || '',
+        utm_campaign: utmData?.utm_campaign || '',
+        utm_term: utmData?.utm_term || '',
+        utm_content: utmData?.utm_content || ''
+      },
       pix: {
         expiresInDays: 1
       },
@@ -278,6 +278,7 @@ serve(async (req) => {
           tangible: false
         }
       ],
+      postbackUrl: `${supabaseUrl}/functions/v1/ativus-webhook`,
       metadata: JSON.stringify({ popup_model: popupModel, user_id: userId }),
       traceable: true
     };
