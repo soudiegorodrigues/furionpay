@@ -157,12 +157,19 @@ export default function AdminProductEdit() {
     },
   });
 
-  const handleSave = () => {
-    if (!formData.name.trim()) {
-      toast.error("Nome do produto é obrigatório");
-      return;
+  const handleSave = async () => {
+    if (activeSection === "details") {
+      if (!formData.name.trim()) {
+        toast.error("Nome do produto é obrigatório");
+        return;
+      }
+      updateMutation.mutate(formData);
+    } else if (activeSection === "checkout") {
+      // Call checkout save function if available
+      if ((window as any).__checkoutSaveConfig) {
+        await (window as any).__checkoutSaveConfig();
+      }
     }
-    updateMutation.mutate(formData);
   };
 
   const copyToClipboard = (text: string) => {
@@ -252,10 +259,12 @@ export default function AdminProductEdit() {
               <p className="text-muted-foreground">Gerencie os detalhes e configurações do seu produto</p>
             </div>
             
-            <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2 lg:mr-16">
-              <Save className="h-4 w-4" />
-              {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
-            </Button>
+            {(activeSection === "details" || activeSection === "checkout") && (
+              <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2 lg:mr-16">
+                <Save className="h-4 w-4" />
+                {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -668,15 +677,17 @@ function CheckoutSection({ productId, userId, productName }: { productId: string
     setSettings(prev => ({ ...prev, [setting]: !prev[setting] }));
   };
 
+  // Expose saveConfig to parent via useEffect
+  useEffect(() => {
+    // Store save function globally so parent can call it
+    (window as any).__checkoutSaveConfig = saveConfig;
+    return () => {
+      delete (window as any).__checkoutSaveConfig;
+    };
+  }, [selectedColor, selectedTemplate, requiredFields, settings]);
+
   return (
     <div className="space-y-6">
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={saveConfig} disabled={isSaving} className="gap-2">
-          <Save className="h-4 w-4" />
-          {isSaving ? "Salvando..." : "Salvar configurações"}
-        </Button>
-      </div>
 
       {/* Pagamento */}
       <Card>
