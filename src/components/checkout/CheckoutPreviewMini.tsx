@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import {
   Clock,
   Shield,
+  ShieldCheck,
   Lock,
   User,
   CreditCard,
@@ -452,6 +453,58 @@ export function CheckoutPreviewMini({
           </div>
         </div>
       )}
+
+      {/* Trust Section */}
+      <div className="p-5 bg-white border-t">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Dados protegidos</p>
+              <p className="text-xs text-gray-500">Suas informações são confidenciais e seguras</p>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Pagamento 100% Seguro</p>
+              <p className="text-xs text-gray-500">Todas as transações são criptografadas</p>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Conteúdo Aprovado</p>
+              <p className="text-xs text-gray-500">Revisado e validado por especialistas</p>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <Gift className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Garantia de 7 dias</p>
+              <p className="text-xs text-gray-500">Você tem 7 dias para testar o produto</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-6 text-center">
+          <div className="flex items-center justify-center gap-2 text-gray-500 mb-3">
+            <Lock className="w-3 h-3" />
+            <span className="text-xs">Ambiente 100% seguro</span>
+          </div>
+        </div>
+      </div>
 
       {/* Security badges */}
       <div className="p-4 bg-white border-t">
