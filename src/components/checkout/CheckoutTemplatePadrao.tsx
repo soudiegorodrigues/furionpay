@@ -27,7 +27,10 @@ export function CheckoutTemplatePadrao({
   const primaryColor = config?.primary_color || "#16A34A";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+    <div 
+      className="min-h-screen"
+      style={{ backgroundColor: config?.background_color || '#f3f4f6' }}
+    >
       {/* Countdown Banner */}
       {config?.show_countdown && countdown !== null && countdown > 0 && (
         <div 
@@ -46,12 +49,16 @@ export function CheckoutTemplatePadrao({
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4" style={{ color: primaryColor }} />
-            <span className="text-sm text-muted-foreground">Pagamento Seguro</span>
+            <span className="text-sm text-muted-foreground">
+              {config?.security_badge_text || "Pagamento Seguro"}
+            </span>
           </div>
-          <Badge variant="outline" className="gap-1">
-            <Shield className="h-3 w-3" />
-            SSL
-          </Badge>
+          {config?.show_security_badges !== false && (
+            <Badge variant="outline" className="gap-1">
+              <Shield className="h-3 w-3" />
+              SSL
+            </Badge>
+          )}
         </div>
       </header>
 
@@ -64,13 +71,16 @@ export function CheckoutTemplatePadrao({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5" style={{ color: primaryColor }} />
-                    Finalizar Compra
+                    {config?.checkout_title || "Finalizar Compra"}
                   </CardTitle>
+                  {config?.checkout_subtitle && (
+                    <p className="text-sm text-muted-foreground">{config.checkout_subtitle}</p>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                      Dados do comprador
+                      {config?.buyer_section_title || "Dados do comprador"}
                     </h3>
                     
                     <div className="space-y-2">
@@ -174,7 +184,7 @@ export function CheckoutTemplatePadrao({
 
                   <div className="space-y-4">
                     <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                      Forma de pagamento
+                      {config?.payment_section_title || "Forma de pagamento"}
                     </h3>
                     
                     <div 
@@ -246,21 +256,23 @@ export function CheckoutTemplatePadrao({
                 <CardTitle className="text-lg">Resumo do pedido</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-4">
-                  {product?.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="w-20 h-20 object-cover rounded-lg" />
-                  ) : (
-                    <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
-                      <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <h3 className="font-medium">{offer.name}</h3>
-                    {product?.name && product.name !== offer.name && (
-                      <p className="text-sm text-muted-foreground">{product.name}</p>
+                {config?.show_product_image !== false && (
+                  <div className="flex gap-4">
+                    {product?.image_url ? (
+                      <img src={product.image_url} alt={product.name} className="w-20 h-20 object-cover rounded-lg" />
+                    ) : (
+                      <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
+                        <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+                      </div>
                     )}
+                    <div className="flex-1">
+                      <h3 className="font-medium">{offer.name}</h3>
+                      {product?.name && product.name !== offer.name && (
+                        <p className="text-sm text-muted-foreground">{product.name}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <Separator />
 
@@ -277,20 +289,22 @@ export function CheckoutTemplatePadrao({
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Shield className="h-4 w-4 text-green-500" />
-                    <span>Compra 100% segura</span>
+                {config?.show_security_badges !== false && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Shield className="h-4 w-4 text-green-500" />
+                      <span>Compra 100% segura</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Lock className="h-4 w-4 text-green-500" />
+                      <span>Dados protegidos</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Aprovação instantânea via PIX</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Lock className="h-4 w-4 text-green-500" />
-                    <span>Dados protegidos</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Aprovação instantânea via PIX</span>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -299,7 +313,7 @@ export function CheckoutTemplatePadrao({
 
       <footer className="border-t mt-12">
         <div className="container max-w-4xl mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
-          <p>Pagamento processado com segurança</p>
+          <p>{config?.footer_text || "Pagamento processado com segurança"}</p>
         </div>
       </footer>
     </div>
