@@ -16,6 +16,7 @@ interface ExitIntentPopupProps {
   ctaText?: string;
   primaryColor?: string;
   discountPercentage?: number;
+  imageUrl?: string;
   onCtaClick?: () => void;
 }
 
@@ -26,6 +27,7 @@ export function ExitIntentPopup({
   ctaText = "Aproveitar oferta",
   primaryColor = "#16A34A",
   discountPercentage = 10,
+  imageUrl,
   onCtaClick,
 }: ExitIntentPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -130,13 +132,21 @@ export function ExitIntentPopup({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md text-center">
         <DialogHeader className="items-center space-y-4">
-          {/* Discount Badge */}
-          <Badge 
-            className="text-lg px-4 py-2 font-bold"
-            style={{ backgroundColor: primaryColor }}
-          >
-            {discountPercentage}% OFF
-          </Badge>
+          {/* Image or Discount Badge */}
+          {imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt="Oferta" 
+              className="w-full max-h-32 object-cover rounded-lg"
+            />
+          ) : (
+            <Badge 
+              className="text-lg px-4 py-2 font-bold"
+              style={{ backgroundColor: primaryColor }}
+            >
+              {discountPercentage}% OFF
+            </Badge>
+          )}
           
           <DialogTitle className="text-xl font-bold text-center">
             {title}

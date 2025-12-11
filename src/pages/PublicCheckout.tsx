@@ -335,8 +335,9 @@ export default function PublicCheckout() {
         title={config?.discount_popup_title || undefined}
         message={config?.discount_popup_message || undefined}
         ctaText={config?.discount_popup_cta || undefined}
-        primaryColor={config?.primary_color || "#16A34A"}
+        primaryColor={config?.discount_popup_color || config?.primary_color || "#16A34A"}
         discountPercentage={config?.discount_popup_percentage || 10}
+        imageUrl={config?.discount_popup_image_url || undefined}
         onCtaClick={handleApplyDiscount}
       />
     </>

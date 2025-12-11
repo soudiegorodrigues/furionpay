@@ -90,6 +90,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     discountPopupMessage: "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
     discountPopupCta: "Aproveitar oferta",
     discountPopupPercentage: 10,
+    discountPopupColor: "#16A34A",
+    discountPopupImageUrl: "",
     showWhatsappButton: false,
     whatsappNumber: "",
   });
@@ -156,6 +158,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discountPopupMessage: config.discount_popup_message || "Você só tem até a meia noite de hoje para aproveitar essa oferta, não perca tempo!",
         discountPopupCta: config.discount_popup_cta || "Aproveitar oferta",
         discountPopupPercentage: config.discount_popup_percentage || 10,
+        discountPopupColor: config.discount_popup_color || "#16A34A",
+        discountPopupImageUrl: config.discount_popup_image_url || "",
         showWhatsappButton: config.show_whatsapp_button || false,
         whatsappNumber: config.whatsapp_number || "",
       });
@@ -243,6 +247,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discount_popup_message: customizations.discountPopupMessage || null,
         discount_popup_cta: customizations.discountPopupCta || null,
         discount_popup_percentage: customizations.discountPopupPercentage || 10,
+        discount_popup_color: customizations.discountPopupColor || "#16A34A",
+        discount_popup_image_url: customizations.discountPopupImageUrl || null,
       };
 
       const { error } = await supabase
@@ -651,18 +657,61 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 <div className="py-3 pl-6 space-y-3">
                   {/* Preview */}
                   <div className="p-4 bg-muted/50 rounded-lg border text-center space-y-2">
-                    <div className="w-10 h-10 mx-auto rounded-full border-2 border-amber-400 flex items-center justify-center">
-                      <span className="text-amber-400 text-xl font-bold">!</span>
-                    </div>
+                    {customizations.discountPopupImageUrl ? (
+                      <img 
+                        src={customizations.discountPopupImageUrl} 
+                        alt="Popup" 
+                        className="w-full h-20 object-cover rounded-lg mb-2"
+                      />
+                    ) : (
+                      <Badge 
+                        className="text-sm px-3 py-1 font-bold"
+                        style={{ backgroundColor: customizations.discountPopupColor }}
+                      >
+                        {customizations.discountPopupPercentage}% OFF
+                      </Badge>
+                    )}
                     <p className="font-semibold text-sm">{customizations.discountPopupTitle || "Título"}</p>
                     <p className="text-xs text-muted-foreground">{customizations.discountPopupMessage || "Mensagem"}</p>
                     <Button 
                       size="sm" 
                       className="mt-2"
-                      style={{ backgroundColor: primaryColor }}
+                      style={{ backgroundColor: customizations.discountPopupColor }}
                     >
                       {customizations.discountPopupCta || "CTA"}
                     </Button>
+                  </div>
+                  
+                  {/* Color picker */}
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Cor do Popup</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="color"
+                        value={customizations.discountPopupColor}
+                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupColor: e.target.value }))}
+                        className="h-8 w-12 p-0.5 cursor-pointer"
+                      />
+                      <Input
+                        value={customizations.discountPopupColor}
+                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupColor: e.target.value }))}
+                        className="h-8 text-xs flex-1 font-mono"
+                        placeholder="#16A34A"
+                        maxLength={7}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Image URL */}
+                  <div>
+                    <Label className="text-xs text-muted-foreground">URL da Imagem (opcional)</Label>
+                    <Input
+                      value={customizations.discountPopupImageUrl}
+                      onChange={(e) => setCustomizations(p => ({ ...p, discountPopupImageUrl: e.target.value }))}
+                      className="h-8 text-xs mt-1"
+                      placeholder="https://exemplo.com/imagem.png"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">Se preenchido, substitui o badge de desconto</p>
                   </div>
                   
                   {/* Fields */}
