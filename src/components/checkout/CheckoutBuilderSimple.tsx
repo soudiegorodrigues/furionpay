@@ -36,6 +36,7 @@ import {
   CheckCircle,
   Percent,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 
 interface CheckoutBuilderSimpleProps {
@@ -407,96 +408,125 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
         {/* Customizations */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Settings2 className="h-4 w-4" />
               Personalizações
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Image className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">Banner</Label>
-              </div>
-              <Switch
-                checked={customizations.showBanner}
-                onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBanner: v }))}
-              />
-            </div>
-            {customizations.showBanner && (
-              <div className="pl-6 space-y-2">
-                <Label className="text-xs text-muted-foreground">Imagem do Banner</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
+          <CardContent className="space-y-1 pt-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+
+            {/* Banner */}
+            <Collapsible open={customizations.showBanner}>
+              <div className="flex items-center justify-between py-2 border-b">
+                <CollapsibleTrigger asChild disabled={!customizations.showBanner}>
+                  <div className="flex items-center gap-2 cursor-pointer flex-1">
+                    <Image className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm cursor-pointer">Banner</Label>
+                    {customizations.showBanner && (
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={customizations.showBanner}
+                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBanner: v }))}
                 />
-                {bannerImageUrl ? (
-                  <div className="relative">
-                    <img
-                      src={bannerImageUrl}
-                      alt="Banner"
-                      className="w-full h-20 object-cover rounded-lg"
-                    />
+              </div>
+              <CollapsibleContent>
+                <div className="py-2 pl-6 space-y-2">
+                  {bannerImageUrl ? (
+                    <div className="relative">
+                      <img
+                        src={bannerImageUrl}
+                        alt="Banner"
+                        className="w-full h-16 object-cover rounded-lg"
+                      />
+                      <div className="absolute top-1 right-1 flex gap-1">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                        >
+                          {isUploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => setBannerImageUrl(null)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
-                      className="absolute top-1 right-1 h-6 text-xs"
+                      className="w-full h-12 flex flex-col gap-1"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingImage}
                     >
-                      {isUploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
+                      {isUploadingImage ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          <span className="text-xs">Upload</span>
+                        </>
+                      )}
                     </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full h-16 flex flex-col gap-1"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage}
-                  >
-                    {isUploadingImage ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4" />
-                        <span className="text-xs">Fazer upload</span>
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">Cronômetro</Label>
-              </div>
-              <Switch
-                checked={customizations.showCountdown}
-                onCheckedChange={(v) => setCustomizations(p => ({ ...p, showCountdown: v }))}
-              />
-            </div>
-            {customizations.showCountdown && (
-              <div className="pl-6">
-                <Label className="text-xs text-muted-foreground">Minutos</Label>
-                <Input
-                  type="number"
-                  value={customizations.countdownMinutes}
-                  onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
-                  className="h-8 mt-1"
-                  min={1}
-                  max={60}
+            {/* Countdown */}
+            <Collapsible open={customizations.showCountdown}>
+              <div className="flex items-center justify-between py-2 border-b">
+                <CollapsibleTrigger asChild disabled={!customizations.showCountdown}>
+                  <div className="flex items-center gap-2 cursor-pointer flex-1">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm cursor-pointer">Cronômetro</Label>
+                    {customizations.showCountdown && (
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={customizations.showCountdown}
+                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showCountdown: v }))}
                 />
               </div>
-            )}
+              <CollapsibleContent>
+                <div className="py-2 pl-6">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs text-muted-foreground">Minutos:</Label>
+                    <Input
+                      type="number"
+                      value={customizations.countdownMinutes}
+                      onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
+                      className="h-7 w-16 text-xs"
+                      min={1}
+                      max={60}
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
-            <div className="flex items-center justify-between">
+            {/* Testimonials */}
+            <div className="flex items-center justify-between py-2 border-b">
               <div className="flex items-center gap-2">
                 <Star className="h-4 w-4 text-muted-foreground" />
                 <Label className="text-sm">Depoimentos</Label>
@@ -507,7 +537,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            {/* Discount Popup */}
+            <div className="flex items-center justify-between py-2 border-b">
               <div className="flex items-center gap-2">
                 <Percent className="h-4 w-4 text-muted-foreground" />
                 <Label className="text-sm">Popup de Desconto</Label>
@@ -518,27 +549,34 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">Botão WhatsApp</Label>
-              </div>
-              <Switch
-                checked={customizations.showWhatsappButton}
-                onCheckedChange={(v) => setCustomizations(p => ({ ...p, showWhatsappButton: v }))}
-              />
-            </div>
-            {customizations.showWhatsappButton && (
-              <div className="pl-6">
-                <Label className="text-xs text-muted-foreground">Número do WhatsApp</Label>
-                <Input
-                  value={customizations.whatsappNumber}
-                  onChange={(e) => setCustomizations(p => ({ ...p, whatsappNumber: e.target.value }))}
-                  className="h-8 mt-1"
-                  placeholder="5511999999999"
+            {/* WhatsApp Button */}
+            <Collapsible open={customizations.showWhatsappButton}>
+              <div className="flex items-center justify-between py-2">
+                <CollapsibleTrigger asChild disabled={!customizations.showWhatsappButton}>
+                  <div className="flex items-center gap-2 cursor-pointer flex-1">
+                    <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm cursor-pointer">Botão WhatsApp</Label>
+                    {customizations.showWhatsappButton && (
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={customizations.showWhatsappButton}
+                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showWhatsappButton: v }))}
                 />
               </div>
-            )}
+              <CollapsibleContent>
+                <div className="py-2 pl-6">
+                  <Input
+                    value={customizations.whatsappNumber}
+                    onChange={(e) => setCustomizations(p => ({ ...p, whatsappNumber: e.target.value }))}
+                    className="h-7 text-xs"
+                    placeholder="5511999999999"
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
       </div>
