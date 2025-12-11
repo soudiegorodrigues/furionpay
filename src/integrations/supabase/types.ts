@@ -392,6 +392,7 @@ export type Database = {
           product_code: string | null
           updated_at: string
           user_id: string
+          website_url: string | null
         }
         Insert: {
           created_at?: string
@@ -405,6 +406,7 @@ export type Database = {
           product_code?: string | null
           updated_at?: string
           user_id: string
+          website_url?: string | null
         }
         Update: {
           created_at?: string
@@ -418,6 +420,7 @@ export type Database = {
           product_code?: string | null
           updated_at?: string
           user_id?: string
+          website_url?: string | null
         }
         Relationships: [
           {
