@@ -43,6 +43,8 @@ export const UsuariosSection = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedUserAcquirer, setSelectedUserAcquirer] = useState<string>('spedpay');
   const [isSavingUserAcquirer, setIsSavingUserAcquirer] = useState(false);
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [userToPromote, setUserToPromote] = useState<User | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -80,12 +82,20 @@ export const UsuariosSection = () => {
     }
   };
 
-  const handleGrantAdmin = async (userId: string) => {
+  const openAdminDialog = (u: User) => {
+    setUserToPromote(u);
+    setAdminDialogOpen(true);
+  };
+
+  const handleGrantAdmin = async () => {
+    if (!userToPromote) return;
     try {
-      setActionLoading(userId);
-      const { error } = await supabase.rpc('grant_admin_role', { target_user_id: userId });
+      setActionLoading(userToPromote.id);
+      const { error } = await supabase.rpc('grant_admin_role', { target_user_id: userToPromote.id });
       if (error) throw error;
       toast({ title: 'Sucesso', description: 'Permissão de admin concedida' });
+      setAdminDialogOpen(false);
+      setUserToPromote(null);
       loadUsers();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao conceder permissão', variant: 'destructive' });
@@ -370,7 +380,7 @@ export const UsuariosSection = () => {
                                     {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldOff className="h-3 w-3" />}
                                   </Button>
                                 ) : (
-                                  <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleGrantAdmin(u.id)} disabled={actionLoading === u.id} title="Tornar Admin">
+                                  <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => openAdminDialog(u)} disabled={actionLoading === u.id} title="Tornar Admin">
                                     {actionLoading === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Shield className="h-3 w-3" />}
                                   </Button>
                                 )}
@@ -432,6 +442,25 @@ export const UsuariosSection = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Promote to Admin Dialog */}
+      <AlertDialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Promover para Admin</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja promover <strong>{userToPromote?.email}</strong> para Administrador? 
+              Este usuário terá acesso completo ao painel administrativo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleGrantAdmin}>
+              Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
