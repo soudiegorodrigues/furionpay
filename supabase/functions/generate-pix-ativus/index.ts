@@ -244,9 +244,10 @@ serve(async (req) => {
     
     console.log('Using donor name:', finalDonorName);
     
-    const customerCPF = generateRandomCPF();
-    const customerEmail = generateRandomEmail(finalDonorName);
-    const customerPhone = generateRandomPhone();
+    // Use a fixed valid CPF to avoid API validation issues
+    const customerCPF = "02965847521"; // Valid CPF from documentation
+    const customerEmail = `cliente${Date.now()}@email.com`;
+    const customerPhone = "(11) 99999-9999";
 
     // Build request payload according to Ativus Hub API spec
     // Note: 'ip' field is required according to documentation
