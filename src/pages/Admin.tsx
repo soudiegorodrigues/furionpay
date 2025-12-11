@@ -272,21 +272,26 @@ const Admin = () => {
   const loadInterCredentials = async () => {
     setIsLoadingInterConfig(true);
     try {
-      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      const { data, error } = await supabase.functions.invoke('get-inter-credentials');
+      
       if (error) throw error;
       
-      const settings = data as { key: string; value: string }[] || [];
-      const getValue = (key: string) => settings.find(s => s.key === key)?.value || '';
-      
-      setInterConfig({
-        clientId: getValue('inter_client_id'),
-        clientSecret: getValue('inter_client_secret'),
-        certificate: getValue('inter_certificate'),
-        privateKey: getValue('inter_private_key'),
-        pixKey: getValue('inter_pix_key')
-      });
+      if (data?.success && data?.credentials) {
+        setInterConfig({
+          clientId: data.credentials.clientId || '',
+          clientSecret: data.credentials.clientSecret || '',
+          certificate: data.credentials.certificate || '',
+          privateKey: data.credentials.privateKey || '',
+          pixKey: data.credentials.pixKey || ''
+        });
+      }
     } catch (error) {
       console.error('Error loading Inter credentials:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar credenciais",
+        variant: "destructive"
+      });
     } finally {
       setIsLoadingInterConfig(false);
     }

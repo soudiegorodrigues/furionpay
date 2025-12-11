@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.verify-unlock-code]
 verify_jwt = false
+
+[functions.get-inter-credentials]
+verify_jwt = false
+
+[functions.send-approval-notification]
+verify_jwt = false
