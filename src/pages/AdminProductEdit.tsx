@@ -201,7 +201,7 @@ export default function AdminProductEdit() {
       case "details":
         return <ProductDetailsSection formData={formData} setFormData={setFormData} product={product} copyToClipboard={copyToClipboard} />;
       case "checkout":
-        return <CheckoutSection productId={product.id} productName={product.name} />;
+        return <CheckoutSection productId={product.id} userId={product.user_id} productName={product.name} />;
       case "offers":
         return <OffersSection productId={product.id} userId={product.user_id} />;
       case "domains":
@@ -553,7 +553,9 @@ function ProductDetailsSection({
 }
 
 // Checkout Builder Section Component
-function CheckoutSection({ productId, productName }: { productId: string; productName: string }) {
+function CheckoutSection({ productId, userId, productName }: { productId: string; userId: string; productName: string }) {
+  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("padrao");
   const [selectedColor, setSelectedColor] = useState("#16A34A");
   const [requiredFields, setRequiredFields] = useState({
@@ -571,6 +573,80 @@ function CheckoutSection({ productId, productName }: { productId: string; produc
     paginaObrigado: false,
     botaoWhatsapp: false,
   });
+
+  // Load existing config
+  const { data: config } = useQuery({
+    queryKey: ["checkout-config", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_checkout_configs")
+        .select("*")
+        .eq("product_id", productId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Load config into state when fetched
+  useEffect(() => {
+    if (config) {
+      setSelectedColor(config.primary_color || "#16A34A");
+      setSelectedTemplate(config.template || "padrao");
+      setRequiredFields({
+        endereco: config.require_address || false,
+        telefone: config.require_phone || true,
+        dataNascimento: config.require_birthdate || false,
+        cpf: config.require_cpf || false,
+      });
+      setSettings({
+        confirmacaoEmail: config.require_email_confirmation || false,
+        contagemRegressiva: config.show_countdown || false,
+        notificacoes: config.show_notifications || false,
+        personalizarBotao: !!config.custom_button_text,
+        banners: config.show_banners || false,
+        paginaObrigado: !!config.thank_you_url,
+        botaoWhatsapp: config.show_whatsapp_button || false,
+      });
+    }
+  }, [config]);
+
+  // Save config
+  const saveConfig = async () => {
+    setIsSaving(true);
+    try {
+      const configData = {
+        product_id: productId,
+        user_id: userId,
+        primary_color: selectedColor,
+        template: selectedTemplate,
+        require_address: requiredFields.endereco,
+        require_phone: requiredFields.telefone,
+        require_birthdate: requiredFields.dataNascimento,
+        require_cpf: requiredFields.cpf,
+        require_email_confirmation: settings.confirmacaoEmail,
+        show_countdown: settings.contagemRegressiva,
+        show_notifications: settings.notificacoes,
+        show_banners: settings.banners,
+        show_whatsapp_button: settings.botaoWhatsapp,
+      };
+
+      const { error } = await supabase
+        .from("product_checkout_configs")
+        .upsert(configData, { onConflict: "product_id" });
+
+      if (error) throw error;
+      
+      toast.success("Configurações salvas com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["checkout-config", productId] });
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const colors = [
     "#000000", "#dc2626", "#ea580c", "#eab308", "#16a34a", "#06b6d4", "#3b82f6",
@@ -594,6 +670,14 @@ function CheckoutSection({ productId, productName }: { productId: string; produc
 
   return (
     <div className="space-y-6">
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <Button onClick={saveConfig} disabled={isSaving} className="gap-2">
+          <Save className="h-4 w-4" />
+          {isSaving ? "Salvando..." : "Salvar configurações"}
+        </Button>
+      </div>
+
       {/* Pagamento */}
       <Card>
         <CardHeader className="pb-3">

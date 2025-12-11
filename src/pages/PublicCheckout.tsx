@@ -15,7 +15,11 @@ import {
   CreditCard,
   CheckCircle,
   Shield,
-  Clock
+  Clock,
+  MapPin,
+  Phone,
+  Calendar,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PixQRCode } from "@/components/PixQRCode";
@@ -40,6 +44,24 @@ interface Product {
   image_url: string | null;
 }
 
+interface CheckoutConfig {
+  primary_color: string | null;
+  template: string | null;
+  require_address: boolean;
+  require_phone: boolean;
+  require_birthdate: boolean;
+  require_cpf: boolean;
+  require_email_confirmation: boolean;
+  show_countdown: boolean;
+  countdown_minutes: number | null;
+  show_notifications: boolean;
+  custom_button_text: string | null;
+  show_banners: boolean;
+  thank_you_url: string | null;
+  show_whatsapp_button: boolean;
+  whatsapp_number: string | null;
+}
+
 export default function PublicCheckout() {
   const { offerCode } = useParams<{ offerCode: string }>();
   const navigate = useNavigate();
@@ -47,8 +69,11 @@ export default function PublicCheckout() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    emailConfirm: "",
     phone: "",
     cpf: "",
+    birthdate: "",
+    address: "",
   });
   const [pixData, setPixData] = useState<{
     qrCode: string;
@@ -57,6 +82,7 @@ export default function PublicCheckout() {
     transactionId: string;
   } | null>(null);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   // Fetch offer by code
   const { data: offer, isLoading: offerLoading, error: offerError } = useQuery({
@@ -69,10 +95,10 @@ export default function PublicCheckout() {
         .select("*")
         .eq("offer_code", offerCode)
         .eq("is_active", true)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
-      return data as ProductOffer;
+      return data as ProductOffer | null;
     },
     enabled: !!offerCode,
   });
@@ -87,13 +113,56 @@ export default function PublicCheckout() {
         .from("products")
         .select("*")
         .eq("id", offer.product_id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
-      return data as Product;
+      return data as Product | null;
     },
     enabled: !!offer?.product_id,
   });
+
+  // Fetch checkout config
+  const { data: config } = useQuery({
+    queryKey: ["checkout-config", offer?.product_id],
+    queryFn: async () => {
+      if (!offer?.product_id) return null;
+      
+      const { data, error } = await supabase
+        .from("product_checkout_configs")
+        .select("*")
+        .eq("product_id", offer.product_id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as CheckoutConfig | null;
+    },
+    enabled: !!offer?.product_id,
+  });
+
+  // Countdown timer
+  useEffect(() => {
+    if (config?.show_countdown && config.countdown_minutes) {
+      setCountdown(config.countdown_minutes * 60);
+    }
+  }, [config]);
+
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+    
+    const timer = setInterval(() => {
+      setCountdown(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const primaryColor = config?.primary_color || "#16A34A";
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -109,6 +178,26 @@ export default function PublicCheckout() {
     }
     if (!formData.email.trim() || !formData.email.includes("@")) {
       toast.error("Email válido é obrigatório");
+      return false;
+    }
+    if (config?.require_email_confirmation && formData.email !== formData.emailConfirm) {
+      toast.error("Os emails não coincidem");
+      return false;
+    }
+    if (config?.require_phone && !formData.phone.trim()) {
+      toast.error("Telefone é obrigatório");
+      return false;
+    }
+    if (config?.require_cpf && !formData.cpf.trim()) {
+      toast.error("CPF é obrigatório");
+      return false;
+    }
+    if (config?.require_birthdate && !formData.birthdate.trim()) {
+      toast.error("Data de nascimento é obrigatória");
+      return false;
+    }
+    if (config?.require_address && !formData.address.trim()) {
+      toast.error("Endereço é obrigatório");
       return false;
     }
     return true;
@@ -180,11 +269,24 @@ export default function PublicCheckout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      {/* Countdown Banner */}
+      {config?.show_countdown && countdown !== null && countdown > 0 && (
+        <div 
+          className="py-3 text-center text-white font-medium"
+          style={{ backgroundColor: primaryColor }}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span>Oferta expira em: {formatCountdown(countdown)}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-green-500" />
+            <Lock className="h-4 w-4" style={{ color: primaryColor }} />
             <span className="text-sm text-muted-foreground">Pagamento Seguro</span>
           </div>
           <Badge variant="outline" className="gap-1">
@@ -202,7 +304,7 @@ export default function PublicCheckout() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
+                    <CreditCard className="h-5 w-5" style={{ color: primaryColor }} />
                     Finalizar Compra
                   </CardTitle>
                 </CardHeader>
@@ -214,7 +316,10 @@ export default function PublicCheckout() {
                     </h3>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="name">Nome completo *</Label>
+                      <Label htmlFor="name" className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        Nome completo *
+                      </Label>
                       <Input
                         id="name"
                         value={formData.name}
@@ -234,26 +339,77 @@ export default function PublicCheckout() {
                       />
                     </div>
 
+                    {config?.require_email_confirmation && (
+                      <div className="space-y-2">
+                        <Label htmlFor="emailConfirm">Confirmar E-mail *</Label>
+                        <Input
+                          id="emailConfirm"
+                          type="email"
+                          value={formData.emailConfirm}
+                          onChange={(e) => setFormData({ ...formData, emailConfirm: e.target.value })}
+                          placeholder="Confirme seu e-mail"
+                        />
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Telefone</Label>
-                        <Input
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="(00) 00000-0000"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cpf">CPF</Label>
-                        <Input
-                          id="cpf"
-                          value={formData.cpf}
-                          onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                          placeholder="000.000.000-00"
-                        />
-                      </div>
+                      {(config?.require_phone !== false) && (
+                        <div className="space-y-2">
+                          <Label htmlFor="phone" className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            Telefone {config?.require_phone && "*"}
+                          </Label>
+                          <Input
+                            id="phone"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="(00) 00000-0000"
+                          />
+                        </div>
+                      )}
+                      
+                      {config?.require_cpf && (
+                        <div className="space-y-2">
+                          <Label htmlFor="cpf">CPF *</Label>
+                          <Input
+                            id="cpf"
+                            value={formData.cpf}
+                            onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                            placeholder="000.000.000-00"
+                          />
+                        </div>
+                      )}
                     </div>
+
+                    {config?.require_birthdate && (
+                      <div className="space-y-2">
+                        <Label htmlFor="birthdate" className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Data de nascimento *
+                        </Label>
+                        <Input
+                          id="birthdate"
+                          type="date"
+                          value={formData.birthdate}
+                          onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+                        />
+                      </div>
+                    )}
+
+                    {config?.require_address && (
+                      <div className="space-y-2">
+                        <Label htmlFor="address" className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          Endereço *
+                        </Label>
+                        <Input
+                          id="address"
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          placeholder="Seu endereço completo"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
@@ -264,9 +420,18 @@ export default function PublicCheckout() {
                       Forma de pagamento
                     </h3>
                     
-                    <div className="p-4 border-2 border-primary rounded-lg bg-primary/5">
+                    <div 
+                      className="p-4 border-2 rounded-lg"
+                      style={{ 
+                        borderColor: primaryColor,
+                        backgroundColor: `${primaryColor}10`
+                      }}
+                    >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <div 
+                          className="w-10 h-10 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${primaryColor}20` }}
+                        >
                           <img 
                             src="/pix-logo.png" 
                             alt="PIX" 
@@ -280,7 +445,7 @@ export default function PublicCheckout() {
                           <p className="font-medium">PIX</p>
                           <p className="text-sm text-muted-foreground">Aprovação instantânea</p>
                         </div>
-                        <CheckCircle className="h-5 w-5 text-primary ml-auto" />
+                        <CheckCircle className="h-5 w-5 ml-auto" style={{ color: primaryColor }} />
                       </div>
                     </div>
                   </div>
@@ -290,13 +455,14 @@ export default function PublicCheckout() {
                     disabled={isGeneratingPix}
                     className="w-full h-12 text-lg gap-2"
                     size="lg"
+                    style={{ backgroundColor: primaryColor }}
                   >
                     {isGeneratingPix ? (
                       "Gerando PIX..."
                     ) : (
                       <>
                         <Lock className="h-4 w-4" />
-                        Pagar {formatPrice(offer.price)}
+                        {config?.custom_button_text || `Pagar ${formatPrice(offer.price)}`}
                       </>
                     )}
                   </Button>
@@ -310,7 +476,7 @@ export default function PublicCheckout() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-primary" />
+                    <Clock className="h-5 w-5" style={{ color: primaryColor }} />
                     Aguardando Pagamento
                   </CardTitle>
                 </CardHeader>
@@ -366,7 +532,7 @@ export default function PublicCheckout() {
                   </div>
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span className="text-primary">{formatPrice(offer.price)}</span>
+                    <span style={{ color: primaryColor }}>{formatPrice(offer.price)}</span>
                   </div>
                 </div>
 

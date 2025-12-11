@@ -352,6 +352,83 @@ export type Database = {
         }
         Relationships: []
       }
+      product_checkout_configs: {
+        Row: {
+          countdown_minutes: number | null
+          created_at: string
+          custom_button_text: string | null
+          id: string
+          primary_color: string | null
+          product_id: string
+          require_address: boolean | null
+          require_birthdate: boolean | null
+          require_cpf: boolean | null
+          require_email_confirmation: boolean | null
+          require_phone: boolean | null
+          show_banners: boolean | null
+          show_countdown: boolean | null
+          show_notifications: boolean | null
+          show_whatsapp_button: boolean | null
+          template: string | null
+          thank_you_url: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          countdown_minutes?: number | null
+          created_at?: string
+          custom_button_text?: string | null
+          id?: string
+          primary_color?: string | null
+          product_id: string
+          require_address?: boolean | null
+          require_birthdate?: boolean | null
+          require_cpf?: boolean | null
+          require_email_confirmation?: boolean | null
+          require_phone?: boolean | null
+          show_banners?: boolean | null
+          show_countdown?: boolean | null
+          show_notifications?: boolean | null
+          show_whatsapp_button?: boolean | null
+          template?: string | null
+          thank_you_url?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          countdown_minutes?: number | null
+          created_at?: string
+          custom_button_text?: string | null
+          id?: string
+          primary_color?: string | null
+          product_id?: string
+          require_address?: boolean | null
+          require_birthdate?: boolean | null
+          require_cpf?: boolean | null
+          require_email_confirmation?: boolean | null
+          require_phone?: boolean | null
+          show_banners?: boolean | null
+          show_countdown?: boolean | null
+          show_notifications?: boolean | null
+          show_whatsapp_button?: boolean | null
+          template?: string | null
+          thank_you_url?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_checkout_configs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_folders: {
         Row: {
           color: string | null
