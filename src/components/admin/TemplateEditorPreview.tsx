@@ -1,9 +1,20 @@
 import { TemplateConfig } from "./TemplateEditor";
-import { CreditCard, Shield, Lock, Clock, User, Mail, Phone, FileText, CheckCircle, Star, Truck, Gift, Zap, Users, TrendingUp, Play, Award } from "lucide-react";
+import { CreditCard, Shield, Lock, Clock, User, Mail, Phone, FileText, CheckCircle, Star, Truck, Gift, Zap, Users, TrendingUp, Play, Award, EyeOff } from "lucide-react";
 
 interface TemplateEditorPreviewProps {
   config: TemplateConfig;
   previewMode: "desktop" | "mobile";
+}
+
+// Placeholder component for disabled blocks
+function DisabledPlaceholder({ name, icon: Icon }: { name: string; icon?: React.ComponentType<{ className?: string }> }) {
+  return (
+    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-100/50 dark:bg-gray-800/30 flex items-center justify-center gap-3 my-2">
+      <EyeOff className="h-4 w-4 text-gray-400" />
+      <span className="text-sm text-gray-400 font-medium">{name}</span>
+      <span className="text-[10px] text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">Desativado</span>
+    </div>
+  );
 }
 
 // Preview para Template Padrão (Kiwify style)
@@ -387,6 +398,9 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
   const isComponentEnabled = (type: string) => 
     components.find(c => c.type === type)?.enabled ?? false;
 
+  const getComponentName = (type: string) => 
+    components.find(c => c.type === type)?.name ?? type;
+
   const borderRadius = settings.borderRadius || "8px";
 
   return (
@@ -398,7 +412,7 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
       }}
     >
       {/* Header */}
-      {isComponentEnabled("header") && (
+      {isComponentEnabled("header") ? (
         <div 
           className="p-4 border-b"
           style={{ 
@@ -423,6 +437,8 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
             </div>
           </div>
         </div>
+      ) : (
+        <DisabledPlaceholder name={getComponentName("header")} />
       )}
 
       <div className={`p-4 ${previewMode === "desktop" ? "flex gap-6" : "space-y-4"}`}>
@@ -441,7 +457,7 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
           </div>
 
           {/* Countdown */}
-          {isComponentEnabled("countdown") && (
+          {isComponentEnabled("countdown") ? (
             <div 
               className="mb-4 p-3 rounded-lg flex items-center gap-2"
               style={{ 
@@ -454,10 +470,12 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
                 Oferta expira em: 14:59
               </span>
             </div>
+          ) : (
+            <DisabledPlaceholder name={getComponentName("countdown")} />
           )}
 
           {/* Buyer Form */}
-          {isComponentEnabled("buyerForm") && (
+          {isComponentEnabled("buyerForm") ? (
             <div 
               className="p-4 mb-4 border"
               style={{ 
@@ -521,10 +539,12 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
                 </div>
               </div>
             </div>
+          ) : (
+            <DisabledPlaceholder name={getComponentName("buyerForm")} />
           )}
 
           {/* Payment Section */}
-          {isComponentEnabled("payment") && (
+          {isComponentEnabled("payment") ? (
             <div 
               className="p-4 border"
               style={{ 
@@ -575,58 +595,66 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
                 {labels.buttonText}
               </button>
             </div>
+          ) : (
+            <DisabledPlaceholder name={getComponentName("payment")} />
           )}
         </div>
 
         {/* Right Column - Product Summary */}
-        {previewMode === "desktop" && isComponentEnabled("productInfo") && (
-          <div className="w-80 shrink-0">
-            <div 
-              className="p-4 border sticky top-4"
-              style={{ 
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-                borderRadius,
-              }}
-            >
-              <h3 className="font-semibold text-sm mb-3" style={{ color: colors.text }}>
-                Resumo do Pedido
-              </h3>
-              
-              {settings.showProductImage && (
-                <div 
-                  className="aspect-video rounded-lg mb-3 flex items-center justify-center"
-                  style={{ 
-                    backgroundColor: colors.background,
-                    borderRadius,
-                  }}
-                >
-                  <FileText className="h-8 w-8" style={{ color: colors.mutedText }} />
-                </div>
-              )}
-              
-              <p className="font-medium text-sm" style={{ color: colors.text }}>
-                Nome do Produto
-              </p>
-              <p className="text-xs mt-1" style={{ color: colors.mutedText }}>
-                Descrição do produto aqui
-              </p>
-              
-              <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.border }}>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm" style={{ color: colors.mutedText }}>Total</span>
-                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
-                    R$ 97,00
-                  </span>
+        {previewMode === "desktop" && (
+          isComponentEnabled("productInfo") ? (
+            <div className="w-80 shrink-0">
+              <div 
+                className="p-4 border sticky top-4"
+                style={{ 
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                  borderRadius,
+                }}
+              >
+                <h3 className="font-semibold text-sm mb-3" style={{ color: colors.text }}>
+                  Resumo do Pedido
+                </h3>
+                
+                {settings.showProductImage && (
+                  <div 
+                    className="aspect-video rounded-lg mb-3 flex items-center justify-center"
+                    style={{ 
+                      backgroundColor: colors.background,
+                      borderRadius,
+                    }}
+                  >
+                    <FileText className="h-8 w-8" style={{ color: colors.mutedText }} />
+                  </div>
+                )}
+                
+                <p className="font-medium text-sm" style={{ color: colors.text }}>
+                  Nome do Produto
+                </p>
+                <p className="text-xs mt-1" style={{ color: colors.mutedText }}>
+                  Descrição do produto aqui
+                </p>
+                
+                <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.border }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm" style={{ color: colors.mutedText }}>Total</span>
+                    <span className="text-xl font-bold" style={{ color: colors.primary }}>
+                      R$ 97,00
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="w-80 shrink-0">
+              <DisabledPlaceholder name={getComponentName("productInfo")} />
+            </div>
+          )
         )}
       </div>
 
       {/* Testimonials */}
-      {isComponentEnabled("testimonials") && (
+      {isComponentEnabled("testimonials") ? (
         <div className="px-4 pb-4">
           <div 
             className="p-4 border"
@@ -671,10 +699,14 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
             </div>
           </div>
         </div>
+      ) : (
+        <div className="px-4 pb-4">
+          <DisabledPlaceholder name={getComponentName("testimonials")} />
+        </div>
       )}
 
       {/* Security Badges */}
-      {isComponentEnabled("securityBadges") && (
+      {isComponentEnabled("securityBadges") ? (
         <div className="px-4 pb-4">
           <div className="flex items-center justify-center gap-4">
             <div className="flex items-center gap-1.5" style={{ color: colors.mutedText }}>
@@ -687,10 +719,14 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
             </div>
           </div>
         </div>
+      ) : (
+        <div className="px-4 pb-4">
+          <DisabledPlaceholder name={getComponentName("securityBadges")} />
+        </div>
       )}
 
       {/* Footer */}
-      {isComponentEnabled("footer") && (
+      {isComponentEnabled("footer") ? (
         <div 
           className="p-4 border-t text-center"
           style={{ borderColor: colors.border }}
@@ -699,6 +735,8 @@ export function TemplateEditorPreview({ config, previewMode }: TemplateEditorPre
             {labels.footerText}
           </p>
         </div>
+      ) : (
+        <DisabledPlaceholder name={getComponentName("footer")} />
       )}
     </div>
   );
