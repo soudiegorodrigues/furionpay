@@ -104,26 +104,33 @@ async function getInterCredentialsFromDb(supabase: any, userId?: string): Promis
   return null;
 }
 
-// Get cached Inter token from database
+// Get cached Inter token from database (check any recent valid token)
 async function getCachedInterToken(supabase: any): Promise<{ token: string; expiresAt: number } | null> {
+  // Get all inter_token_cache entries and find the most recent valid one
   const { data, error } = await supabase
     .from('admin_settings')
-    .select('value')
+    .select('value, updated_at')
     .eq('key', 'inter_token_cache')
-    .is('user_id', null)
-    .single();
+    .order('updated_at', { ascending: false })
+    .limit(10);
   
-  if (error || !data?.value) {
+  if (error || !data || data.length === 0) {
     return null;
   }
   
-  try {
-    const cached = JSON.parse(data.value);
-    if (cached.token && cached.expiresAt) {
-      return cached;
+  const now = Date.now();
+  
+  for (const item of data) {
+    try {
+      const cached = JSON.parse(item.value);
+      // Check if token is still valid with 5 minute buffer
+      if (cached.token && cached.expiresAt && cached.expiresAt > now + 300000) {
+        console.log('Found valid cached token, expires in', Math.round((cached.expiresAt - now) / 1000), 'seconds');
+        return cached;
+      }
+    } catch {
+      continue;
     }
-  } catch {
-    return null;
   }
   
   return null;
@@ -133,16 +140,14 @@ async function getCachedInterToken(supabase: any): Promise<{ token: string; expi
 async function saveInterTokenCache(supabase: any, token: string, expiresAt: number): Promise<void> {
   const cacheValue = JSON.stringify({ token, expiresAt });
   
-  // Upsert the token cache
+  // Insert new token cache entry (use insert to avoid conflicts)
   const { error } = await supabase
     .from('admin_settings')
-    .upsert({
+    .insert({
       key: 'inter_token_cache',
       value: cacheValue,
       user_id: null,
       updated_at: new Date().toISOString(),
-    }, {
-      onConflict: 'key,user_id',
     });
   
   if (error) {
@@ -198,9 +203,9 @@ function createMtlsClient(): Deno.HttpClient {
 async function getInterAccessToken(client: Deno.HttpClient, supabase: any): Promise<string> {
   const now = Date.now();
   
-  // Check database cache first (with 5 minute buffer)
+  // Check database cache first
   const cached = await getCachedInterToken(supabase);
-  if (cached && cached.expiresAt > now + 300000) {
+  if (cached) {
     console.log('Using cached Inter token from database');
     return cached.token;
   }
@@ -235,6 +240,29 @@ async function getInterAccessToken(client: Deno.HttpClient, supabase: any): Prom
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Erro ao obter token Inter:', response.status, errorText);
+    
+    // If rate limited, try to use any cached token even if expired
+    if (response.status === 429) {
+      console.log('Rate limited, checking for any cached token...');
+      const { data } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('key', 'inter_token_cache')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data?.value) {
+        try {
+          const parsed = JSON.parse(data.value);
+          if (parsed.token) {
+            console.log('Using potentially expired cached token due to rate limit');
+            return parsed.token;
+          }
+        } catch {}
+      }
+    }
+    
     throw new Error(`Erro ao obter token Inter: ${response.status} - ${errorText}`);
   }
 
