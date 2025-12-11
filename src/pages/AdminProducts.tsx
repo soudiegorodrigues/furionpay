@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminHeader } from "@/components/AdminSidebar";
@@ -31,6 +32,7 @@ interface ProductFolder {
 }
 
 export default function AdminProducts() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -295,7 +297,12 @@ export default function AdminProducts() {
                   )}
                   {/* Action buttons overlay */}
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="secondary" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="secondary" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => navigate(`/admin/products/${product.id}`)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button 
