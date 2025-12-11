@@ -585,17 +585,17 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
               <CollapsibleContent>
                 <div className="py-2 pl-6 space-y-2">
                   {bannerImageUrl ? (
-                    <div className="relative">
+                    <div className="space-y-2">
                       <img
                         src={bannerImageUrl}
                         alt="Banner"
                         className="w-full h-16 object-cover rounded-lg"
                       />
-                      <div className="absolute top-1 right-1 flex gap-1">
+                      <div className="flex gap-2">
                         <Button
-                          variant="secondary"
+                          variant="outline"
                           size="sm"
-                          className="h-6 text-xs px-2"
+                          className="flex-1 h-8 text-xs"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploadingImage}
                         >
@@ -604,7 +604,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                         <Button
                           variant="destructive"
                           size="sm"
-                          className="h-6 w-6 p-0"
+                          className="h-8 px-3"
                           onClick={() => setBannerImageUrl(null)}
                         >
                           <Trash2 className="h-3 w-3" />
