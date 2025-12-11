@@ -131,44 +131,50 @@ export function ExitIntentPopup({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md text-center">
-        <DialogHeader className="items-center space-y-4">
-          {/* Image or Discount Badge */}
-          {imageUrl ? (
+        {imageUrl ? (
+          // Image-only mode
+          <div className="space-y-4">
             <img 
               src={imageUrl} 
               alt="Oferta" 
-              className="w-full max-h-32 object-cover rounded-lg"
+              className="w-full object-contain rounded-lg cursor-pointer"
+              onClick={handleCtaClick}
             />
-          ) : (
-            <Badge 
-              className="text-lg px-4 py-2 font-bold"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {discountPercentage}% OFF
-            </Badge>
-          )}
-          
-          <DialogTitle className="text-xl font-bold text-center">
-            {title}
-          </DialogTitle>
-          
-          <DialogDescription className="text-center text-muted-foreground">
-            {message}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="mt-4">
-          <Button
-            className="w-full font-semibold text-lg py-6"
-            style={{ backgroundColor: primaryColor }}
-            onClick={handleCtaClick}
-          >
-            {ctaText}
-          </Button>
-          <p className="text-xs text-muted-foreground mt-2">
-            Desconto aplicado automaticamente
-          </p>
-        </div>
+          </div>
+        ) : (
+          // Standard mode with badge, title, message and button
+          <>
+            <DialogHeader className="items-center space-y-4">
+              <Badge 
+                className="text-lg px-4 py-2 font-bold"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {discountPercentage}% OFF
+              </Badge>
+              
+              <DialogTitle className="text-xl font-bold text-center">
+                {title}
+              </DialogTitle>
+              
+              <DialogDescription className="text-center text-muted-foreground">
+                {message}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="mt-4">
+              <Button
+                className="w-full font-semibold text-lg py-6"
+                style={{ backgroundColor: primaryColor }}
+                onClick={handleCtaClick}
+              >
+                {ctaText}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Desconto aplicado automaticamente
+              </p>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

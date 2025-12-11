@@ -705,25 +705,27 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       <img 
                         src={customizations.discountPopupImageUrl} 
                         alt="Popup" 
-                        className="w-full h-20 object-cover rounded-lg mb-2"
+                        className="w-full h-24 object-contain rounded-lg"
                       />
                     ) : (
-                      <Badge 
-                        className="text-sm px-3 py-1 font-bold"
-                        style={{ backgroundColor: customizations.discountPopupColor }}
-                      >
-                        {customizations.discountPopupPercentage}% OFF
-                      </Badge>
+                      <>
+                        <Badge 
+                          className="text-sm px-3 py-1 font-bold"
+                          style={{ backgroundColor: customizations.discountPopupColor }}
+                        >
+                          {customizations.discountPopupPercentage}% OFF
+                        </Badge>
+                        <p className="font-semibold text-sm">{customizations.discountPopupTitle || "Título"}</p>
+                        <p className="text-xs text-muted-foreground">{customizations.discountPopupMessage || "Mensagem"}</p>
+                        <Button 
+                          size="sm" 
+                          className="mt-2"
+                          style={{ backgroundColor: customizations.discountPopupColor }}
+                        >
+                          {customizations.discountPopupCta || "CTA"}
+                        </Button>
+                      </>
                     )}
-                    <p className="font-semibold text-sm">{customizations.discountPopupTitle || "Título"}</p>
-                    <p className="text-xs text-muted-foreground">{customizations.discountPopupMessage || "Mensagem"}</p>
-                    <Button 
-                      size="sm" 
-                      className="mt-2"
-                      style={{ backgroundColor: customizations.discountPopupColor }}
-                    >
-                      {customizations.discountPopupCta || "CTA"}
-                    </Button>
                   </div>
                   
                   {/* Color picker */}
