@@ -107,6 +107,11 @@ export const CheckoutOfferCard = ({
       ? `https://www.${domain}/?u=${userId}&m=${popupModel}` 
       : `${window.location.origin}/?u=${userId}&m=${popupModel}`;
     
+    // Add product name to URL
+    if (productName && productName.trim()) {
+      link += `&product=${encodeURIComponent(productName.trim())}`;
+    }
+    
     if (metaPixelIds.length > 0) {
       const pixelValues = metaPixelIds
         .map(id => metaPixels.find(p => p.id === id)?.pixelId)
