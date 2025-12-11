@@ -11,8 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Copy, LayoutTemplate, Check, X, Settings2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, LayoutTemplate, Check, X, Settings2, Eye } from "lucide-react";
 import { TemplateEditor } from "./TemplateEditor";
+import { TemplateEditorPreview } from "./TemplateEditorPreview";
+import type { TemplateConfig, ComponentConfig } from "./TemplateEditor";
 
 interface CheckoutTemplate {
   id: string;
@@ -32,6 +34,7 @@ export function TemplatesSection() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<CheckoutTemplate | null>(null);
   const [editorTemplate, setEditorTemplate] = useState<CheckoutTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<CheckoutTemplate | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -178,6 +181,56 @@ export function TemplatesSection() {
     toast.success("Código copiado!");
   };
 
+  const getTemplateConfig = (layoutConfig: Record<string, unknown>): TemplateConfig => {
+    const defaultConfig: TemplateConfig = {
+      type: "custom",
+      colors: {
+        primary: "#16A34A",
+        background: "#f3f4f6",
+        cardBackground: "#ffffff",
+        text: "#1f2937",
+        mutedText: "#6b7280",
+        border: "#e5e7eb",
+        buttonText: "#ffffff",
+      },
+      components: [
+        { id: "header", type: "header", name: "Cabeçalho", enabled: true, config: {} },
+        { id: "product", type: "productInfo", name: "Informações do Produto", enabled: true, config: {} },
+        { id: "countdown", type: "countdown", name: "Cronômetro", enabled: false, config: { minutes: 15 } },
+        { id: "buyer", type: "buyerForm", name: "Formulário do Comprador", enabled: true, config: {} },
+        { id: "payment", type: "payment", name: "Pagamento PIX", enabled: true, config: {} },
+        { id: "testimonials", type: "testimonials", name: "Depoimentos", enabled: false, config: { items: [] } },
+        { id: "security", type: "securityBadges", name: "Selos de Segurança", enabled: true, config: {} },
+        { id: "footer", type: "footer", name: "Rodapé", enabled: true, config: {} },
+      ],
+      labels: {
+        checkoutTitle: "Finalizar Compra",
+        checkoutSubtitle: "",
+        buyerSectionTitle: "Dados do comprador",
+        paymentSectionTitle: "Forma de pagamento",
+        buttonText: "Pagar com PIX",
+        footerText: "Pagamento processado com segurança",
+        securityBadgeText: "Pagamento Seguro",
+      },
+      settings: {
+        showLogo: true,
+        logoUrl: "",
+        showProductImage: true,
+        borderRadius: "8px",
+      },
+    };
+
+    const existingConfig = layoutConfig as Partial<TemplateConfig>;
+    return {
+      ...defaultConfig,
+      ...existingConfig,
+      colors: { ...defaultConfig.colors, ...(existingConfig.colors || {}) },
+      labels: { ...defaultConfig.labels, ...(existingConfig.labels || {}) },
+      settings: { ...defaultConfig.settings, ...(existingConfig.settings || {}) },
+      components: existingConfig.components || defaultConfig.components,
+    } as TemplateConfig;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -297,17 +350,25 @@ export function TemplatesSection() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Preview placeholder */}
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border">
+                <div 
+                  className="aspect-[4/3] bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border cursor-pointer hover:border-primary/50 hover:bg-muted/80 transition-all group"
+                  onClick={() => setPreviewTemplate(template)}
+                >
                   {template.preview_image_url ? (
-                    <img 
-                      src={template.preview_image_url} 
-                      alt={template.name}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
+                    <div className="relative w-full h-full">
+                      <img 
+                        src={template.preview_image_url} 
+                        alt={template.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                        <Eye className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
                   ) : (
-                    <div className="text-center text-muted-foreground">
-                      <LayoutTemplate className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px]">Preview não disponível</span>
+                    <div className="text-center text-muted-foreground group-hover:text-primary transition-colors">
+                      <Eye className="h-8 w-8 mx-auto mb-2 opacity-50 group-hover:opacity-100" />
+                      <span className="text-xs font-medium">Clique para visualizar</span>
                     </div>
                   )}
                 </div>
@@ -330,7 +391,17 @@ export function TemplatesSection() {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setPreviewTemplate(template)}
+                  >
+                    <Eye className="h-3.5 w-3.5 mr-1" />
+                    Preview
+                  </Button>
+                  
                   <Button
                     variant="default"
                     size="sm"
@@ -446,6 +517,29 @@ export function TemplatesSection() {
             <Button onClick={handleUpdate} className="w-full" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewTemplate} onOpenChange={(open) => !open && setPreviewTemplate(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Preview: {previewTemplate?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Visualização do template de checkout
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 border rounded-lg overflow-hidden">
+            {previewTemplate && (
+              <TemplateEditorPreview 
+                config={getTemplateConfig(previewTemplate.layout_config)} 
+                previewMode="desktop" 
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
