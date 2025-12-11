@@ -321,19 +321,7 @@ export default function AdminProducts() {
         </div>
 
         {/* Products Grid */}
-        {isLoadingProducts ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="aspect-square bg-muted animate-pulse" />
-                <CardContent className="p-4 space-y-2">
-                  <div className="h-5 bg-muted rounded animate-pulse" />
-                  <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredProducts.length === 0 ? (
+        {isLoadingProducts ? null : filteredProducts.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
