@@ -303,17 +303,6 @@ export function CheckoutPreviewMini({
   // Render Padrão (Default Kiwify-style)
   return (
     <div className="bg-gray-50 min-h-[500px]">
-      {/* Banner */}
-      {showBanner && bannerImageUrl && (
-        <div className="w-full">
-          <img 
-            src={bannerImageUrl} 
-            alt="Banner" 
-            className="w-full h-auto object-cover"
-          />
-        </div>
-      )}
-
       {/* Countdown */}
       {showCountdown && (
         <div 
@@ -323,6 +312,17 @@ export function CheckoutPreviewMini({
           <Clock className="h-4 w-4" />
           <span className="font-bold">{countdownMinutes}:00</span>
           <span className="text-sm">Oferta por tempo limitado</span>
+        </div>
+      )}
+
+      {/* Banner */}
+      {showBanner && bannerImageUrl && (
+        <div className="w-full">
+          <img 
+            src={bannerImageUrl} 
+            alt="Banner" 
+            className="w-full h-auto object-cover"
+          />
         </div>
       )}
 
