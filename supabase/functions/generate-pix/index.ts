@@ -111,38 +111,42 @@ async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
   return userData.value;
 }
 
-async function getProductNameFromDatabase(userId?: string): Promise<string> {
+async function getProductNameFromDatabase(userId?: string, popupModel?: string): Promise<string> {
   const supabase = getSupabaseClient();
   const DEFAULT_PRODUCT_NAME = 'Anônimo';
   
-  // First try user-specific settings
-  if (userId) {
-    const { data: userData, error: userError } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('key', 'product_name')
+  // First try to get product_name from checkout_offers using userId + popup_model
+  if (userId && popupModel) {
+    const { data: offerData, error: offerError } = await supabase
+      .from('checkout_offers')
+      .select('product_name')
       .eq('user_id', userId)
-      .single();
+      .eq('popup_model', popupModel)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
     
-    // Only use if value exists and is not empty
-    if (!userError && userData?.value && userData.value.trim() !== '') {
-      console.log('Using user-specific product name:', userData.value);
-      return userData.value;
+    if (!offerError && offerData?.product_name && offerData.product_name.trim() !== '') {
+      console.log('Using product name from checkout offer:', offerData.product_name);
+      return offerData.product_name;
     }
   }
   
-  // Fall back to global settings
-  const { data, error } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'product_name')
-    .is('user_id', null)
-    .single();
-  
-  // Only use global if value exists and is not empty
-  if (!error && data?.value && data.value.trim() !== '') {
-    console.log('Using global product name:', data.value);
-    return data.value;
+  // Fallback: try to get any checkout offer from this user with product_name
+  if (userId) {
+    const { data: anyOfferData, error: anyOfferError } = await supabase
+      .from('checkout_offers')
+      .select('product_name')
+      .eq('user_id', userId)
+      .not('product_name', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (!anyOfferError && anyOfferData?.product_name && anyOfferData.product_name.trim() !== '') {
+      console.log('Using product name from user checkout offer (fallback):', anyOfferData.product_name);
+      return anyOfferData.product_name;
+    }
   }
   
   console.log('Using default product name:', DEFAULT_PRODUCT_NAME);
@@ -264,8 +268,8 @@ serve(async (req) => {
 
     console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
 
-    // Get product name from database (user-specific)
-    const productName = await getProductNameFromDatabase(userId);
+    // Get product name from checkout_offers (by userId + popupModel)
+    const productName = await getProductNameFromDatabase(userId, popupModel);
     console.log('Product name:', productName);
 
     if (!amount || amount <= 0) {

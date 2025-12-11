@@ -129,7 +129,16 @@ export const CheckoutOfferCard = ({
   };
 
   const handleSave = async () => {
-    if (productName && isProductNameBlocked(productName)) {
+    if (!productName || !productName.trim()) {
+      toast({
+        title: "Nome do produto obrigatório",
+        description: "Por favor, informe o nome do produto que aparecerá no gateway de pagamento.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isProductNameBlocked(productName)) {
       toast({
         title: "Nome de produto bloqueado",
         description: "O nome do produto contém palavras não permitidas.",
@@ -365,16 +374,17 @@ export const CheckoutOfferCard = ({
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Nome do Produto
+              Nome do Produto <span className="text-destructive">*</span>
             </Label>
             <Input 
-              placeholder="Anônimo (padrão)" 
+              placeholder="Ex: Ebook, Curso, Produto Digital" 
               value={productName} 
               onChange={(e) => setProductName(e.target.value)}
               disabled={!isEditing}
+              required
             />
             <p className="text-xs text-muted-foreground">
-              Nome que aparecerá no gateway de pagamento
+              Nome que aparecerá no gateway de pagamento (obrigatório)
             </p>
           </div>
 
