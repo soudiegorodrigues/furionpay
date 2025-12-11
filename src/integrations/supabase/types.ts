@@ -190,6 +190,48 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_default: boolean
+          is_published: boolean
+          layout_config: Json
+          name: string
+          preview_image_url: string | null
+          template_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          is_published?: boolean
+          layout_config?: Json
+          name: string
+          preview_image_url?: string | null
+          template_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          is_published?: boolean
+          layout_config?: Json
+          name?: string
+          preview_image_url?: string | null
+          template_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempt_count: number
@@ -380,6 +422,7 @@ export type Database = {
           show_security_badges: boolean | null
           show_whatsapp_button: boolean | null
           template: string | null
+          template_id: string | null
           thank_you_url: string | null
           updated_at: string
           user_id: string
@@ -412,6 +455,7 @@ export type Database = {
           show_security_badges?: boolean | null
           show_whatsapp_button?: boolean | null
           template?: string | null
+          template_id?: string | null
           thank_you_url?: string | null
           updated_at?: string
           user_id: string
@@ -444,6 +488,7 @@ export type Database = {
           show_security_badges?: boolean | null
           show_whatsapp_button?: boolean | null
           template?: string | null
+          template_id?: string | null
           thank_you_url?: string | null
           updated_at?: string
           user_id?: string
@@ -455,6 +500,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: true
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_checkout_configs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_templates"
             referencedColumns: ["id"]
           },
         ]
