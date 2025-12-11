@@ -1009,8 +1009,8 @@ function OffersSection({ productId, userId }: { productId: string; userId: strin
   });
 
   const generateLink = (offer: ProductOffer) => {
-    const domain = offer.domain || selectedDomain || "pay.furionpay.com.br";
-    return `https://${domain}/${offer.offer_code}`;
+    // Use FurionPay checkout route - external domains require DNS configuration
+    return `${window.location.origin}/checkout/${offer.offer_code}`;
   };
 
   const copyLink = (offer: ProductOffer) => {
