@@ -73,14 +73,12 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [primaryColor, setPrimaryColor] = useState("#16A34A");
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   
-  // Separate states for section expansion (visual toggle)
-  const [expandedSections, setExpandedSections] = useState({
-    banner: true,
-    countdown: true,
-    whatsapp: true,
-    testimonials: true,
-    discountPopup: true,
-  });
+  // Accordion state - only one section open at a time, all start closed
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  
+  const toggleSection = (section: string) => {
+    setOpenSection(prev => prev === section ? null : section);
+  };
   
   const [customizations, setCustomizations] = useState({
     showBanner: false,
@@ -517,8 +515,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
             {/* Countdown */}
             <Collapsible 
-              open={customizations.showCountdown && expandedSections.countdown}
-              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, countdown: isOpen }))}
+              open={customizations.showCountdown && openSection === "countdown"}
+              onOpenChange={() => customizations.showCountdown && toggleSection("countdown")}
             >
               <div className="flex items-center justify-between py-2 border-b">
                 <CollapsibleTrigger asChild>
@@ -531,7 +529,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     {customizations.showCountdown && (
                       <ChevronDown className={cn(
                         "h-3 w-3 text-muted-foreground transition-transform",
-                        expandedSections.countdown && "rotate-180"
+                        openSection === "countdown" && "rotate-180"
                       )} />
                     )}
                   </div>
@@ -560,8 +558,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
             {/* Banner */}
             <Collapsible 
-              open={customizations.showBanner && expandedSections.banner}
-              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, banner: isOpen }))}
+              open={customizations.showBanner && openSection === "banner"}
+              onOpenChange={() => customizations.showBanner && toggleSection("banner")}
             >
               <div className="flex items-center justify-between py-2 border-b">
                 <CollapsibleTrigger asChild>
@@ -574,7 +572,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     {customizations.showBanner && (
                       <ChevronDown className={cn(
                         "h-3 w-3 text-muted-foreground transition-transform",
-                        expandedSections.banner && "rotate-180"
+                        openSection === "banner" && "rotate-180"
                       )} />
                     )}
                   </div>
@@ -637,8 +635,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
             {/* Testimonials */}
             <Collapsible 
-              open={customizations.showTestimonials && expandedSections.testimonials}
-              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, testimonials: isOpen }))}
+              open={customizations.showTestimonials && openSection === "testimonials"}
+              onOpenChange={() => customizations.showTestimonials && toggleSection("testimonials")}
             >
               <div className="flex items-center justify-between py-2 border-b">
                 <CollapsibleTrigger asChild>
@@ -651,7 +649,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     {customizations.showTestimonials && (
                       <ChevronDown className={cn(
                         "h-3 w-3 text-muted-foreground transition-transform",
-                        expandedSections.testimonials && "rotate-180"
+                        openSection === "testimonials" && "rotate-180"
                       )} />
                     )}
                   </div>
@@ -670,8 +668,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
             {/* Discount Popup */}
             <Collapsible 
-              open={customizations.showDiscountPopup && expandedSections.discountPopup}
-              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, discountPopup: isOpen }))}
+              open={customizations.showDiscountPopup && openSection === "discountPopup"}
+              onOpenChange={() => customizations.showDiscountPopup && toggleSection("discountPopup")}
             >
               <div className="flex items-center justify-between py-2 border-b">
                 <CollapsibleTrigger asChild>
@@ -684,7 +682,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     {customizations.showDiscountPopup && (
                       <ChevronDown className={cn(
                         "h-3 w-3 text-muted-foreground transition-transform",
-                        expandedSections.discountPopup && "rotate-180"
+                        openSection === "discountPopup" && "rotate-180"
                       )} />
                     )}
                   </div>
@@ -693,7 +691,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   checked={customizations.showDiscountPopup}
                   onCheckedChange={(v) => {
                     setCustomizations(p => ({ ...p, showDiscountPopup: v }));
-                    if (v) setExpandedSections(p => ({ ...p, discountPopup: true }));
+                    if (v) setOpenSection("discountPopup");
                   }}
                 />
               </div>
@@ -864,8 +862,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
             {/* WhatsApp Button */}
             <Collapsible 
-              open={customizations.showWhatsappButton && expandedSections.whatsapp}
-              onOpenChange={(isOpen) => setExpandedSections(p => ({ ...p, whatsapp: isOpen }))}
+              open={customizations.showWhatsappButton && openSection === "whatsapp"}
+              onOpenChange={() => customizations.showWhatsappButton && toggleSection("whatsapp")}
             >
               <div className="flex items-center justify-between py-2">
                 <CollapsibleTrigger asChild>
@@ -878,7 +876,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     {customizations.showWhatsappButton && (
                       <ChevronDown className={cn(
                         "h-3 w-3 text-muted-foreground transition-transform",
-                        expandedSections.whatsapp && "rotate-180"
+                        openSection === "whatsapp" && "rotate-180"
                       )} />
                     )}
                   </div>
