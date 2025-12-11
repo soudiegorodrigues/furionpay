@@ -238,10 +238,15 @@ export default function AdminProductEdit() {
           </div>
         </div>
 
-        {/* Main content with sidebar */}
+        {/* Main content with sidebar on the right */}
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Navigation */}
-          <div className="lg:w-80 shrink-0">
+          {/* Content Area */}
+          <div className="flex-1 min-w-0 order-2 lg:order-1">
+            {renderSectionContent()}
+          </div>
+
+          {/* Sidebar Navigation - Right side */}
+          <div className="lg:w-80 shrink-0 order-1 lg:order-2">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Navegação</CardTitle>
@@ -277,11 +282,6 @@ export default function AdminProductEdit() {
                 </nav>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Content Area */}
-          <div className="flex-1 min-w-0">
-            {renderSectionContent()}
           </div>
         </div>
       </main>
