@@ -70,28 +70,75 @@ export function AdminLayoutWrapper() {
   // Show pending approval screen for non-approved users (except admins)
   if (!isApproved && !isAdmin && !loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500/10 flex items-center justify-center">
-              <Clock className="w-8 h-8 text-yellow-500" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        
+        <Card className="max-w-md w-full relative z-10 border-border/50 shadow-2xl backdrop-blur-sm bg-card/95">
+          <CardHeader className="text-center pb-2">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <img 
+                src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} 
+                alt="FurionPay" 
+                className="h-10 w-auto object-contain" 
+              />
             </div>
-            <CardTitle className="text-xl">Aguardando Aprovação</CardTitle>
-            <CardDescription className="text-base">
-              Sua conta foi criada com sucesso! No entanto, você precisa aguardar a aprovação de um administrador para acessar o sistema.
+            
+            {/* Animated clock icon */}
+            <div className="relative w-20 h-20 mx-auto mb-6">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400/20 to-orange-500/20 animate-pulse" />
+              <div className="absolute inset-1 rounded-full bg-gradient-to-br from-yellow-400/10 to-orange-500/10" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-500/25">
+                  <Clock className="w-7 h-7 text-white animate-[spin_8s_linear_infinite]" />
+                </div>
+              </div>
+            </div>
+            
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              Aguardando Aprovação
+            </CardTitle>
+            <CardDescription className="text-base mt-3 leading-relaxed">
+              Sua conta foi criada com sucesso! Você receberá um email quando sua conta for aprovada por um administrador.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center text-sm text-muted-foreground">
-              <p>Email: <span className="font-medium text-foreground">{user?.email}</span></p>
+          
+          <CardContent className="space-y-6 pt-2">
+            {/* User info card */}
+            <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-semibold text-lg">
+                    {user?.email?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Conta registrada</p>
+                  <p className="font-medium text-sm truncate">{user?.email}</p>
+                </div>
+              </div>
             </div>
+            
+            {/* Status indicator */}
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+              </span>
+              Status: Pendente
+            </div>
+            
             <Button 
               variant="outline" 
-              className="w-full" 
+              className="w-full h-11 font-medium hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-all duration-200" 
               onClick={handleLogout}
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Sair
+              Sair da conta
             </Button>
           </CardContent>
         </Card>
