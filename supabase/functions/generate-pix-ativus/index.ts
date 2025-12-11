@@ -240,9 +240,11 @@ serve(async (req) => {
     const customerPhone = generateRandomPhone();
 
     // Build request payload according to Ativus Hub API spec
+    // Note: 'ip' field is required according to documentation
     const payload = {
       amount: amount,
       id_seller: `seller_${userId || 'default'}`,
+      ip: "177.38.123.45", // Client IP - required field
       customer: {
         name: finalDonorName,
         email: customerEmail,
