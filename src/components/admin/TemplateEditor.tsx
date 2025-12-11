@@ -157,6 +157,8 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
   const [activeTab, setActiveTab] = useState<"components" | "config">("components");
   const [draggedComponent, setDraggedComponent] = useState<string | null>(null);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [showFullPreview, setShowFullPreview] = useState(false);
+  const [fullPreviewMode, setFullPreviewMode] = useState<"desktop" | "mobile">("desktop");
   
   const [config, setConfig] = useState<TemplateConfig>(() => {
     const existingConfig = template.layout_config as Partial<TemplateConfig>;
@@ -341,6 +343,7 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
 
           <Button 
             variant="outline"
+            onClick={() => setShowFullPreview(true)}
             className="border-white/20 text-white h-9 px-4 text-sm hover:bg-white/10"
           >
             <Eye className="h-4 w-4 mr-2" />
@@ -670,6 +673,79 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
           </ScrollArea>
         </div>
       </div>
+
+      {/* Full Screen Preview Modal */}
+      {showFullPreview && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex flex-col">
+          {/* Modal Header */}
+          <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-black/50 shrink-0">
+            <div className="flex items-center gap-4">
+              <span className="text-white font-medium">Preview: {template.name}</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Preview Mode Toggle */}
+              <div className="flex items-center bg-white/10 rounded-lg p-1">
+                <button
+                  onClick={() => setFullPreviewMode("desktop")}
+                  className={cn(
+                    "p-2 rounded-md transition-all",
+                    fullPreviewMode === "desktop"
+                      ? "bg-white/20 text-white"
+                      : "text-white/40 hover:text-white"
+                  )}
+                >
+                  <Monitor className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setFullPreviewMode("mobile")}
+                  className={cn(
+                    "p-2 rounded-md transition-all",
+                    fullPreviewMode === "mobile"
+                      ? "bg-white/20 text-white"
+                      : "text-white/40 hover:text-white"
+                  )}
+                >
+                  <Smartphone className="h-4 w-4" />
+                </button>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowFullPreview(false)}
+                className="h-9 w-9 text-white/60 hover:text-white hover:bg-white/10"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Preview Content */}
+          <div className="flex-1 overflow-auto p-8 flex items-start justify-center">
+            <div 
+              className={cn(
+                "transition-all duration-300 shadow-2xl",
+                fullPreviewMode === "mobile" 
+                  ? "w-[375px] rounded-[2.5rem] border-[14px] border-zinc-800 bg-zinc-800" 
+                  : "w-full max-w-5xl rounded-xl overflow-hidden"
+              )}
+            >
+              {fullPreviewMode === "mobile" && (
+                <div className="h-6 bg-zinc-800 flex items-center justify-center">
+                  <div className="w-20 h-5 bg-black rounded-full" />
+                </div>
+              )}
+              <div className={cn(
+                "bg-white overflow-hidden",
+                fullPreviewMode === "mobile" ? "rounded-b-[2rem]" : "rounded-xl"
+              )}>
+                <TemplateEditorPreview config={config} previewMode={fullPreviewMode} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
