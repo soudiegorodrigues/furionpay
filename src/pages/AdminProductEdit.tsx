@@ -52,6 +52,7 @@ interface Product {
   image_url: string | null;
   is_active: boolean;
   folder_id: string | null;
+  product_code: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -433,12 +434,12 @@ function ProductDetailsSection({
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">ID do Produto</p>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm truncate">{product.id}</p>
+                      <p className="font-mono text-lg font-bold">{product.product_code || product.id.substring(0, 8)}</p>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className="h-6 w-6 shrink-0"
-                        onClick={() => copyToClipboard(product.id)}
+                        onClick={() => copyToClipboard(product.product_code || product.id)}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
