@@ -513,6 +513,36 @@ export function TemplateEditor({ template, onClose }: TemplateEditorProps) {
             {/* Config Tab */}
             {activeTab === "config" && (
               <div className="p-4 space-y-6">
+                {/* Template Type Selector */}
+                <div>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
+                    Estilo do Template
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: "padrao", name: "Padrão", desc: "Estilo Kiwify" },
+                      { id: "vega", name: "Vega", desc: "Dark Premium" },
+                      { id: "afilia", name: "Afilia", desc: "E-commerce" },
+                      { id: "multistep", name: "Multistep", desc: "Por etapas" },
+                    ].map((style) => (
+                      <button
+                        key={style.id}
+                        onClick={() => setConfig(prev => ({ ...prev, type: style.id }))}
+                        className={cn(
+                          "p-3 rounded-lg border text-left transition-all",
+                          config.type === style.id || (config.type === "custom" && style.id === "padrao")
+                            ? "border-emerald-500 bg-emerald-500/10"
+                            : "border-white/10 bg-white/5 hover:border-white/20"
+                        )}
+                      >
+                        <p className="text-sm font-medium text-white">{style.name}</p>
+                        <p className="text-[10px] text-white/50">{style.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Colors */}
                 <div>
                   <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3">
