@@ -4,3 +4,4 @@ export * from "./CheckoutTemplateVega";
 export * from "./CheckoutTemplateAfilia";
 export * from "./CheckoutTemplateMultistep";
 export * from "./CheckoutPixPayment";
+export * from "./CheckoutBuilder";
