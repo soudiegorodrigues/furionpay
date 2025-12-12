@@ -130,6 +130,26 @@ export default function PublicCheckout() {
     enabled: !!offer?.product_id,
   });
 
+  // Back redirect handler
+  useEffect(() => {
+    const backRedirectUrl = config?.back_redirect_url;
+    if (!backRedirectUrl) return;
+
+    // Handle browser back button
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.location.href = backRedirectUrl;
+    };
+
+    // Push a state to enable back button detection
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [config]);
+
   // Countdown timer
   useEffect(() => {
     if (config?.show_countdown && config.countdown_minutes) {
