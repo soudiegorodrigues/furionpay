@@ -90,7 +90,7 @@ const AdminDashboard = () => {
         .from('fee_configs')
         .select('pix_percentage, pix_fixed')
         .eq('is_default', true)
-        .single();
+        .maybeSingle();
       if (feeData) {
         setFeeConfig(feeData as FeeConfig);
       }
@@ -269,7 +269,8 @@ const AdminDashboard = () => {
   const filteredStats = useMemo(() => {
     const generated = filteredTransactions.length;
     const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
-    const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    // Calculate net amount (after fee deduction) for ALL transactions (estimated)
+    const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
     // Calculate net amount (after fee deduction) for paid transactions
     const amountPaid = filteredTransactions
       .filter(tx => tx.status === 'paid')
