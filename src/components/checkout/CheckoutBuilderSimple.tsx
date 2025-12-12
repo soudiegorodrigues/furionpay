@@ -39,6 +39,11 @@ import {
   ChevronDown,
   Trash2,
   Video,
+  MapPin,
+  Phone,
+  Calendar,
+  FileText,
+  Mail,
 } from "lucide-react";
 
 interface CheckoutBuilderSimpleProps {
@@ -81,6 +86,15 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     setOpenSection(prev => prev === section ? null : section);
   };
   
+  // Required fields state
+  const [requiredFields, setRequiredFields] = useState({
+    address: false,
+    phone: false,
+    birthdate: false,
+    cpf: false,
+    emailConfirmation: false,
+  });
+
   const [customizations, setCustomizations] = useState({
     showBanner: false,
     showCountdown: false,
@@ -151,6 +165,13 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       setSelectedTemplateId(config.template_id || null);
       setPrimaryColor(config.primary_color || "#16A34A");
       setBannerImageUrl(config.header_logo_url || null);
+      setRequiredFields({
+        address: config.require_address || false,
+        phone: config.require_phone || false,
+        birthdate: config.require_birthdate || false,
+        cpf: config.require_cpf || false,
+        emailConfirmation: config.require_email_confirmation || false,
+      });
       setCustomizations({
         showBanner: config.show_banners || false,
         showCountdown: config.show_countdown || false,
@@ -282,6 +303,13 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         template: templateString, // Also save template name for backwards compatibility
         primary_color: primaryColor,
         header_logo_url: bannerImageUrl, // Save banner URL
+        // Required fields
+        require_address: requiredFields.address,
+        require_phone: requiredFields.phone,
+        require_birthdate: requiredFields.birthdate,
+        require_cpf: requiredFields.cpf,
+        require_email_confirmation: requiredFields.emailConfirmation,
+        // Customizations
         show_banners: customizations.showBanner,
         show_countdown: customizations.showCountdown,
         countdown_minutes: customizations.countdownMinutes,
@@ -322,7 +350,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     return () => {
       delete (window as any).__checkoutSaveConfig;
     };
-  }, [selectedTemplateId, primaryColor, customizations, bannerImageUrl]);
+  }, [selectedTemplateId, primaryColor, customizations, bannerImageUrl, requiredFields]);
 
   const colors = [
     "#16a34a", "#dc2626", "#ea580c", "#eab308", "#06b6d4", "#3b82f6",
@@ -503,7 +531,88 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
           </CardContent>
         </Card>
 
-        {/* Customizations */}
+        {/* Required Fields */}
+        <Card className="border-l-4 border-l-primary/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm text-primary">Campos obrigatórios no Checkout</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-2 block">Itens Obrigatórios</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRequiredFields(p => ({ ...p, address: !p.address }))}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
+                    requiredFields.address
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-muted border-border"
+                  )}
+                >
+                  <MapPin className="h-4 w-4" />
+                  Endereço
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRequiredFields(p => ({ ...p, phone: !p.phone }))}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
+                    requiredFields.phone
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-muted border-border"
+                  )}
+                >
+                  <Phone className="h-4 w-4" />
+                  Telefone
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRequiredFields(p => ({ ...p, birthdate: !p.birthdate }))}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
+                    requiredFields.birthdate
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-muted border-border"
+                  )}
+                >
+                  <Calendar className="h-4 w-4" />
+                  Data de nascimento
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRequiredFields(p => ({ ...p, cpf: !p.cpf }))}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
+                    requiredFields.cpf
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-muted border-border"
+                  )}
+                >
+                  <FileText className="h-4 w-4" />
+                  CPF
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between py-2 border-t">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm">Confirmação de email</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  O usuário estará condicionado a repetir o email informado em um campo específico para sua confirmação.
+                </p>
+              </div>
+              <Switch
+                checked={requiredFields.emailConfirmation}
+                onCheckedChange={(v) => setRequiredFields(p => ({ ...p, emailConfirmation: v }))}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
