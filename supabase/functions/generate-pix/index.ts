@@ -86,8 +86,32 @@ async function isAcquirerEnabled(acquirer: string): Promise<boolean> {
   return enabled;
 }
 
+async function getDefaultAcquirer(): Promise<string> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'default_acquirer')
+    .is('user_id', null)
+    .maybeSingle();
+  
+  if (error || !data?.value) {
+    console.log('Default acquirer not configured, using spedpay');
+    return 'spedpay';
+  }
+  
+  console.log('Platform default acquirer:', data.value);
+  return data.value;
+}
+
 async function getUserAcquirer(userId?: string): Promise<string> {
-  if (!userId) return 'spedpay';
+  // First, get the platform default acquirer
+  const defaultAcquirer = await getDefaultAcquirer();
+  
+  if (!userId) {
+    console.log('No userId, using platform default acquirer:', defaultAcquirer);
+    return defaultAcquirer;
+  }
   
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -98,8 +122,8 @@ async function getUserAcquirer(userId?: string): Promise<string> {
     .maybeSingle();
   
   if (error || !data?.value) {
-    console.log('User acquirer not configured, defaulting to spedpay');
-    return 'spedpay';
+    console.log('User acquirer not configured, using platform default:', defaultAcquirer);
+    return defaultAcquirer;
   }
   
   console.log('User acquirer:', data.value);
