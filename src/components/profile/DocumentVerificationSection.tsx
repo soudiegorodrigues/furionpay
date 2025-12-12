@@ -411,7 +411,7 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
           {/* Owner Documents Section (PJ only) */}
           {personType === "pj" && (
             <>
-              <Label className="mt-6 block">Documentos do Dono da Empresa</Label>
+              <Label className="mt-6 block">Proprietário da Empresa</Label>
               <div className="grid gap-4 sm:grid-cols-3">
                 {getRequiredUploads().filter(u => u.group === "dono").map((upload) => {
                   const uploadedFile = uploadedFiles.find(uf => uf.side === upload.side);
