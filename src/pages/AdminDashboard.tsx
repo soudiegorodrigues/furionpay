@@ -277,12 +277,23 @@ const AdminDashboard = () => {
     return { generated, paid, amountPaid };
   }, [transactions]);
 
-  // Month's stats
+  // Month's stats (using paid_at, Brazil timezone)
   const monthStats = useMemo(() => {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthTransactions = transactions.filter(tx => new Date(tx.created_at) >= startOfMonth);
-    const amountPaid = monthTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+    // Get current month/year in Brazil timezone
+    const brazilNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const currentMonth = brazilNow.getMonth();
+    const currentYear = brazilNow.getFullYear();
+    
+    // Filter transactions PAID this month (using paid_at, Brazil time)
+    const monthPaid = transactions.filter(tx => {
+      if (tx.status !== 'paid' || !tx.paid_at) return false;
+      const paidDate = new Date(tx.paid_at);
+      const paidBrazil = new Date(paidDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      return paidBrazil.getMonth() === currentMonth && paidBrazil.getFullYear() === currentYear;
+    });
+    
+    const amountPaid = monthPaid.reduce((sum, tx) => sum + tx.amount, 0);
     return { amountPaid };
   }, [transactions]);
 
