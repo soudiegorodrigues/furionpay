@@ -40,6 +40,15 @@ interface WithdrawalHistory {
   rejection_reason: string | null;
 }
 
+interface FeeConfig {
+  id: string;
+  name: string;
+  pix_percentage: number;
+  pix_fixed: number;
+  saque_percentage: number;
+  saque_fixed: number;
+}
+
 const AdminFinanceiro = () => {
   const { user, isAdmin } = useAdminAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -52,6 +61,7 @@ const AdminFinanceiro = () => {
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
+  const [userFeeConfig, setUserFeeConfig] = useState<FeeConfig | null>(null);
   const [bankData, setBankData] = useState<BankAccountData>({
     bank: '',
     pixKeyType: '',
@@ -498,11 +508,53 @@ const AdminFinanceiro = () => {
     }
   };
 
+  const loadUserFeeConfig = async () => {
+    try {
+      // First try to get user's specific fee config
+      const { data: userSettings } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('key', 'user_fee_config')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      let feeConfigId = userSettings?.value;
+
+      if (feeConfigId) {
+        // Load specific fee config
+        const { data: feeConfig } = await supabase
+          .from('fee_configs')
+          .select('id, name, pix_percentage, pix_fixed, saque_percentage, saque_fixed')
+          .eq('id', feeConfigId)
+          .maybeSingle();
+
+        if (feeConfig) {
+          setUserFeeConfig(feeConfig);
+          return;
+        }
+      }
+
+      // Fallback to default fee config
+      const { data: defaultConfig } = await supabase
+        .from('fee_configs')
+        .select('id, name, pix_percentage, pix_fixed, saque_percentage, saque_fixed')
+        .eq('is_default', true)
+        .maybeSingle();
+
+      if (defaultConfig) {
+        setUserFeeConfig(defaultConfig);
+      }
+    } catch (error) {
+      console.error('Error loading user fee config:', error);
+    }
+  };
+
   useEffect(() => {
     loadTransactions();
     loadAvailableBalance();
     loadWithdrawalHistory();
     loadBankAccountData();
+    loadUserFeeConfig();
     const interval = setInterval(() => {
       loadTransactions();
       loadAvailableBalance();
@@ -1148,6 +1200,11 @@ const AdminFinanceiro = () => {
               <CardTitle className="flex items-center gap-2">
                 <Percent className="h-5 w-5 text-primary" />
                 Taxas
+                {userFeeConfig && (
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {userFeeConfig.name}
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1158,8 +1215,12 @@ const AdminFinanceiro = () => {
                     <p className="text-sm text-muted-foreground">Taxa por transação</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">4,99%</p>
-                    <p className="text-sm text-muted-foreground">+ R$ 0,00</p>
+                    <p className="font-bold">
+                      {userFeeConfig ? `${userFeeConfig.pix_percentage.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}%` : '—'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      + R$ {userFeeConfig ? userFeeConfig.pix_fixed.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
@@ -1168,8 +1229,12 @@ const AdminFinanceiro = () => {
                     <p className="text-sm text-muted-foreground">Por saque realizado</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">0%</p>
-                    <p className="text-sm text-muted-foreground">+ R$ 4,99</p>
+                    <p className="font-bold">
+                      {userFeeConfig ? `${userFeeConfig.saque_percentage.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}%` : '—'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      + R$ {userFeeConfig ? userFeeConfig.saque_fixed.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
+                    </p>
                   </div>
                 </div>
               </div>
