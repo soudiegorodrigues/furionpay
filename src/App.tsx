@@ -17,6 +17,7 @@ import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminProducts from "./pages/AdminProducts";
 import AdminProductEdit from "./pages/AdminProductEdit";
 import AdminFinanceiro from "./pages/AdminFinanceiro";
+import AdminDocuments from "./pages/AdminDocuments";
 import PublicCheckout from "./pages/PublicCheckout";
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +48,7 @@ const App = () => (
                 <Route path="checkout" element={<AdminCheckout />} />
                 <Route path="profile" element={<AdminProfile />} />
                 <Route path="integrations" element={<AdminIntegrations />} />
+                <Route path="documents" element={<AdminDocuments />} />
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="products/:id" element={<AdminProductEdit />} />
               </Route>

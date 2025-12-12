@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { DocumentVerificationSection } from "@/components/profile/DocumentVerificationSection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -137,6 +138,11 @@ export default function AdminProfile() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Verificação de Documentos */}
+          {user?.id && (
+            <DocumentVerificationSection userId={user.id} />
+          )}
 
           {/* Zona de Perigo */}
           <Card className="border-destructive/50">
