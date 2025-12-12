@@ -232,6 +232,72 @@ export type Database = {
         }
         Relationships: []
       }
+      fee_configs: {
+        Row: {
+          boleto_fixed: number
+          boleto_percentage: number
+          boleto_repasse_days: number
+          boleto_repasse_percentage: number
+          cartao_fixed: number
+          cartao_percentage: number
+          cartao_repasse_days: number
+          cartao_repasse_percentage: number
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          pix_fixed: number
+          pix_percentage: number
+          pix_repasse_days: number
+          pix_repasse_percentage: number
+          saque_fixed: number
+          saque_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          boleto_fixed?: number
+          boleto_percentage?: number
+          boleto_repasse_days?: number
+          boleto_repasse_percentage?: number
+          cartao_fixed?: number
+          cartao_percentage?: number
+          cartao_repasse_days?: number
+          cartao_repasse_percentage?: number
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          pix_fixed?: number
+          pix_percentage?: number
+          pix_repasse_days?: number
+          pix_repasse_percentage?: number
+          saque_fixed?: number
+          saque_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          boleto_fixed?: number
+          boleto_percentage?: number
+          boleto_repasse_days?: number
+          boleto_repasse_percentage?: number
+          cartao_fixed?: number
+          cartao_percentage?: number
+          cartao_repasse_days?: number
+          cartao_repasse_percentage?: number
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          pix_fixed?: number
+          pix_percentage?: number
+          pix_repasse_days?: number
+          pix_repasse_percentage?: number
+          saque_fixed?: number
+          saque_percentage?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempt_count: number

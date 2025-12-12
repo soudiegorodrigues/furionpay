@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AdminNavigation } from "@/components/AdminNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Percent } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { PersonalizacaoSection } from "@/components/admin/PersonalizacaoSection";
 import { EmailSection } from "@/components/admin/EmailSection";
@@ -14,6 +14,7 @@ import { DominiosSection } from "@/components/admin/DominiosSection";
 import { UsuariosSection } from "@/components/admin/UsuariosSection";
 import { MultiAcquirersSection } from "@/components/admin/MultiAcquirersSection";
 import { ZonaDePerigo } from "@/components/admin/ZonaDePerigo";
+import { TaxasSection } from "@/components/admin/TaxasSection";
 
 const Admin = () => {
   const location = useLocation();
@@ -65,19 +66,7 @@ const Admin = () => {
         </Card>
       )}
 
-      {activeSection === "taxas" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Percent className="h-5 w-5 text-primary" />
-              Taxas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Em desenvolvimento...</p>
-          </CardContent>
-        </Card>
-      )}
+      {activeSection === "taxas" && <TaxasSection />}
     </div>
   );
 };
