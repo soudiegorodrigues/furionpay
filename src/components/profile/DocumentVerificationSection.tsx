@@ -319,24 +319,22 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
         {/* Person Type Selection */}
         <div className="space-y-3">
           <Label>Tipo de Pessoa</Label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex gap-3">
             <Button
               type="button"
               variant={personType === "pf" ? "default" : "outline"}
-              className="h-auto py-4 flex flex-col items-center gap-2"
               onClick={() => setPersonType("pf")}
             >
-              <User className="h-6 w-6" />
-              <span>Pessoa Física (PF)</span>
+              <User className="h-4 w-4" />
+              Pessoa Física (PF)
             </Button>
             <Button
               type="button"
               variant={personType === "pj" ? "default" : "outline"}
-              className="h-auto py-4 flex flex-col items-center gap-2"
               onClick={() => setPersonType("pj")}
             >
-              <Building2 className="h-6 w-6" />
-              <span>Pessoa Jurídica (PJ)</span>
+              <Building2 className="h-4 w-4" />
+              Pessoa Jurídica (PJ)
             </Button>
           </div>
         </div>
@@ -345,33 +343,30 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
         {personType === "pf" && (
           <div className="space-y-3">
             <Label>Tipo de Documento</Label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="flex gap-3">
               <Button
                 type="button"
                 variant={documentType === "rg" ? "default" : "outline"}
-                className="h-auto py-3 flex flex-col items-center gap-1"
                 onClick={() => setDocumentType("rg")}
               >
-                <IdCard className="h-5 w-5" />
-                <span className="text-sm">RG</span>
+                <IdCard className="h-4 w-4" />
+                RG
               </Button>
               <Button
                 type="button"
                 variant={documentType === "cnh" ? "default" : "outline"}
-                className="h-auto py-3 flex flex-col items-center gap-1"
                 onClick={() => setDocumentType("cnh")}
               >
-                <Car className="h-5 w-5" />
-                <span className="text-sm">CNH</span>
+                <Car className="h-4 w-4" />
+                CNH
               </Button>
               <Button
                 type="button"
                 variant={documentType === "passaporte" ? "default" : "outline"}
-                className="h-auto py-3 flex flex-col items-center gap-1"
                 onClick={() => setDocumentType("passaporte")}
               >
-                <BookOpen className="h-5 w-5" />
-                <span className="text-sm">Passaporte</span>
+                <BookOpen className="h-4 w-4" />
+                Passaporte
               </Button>
             </div>
           </div>
