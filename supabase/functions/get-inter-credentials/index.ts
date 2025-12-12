@@ -61,16 +61,42 @@ serve(async (req) => {
       return setting?.value || null;
     };
 
-    // Get from admin_settings or fall back to environment variables
-    const credentials = {
-      clientId: getValue('inter_client_id') || Deno.env.get('INTER_CLIENT_ID') || '',
-      clientSecret: getValue('inter_client_secret') || Deno.env.get('INTER_CLIENT_SECRET') || '',
-      certificate: getValue('inter_certificate') || Deno.env.get('INTER_CERTIFICATE') || '',
-      privateKey: getValue('inter_private_key') || Deno.env.get('INTER_PRIVATE_KEY') || '',
-      pixKey: getValue('inter_pix_key') || Deno.env.get('INTER_PIX_KEY') || ''
+    // Helper to mask sensitive values - show only first 4 and last 4 chars
+    const maskValue = (value: string | null): string | null => {
+      if (!value || value.length < 12) return value ? '****' : null;
+      return `${value.substring(0, 4)}${'*'.repeat(8)}${value.substring(value.length - 4)}`;
     };
 
-    console.log('Credentials loaded for admin:', user.email);
+    // Helper to check if a credential is configured
+    const isConfigured = (value: string | null): boolean => {
+      return !!value && value.trim().length > 0;
+    };
+
+    // Get raw values to check configuration status
+    const rawClientId = getValue('inter_client_id') || Deno.env.get('INTER_CLIENT_ID') || '';
+    const rawClientSecret = getValue('inter_client_secret') || Deno.env.get('INTER_CLIENT_SECRET') || '';
+    const rawCertificate = getValue('inter_certificate') || Deno.env.get('INTER_CERTIFICATE') || '';
+    const rawPrivateKey = getValue('inter_private_key') || Deno.env.get('INTER_PRIVATE_KEY') || '';
+    const rawPixKey = getValue('inter_pix_key') || Deno.env.get('INTER_PIX_KEY') || '';
+
+    // Return only masked values and configuration status - NEVER return full secrets
+    const credentials = {
+      clientId: maskValue(rawClientId),
+      clientSecret: maskValue(rawClientSecret),
+      certificate: isConfigured(rawCertificate) ? '[CERTIFICADO CONFIGURADO]' : null,
+      privateKey: isConfigured(rawPrivateKey) ? '[CHAVE PRIVADA CONFIGURADA]' : null,
+      pixKey: maskValue(rawPixKey),
+      // Configuration status indicators
+      hasClientId: isConfigured(rawClientId),
+      hasClientSecret: isConfigured(rawClientSecret),
+      hasCertificate: isConfigured(rawCertificate),
+      hasPrivateKey: isConfigured(rawPrivateKey),
+      hasPixKey: isConfigured(rawPixKey),
+      isFullyConfigured: isConfigured(rawClientId) && isConfigured(rawClientSecret) && 
+                         isConfigured(rawCertificate) && isConfigured(rawPrivateKey) && isConfigured(rawPixKey)
+    };
+
+    console.log('Credentials status loaded for admin:', user.email, '- Fully configured:', credentials.isFullyConfigured);
 
     return new Response(
       JSON.stringify({ success: true, credentials }),
