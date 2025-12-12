@@ -600,47 +600,28 @@ const AdminFinanceiro = () => {
   const MINIMUM_WITHDRAWAL = 50;
 
   // Get current withdrawal preview values
+  // User enters the gross amount (what's deducted from balance)
+  // We calculate the net (what user receives after fees)
   const getWithdrawalPreview = () => {
-    const inputAmount = parseFloat(withdrawAmount.replace(',', '.')) || 0;
-    // The input is the net amount (what user receives)
-    // We need to find the gross that results in this net
-    // gross - fee(gross) = net
-    // For fixed fee only: gross = net + fixed_fee
-    // For percentage: gross * (1 - pct/100) - fixed = net => gross = (net + fixed) / (1 - pct/100)
-    const pct = userFeeConfig?.saque_percentage || 0;
-    const fixed = userFeeConfig?.saque_fixed || 0;
-    
-    let grossAmount = inputAmount;
-    if (pct > 0) {
-      grossAmount = (inputAmount + fixed) / (1 - pct / 100);
-    } else {
-      grossAmount = inputAmount + fixed;
-    }
-    grossAmount = Math.round(grossAmount * 100) / 100;
-    
+    const grossAmount = parseFloat(withdrawAmount.replace(',', '.')) || 0;
     const fee = calculateWithdrawalFee(grossAmount);
-    return { grossAmount, fee, netAmount: inputAmount };
+    const netAmount = Math.max(0, Math.round((grossAmount - fee) * 100) / 100);
+    return { grossAmount, fee, netAmount };
   };
 
   // Validate if withdrawal is valid (for button state)
   const isWithdrawalValid = useMemo(() => {
-    const amount = parseFloat(withdrawAmount.replace(',', '.')) || 0;
-    if (isNaN(amount) || amount <= 0) return false;
-    if (amount < MINIMUM_WITHDRAWAL) return false;
+    const grossAmount = parseFloat(withdrawAmount.replace(',', '.')) || 0;
+    if (isNaN(grossAmount) || grossAmount <= 0) return false;
     
-    // Check if gross amount would exceed balance
-    const pct = userFeeConfig?.saque_percentage || 0;
-    const fixed = userFeeConfig?.saque_fixed || 0;
-    let grossAmount = amount;
-    if (pct > 0) {
-      grossAmount = (amount + fixed) / (1 - pct / 100);
-    } else {
-      grossAmount = amount + fixed;
-    }
-    grossAmount = Math.round(grossAmount * 100) / 100;
+    // Check if gross amount exceeds balance
     const roundedBalance = Math.round(availableBalance * 100) / 100;
-    
     if (grossAmount > roundedBalance) return false;
+    
+    // Check minimum net amount after fees
+    const fee = calculateWithdrawalFee(grossAmount);
+    const netAmount = Math.max(0, grossAmount - fee);
+    if (netAmount < MINIMUM_WITHDRAWAL) return false;
     
     return true;
   }, [withdrawAmount, availableBalance, userFeeConfig]);
@@ -655,11 +636,10 @@ const AdminFinanceiro = () => {
       return;
     }
 
-    const amount = parseFloat(withdrawAmount.replace(',', '.'));
-    const roundedAmount = Math.round(amount * 100) / 100;
+    const grossAmount = parseFloat(withdrawAmount.replace(',', '.'));
     const roundedBalance = Math.round(availableBalance * 100) / 100;
     
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(grossAmount) || grossAmount <= 0) {
       toast({
         title: "Valor inválido",
         description: "Digite um valor válido para o saque.",
@@ -668,21 +648,21 @@ const AdminFinanceiro = () => {
       return;
     }
 
-    if (roundedAmount < MINIMUM_WITHDRAWAL) {
+    if (grossAmount > roundedBalance) {
       toast({
-        title: "Valor mínimo não atingido",
-        description: "O saque mínimo é de R$ 50,00",
+        title: "Saldo insuficiente",
+        description: `O valor (${formatCurrency(grossAmount)}) excede o saldo disponível.`,
         variant: "destructive"
       });
       return;
     }
 
-    // Check if gross amount would exceed balance
+    // Check minimum net amount after fees
     const preview = getWithdrawalPreview();
-    if (preview.grossAmount > roundedBalance) {
+    if (preview.netAmount < MINIMUM_WITHDRAWAL) {
       toast({
-        title: "Saldo insuficiente",
-        description: `O valor bruto (${formatCurrency(preview.grossAmount)}) excede o saldo disponível.`,
+        title: "Valor mínimo não atingido",
+        description: `O valor líquido após taxas deve ser no mínimo R$ 50,00. Você receberá: ${formatCurrency(preview.netAmount)}`,
         variant: "destructive"
       });
       return;
@@ -733,11 +713,13 @@ const AdminFinanceiro = () => {
     
     setIsSubmittingWithdrawal(true);
     try {
-      const amount = parseFloat(withdrawAmount.replace(',', '.'));
+      // The withdrawal amount stored is the NET amount (what user receives)
+      const preview = getWithdrawalPreview();
+      const netAmount = preview.netAmount;
       const bankName = banks.find(b => b.code === savedBankData.bank)?.name || savedBankData.bank;
       
       const { error } = await supabase.rpc('request_withdrawal', {
-        p_amount: amount,
+        p_amount: netAmount,
         p_bank_code: savedBankData.bank,
         p_bank_name: bankName,
         p_pix_key_type: savedBankData.pixKeyType,
@@ -748,7 +730,7 @@ const AdminFinanceiro = () => {
 
       toast({
         title: "Saque solicitado!",
-        description: `Sua solicitação de ${formatCurrency(amount)} foi enviada para aprovação.`,
+        description: `Sua solicitação de ${formatCurrency(netAmount)} foi enviada para aprovação.`,
       });
 
       setShowPasswordConfirmDialog(false);
@@ -1107,7 +1089,7 @@ const AdminFinanceiro = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label>Valor que você receberá</Label>
+                  <Label>Valor que deseja sacar</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
                     <Input
@@ -1119,7 +1101,7 @@ const AdminFinanceiro = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
-                      Mínimo: R$ 50,00 • Taxa: {userFeeConfig?.saque_fixed ? `R$ ${userFeeConfig.saque_fixed.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                      Mínimo líquido: R$ 50,00 • Taxa: {userFeeConfig?.saque_fixed ? `R$ ${userFeeConfig.saque_fixed.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
                       {userFeeConfig?.saque_percentage ? ` + ${userFeeConfig.saque_percentage}%` : ''}
                     </p>
                     <Button
@@ -1127,8 +1109,8 @@ const AdminFinanceiro = () => {
                       size="sm"
                       className="h-auto p-0 text-xs"
                       onClick={() => {
-                        const netAmount = calculateNetWithdrawal(availableBalance);
-                        setWithdrawAmount(netAmount.toFixed(2).replace('.', ','));
+                        // Use the full balance as the gross amount
+                        setWithdrawAmount(availableBalance.toFixed(2).replace('.', ','));
                       }}
                     >
                       Usar saldo total
