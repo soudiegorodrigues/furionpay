@@ -47,14 +47,17 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
   const getRequiredUploads = () => {
     if (personType === "pf") {
       return [
-        { side: "frente", label: "Frente do Documento" },
-        { side: "verso", label: "Verso do Documento" },
-        { side: "selfie", label: "Selfie segurando o Documento" }
+        { side: "frente", label: "Frente do Documento", group: "documento" },
+        { side: "verso", label: "Verso do Documento", group: "documento" },
+        { side: "selfie", label: "Selfie segurando o Documento", group: "documento" }
       ];
     }
     return [
-      { side: "cnpj_card", label: "Cartão CNPJ" },
-      { side: "contrato_social", label: "Contrato Social" }
+      { side: "cnpj_card", label: "Cartão CNPJ", group: "empresa" },
+      { side: "contrato_social", label: "Contrato Social", group: "empresa" },
+      { side: "owner_frente", label: "Frente", group: "dono" },
+      { side: "owner_verso", label: "Verso", group: "dono" },
+      { side: "owner_selfie", label: "Selfie", group: "dono" }
     ];
   };
 
@@ -366,9 +369,9 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
 
         {/* Upload Fields */}
         <div className="space-y-4">
-          <Label>Documentos</Label>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {getRequiredUploads().map((upload) => {
+          <Label>Documentos da Empresa</Label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {getRequiredUploads().filter(u => u.group === "empresa" || u.group === "documento").map((upload) => {
               const uploadedFile = uploadedFiles.find(uf => uf.side === upload.side);
               return (
                 <div key={upload.side} className="space-y-2">
@@ -404,6 +407,51 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
               );
             })}
           </div>
+
+          {/* Owner Documents Section (PJ only) */}
+          {personType === "pj" && (
+            <>
+              <Label className="mt-6 block">Documentos do Dono da Empresa</Label>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {getRequiredUploads().filter(u => u.group === "dono").map((upload) => {
+                  const uploadedFile = uploadedFiles.find(uf => uf.side === upload.side);
+                  return (
+                    <div key={upload.side} className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">{upload.label}</Label>
+                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                        {uploadedFile?.preview ? (
+                          <div className="relative w-full h-full p-2">
+                            <img 
+                              src={uploadedFile.preview} 
+                              alt={upload.label}
+                              className="w-full h-full object-contain rounded"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded">
+                              <span className="text-white text-xs">Trocar</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 p-4">
+                            <Upload className="h-6 w-6 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground text-center">
+                              Clique para enviar
+                            </span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          onChange={(e) => handleFileChange(upload.side, e.target.files?.[0] || null)}
+                        />
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
           <p className="text-xs text-muted-foreground">
             Formatos aceitos: JPG, PNG, WebP ou PDF. Máximo 5MB por arquivo.
           </p>
