@@ -587,7 +587,11 @@ const AdminFinanceiro = () => {
       return;
     }
 
+    const MINIMUM_WITHDRAWAL = 50;
     const amount = parseFloat(withdrawAmount.replace(',', '.'));
+    const roundedAmount = Math.round(amount * 100) / 100;
+    const roundedBalance = Math.round(availableBalance * 100) / 100;
+    
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: "Valor inválido",
@@ -597,10 +601,19 @@ const AdminFinanceiro = () => {
       return;
     }
 
-    if (amount > availableBalance) {
+    if (roundedAmount < MINIMUM_WITHDRAWAL) {
+      toast({
+        title: "Valor mínimo não atingido",
+        description: "O saque mínimo é de R$ 50,00",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (roundedAmount > roundedBalance) {
       toast({
         title: "Saldo insuficiente",
-        description: `Saldo disponível: ${formatCurrency(availableBalance)}`,
+        description: `Saldo disponível: ${formatCurrency(roundedBalance)}`,
         variant: "destructive"
       });
       return;
@@ -989,6 +1002,7 @@ const AdminFinanceiro = () => {
                       className="pl-10"
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground">Valor mínimo: R$ 50,00</p>
                   <Button
                     variant="link"
                     size="sm"
