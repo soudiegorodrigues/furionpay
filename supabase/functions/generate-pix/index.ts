@@ -181,26 +181,36 @@ async function getUserAcquirer(userId?: string): Promise<string> {
 async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
   const supabase = getSupabaseClient();
   
-  // Each user MUST have their own API key configured
-  if (!userId) {
-    console.error('User ID is required to get API key');
-    return null;
+  // First try to get user-specific API key if userId provided
+  if (userId) {
+    const { data: userData, error: userError } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'spedpay_api_key')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (!userError && userData?.value) {
+      console.log('Using user-specific SpedPay API key');
+      return userData.value;
+    }
   }
   
-  const { data: userData, error: userError } = await supabase
+  // Fallback to global SpedPay API key from admin_settings (user_id = null)
+  const { data: globalData, error: globalError } = await supabase
     .from('admin_settings')
     .select('value')
     .eq('key', 'spedpay_api_key')
-    .eq('user_id', userId)
+    .is('user_id', null)
     .maybeSingle();
   
-  if (userError || !userData?.value) {
-    console.error('User does not have API key configured:', userError?.message || 'No key found');
-    return null;
+  if (!globalError && globalData?.value) {
+    console.log('Using global SpedPay API key from admin_settings');
+    return globalData.value;
   }
   
-  console.log('Using user-specific API key');
-  return userData.value;
+  console.log('No SpedPay API key found in database');
+  return null;
 }
 
 async function getProductNameFromDatabase(userId?: string, popupModel?: string): Promise<string> {
