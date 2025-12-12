@@ -396,6 +396,7 @@ export type Database = {
       }
       product_checkout_configs: {
         Row: {
+          back_redirect_url: string | null
           background_color: string | null
           buyer_section_title: string | null
           checkout_subtitle: string | null
@@ -438,6 +439,7 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          back_redirect_url?: string | null
           background_color?: string | null
           buyer_section_title?: string | null
           checkout_subtitle?: string | null
@@ -480,6 +482,7 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          back_redirect_url?: string | null
           background_color?: string | null
           buyer_section_title?: string | null
           checkout_subtitle?: string | null

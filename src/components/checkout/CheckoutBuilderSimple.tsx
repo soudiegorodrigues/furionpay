@@ -111,6 +111,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     discountPopupImageUrl: "",
     showWhatsappButton: false,
     whatsappNumber: "",
+    backRedirectUrl: "",
   });
 
   // Fetch global templates
@@ -188,6 +189,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discountPopupImageUrl: config.discount_popup_image_url || "",
         showWhatsappButton: config.show_whatsapp_button || false,
         whatsappNumber: config.whatsapp_number || "",
+        backRedirectUrl: (config as any).back_redirect_url || "",
       });
     }
   }, [config]);
@@ -326,6 +328,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discount_popup_percentage: customizations.discountPopupPercentage || 10,
         discount_popup_color: customizations.discountPopupColor || "#16A34A",
         discount_popup_image_url: customizations.discountPopupImageUrl || null,
+        back_redirect_url: customizations.backRedirectUrl || null,
       } as any;
 
       const { error } = await supabase
@@ -1066,6 +1069,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 </div>
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Back Redirect */}
+            <div className="py-3 border-t">
+              <div className="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+                <Label className="text-sm font-medium">Back redirect</Label>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">Link para redirecionar ao sair do checkout</p>
+              <Input
+                value={customizations.backRedirectUrl}
+                onChange={(e) => setCustomizations(p => ({ ...p, backRedirectUrl: e.target.value }))}
+                className="h-8 text-xs"
+                placeholder="https://seusite.com"
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
