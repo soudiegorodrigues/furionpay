@@ -589,7 +589,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       <img
                         src={bannerImageUrl}
                         alt="Banner"
-                        className="w-full h-16 object-cover rounded-lg"
+                        className="w-full h-28 object-cover rounded-lg"
                       />
                       <div className="flex gap-2">
                         <Button
