@@ -597,12 +597,6 @@ const AdminFinanceiro = () => {
           >
             Taxas
           </TabsTrigger>
-          <TabsTrigger 
-            value="movimentacoes" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary px-4 py-3"
-          >
-            Movimentações
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="saldo" className="mt-6 space-y-6">
@@ -1126,55 +1120,6 @@ const AdminFinanceiro = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="movimentacoes" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowRightLeft className="h-5 w-5 text-primary" />
-                Movimentações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {transactions.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Nenhuma movimentação encontrada.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {transactions.slice(0, 20).map((tx) => (
-                    <div 
-                      key={tx.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">
-                          {tx.status === 'paid' ? 'Pagamento recebido' : 'Aguardando pagamento'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(tx.created_at).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                      <p className={`font-bold ${
-                        tx.status === 'paid' 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-yellow-600 dark:text-yellow-400'
-                      }`}>
-                        {tx.status === 'paid' ? '+' : ''}{formatCurrency(tx.amount)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
