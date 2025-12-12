@@ -700,15 +700,43 @@ const AdminFinanceiro = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Valor já descontando saques pendentes e aprovados
                 </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setHideValues(!hideValues)}
-                  className="gap-2"
-                >
-                  {hideValues ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  {hideValues ? 'Mostrar valores' : 'Esconder valores'}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setHideValues(!hideValues)}
+                    className="gap-2"
+                  >
+                    {hideValues ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    {hideValues ? 'Mostrar valores' : 'Esconder valores'}
+                  </Button>
+                  <Button 
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      if (!hasBankAccount || !savedBankData) {
+                        toast({
+                          title: "Conta não configurada",
+                          description: "Configure uma conta bancária antes de solicitar um saque.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      if (availableBalance <= 0) {
+                        toast({
+                          title: "Saldo insuficiente",
+                          description: "Você não possui saldo disponível para saque.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      setShowWithdrawDialog(true);
+                    }}
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Solicitar Saque
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -923,60 +951,6 @@ const AdminFinanceiro = () => {
           </Dialog>
 
 
-          {/* Gerenciar Saldo */}
-          <Card>
-            <CardContent className="pt-6">
-              <span className="text-primary font-medium text-lg">Gerenciar Saldo</span>
-              <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Solicite um saque do valor disponível na sua conta
-              </p>
-
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Saldo disponível para saque:</p>
-                  <p className="text-2xl font-bold">{formatCurrency(availableBalance)}</p>
-                </div>
-                <Button 
-                  className="gap-2"
-                  onClick={() => {
-                    if (!hasBankAccount || !savedBankData) {
-                      toast({
-                        title: "Conta não configurada",
-                        description: "Configure uma conta bancária antes de solicitar um saque.",
-                        variant: "destructive"
-                      });
-                      return;
-                    }
-                    if (availableBalance <= 0) {
-                      toast({
-                        title: "Saldo insuficiente",
-                        description: "Você não possui saldo disponível para saque.",
-                        variant: "destructive"
-                      });
-                      return;
-                    }
-                    setShowWithdrawDialog(true);
-                  }}
-                >
-                  <Wallet className="h-4 w-4" />
-                  Solicitar Saque
-                </Button>
-              </div>
-
-              <Button 
-                variant="outline" 
-                className="mt-6 gap-2"
-                onClick={() => {
-                  loadTransactions();
-                  loadAvailableBalance();
-                }}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                Atualizar Saldo
-              </Button>
-            </CardContent>
-          </Card>
 
           {/* Dialog de Solicitar Saque */}
           <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
