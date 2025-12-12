@@ -15,8 +15,10 @@ export const MultiAcquirersSection = () => {
   const { user, isAdmin } = useAdminAuth();
   const [isTestingInter, setIsTestingInter] = useState(false);
   const [isTestingAtivus, setIsTestingAtivus] = useState(false);
+  const [isTestingSpedpay, setIsTestingSpedpay] = useState(false);
   const [showInterConfigDialog, setShowInterConfigDialog] = useState(false);
   const [showAtivusConfigDialog, setShowAtivusConfigDialog] = useState(false);
+  const [showSpedpayConfigDialog, setShowSpedpayConfigDialog] = useState(false);
   const [isLoadingInterConfig, setIsLoadingInterConfig] = useState(false);
   const [isLoadingStates, setIsLoadingStates] = useState(true);
   const [interEnabled, setInterEnabled] = useState<boolean | null>(null);
@@ -26,6 +28,7 @@ export const MultiAcquirersSection = () => {
   const [interFixedFee, setInterFixedFee] = useState('');
   const [spedpayFeeRate, setSpedpayFeeRate] = useState('');
   const [spedpayFixedFee, setSpedpayFixedFee] = useState('');
+  const [spedpayApiKey, setSpedpayApiKey] = useState('');
   const [ativusFeeRate, setAtivusFeeRate] = useState('');
   const [ativusFixedFee, setAtivusFixedFee] = useState('');
   const [ativusApiKey, setAtivusApiKey] = useState('');
@@ -90,6 +93,7 @@ export const MultiAcquirersSection = () => {
         const interFixed = settings.find(s => s.key === 'inter_fixed_fee');
         const spedpayFee = settings.find(s => s.key === 'spedpay_fee_rate');
         const spedpayFixed = settings.find(s => s.key === 'spedpay_fixed_fee');
+        const spedpayKey = settings.find(s => s.key === 'spedpay_api_key');
         const ativusFee = settings.find(s => s.key === 'ativus_fee_rate');
         const ativusFixed = settings.find(s => s.key === 'ativus_fixed_fee');
         const ativusKey = settings.find(s => s.key === 'ativus_api_key');
@@ -103,6 +107,7 @@ export const MultiAcquirersSection = () => {
         setInterFixedFee(interFixed?.value || '');
         setSpedpayFeeRate(spedpayFee?.value || '');
         setSpedpayFixedFee(spedpayFixed?.value || '');
+        setSpedpayApiKey(spedpayKey?.value || '');
         setAtivusFeeRate(ativusFee?.value || '');
         setAtivusFixedFee(ativusFixed?.value || '');
         setAtivusApiKey(ativusKey?.value || '');
@@ -211,6 +216,64 @@ export const MultiAcquirersSection = () => {
         description: "Falha ao salvar taxas",
         variant: "destructive"
       });
+    }
+  };
+
+  const saveSpedpayApiKey = async () => {
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'spedpay_api_key',
+        setting_value: spedpayApiKey
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Chave API do SpedPay atualizada!"
+      });
+      setShowSpedpayConfigDialog(false);
+    } catch (error) {
+      console.error('Error saving SpedPay API key:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar chave API",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const testSpedpayConnection = async () => {
+    setIsTestingSpedpay(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pix', {
+        body: {
+          amount: 0.50,
+          donorName: 'Teste Conexão',
+          productName: 'Teste SpedPay',
+          userId: user?.id
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Conexão OK",
+          description: "SpedPay está funcionando corretamente!"
+        });
+      } else {
+        throw new Error(data?.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error('Erro ao testar SpedPay:', error);
+      toast({
+        title: "Erro na conexão",
+        description: error.message || "Falha ao conectar com SpedPay",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTestingSpedpay(false);
     }
   };
 
@@ -687,20 +750,81 @@ export const MultiAcquirersSection = () => {
               </div>
             )}
             
-            <div className="flex items-center justify-between pt-2 border-t">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
               <Badge 
                 variant="outline" 
                 className={spedpayEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted"
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-xs"
                 }
               >
                 {spedpayEnabled !== false ? <Check className="w-3 h-3 mr-1" /> : <Power className="w-3 h-3 mr-1" />}
                 {spedpayEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowSpedpayConfigDialog(true)}
+                  className="h-7 text-xs px-2"
+                  disabled={spedpayEnabled === false}
+                >
+                  <Settings className="w-3 h-3 mr-1" />
+                  Config
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={testSpedpayConnection}
+                  disabled={isTestingSpedpay || spedpayEnabled === false}
+                  className="h-7 text-xs px-2"
+                >
+                  {isTestingSpedpay ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    "Testar"
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Dialog de Configuração do SpedPay */}
+        <AlertDialog open={showSpedpayConfigDialog} onOpenChange={setShowSpedpayConfigDialog}>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Configurar SpedPay
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Configure a chave API global do SpedPay para a plataforma.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="spedpay-api-key">Chave API</Label>
+                <Input
+                  id="spedpay-api-key"
+                  type="password"
+                  placeholder="Digite a chave API do SpedPay"
+                  value={spedpayApiKey}
+                  onChange={(e) => setSpedpayApiKey(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esta chave será usada globalmente pela plataforma FurionPay
+                </p>
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={saveSpedpayApiKey}>
+                Salvar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* ATIVUS HUB Card */}
         <Card className={`border-primary/50 transition-opacity ${ativusEnabled === false ? 'opacity-60' : ''}`}>
