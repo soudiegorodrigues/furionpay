@@ -43,9 +43,15 @@ const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
 
+interface FeeConfig {
+  pix_percentage: number;
+  pix_fixed: number;
+}
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
@@ -54,6 +60,13 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, signOut } = useAdminAuth();
+
+  // Calculate net amount after fee deduction
+  const calculateNetAmount = (grossAmount: number): number => {
+    if (!feeConfig) return grossAmount;
+    const fee = (grossAmount * feeConfig.pix_percentage / 100) + feeConfig.pix_fixed;
+    return Math.max(0, grossAmount - fee);
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -72,6 +85,16 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true) => {
     if (showLoading && !stats) setIsLoading(true);
     try {
+      // Load fee config
+      const { data: feeData } = await supabase
+        .from('fee_configs')
+        .select('pix_percentage, pix_fixed')
+        .eq('is_default', true)
+        .single();
+      if (feeData) {
+        setFeeConfig(feeData as FeeConfig);
+      }
+
       const { data: statsData, error: statsError } = await supabase.rpc('get_user_dashboard');
       if (statsError) throw statsError;
       setStats(statsData as unknown as DashboardStats);
@@ -247,7 +270,10 @@ const AdminDashboard = () => {
     const generated = filteredTransactions.length;
     const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
     const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-    const amountPaid = filteredTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+    // Calculate net amount (after fee deduction) for paid transactions
+    const amountPaid = filteredTransactions
+      .filter(tx => tx.status === 'paid')
+      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
     return {
       generated,
       paid,
@@ -255,7 +281,7 @@ const AdminDashboard = () => {
       amountPaid,
       conversionRate: generated > 0 ? (paid / generated * 100).toFixed(1) : '0'
     };
-  }, [filteredTransactions]);
+  }, [filteredTransactions, feeConfig]);
 
   // Today's stats (using paid_at for paid stats, Brazil timezone)
   const todayStats = useMemo(() => {
@@ -272,10 +298,11 @@ const AdminDashboard = () => {
       return getBrazilDateStr(new Date(tx.paid_at)) === todayBrazil;
     });
     const paid = todayPaid.length;
-    const amountPaid = todayPaid.reduce((sum, tx) => sum + tx.amount, 0);
+    // Calculate net amount (after fee deduction)
+    const amountPaid = todayPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
     
     return { generated, paid, amountPaid };
-  }, [transactions]);
+  }, [transactions, feeConfig]);
 
   // Month's stats (using paid_at, Brazil timezone)
   const monthStats = useMemo(() => {
@@ -293,14 +320,17 @@ const AdminDashboard = () => {
       return paidBrazil.getMonth() === currentMonth && paidBrazil.getFullYear() === currentYear;
     });
     
-    const amountPaid = monthPaid.reduce((sum, tx) => sum + tx.amount, 0);
+    // Calculate net amount (after fee deduction)
+    const amountPaid = monthPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
     return { amountPaid };
-  }, [transactions]);
+  }, [transactions, feeConfig]);
 
-  // Total balance (all paid transactions)
+  // Total balance (all paid transactions) - net amount
   const totalBalance = useMemo(() => {
-    return transactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
-  }, [transactions]);
+    return transactions
+      .filter(tx => tx.status === 'paid')
+      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
+  }, [transactions, feeConfig]);
 
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
