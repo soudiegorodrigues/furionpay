@@ -1071,21 +1071,51 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
             </Collapsible>
 
             {/* Back Redirect */}
-            <div className="py-3 border-t">
-              <div className="flex items-center gap-2 mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
-                  <path d="m15 18-6-6 6-6"/>
-                </svg>
-                <Label className="text-sm font-medium">Back redirect</Label>
+            <Collapsible 
+              open={customizations.backRedirectUrl && openSection === "backredirect"}
+              onOpenChange={() => customizations.backRedirectUrl && toggleSection("backredirect")}
+            >
+              <div className="flex items-center justify-between py-2">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.backRedirectUrl ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground">
+                      <path d="m15 18-6-6 6-6"/>
+                    </svg>
+                    <Label className="text-sm">Back redirect</Label>
+                    {customizations.backRedirectUrl && (
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        openSection === "backredirect" && "rotate-180"
+                      )} />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={!!customizations.backRedirectUrl}
+                  onCheckedChange={(v) => {
+                    if (!v) {
+                      setCustomizations(p => ({ ...p, backRedirectUrl: "" }));
+                    } else {
+                      toggleSection("backredirect");
+                    }
+                  }}
+                />
               </div>
-              <p className="text-xs text-muted-foreground mb-2">Link para redirecionar ao sair do checkout</p>
-              <Input
-                value={customizations.backRedirectUrl}
-                onChange={(e) => setCustomizations(p => ({ ...p, backRedirectUrl: e.target.value }))}
-                className="h-8 text-xs"
-                placeholder="https://seusite.com"
-              />
-            </div>
+              <CollapsibleContent>
+                <div className="py-2 pl-6">
+                  <p className="text-xs text-muted-foreground mb-2">Link para redirecionar ao sair do checkout</p>
+                  <Input
+                    value={customizations.backRedirectUrl}
+                    onChange={(e) => setCustomizations(p => ({ ...p, backRedirectUrl: e.target.value }))}
+                    className="h-7 text-xs"
+                    placeholder="https://seusite.com"
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
       </div>
