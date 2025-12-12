@@ -54,6 +54,9 @@ export interface CheckoutConfig {
   discount_popup_message?: string | null;
   discount_popup_cta?: string | null;
   discount_popup_percentage?: number | null;
+  // Video fields
+  show_video?: boolean;
+  video_url?: string | null;
 }
 
 export interface FormData {

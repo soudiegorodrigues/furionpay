@@ -91,6 +91,38 @@ export function CheckoutTemplatePadrao({
         </div>
       )}
 
+      {/* Video Section */}
+      {config?.show_video && config?.video_url && (
+        <div className="w-full flex justify-center pt-1 pb-4 md:pt-2 md:pb-6 px-4">
+          <div className="w-full md:max-w-4xl aspect-video rounded-lg overflow-hidden shadow-lg">
+            {config.video_url.includes('youtube.com') || config.video_url.includes('youtu.be') ? (
+              <iframe
+                src={config.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Video"
+              />
+            ) : config.video_url.includes('vimeo.com') ? (
+              <iframe
+                src={config.video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
+                className="w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title="Video"
+              />
+            ) : (
+              <video
+                src={config.video_url}
+                className="w-full h-full object-cover"
+                controls
+                playsInline
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Compact Header */}
       <header className="bg-white border-b shadow-sm sticky top-0 z-10">
         <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
