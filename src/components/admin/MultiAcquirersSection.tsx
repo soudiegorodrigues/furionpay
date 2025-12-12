@@ -472,16 +472,15 @@ export const MultiAcquirersSection = () => {
               </Button>
             </div>
 
-            {/* Set as Default - only show if enabled and not already default */}
+            {/* Set as Default - only show if enabled */}
             {interEnabled !== false && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Definir como principal:</span>
+                <span className="text-xs text-muted-foreground">Adquirente principal:</span>
                 <Switch
                   checked={defaultAcquirer === 'inter'}
                   onCheckedChange={(checked) => {
                     if (checked) setAsDefaultAcquirer('inter');
                   }}
-                  disabled={defaultAcquirer === 'inter'}
                 />
               </div>
             )}
@@ -694,13 +693,12 @@ export const MultiAcquirersSection = () => {
             {/* Set as Default - only show if enabled */}
             {spedpayEnabled !== false && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Definir como principal:</span>
+                <span className="text-xs text-muted-foreground">Adquirente principal:</span>
                 <Switch
                   checked={defaultAcquirer === 'spedpay'}
                   onCheckedChange={(checked) => {
                     if (checked) setAsDefaultAcquirer('spedpay');
                   }}
-                  disabled={defaultAcquirer === 'spedpay'}
                 />
               </div>
             )}
@@ -814,13 +812,12 @@ export const MultiAcquirersSection = () => {
             {/* Set as Default - only show if enabled */}
             {ativusEnabled !== false && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Definir como principal:</span>
+                <span className="text-xs text-muted-foreground">Adquirente principal:</span>
                 <Switch
                   checked={defaultAcquirer === 'ativus'}
                   onCheckedChange={(checked) => {
                     if (checked) setAsDefaultAcquirer('ativus');
                   }}
-                  disabled={defaultAcquirer === 'ativus'}
                 />
               </div>
             )}
