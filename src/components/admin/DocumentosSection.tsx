@@ -489,7 +489,18 @@ function DocumentViewer({
     try {
       const downloadUrl = await getDownloadUrl(document.file_url);
       if (downloadUrl) {
-        window.open(downloadUrl, '_blank');
+        // Create invisible anchor element for direct download
+        const link = window.document.createElement('a');
+        link.href = downloadUrl;
+        
+        // Extract filename from path
+        const fileName = document.file_url.split('/').pop() || 'documento';
+        link.download = fileName;
+        
+        // Add to DOM, click, and remove
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
       }
     } finally {
       setDownloading(false);
