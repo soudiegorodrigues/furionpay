@@ -688,20 +688,17 @@ const AdminFinanceiro = () => {
 
         <TabsContent value="saldo" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Saldo Total */}
+            {/* Saldo Disponível para Saque */}
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-2">
-                  <span className="text-primary font-medium">Saldo Total</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <span className="text-primary font-medium">Saldo Disponível para Saque</span>
                 </div>
-                <p className="text-3xl font-bold mb-3">
-                  {formatCurrency(stats.totalBalance)}
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-3">
+                  {formatCurrency(availableBalance)}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Este é o valor do seu saldo disponível mais o saldo pendente da reserva financeira.
+                  Valor já descontando saques pendentes e aprovados
                 </p>
                 <Button 
                   variant="outline" 
@@ -925,20 +922,6 @@ const AdminFinanceiro = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Saldo Disponível */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between mb-2">
-                <span className="text-primary font-medium">Saldo Disponível para Saque</span>
-              </div>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(availableBalance)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Valor já descontando saques pendentes e aprovados
-              </p>
-            </CardContent>
-          </Card>
 
           {/* Gerenciar Saldo */}
           <Card>
