@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle, Lock, Loader2 } from "lucide-react";
+import { DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,10 @@ const AdminFinanceiro = () => {
   const [savedBankData, setSavedBankData] = useState<BankAccountData | null>(null);
   const [bankSearch, setBankSearch] = useState('');
   const [bankPopoverOpen, setBankPopoverOpen] = useState(false);
+  const [showPasswordConfirmDialog, setShowPasswordConfirmDialog] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
   const { toast } = useToast();
 
   const banks = [
@@ -640,7 +645,7 @@ const AdminFinanceiro = () => {
     return true;
   }, [withdrawAmount, availableBalance, userFeeConfig]);
 
-  const handleRequestWithdrawal = async () => {
+  const handleRequestWithdrawal = () => {
     if (!savedBankData) {
       toast({
         title: "Conta não configurada",
@@ -683,8 +688,52 @@ const AdminFinanceiro = () => {
       return;
     }
 
+    // Abre o diálogo de confirmação de senha
+    setShowPasswordConfirmDialog(true);
+  };
+
+  const handleConfirmWithdrawal = async () => {
+    if (!user?.email || !savedBankData) return;
+    
+    setIsVerifyingPassword(true);
+    
+    try {
+      // Verificar senha re-autenticando o usuário
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: confirmPassword
+      });
+      
+      if (authError) {
+        toast({
+          title: "Senha incorreta",
+          description: "A senha informada está incorreta. Tente novamente.",
+          variant: "destructive"
+        });
+        setConfirmPassword('');
+        return;
+      }
+      
+      // Senha correta - processar o saque
+      await processWithdrawal();
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro de verificação",
+        description: error.message || "Erro ao verificar senha.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+  };
+
+  const processWithdrawal = async () => {
+    if (!savedBankData) return;
+    
     setIsSubmittingWithdrawal(true);
     try {
+      const amount = parseFloat(withdrawAmount.replace(',', '.'));
       const bankName = banks.find(b => b.code === savedBankData.bank)?.name || savedBankData.bank;
       
       const { error } = await supabase.rpc('request_withdrawal', {
@@ -702,8 +751,10 @@ const AdminFinanceiro = () => {
         description: `Sua solicitação de ${formatCurrency(amount)} foi enviada para aprovação.`,
       });
 
+      setShowPasswordConfirmDialog(false);
       setShowWithdrawDialog(false);
       setWithdrawAmount("");
+      setConfirmPassword("");
       loadAvailableBalance();
       loadWithdrawalHistory();
     } catch (error: any) {
@@ -1129,6 +1180,94 @@ const AdminFinanceiro = () => {
                   disabled={isSubmittingWithdrawal || !isWithdrawalValid}
                 >
                   {isSubmittingWithdrawal ? "Enviando..." : "Solicitar Saque"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog de confirmação de senha */}
+          <Dialog open={showPasswordConfirmDialog} onOpenChange={(open) => {
+            setShowPasswordConfirmDialog(open);
+            if (!open) {
+              setConfirmPassword('');
+              setShowConfirmPassword(false);
+            }
+          }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-primary" />
+                  Confirme sua identidade
+                </DialogTitle>
+                <DialogDescription>
+                  Para sua segurança, digite sua senha de login para confirmar o saque.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {/* Resumo do saque */}
+                <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Você receberá:</span>
+                    <span className="font-medium text-green-600">{formatCurrency(parseFloat(withdrawAmount.replace(',', '.')) || 0)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Conta:</span>
+                    <span>{banks.find(b => b.code === savedBankData?.bank)?.name || savedBankData?.bank}</span>
+                  </div>
+                </div>
+                
+                {/* Campo de senha */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Digite sua senha de login"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && confirmPassword) {
+                          handleConfirmWithdrawal();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPasswordConfirmDialog(false);
+                    setConfirmPassword('');
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleConfirmWithdrawal}
+                  disabled={isVerifyingPassword || !confirmPassword}
+                >
+                  {isVerifyingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    "Confirmar Saque"
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
