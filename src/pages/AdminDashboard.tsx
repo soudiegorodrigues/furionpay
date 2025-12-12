@@ -85,12 +85,37 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true) => {
     if (showLoading && !stats) setIsLoading(true);
     try {
-      // Load fee config
-      const { data: feeData } = await supabase
-        .from('fee_configs')
-        .select('pix_percentage, pix_fixed')
-        .eq('is_default', true)
-        .maybeSingle();
+      // Load user-specific fee config or fallback to default
+      const { data: userSettingsData } = await supabase.rpc('get_user_settings');
+      let userFeeConfigId: string | null = null;
+      
+      if (userSettingsData) {
+        const settings = userSettingsData as { key: string; value: string }[];
+        const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
+        userFeeConfigId = feeConfigSetting?.value || null;
+      }
+      
+      // Load fee config - user specific or default
+      let feeData;
+      if (userFeeConfigId) {
+        const { data } = await supabase
+          .from('fee_configs')
+          .select('pix_percentage, pix_fixed')
+          .eq('id', userFeeConfigId)
+          .maybeSingle();
+        feeData = data;
+      }
+      
+      // Fallback to default if no user-specific config
+      if (!feeData) {
+        const { data } = await supabase
+          .from('fee_configs')
+          .select('pix_percentage, pix_fixed')
+          .eq('is_default', true)
+          .maybeSingle();
+        feeData = data;
+      }
+      
       if (feeData) {
         setFeeConfig(feeData as FeeConfig);
       }
