@@ -365,7 +365,7 @@ const AdminFinanceiro = () => {
     }
   };
 
-  const handleAddBankAccount = () => {
+  const handleAddBankAccount = async () => {
     if (!bankData.bank || !bankData.pixKeyType || !bankData.pixKey.trim()) {
       toast({
         title: "Erro",
@@ -375,14 +375,70 @@ const AdminFinanceiro = () => {
       return;
     }
 
-    setSavedBankData({ ...bankData });
-    setHasBankAccount(true);
-    setShowBankDialog(false);
-    setBankData({ bank: '', pixKeyType: '', pixKey: '' });
-    toast({
-      title: "Conta adicionada!",
-      description: "Sua conta bancária foi configurada com sucesso.",
-    });
+    try {
+      // Save bank data to admin_settings
+      const bankDataJson = JSON.stringify(bankData);
+      const { error } = await supabase.rpc('update_user_setting', {
+        setting_key: 'bank_account_data',
+        setting_value: bankDataJson
+      });
+
+      if (error) throw error;
+
+      setSavedBankData({ ...bankData });
+      setHasBankAccount(true);
+      setShowBankDialog(false);
+      setBankData({ bank: '', pixKeyType: '', pixKey: '' });
+      toast({
+        title: "Conta adicionada!",
+        description: "Sua conta bancária foi configurada com sucesso.",
+      });
+    } catch (error: any) {
+      console.error('Error saving bank account:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar conta bancária.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadBankAccountData = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_user_settings');
+      if (error) throw error;
+      
+      const bankAccountSetting = data?.find((s: { key: string; value: string }) => s.key === 'bank_account_data');
+      if (bankAccountSetting?.value) {
+        const parsedData = JSON.parse(bankAccountSetting.value);
+        setSavedBankData(parsedData);
+        setHasBankAccount(true);
+      }
+    } catch (error) {
+      console.error('Error loading bank account:', error);
+    }
+  };
+
+  const handleRemoveBankAccount = async () => {
+    try {
+      // Remove from database
+      const { error } = await supabase
+        .from('admin_settings')
+        .delete()
+        .eq('key', 'bank_account_data')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setSavedBankData(null);
+      setHasBankAccount(false);
+      toast({
+        title: "Conta removida",
+        description: "Sua conta bancária foi removida.",
+      });
+    } catch (error) {
+      console.error('Error removing bank account:', error);
+    }
   };
 
   const getBankName = (code: string) => {
@@ -446,6 +502,7 @@ const AdminFinanceiro = () => {
     loadTransactions();
     loadAvailableBalance();
     loadWithdrawalHistory();
+    loadBankAccountData();
     const interval = setInterval(() => {
       loadTransactions();
       loadAvailableBalance();
