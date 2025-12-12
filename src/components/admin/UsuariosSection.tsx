@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Users, Loader2, RefreshCw, ChevronLeft, ChevronRight, Search, Pencil, 
-  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX 
+  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX, Percent 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -27,12 +27,22 @@ interface User {
   is_approved: boolean;
 }
 
+interface FeeConfig {
+  id: string;
+  name: string;
+  pix_percentage: number;
+  pix_fixed: number;
+  is_default: boolean;
+}
+
 const USERS_PER_PAGE = 10;
 
 export const UsuariosSection = () => {
   const { user: currentUser } = useAdminAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [userAcquirers, setUserAcquirers] = useState<Record<string, string>>({});
+  const [userFeeConfigs, setUserFeeConfigs] = useState<Record<string, string>>({});
+  const [feeConfigs, setFeeConfigs] = useState<FeeConfig[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,13 +52,28 @@ export const UsuariosSection = () => {
   const [userDetailsOpen, setUserDetailsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedUserAcquirer, setSelectedUserAcquirer] = useState<string>('spedpay');
-  const [isSavingUserAcquirer, setIsSavingUserAcquirer] = useState(false);
+  const [selectedUserFeeConfig, setSelectedUserFeeConfig] = useState<string>('');
+  const [isSavingUserSettings, setIsSavingUserSettings] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [userToPromote, setUserToPromote] = useState<User | null>(null);
 
   useEffect(() => {
     loadUsers();
+    loadFeeConfigs();
   }, []);
+
+  const loadFeeConfigs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('fee_configs')
+        .select('id, name, pix_percentage, pix_fixed, is_default')
+        .order('name');
+      if (error) throw error;
+      setFeeConfigs(data || []);
+    } catch (error: any) {
+      console.error('Error loading fee configs:', error);
+    }
+  };
 
   const loadUsers = async () => {
     setIsLoading(true);
@@ -57,6 +82,7 @@ export const UsuariosSection = () => {
       if (error) throw error;
       setUsers(data || []);
       
+      // Load user acquirers
       const { data: acquirerData } = await supabase
         .from('admin_settings')
         .select('user_id, value')
@@ -71,6 +97,22 @@ export const UsuariosSection = () => {
         });
         setUserAcquirers(acquirersMap);
       }
+
+      // Load user fee configs
+      const { data: feeConfigData } = await supabase
+        .from('admin_settings')
+        .select('user_id, value')
+        .eq('key', 'user_fee_config');
+      
+      if (feeConfigData) {
+        const feeConfigsMap: Record<string, string> = {};
+        feeConfigData.forEach(item => {
+          if (item.user_id) {
+            feeConfigsMap[item.user_id] = item.value || '';
+          }
+        });
+        setUserFeeConfigs(feeConfigsMap);
+      }
     } catch (error: any) {
       toast({
         title: 'Erro',
@@ -80,6 +122,16 @@ export const UsuariosSection = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getFeeConfigName = (userId: string) => {
+    const feeConfigId = userFeeConfigs[userId];
+    if (!feeConfigId) {
+      const defaultConfig = feeConfigs.find(fc => fc.is_default);
+      return defaultConfig ? `${defaultConfig.name} (Padrão)` : 'Padrão';
+    }
+    const config = feeConfigs.find(fc => fc.id === feeConfigId);
+    return config ? config.name : 'Padrão';
   };
 
   const openAdminDialog = (u: User) => {
@@ -217,23 +269,33 @@ export const UsuariosSection = () => {
     setSelectedUser(u);
     setUserDetailsOpen(true);
     try {
-      const { data } = await supabase
+      const { data: acquirerData } = await supabase
         .from('admin_settings')
         .select('value')
         .eq('user_id', u.id)
         .eq('key', 'user_acquirer')
         .single();
-      setSelectedUserAcquirer(data?.value || 'spedpay');
+      setSelectedUserAcquirer(acquirerData?.value || 'spedpay');
+
+      const { data: feeData } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('user_id', u.id)
+        .eq('key', 'user_fee_config')
+        .single();
+      setSelectedUserFeeConfig(feeData?.value || '');
     } catch {
       setSelectedUserAcquirer('spedpay');
+      setSelectedUserFeeConfig('');
     }
   };
 
-  const saveUserAcquirer = async () => {
+  const saveUserSettings = async () => {
     if (!selectedUser) return;
-    setIsSavingUserAcquirer(true);
+    setIsSavingUserSettings(true);
     try {
-      const { error } = await supabase
+      // Save acquirer
+      const { error: acquirerError } = await supabase
         .from('admin_settings')
         .upsert({
           user_id: selectedUser.id,
@@ -241,13 +303,46 @@ export const UsuariosSection = () => {
           value: selectedUserAcquirer,
           updated_at: new Date().toISOString()
         }, { onConflict: 'key,user_id' });
-      if (error) throw error;
-      toast({ title: 'Sucesso', description: 'Adquirente do usuário atualizado' });
+      if (acquirerError) throw acquirerError;
+
+      // Save fee config
+      if (selectedUserFeeConfig) {
+        const { error: feeError } = await supabase
+          .from('admin_settings')
+          .upsert({
+            user_id: selectedUser.id,
+            key: 'user_fee_config',
+            value: selectedUserFeeConfig,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'key,user_id' });
+        if (feeError) throw feeError;
+      } else {
+        // Remove fee config if empty (use default)
+        await supabase
+          .from('admin_settings')
+          .delete()
+          .eq('user_id', selectedUser.id)
+          .eq('key', 'user_fee_config');
+      }
+
+      // Update local state
+      setUserAcquirers(prev => ({ ...prev, [selectedUser.id]: selectedUserAcquirer }));
+      setUserFeeConfigs(prev => {
+        const newState = { ...prev };
+        if (selectedUserFeeConfig) {
+          newState[selectedUser.id] = selectedUserFeeConfig;
+        } else {
+          delete newState[selectedUser.id];
+        }
+        return newState;
+      });
+
+      toast({ title: 'Sucesso', description: 'Configurações do usuário atualizadas' });
       setUserDetailsOpen(false);
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao salvar', variant: 'destructive' });
     } finally {
-      setIsSavingUserAcquirer(false);
+      setIsSavingUserSettings(false);
     }
   };
 
@@ -312,6 +407,7 @@ export const UsuariosSection = () => {
                       <TableHead className="text-xs">Email</TableHead>
                       <TableHead className="text-xs hidden md:table-cell">Cadastro</TableHead>
                       <TableHead className="text-xs hidden lg:table-cell">Adquirente</TableHead>
+                      <TableHead className="text-xs hidden xl:table-cell">Taxa</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
                       <TableHead className="text-right text-xs">Ações</TableHead>
                     </TableRow>
@@ -319,7 +415,7 @@ export const UsuariosSection = () => {
                   <TableBody>
                     {paginatedUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
                           Nenhum usuário cadastrado
                         </TableCell>
                       </TableRow>
@@ -331,6 +427,12 @@ export const UsuariosSection = () => {
                           <TableCell className="text-xs hidden lg:table-cell">
                             <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
                               {userAcquirers[u.id] === 'inter' ? 'Banco Inter' : userAcquirers[u.id] === 'ativus' ? 'Ativus Hub' : 'SpedPay'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs hidden xl:table-cell">
+                            <Badge variant="outline" className="text-[10px] px-1.5">
+                              <Percent className="h-3 w-3 mr-1" />
+                              {getFeeConfigName(u.id)}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -543,14 +645,42 @@ export const UsuariosSection = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-sm font-medium">Configuração de Taxa</Label>
+                <p className="text-xs text-muted-foreground">
+                  Selecione qual taxa será aplicada às transações deste usuário
+                </p>
+                <Select value={selectedUserFeeConfig} onValueChange={setSelectedUserFeeConfig}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Usar taxa padrão" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">
+                      <div className="flex items-center gap-2">
+                        <Percent className="w-3 h-3 text-muted-foreground" />
+                        Usar taxa padrão
+                      </div>
+                    </SelectItem>
+                    {feeConfigs.map(fc => (
+                      <SelectItem key={fc.id} value={fc.id}>
+                        <div className="flex items-center gap-2">
+                          <Percent className="w-3 h-3 text-primary" />
+                          {fc.name} ({fc.pix_percentage}% + R$ {fc.pix_fixed.toFixed(2)})
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setUserDetailsOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={saveUserAcquirer} disabled={isSavingUserAcquirer}>
-              {isSavingUserAcquirer ? (
+            <Button onClick={saveUserSettings} disabled={isSavingUserSettings}>
+              {isSavingUserSettings ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
                 <Check className="h-4 w-4 mr-2" />
