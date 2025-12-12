@@ -392,7 +392,10 @@ export function CheckoutPreviewMini({
 
       {/* Payment */}
       <div className="p-4 space-y-3 bg-white border-t">
-        <h3 className="font-medium text-gray-700">Forma de pagamento</h3>
+        <h3 className="font-medium text-gray-700 flex items-center gap-2">
+          <CreditCard className="h-4 w-4" />
+          Forma de pagamento
+        </h3>
         <div 
           className="inline-flex items-center gap-2 py-2 px-4 rounded-full border"
           style={{ borderColor: '#32BCAD30', backgroundColor: '#32BCAD08' }}
