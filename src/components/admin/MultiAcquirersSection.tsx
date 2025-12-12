@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Loader2, Check, Settings, Power } from "lucide-react";
+import { Plus, Loader2, Check, Settings, Power, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -29,6 +29,7 @@ export const MultiAcquirersSection = () => {
   const [ativusFeeRate, setAtivusFeeRate] = useState('');
   const [ativusFixedFee, setAtivusFixedFee] = useState('');
   const [ativusApiKey, setAtivusApiKey] = useState('');
+  const [defaultAcquirer, setDefaultAcquirer] = useState<string>('spedpay');
   const [interConfig, setInterConfig] = useState({
     clientId: '',
     clientSecret: '',
@@ -92,6 +93,7 @@ export const MultiAcquirersSection = () => {
         const ativusFee = settings.find(s => s.key === 'ativus_fee_rate');
         const ativusFixed = settings.find(s => s.key === 'ativus_fixed_fee');
         const ativusKey = settings.find(s => s.key === 'ativus_api_key');
+        const defaultAcq = settings.find(s => s.key === 'default_acquirer');
         
         // Default to true if not set, false only if explicitly set to 'false'
         setInterEnabled(interState?.value !== 'false');
@@ -104,6 +106,7 @@ export const MultiAcquirersSection = () => {
         setAtivusFeeRate(ativusFee?.value || '');
         setAtivusFixedFee(ativusFixed?.value || '');
         setAtivusApiKey(ativusKey?.value || '');
+        setDefaultAcquirer(defaultAcq?.value || 'spedpay');
       } else {
         // No data, default to enabled
         setInterEnabled(true);
@@ -148,6 +151,33 @@ export const MultiAcquirersSection = () => {
       toast({
         title: "Erro",
         description: "Falha ao alterar estado da adquirente",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const setAsDefaultAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus') => {
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'default_acquirer',
+        setting_value: acquirer
+      });
+      
+      if (error) throw error;
+      
+      setDefaultAcquirer(acquirer);
+      
+      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
+      
+      toast({
+        title: "Adquirente Principal Definida",
+        description: `${acquirerNames[acquirer]} agora é a adquirente padrão do sistema.`
+      });
+    } catch (error) {
+      console.error('Error setting default acquirer:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao definir adquirente padrão",
         variant: "destructive"
       });
     }
@@ -352,7 +382,15 @@ export const MultiAcquirersSection = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* BANCO INTER Card */}
-        <Card className={`border-primary/50 transition-opacity ${interEnabled === false ? 'opacity-60' : ''}`}>
+        <Card className={`border-primary/50 transition-opacity relative ${interEnabled === false ? 'opacity-60' : ''} ${defaultAcquirer === 'inter' ? 'ring-2 ring-yellow-500' : ''}`}>
+          {defaultAcquirer === 'inter' && (
+            <div className="absolute -top-2 -right-2">
+              <Badge className="bg-yellow-500 text-yellow-900 hover:bg-yellow-500">
+                <Star className="w-3 h-3 mr-1 fill-current" />
+                Principal
+              </Badge>
+            </div>
+          )}
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
@@ -433,6 +471,19 @@ export const MultiAcquirersSection = () => {
                 Salvar Taxas
               </Button>
             </div>
+
+            {/* Set as Default */}
+            {defaultAcquirer !== 'inter' && interEnabled !== false && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAsDefaultAcquirer('inter')}
+                className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
+              >
+                <Star className="w-3 h-3 mr-1" />
+                Definir como Principal
+              </Button>
+            )}
             
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
               <Badge 
@@ -549,13 +600,21 @@ export const MultiAcquirersSection = () => {
         </AlertDialog>
 
         {/* SPEDPAY Card */}
-        <Card className={`border-primary/50 transition-opacity ${spedpayEnabled === false ? 'opacity-60' : ''}`}>
+        <Card className={`border-primary/50 transition-opacity relative ${spedpayEnabled === false ? 'opacity-60' : ''} ${defaultAcquirer === 'spedpay' ? 'ring-2 ring-yellow-500' : ''}`}>
+          {defaultAcquirer === 'spedpay' && (
+            <div className="absolute -top-2 -right-2">
+              <Badge className="bg-yellow-500 text-yellow-900 hover:bg-yellow-500">
+                <Star className="w-3 h-3 mr-1 fill-current" />
+                Principal
+              </Badge>
+            </div>
+          )}
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-xl font-bold text-primary">SPEDPAY</CardTitle>
                 <CardDescription className="text-sm">
-                  Adquirente principal integrada ao sistema
+                  Adquirente integrada ao sistema
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -630,6 +689,19 @@ export const MultiAcquirersSection = () => {
                 Salvar Taxas
               </Button>
             </div>
+
+            {/* Set as Default */}
+            {defaultAcquirer !== 'spedpay' && spedpayEnabled !== false && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAsDefaultAcquirer('spedpay')}
+                className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
+              >
+                <Star className="w-3 h-3 mr-1" />
+                Definir como Principal
+              </Button>
+            )}
             
             <div className="flex items-center justify-between pt-2 border-t">
               <Badge 
@@ -647,7 +719,15 @@ export const MultiAcquirersSection = () => {
         </Card>
 
         {/* ATIVUS HUB Card */}
-        <Card className={`border-primary/50 transition-opacity ${ativusEnabled === false ? 'opacity-60' : ''}`}>
+        <Card className={`border-primary/50 transition-opacity relative ${ativusEnabled === false ? 'opacity-60' : ''} ${defaultAcquirer === 'ativus' ? 'ring-2 ring-yellow-500' : ''}`}>
+          {defaultAcquirer === 'ativus' && (
+            <div className="absolute -top-2 -right-2">
+              <Badge className="bg-yellow-500 text-yellow-900 hover:bg-yellow-500">
+                <Star className="w-3 h-3 mr-1 fill-current" />
+                Principal
+              </Badge>
+            </div>
+          )}
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
@@ -728,6 +808,19 @@ export const MultiAcquirersSection = () => {
                 Salvar Taxas
               </Button>
             </div>
+
+            {/* Set as Default */}
+            {defaultAcquirer !== 'ativus' && ativusEnabled !== false && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAsDefaultAcquirer('ativus')}
+                className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
+              >
+                <Star className="w-3 h-3 mr-1" />
+                Definir como Principal
+              </Button>
+            )}
             
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
               <Badge 
