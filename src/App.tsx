@@ -16,6 +16,7 @@ import AdminProfile from "./pages/AdminProfile";
 import AdminIntegrations from "./pages/AdminIntegrations";
 import AdminProducts from "./pages/AdminProducts";
 import AdminProductEdit from "./pages/AdminProductEdit";
+import AdminFinanceiro from "./pages/AdminFinanceiro";
 import PublicCheckout from "./pages/PublicCheckout";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +43,7 @@ const App = () => (
                 <Route index element={<Admin />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="financeiro" element={<AdminFinanceiro />} />
                 <Route path="checkout" element={<AdminCheckout />} />
                 <Route path="profile" element={<AdminProfile />} />
                 <Route path="integrations" element={<AdminIntegrations />} />
