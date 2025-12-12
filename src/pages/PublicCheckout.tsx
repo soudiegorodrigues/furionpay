@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,16 @@ import {
 
 // Lazy load ExitIntentPopup since it's not needed immediately
 const ExitIntentPopup = lazy(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })));
+
+// Preload critical images
+const preloadImage = (src: string | null | undefined) => {
+  if (!src) return;
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "image";
+  link.href = src;
+  document.head.appendChild(link);
+};
 
 export default function PublicCheckout() {
   const { offerCode } = useParams<{ offerCode: string }>();
@@ -108,6 +118,14 @@ export default function PublicCheckout() {
   const product = checkoutData?.product;
   const config = checkoutData?.config;
   const testimonials = checkoutData?.testimonials || [];
+
+  // Preload critical images as soon as data is available
+  useEffect(() => {
+    if (product?.image_url) preloadImage(product.image_url);
+    if (config?.header_logo_url) preloadImage(config.header_logo_url);
+    if (config?.discount_popup_image_url) preloadImage(config.discount_popup_image_url);
+  }, [product, config]);
+
   // Back redirect handler
   useEffect(() => {
     const backRedirectUrl = config?.back_redirect_url;
