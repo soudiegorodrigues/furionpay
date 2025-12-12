@@ -20,11 +20,6 @@ const menuItems = [{
   icon: BarChart3,
   adminOnly: false
 }, {
-  title: "Painel Financeiro",
-  url: "/admin/financeiro",
-  icon: Wallet,
-  adminOnly: false
-}, {
   title: "Checkout",
   url: "/admin/checkout",
   icon: CreditCard,
@@ -43,6 +38,11 @@ const menuItems = [{
   title: "Meta Pixels",
   url: "/admin/settings",
   icon: Settings,
+  adminOnly: false
+}, {
+  title: "Painel Financeiro",
+  url: "/admin/financeiro",
+  icon: Wallet,
   adminOnly: false
 }];
 
