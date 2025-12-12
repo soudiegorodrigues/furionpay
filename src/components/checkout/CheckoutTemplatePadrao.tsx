@@ -84,14 +84,16 @@ export function CheckoutTemplatePadrao({
       {/* Banner Image */}
       {config?.show_banners && config?.header_logo_url && (
         <div className="w-full flex justify-center pt-1 pb-4 md:pt-2 md:pb-6">
-          <img 
-            src={config.header_logo_url} 
-            alt="Banner" 
-            className="w-full md:max-w-5xl md:rounded-lg object-contain"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-          />
+          <div className="w-full md:max-w-5xl aspect-[16/9] md:aspect-[21/9]">
+            <img 
+              src={config.header_logo_url} 
+              alt="Banner" 
+              className="w-full h-full md:rounded-lg object-contain"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
         </div>
       )}
 
@@ -341,6 +343,8 @@ export function CheckoutTemplatePadrao({
                                 className="w-8 h-8 rounded-full object-cover shrink-0"
                                 loading="lazy"
                                 decoding="async"
+                                width={32}
+                                height={32}
                               />
                             ) : (
                               <div 
@@ -374,13 +378,23 @@ export function CheckoutTemplatePadrao({
 
                   {config?.show_product_image !== false && (
                     <div className="flex gap-3 p-3 bg-gray-50 rounded-xl">
-                      {product?.image_url ? (
-                        <img src={product.image_url} alt={product.name} className="w-16 h-16 object-cover rounded-lg" loading="lazy" decoding="async" />
-                      ) : (
-                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <ShoppingCart className="h-6 w-6 text-gray-400" />
-                        </div>
-                      )}
+                      <div className="w-16 h-16 shrink-0">
+                        {product?.image_url ? (
+                          <img 
+                            src={product.image_url} 
+                            alt={product.name || "Produto"} 
+                            className="w-16 h-16 object-cover rounded-lg" 
+                            loading="lazy" 
+                            decoding="async"
+                            width={64}
+                            height={64}
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <ShoppingCart className="h-6 w-6 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{offer.name}</h3>
                         <p className="text-xs text-gray-500 mt-1">Acesso imediato</p>

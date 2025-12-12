@@ -171,20 +171,29 @@ export const PixQRCode = ({
           {/* QR Code */}
           <div className="flex flex-col items-center gap-2 sm:gap-3">
             <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-white border-2 border-border shadow-lg ${isExpired ? "opacity-50 grayscale" : ""}`}>
-              {qrCodeUrl && qrCodeUrl.startsWith('http') ? (
-                <img src={qrCodeUrl} alt="QR Code PIX" className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl" loading="eager" />
-              ) : pixCode ? (
-                <QRCodeSVG 
-                  value={pixCode} 
-                  size={176} 
-                  level="M"
-                  className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl"
-                />
-              ) : (
-                <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl bg-secondary flex items-center justify-center">
-                  <span className="text-muted-foreground text-sm">QR Code</span>
-                </div>
-              )}
+              <div className="w-36 h-36 sm:w-44 sm:h-44">
+                {qrCodeUrl && qrCodeUrl.startsWith('http') ? (
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code PIX" 
+                    className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl" 
+                    loading="eager"
+                    width={176}
+                    height={176}
+                  />
+                ) : pixCode ? (
+                  <QRCodeSVG 
+                    value={pixCode} 
+                    size={176} 
+                    level="M"
+                    className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl"
+                  />
+                ) : (
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg sm:rounded-xl bg-secondary flex items-center justify-center">
+                    <span className="text-muted-foreground text-sm">QR Code</span>
+                  </div>
+                )}
+              </div>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground text-center flex items-center gap-1 sm:gap-1.5">
               📱 {isExpired ? "Código expirado" : "Escaneie o QR Code no app do seu banco"}
