@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Upload, FileCheck, Clock, XCircle, AlertTriangle, User, Building2, IdCard, Car, BookOpen } from "lucide-react";
+import { Upload, FileCheck, Clock, XCircle, AlertTriangle, User, Building2, IdCard, Car, BookOpen, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -382,20 +382,29 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
                 <div key={upload.side} className="space-y-2">
                   <Label className="text-sm text-muted-foreground">{upload.label}</Label>
                   <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
-                    {uploadedFile?.preview ? (
-                      <div className="relative w-full h-full">
-                        <img 
-                          src={uploadedFile.preview} 
-                          alt={upload.label}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
-                          <span className="text-white text-sm font-medium">Trocar</span>
+                    {uploadedFile?.file ? (
+                      uploadedFile.file.type === 'application/pdf' ? (
+                        <div className="relative w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/30">
+                          <FileText className="h-8 w-8 text-primary" />
+                          <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
+                            {uploadedFile.file.name}
+                          </span>
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                            <span className="text-white text-sm font-medium">Trocar</span>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="relative w-full h-full">
+                          <img 
+                            src={uploadedFile.preview || ''} 
+                            alt={upload.label}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                            <span className="text-white text-sm font-medium">Trocar</span>
+                          </div>
+                        </div>
+                      )
                     ) : (
                       <div className="flex flex-col items-center gap-2 p-4">
                         <Upload className="h-6 w-6 text-muted-foreground" />
@@ -427,20 +436,29 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
                     <div key={upload.side} className="space-y-2">
                       <Label className="text-sm text-muted-foreground">{upload.label}</Label>
                       <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
-                        {uploadedFile?.preview ? (
-                          <div className="relative w-full h-full">
-                            <img 
-                              src={uploadedFile.preview} 
-                              alt={upload.label}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
-                              <span className="text-white text-sm font-medium">Trocar</span>
+                        {uploadedFile?.file ? (
+                          uploadedFile.file.type === 'application/pdf' ? (
+                            <div className="relative w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/30">
+                              <FileText className="h-8 w-8 text-primary" />
+                              <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
+                                {uploadedFile.file.name}
+                              </span>
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                                <span className="text-white text-sm font-medium">Trocar</span>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div className="relative w-full h-full">
+                              <img 
+                                src={uploadedFile.preview || ''} 
+                                alt={upload.label}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                                <span className="text-white text-sm font-medium">Trocar</span>
+                              </div>
+                            </div>
+                          )
                         ) : (
                           <div className="flex flex-col items-center gap-2 p-4">
                             <Upload className="h-6 w-6 text-muted-foreground" />
