@@ -176,7 +176,7 @@ export function CheckoutTemplatePadrao({
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Digite seu nome completo"
-                      className="h-12 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                      className="h-12 border-gray-200 focus-visible:ring-green-500 focus-visible:border-green-500"
                     />
                   </div>
 
@@ -188,7 +188,7 @@ export function CheckoutTemplatePadrao({
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="seu@email.com"
-                      className="h-12 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                      className="h-12 border-gray-200 focus-visible:ring-green-500 focus-visible:border-green-500"
                     />
                   </div>
 
