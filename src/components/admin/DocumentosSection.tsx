@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileCheck, Eye, Check, X, User, Building2, Clock, CheckCircle, XCircle } from "lucide-react";
+import { FileCheck, Eye, Check, X, User, Building2, Clock, CheckCircle, XCircle, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -449,36 +449,72 @@ function DocumentViewer({
   getSignedUrl: (path: string) => Promise<string | null>;
   documentSideLabels: Record<string, string>;
 }) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const isPdf = document.file_url.toLowerCase().endsWith('.pdf');
+
   useEffect(() => {
-    const loadImage = async () => {
+    const loadFile = async () => {
       const url = await getSignedUrl(document.file_url);
-      setImageUrl(url);
+      setFileUrl(url);
       setLoading(false);
     };
-    loadImage();
+    loadFile();
   }, [document.file_url]);
 
   const label = document.document_side 
     ? documentSideLabels[document.document_side] 
     : documentSideLabels[document.document_type] || document.document_type;
 
+  const handleDownload = () => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label className="text-sm text-muted-foreground">{label}</Label>
-      <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+      <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden relative">
         {loading ? (
           <div className="w-full h-full animate-pulse bg-muted"></div>
-        ) : imageUrl ? (
-          <a href={imageUrl} target="_blank" rel="noopener noreferrer">
-            <img 
-              src={imageUrl} 
-              alt={label}
-              className="w-full h-full object-contain hover:scale-105 transition-transform cursor-zoom-in"
-            />
-          </a>
+        ) : fileUrl ? (
+          isPdf ? (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
+              <FileText className="h-12 w-12 text-primary" />
+              <span className="text-sm text-center text-muted-foreground truncate max-w-full px-2">
+                {label}.pdf
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDownload}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Baixar
+              </Button>
+            </div>
+          ) : (
+            <div className="relative w-full h-full group">
+              <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                <img 
+                  src={fileUrl} 
+                  alt={label}
+                  className="w-full h-full object-contain hover:scale-105 transition-transform cursor-zoom-in"
+                />
+              </a>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={handleDownload}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Baixar
+              </Button>
+            </div>
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             Erro ao carregar
