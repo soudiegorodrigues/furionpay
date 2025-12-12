@@ -1,9 +1,12 @@
+// Types only for tree-shaking optimization
 export * from "./types";
-export * from "./CheckoutTemplatePadrao";
-export * from "./CheckoutTemplateVega";
-export * from "./CheckoutTemplateAfilia";
-export * from "./CheckoutTemplateMultistep";
-export * from "./CheckoutPixPayment";
-export * from "./CheckoutBuilderSimple";
-export * from "./CheckoutPreviewMini";
-export * from "./ExitIntentPopup";
+
+// Individual exports for lazy loading support
+export { CheckoutTemplatePadrao } from "./CheckoutTemplatePadrao";
+export { CheckoutTemplateVega } from "./CheckoutTemplateVega";
+export { CheckoutTemplateAfilia } from "./CheckoutTemplateAfilia";
+export { CheckoutTemplateMultistep } from "./CheckoutTemplateMultistep";
+export { CheckoutPixPayment } from "./CheckoutPixPayment";
+export { CheckoutBuilderSimple } from "./CheckoutBuilderSimple";
+export { CheckoutPreviewMini } from "./CheckoutPreviewMini";
+export { ExitIntentPopup } from "./ExitIntentPopup";

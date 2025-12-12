@@ -1,17 +1,9 @@
-import { useState, useEffect, lazy, Suspense, useMemo } from "react";
+import { useState, useEffect, lazy, Suspense, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ShoppingCart } from "lucide-react";
 import {
-  CheckoutTemplatePadrao,
-  CheckoutTemplateVega,
-  CheckoutTemplateAfilia,
-  CheckoutTemplateMultistep,
-  CheckoutPixPayment,
   ProductOffer,
   Product,
   CheckoutConfig,
@@ -20,16 +12,50 @@ import {
   Testimonial,
 } from "@/components/checkout";
 
-// Lazy load ExitIntentPopup since it's not needed immediately
+// Lazy load ALL templates for maximum code splitting
+const CheckoutTemplatePadrao = lazy(() => import("@/components/checkout/CheckoutTemplatePadrao").then(m => ({ default: m.CheckoutTemplatePadrao })));
+const CheckoutTemplateVega = lazy(() => import("@/components/checkout/CheckoutTemplateVega").then(m => ({ default: m.CheckoutTemplateVega })));
+const CheckoutTemplateAfilia = lazy(() => import("@/components/checkout/CheckoutTemplateAfilia").then(m => ({ default: m.CheckoutTemplateAfilia })));
+const CheckoutTemplateMultistep = lazy(() => import("@/components/checkout/CheckoutTemplateMultistep").then(m => ({ default: m.CheckoutTemplateMultistep })));
+const CheckoutPixPayment = lazy(() => import("@/components/checkout/CheckoutPixPayment").then(m => ({ default: m.CheckoutPixPayment })));
 const ExitIntentPopup = lazy(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })));
 
-// Preload critical images
+// Minimal skeleton for instant render - CSS-only, no JS
+const CheckoutSkeleton = memo(() => (
+  <div className="min-h-screen bg-gray-50">
+    <div className="h-12 bg-white border-b" />
+    <div className="max-w-4xl mx-auto p-4 animate-pulse">
+      <div className="grid md:grid-cols-5 gap-4">
+        <div className="md:col-span-3 space-y-4">
+          <div className="bg-white rounded-lg p-6 space-y-3">
+            <div className="h-6 bg-gray-200 rounded w-1/3" />
+            <div className="h-12 bg-gray-100 rounded" />
+            <div className="h-12 bg-gray-100 rounded" />
+          </div>
+        </div>
+        <div className="md:col-span-2">
+          <div className="bg-white rounded-lg p-6 space-y-3">
+            <div className="h-6 bg-gray-200 rounded w-1/2" />
+            <div className="h-16 bg-gray-100 rounded" />
+            <div className="h-10 bg-green-200 rounded" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+));
+CheckoutSkeleton.displayName = "CheckoutSkeleton";
+
+// Preload critical images with priority
 const preloadImage = (src: string | null | undefined) => {
-  if (!src) return;
+  if (!src || typeof document === 'undefined') return;
+  const existing = document.querySelector(`link[href="${src}"]`);
+  if (existing) return;
   const link = document.createElement("link");
   link.rel = "preload";
   link.as = "image";
   link.href = src;
+  link.fetchPriority = "high";
   document.head.appendChild(link);
 };
 
@@ -258,31 +284,29 @@ export default function PublicCheckout() {
     }
   };
 
+  // Show skeleton for fast perceived load
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Carregando checkout...</div>
-      </div>
-    );
+    return <CheckoutSkeleton />;
   }
 
   if (error || !offer) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ShoppingCart className="h-8 w-8 text-destructive" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Oferta não encontrada</h2>
-            <p className="text-muted-foreground mb-4">
-              Esta oferta não está mais disponível ou o link está incorreto.
-            </p>
-            <Button onClick={() => navigate("/")} variant="outline">
-              Voltar ao início
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold mb-2 text-gray-900">Oferta não encontrada</h2>
+          <p className="text-gray-500 mb-4">Esta oferta não está mais disponível.</p>
+          <button 
+            onClick={() => navigate("/")} 
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Voltar ao início
+          </button>
+        </div>
       </div>
     );
   }
@@ -342,7 +366,7 @@ export default function PublicCheckout() {
   };
 
   return (
-    <>
+    <Suspense fallback={<CheckoutSkeleton />}>
       {renderTemplate()}
       {config?.show_discount_popup && (
         <Suspense fallback={null}>
@@ -358,6 +382,6 @@ export default function PublicCheckout() {
           />
         </Suspense>
       )}
-    </>
+    </Suspense>
   );
 }
