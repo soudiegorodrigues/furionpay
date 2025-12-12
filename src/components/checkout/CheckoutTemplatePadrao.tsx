@@ -210,7 +210,7 @@ export function CheckoutTemplatePadrao({
                     {(config?.require_phone !== false) && (
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="text-gray-700 font-medium">
-                          WhatsApp {config?.require_phone && "*"}
+                          Telefone {config?.require_phone && "*"}
                         </Label>
                         <Input
                           id="phone"
