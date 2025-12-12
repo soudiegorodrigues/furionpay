@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
+const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/getTransactionStatus.php';
 
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -21,7 +22,7 @@ async function getApiKeyForUser(supabase: any, userId: string): Promise<string |
     .select('value')
     .eq('key', 'spedpay_api_key')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   
   if (error || !data?.value) {
     return null;
@@ -36,13 +37,43 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
     .select('value')
     .eq('key', 'user_acquirer')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   
   if (error || !data?.value) {
     return 'spedpay';
   }
   
   return data.value;
+}
+
+async function getAtivusApiKey(supabase: any, userId?: string): Promise<string | null> {
+  // Try user-specific setting first
+  if (userId) {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('user_id', userId)
+      .eq('key', 'ativus_api_key')
+      .maybeSingle();
+    
+    if (!error && data?.value) {
+      return data.value;
+    }
+  }
+  
+  // Try global setting
+  const { data: globalData, error: globalError } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .is('user_id', null)
+    .eq('key', 'ativus_api_key')
+    .maybeSingle();
+  
+  if (!globalError && globalData?.value) {
+    return globalData.value;
+  }
+  
+  return null;
 }
 
 // Get cached Inter token from database
@@ -52,7 +83,7 @@ async function getCachedInterToken(supabase: any): Promise<{ token: string; expi
     .select('value')
     .eq('key', 'inter_token_cache')
     .is('user_id', null)
-    .single();
+    .maybeSingle();
   
   if (error || !data?.value) {
     return null;
@@ -228,6 +259,49 @@ async function checkInterStatus(
   };
 }
 
+async function checkAtivusStatus(
+  idTransaction: string,
+  apiKey: string
+): Promise<{ isPaid: boolean; status: string }> {
+  try {
+    // Build auth header - check if API key is already Base64 encoded
+    const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
+    const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
+
+    const statusUrl = `${ATIVUS_STATUS_URL}?id_transaction=${idTransaction}`;
+    
+    console.log(`Checking Ativus status for id_transaction: ${idTransaction}`);
+
+    const response = await fetch(statusUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${authHeader}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`Ativus API error for ${idTransaction}:`, response.status);
+      return { isPaid: false, status: 'error' };
+    }
+
+    const data = await response.json();
+    console.log(`Ativus status response for ${idTransaction}:`, data.situacao);
+
+    // Map Ativus status to our internal status
+    const situacao = (data.situacao || '').toUpperCase();
+    const isPaid = ['CONCLUIDO', 'PAGO', 'CONCLUÍDA', 'PAID', 'APPROVED'].includes(situacao);
+
+    return {
+      isPaid,
+      status: situacao,
+    };
+  } catch (err) {
+    console.error(`Error checking Ativus status for ${idTransaction}:`, err);
+    return { isPaid: false, status: 'error' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -236,12 +310,14 @@ serve(async (req) => {
   try {
     const supabase = getSupabaseClient();
     
-    // Get all pending transactions
+    // Get all pending transactions (limit to 100 per batch to avoid timeout)
     const { data: pendingTransactions, error: fetchError } = await supabase
       .from('pix_transactions')
       .select('id, txid, user_id, amount')
       .eq('status', 'generated')
-      .not('txid', 'is', null);
+      .not('txid', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(100);
     
     if (fetchError) {
       console.error('Error fetching pending transactions:', fetchError);
@@ -263,6 +339,7 @@ serve(async (req) => {
     // Cache user acquirers and API keys to avoid repeated queries
     const userAcquirers: Record<string, string> = {};
     const userApiKeys: Record<string, string | null> = {};
+    const userAtivusKeys: Record<string, string | null> = {};
     const defaultApiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
 
     // Setup Inter client once if needed
@@ -286,7 +363,47 @@ serve(async (req) => {
       }
 
       try {
-        if (acquirer === 'inter') {
+        if (acquirer === 'ativus') {
+          // Check with Ativus Hub
+          let ativusApiKey: string | null = null;
+          
+          if (transaction.user_id) {
+            if (!(transaction.user_id in userAtivusKeys)) {
+              userAtivusKeys[transaction.user_id] = await getAtivusApiKey(supabase, transaction.user_id);
+            }
+            ativusApiKey = userAtivusKeys[transaction.user_id];
+          }
+          
+          if (!ativusApiKey) {
+            ativusApiKey = await getAtivusApiKey(supabase);
+          }
+          
+          if (!ativusApiKey) {
+            console.log(`Skipping Ativus transaction ${transaction.id} - no API key available`);
+            results.push({ id: transaction.id, txid: transaction.txid, status: 'skipped', reason: 'no_ativus_key', acquirer: 'ativus' });
+            continue;
+          }
+
+          const ativusResult = await checkAtivusStatus(transaction.txid, ativusApiKey);
+          
+          if (ativusResult.isPaid) {
+            console.log(`Marking transaction ${transaction.txid} as paid (Ativus)`);
+            
+            const { error: updateError } = await supabase.rpc('mark_pix_paid', {
+              p_txid: transaction.txid
+            });
+
+            if (updateError) {
+              console.error(`Error updating transaction ${transaction.txid}:`, updateError);
+              results.push({ id: transaction.id, txid: transaction.txid, status: 'update_error', reason: updateError.message });
+            } else {
+              updatedCount++;
+              results.push({ id: transaction.id, txid: transaction.txid, status: 'updated_to_paid', amount: transaction.amount, acquirer: 'ativus' });
+            }
+          } else {
+            results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', ativus_status: ativusResult.status, acquirer: 'ativus' });
+          }
+        } else if (acquirer === 'inter') {
           // Check with Banco Inter
           if (!mtlsClient) {
             mtlsClient = createMtlsClient();
@@ -393,7 +510,7 @@ serve(async (req) => {
         }
 
         // Add small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (err) {
         console.error(`Error checking transaction ${transaction.txid}:`, err);
