@@ -46,6 +46,27 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
   return data.value;
 }
 
+// Detect acquirer by txid format
+// Ativus: 26+ alphanumeric chars without hyphens (e.g., "409b79aefec44a99baf6700f95")
+// SpedPay/Inter: UUID format with hyphens (e.g., "8172e8d2-8b97-4725-b735-2f4a20938b89")
+function detectAcquirerByTxid(txid: string): string | null {
+  if (!txid) return null;
+  
+  // UUID format (with hyphens) = SpedPay or Inter
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidPattern.test(txid)) {
+    return null; // Can't determine between SpedPay and Inter by txid alone
+  }
+  
+  // Ativus format: 26+ alphanumeric chars without hyphens
+  const ativusPattern = /^[a-zA-Z0-9]{20,}$/;
+  if (ativusPattern.test(txid) && !txid.includes('-')) {
+    return 'ativus';
+  }
+  
+  return null;
+}
+
 async function getAtivusApiKey(supabase: any, userId?: string): Promise<string | null> {
   // Try user-specific setting first
   if (userId) {
@@ -354,12 +375,20 @@ serve(async (req) => {
       checkedCount++;
       
       // Determine acquirer for this transaction
-      let acquirer = 'spedpay';
-      if (transaction.user_id) {
+      // First, try to detect by txid format (most reliable for Ativus)
+      let acquirer = detectAcquirerByTxid(transaction.txid);
+      
+      // If not detected by txid, check user settings
+      if (!acquirer && transaction.user_id) {
         if (!(transaction.user_id in userAcquirers)) {
           userAcquirers[transaction.user_id] = await getUserAcquirer(supabase, transaction.user_id);
         }
         acquirer = userAcquirers[transaction.user_id];
+      }
+      
+      // Default to spedpay if still not determined
+      if (!acquirer) {
+        acquirer = 'spedpay';
       }
 
       try {
