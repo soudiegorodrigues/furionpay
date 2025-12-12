@@ -28,6 +28,12 @@ export default function AdminProfile() {
   const [displayName, setDisplayName] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [resetting, setResetting] = useState(false);
+  
+  // Reset confirmation dialog state
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   // Load profile name from database
   useEffect(() => {
@@ -84,6 +90,68 @@ export default function AdminProfile() {
       });
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const handleResetAccount = async () => {
+    if (!confirmEmail.trim() || !confirmPassword.trim()) {
+      toast({
+        title: "Erro",
+        description: "Preencha o email e a senha para confirmar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (confirmEmail.trim().toLowerCase() !== user?.email?.toLowerCase()) {
+      toast({
+        title: "Erro",
+        description: "O email informado não corresponde à sua conta",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      // Verify password by attempting to sign in
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: confirmEmail.trim(),
+        password: confirmPassword,
+      });
+
+      if (authError) {
+        toast({
+          title: "Erro",
+          description: "Senha incorreta. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Password verified, proceed with reset
+      setResetting(true);
+      const { error: txError } = await supabase.rpc('reset_user_transactions');
+      if (txError) throw txError;
+
+      toast({
+        title: "Conta resetada",
+        description: "Seu histórico de transações foi removido com sucesso.",
+      });
+
+      // Close dialog and reset fields
+      setResetDialogOpen(false);
+      setConfirmEmail("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao resetar conta",
+        variant: "destructive",
+      });
+    } finally {
+      setVerifying(false);
+      setResetting(false);
     }
   };
 
@@ -164,7 +232,13 @@ export default function AdminProfile() {
                     Use isso se deseja iniciar um novo projeto do zero. 
                     <strong className="text-foreground"> Seus dados históricos permanecerão registrados no sistema administrativo.</strong>
                   </p>
-                  <AlertDialog>
+                  <AlertDialog open={resetDialogOpen} onOpenChange={(open) => {
+                    setResetDialogOpen(open);
+                    if (!open) {
+                      setConfirmEmail("");
+                      setConfirmPassword("");
+                    }
+                  }}>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" disabled={resetting}>
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -173,40 +247,44 @@ export default function AdminProfile() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                        <AlertDialogTitle>Confirme sua identidade</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta ação não pode ser desfeita. Isso irá apagar permanentemente suas transações e configurações pessoais.
-                          Os dados históricos continuarão visíveis para administradores do sistema.
+                          Para resetar sua conta, confirme seu email e senha. Esta ação não pode ser desfeita.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          onClick={async () => {
-                            setResetting(true);
-                            try {
-                              // Reset user transactions only
-                              const { error: txError } = await supabase.rpc('reset_user_transactions');
-                              if (txError) throw txError;
+                      
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="confirm-email">Email</Label>
+                          <Input
+                            id="confirm-email"
+                            type="email"
+                            placeholder="Digite seu email"
+                            value={confirmEmail}
+                            onChange={(e) => setConfirmEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="confirm-password">Senha</Label>
+                          <Input
+                            id="confirm-password"
+                            type="password"
+                            placeholder="Digite sua senha"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                          />
+                        </div>
+                      </div>
 
-                              toast({
-                                title: "Conta resetada",
-                                description: "Seu histórico de transações foi removido com sucesso.",
-                              });
-                            } catch (error: any) {
-                              toast({
-                                title: "Erro",
-                                description: error.message || "Erro ao resetar conta",
-                                variant: "destructive",
-                              });
-                            } finally {
-                              setResetting(false);
-                            }
-                          }}
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={verifying || resetting}>Cancelar</AlertDialogCancel>
+                        <Button
+                          variant="destructive"
+                          onClick={handleResetAccount}
+                          disabled={verifying || resetting || !confirmEmail || !confirmPassword}
                         >
-                          Sim, resetar minha conta
-                        </AlertDialogAction>
+                          {verifying ? "Verificando..." : resetting ? "Resetando..." : "Confirmar e Resetar"}
+                        </Button>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
