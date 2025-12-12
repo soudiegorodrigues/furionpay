@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Badge } from "@/components/ui/badge";
@@ -38,18 +38,292 @@ const AdminFinanceiro = () => {
     pixKeyType: '',
     pixKey: ''
   });
+  const [bankSearch, setBankSearch] = useState('');
   const { toast } = useToast();
 
   const banks = [
     { code: '001', name: 'Banco do Brasil S.A.' },
+    { code: '003', name: 'Banco da Amazônia S.A.' },
+    { code: '004', name: 'Banco do Nordeste do Brasil S.A.' },
+    { code: '007', name: 'BNDES' },
+    { code: '010', name: 'Credicoamo' },
+    { code: '011', name: 'Credit Suisse Hedging-Griffo' },
+    { code: '012', name: 'Banco Inbursa S.A.' },
+    { code: '014', name: 'Natixis Brasil S.A.' },
+    { code: '015', name: 'UBS Brasil CCTVM S.A.' },
+    { code: '016', name: 'Sicoob Creditran' },
+    { code: '017', name: 'BNY Mellon Banco S.A.' },
+    { code: '018', name: 'Banco Tricury S.A.' },
+    { code: '021', name: 'Banestes S.A.' },
+    { code: '024', name: 'Banco Bandepe S.A.' },
+    { code: '025', name: 'Banco Alfa S.A.' },
+    { code: '029', name: 'Banco Itaú Consignado S.A.' },
     { code: '033', name: 'Banco Santander Brasil S.A.' },
+    { code: '036', name: 'Banco Bradesco BBI S.A.' },
+    { code: '037', name: 'Banco do Estado do Pará S.A.' },
+    { code: '040', name: 'Banco Cargill S.A.' },
+    { code: '041', name: 'Banrisul S.A.' },
+    { code: '047', name: 'Banco do Estado de Sergipe S.A.' },
+    { code: '062', name: 'Hipercard' },
+    { code: '063', name: 'Banco Bradescard S.A.' },
+    { code: '065', name: 'Banco AndBank Brasil S.A.' },
+    { code: '066', name: 'Banco Morgan Stanley S.A.' },
+    { code: '069', name: 'Banco Crefisa S.A.' },
+    { code: '070', name: 'BRB - Banco de Brasília S.A.' },
+    { code: '074', name: 'Banco J. Safra S.A.' },
+    { code: '075', name: 'BCo ABN Amro S.A.' },
+    { code: '076', name: 'Banco KDB do Brasil S.A.' },
     { code: '077', name: 'Banco Inter S.A.' },
+    { code: '078', name: 'Haitong BI do Brasil S.A.' },
+    { code: '079', name: 'Banco Original do Agronegócio S.A.' },
+    { code: '080', name: 'B&T CC Ltda.' },
+    { code: '081', name: 'BBN Banco Brasileiro de Negócios S.A.' },
+    { code: '082', name: 'Banco Topázio S.A.' },
+    { code: '083', name: 'Banco da China Brasil S.A.' },
+    { code: '084', name: 'Uniprime Norte do Paraná' },
+    { code: '085', name: 'Cooperativa Central Ailos' },
+    { code: '088', name: 'Randon S.A.' },
+    { code: '089', name: 'Credisan CC' },
+    { code: '091', name: 'Unicred Central RS' },
+    { code: '092', name: 'BRK S.A. CFI' },
+    { code: '093', name: 'Polocred SCMEPP Ltda.' },
+    { code: '094', name: 'Banco Finaxis S.A.' },
+    { code: '095', name: 'Banco Confidence' },
+    { code: '096', name: 'Banco B3 S.A.' },
+    { code: '097', name: 'Credisis Central de Cooperativas' },
+    { code: '098', name: 'Credialiança CCR' },
+    { code: '099', name: 'Uniprime Central' },
+    { code: '100', name: 'Planner Corretora de Valores S.A.' },
+    { code: '101', name: 'Renascença DTVM Ltda.' },
+    { code: '102', name: 'XP Investimentos CCTVM S.A.' },
     { code: '104', name: 'Caixa Econômica Federal' },
+    { code: '105', name: 'Lecca CFI S.A.' },
+    { code: '107', name: 'Banco Bocom BBM S.A.' },
+    { code: '108', name: 'PortoCred S.A.' },
+    { code: '111', name: 'Oliveira Trust DTVM S.A.' },
+    { code: '113', name: 'Magliano S.A. CCVM' },
+    { code: '114', name: 'Central Cooperativa de Crédito no Estado do Espírito Santo' },
+    { code: '117', name: 'Advanced CC Ltda.' },
+    { code: '119', name: 'Banco Western Union do Brasil S.A.' },
+    { code: '120', name: 'Banco Rodobens S.A.' },
+    { code: '121', name: 'Banco Agibank S.A.' },
+    { code: '122', name: 'Banco Bradesco BERJ S.A.' },
+    { code: '124', name: 'Banco Woori Bank do Brasil S.A.' },
+    { code: '125', name: 'Banco Genial S.A.' },
+    { code: '126', name: 'BR Partners BI S.A.' },
+    { code: '127', name: 'Codepe CVC S.A.' },
+    { code: '128', name: 'MS Bank S.A. Banco de Câmbio' },
+    { code: '129', name: 'UBS Brasil BI S.A.' },
+    { code: '130', name: 'Caruana SCFI' },
+    { code: '131', name: 'Tullett Prebon Brasil CVC Ltda.' },
+    { code: '132', name: 'ICBC do Brasil BM S.A.' },
+    { code: '133', name: 'Cresol Confederação' },
+    { code: '134', name: 'BGC Liquidez DTVM Ltda.' },
+    { code: '136', name: 'Unicred Cooperativa' },
+    { code: '137', name: 'Multimoney CC Ltda.' },
+    { code: '138', name: 'Get Money CC Ltda.' },
+    { code: '139', name: 'Intesa Sanpaolo Brasil S.A.' },
+    { code: '140', name: 'Easynvest Título CV S.A.' },
+    { code: '142', name: 'Broker Brasil CC Ltda.' },
+    { code: '143', name: 'Treviso CC S.A.' },
+    { code: '144', name: 'Bexs Banco de Câmbio S.A.' },
+    { code: '145', name: 'Levycam CCV Ltda.' },
+    { code: '146', name: 'Guitta CC Ltda.' },
+    { code: '149', name: 'Facta S.A. CFI' },
+    { code: '157', name: 'ICAP do Brasil CTVM Ltda.' },
+    { code: '159', name: 'Casa do Crédito S.A.' },
+    { code: '163', name: 'Commerzbank Brasil S.A.' },
+    { code: '169', name: 'Banco Olé Consignado S.A.' },
+    { code: '173', name: 'BRL Trust DTVM S.A.' },
+    { code: '174', name: 'Pefisa S.A. CFI' },
+    { code: '177', name: 'Guide Investimentos S.A.' },
+    { code: '180', name: 'CM Capital Markets CCTVM Ltda.' },
+    { code: '183', name: 'Socred S.A.' },
+    { code: '184', name: 'Banco Itaú BBA S.A.' },
+    { code: '188', name: 'Ativa Investimentos S.A.' },
+    { code: '189', name: 'HS Financeira S.A.' },
+    { code: '190', name: 'Servicoop' },
+    { code: '191', name: 'Nova Futura CTVM Ltda.' },
+    { code: '194', name: 'Parmetal DTVM Ltda.' },
+    { code: '196', name: 'Fair CC S.A.' },
+    { code: '197', name: 'Stone Pagamentos S.A.' },
+    { code: '208', name: 'Banco BTG Pactual S.A.' },
+    { code: '212', name: 'Banco Original S.A.' },
+    { code: '213', name: 'Banco Arbi S.A.' },
+    { code: '217', name: 'Banco John Deere S.A.' },
+    { code: '218', name: 'Banco BS2 S.A.' },
+    { code: '222', name: 'Banco Credit Agricole Brasil S.A.' },
+    { code: '224', name: 'Banco Fibra S.A.' },
+    { code: '233', name: 'Banco Cifra S.A.' },
     { code: '237', name: 'Bradesco S.A.' },
+    { code: '241', name: 'Banco Clássico S.A.' },
+    { code: '243', name: 'Banco Máxima S.A.' },
+    { code: '246', name: 'Banco ABC Brasil S.A.' },
+    { code: '249', name: 'Banco Investcred Unibanco S.A.' },
+    { code: '250', name: 'BCV - Banco de Crédito e Varejo S.A.' },
+    { code: '253', name: 'Bexs CC S.A.' },
+    { code: '254', name: 'Paraná Banco S.A.' },
     { code: '260', name: 'Nubank' },
+    { code: '265', name: 'Banco Fator S.A.' },
+    { code: '266', name: 'Banco Cédula S.A.' },
+    { code: '268', name: 'Barigui CH' },
+    { code: '269', name: 'HSBC Brasil S.A.' },
+    { code: '270', name: 'Sagitur CC Ltda.' },
+    { code: '271', name: 'IB CCTVM S.A.' },
+    { code: '272', name: 'AGK CC S.A.' },
+    { code: '273', name: 'CCR de São Miguel do Oeste' },
+    { code: '274', name: 'Money Plus SCMEPP Ltda.' },
+    { code: '276', name: 'Banco Senff S.A.' },
+    { code: '278', name: 'Genial Investimentos CVM S.A.' },
+    { code: '279', name: 'CCR de Primavera do Leste' },
+    { code: '280', name: 'Avista S.A. CFI' },
+    { code: '281', name: 'CCR Coopavel' },
+    { code: '283', name: 'RB Capital Investimentos DTVM Ltda.' },
+    { code: '285', name: 'Frente CC Ltda.' },
+    { code: '286', name: 'CCR de Ouro' },
+    { code: '288', name: 'Carol DTVM Ltda.' },
+    { code: '289', name: 'Decyseo CC Ltda.' },
+    { code: '290', name: 'PagSeguro Internet S.A.' },
+    { code: '292', name: 'BS2 DTVM S.A.' },
+    { code: '293', name: 'Lastro RDV DTVM Ltda.' },
+    { code: '298', name: 'Vip\'s CC Ltda.' },
+    { code: '299', name: 'Sorocred CFI S.A.' },
+    { code: '300', name: 'Banco de la Nación Argentina' },
+    { code: '301', name: 'BPP IP S.A.' },
+    { code: '306', name: 'Portopar DTVM Ltda.' },
+    { code: '307', name: 'Terra Investimentos DTVM Ltda.' },
+    { code: '309', name: 'Cambionet CC Ltda.' },
+    { code: '310', name: 'VORTX DTVM Ltda.' },
+    { code: '311', name: 'Dourada Corretora' },
+    { code: '312', name: 'Hscm SCMEPP Ltda.' },
+    { code: '313', name: 'Amazônia CC Ltda.' },
+    { code: '315', name: 'PI DTVM S.A.' },
+    { code: '318', name: 'Banco BMG S.A.' },
+    { code: '319', name: 'OM DTVM Ltda.' },
+    { code: '320', name: 'China Construction Bank Brasil' },
+    { code: '321', name: 'Crefaz SCMEPP Ltda.' },
+    { code: '322', name: 'CCR de Abelardo Luz' },
+    { code: '323', name: 'Mercado Pago' },
+    { code: '324', name: 'Cartos SCD S.A.' },
+    { code: '325', name: 'Órama DTVM S.A.' },
+    { code: '326', name: 'Parati CFI S.A.' },
+    { code: '329', name: 'QI SCD S.A.' },
+    { code: '330', name: 'Banco Bari S.A.' },
+    { code: '331', name: 'Fram Capital DTVM S.A.' },
+    { code: '332', name: 'Acesso Soluções de Pagamento S.A.' },
+    { code: '335', name: 'Banco Digio S.A.' },
+    { code: '336', name: 'Banco C6 S.A.' },
+    { code: '340', name: 'Super Pagamentos S.A.' },
     { code: '341', name: 'Itaú Unibanco S.A.' },
+    { code: '342', name: 'Creditas SCD S.A.' },
+    { code: '343', name: 'FFA SCMEPP Ltda.' },
+    { code: '348', name: 'Banco XP S.A.' },
+    { code: '349', name: 'AL5 S.A. CFI' },
+    { code: '350', name: 'Crehnor Laranjeiras' },
+    { code: '352', name: 'Toro CTVM Ltda.' },
+    { code: '354', name: 'Necton Investimentos S.A.' },
+    { code: '355', name: 'Ótimo SCD S.A.' },
+    { code: '358', name: 'Midway S.A. CFI' },
+    { code: '359', name: 'Zema CFI S.A.' },
+    { code: '360', name: 'Trinus Capital DTVM S.A.' },
+    { code: '362', name: 'Cielo S.A.' },
+    { code: '363', name: 'Socopa SC Paulista S.A.' },
+    { code: '364', name: 'Gerencianet S.A.' },
+    { code: '365', name: 'Solidus S.A. CCVM' },
+    { code: '366', name: 'Banco Société Générale Brasil S.A.' },
+    { code: '367', name: 'Vitreo DTVM S.A.' },
+    { code: '368', name: 'Banco CSF S.A.' },
+    { code: '370', name: 'Banco Mizuho do Brasil S.A.' },
+    { code: '371', name: 'Warren CVMC Ltda.' },
+    { code: '373', name: 'UP.P SEP S.A.' },
+    { code: '374', name: 'Realize CFI S.A.' },
+    { code: '376', name: 'Banco J.P. Morgan S.A.' },
+    { code: '377', name: 'BMS SCD S.A.' },
+    { code: '378', name: 'BBC Leasing S.A.' },
+    { code: '379', name: 'Cecm Cooperforte' },
+    { code: '380', name: 'PicPay Serviços S.A.' },
+    { code: '381', name: 'Banco Mercedes-Benz do Brasil S.A.' },
+    { code: '382', name: 'Fiducia SCMEPP Ltda.' },
+    { code: '383', name: 'Juno' },
+    { code: '384', name: 'Global SCM Ltda.' },
+    { code: '385', name: 'Cecm dos Trab.Port. da G.Vit' },
+    { code: '386', name: 'Nu Financeira S.A. CFI' },
+    { code: '387', name: 'Banco Toyota do Brasil S.A.' },
+    { code: '389', name: 'Banco Mercantil do Brasil S.A.' },
+    { code: '390', name: 'Banco GM S.A.' },
+    { code: '391', name: 'CCR de Ibiam' },
+    { code: '393', name: 'Banco Volkswagen S.A.' },
+    { code: '394', name: 'Banco Bradesco Financiamentos S.A.' },
+    { code: '396', name: 'Hub Pagamentos S.A.' },
+    { code: '399', name: 'Kirton Bank S.A.' },
+    { code: '400', name: 'Coop. de Créd. Rural de Ouro Sulcredi/Ouro' },
+    { code: '401', name: 'Iugu IP S.A.' },
+    { code: '403', name: 'Cora SCD S.A.' },
+    { code: '404', name: 'Sumup SCD S.A.' },
+    { code: '406', name: 'Accredito SCD S.A.' },
+    { code: '407', name: 'Índigo Investimentos DTVM Ltda.' },
+    { code: '408', name: 'Bônuscred SCD S.A.' },
+    { code: '410', name: 'Planner Sociedade de Crédito Direto' },
+    { code: '411', name: 'Via Certa Financiadora S.A.' },
+    { code: '412', name: 'Banco Capital S.A.' },
+    { code: '413', name: 'Banco BV S.A.' },
+    { code: '414', name: 'Lend SCD S.A.' },
+    { code: '416', name: 'Lamara SCD S.A.' },
+    { code: '418', name: 'Zipdin SCD S.A.' },
+    { code: '419', name: 'Numbrs SCD S.A.' },
+    { code: '422', name: 'Banco Safra S.A.' },
+    { code: '456', name: 'Banco MUFG Brasil S.A.' },
+    { code: '473', name: 'Banco Caixa Geral Brasil S.A.' },
+    { code: '477', name: 'Citibank N.A.' },
+    { code: '479', name: 'Banco ItauBank S.A.' },
+    { code: '487', name: 'Deutsche Bank S.A.' },
+    { code: '492', name: 'ING Bank N.V.' },
+    { code: '495', name: 'Banco de La Provincia de Buenos Aires' },
+    { code: '505', name: 'Banco Credit Suisse Brasil S.A.' },
+    { code: '545', name: 'Senso CCVM S.A.' },
+    { code: '600', name: 'Banco Luso Brasileiro S.A.' },
+    { code: '604', name: 'Banco Industrial do Brasil S.A.' },
+    { code: '610', name: 'Banco VR S.A.' },
+    { code: '611', name: 'Banco Paulista S.A.' },
+    { code: '612', name: 'Banco Guanabara S.A.' },
+    { code: '613', name: 'Omni Banco S.A.' },
+    { code: '623', name: 'Banco Pan S.A.' },
+    { code: '626', name: 'Banco C6 Consignado S.A.' },
+    { code: '630', name: 'Banco Smartbank S.A.' },
+    { code: '633', name: 'Banco Rendimento S.A.' },
+    { code: '634', name: 'Banco Triângulo S.A.' },
+    { code: '637', name: 'Banco Sofisa S.A.' },
+    { code: '643', name: 'Banco Pine S.A.' },
+    { code: '652', name: 'Itaú Unibanco Holding S.A.' },
+    { code: '653', name: 'Banco Indusval S.A.' },
+    { code: '654', name: 'Banco A.J.Renner S.A.' },
+    { code: '655', name: 'Banco Votorantim S.A.' },
+    { code: '707', name: 'Banco Daycoval S.A.' },
+    { code: '712', name: 'Banco Ourinvest S.A.' },
+    { code: '739', name: 'Banco Cetelem S.A.' },
+    { code: '741', name: 'Banco Ribeirão Preto S.A.' },
+    { code: '743', name: 'Banco Semear S.A.' },
+    { code: '745', name: 'Banco Citibank S.A.' },
+    { code: '746', name: 'Banco Modal S.A.' },
+    { code: '747', name: 'Banco Rabobank International Brasil S.A.' },
+    { code: '748', name: 'Sicredi S.A.' },
+    { code: '751', name: 'Scotiabank Brasil S.A.' },
+    { code: '752', name: 'Banco BNP Paribas Brasil S.A.' },
+    { code: '753', name: 'Novo Banco Continental S.A.' },
+    { code: '754', name: 'Banco Sistema S.A.' },
+    { code: '755', name: 'Bank of America Merrill Lynch' },
     { code: '756', name: 'Sicoob' },
+    { code: '757', name: 'Banco KEB Hana do Brasil S.A.' },
   ];
+
+  const filteredBanks = useMemo(() => {
+    if (!bankSearch.trim()) return banks;
+    const search = bankSearch.toLowerCase();
+    return banks.filter(bank => 
+      bank.code.toLowerCase().includes(search) || 
+      bank.name.toLowerCase().includes(search)
+    );
+  }, [bankSearch]);
 
   const pixKeyTypes = [
     { value: 'cpf', label: 'CPF' },
@@ -315,6 +589,15 @@ const AdminFinanceiro = () => {
                     
                     <div className="space-y-2">
                       <Label>Instituição Bancária</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar por código ou nome..."
+                          value={bankSearch}
+                          onChange={(e) => setBankSearch(e.target.value)}
+                          className="pl-9 mb-2"
+                        />
+                      </div>
                       <Select 
                         value={bankData.bank} 
                         onValueChange={(value) => setBankData(prev => ({ ...prev, bank: value }))}
@@ -322,12 +605,18 @@ const AdminFinanceiro = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o banco" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {banks.map(bank => (
-                            <SelectItem key={bank.code} value={bank.code}>
-                              {bank.code} - {bank.name}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="max-h-[200px]">
+                          {filteredBanks.length === 0 ? (
+                            <div className="py-2 px-3 text-sm text-muted-foreground">
+                              Nenhum banco encontrado
+                            </div>
+                          ) : (
+                            filteredBanks.map(bank => (
+                              <SelectItem key={bank.code} value={bank.code}>
+                                {bank.code} - {bank.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
