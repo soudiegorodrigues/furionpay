@@ -38,6 +38,7 @@ import {
   Percent,
   ChevronDown,
   Trash2,
+  Video,
 } from "lucide-react";
 
 interface CheckoutBuilderSimpleProps {
@@ -84,6 +85,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     showBanner: false,
     showCountdown: false,
     countdownMinutes: 15,
+    showVideo: false,
+    videoUrl: "",
     showTestimonials: false,
     showDiscountPopup: false,
     discountPopupTitle: "Que tal um desconto para comprar agora?",
@@ -152,6 +155,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         showBanner: config.show_banners || false,
         showCountdown: config.show_countdown || false,
         countdownMinutes: config.countdown_minutes || 15,
+        showVideo: (config as any).show_video || false,
+        videoUrl: (config as any).video_url || "",
         showTestimonials: config.show_notifications || false,
         showDiscountPopup: config.show_discount_popup || false,
         discountPopupTitle: config.discount_popup_title || "Que tal um desconto para comprar agora?",
@@ -280,6 +285,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         show_banners: customizations.showBanner,
         show_countdown: customizations.showCountdown,
         countdown_minutes: customizations.countdownMinutes,
+        show_video: customizations.showVideo,
+        video_url: customizations.videoUrl || null,
         show_notifications: customizations.showTestimonials,
         show_whatsapp_button: customizations.showWhatsappButton,
         whatsapp_number: customizations.whatsappNumber || null,
@@ -291,7 +298,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discount_popup_percentage: customizations.discountPopupPercentage || 10,
         discount_popup_color: customizations.discountPopupColor || "#16A34A",
         discount_popup_image_url: customizations.discountPopupImageUrl || null,
-      };
+      } as any;
 
       const { error } = await supabase
         .from("product_checkout_configs")
@@ -627,6 +634,59 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                           <span className="text-xs">Upload</span>
                         </>
                       )}
+                    </Button>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Video */}
+            <Collapsible 
+              open={customizations.showVideo && openSection === "video"}
+              onOpenChange={() => customizations.showVideo && toggleSection("video")}
+            >
+              <div className="flex items-center justify-between py-2 border-b">
+                <CollapsibleTrigger asChild>
+                  <div className={cn(
+                    "flex items-center gap-2 flex-1",
+                    customizations.showVideo ? "cursor-pointer" : "cursor-default opacity-60"
+                  )}>
+                    <Video className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm">Vídeo</Label>
+                    {customizations.showVideo && (
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-muted-foreground transition-transform",
+                        openSection === "video" && "rotate-180"
+                      )} />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <Switch
+                  checked={customizations.showVideo}
+                  onCheckedChange={(v) => {
+                    setCustomizations(p => ({ ...p, showVideo: v }));
+                    if (v) setOpenSection("video");
+                  }}
+                />
+              </div>
+              <CollapsibleContent>
+                <div className="py-2 pl-6 space-y-2">
+                  <Label className="text-xs text-muted-foreground">URL do vídeo (YouTube ou URL direta)</Label>
+                  <Input
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={customizations.videoUrl}
+                    onChange={(e) => setCustomizations(p => ({ ...p, videoUrl: e.target.value }))}
+                    className="h-9 text-sm"
+                  />
+                  {customizations.videoUrl && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setCustomizations(p => ({ ...p, videoUrl: "" }))}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Remover
                     </Button>
                   )}
                 </div>
