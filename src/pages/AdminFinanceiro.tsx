@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface Transaction {
   id: string;
@@ -39,6 +42,7 @@ const AdminFinanceiro = () => {
     pixKey: ''
   });
   const [bankSearch, setBankSearch] = useState('');
+  const [bankPopoverOpen, setBankPopoverOpen] = useState(false);
   const { toast } = useToast();
 
   const banks = [
@@ -589,36 +593,68 @@ const AdminFinanceiro = () => {
                     
                     <div className="space-y-2">
                       <Label>Instituição Bancária</Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar por código ou nome..."
-                          value={bankSearch}
-                          onChange={(e) => setBankSearch(e.target.value)}
-                          className="pl-9 mb-2"
-                        />
-                      </div>
-                      <Select 
-                        value={bankData.bank} 
-                        onValueChange={(value) => setBankData(prev => ({ ...prev, bank: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o banco" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px]">
-                          {filteredBanks.length === 0 ? (
-                            <div className="py-2 px-3 text-sm text-muted-foreground">
-                              Nenhum banco encontrado
+                      <Popover open={bankPopoverOpen} onOpenChange={setBankPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={bankPopoverOpen}
+                            className="w-full justify-between font-normal"
+                          >
+                            {bankData.bank
+                              ? banks.find((bank) => bank.code === bankData.bank)
+                                ? `${bankData.bank} - ${banks.find((bank) => bank.code === bankData.bank)?.name}`
+                                : "Selecione o banco"
+                              : "Selecione o banco"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[350px] p-0" align="start">
+                          <div className="p-2 border-b">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Buscar por código ou nome..."
+                                value={bankSearch}
+                                onChange={(e) => setBankSearch(e.target.value)}
+                                className="pl-9"
+                              />
                             </div>
-                          ) : (
-                            filteredBanks.map(bank => (
-                              <SelectItem key={bank.code} value={bank.code}>
-                                {bank.code} - {bank.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                          </div>
+                          <ScrollArea className="h-[200px]">
+                            {filteredBanks.length === 0 ? (
+                              <div className="py-6 text-center text-sm text-muted-foreground">
+                                Nenhum banco encontrado
+                              </div>
+                            ) : (
+                              <div className="p-1">
+                                {filteredBanks.map((bank) => (
+                                  <div
+                                    key={bank.code}
+                                    className={cn(
+                                      "flex items-center gap-2 rounded-sm px-2 py-2 text-sm cursor-pointer hover:bg-muted",
+                                      bankData.bank === bank.code && "bg-muted"
+                                    )}
+                                    onClick={() => {
+                                      setBankData(prev => ({ ...prev, bank: bank.code }));
+                                      setBankPopoverOpen(false);
+                                      setBankSearch('');
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "h-4 w-4",
+                                        bankData.bank === bank.code ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {bank.code} - {bank.name}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </ScrollArea>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </CardContent>
                 </Card>
