@@ -592,6 +592,8 @@ const AdminFinanceiro = () => {
     return Math.max(0, Math.round((grossAmount - fee) * 100) / 100);
   };
 
+  const MINIMUM_WITHDRAWAL = 50;
+
   // Get current withdrawal preview values
   const getWithdrawalPreview = () => {
     const inputAmount = parseFloat(withdrawAmount.replace(',', '.')) || 0;
@@ -615,6 +617,29 @@ const AdminFinanceiro = () => {
     return { grossAmount, fee, netAmount: inputAmount };
   };
 
+  // Validate if withdrawal is valid (for button state)
+  const isWithdrawalValid = useMemo(() => {
+    const amount = parseFloat(withdrawAmount.replace(',', '.')) || 0;
+    if (isNaN(amount) || amount <= 0) return false;
+    if (amount < MINIMUM_WITHDRAWAL) return false;
+    
+    // Check if gross amount would exceed balance
+    const pct = userFeeConfig?.saque_percentage || 0;
+    const fixed = userFeeConfig?.saque_fixed || 0;
+    let grossAmount = amount;
+    if (pct > 0) {
+      grossAmount = (amount + fixed) / (1 - pct / 100);
+    } else {
+      grossAmount = amount + fixed;
+    }
+    grossAmount = Math.round(grossAmount * 100) / 100;
+    const roundedBalance = Math.round(availableBalance * 100) / 100;
+    
+    if (grossAmount > roundedBalance) return false;
+    
+    return true;
+  }, [withdrawAmount, availableBalance, userFeeConfig]);
+
   const handleRequestWithdrawal = async () => {
     if (!savedBankData) {
       toast({
@@ -625,7 +650,6 @@ const AdminFinanceiro = () => {
       return;
     }
 
-    const MINIMUM_WITHDRAWAL = 50;
     const amount = parseFloat(withdrawAmount.replace(',', '.'));
     const roundedAmount = Math.round(amount * 100) / 100;
     const roundedBalance = Math.round(availableBalance * 100) / 100;
@@ -1064,12 +1088,16 @@ const AdminFinanceiro = () => {
                 {/* Fee preview */}
                 {withdrawAmount && parseFloat(withdrawAmount.replace(',', '.')) > 0 && (() => {
                   const preview = getWithdrawalPreview();
+                  const exceedsBalance = preview.grossAmount > Math.round(availableBalance * 100) / 100;
                   return (
-                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
+                    <div className={`p-3 rounded-lg space-y-2 ${exceedsBalance ? 'bg-destructive/10 border border-destructive/30' : 'bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800'}`}>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Será descontado do saldo:</span>
-                        <span>{formatCurrency(preview.grossAmount)}</span>
+                        <span className={exceedsBalance ? 'text-destructive font-medium' : ''}>{formatCurrency(preview.grossAmount)}</span>
                       </div>
+                      {exceedsBalance && (
+                        <p className="text-xs text-destructive">Valor excede o saldo disponível</p>
+                      )}
                       <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
                         <span>Taxa de saque:</span>
                         <span>- {formatCurrency(preview.fee)}</span>
@@ -1098,7 +1126,7 @@ const AdminFinanceiro = () => {
                 </Button>
                 <Button
                   onClick={handleRequestWithdrawal}
-                  disabled={isSubmittingWithdrawal}
+                  disabled={isSubmittingWithdrawal || !isWithdrawalValid}
                 >
                   {isSubmittingWithdrawal ? "Enviando..." : "Solicitar Saque"}
                 </Button>
