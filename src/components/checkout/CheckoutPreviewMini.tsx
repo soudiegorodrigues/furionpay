@@ -391,21 +391,16 @@ export function CheckoutPreviewMini({
       </div>
 
       {/* Payment */}
-      <div className="p-4 space-y-4 bg-white border-t">
-        <h3 className="font-medium flex items-center gap-2 text-sm uppercase tracking-wide">
-          <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: primaryColor }}>
-            2
-          </span>
-          Dados de Pagamento
-        </h3>
+      <div className="p-4 space-y-3 bg-white border-t">
+        <h3 className="font-medium text-gray-700">Forma de pagamento</h3>
         <div 
-          className="py-3 px-4 border rounded-lg flex items-center gap-3"
-          style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
+          className="inline-flex items-center gap-2 py-2 px-4 rounded-full border"
+          style={{ borderColor: '#32BCAD20', backgroundColor: '#32BCAD10' }}
         >
-          <svg className="w-5 h-5" style={{ color: '#32BCAD' }} viewBox="0 0 512 512" fill="currentColor">
+          <svg className="w-4 h-4" style={{ color: '#32BCAD' }} viewBox="0 0 512 512" fill="currentColor">
             <path d="M242.4 292.5c-7.4-7.4-19.4-7.4-26.8 0L169 339.1c-3.7 3.7-8.6 5.7-13.8 5.7s-10.1-2-13.8-5.7l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8l46.6-46.6c3.7-3.7 5.7-8.6 5.7-13.8s-2-10.1-5.7-13.8l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8L141.4 72c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c3.7 3.7 8.6 5.7 13.8 5.7s10.1-2 13.8-5.7l46.6-46.6c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-3.7 3.7-5.7 8.6-5.7 13.8s2 10.1 5.7 13.8l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6c-3.7-3.7-8.6-5.7-13.8-5.7s-10.1 2-13.8 5.7l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6z"/>
           </svg>
-          <span className="text-sm font-medium text-gray-700">PIX</span>
+          <span className="text-sm font-medium" style={{ color: '#32BCAD' }}>PIX</span>
         </div>
         <button 
           className="w-full py-3 rounded-lg font-semibold text-white"
