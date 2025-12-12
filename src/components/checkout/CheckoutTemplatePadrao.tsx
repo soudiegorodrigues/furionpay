@@ -176,7 +176,7 @@ export function CheckoutTemplatePadrao({
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Digite seu nome completo"
-                      className="h-12 border-gray-200 focus-visible:ring-green-500 focus-visible:border-green-500"
+                      className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
 
@@ -188,7 +188,7 @@ export function CheckoutTemplatePadrao({
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="seu@email.com"
-                      className="h-12 border-gray-200 focus-visible:ring-green-500 focus-visible:border-green-500"
+                      className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
 
@@ -201,7 +201,7 @@ export function CheckoutTemplatePadrao({
                         value={formData.emailConfirm}
                         onChange={(e) => setFormData({ ...formData, emailConfirm: e.target.value })}
                         placeholder="Confirme seu e-mail"
-                        className="h-12 border-gray-200"
+                        className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </div>
                   )}
@@ -217,7 +217,7 @@ export function CheckoutTemplatePadrao({
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           placeholder="(00) 00000-0000"
-                          className="h-12 border-gray-200"
+                          className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </div>
                     )}
@@ -230,7 +230,7 @@ export function CheckoutTemplatePadrao({
                           value={formData.cpf}
                           onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
                           placeholder="000.000.000-00"
-                          className="h-12 border-gray-200"
+                          className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       </div>
                     )}
@@ -246,7 +246,7 @@ export function CheckoutTemplatePadrao({
                         type="date"
                         value={formData.birthdate}
                         onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
-                        className="h-12 border-gray-200"
+                        className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </div>
                   )}
@@ -261,7 +261,7 @@ export function CheckoutTemplatePadrao({
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         placeholder="Rua, número, bairro, cidade - UF"
-                        className="h-12 border-gray-200"
+                        className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </div>
                   )}
