@@ -15,6 +15,7 @@ import { UsuariosSection } from "@/components/admin/UsuariosSection";
 import { MultiAcquirersSection } from "@/components/admin/MultiAcquirersSection";
 import { ZonaDePerigo } from "@/components/admin/ZonaDePerigo";
 import { TaxasSection } from "@/components/admin/TaxasSection";
+import { SaquesGlobaisSection } from "@/components/admin/SaquesGlobaisSection";
 
 const Admin = () => {
   const location = useLocation();
@@ -49,6 +50,7 @@ const Admin = () => {
       {activeSection === "usuarios" && <UsuariosSection />}
       {activeSection === "zona-perigo" && <ZonaDePerigo />}
       {activeSection === "checkout-global" && <CheckoutGlobalSection />}
+      {activeSection === "saques" && <SaquesGlobaisSection />}
       {activeSection === "personalizacao" && <PersonalizacaoSection userId={user?.id} />}
       {activeSection === "email" && <EmailSection />}
 
