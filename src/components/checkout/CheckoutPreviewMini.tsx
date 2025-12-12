@@ -372,8 +372,8 @@ export function CheckoutPreviewMini({
       {/* Form */}
       <div className="p-4 space-y-4 bg-white">
         <h3 className="font-medium flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>
-            <User className="h-3 w-3" />
+          <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: primaryColor }}>
+            1
           </span>
           Dados do comprador
         </h3>
@@ -393,7 +393,9 @@ export function CheckoutPreviewMini({
       {/* Payment */}
       <div className="p-4 space-y-3 bg-white border-t">
         <h3 className="font-medium text-gray-700 flex items-center gap-2">
-          <CreditCard className="h-4 w-4" />
+          <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: primaryColor }}>
+            2
+          </span>
           Forma de pagamento
         </h3>
         <div 
