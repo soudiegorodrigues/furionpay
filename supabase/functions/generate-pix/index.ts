@@ -66,48 +66,7 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-interface FeeConfig {
-  pix_percentage: number;
-  pix_fixed: number;
-}
-
-async function getDefaultFeeConfig(): Promise<FeeConfig | null> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('fee_configs')
-    .select('pix_percentage, pix_fixed')
-    .eq('is_default', true)
-    .maybeSingle();
-  
-  if (error) {
-    console.log('Error fetching default fee config:', error);
-    return null;
-  }
-  
-  if (!data) {
-    console.log('No default fee config found');
-    return null;
-  }
-  
-  console.log('Default fee config:', data);
-  return data as FeeConfig;
-}
-
-function applyFees(baseAmount: number, feeConfig: FeeConfig | null): number {
-  if (!feeConfig) {
-    console.log('No fee config, using base amount:', baseAmount);
-    return baseAmount;
-  }
-  
-  const percentageFee = baseAmount * (feeConfig.pix_percentage / 100);
-  const fixedFee = feeConfig.pix_fixed;
-  const finalAmount = baseAmount + percentageFee + fixedFee;
-  
-  console.log(`Applying fees: base=${baseAmount}, percentage=${feeConfig.pix_percentage}% (${percentageFee.toFixed(2)}), fixed=${fixedFee}, final=${finalAmount.toFixed(2)}`);
-  
-  return Math.round(finalAmount * 100) / 100; // Round to 2 decimal places
-}
-
+// Fee calculation removed - fees are deducted from user balance, not added to transaction amount
 async function isAcquirerEnabled(acquirer: string): Promise<boolean> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -277,12 +236,7 @@ serve(async (req) => {
     console.log('User ID:', userId);
     console.log('Popup Model:', popupModel);
     console.log('UTM params received:', utmParams);
-    console.log('Original amount:', amount);
-
-    // Get default fee config and apply fees to the amount
-    const feeConfig = await getDefaultFeeConfig();
-    const finalAmount = applyFees(amount, feeConfig);
-    console.log('Final amount with fees:', finalAmount);
+    console.log('Amount:', amount);
 
     // Check user's acquirer preference
     const acquirer = await getUserAcquirer(userId);
@@ -312,7 +266,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({ 
-          amount: finalAmount, 
+          amount, 
           donorName: customerName, 
           utmParams, 
           userId, 
@@ -342,7 +296,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({ 
-          amount: finalAmount, 
+          amount, 
           donorName: customerName, 
           utmData: utmParams, 
           userId, 
@@ -392,7 +346,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({ 
-          amount: finalAmount, 
+          amount, 
           donorName: customerName, 
           utmData: utmParams, 
           userId, 
@@ -416,7 +370,7 @@ serve(async (req) => {
     const productName = await getProductNameFromDatabase(userId, popupModel);
     console.log('Product name:', productName);
 
-    if (!finalAmount || finalAmount <= 0) {
+    if (!amount || amount <= 0) {
       return new Response(
         JSON.stringify({ error: 'Invalid amount' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -452,7 +406,7 @@ serve(async (req) => {
 
     const transactionData: Record<string, any> = {
       external_id: externalId,
-      total_amount: finalAmount,
+      total_amount: amount,
       payment_method: 'PIX',
       webhook_url: webhookUrl,
       customer: customerData,
@@ -461,7 +415,7 @@ serve(async (req) => {
           id: `item_${externalId}`,
           title: productName,
           description: productName,
-          price: finalAmount,
+          price: amount,
           quantity: 1,
           is_physical: false,
         }
@@ -539,7 +493,7 @@ serve(async (req) => {
     }
 
     // Log the PIX generation to database and get the database ID
-    const dbTransactionId = await logPixGenerated(finalAmount, transactionId, pixCode, donorName, utmParams, productName, userId, popupModel);
+    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName, userId, popupModel);
 
     return new Response(
       JSON.stringify({
