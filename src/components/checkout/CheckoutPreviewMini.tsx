@@ -393,16 +393,25 @@ export function CheckoutPreviewMini({
       {/* Payment */}
       <div className="p-4 space-y-4 bg-white border-t">
         <h3 className="font-medium flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>
-            <CreditCard className="h-3 w-3" />
+          <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: primaryColor }}>
+            2
           </span>
-          Forma de pagamento
+          DADOS DE PAGAMENTO
         </h3>
-        <div 
-          className="p-3 border-2 rounded-lg inline-flex items-center justify-center"
-          style={{ borderColor: primaryColor, backgroundColor: 'white' }}
-        >
-          <img src="/pix-logo.png" alt="PIX" className="h-8" />
+        <div className="flex border rounded-lg overflow-hidden">
+          <div 
+            className="flex-1 py-3 px-4 flex flex-col items-center justify-center gap-1 border-r bg-gray-50"
+            style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
+          >
+            <svg className="w-5 h-5" style={{ color: '#32BCAD' }} viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.006 2.004L9.892 4.118 12.006 6.232 14.12 4.118zM6.232 6.232L4.118 8.346 6.232 10.46 8.346 8.346zM17.768 6.232L15.654 8.346 17.768 10.46 19.882 8.346zM12.006 10.46L9.892 12.574 12.006 14.688 14.12 12.574zM6.232 14.688L4.118 16.802 6.232 18.916 8.346 16.802zM17.768 14.688L15.654 16.802 17.768 18.916 19.882 16.802zM12.006 18.916L9.892 21.03 12.006 23.144 14.12 21.03z"/>
+            </svg>
+            <span className="text-xs font-medium text-gray-700">PIX</span>
+          </div>
+          <div className="flex-1 py-3 px-4 flex flex-col items-center justify-center gap-1 opacity-50">
+            <CreditCard className="w-5 h-5 text-gray-400" />
+            <span className="text-xs text-gray-400">Cartão de crédito</span>
+          </div>
         </div>
         <button 
           className="w-full py-3 rounded-lg font-semibold text-white"
