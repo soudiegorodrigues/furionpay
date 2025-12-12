@@ -838,6 +838,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_documents: {
+        Row: {
+          created_at: string | null
+          document_side: string | null
+          document_type: string
+          file_url: string
+          id: string
+          person_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_side?: string | null
+          document_type: string
+          file_url: string
+          id?: string
+          person_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_side?: string | null
+          document_type?: string
+          file_url?: string
+          id?: string
+          person_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -855,6 +888,45 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_verification: {
+        Row: {
+          created_at: string | null
+          document_type_selected: string
+          id: string
+          person_type: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_type_selected: string
+          id?: string
+          person_type: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_type_selected?: string
+          id?: string
+          person_type?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -961,6 +1033,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_document_verification: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       approve_user: { Args: { target_user_id: string }; Returns: boolean }
       block_user: { Args: { target_user_id: string }; Returns: boolean }
       bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
@@ -1008,6 +1084,30 @@ export type Database = {
           processed_at: string
           rejection_reason: string
           status: Database["public"]["Enums"]["withdrawal_status"]
+          user_email: string
+          user_id: string
+        }[]
+      }
+      get_my_verification_status: {
+        Args: never
+        Returns: {
+          created_at: string
+          document_type_selected: string
+          id: string
+          person_type: string
+          rejection_reason: string
+          reviewed_at: string
+          status: string
+        }[]
+      }
+      get_pending_verifications: {
+        Args: never
+        Returns: {
+          created_at: string
+          document_type_selected: string
+          id: string
+          person_type: string
+          status: string
           user_email: string
           user_id: string
         }[]
@@ -1087,6 +1187,16 @@ export type Database = {
       }
       get_user_balance_details: { Args: never; Returns: Json }
       get_user_dashboard: { Args: never; Returns: Json }
+      get_user_documents_admin: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          document_side: string
+          document_type: string
+          file_url: string
+          id: string
+        }[]
+      }
       get_user_popup_model_stats: {
         Args: never
         Returns: {
@@ -1238,6 +1348,10 @@ export type Database = {
           p_status: Database["public"]["Enums"]["withdrawal_status"]
           p_withdrawal_id: string
         }
+        Returns: boolean
+      }
+      reject_document_verification: {
+        Args: { p_reason: string; p_user_id: string }
         Returns: boolean
       }
       request_withdrawal: {
