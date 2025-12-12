@@ -602,9 +602,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                           {isUploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
-                          className="h-8 px-3"
+                          className="h-8 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => setBannerImageUrl(null)}
                         >
                           <Trash2 className="h-3 w-3" />
