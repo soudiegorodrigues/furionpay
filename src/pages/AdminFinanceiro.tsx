@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,13 +29,29 @@ interface BankAccountData {
   pixKey: string;
 }
 
+interface WithdrawalHistory {
+  id: string;
+  amount: number;
+  status: string;
+  bank_name: string;
+  pix_key: string;
+  created_at: string;
+  processed_at: string | null;
+  rejection_reason: string | null;
+}
+
 const AdminFinanceiro = () => {
   const { user, isAdmin } = useAdminAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [withdrawalHistory, setWithdrawalHistory] = useState<WithdrawalHistory[]>([]);
+  const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hideValues, setHideValues] = useState(false);
   const [hasBankAccount, setHasBankAccount] = useState(false);
   const [showBankDialog, setShowBankDialog] = useState(false);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
   const [bankData, setBankData] = useState<BankAccountData>({
     bank: '',
     pixKeyType: '',
@@ -406,9 +422,34 @@ const AdminFinanceiro = () => {
     }
   };
 
+  const loadAvailableBalance = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_user_available_balance');
+      if (error) throw error;
+      setAvailableBalance(data || 0);
+    } catch (error) {
+      console.error('Error loading balance:', error);
+    }
+  };
+
+  const loadWithdrawalHistory = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_user_withdrawals', { p_limit: 50 });
+      if (error) throw error;
+      setWithdrawalHistory(data || []);
+    } catch (error) {
+      console.error('Error loading withdrawal history:', error);
+    }
+  };
+
   useEffect(() => {
     loadTransactions();
-    const interval = setInterval(() => loadTransactions(), 60000);
+    loadAvailableBalance();
+    loadWithdrawalHistory();
+    const interval = setInterval(() => {
+      loadTransactions();
+      loadAvailableBalance();
+    }, 60000);
     return () => clearInterval(interval);
   }, [user?.id]);
 
@@ -426,6 +467,69 @@ const AdminFinanceiro = () => {
       totalPending,
     };
   }, [transactions]);
+
+  const handleRequestWithdrawal = async () => {
+    if (!savedBankData) {
+      toast({
+        title: "Conta não configurada",
+        description: "Configure uma conta bancária antes de solicitar um saque.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const amount = parseFloat(withdrawAmount.replace(',', '.'));
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Valor inválido",
+        description: "Digite um valor válido para o saque.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (amount > availableBalance) {
+      toast({
+        title: "Saldo insuficiente",
+        description: `Saldo disponível: ${formatCurrency(availableBalance)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmittingWithdrawal(true);
+    try {
+      const bankName = banks.find(b => b.code === savedBankData.bank)?.name || savedBankData.bank;
+      
+      const { error } = await supabase.rpc('request_withdrawal', {
+        p_amount: amount,
+        p_bank_code: savedBankData.bank,
+        p_bank_name: bankName,
+        p_pix_key_type: savedBankData.pixKeyType,
+        p_pix_key: savedBankData.pixKey
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Saque solicitado!",
+        description: `Sua solicitação de ${formatCurrency(amount)} foi enviada para aprovação.`,
+      });
+
+      setShowWithdrawDialog(false);
+      setWithdrawAmount("");
+      loadAvailableBalance();
+      loadWithdrawalHistory();
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao solicitar saque.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingWithdrawal(false);
+    }
+  };
 
   const formatCurrency = (value: number) => {
     if (hideValues) return 'R$ •••••';
@@ -758,13 +862,13 @@ const AdminFinanceiro = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-2">
-                  <span className="text-primary font-medium">Saldo Disponível</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <span className="text-primary font-medium">Saldo Disponível para Saque</span>
                 </div>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(stats.totalReceived)}
+                  {formatCurrency(availableBalance)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Valor já descontando saques pendentes e aprovados
                 </p>
               </CardContent>
             </Card>
@@ -781,9 +885,30 @@ const AdminFinanceiro = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Saldo disponível para saque:</p>
-                  <p className="text-2xl font-bold">{formatCurrency(stats.totalReceived)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(availableBalance)}</p>
                 </div>
-                <Button className="gap-2">
+                <Button 
+                  className="gap-2"
+                  onClick={() => {
+                    if (!hasBankAccount || !savedBankData) {
+                      toast({
+                        title: "Conta não configurada",
+                        description: "Configure uma conta bancária antes de solicitar um saque.",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    if (availableBalance <= 0) {
+                      toast({
+                        title: "Saldo insuficiente",
+                        description: "Você não possui saldo disponível para saque.",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    setShowWithdrawDialog(true);
+                  }}
+                >
                   <Wallet className="h-4 w-4" />
                   Solicitar Saque
                 </Button>
@@ -792,7 +917,10 @@ const AdminFinanceiro = () => {
               <Button 
                 variant="outline" 
                 className="mt-6 gap-2"
-                onClick={loadTransactions}
+                onClick={() => {
+                  loadTransactions();
+                  loadAvailableBalance();
+                }}
                 disabled={isLoading}
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -800,21 +928,165 @@ const AdminFinanceiro = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Dialog de Solicitar Saque */}
+          <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5 text-primary" />
+                  Solicitar Saque
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-6 py-4">
+                <div className="p-4 rounded-lg bg-muted/30 space-y-2">
+                  <p className="text-sm text-muted-foreground">Saldo disponível:</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {formatCurrency(availableBalance)}
+                  </p>
+                </div>
+
+                {savedBankData && (
+                  <div className="p-4 rounded-lg bg-muted/30 space-y-2">
+                    <p className="text-sm text-muted-foreground">Conta de destino:</p>
+                    <p className="font-medium">{getBankName(savedBankData.bank)}</p>
+                    <p className="text-sm">Chave PIX: {savedBankData.pixKey}</p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Valor do saque</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                    <Input
+                      placeholder="0,00"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-xs"
+                    onClick={() => setWithdrawAmount(availableBalance.toFixed(2).replace('.', ','))}
+                  >
+                    Usar saldo total
+                  </Button>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowWithdrawDialog(false);
+                    setWithdrawAmount("");
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleRequestWithdrawal}
+                  disabled={isSubmittingWithdrawal}
+                >
+                  {isSubmittingWithdrawal ? "Enviando..." : "Solicitar Saque"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="historico" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5 text-primary" />
-                Histórico de Saques
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <History className="h-5 w-5 text-primary" />
+                  Histórico de Saques
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadWithdrawalHistory}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Atualizar
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum saque realizado ainda.</p>
-              </div>
+              {withdrawalHistory.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhum saque realizado ainda.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {withdrawalHistory.map((withdrawal) => (
+                    <div 
+                      key={withdrawal.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/30"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-lg">
+                            {formatCurrency(withdrawal.amount)}
+                          </p>
+                          {withdrawal.status === 'pending' && (
+                            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Pendente
+                            </Badge>
+                          )}
+                          {withdrawal.status === 'approved' && (
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Aprovado
+                            </Badge>
+                          )}
+                          {withdrawal.status === 'rejected' && (
+                            <Badge variant="outline" className="text-destructive border-destructive">
+                              <X className="h-3 w-3 mr-1" />
+                              Rejeitado
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {withdrawal.bank_name} • {withdrawal.pix_key}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Solicitado em {new Date(withdrawal.created_at).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                        {withdrawal.processed_at && (
+                          <p className="text-xs text-muted-foreground">
+                            Processado em {new Date(withdrawal.processed_at).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        )}
+                        {withdrawal.rejection_reason && (
+                          <p className="text-xs text-destructive mt-1">
+                            Motivo: {withdrawal.rejection_reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

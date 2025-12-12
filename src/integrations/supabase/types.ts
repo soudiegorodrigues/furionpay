@@ -853,6 +853,54 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_requests: {
+        Row: {
+          amount: number
+          bank_code: string
+          bank_name: string
+          created_at: string
+          id: string
+          pix_key: string
+          pix_key_type: string
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank_code: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          pix_key: string
+          pix_key_type: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank_code?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          pix_key?: string
+          pix_key_type?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_products: {
@@ -941,6 +989,20 @@ export type Database = {
           last_sign_in_at: string
         }[]
       }
+      get_pending_withdrawals: {
+        Args: never
+        Returns: {
+          amount: number
+          bank_code: string
+          bank_name: string
+          created_at: string
+          id: string
+          pix_key: string
+          pix_key_type: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       get_pix_dashboard: { Args: { input_token: string }; Returns: Json }
       get_pix_dashboard_auth: { Args: never; Returns: Json }
       get_pix_transactions: {
@@ -993,6 +1055,7 @@ export type Database = {
           status: Database["public"]["Enums"]["pix_status"]
         }[]
       }
+      get_user_available_balance: { Args: never; Returns: number }
       get_user_dashboard: { Args: never; Returns: Json }
       get_user_popup_model_stats: {
         Args: never
@@ -1021,6 +1084,19 @@ export type Database = {
           product_name: string
           status: Database["public"]["Enums"]["pix_status"]
           txid: string
+        }[]
+      }
+      get_user_withdrawals: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          bank_name: string
+          created_at: string
+          id: string
+          pix_key: string
+          processed_at: string
+          rejection_reason: string
+          status: Database["public"]["Enums"]["withdrawal_status"]
         }[]
       }
       get_users_count: { Args: never; Returns: number }
@@ -1122,6 +1198,24 @@ export type Database = {
             Returns: string
           }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
+      process_withdrawal: {
+        Args: {
+          p_rejection_reason?: string
+          p_status: Database["public"]["Enums"]["withdrawal_status"]
+          p_withdrawal_id: string
+        }
+        Returns: boolean
+      }
+      request_withdrawal: {
+        Args: {
+          p_amount: number
+          p_bank_code: string
+          p_bank_name: string
+          p_pix_key: string
+          p_pix_key_type: string
+        }
+        Returns: string
+      }
       reset_login_attempts: { Args: { p_email: string }; Returns: boolean }
       reset_pix_transactions: {
         Args: { input_token: string }
@@ -1156,6 +1250,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       pix_status: "generated" | "paid" | "expired"
+      withdrawal_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1285,6 +1380,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       pix_status: ["generated", "paid", "expired"],
+      withdrawal_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
