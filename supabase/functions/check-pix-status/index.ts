@@ -372,127 +372,84 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
   };
 }
 
-async function checkAtivusStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
-  console.log('Verificando status no Ativus Hub, txid:', txid);
+// Ativus Hub correct API URL for status check - from documentation
+const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/getTransactionStatus.php';
 
-  // Try both possible Ativus API endpoints
-  const endpoints = [
-    `https://api.ativushub.com.br/v1/gateway/api/transactions/${txid}`,
-    `https://api.ativushub.com.br/api/user/transactions/${txid}`,
-    `https://api.ativopay.com.br/api/user/transactions/${txid}`,
-  ];
+async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
+  console.log('Verificando status no Ativus Hub, id_transaction:', idTransaction);
 
   // Check if API key is already Base64 encoded
   const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
   const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
 
-  for (const statusUrl of endpoints) {
-    console.log('Trying Ativus status URL:', statusUrl);
+  // Use the correct endpoint from documentation
+  const statusUrl = `${ATIVUS_STATUS_URL}?id_transaction=${encodeURIComponent(idTransaction)}`;
+  console.log('Ativus status URL:', statusUrl);
 
-    try {
-      // Try with both auth methods: x-api-key header and Basic auth
-      const response = await fetch(statusUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${authHeader}`,
-          'x-api-key': apiKey,
-          'User-Agent': 'AtivoB2B/1.0',
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const responseText = await response.text();
-      console.log('Ativus status response from', statusUrl, ':', response.status, responseText.substring(0, 200));
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.log('Endpoint not found, trying next...');
-          continue;
-        }
-        console.error('Ativus API error:', response.status, responseText);
-        continue;
-      }
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        console.error('Failed to parse Ativus response');
-        continue;
-      }
-
-      // Ativus returns data in a nested structure: { status: 200, data: { status: "PAID" } }
-      const transactionData = data.data || data;
-      const ativusStatus = (transactionData.status || '').toString().toUpperCase();
-      
-      console.log('Ativus transaction status:', ativusStatus);
-      
-      // Ativus uses these status values: PROCESSING, AUTHORIZED, PAID, REFUNDED, WAITING_PAYMENT, REFUSED, CHARGEDBACK, CANCELED
-      const isPaid = ['PAID', 'AUTHORIZED'].includes(ativusStatus);
-
-      if (isPaid) {
-        const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
-        if (error) {
-          console.error('Erro ao marcar PIX como pago:', error);
-        } else {
-          console.log('PIX marcado como pago com sucesso');
-        }
-      }
-
-      return {
-        isPaid,
-        status: isPaid ? 'paid' : ativusStatus.toLowerCase() || 'pending',
-        paidAt: transactionData.paidAt || undefined,
-      };
-    } catch (error) {
-      console.error('Error with endpoint', statusUrl, ':', error);
-      continue;
-    }
-  }
-
-  // If all endpoints failed, try listing transactions to find by ID
-  console.log('All direct endpoints failed, trying to list transactions...');
-  
   try {
-    const listUrl = `https://api.ativushub.com.br/v1/gateway/api/transactions?id=${txid}`;
-    console.log('Trying list URL:', listUrl);
-    
-    const listResponse = await fetch(listUrl, {
+    const response = await fetch(statusUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Basic ${authHeader}`,
-        'x-api-key': apiKey,
-        'User-Agent': 'AtivoB2B/1.0',
         'Content-Type': 'application/json',
       },
     });
+
+    const responseText = await response.text();
+    console.log('Ativus status response:', response.status, responseText);
+
+    if (!response.ok) {
+      console.error('Ativus status check failed:', response.status, responseText);
+      return { isPaid: false, status: 'pending' };
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('Failed to parse Ativus response');
+      return { isPaid: false, status: 'pending' };
+    }
+
+    // According to documentation, response format is:
+    // { "situacao": "AGUARDANDO_PAGAMENTO" | "CONCLUIDO" | etc, "tipo": "CASH IN", ... }
+    const situacao = (data.situacao || data.status || '').toString().toUpperCase();
     
-    if (listResponse.ok) {
-      const listData = await listResponse.json();
-      console.log('List response:', JSON.stringify(listData).substring(0, 300));
-      
-      const transactions = listData.data || listData;
-      if (Array.isArray(transactions)) {
-        const found = transactions.find((t: any) => t.id === txid || t.idTransaction === txid || t.externalRef === txid);
-        if (found) {
-          const ativusStatus = (found.status || '').toString().toUpperCase();
-          const isPaid = ['PAID', 'AUTHORIZED'].includes(ativusStatus);
-          
-          if (isPaid) {
-            await supabase.rpc('mark_pix_paid', { p_txid: txid });
-            console.log('PIX marcado como pago via list');
-          }
-          
-          return { isPaid, status: isPaid ? 'paid' : ativusStatus.toLowerCase(), paidAt: found.paidAt };
-        }
+    console.log('Ativus transaction situacao:', situacao);
+    
+    // Check for paid statuses - Ativus uses "CONCLUIDO" or "PAGO" for paid transactions
+    const paidStatuses = ['CONCLUIDO', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED'];
+    const isPaid = paidStatuses.includes(situacao);
+
+    if (isPaid) {
+      console.log('Transaction is PAID! Marking as paid in database');
+      const { error } = await supabase.rpc('mark_pix_paid', { p_txid: idTransaction });
+      if (error) {
+        console.error('Erro ao marcar PIX como pago:', error);
+      } else {
+        console.log('PIX marcado como pago com sucesso');
       }
     }
-  } catch (e) {
-    console.error('List endpoint also failed:', e);
-  }
 
-  console.error('All Ativus endpoints failed');
-  return { isPaid: false, status: 'pending' };
+    // Map Ativus status to our status
+    let mappedStatus = 'pending';
+    if (isPaid) {
+      mappedStatus = 'paid';
+    } else if (situacao === 'AGUARDANDO_PAGAMENTO') {
+      mappedStatus = 'generated';
+    } else if (situacao === 'EXPIRADO' || situacao === 'EXPIRED' || situacao === 'CANCELADO') {
+      mappedStatus = 'expired';
+    }
+
+    return {
+      isPaid,
+      status: mappedStatus,
+      paidAt: data.data_transacao || undefined,
+    };
+  } catch (error) {
+    console.error('Error checking Ativus status:', error);
+    return { isPaid: false, status: 'pending' };
+  }
 }
 
 serve(async (req) => {
