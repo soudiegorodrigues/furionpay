@@ -369,7 +369,7 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
 
         {/* Upload Fields */}
         <div className="space-y-4">
-          <Label>Documentos da Empresa</Label>
+          <Label>{personType === "pf" ? "Documentos Pessoais" : "Documentos da Empresa"}</Label>
           <div className="grid gap-4 sm:grid-cols-2">
             {getRequiredUploads().filter(u => u.group === "empresa" || u.group === "documento").map((upload) => {
               const uploadedFile = uploadedFiles.find(uf => uf.side === upload.side);
