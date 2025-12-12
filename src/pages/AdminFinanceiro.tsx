@@ -925,35 +925,20 @@ const AdminFinanceiro = () => {
             </DialogContent>
           </Dialog>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Saldo Pendente */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-primary font-medium">Saldo Pendente</span>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                  {stats.totalPending > 0 ? '-' : ''}{formatCurrency(stats.totalPending)}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Saldo Disponível */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-primary font-medium">Saldo Disponível para Saque</span>
-                </div>
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(availableBalance)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Valor já descontando saques pendentes e aprovados
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Saldo Disponível */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-primary font-medium">Saldo Disponível para Saque</span>
+              </div>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                {formatCurrency(availableBalance)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Valor já descontando saques pendentes e aprovados
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Gerenciar Saldo */}
           <Card>
