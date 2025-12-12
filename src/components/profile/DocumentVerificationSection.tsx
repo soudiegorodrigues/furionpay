@@ -381,16 +381,19 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
               return (
                 <div key={upload.side} className="space-y-2">
                   <Label className="text-sm text-muted-foreground">{upload.label}</Label>
-                  <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                  <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
                     {uploadedFile?.preview ? (
-                      <div className="relative w-full h-full p-2">
+                      <div className="relative w-full h-full">
                         <img 
                           src={uploadedFile.preview} 
                           alt={upload.label}
-                          className="w-full h-full object-contain rounded"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded">
-                          <span className="text-white text-xs">Trocar</span>
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                          <span className="text-white text-sm font-medium">Trocar</span>
                         </div>
                       </div>
                     ) : (
@@ -423,16 +426,19 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
                   return (
                     <div key={upload.side} className="space-y-2">
                       <Label className="text-sm text-muted-foreground">{upload.label}</Label>
-                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
                         {uploadedFile?.preview ? (
-                          <div className="relative w-full h-full p-2">
+                          <div className="relative w-full h-full">
                             <img 
                               src={uploadedFile.preview} 
                               alt={upload.label}
-                              className="w-full h-full object-contain rounded"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
                             />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded">
-                              <span className="text-white text-xs">Trocar</span>
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                              <span className="text-white text-sm font-medium">Trocar</span>
                             </div>
                           </div>
                         ) : (
