@@ -392,26 +392,20 @@ export function CheckoutPreviewMini({
 
       {/* Payment */}
       <div className="p-4 space-y-4 bg-white border-t">
-        <h3 className="font-medium flex items-center gap-2">
+        <h3 className="font-medium flex items-center gap-2 text-sm uppercase tracking-wide">
           <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: primaryColor }}>
             2
           </span>
-          DADOS DE PAGAMENTO
+          Dados de Pagamento
         </h3>
-        <div className="flex border rounded-lg overflow-hidden">
-          <div 
-            className="flex-1 py-3 px-4 flex flex-col items-center justify-center gap-1 border-r bg-gray-50"
-            style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
-          >
-            <svg className="w-5 h-5" style={{ color: '#32BCAD' }} viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.006 2.004L9.892 4.118 12.006 6.232 14.12 4.118zM6.232 6.232L4.118 8.346 6.232 10.46 8.346 8.346zM17.768 6.232L15.654 8.346 17.768 10.46 19.882 8.346zM12.006 10.46L9.892 12.574 12.006 14.688 14.12 12.574zM6.232 14.688L4.118 16.802 6.232 18.916 8.346 16.802zM17.768 14.688L15.654 16.802 17.768 18.916 19.882 16.802zM12.006 18.916L9.892 21.03 12.006 23.144 14.12 21.03z"/>
-            </svg>
-            <span className="text-xs font-medium text-gray-700">PIX</span>
-          </div>
-          <div className="flex-1 py-3 px-4 flex flex-col items-center justify-center gap-1 opacity-50">
-            <CreditCard className="w-5 h-5 text-gray-400" />
-            <span className="text-xs text-gray-400">Cartão de crédito</span>
-          </div>
+        <div 
+          className="py-3 px-4 border rounded-lg flex items-center gap-3"
+          style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
+        >
+          <svg className="w-5 h-5" style={{ color: '#32BCAD' }} viewBox="0 0 512 512" fill="currentColor">
+            <path d="M242.4 292.5c-7.4-7.4-19.4-7.4-26.8 0L169 339.1c-3.7 3.7-8.6 5.7-13.8 5.7s-10.1-2-13.8-5.7l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8l46.6-46.6c3.7-3.7 5.7-8.6 5.7-13.8s-2-10.1-5.7-13.8l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8L141.4 72c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c3.7 3.7 8.6 5.7 13.8 5.7s10.1-2 13.8-5.7l46.6-46.6c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-3.7 3.7-5.7 8.6-5.7 13.8s2 10.1 5.7 13.8l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6c-3.7-3.7-8.6-5.7-13.8-5.7s-10.1 2-13.8 5.7l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6z"/>
+          </svg>
+          <span className="text-sm font-medium text-gray-700">PIX</span>
         </div>
         <button 
           className="w-full py-3 rounded-lg font-semibold text-white"

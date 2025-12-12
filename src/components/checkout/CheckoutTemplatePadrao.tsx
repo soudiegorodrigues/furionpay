@@ -286,20 +286,14 @@ export function CheckoutTemplatePadrao({
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-4">
-                  <div className="flex border rounded-lg overflow-hidden">
-                    <div 
-                      className="flex-1 py-4 px-6 flex flex-col items-center justify-center gap-2 border-r cursor-pointer"
-                      style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
-                    >
-                      <svg className="w-6 h-6" style={{ color: '#32BCAD' }} viewBox="0 0 512 512" fill="currentColor">
-                        <path d="M242.4 292.5c-7.4-7.4-19.4-7.4-26.8 0L169 339.1c-3.7 3.7-8.6 5.7-13.8 5.7s-10.1-2-13.8-5.7l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8l46.6-46.6c3.7-3.7 5.7-8.6 5.7-13.8s-2-10.1-5.7-13.8l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8L141.4 72c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c3.7 3.7 8.6 5.7 13.8 5.7s10.1-2 13.8-5.7l46.6-46.6c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-3.7 3.7-5.7 8.6-5.7 13.8s2 10.1 5.7 13.8l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6c-3.7-3.7-8.6-5.7-13.8-5.7s-10.1 2-13.8 5.7l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6z"/>
-                      </svg>
-                      <span className="text-sm font-medium text-gray-700">PIX</span>
-                    </div>
-                    <div className="flex-1 py-4 px-6 flex flex-col items-center justify-center gap-2 opacity-50 cursor-not-allowed">
-                      <CreditCard className="w-6 h-6 text-gray-400" />
-                      <span className="text-sm text-gray-400">Cartão de crédito</span>
-                    </div>
+                  <div 
+                    className="py-4 px-5 border rounded-lg flex items-center gap-3"
+                    style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
+                  >
+                    <svg className="w-6 h-6" style={{ color: '#32BCAD' }} viewBox="0 0 512 512" fill="currentColor">
+                      <path d="M242.4 292.5c-7.4-7.4-19.4-7.4-26.8 0L169 339.1c-3.7 3.7-8.6 5.7-13.8 5.7s-10.1-2-13.8-5.7l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8l46.6-46.6c3.7-3.7 5.7-8.6 5.7-13.8s-2-10.1-5.7-13.8l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8L141.4 72c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c3.7 3.7 8.6 5.7 13.8 5.7s10.1-2 13.8-5.7l46.6-46.6c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-3.7 3.7-5.7 8.6-5.7 13.8s2 10.1 5.7 13.8l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6c-3.7-3.7-8.6-5.7-13.8-5.7s-10.1 2-13.8 5.7l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6z"/>
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700">PIX</span>
                   </div>
 
                   <Button 
