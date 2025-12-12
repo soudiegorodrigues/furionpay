@@ -403,12 +403,13 @@ export function CheckoutPreviewMini({
           style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}15` }}
         >
           <div 
-            className="w-5 h-5 rounded-full flex items-center justify-center text-white"
-            style={{ backgroundColor: primaryColor }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: '#32BCAD' }}
           >
-            <CheckCircle className="h-3 w-3" />
+            <img src="/pix-logo.png" alt="PIX" className="w-5 h-5" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           </div>
           <span className="font-medium">Pix</span>
+          <CheckCircle className="h-4 w-4 ml-auto" style={{ color: primaryColor }} />
         </div>
         <button 
           className="w-full py-3 rounded-lg font-semibold text-white"
