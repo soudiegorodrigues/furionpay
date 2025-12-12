@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   Receipt,
   PieChart,
-  Wallet
+  Wallet,
+  FileCheck
 } from "lucide-react";
 
 const adminSections = [
@@ -19,6 +20,7 @@ const adminSections = [
   { id: "transacoes", title: "Transações Globais", icon: Receipt },
   { id: "checkout-global", title: "Checkout Global", icon: PieChart },
   { id: "saques", title: "Saque Global", icon: Wallet },
+  { id: "documentos", title: "Documentos", icon: FileCheck },
   { id: "ranking", title: "Ranking", icon: Trophy },
   { id: "dominios", title: "Domínios", icon: Globe },
   { id: "multi", title: "Multi-adquirência", icon: CreditCard },

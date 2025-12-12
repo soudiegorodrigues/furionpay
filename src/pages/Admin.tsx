@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AdminNavigation } from "@/components/AdminNavigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { PersonalizacaoSection } from "@/components/admin/PersonalizacaoSection";
 import { EmailSection } from "@/components/admin/EmailSection";
@@ -16,6 +14,7 @@ import { MultiAcquirersSection } from "@/components/admin/MultiAcquirersSection"
 import { ZonaDePerigo } from "@/components/admin/ZonaDePerigo";
 import { TaxasSection } from "@/components/admin/TaxasSection";
 import { SaquesGlobaisSection } from "@/components/admin/SaquesGlobaisSection";
+import { DocumentosSection } from "@/components/admin/DocumentosSection";
 
 const Admin = () => {
   const location = useLocation();
@@ -51,23 +50,9 @@ const Admin = () => {
       {activeSection === "zona-perigo" && <ZonaDePerigo />}
       {activeSection === "checkout-global" && <CheckoutGlobalSection />}
       {activeSection === "saques" && <SaquesGlobaisSection />}
+      {activeSection === "documentos" && <DocumentosSection />}
       {activeSection === "personalizacao" && <PersonalizacaoSection userId={user?.id} />}
       {activeSection === "email" && <EmailSection />}
-
-      {activeSection === "documentos" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Documentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Em desenvolvimento...</p>
-          </CardContent>
-        </Card>
-      )}
-
       {activeSection === "taxas" && <TaxasSection />}
     </div>
   );
