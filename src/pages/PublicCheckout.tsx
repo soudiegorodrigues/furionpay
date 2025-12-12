@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,6 @@ import {
   CheckoutTemplateAfilia,
   CheckoutTemplateMultistep,
   CheckoutPixPayment,
-  ExitIntentPopup,
   ProductOffer,
   Product,
   CheckoutConfig,
@@ -20,6 +19,9 @@ import {
   PixData,
   Testimonial,
 } from "@/components/checkout";
+
+// Lazy load ExitIntentPopup since it's not needed immediately
+const ExitIntentPopup = lazy(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })));
 
 export default function PublicCheckout() {
   const { offerCode } = useParams<{ offerCode: string }>();
@@ -39,97 +41,73 @@ export default function PublicCheckout() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [discountApplied, setDiscountApplied] = useState(false);
 
-  // Fetch offer by code
-  const { data: offer, isLoading: offerLoading, error: offerError } = useQuery({
-    queryKey: ["public-offer", offerCode],
+  // Fetch ALL checkout data in a single optimized query
+  const { data: checkoutData, isLoading, error } = useQuery({
+    queryKey: ["public-checkout", offerCode],
     queryFn: async () => {
       if (!offerCode) return null;
       
-      const { data, error } = await supabase
+      // Step 1: Get offer
+      const { data: offer, error: offerError } = await supabase
         .from("product_offers")
         .select("*")
         .eq("offer_code", offerCode)
         .eq("is_active", true)
         .maybeSingle();
       
-      if (error) throw error;
-      return data as ProductOffer | null;
-    },
-    enabled: !!offerCode,
-  });
+      if (offerError) throw offerError;
+      if (!offer) return null;
 
-  // Fetch product details
-  const { data: product, isLoading: productLoading } = useQuery({
-    queryKey: ["public-product", offer?.product_id],
-    queryFn: async () => {
-      if (!offer?.product_id) return null;
-      
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", offer.product_id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data as Product | null;
-    },
-    enabled: !!offer?.product_id,
-  });
+      // Step 2: Fetch product, config, and testimonials IN PARALLEL
+      const [productResult, configResult, testimonialsResult] = await Promise.all([
+        supabase
+          .from("products")
+          .select("*")
+          .eq("id", offer.product_id)
+          .maybeSingle(),
+        supabase
+          .from("product_checkout_configs")
+          .select("*")
+          .eq("product_id", offer.product_id)
+          .maybeSingle(),
+        supabase
+          .from("product_testimonials")
+          .select("id, author_name, author_photo_url, rating, content")
+          .eq("product_id", offer.product_id)
+          .eq("is_active", true)
+          .order("display_order", { ascending: true })
+      ]);
 
-  // Fetch checkout config with template info
-  const { data: config } = useQuery({
-    queryKey: ["checkout-config", offer?.product_id],
-    queryFn: async () => {
-      if (!offer?.product_id) return null;
-      
-      const { data, error } = await supabase
-        .from("product_checkout_configs")
-        .select("*")
-        .eq("product_id", offer.product_id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      
-      // If template_id is set, fetch the template to get template_code
-      if (data?.template_id) {
+      const product = productResult.data as Product | null;
+      let config = configResult.data as CheckoutConfig | null;
+      const testimonials = (testimonialsResult.data || []) as Testimonial[];
+
+      // Handle template mapping if needed (rare case)
+      if (config?.template_id) {
         const { data: templateData } = await supabase
           .from("checkout_templates")
           .select("template_code, name")
-          .eq("id", data.template_id)
+          .eq("id", config.template_id)
           .eq("is_published", true)
           .maybeSingle();
         
         if (templateData) {
-          // Map template name to template code for backwards compatibility
           const templateName = templateData.name.toLowerCase();
-          data.template = templateName === "padrão" ? "padrao" : templateName;
+          config = { ...config, template: templateName === "padrão" ? "padrao" : templateName };
         }
       }
-      
-      return data as CheckoutConfig | null;
+
+      return { offer: offer as ProductOffer, product, config, testimonials };
     },
-    enabled: !!offer?.product_id,
+    enabled: !!offerCode,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
   });
 
-  // Fetch testimonials
-  const { data: testimonials } = useQuery({
-    queryKey: ["checkout-testimonials", offer?.product_id],
-    queryFn: async () => {
-      if (!offer?.product_id) return [];
-      
-      const { data, error } = await supabase
-        .from("product_testimonials")
-        .select("id, author_name, author_photo_url, rating, content")
-        .eq("product_id", offer.product_id)
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-      
-      if (error) throw error;
-      return data as Testimonial[];
-    },
-    enabled: !!offer?.product_id,
-  });
-
+  const offer = checkoutData?.offer;
+  const product = checkoutData?.product;
+  const config = checkoutData?.config;
+  const testimonials = checkoutData?.testimonials || [];
   // Back redirect handler
   useEffect(() => {
     const backRedirectUrl = config?.back_redirect_url;
@@ -262,8 +240,6 @@ export default function PublicCheckout() {
     }
   };
 
-  const isLoading = offerLoading || productLoading;
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
@@ -272,7 +248,7 @@ export default function PublicCheckout() {
     );
   }
 
-  if (offerError || !offer) {
+  if (error || !offer) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
@@ -350,16 +326,20 @@ export default function PublicCheckout() {
   return (
     <>
       {renderTemplate()}
-      <ExitIntentPopup
-        isEnabled={config?.show_discount_popup || false}
-        title={config?.discount_popup_title || undefined}
-        message={config?.discount_popup_message || undefined}
-        ctaText={config?.discount_popup_cta || undefined}
-        primaryColor={config?.discount_popup_color || config?.primary_color || "#16A34A"}
-        discountPercentage={config?.discount_popup_percentage || 10}
-        imageUrl={config?.discount_popup_image_url || undefined}
-        onCtaClick={handleApplyDiscount}
-      />
+      {config?.show_discount_popup && (
+        <Suspense fallback={null}>
+          <ExitIntentPopup
+            isEnabled={true}
+            title={config?.discount_popup_title || undefined}
+            message={config?.discount_popup_message || undefined}
+            ctaText={config?.discount_popup_cta || undefined}
+            primaryColor={config?.discount_popup_color || config?.primary_color || "#16A34A"}
+            discountPercentage={config?.discount_popup_percentage || 10}
+            imageUrl={config?.discount_popup_image_url || undefined}
+            onCtaClick={handleApplyDiscount}
+          />
+        </Suspense>
+      )}
     </>
   );
 }
