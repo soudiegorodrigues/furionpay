@@ -53,6 +53,24 @@ export function SaquesGlobaisSection() {
     loadWithdrawals();
   }, []);
 
+  const sendNotificationEmail = async (withdrawal: PendingWithdrawal, status: 'approved' | 'rejected', rejectionReason?: string) => {
+    try {
+      await supabase.functions.invoke('send-withdrawal-notification', {
+        body: {
+          userEmail: withdrawal.user_email,
+          amount: withdrawal.amount,
+          status,
+          bankName: `${withdrawal.bank_code} - ${withdrawal.bank_name}`,
+          pixKey: withdrawal.pix_key,
+          rejectionReason
+        }
+      });
+    } catch (error) {
+      console.error('Error sending notification email:', error);
+      // Don't throw - email is secondary to the withdrawal action
+    }
+  };
+
   const handleApprove = async (withdrawal: PendingWithdrawal) => {
     setProcessingId(withdrawal.id);
     try {
@@ -62,6 +80,9 @@ export function SaquesGlobaisSection() {
       });
 
       if (error) throw error;
+
+      // Send notification email
+      await sendNotificationEmail(withdrawal, 'approved');
 
       toast({
         title: "Saque aprovado!",
@@ -92,6 +113,9 @@ export function SaquesGlobaisSection() {
       });
 
       if (error) throw error;
+
+      // Send notification email
+      await sendNotificationEmail(selectedWithdrawal, 'rejected', rejectionReason || undefined);
 
       toast({
         title: "Saque rejeitado",

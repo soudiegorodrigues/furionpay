@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.check-pix-status-ativus]
 verify_jwt = false
+
+[functions.send-withdrawal-notification]
+verify_jwt = false
