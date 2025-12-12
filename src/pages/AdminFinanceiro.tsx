@@ -34,13 +34,14 @@ const AdminFinanceiro = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hideValues, setHideValues] = useState(false);
-  const [hasBankAccount, setHasBankAccount] = useState(true);
+  const [hasBankAccount, setHasBankAccount] = useState(false);
   const [showBankDialog, setShowBankDialog] = useState(false);
   const [bankData, setBankData] = useState<BankAccountData>({
     bank: '',
     pixKeyType: '',
     pixKey: ''
   });
+  const [savedBankData, setSavedBankData] = useState<BankAccountData | null>(null);
   const [bankSearch, setBankSearch] = useState('');
   const [bankPopoverOpen, setBankPopoverOpen] = useState(false);
   const { toast } = useToast();
@@ -358,6 +359,7 @@ const AdminFinanceiro = () => {
       return;
     }
 
+    setSavedBankData({ ...bankData });
     setHasBankAccount(true);
     setShowBankDialog(false);
     setBankData({ bank: '', pixKeyType: '', pixKey: '' });
@@ -365,6 +367,26 @@ const AdminFinanceiro = () => {
       title: "Conta adicionada!",
       description: "Sua conta bancária foi configurada com sucesso.",
     });
+  };
+
+  const getBankName = (code: string) => {
+    const bank = banks.find(b => b.code === code);
+    return bank ? `${bank.code} - ${bank.name}` : code;
+  };
+
+  const getPixTypeLabel = (type: string) => {
+    const pixType = pixKeyTypes.find(t => t.value === type);
+    return pixType ? pixType.label : type;
+  };
+
+  const handleCopyPixKey = () => {
+    if (savedBankData?.pixKey) {
+      navigator.clipboard.writeText(savedBankData.pixKey);
+      toast({
+        title: "Copiado!",
+        description: "Chave PIX copiada para a área de transferência.",
+      });
+    }
   };
 
   const loadTransactions = async () => {
@@ -513,11 +535,11 @@ const AdminFinanceiro = () => {
               <CardContent className="pt-6">
                 <span className="text-primary font-medium">Conta Bancária Principal</span>
                 
-                {hasBankAccount ? (
+                {hasBankAccount && savedBankData ? (
                   <>
                     <div className="flex items-center gap-2 mt-4 mb-4">
                       <Building2 className="h-5 w-5 text-muted-foreground" />
-                      <span className="font-medium">077 - Banco Inter S.A.</span>
+                      <span className="font-medium">{getBankName(savedBankData.bank)}</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -527,14 +549,14 @@ const AdminFinanceiro = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <Key className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">Chave PIX: {user?.email || 'Não configurado'}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyPix}>
+                        <span className="truncate">Chave PIX: {savedBankData.pixKey}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyPixKey}>
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span>Tipo PIX: email</span>
+                        <span>Tipo PIX: {getPixTypeLabel(savedBankData.pixKeyType)}</span>
                       </div>
                     </div>
 
@@ -543,6 +565,7 @@ const AdminFinanceiro = () => {
                       className="w-full mt-6 text-destructive hover:text-destructive"
                       onClick={() => {
                         setHasBankAccount(false);
+                        setSavedBankData(null);
                         toast({
                           title: "Conta bancária removida",
                           description: "Configure uma nova conta para realizar saques.",
