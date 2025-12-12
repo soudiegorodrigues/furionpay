@@ -207,10 +207,10 @@ export function CheckoutTemplatePadrao({
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(config?.require_phone !== false) && (
+                    {config?.require_phone && (
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="text-gray-700 font-medium">
-                          Telefone {config?.require_phone && "*"}
+                          Telefone *
                         </Label>
                         <Input
                           id="phone"
