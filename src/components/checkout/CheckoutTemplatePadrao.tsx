@@ -271,7 +271,15 @@ export function CheckoutTemplatePadrao({
               {/* Payment Method Card */}
               <Card className="shadow-md border-0">
                 <CardHeader className="pb-2">
-                  <h2 className="font-medium text-gray-700">Forma de pagamento</h2>
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      2
+                    </div>
+                    <h2 className="font-medium text-gray-700">Forma de pagamento</h2>
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-4">
                   <div 
