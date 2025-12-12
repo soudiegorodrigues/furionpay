@@ -288,25 +288,11 @@ export function CheckoutTemplatePadrao({
                 </CardHeader>
                 <CardContent className="pt-0 space-y-4">
                   <div 
-                    className="p-4 border-2 rounded-xl transition-all"
-                    style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}08` }}
+                    className="p-4 border-2 rounded-xl transition-all inline-flex items-center gap-3"
+                    style={{ borderColor: primaryColor, backgroundColor: 'white' }}
                   >
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-14 h-14 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: '#32BCAD' }}
-                      >
-                        <img src="/pix-logo.png" alt="PIX" className="w-8 h-8" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-lg text-gray-900">PIX</p>
-                          <Badge className="bg-green-100 text-green-700 text-xs">Aprovação Imediata</Badge>
-                        </div>
-                        <p className="text-sm text-gray-500">Pague e receba na hora</p>
-                      </div>
-                      <CheckCircle className="h-6 w-6" style={{ color: primaryColor }} />
-                    </div>
+                    <img src="/pix-logo.png" alt="PIX" className="h-10" />
+                    <Badge className="bg-green-100 text-green-700 text-xs">Aprovação Imediata</Badge>
                   </div>
 
                   <Button 
