@@ -397,10 +397,7 @@ export function CheckoutPreviewMini({
           className="inline-flex items-center gap-2 py-2 px-4 rounded-full border"
           style={{ borderColor: '#32BCAD20', backgroundColor: '#32BCAD10' }}
         >
-          <svg className="w-4 h-4" style={{ color: '#32BCAD' }} viewBox="0 0 512 512" fill="currentColor">
-            <path d="M242.4 292.5c-7.4-7.4-19.4-7.4-26.8 0L169 339.1c-3.7 3.7-8.6 5.7-13.8 5.7s-10.1-2-13.8-5.7l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8l46.6-46.6c3.7-3.7 5.7-8.6 5.7-13.8s-2-10.1-5.7-13.8l-46.6-46.6c-7.4-7.4-7.4-19.4 0-26.8L141.4 72c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c3.7 3.7 8.6 5.7 13.8 5.7s10.1-2 13.8-5.7l46.6-46.6c7.4-7.4 19.4-7.4 26.8 0l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-3.7 3.7-5.7 8.6-5.7 13.8s2 10.1 5.7 13.8l46.6 46.6c7.4 7.4 7.4 19.4 0 26.8l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6c-3.7-3.7-8.6-5.7-13.8-5.7s-10.1 2-13.8 5.7l-46.6 46.6c-7.4 7.4-19.4 7.4-26.8 0l-46.6-46.6z"/>
-          </svg>
-          <span className="text-sm font-medium" style={{ color: '#32BCAD' }}>PIX</span>
+          <img src="/pix-logo.png" alt="PIX" className="h-4" />
         </div>
         <button 
           className="w-full py-3 rounded-lg font-semibold text-white"
