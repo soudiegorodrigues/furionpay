@@ -57,6 +57,8 @@ export interface CheckoutConfig {
   // Video fields
   show_video?: boolean;
   video_url?: string | null;
+  // Back redirect
+  back_redirect_url?: string | null;
 }
 
 export interface FormData {
