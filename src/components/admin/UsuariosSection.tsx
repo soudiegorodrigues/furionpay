@@ -651,18 +651,18 @@ export const UsuariosSection = () => {
                 <p className="text-xs text-muted-foreground">
                   Selecione qual taxa será aplicada às transações deste usuário
                 </p>
-                <Select value={selectedUserFeeConfig} onValueChange={setSelectedUserFeeConfig}>
+                <Select value={selectedUserFeeConfig || 'default'} onValueChange={(val) => setSelectedUserFeeConfig(val === 'default' ? '' : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Usar taxa padrão" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="default">
                       <div className="flex items-center gap-2">
                         <Percent className="w-3 h-3 text-muted-foreground" />
                         Usar taxa padrão
                       </div>
                     </SelectItem>
-                    {feeConfigs.map(fc => (
+                    {feeConfigs.filter(fc => fc.id).map(fc => (
                       <SelectItem key={fc.id} value={fc.id}>
                         <div className="flex items-center gap-2">
                           <Percent className="w-3 h-3 text-primary" />
