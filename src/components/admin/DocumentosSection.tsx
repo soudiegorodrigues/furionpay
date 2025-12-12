@@ -113,6 +113,20 @@ export function DocumentosSection() {
     }
   };
 
+  const getDownloadUrl = async (filePath: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('user-documents')
+        .createSignedUrl(filePath, 3600, { download: true });
+      
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error("Error getting download URL:", error);
+      return null;
+    }
+  };
+
   const handleViewDocuments = async (verification: Verification) => {
     setSelectedVerification(verification);
     setViewDialogOpen(true);
@@ -358,7 +372,7 @@ export function DocumentosSection() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-3">
                 {userDocuments.map(doc => (
-                  <DocumentViewer key={doc.id} document={doc} getSignedUrl={getSignedUrl} documentSideLabels={documentSideLabels} />
+                  <DocumentViewer key={doc.id} document={doc} getSignedUrl={getSignedUrl} getDownloadUrl={getDownloadUrl} documentSideLabels={documentSideLabels} />
                 ))}
               </div>
             )}
@@ -443,14 +457,17 @@ export function DocumentosSection() {
 function DocumentViewer({ 
   document, 
   getSignedUrl,
+  getDownloadUrl,
   documentSideLabels
 }: { 
   document: UserDocument; 
   getSignedUrl: (path: string) => Promise<string | null>;
+  getDownloadUrl: (path: string) => Promise<string | null>;
   documentSideLabels: Record<string, string>;
 }) {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   const isPdf = document.file_url.toLowerCase().endsWith('.pdf');
 
@@ -467,9 +484,15 @@ function DocumentViewer({
     ? documentSideLabels[document.document_side] 
     : documentSideLabels[document.document_type] || document.document_type;
 
-  const handleDownload = () => {
-    if (fileUrl) {
-      window.open(fileUrl, '_blank');
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const downloadUrl = await getDownloadUrl(document.file_url);
+      if (downloadUrl) {
+        window.open(downloadUrl, '_blank');
+      }
+    } finally {
+      setDownloading(false);
     }
   };
 
