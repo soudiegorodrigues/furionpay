@@ -499,27 +499,19 @@ function DocumentViewer({
   return (
     <div className="space-y-2">
       <Label className="text-sm text-muted-foreground">{label}</Label>
-      <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden relative">
+      <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden relative group">
         {loading ? (
           <div className="w-full h-full animate-pulse bg-muted"></div>
         ) : fileUrl ? (
-          isPdf ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
-              <FileText className="h-12 w-12 text-primary" />
-              <span className="text-sm text-center text-muted-foreground truncate max-w-full px-2">
-                {label}.pdf
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleDownload}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Baixar
-              </Button>
-            </div>
-          ) : (
-            <div className="relative w-full h-full group">
+          <>
+            {isPdf ? (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
+                <FileText className="h-12 w-12 text-primary" />
+                <span className="text-sm text-center text-muted-foreground truncate max-w-full px-2">
+                  {label}.pdf
+                </span>
+              </div>
+            ) : (
               <a href={fileUrl} target="_blank" rel="noopener noreferrer">
                 <img 
                   src={fileUrl} 
@@ -527,17 +519,17 @@ function DocumentViewer({
                   className="w-full h-full object-contain hover:scale-105 transition-transform cursor-zoom-in"
                 />
               </a>
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={handleDownload}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Baixar
-              </Button>
-            </div>
-          )
+            )}
+            <Button 
+              variant="default" 
+              size="icon"
+              className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={handleDownload}
+              disabled={downloading}
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             Erro ao carregar
