@@ -399,11 +399,10 @@ export function CheckoutPreviewMini({
           Forma de pagamento
         </h3>
         <div 
-          className="p-2.5 border-2 rounded-lg inline-flex items-center gap-2 w-auto"
-          style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}15` }}
+          className="p-3 border-2 rounded-lg inline-flex items-center justify-center"
+          style={{ borderColor: primaryColor, backgroundColor: 'white' }}
         >
-          <img src="/pix-logo.png" alt="PIX" className="h-5" />
-          <CheckCircle className="h-3.5 w-3.5" style={{ color: primaryColor }} />
+          <img src="/pix-logo.png" alt="PIX" className="h-8" />
         </div>
         <button 
           className="w-full py-3 rounded-lg font-semibold text-white"
