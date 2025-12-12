@@ -395,9 +395,13 @@ export function CheckoutPreviewMini({
         <h3 className="font-medium text-gray-700">Forma de pagamento</h3>
         <div 
           className="inline-flex items-center gap-2 py-2 px-4 rounded-full border"
-          style={{ borderColor: '#32BCAD20', backgroundColor: '#32BCAD10' }}
+          style={{ borderColor: '#32BCAD30', backgroundColor: '#32BCAD08' }}
         >
-          <img src="/pix-logo.png" alt="PIX" className="h-4" />
+          <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+            <path d="M17.7 12.3L16 14l-1.7-1.7c-.4-.4-1-.4-1.4 0l-3.2 3.2c-.2.2-.3.4-.3.7s.1.5.3.7l3.2 3.2c.4.4 1 .4 1.4 0L16 18.4l1.7 1.7c.4.4 1 .4 1.4 0l3.2-3.2c.2-.2.3-.4.3-.7s-.1-.5-.3-.7l-3.2-3.2c-.4-.4-1-.4-1.4 0z" fill="#32BCAD"/>
+            <path d="M23.8 8.2l-3.2-3.2c-.8-.8-2-.8-2.8 0L16 6.8 14.2 5c-.8-.8-2-.8-2.8 0L8.2 8.2c-.8.8-.8 2 0 2.8L10 12.8l-.8.8c-.4.4-.4 1 0 1.4l.8.8-1.8 1.8c-.8.8-.8 2 0 2.8l3.2 3.2c.8.8 2 .8 2.8 0L16 21.8l1.8 1.8c.8.8 2 .8 2.8 0l3.2-3.2c.8-.8.8-2 0-2.8L22 15.8l.8-.8c.4-.4.4-1 0-1.4l-.8-.8 1.8-1.8c.8-.8.8-2 0-2.8z" fill="#32BCAD"/>
+          </svg>
+          <span className="text-sm font-medium" style={{ color: '#32BCAD' }}>PIX</span>
         </div>
         <button 
           className="w-full py-3 rounded-lg font-semibold text-white"
