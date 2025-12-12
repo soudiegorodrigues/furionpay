@@ -30,6 +30,8 @@ interface Transaction {
   product_name: string | null;
   created_at: string;
   paid_at: string | null;
+  fee_percentage: number | null;
+  fee_fixed: number | null;
 }
 
 interface ChartData {
@@ -61,8 +63,15 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const { isAuthenticated, signOut } = useAdminAuth();
 
-  // Calculate net amount after fee deduction
-  const calculateNetAmount = (grossAmount: number): number => {
+  // Calculate net amount after fee deduction - uses stored fee from transaction or fallback to current config
+  const calculateNetAmount = (grossAmount: number, storedFeePercentage?: number | null, storedFeeFixed?: number | null): number => {
+    // Use stored fees from transaction if available (for historical accuracy)
+    if (storedFeePercentage !== null && storedFeePercentage !== undefined && 
+        storedFeeFixed !== null && storedFeeFixed !== undefined) {
+      const fee = (grossAmount * storedFeePercentage / 100) + storedFeeFixed;
+      return Math.max(0, grossAmount - fee);
+    }
+    // Fallback to current fee config for older transactions without stored fees
     if (!feeConfig) return grossAmount;
     const fee = (grossAmount * feeConfig.pix_percentage / 100) + feeConfig.pix_fixed;
     return Math.max(0, grossAmount - fee);
@@ -295,11 +304,11 @@ const AdminDashboard = () => {
     const generated = filteredTransactions.length;
     const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
     // Calculate net amount (after fee deduction) for ALL transactions (estimated)
-    const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
+    const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
     // Calculate net amount (after fee deduction) for paid transactions
     const amountPaid = filteredTransactions
       .filter(tx => tx.status === 'paid')
-      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
+      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
     return {
       generated,
       paid,
@@ -324,8 +333,8 @@ const AdminDashboard = () => {
       return getBrazilDateStr(new Date(tx.paid_at)) === todayBrazil;
     });
     const paid = todayPaid.length;
-    // Calculate net amount (after fee deduction)
-    const amountPaid = todayPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
+    // Calculate net amount (after fee deduction) using stored fees
+    const amountPaid = todayPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
     
     return { generated, paid, amountPaid };
   }, [transactions, feeConfig]);
@@ -346,16 +355,16 @@ const AdminDashboard = () => {
       return paidBrazil.getMonth() === currentMonth && paidBrazil.getFullYear() === currentYear;
     });
     
-    // Calculate net amount (after fee deduction)
-    const amountPaid = monthPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
+    // Calculate net amount (after fee deduction) using stored fees
+    const amountPaid = monthPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
     return { amountPaid };
   }, [transactions, feeConfig]);
 
-  // Total balance (all paid transactions) - net amount
+  // Total balance (all paid transactions) - net amount using stored fees
   const totalBalance = useMemo(() => {
     return transactions
       .filter(tx => tx.status === 'paid')
-      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount), 0);
+      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
   }, [transactions, feeConfig]);
 
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);

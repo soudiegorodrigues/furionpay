@@ -364,6 +364,8 @@ export type Database = {
           created_at: string | null
           donor_name: string | null
           expired_at: string | null
+          fee_fixed: number | null
+          fee_percentage: number | null
           id: string
           paid_at: string | null
           pix_code: string | null
@@ -379,6 +381,8 @@ export type Database = {
           created_at?: string | null
           donor_name?: string | null
           expired_at?: string | null
+          fee_fixed?: number | null
+          fee_percentage?: number | null
           id?: string
           paid_at?: string | null
           pix_code?: string | null
@@ -394,6 +398,8 @@ export type Database = {
           created_at?: string | null
           donor_name?: string | null
           expired_at?: string | null
+          fee_fixed?: number | null
+          fee_percentage?: number | null
           id?: string
           paid_at?: string | null
           pix_code?: string | null
@@ -1040,6 +1046,8 @@ export type Database = {
           amount: number
           created_at: string
           donor_name: string
+          fee_fixed: number
+          fee_percentage: number
           id: string
           paid_at: string
           product_name: string
@@ -1097,6 +1105,8 @@ export type Database = {
           amount: number
           created_at: string
           donor_name: string
+          fee_fixed: number
+          fee_percentage: number
           id: string
           paid_at: string
           product_name: string
@@ -1206,6 +1216,8 @@ export type Database = {
             Args: {
               p_amount: number
               p_donor_name: string
+              p_fee_fixed?: number
+              p_fee_percentage?: number
               p_pix_code: string
               p_popup_model?: string
               p_product_name?: string
