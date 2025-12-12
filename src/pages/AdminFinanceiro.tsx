@@ -658,28 +658,6 @@ const AdminFinanceiro = () => {
     }
   };
 
-  // Show "Em Produção" for non-admin users
-  if (!isAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Construction className="h-8 w-8 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold">Página em Produção</h2>
-            <p className="text-muted-foreground">
-              Estamos trabalhando para trazer a melhor experiência de gerenciamento financeiro para você.
-            </p>
-            <Badge variant="outline" className="text-sm">
-              Em breve
-            </Badge>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
