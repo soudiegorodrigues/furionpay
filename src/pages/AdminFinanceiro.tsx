@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, TrendingDown, DollarSign, Calendar, ArrowUpRight, ArrowDownRight, Clock, RefreshCw } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, DollarSign, Calendar, ArrowUpRight, ArrowDownRight, Clock, RefreshCw, Construction } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface Transaction {
   id: string;
@@ -19,7 +20,7 @@ interface Transaction {
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
 
 const AdminFinanceiro = () => {
-  const { user } = useAdminAuth();
+  const { user, isAdmin } = useAdminAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
@@ -120,6 +121,28 @@ const AdminFinanceiro = () => {
     { value: 'year', label: 'Este Ano' },
     { value: 'all', label: 'Todo Período' },
   ];
+
+  // Show "Em Produção" for non-admin users
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-8 pb-8 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Construction className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold">Página em Produção</h2>
+            <p className="text-muted-foreground">
+              Estamos trabalhando para trazer a melhor experiência de gerenciamento financeiro para você.
+            </p>
+            <Badge variant="outline" className="text-sm">
+              Em breve
+            </Badge>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
