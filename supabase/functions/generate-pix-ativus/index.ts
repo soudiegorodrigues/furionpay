@@ -89,6 +89,11 @@ interface GeneratePixRequest {
   popupModel?: string;
 }
 
+interface FeeConfig {
+  pix_percentage: number;
+  pix_fixed: number;
+}
+
 function generateTxId(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -96,6 +101,47 @@ function generateTxId(): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+// Get user fee config or default
+async function getUserFeeConfig(supabase: any, userId?: string): Promise<FeeConfig | null> {
+  // First try to get user-specific fee config
+  if (userId) {
+    const { data: userSetting } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'user_fee_config')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (userSetting?.value) {
+      const { data: feeConfig } = await supabase
+        .from('fee_configs')
+        .select('pix_percentage, pix_fixed')
+        .eq('id', userSetting.value)
+        .maybeSingle();
+      
+      if (feeConfig) {
+        console.log('Using user-specific fee config:', feeConfig);
+        return feeConfig as FeeConfig;
+      }
+    }
+  }
+  
+  // Fallback to default fee config
+  const { data: defaultConfig } = await supabase
+    .from('fee_configs')
+    .select('pix_percentage, pix_fixed')
+    .eq('is_default', true)
+    .maybeSingle();
+  
+  if (defaultConfig) {
+    console.log('Using default fee config:', defaultConfig);
+    return defaultConfig as FeeConfig;
+  }
+  
+  console.log('No fee config found');
+  return null;
 }
 
 // Get Ativus API key from admin_settings or env vars
@@ -147,7 +193,9 @@ async function logPixGenerated(
   utmData?: Record<string, string>,
   productName?: string,
   userId?: string,
-  popupModel?: string
+  popupModel?: string,
+  feePercentage?: number,
+  feeFixed?: number
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -159,6 +207,8 @@ async function logPixGenerated(
       p_product_name: productName || null,
       p_user_id: userId || null,
       p_popup_model: popupModel || null,
+      p_fee_percentage: feePercentage ?? null,
+      p_fee_fixed: feeFixed ?? null,
     });
 
     if (error) {
@@ -233,6 +283,10 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user fee config
+    const feeConfig = await getUserFeeConfig(supabase, userId);
+    console.log('Fee config for transaction:', feeConfig);
 
     // Get Ativus API key
     const apiKey = await getAtivusApiKey(supabase, userId);
@@ -380,7 +434,9 @@ serve(async (req) => {
       utmData,
       finalProductName,
       userId,
-      popupModel
+      popupModel,
+      feeConfig?.pix_percentage,
+      feeConfig?.pix_fixed
     );
 
     return new Response(

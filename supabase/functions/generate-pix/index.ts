@@ -60,13 +60,60 @@ interface GeneratePixRequest {
   };
 }
 
+interface FeeConfig {
+  pix_percentage: number;
+  pix_fixed: number;
+}
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-// Fee calculation removed - fees are deducted from user balance, not added to transaction amount
+// Get user fee config or default
+async function getUserFeeConfig(userId?: string): Promise<FeeConfig | null> {
+  const supabase = getSupabaseClient();
+  
+  // First try to get user-specific fee config
+  if (userId) {
+    const { data: userSetting } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'user_fee_config')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (userSetting?.value) {
+      const { data: feeConfig } = await supabase
+        .from('fee_configs')
+        .select('pix_percentage, pix_fixed')
+        .eq('id', userSetting.value)
+        .maybeSingle();
+      
+      if (feeConfig) {
+        console.log('Using user-specific fee config:', feeConfig);
+        return feeConfig as FeeConfig;
+      }
+    }
+  }
+  
+  // Fallback to default fee config
+  const { data: defaultConfig } = await supabase
+    .from('fee_configs')
+    .select('pix_percentage, pix_fixed')
+    .eq('is_default', true)
+    .maybeSingle();
+  
+  if (defaultConfig) {
+    console.log('Using default fee config:', defaultConfig);
+    return defaultConfig as FeeConfig;
+  }
+  
+  console.log('No fee config found');
+  return null;
+}
+
 async function isAcquirerEnabled(acquirer: string): Promise<boolean> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -198,7 +245,18 @@ async function getProductNameFromDatabase(userId?: string, popupModel?: string):
   return DEFAULT_PRODUCT_NAME;
 }
 
-async function logPixGenerated(amount: number, txid: string, pixCode: string, donorName: string, utmData?: Record<string, any>, productName?: string, userId?: string, popupModel?: string): Promise<string | null> {
+async function logPixGenerated(
+  amount: number, 
+  txid: string, 
+  pixCode: string, 
+  donorName: string, 
+  utmData?: Record<string, any>, 
+  productName?: string, 
+  userId?: string, 
+  popupModel?: string,
+  feePercentage?: number,
+  feeFixed?: number
+): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -209,7 +267,9 @@ async function logPixGenerated(amount: number, txid: string, pixCode: string, do
       p_utm_data: utmData || null,
       p_product_name: productName || null,
       p_user_id: userId || null,
-      p_popup_model: popupModel || null
+      p_popup_model: popupModel || null,
+      p_fee_percentage: feePercentage ?? null,
+      p_fee_fixed: feeFixed ?? null
     });
     
     if (error) {
@@ -237,6 +297,10 @@ serve(async (req) => {
     console.log('Popup Model:', popupModel);
     console.log('UTM params received:', utmParams);
     console.log('Amount:', amount);
+
+    // Get user fee config
+    const feeConfig = await getUserFeeConfig(userId);
+    console.log('Fee config for transaction:', feeConfig);
 
     // Check user's acquirer preference
     const acquirer = await getUserAcquirer(userId);
@@ -492,23 +556,34 @@ serve(async (req) => {
       );
     }
 
-    // Log the PIX generation to database and get the database ID
-    const dbTransactionId = await logPixGenerated(amount, transactionId, pixCode, donorName, utmParams, productName, userId, popupModel);
+    // Log to database with fee config
+    await logPixGenerated(
+      amount, 
+      transactionId, 
+      pixCode, 
+      donorName, 
+      utmParams, 
+      productName, 
+      userId, 
+      popupModel,
+      feeConfig?.pix_percentage,
+      feeConfig?.pix_fixed
+    );
 
     return new Response(
       JSON.stringify({
+        success: true,
         pixCode,
-        qrCodeUrl: qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixCode)}`,
-        transactionId: dbTransactionId || transactionId,
+        qrCodeUrl,
+        transactionId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in generate-pix function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error generating PIX:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
