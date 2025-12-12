@@ -472,17 +472,18 @@ export const MultiAcquirersSection = () => {
               </Button>
             </div>
 
-            {/* Set as Default */}
-            {defaultAcquirer !== 'inter' && interEnabled !== false && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAsDefaultAcquirer('inter')}
-                className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
-              >
-                <Star className="w-3 h-3 mr-1" />
-                Definir como Principal
-              </Button>
+            {/* Set as Default - only show if enabled and not already default */}
+            {interEnabled !== false && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Definir como principal:</span>
+                <Switch
+                  checked={defaultAcquirer === 'inter'}
+                  onCheckedChange={(checked) => {
+                    if (checked) setAsDefaultAcquirer('inter');
+                  }}
+                  disabled={defaultAcquirer === 'inter'}
+                />
+              </div>
             )}
             
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
@@ -690,17 +691,18 @@ export const MultiAcquirersSection = () => {
               </Button>
             </div>
 
-            {/* Set as Default */}
-            {defaultAcquirer !== 'spedpay' && spedpayEnabled !== false && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAsDefaultAcquirer('spedpay')}
-                className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
-              >
-                <Star className="w-3 h-3 mr-1" />
-                Definir como Principal
-              </Button>
+            {/* Set as Default - only show if enabled */}
+            {spedpayEnabled !== false && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Definir como principal:</span>
+                <Switch
+                  checked={defaultAcquirer === 'spedpay'}
+                  onCheckedChange={(checked) => {
+                    if (checked) setAsDefaultAcquirer('spedpay');
+                  }}
+                  disabled={defaultAcquirer === 'spedpay'}
+                />
+              </div>
             )}
             
             <div className="flex items-center justify-between pt-2 border-t">
@@ -809,17 +811,18 @@ export const MultiAcquirersSection = () => {
               </Button>
             </div>
 
-            {/* Set as Default */}
-            {defaultAcquirer !== 'ativus' && ativusEnabled !== false && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAsDefaultAcquirer('ativus')}
-                className="w-full h-7 text-xs border-yellow-500/50 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
-              >
-                <Star className="w-3 h-3 mr-1" />
-                Definir como Principal
-              </Button>
+            {/* Set as Default - only show if enabled */}
+            {ativusEnabled !== false && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Definir como principal:</span>
+                <Switch
+                  checked={defaultAcquirer === 'ativus'}
+                  onCheckedChange={(checked) => {
+                    if (checked) setAsDefaultAcquirer('ativus');
+                  }}
+                  disabled={defaultAcquirer === 'ativus'}
+                />
+              </div>
             )}
             
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
