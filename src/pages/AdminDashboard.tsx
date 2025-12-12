@@ -172,28 +172,37 @@ const AdminDashboard = () => {
     });
   }, [transactions, dateFilter]);
 
+  // Helper to get Brazil date string (YYYY-MM-DD) from a date
+  const getBrazilDateStr = (date: Date): string => {
+    return date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  };
+  
+  // Helper to get Brazil hour from a date
+  const getBrazilHour = (date: Date): number => {
+    return parseInt(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }));
+  };
+
   const chartData = useMemo((): ChartData[] => {
     const data: ChartData[] = [];
     const now = new Date();
+    const todayBrazil = getBrazilDateStr(now);
     
     if (chartFilter === 'today') {
-      // Hourly data for today - use paid_at for paid transactions
+      // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
       for (let hour = 0; hour < 24; hour++) {
         const hourStr = hour.toString().padStart(2, '0') + ':00';
-        const today = new Date();
-        const todayStr = today.toDateString();
         
-        // Filter transactions created today at this hour
+        // Filter transactions created today at this hour (Brazil time)
         const hourGerados = transactions.filter(tx => {
           const txDate = new Date(tx.created_at);
-          return txDate.toDateString() === todayStr && txDate.getHours() === hour;
+          return getBrazilDateStr(txDate) === todayBrazil && getBrazilHour(txDate) === hour;
         });
         
-        // Filter transactions PAID today at this hour (using paid_at)
+        // Filter transactions PAID today at this hour (using paid_at, Brazil time)
         const hourPagos = transactions.filter(tx => {
           if (tx.status !== 'paid' || !tx.paid_at) return false;
           const paidDate = new Date(tx.paid_at);
-          return paidDate.toDateString() === todayStr && paidDate.getHours() === hour;
+          return getBrazilDateStr(paidDate) === todayBrazil && getBrazilHour(paidDate) === hour;
         });
         
         const gerados = hourGerados.length;
@@ -209,20 +218,18 @@ const AdminDashboard = () => {
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = getBrazilDateStr(date);
         const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         
-        // Transactions created on this day
+        // Transactions created on this day (Brazil time)
         const dayGerados = transactions.filter(tx => {
-          const txDate = new Date(tx.created_at).toISOString().split('T')[0];
-          return txDate === dateStr;
+          return getBrazilDateStr(new Date(tx.created_at)) === dateStr;
         });
         
-        // Transactions PAID on this day (using paid_at)
+        // Transactions PAID on this day (using paid_at, Brazil time)
         const dayPagos = transactions.filter(tx => {
           if (tx.status !== 'paid' || !tx.paid_at) return false;
-          const paidDate = new Date(tx.paid_at).toISOString().split('T')[0];
-          return paidDate === dateStr;
+          return getBrazilDateStr(new Date(tx.paid_at)) === dateStr;
         });
         
         const gerados = dayGerados.length;
@@ -250,14 +257,23 @@ const AdminDashboard = () => {
     };
   }, [filteredTransactions]);
 
-  // Today's stats
+  // Today's stats (using paid_at for paid stats, Brazil timezone)
   const todayStats = useMemo(() => {
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayTransactions = transactions.filter(tx => new Date(tx.created_at) >= startOfDay);
-    const generated = todayTransactions.length;
-    const paid = todayTransactions.filter(tx => tx.status === 'paid').length;
-    const amountPaid = todayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+    const todayBrazil = getBrazilDateStr(now);
+    
+    // Transactions CREATED today (Brazil time)
+    const todayCreated = transactions.filter(tx => getBrazilDateStr(new Date(tx.created_at)) === todayBrazil);
+    const generated = todayCreated.length;
+    
+    // Transactions PAID today (using paid_at, Brazil time)
+    const todayPaid = transactions.filter(tx => {
+      if (tx.status !== 'paid' || !tx.paid_at) return false;
+      return getBrazilDateStr(new Date(tx.paid_at)) === todayBrazil;
+    });
+    const paid = todayPaid.length;
+    const amountPaid = todayPaid.reduce((sum, tx) => sum + tx.amount, 0);
+    
     return { generated, paid, amountPaid };
   }, [transactions]);
 
