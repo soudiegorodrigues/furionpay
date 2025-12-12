@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ const AdminFinanceiro = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hideValues, setHideValues] = useState(false);
+  const [hasBankAccount, setHasBankAccount] = useState(true);
   const { toast } = useToast();
 
   const loadTransactions = async () => {
@@ -169,32 +170,64 @@ const AdminFinanceiro = () => {
               <CardContent className="pt-6">
                 <span className="text-primary font-medium">Conta Bancária Principal</span>
                 
-                <div className="flex items-center gap-2 mt-4 mb-4">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">077 - Banco Inter S.A.</span>
-                </div>
+                {hasBankAccount ? (
+                  <>
+                    <div className="flex items-center gap-2 mt-4 mb-4">
+                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                      <span className="font-medium">077 - Banco Inter S.A.</span>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>Conta PF</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Key className="h-4 w-4 text-muted-foreground" />
-                    <span className="truncate">Chave PIX: {user?.email || 'Não configurado'}</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyPix}>
-                      <Copy className="h-3 w-3" />
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span>Conta PF</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Key className="h-4 w-4 text-muted-foreground" />
+                        <span className="truncate">Chave PIX: {user?.email || 'Não configurado'}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyPix}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>Tipo PIX: email</span>
+                      </div>
+                    </div>
+
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-6 text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setHasBankAccount(false);
+                        toast({
+                          title: "Conta bancária removida",
+                          description: "Configure uma nova conta para realizar saques.",
+                        });
+                      }}
+                    >
+                      Excluir conta bancária
                     </Button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span>Tipo PIX: email</span>
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 mt-4 mb-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                      <span className="text-yellow-600 dark:text-yellow-400">
+                        Nenhuma conta bancária cadastrada. Configure uma conta para realizar saques.
+                      </span>
+                    </div>
 
-                <Button variant="outline" className="w-full mt-6 text-destructive hover:text-destructive">
-                  Excluir conta bancária
-                </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2"
+                      onClick={() => setHasBankAccount(true)}
+                    >
+                      Configurar conta bancária
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
