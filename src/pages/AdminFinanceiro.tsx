@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -577,6 +578,43 @@ const AdminFinanceiro = () => {
     };
   }, [transactions]);
 
+  // Calculate withdrawal fee based on user's fee config
+  const calculateWithdrawalFee = (grossAmount: number) => {
+    if (!userFeeConfig) return 0;
+    const percentageFee = grossAmount * (userFeeConfig.saque_percentage / 100);
+    const fixedFee = userFeeConfig.saque_fixed;
+    return Math.round((percentageFee + fixedFee) * 100) / 100;
+  };
+
+  // Calculate net amount after fee deduction
+  const calculateNetWithdrawal = (grossAmount: number) => {
+    const fee = calculateWithdrawalFee(grossAmount);
+    return Math.max(0, Math.round((grossAmount - fee) * 100) / 100);
+  };
+
+  // Get current withdrawal preview values
+  const getWithdrawalPreview = () => {
+    const inputAmount = parseFloat(withdrawAmount.replace(',', '.')) || 0;
+    // The input is the net amount (what user receives)
+    // We need to find the gross that results in this net
+    // gross - fee(gross) = net
+    // For fixed fee only: gross = net + fixed_fee
+    // For percentage: gross * (1 - pct/100) - fixed = net => gross = (net + fixed) / (1 - pct/100)
+    const pct = userFeeConfig?.saque_percentage || 0;
+    const fixed = userFeeConfig?.saque_fixed || 0;
+    
+    let grossAmount = inputAmount;
+    if (pct > 0) {
+      grossAmount = (inputAmount + fixed) / (1 - pct / 100);
+    } else {
+      grossAmount = inputAmount + fixed;
+    }
+    grossAmount = Math.round(grossAmount * 100) / 100;
+    
+    const fee = calculateWithdrawalFee(grossAmount);
+    return { grossAmount, fee, netAmount: inputAmount };
+  };
+
   const handleRequestWithdrawal = async () => {
     if (!savedBankData) {
       toast({
@@ -610,10 +648,12 @@ const AdminFinanceiro = () => {
       return;
     }
 
-    if (roundedAmount > roundedBalance) {
+    // Check if gross amount would exceed balance
+    const preview = getWithdrawalPreview();
+    if (preview.grossAmount > roundedBalance) {
       toast({
         title: "Saldo insuficiente",
-        description: `Saldo disponível: ${formatCurrency(roundedBalance)}`,
+        description: `O valor bruto (${formatCurrency(preview.grossAmount)}) excede o saldo disponível.`,
         variant: "destructive"
       });
       return;
@@ -992,7 +1032,7 @@ const AdminFinanceiro = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label>Valor do saque</Label>
+                  <Label>Valor que você receberá</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
                     <Input
@@ -1002,16 +1042,48 @@ const AdminFinanceiro = () => {
                       className="pl-10"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Valor mínimo: R$ 50,00</p>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-auto p-0 text-xs"
-                    onClick={() => setWithdrawAmount(availableBalance.toFixed(2).replace('.', ','))}
-                  >
-                    Usar saldo total
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Mínimo: R$ 50,00 • Taxa: {userFeeConfig?.saque_fixed ? `R$ ${userFeeConfig.saque_fixed.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                      {userFeeConfig?.saque_percentage ? ` + ${userFeeConfig.saque_percentage}%` : ''}
+                    </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs"
+                      onClick={() => {
+                        const netAmount = calculateNetWithdrawal(availableBalance);
+                        setWithdrawAmount(netAmount.toFixed(2).replace('.', ','));
+                      }}
+                    >
+                      Usar saldo total
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Fee preview */}
+                {withdrawAmount && parseFloat(withdrawAmount.replace(',', '.')) > 0 && (() => {
+                  const preview = getWithdrawalPreview();
+                  return (
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Será descontado do saldo:</span>
+                        <span>{formatCurrency(preview.grossAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
+                        <span>Taxa de saque:</span>
+                        <span>- {formatCurrency(preview.fee)}</span>
+                      </div>
+                      <Separator className="my-1" />
+                      <div className="flex justify-between font-medium">
+                        <span>Você receberá:</span>
+                        <span className="text-green-600 dark:text-green-400">
+                          {formatCurrency(preview.netAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <DialogFooter>
