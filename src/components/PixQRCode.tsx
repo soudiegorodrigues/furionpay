@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Clock, RefreshCw, CheckCircle } from "lucide-react";
@@ -97,11 +97,12 @@ export const PixQRCode = ({
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+  }, []);
+  
   const isExpired = timeLeft <= 0;
   const isLowTime = timeLeft <= 60;
   const formattedAmount = new Intl.NumberFormat("pt-BR", {
@@ -109,7 +110,8 @@ export const PixQRCode = ({
     currency: "BRL",
     minimumFractionDigits: 2
   }).format(amount);
-  const handleCopyCode = async () => {
+  
+  const handleCopyCode = useCallback(async () => {
     if (isExpired) {
       toast({
         title: "PIX expirado",
@@ -133,7 +135,7 @@ export const PixQRCode = ({
         variant: "destructive"
       });
     }
-  };
+  }, [isExpired, pixCode]);
   return <div className="flex flex-col items-center gap-3 sm:gap-4 py-1 sm:py-2 animate-fade-in">
       {/* Payment Confirmed State */}
       {isPaid ? (

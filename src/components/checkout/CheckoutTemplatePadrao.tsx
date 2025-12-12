@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,11 +6,27 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  ShoppingCart, Lock, CreditCard, CheckCircle, Shield, ShieldCheck, Clock, MapPin, Phone, Calendar, User, Zap, Users, Gift, MessageCircle, Star
+  ShoppingCart, Lock, Shield, Clock, Star, Users, Zap, Gift, ShieldCheck, CheckCircle
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { cn } from "@/lib/utils";
+
+// Memoized star rating component
+const StarRating = memo(({ rating }: { rating: number }) => (
+  <div className="flex gap-0.5">
+    {[1, 2, 3, 4, 5].map((star) => (
+      <Star
+        key={star}
+        className={cn(
+          "h-3 w-3",
+          star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+        )}
+      />
+    ))}
+  </div>
+));
+StarRating.displayName = "StarRating";
 
 // Template PADRÃO - Inspirado no checkout da Kiwify
 // Foco em: Simplicidade, confiança e conversão
@@ -32,34 +49,18 @@ export function CheckoutTemplatePadrao({
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#22C55E";
 
-  const getInitials = (name: string) => {
+  const getInitials = useCallback((name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
+  }, []);
 
-  const getAvatarColor = (name: string) => {
+  const getAvatarColor = useCallback((name: string) => {
     const colors = [
       "#ef4444", "#3b82f6", "#22c55e", "#eab308", 
       "#a855f7", "#ec4899", "#6366f1", "#14b8a6"
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
-  };
-
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={cn(
-              "h-3 w-3",
-              star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-            )}
-          />
-        ))}
-      </div>
-    );
-  };
+  }, []);
 
   return (
     <div 
@@ -87,6 +88,9 @@ export function CheckoutTemplatePadrao({
             src={config.header_logo_url} 
             alt="Banner" 
             className="w-full md:max-w-5xl md:rounded-lg object-contain"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
         </div>
       )}
@@ -102,6 +106,7 @@ export function CheckoutTemplatePadrao({
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 title="Video"
+                loading="lazy"
               />
             ) : config.video_url.includes('vimeo.com') ? (
               <iframe
@@ -110,6 +115,7 @@ export function CheckoutTemplatePadrao({
                 allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
                 title="Video"
+                loading="lazy"
               />
             ) : (
               <video
@@ -333,6 +339,8 @@ export function CheckoutTemplatePadrao({
                                 src={testimonial.author_photo_url}
                                 alt={testimonial.author_name}
                                 className="w-8 h-8 rounded-full object-cover shrink-0"
+                                loading="lazy"
+                                decoding="async"
                               />
                             ) : (
                               <div 
@@ -345,7 +353,7 @@ export function CheckoutTemplatePadrao({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-gray-800">{testimonial.author_name}</span>
-                                {renderStars(testimonial.rating)}
+                                <StarRating rating={testimonial.rating} />
                               </div>
                               <p className="text-xs text-gray-600 mt-0.5">"{testimonial.content}"</p>
                             </div>
@@ -367,7 +375,7 @@ export function CheckoutTemplatePadrao({
                   {config?.show_product_image !== false && (
                     <div className="flex gap-3 p-3 bg-gray-50 rounded-xl">
                       {product?.image_url ? (
-                        <img src={product.image_url} alt={product.name} className="w-16 h-16 object-cover rounded-lg" />
+                        <img src={product.image_url} alt={product.name} className="w-16 h-16 object-cover rounded-lg" loading="lazy" decoding="async" />
                       ) : (
                         <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
                           <ShoppingCart className="h-6 w-6 text-gray-400" />
