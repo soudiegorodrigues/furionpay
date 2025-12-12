@@ -48,8 +48,8 @@ const AdminDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
-  const [chartFilter, setChartFilter] = useState<ChartFilter>('30days');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
+  const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
