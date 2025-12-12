@@ -382,15 +382,7 @@ export const MultiAcquirersSection = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* BANCO INTER Card */}
-        <Card className={`border-primary/50 transition-opacity relative ${interEnabled === false ? 'opacity-60' : ''} ${defaultAcquirer === 'inter' ? 'ring-2 ring-yellow-500' : ''}`}>
-          {defaultAcquirer === 'inter' && (
-            <div className="absolute -top-2 -right-2">
-              <Badge className="bg-yellow-500 text-yellow-900 hover:bg-yellow-500">
-                <Star className="w-3 h-3 mr-1 fill-current" />
-                Principal
-              </Badge>
-            </div>
-          )}
+        <Card className={`border-primary/50 transition-opacity ${interEnabled === false ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
@@ -600,15 +592,7 @@ export const MultiAcquirersSection = () => {
         </AlertDialog>
 
         {/* SPEDPAY Card */}
-        <Card className={`border-primary/50 transition-opacity relative ${spedpayEnabled === false ? 'opacity-60' : ''} ${defaultAcquirer === 'spedpay' ? 'ring-2 ring-yellow-500' : ''}`}>
-          {defaultAcquirer === 'spedpay' && (
-            <div className="absolute -top-2 -right-2">
-              <Badge className="bg-yellow-500 text-yellow-900 hover:bg-yellow-500">
-                <Star className="w-3 h-3 mr-1 fill-current" />
-                Principal
-              </Badge>
-            </div>
-          )}
+        <Card className={`border-primary/50 transition-opacity ${spedpayEnabled === false ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
@@ -719,15 +703,7 @@ export const MultiAcquirersSection = () => {
         </Card>
 
         {/* ATIVUS HUB Card */}
-        <Card className={`border-primary/50 transition-opacity relative ${ativusEnabled === false ? 'opacity-60' : ''} ${defaultAcquirer === 'ativus' ? 'ring-2 ring-yellow-500' : ''}`}>
-          {defaultAcquirer === 'ativus' && (
-            <div className="absolute -top-2 -right-2">
-              <Badge className="bg-yellow-500 text-yellow-900 hover:bg-yellow-500">
-                <Star className="w-3 h-3 mr-1 fill-current" />
-                Principal
-              </Badge>
-            </div>
-          )}
+        <Card className={`border-primary/50 transition-opacity ${ativusEnabled === false ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
