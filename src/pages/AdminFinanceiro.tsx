@@ -1,12 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Transaction {
   id: string;
@@ -16,13 +20,74 @@ interface Transaction {
   paid_at: string | null;
 }
 
+interface BankAccountData {
+  bank: string;
+  pixKeyType: string;
+  pixKey: string;
+}
+
 const AdminFinanceiro = () => {
   const { user, isAdmin } = useAdminAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hideValues, setHideValues] = useState(false);
   const [hasBankAccount, setHasBankAccount] = useState(true);
+  const [showBankDialog, setShowBankDialog] = useState(false);
+  const [bankData, setBankData] = useState<BankAccountData>({
+    bank: '',
+    pixKeyType: '',
+    pixKey: ''
+  });
   const { toast } = useToast();
+
+  const banks = [
+    { code: '001', name: 'Banco do Brasil S.A.' },
+    { code: '033', name: 'Banco Santander Brasil S.A.' },
+    { code: '077', name: 'Banco Inter S.A.' },
+    { code: '104', name: 'Caixa Econômica Federal' },
+    { code: '237', name: 'Bradesco S.A.' },
+    { code: '260', name: 'Nubank' },
+    { code: '341', name: 'Itaú Unibanco S.A.' },
+    { code: '756', name: 'Sicoob' },
+  ];
+
+  const pixKeyTypes = [
+    { value: 'cpf', label: 'CPF' },
+    { value: 'cnpj', label: 'CNPJ' },
+    { value: 'email', label: 'E-mail' },
+    { value: 'phone', label: 'Telefone' },
+    { value: 'random', label: 'Chave Aleatória' },
+  ];
+
+  const getPixKeyPlaceholder = () => {
+    switch (bankData.pixKeyType) {
+      case 'cpf': return 'Digite seu CPF';
+      case 'cnpj': return 'Digite seu CNPJ';
+      case 'email': return 'Digite seu e-mail';
+      case 'phone': return 'Digite seu telefone';
+      case 'random': return 'Digite sua chave aleatória';
+      default: return 'Digite sua chave PIX';
+    }
+  };
+
+  const handleAddBankAccount = () => {
+    if (!bankData.bank || !bankData.pixKeyType || !bankData.pixKey.trim()) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setHasBankAccount(true);
+    setShowBankDialog(false);
+    setBankData({ bank: '', pixKeyType: '', pixKey: '' });
+    toast({
+      title: "Conta adicionada!",
+      description: "Sua conta bancária foi configurada com sucesso.",
+    });
+  };
 
   const loadTransactions = async () => {
     if (!user?.id) return;
@@ -221,7 +286,7 @@ const AdminFinanceiro = () => {
                     <Button 
                       variant="outline" 
                       className="w-full gap-2"
-                      onClick={() => setHasBankAccount(true)}
+                      onClick={() => setShowBankDialog(true)}
                     >
                       Configurar conta bancária
                       <Settings className="h-4 w-4" />
@@ -231,6 +296,101 @@ const AdminFinanceiro = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Dialog de Configurar Conta Bancária */}
+          <Dialog open={showBankDialog} onOpenChange={setShowBankDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Configurar conta bancária</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-6 py-4">
+                {/* Informações do Titular */}
+                <Card className="border-0 shadow-none bg-muted/30">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 text-primary font-medium mb-4">
+                      <Building2 className="h-5 w-5" />
+                      Informações do Titular
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Instituição Bancária</Label>
+                      <Select 
+                        value={bankData.bank} 
+                        onValueChange={(value) => setBankData(prev => ({ ...prev, bank: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o banco" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {banks.map(bank => (
+                            <SelectItem key={bank.code} value={bank.code}>
+                              {bank.code} - {bank.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Chave PIX */}
+                <Card className="border-0 shadow-none bg-muted/30">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 text-primary font-medium mb-4">
+                      <CreditCard className="h-5 w-5" />
+                      Chave PIX
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Tipo de Chave PIX</Label>
+                        <Select 
+                          value={bankData.pixKeyType} 
+                          onValueChange={(value) => setBankData(prev => ({ ...prev, pixKeyType: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de chave PIX" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {pixKeyTypes.map(type => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Chave PIX</Label>
+                        <Input 
+                          placeholder={getPixKeyPlaceholder()}
+                          value={bankData.pixKey}
+                          onChange={(e) => setBankData(prev => ({ ...prev, pixKey: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowBankDialog(false);
+                    setBankData({ bank: '', pixKeyType: '', pixKey: '' });
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleAddBankAccount}>
+                  Adicionar Conta
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Saldo Pendente */}
