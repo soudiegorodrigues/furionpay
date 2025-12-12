@@ -71,57 +71,57 @@ const handler = async (req: Request): Promise<Response> => {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+        <body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; padding: 40px 20px;">
             <tr>
               <td align="center">
-                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);">
                   
-                  <!-- Header -->
+                  <!-- Header with Logo -->
                   <tr>
-                    <td style="background-color: #18181b; padding: 30px; text-align: center;">
-                      ${logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-height: 50px; max-width: 200px;">` : '<h1 style="color: #ffffff; margin: 0; font-size: 24px;">FurionPay</h1>'}
+                    <td style="padding: 40px 30px 30px 30px; text-align: center;">
+                      ${logoUrl ? `<img src="${logoUrl}" alt="FurionPay" style="max-height: 60px; max-width: 220px;">` : '<h1 style="color: #18181b; margin: 0; font-size: 28px; font-weight: 700;">FurionPay</h1>'}
                     </td>
                   </tr>
 
                   <!-- Status Badge -->
                   <tr>
-                    <td style="padding: 30px 30px 20px 30px; text-align: center;">
-                      <div style="display: inline-block; background-color: ${statusColor}15; border: 2px solid ${statusColor}; border-radius: 50px; padding: 12px 24px;">
-                        <span style="color: ${statusColor}; font-size: 18px; font-weight: bold;">
-                          ${statusEmoji} Saque ${statusText}
+                    <td style="padding: 0 30px 24px 30px; text-align: center;">
+                      <div style="display: inline-block; background-color: ${isApproved ? '#dcfce7' : '#fee2e2'}; border: 1.5px solid ${statusColor}; border-radius: 100px; padding: 10px 20px;">
+                        <span style="color: ${statusColor}; font-size: 15px; font-weight: 600;">
+                          ${statusEmoji} Saque ${statusText.toLowerCase()}
                         </span>
                       </div>
                     </td>
                   </tr>
 
-                  <!-- Amount -->
+                  <!-- Amount Section -->
                   <tr>
-                    <td style="padding: 10px 30px 20px 30px; text-align: center;">
-                      <p style="color: #71717a; font-size: 14px; margin: 0 0 8px 0;">Valor do saque</p>
-                      <p style="color: #18181b; font-size: 36px; font-weight: bold; margin: 0;">${formatCurrency(amount)}</p>
+                    <td style="padding: 0 30px 28px 30px; text-align: center;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0 0 8px 0; font-weight: 400;">Valor do saque</p>
+                      <p style="color: #111827; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: -1px;">${formatCurrency(amount)}</p>
                     </td>
                   </tr>
 
-                  <!-- Details -->
+                  <!-- Bank Details Box -->
                   <tr>
-                    <td style="padding: 0 30px 30px 30px;">
-                      <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px;">
+                    <td style="padding: 0 30px 28px 30px;">
+                      <div style="background-color: #f5f5f5; border-radius: 12px; overflow: hidden;">
                         <table width="100%" cellpadding="0" cellspacing="0">
                           <tr>
-                            <td style="padding: 8px 0; border-bottom: 1px solid #e4e4e7;">
-                              <span style="color: #71717a; font-size: 14px;">Banco</span>
+                            <td style="padding: 16px 20px; border-bottom: 1px solid #e5e5e5;">
+                              <span style="color: #6b7280; font-size: 14px;">Banco</span>
                             </td>
-                            <td style="padding: 8px 0; border-bottom: 1px solid #e4e4e7; text-align: right;">
-                              <span style="color: #18181b; font-size: 14px; font-weight: 500;">${bankName}</span>
+                            <td style="padding: 16px 20px; border-bottom: 1px solid #e5e5e5; text-align: right;">
+                              <span style="color: #111827; font-size: 14px; font-weight: 600;">${bankName}</span>
                             </td>
                           </tr>
                           <tr>
-                            <td style="padding: 8px 0;">
-                              <span style="color: #71717a; font-size: 14px;">Chave PIX</span>
+                            <td style="padding: 16px 20px;">
+                              <span style="color: #6b7280; font-size: 14px;">Chave Pix</span>
                             </td>
-                            <td style="padding: 8px 0; text-align: right;">
-                              <span style="color: #18181b; font-size: 14px; font-weight: 500;">${pixKey}</span>
+                            <td style="padding: 16px 20px; text-align: right;">
+                              <span style="color: #111827; font-size: 14px; font-weight: 600;">${pixKey}</span>
                             </td>
                           </tr>
                         </table>
@@ -132,30 +132,40 @@ const handler = async (req: Request): Promise<Response> => {
                   ${!isApproved && rejectionReason ? `
                   <!-- Rejection Reason -->
                   <tr>
-                    <td style="padding: 0 30px 30px 30px;">
-                      <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px;">
-                        <p style="color: #991b1b; font-size: 14px; margin: 0 0 4px 0; font-weight: 600;">Motivo da rejeição:</p>
-                        <p style="color: #b91c1c; font-size: 14px; margin: 0;">${rejectionReason}</p>
+                    <td style="padding: 0 30px 28px 30px;">
+                      <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px 20px;">
+                        <p style="color: #991b1b; font-size: 13px; margin: 0 0 6px 0; font-weight: 600;">Motivo da rejeição:</p>
+                        <p style="color: #b91c1c; font-size: 14px; margin: 0; line-height: 1.5;">${rejectionReason}</p>
                       </div>
                     </td>
                   </tr>
                   ` : ''}
 
-                  <!-- Message -->
+                  <!-- Confirmation Message -->
                   <tr>
-                    <td style="padding: 0 30px 30px 30px; text-align: center;">
+                    <td style="padding: 0 30px 32px 30px; text-align: center;">
                       ${isApproved 
-                        ? '<p style="color: #22c55e; font-size: 14px; margin: 0;">O valor será transferido para sua conta em breve.</p>'
-                        : '<p style="color: #71717a; font-size: 14px; margin: 0;">Entre em contato conosco caso tenha dúvidas.</p>'
+                        ? '<p style="color: #16a34a; font-size: 15px; margin: 0; font-weight: 500;">O valor será transferido para sua conta em breve.</p>'
+                        : '<p style="color: #6b7280; font-size: 14px; margin: 0;">Entre em contato conosco caso tenha dúvidas.</p>'
                       }
+                    </td>
+                  </tr>
+
+                  <!-- Footer Divider -->
+                  <tr>
+                    <td style="padding: 0 30px;">
+                      <div style="height: 1px; background-color: #e5e7eb;"></div>
                     </td>
                   </tr>
 
                   <!-- Footer -->
                   <tr>
-                    <td style="background-color: #f4f4f5; padding: 20px 30px; text-align: center;">
-                      <p style="color: #a1a1aa; font-size: 12px; margin: 0;">
-                        Este email foi enviado automaticamente. Por favor, não responda.
+                    <td style="padding: 24px 30px 20px 30px; text-align: center;">
+                      <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px 0;">
+                        Este é um e-mail automático. Não responda.
+                      </p>
+                      <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                        © FurionPay — Pagamentos inteligentes
                       </p>
                     </td>
                   </tr>
