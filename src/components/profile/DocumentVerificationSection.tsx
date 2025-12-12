@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Upload, FileCheck, Clock, XCircle, AlertTriangle, User, Building2, IdCard, Car, BookOpen, FileText } from "lucide-react";
+import { Upload, FileCheck, Clock, XCircle, AlertTriangle, User, Building2, IdCard, Car, BookOpen, FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -381,45 +381,53 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
               return (
                 <div key={upload.side} className="space-y-2">
                   <Label className="text-sm text-muted-foreground">{upload.label}</Label>
-                  <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
-                    {uploadedFile?.file ? (
-                      uploadedFile.file.type === 'application/pdf' ? (
-                        <div className="relative w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/30">
-                          <FileText className="h-8 w-8 text-primary" />
-                          <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
-                            {uploadedFile.file.name}
-                          </span>
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
-                            <span className="text-white text-sm font-medium">Trocar</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="relative w-full h-full">
-                          <img 
-                            src={uploadedFile.preview || ''} 
-                            alt={upload.label}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
-                            <span className="text-white text-sm font-medium">Trocar</span>
-                          </div>
-                        </div>
-                      )
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 p-4">
-                        <Upload className="h-6 w-6 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground text-center">
-                          Clique para enviar
-                        </span>
-                      </div>
+                  <div className="relative">
+                    {uploadedFile?.file && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleFileChange(upload.side, null);
+                        }}
+                        className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     )}
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/jpeg,image/png,image/webp,application/pdf"
-                      onChange={(e) => handleFileChange(upload.side, e.target.files?.[0] || null)}
-                    />
-                  </label>
+                    <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
+                      {uploadedFile?.file ? (
+                        uploadedFile.file.type === 'application/pdf' ? (
+                          <div className="relative w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/30">
+                            <FileText className="h-8 w-8 text-primary" />
+                            <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
+                              {uploadedFile.file.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="relative w-full h-full">
+                            <img 
+                              src={uploadedFile.preview || ''} 
+                              alt={upload.label}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 p-4">
+                          <Upload className="h-6 w-6 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground text-center">
+                            Clique para enviar
+                          </span>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/jpeg,image/png,image/webp,application/pdf"
+                        onChange={(e) => handleFileChange(upload.side, e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
                 </div>
               );
             })}
@@ -435,45 +443,53 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
                   return (
                     <div key={upload.side} className="space-y-2">
                       <Label className="text-sm text-muted-foreground">{upload.label}</Label>
-                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
-                        {uploadedFile?.file ? (
-                          uploadedFile.file.type === 'application/pdf' ? (
-                            <div className="relative w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/30">
-                              <FileText className="h-8 w-8 text-primary" />
-                              <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
-                                {uploadedFile.file.name}
-                              </span>
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
-                                <span className="text-white text-sm font-medium">Trocar</span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="relative w-full h-full">
-                              <img 
-                                src={uploadedFile.preview || ''} 
-                                alt={upload.label}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
-                                <span className="text-white text-sm font-medium">Trocar</span>
-                              </div>
-                            </div>
-                          )
-                        ) : (
-                          <div className="flex flex-col items-center gap-2 p-4">
-                            <Upload className="h-6 w-6 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground text-center">
-                              Clique para enviar
-                            </span>
-                          </div>
+                      <div className="relative">
+                        {uploadedFile?.file && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleFileChange(upload.side, null);
+                            }}
+                            className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         )}
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/jpeg,image/png,image/webp,application/pdf"
-                          onChange={(e) => handleFileChange(upload.side, e.target.files?.[0] || null)}
-                        />
-                      </label>
+                        <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors overflow-hidden">
+                          {uploadedFile?.file ? (
+                            uploadedFile.file.type === 'application/pdf' ? (
+                              <div className="relative w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/30">
+                                <FileText className="h-8 w-8 text-primary" />
+                                <span className="text-xs text-muted-foreground text-center px-2 truncate max-w-full">
+                                  {uploadedFile.file.name}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="relative w-full h-full">
+                                <img 
+                                  src={uploadedFile.preview || ''} 
+                                  alt={upload.label}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )
+                          ) : (
+                            <div className="flex flex-col items-center gap-2 p-4">
+                              <Upload className="h-6 w-6 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground text-center">
+                                Clique para enviar
+                              </span>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            onChange={(e) => handleFileChange(upload.side, e.target.files?.[0] || null)}
+                          />
+                        </label>
+                      </div>
                     </div>
                   );
                 })}
