@@ -45,41 +45,11 @@ export function SaquesGlobaisSection() {
   const loadWithdrawals = async () => {
     setIsLoading(true);
     try {
-      // Load all withdrawals, not just pending
-      const { data, error } = await supabase
-        .from('withdrawal_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_all_withdrawals_admin', { p_limit: 500 });
       
       if (error) throw error;
 
-      // Get user emails
-      const userIds = [...new Set((data || []).map(w => w.user_id))];
-      const withdrawalsWithEmail: Withdrawal[] = [];
-
-      for (const withdrawal of data || []) {
-        // Get user email from pending withdrawals RPC or just use the data we have
-        withdrawalsWithEmail.push({
-          ...withdrawal,
-          user_email: '' // Will be populated below
-        });
-      }
-
-      // Get pending withdrawals to get emails
-      const { data: pendingData } = await supabase.rpc('get_pending_withdrawals');
-      const emailMap: Record<string, string> = {};
-      (pendingData || []).forEach((p: any) => {
-        emailMap[p.id] = p.user_email;
-      });
-
-      // For other withdrawals, we need to query differently
-      // For now, just use what we have
-      const finalWithdrawals = (data || []).map(w => ({
-        ...w,
-        user_email: emailMap[w.id] || 'Usuário'
-      }));
-
-      setWithdrawals(finalWithdrawals);
+      setWithdrawals(data || []);
     } catch (error) {
       console.error('Error loading withdrawals:', error);
       toast({
@@ -336,10 +306,10 @@ export function SaquesGlobaisSection() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">ID</TableHead>
-                  <TableHead className="font-semibold">Data de Solicitação</TableHead>
-                  <TableHead className="font-semibold">Valor do Saque</TableHead>
                   <TableHead className="font-semibold">Email do Usuário</TableHead>
+                  <TableHead className="font-semibold">Data de Solicitação</TableHead>
+                  <TableHead className="font-semibold">ID</TableHead>
+                  <TableHead className="font-semibold">Valor do Saque</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   {statusFilter === 'pending' && <TableHead className="font-semibold text-right">Ações</TableHead>}
                 </TableRow>
@@ -357,19 +327,19 @@ export function SaquesGlobaisSection() {
                 ) : (
                   paginatedWithdrawals.map((withdrawal) => (
                     <TableRow key={withdrawal.id}>
-                      <TableCell className="font-mono text-xs">
-                        {withdrawal.id.slice(0, 8)}...
+                      <TableCell className="text-sm">
+                        {withdrawal.user_email}
                       </TableCell>
                       <TableCell className="text-sm">
                         {formatDate(withdrawal.created_at)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {withdrawal.id.slice(0, 8)}...
                       </TableCell>
                       <TableCell>
                         <span className="font-bold text-primary">
                           {formatCurrency(withdrawal.amount)}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {withdrawal.user_email}
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(withdrawal.status)}

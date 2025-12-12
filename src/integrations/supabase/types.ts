@@ -989,6 +989,23 @@ export type Database = {
           last_sign_in_at: string
         }[]
       }
+      get_all_withdrawals_admin: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          bank_code: string
+          bank_name: string
+          created_at: string
+          id: string
+          pix_key: string
+          pix_key_type: string
+          processed_at: string
+          rejection_reason: string
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          user_email: string
+          user_id: string
+        }[]
+      }
       get_pending_withdrawals: {
         Args: never
         Returns: {
