@@ -177,19 +177,28 @@ const AdminDashboard = () => {
     const now = new Date();
     
     if (chartFilter === 'today') {
-      // Hourly data for today
+      // Hourly data for today - use paid_at for paid transactions
       for (let hour = 0; hour < 24; hour++) {
         const hourStr = hour.toString().padStart(2, '0') + ':00';
+        const today = new Date();
+        const todayStr = today.toDateString();
         
-        const hourTransactions = transactions.filter(tx => {
+        // Filter transactions created today at this hour
+        const hourGerados = transactions.filter(tx => {
           const txDate = new Date(tx.created_at);
-          const today = new Date();
-          return txDate.toDateString() === today.toDateString() && txDate.getHours() === hour;
+          return txDate.toDateString() === todayStr && txDate.getHours() === hour;
         });
         
-        const gerados = hourTransactions.length;
-        const pagos = hourTransactions.filter(tx => tx.status === 'paid').length;
-        const valorPago = hourTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+        // Filter transactions PAID today at this hour (using paid_at)
+        const hourPagos = transactions.filter(tx => {
+          if (tx.status !== 'paid' || !tx.paid_at) return false;
+          const paidDate = new Date(tx.paid_at);
+          return paidDate.toDateString() === todayStr && paidDate.getHours() === hour;
+        });
+        
+        const gerados = hourGerados.length;
+        const pagos = hourPagos.length;
+        const valorPago = hourPagos.reduce((sum, tx) => sum + tx.amount, 0);
         
         data.push({ date: hourStr, gerados, pagos, valorPago });
       }
@@ -203,14 +212,22 @@ const AdminDashboard = () => {
         const dateStr = date.toISOString().split('T')[0];
         const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         
-        const dayTransactions = transactions.filter(tx => {
+        // Transactions created on this day
+        const dayGerados = transactions.filter(tx => {
           const txDate = new Date(tx.created_at).toISOString().split('T')[0];
           return txDate === dateStr;
         });
         
-        const gerados = dayTransactions.length;
-        const pagos = dayTransactions.filter(tx => tx.status === 'paid').length;
-        const valorPago = dayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+        // Transactions PAID on this day (using paid_at)
+        const dayPagos = transactions.filter(tx => {
+          if (tx.status !== 'paid' || !tx.paid_at) return false;
+          const paidDate = new Date(tx.paid_at).toISOString().split('T')[0];
+          return paidDate === dateStr;
+        });
+        
+        const gerados = dayGerados.length;
+        const pagos = dayPagos.length;
+        const valorPago = dayPagos.reduce((sum, tx) => sum + tx.amount, 0);
         
         data.push({ date: displayDate, gerados, pagos, valorPago });
       }
