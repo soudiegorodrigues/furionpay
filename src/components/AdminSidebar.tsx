@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package } from "lucide-react";
+import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -18,6 +18,11 @@ const menuItems = [{
   title: "Dashboard",
   url: "/admin/dashboard",
   icon: BarChart3,
+  adminOnly: false
+}, {
+  title: "Painel Financeiro",
+  url: "/admin/financeiro",
+  icon: Wallet,
   adminOnly: false
 }, {
   title: "Checkout",
