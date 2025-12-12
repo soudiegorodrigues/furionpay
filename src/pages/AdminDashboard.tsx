@@ -594,7 +594,7 @@ const AdminDashboard = () => {
                         <TableCell className="text-xs whitespace-nowrap">{formatDate(tx.created_at)}</TableCell>
                         <TableCell className="text-xs max-w-[100px] truncate">{tx.donor_name}</TableCell>
                         <TableCell className="text-xs hidden sm:table-cell max-w-[100px] truncate">{tx.product_name || '-'}</TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">{formatCurrency(tx.amount)}</TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">{formatCurrency(calculateNetAmount(tx.amount))}</TableCell>
                         <TableCell>{getStatusBadge(tx.status)}</TableCell>
                       </TableRow>
                     ))}
