@@ -25,6 +25,7 @@ interface User {
   is_blocked: boolean;
   full_name: string | null;
   is_approved: boolean;
+  available_balance?: number;
 }
 
 interface FeeConfig {
@@ -80,7 +81,22 @@ export const UsuariosSection = () => {
     try {
       const { data, error } = await supabase.rpc('get_all_users_auth');
       if (error) throw error;
-      setUsers(data || []);
+      
+      // Load balances for all users
+      const usersWithBalances = await Promise.all(
+        (data || []).map(async (user: User) => {
+          try {
+            const { data: balanceData } = await supabase.rpc('get_user_available_balance_admin', { 
+              p_user_id: user.id 
+            });
+            return { ...user, available_balance: balanceData || 0 };
+          } catch {
+            return { ...user, available_balance: 0 };
+          }
+        })
+      );
+      
+      setUsers(usersWithBalances);
       
       // Load user acquirers
       const { data: acquirerData } = await supabase
@@ -408,6 +424,7 @@ export const UsuariosSection = () => {
                       <TableHead className="text-xs hidden md:table-cell">Cadastro</TableHead>
                       <TableHead className="text-xs hidden lg:table-cell">Adquirente</TableHead>
                       <TableHead className="text-xs hidden xl:table-cell">Taxa</TableHead>
+                      <TableHead className="text-xs hidden sm:table-cell">Saldo Disponível</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
                       <TableHead className="text-right text-xs">Ações</TableHead>
                     </TableRow>
@@ -415,7 +432,7 @@ export const UsuariosSection = () => {
                   <TableBody>
                     {paginatedUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
                           Nenhum usuário cadastrado
                         </TableCell>
                       </TableRow>
@@ -434,6 +451,9 @@ export const UsuariosSection = () => {
                               <Percent className="h-3 w-3 mr-1" />
                               {getFeeConfigName(u.id)}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs hidden sm:table-cell whitespace-nowrap font-medium text-green-600 dark:text-green-400">
+                            R$ {(u.available_balance || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1 flex-wrap">
