@@ -1073,6 +1073,7 @@ export type Database = {
         }[]
       }
       get_user_available_balance: { Args: never; Returns: number }
+      get_user_balance_details: { Args: never; Returns: Json }
       get_user_dashboard: { Args: never; Returns: Json }
       get_user_popup_model_stats: {
         Args: never
