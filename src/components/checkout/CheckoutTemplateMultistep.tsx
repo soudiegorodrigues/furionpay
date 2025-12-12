@@ -262,7 +262,7 @@ export function CheckoutTemplateMultistep({
                 <div className="space-y-4">
                   {(config?.require_phone !== false) && (
                     <div className="space-y-2">
-                      <Label className="text-gray-700 font-medium">Seu WhatsApp {config?.require_phone && "*"}</Label>
+                      <Label className="text-gray-700 font-medium">Telefone {config?.require_phone && "*"}</Label>
                       <Input
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
