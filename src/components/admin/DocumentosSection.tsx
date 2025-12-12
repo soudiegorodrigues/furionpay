@@ -481,14 +481,16 @@ function DocumentViewer({
           <div className="w-full h-full animate-pulse bg-muted"></div>
         ) : fileUrl ? (
           isPdf ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
-              <FileText className="h-12 w-12 text-primary" />
-              <span className="text-sm text-center text-muted-foreground truncate max-w-full px-2">
-                {label}.pdf
-              </span>
+            <div className="w-full h-full flex flex-col relative group">
+              <iframe
+                src={`${fileUrl}#toolbar=0&navpanes=0`}
+                className="w-full h-full border-0"
+                title={label}
+              />
               <Button 
-                variant="outline" 
+                variant="secondary" 
                 size="sm" 
+                className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={handleDownload}
               >
                 <Download className="h-4 w-4 mr-2" />
