@@ -427,12 +427,14 @@ export type Database = {
           show_notifications: boolean | null
           show_product_image: boolean | null
           show_security_badges: boolean | null
+          show_video: boolean | null
           show_whatsapp_button: boolean | null
           template: string | null
           template_id: string | null
           thank_you_url: string | null
           updated_at: string
           user_id: string
+          video_url: string | null
           whatsapp_number: string | null
         }
         Insert: {
@@ -467,12 +469,14 @@ export type Database = {
           show_notifications?: boolean | null
           show_product_image?: boolean | null
           show_security_badges?: boolean | null
+          show_video?: boolean | null
           show_whatsapp_button?: boolean | null
           template?: string | null
           template_id?: string | null
           thank_you_url?: string | null
           updated_at?: string
           user_id: string
+          video_url?: string | null
           whatsapp_number?: string | null
         }
         Update: {
@@ -507,12 +511,14 @@ export type Database = {
           show_notifications?: boolean | null
           show_product_image?: boolean | null
           show_security_badges?: boolean | null
+          show_video?: boolean | null
           show_whatsapp_button?: boolean | null
           template?: string | null
           template_id?: string | null
           thank_you_url?: string | null
           updated_at?: string
           user_id?: string
+          video_url?: string | null
           whatsapp_number?: string | null
         }
         Relationships: [
