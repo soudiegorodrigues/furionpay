@@ -77,18 +77,35 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   useEffect(() => {
     const loadPixelConfig = async () => {
       try {
-        // Get userId from URL params
+        // Get userId and pixel from URL params
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('u') || urlParams.get('user');
+        const urlPixelId = urlParams.get('pixel');
         
-        console.log('MetaPixelProvider: Loading pixel config for userId:', userId);
+        console.log('MetaPixelProvider: Loading pixel config for userId:', userId, 'URL pixel:', urlPixelId);
 
+        // Se o pixel já existe no window (site do usuário), usar ele
+        if (window.fbq) {
+          console.log('Facebook Pixel already exists from user site');
+          setIsLoaded(true);
+          return;
+        }
+
+        // Se pixel ID foi passado diretamente na URL, usar esse
+        if (urlPixelId && /^\d+$/.test(urlPixelId)) {
+          console.log('Using pixel from URL parameter:', urlPixelId);
+          initializePixels([{ pixelId: urlPixelId }]);
+          return;
+        }
+
+        // Caso contrário, buscar do banco de dados
         const { data, error } = await supabase.functions.invoke('get-pixel-config', {
           body: { userId }
         });
         
         if (error) {
           console.log('Pixel config not available:', error);
+          setIsLoaded(true);
           return;
         }
 
@@ -96,9 +113,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
 
         if (data?.pixels && Array.isArray(data.pixels) && data.pixels.length > 0) {
           initializePixels(data.pixels);
+        } else {
+          setIsLoaded(true);
         }
       } catch (error) {
         console.log('Failed to load pixel config:', error);
+        setIsLoaded(true);
       }
     };
 
