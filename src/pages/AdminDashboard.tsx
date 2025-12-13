@@ -650,28 +650,28 @@ const AdminDashboard = () => {
 
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
-            <CardContent className="p-4">
+            <CardContent className="p-5">
               {rewards.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {rewards.map(reward => {
                     const progress = Math.min((totalBalance / reward.threshold_amount) * 100, 100);
                     const achieved = totalBalance >= reward.threshold_amount;
                     
                     return (
-                      <div key={reward.id} className="space-y-3">
+                      <div key={reward.id} className="space-y-4">
                         {/* Imagem da placa */}
                         <div className="flex justify-center">
                           <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-2xl opacity-20" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-2xl opacity-30" />
                             {reward.image_url ? (
                               <img 
                                 src={reward.image_url} 
                                 alt={reward.name} 
-                                className="relative w-36 h-36 object-contain drop-shadow-lg" 
+                                className="relative w-52 h-52 object-contain drop-shadow-xl" 
                               />
                             ) : (
-                              <div className="relative w-36 h-36 flex items-center justify-center">
-                                <Trophy className="h-14 w-14 text-primary drop-shadow-lg" />
+                              <div className="relative w-52 h-52 flex items-center justify-center">
+                                <Trophy className="h-20 w-20 text-primary drop-shadow-xl" />
                               </div>
                             )}
                           </div>
