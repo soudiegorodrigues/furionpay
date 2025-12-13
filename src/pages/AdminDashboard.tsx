@@ -567,16 +567,30 @@ const AdminDashboard = () => {
                   <LabelList 
                     dataKey="pagos" 
                     position="top" 
-                    fill="hsl(var(--muted-foreground))"
-                    fontSize={chartFilter === '30days' ? 10 : 12}
-                    fontWeight={500}
-                    formatter={(value: number, entry: any) => {
-                      // Only show percentage for days with paid transactions
-                      if (value === 0) return '';
+                    content={(props: any) => {
+                      const { x, y, width, value } = props;
+                      
+                      if (value === 0) return null;
+                      
                       const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
-                      if (total === 0) return '';
+                      if (total === 0) return null;
+                      
                       const percentage = ((value / total) * 100).toFixed(1);
-                      return `${percentage}%`;
+                      const fontSize = chartFilter === 'today' ? 8 : chartFilter === '30days' ? 9 : 10;
+                      
+                      return (
+                        <text 
+                          x={x + width / 2} 
+                          y={y - 5} 
+                          fill="hsl(var(--muted-foreground))"
+                          fontSize={fontSize}
+                          fontWeight={500}
+                          textAnchor="start"
+                          transform={`rotate(-45, ${x + width / 2}, ${y - 5})`}
+                        >
+                          {percentage}%
+                        </text>
+                      );
                     }}
                   />
                   </Bar>
