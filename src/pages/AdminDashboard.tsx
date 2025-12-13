@@ -52,7 +52,7 @@ interface ChartData {
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
-type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
+type StatusFilter = 'all' | 'paid' | 'generated';
 interface FeeConfig {
   pix_percentage: number;
   pix_fixed: number;
@@ -840,7 +840,6 @@ const AdminDashboard = () => {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="paid">Pago</SelectItem>
                 <SelectItem value="generated">Gerado</SelectItem>
-                <SelectItem value="expired">Expirado</SelectItem>
               </SelectContent>
             </Select>
           </div>
