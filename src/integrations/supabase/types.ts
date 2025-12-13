@@ -59,6 +59,36 @@ export type Database = {
         }
         Relationships: []
       }
+      api_monitoring_events: {
+        Row: {
+          acquirer: string
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          response_time_ms: number | null
+          retry_attempt: number | null
+        }
+        Insert: {
+          acquirer: string
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          response_time_ms?: number | null
+          retry_attempt?: number | null
+        }
+        Update: {
+          acquirer?: string
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          response_time_ms?: number | null
+          retry_attempt?: number | null
+        }
+        Relationships: []
+      }
       available_domains: {
         Row: {
           created_at: string
@@ -1126,6 +1156,7 @@ export type Database = {
       check_login_blocked: { Args: { p_email: string }; Returns: Json }
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
+      cleanup_old_monitoring_events: { Args: never; Returns: undefined }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
       get_admin_settings: {
         Args: { input_token: string }
@@ -1171,6 +1202,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_api_health_summary: { Args: never; Returns: Json }
       get_my_verification_status: {
         Args: never
         Returns: {
@@ -1276,6 +1308,18 @@ export type Database = {
           product_name: string
           product_price: number
           type: string
+        }[]
+      }
+      get_recent_api_events: {
+        Args: { p_limit?: number }
+        Returns: {
+          acquirer: string
+          created_at: string
+          error_message: string
+          event_type: string
+          id: string
+          response_time_ms: number
+          retry_attempt: number
         }[]
       }
       get_sent_reward_requests: {

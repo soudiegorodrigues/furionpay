@@ -17,6 +17,7 @@ import { SaquesGlobaisSection } from "@/components/admin/SaquesGlobaisSection";
 import { DocumentosSection } from "@/components/admin/DocumentosSection";
 import { UTMDebugSection } from "@/components/admin/UTMDebugSection";
 import { PremiacoesSection } from "@/components/admin/PremiacoesSection";
+import { ApiMonitoringSection } from "@/components/admin/ApiMonitoringSection";
 
 const Admin = () => {
   const location = useLocation();
@@ -58,6 +59,7 @@ const Admin = () => {
       {activeSection === "taxas" && <TaxasSection />}
       {activeSection === "utm-debug" && <UTMDebugSection />}
       {activeSection === "premiacoes" && <PremiacoesSection />}
+      {activeSection === "api-monitoring" && <ApiMonitoringSection />}
     </div>
   );
 };
