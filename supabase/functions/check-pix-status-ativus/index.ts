@@ -79,7 +79,7 @@ async function checkAtivusStatus(
     });
 
     const responseText = await response.text();
-    console.log('Ativus status response:', response.status, responseText);
+    console.log('Ativus FULL response:', response.status, responseText);
 
     if (!response.ok) {
       console.error('Ativus status check failed:', response.status, responseText);
@@ -94,18 +94,20 @@ async function checkAtivusStatus(
       return { isPaid: false, status: 'pending' };
     }
 
-    // According to documentation, response format is:
-    // { "situacao": "AGUARDANDO_PAGAMENTO" | "CONCLUIDO" | etc, "tipo": "CASH IN", ... }
-    const situacao = (data.situacao || data.status || '').toString().toUpperCase();
+    // Check multiple possible status fields (Ativus API can return in different formats)
+    // Primary: situacao (from getTransactionStatus.php)
+    // Alternative: status (from main API), data.status (nested)
+    const situacao = (data.situacao || data.status || data.data?.status || '').toString().toUpperCase();
+    const paidAt = data.data_transacao || data.paidAt || data.data?.paidAt || null;
     
-    console.log('Ativus transaction situacao:', situacao);
+    console.log('Ativus parsed status:', situacao, 'paidAt:', paidAt);
     
-    // Check for paid statuses - Ativus uses "CONCLUIDO" or "PAGO" for paid transactions
-    const paidStatuses = ['CONCLUIDO', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED'];
+    // Check for all possible paid status values
+    const paidStatuses = ['CONCLUIDO', 'CONCLUÍDA', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'];
     const isPaid = paidStatuses.includes(situacao);
 
     if (isPaid) {
-      console.log('Transaction is PAID! Marking as paid in database');
+      console.log('*** Transaction is PAID! Marking as paid in database ***');
       const { error } = await supabase.rpc('mark_pix_paid', { p_txid: idTransaction });
       if (error) {
         console.error('Erro ao marcar PIX como pago:', error);
@@ -118,16 +120,16 @@ async function checkAtivusStatus(
     let mappedStatus = 'pending';
     if (isPaid) {
       mappedStatus = 'paid';
-    } else if (situacao === 'AGUARDANDO_PAGAMENTO') {
+    } else if (situacao === 'AGUARDANDO_PAGAMENTO' || situacao === 'PENDING') {
       mappedStatus = 'generated';
-    } else if (situacao === 'EXPIRADO' || situacao === 'EXPIRED' || situacao === 'CANCELADO') {
+    } else if (['EXPIRADO', 'EXPIRED', 'CANCELADO', 'REFUSED', 'CANCELLED'].includes(situacao)) {
       mappedStatus = 'expired';
     }
 
     return {
       isPaid,
       status: mappedStatus,
-      paidAt: data.data_transacao || undefined,
+      paidAt: paidAt || undefined,
     };
   } catch (error) {
     console.error('Error checking Ativus status:', error);

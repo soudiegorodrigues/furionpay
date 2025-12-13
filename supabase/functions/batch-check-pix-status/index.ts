@@ -484,7 +484,7 @@ async function checkInterStatus(
 async function checkAtivusStatus(
   idTransaction: string,
   apiKey: string
-): Promise<{ isPaid: boolean; status: string }> {
+): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   // Check circuit breaker
   if (isCircuitOpen('ativus')) {
     return { isPaid: false, status: 'circuit_open' };
@@ -512,24 +512,40 @@ async function checkAtivusStatus(
     );
 
     if (!response.ok) {
-      console.error(`Ativus API error for ${idTransaction}:`, response.status);
+      const errorText = await response.text();
+      console.error(`Ativus API error for ${idTransaction}:`, response.status, errorText);
       recordFailure('ativus');
       return { isPaid: false, status: 'error' };
     }
 
     const data = await response.json();
-    console.log(`Ativus status response for ${idTransaction}:`, data.situacao);
+    
+    // Log full response for debugging
+    console.log(`Ativus FULL response for ${idTransaction}:`, JSON.stringify(data));
 
     // Success - reset circuit breaker
     recordSuccess('ativus');
 
-    // Map Ativus status to our internal status
-    const situacao = (data.situacao || '').toUpperCase();
-    const isPaid = ['CONCLUIDO', 'PAGO', 'CONCLUÍDA', 'PAID', 'APPROVED'].includes(situacao);
+    // Check multiple possible status fields (Ativus API can return in different formats)
+    // Primary: situacao (from getTransactionStatus.php)
+    // Alternative: status (from main API), data.status (nested)
+    const situacao = (data.situacao || data.status || data.data?.status || '').toString().toUpperCase();
+    const paidAt = data.data_transacao || data.paidAt || data.data?.paidAt || null;
+    
+    console.log(`Ativus parsed status for ${idTransaction}: situacao="${situacao}", paidAt="${paidAt}"`);
+    
+    // Check for all possible paid status values
+    const paidStatuses = ['CONCLUIDO', 'CONCLUÍDA', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'];
+    const isPaid = paidStatuses.includes(situacao);
+
+    if (isPaid) {
+      console.log(`*** TRANSACTION ${idTransaction} IS PAID! Status: ${situacao} ***`);
+    }
 
     return {
       isPaid,
       status: situacao,
+      paidAt: paidAt || undefined,
     };
   } catch (err) {
     console.error(`Ativus status check failed after retries for ${idTransaction}:`, err);
