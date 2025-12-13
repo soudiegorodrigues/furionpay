@@ -855,6 +855,7 @@ const AdminDashboard = () => {
                       <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                       <TableHead className="text-xs">Valor</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs hidden md:table-cell">Posicionamento</TableHead>
                       <TableHead className="text-xs text-center">UTM Tracking</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -868,12 +869,13 @@ const AdminDashboard = () => {
                         <TableCell className="text-xs hidden sm:table-cell max-w-[100px] truncate">{tx.product_name || '-'}</TableCell>
                         <TableCell className="text-xs whitespace-nowrap">{formatCurrency(calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed))}</TableCell>
                         <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                        <TableCell className="text-xs hidden md:table-cell max-w-[100px] truncate">{tx.utm_data?.utm_term || '-'}</TableCell>
                         <TableCell className="text-center">
                           {tx.utm_data?.utm_source?.toLowerCase().includes('facebook') || tx.utm_data?.utm_source?.toLowerCase().includes('fb') || tx.utm_data?.utm_source?.toLowerCase().includes('meta') ? <FacebookIcon /> : tx.utm_data?.utm_source?.toLowerCase().includes('google') || tx.utm_data?.utm_source?.toLowerCase().includes('gads') || tx.utm_data?.utm_source?.toLowerCase().includes('adwords') ? <GoogleIcon /> : null}
                         </TableCell>
                       </TableRow>)}
                     {paginatedTransactions.length === 0 && <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8 text-sm">
                           Nenhuma transação encontrada
                         </TableCell>
                       </TableRow>}
