@@ -1223,9 +1223,11 @@ export type Database = {
           fee_percentage: number
           id: string
           paid_at: string
+          popup_model: string
           product_name: string
           status: Database["public"]["Enums"]["pix_status"]
           txid: string
+          utm_data: Json
         }[]
       }
       get_user_withdrawals: {

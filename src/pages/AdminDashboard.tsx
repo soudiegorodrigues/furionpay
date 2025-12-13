@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 
 interface DashboardStats {
   total_generated: number;
@@ -21,6 +22,14 @@ interface DashboardStats {
   today_paid: number;
   today_amount_paid: number;
 }
+interface UTMData {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+}
+
 interface Transaction {
   id: string;
   amount: number;
@@ -32,6 +41,8 @@ interface Transaction {
   paid_at: string | null;
   fee_percentage: number | null;
   fee_fixed: number | null;
+  utm_data: UTMData | null;
+  popup_model: string | null;
 }
 
 interface ChartData {
@@ -59,6 +70,8 @@ const AdminDashboard = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, signOut } = useAdminAuth();
@@ -624,7 +637,14 @@ const AdminDashboard = () => {
                   </TableHeader>
                   <TableBody>
                     {paginatedTransactions.map((tx) => (
-                      <TableRow key={tx.id}>
+                      <TableRow 
+                        key={tx.id} 
+                        className="cursor-pointer hover:bg-muted/70 transition-colors"
+                        onClick={() => {
+                          setSelectedTransaction(tx);
+                          setIsSheetOpen(true);
+                        }}
+                      >
                         <TableCell className="text-xs whitespace-nowrap">{formatDate(tx.created_at)}</TableCell>
                         <TableCell className="text-xs max-w-[100px] truncate">{tx.donor_name}</TableCell>
                         <TableCell className="text-xs hidden sm:table-cell max-w-[100px] truncate">{tx.product_name || '-'}</TableCell>
@@ -664,6 +684,14 @@ const AdminDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Transaction Details Sheet */}
+      <TransactionDetailsSheet
+        transaction={selectedTransaction}
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        calculateNetAmount={calculateNetAmount}
+      />
     </div>
   );
 };
