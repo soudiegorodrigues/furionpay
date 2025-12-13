@@ -133,23 +133,6 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       return;
     }
 
-    if (pixels.length === 0) {
-      // Mesmo sem pixels configurados, marcar como "loaded" para não bloquear eventos
-      // O site do usuário pode ter seu próprio pixel
-      console.log('No pixels configured, checking if window.fbq exists from user site...');
-      
-      // Aguardar um pouco para ver se o pixel do usuário carrega
-      setTimeout(() => {
-        if (window.fbq) {
-          console.log('Facebook Pixel found from user site');
-        } else {
-          console.log('No Facebook Pixel available');
-        }
-        setIsLoaded(true);
-      }, 500);
-      return;
-    }
-
     // Validate and sanitize pixel IDs
     const validPixels = pixels.filter(p => p.pixelId && /^\d+$/.test(p.pixelId));
     if (validPixels.length === 0) {
@@ -160,38 +143,35 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
 
     console.log('Initializing pixels:', validPixels);
 
-    // Load Facebook Pixel base script
+    // Create fbq function immediately so events can be queued
+    const n = window.fbq = function() {
+      // @ts-ignore
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    if (!window._fbq) window._fbq = n;
+    // @ts-ignore
+    n.push = n;
+    // @ts-ignore
+    n.loaded = true;
+    // @ts-ignore
+    n.version = '2.0';
+    // @ts-ignore
+    n.queue = [];
+
+    // Initialize all pixels immediately (events will be queued)
+    validPixels.forEach(pixel => {
+      window.fbq('init', pixel.pixelId);
+      console.log('Initialized pixel:', pixel.pixelId);
+    });
+
+    // Load the actual Facebook script
     const script = document.createElement('script');
-    script.innerHTML = `
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-    `;
+    script.async = true;
+    script.src = 'https://connect.facebook.net/en_US/fbevents.js';
     document.head.appendChild(script);
 
-    // Initialize all pixels after base script loads
-    setTimeout(() => {
-      validPixels.forEach(pixel => {
-        if (window.fbq) {
-          window.fbq('init', pixel.pixelId);
-          console.log('Initialized pixel:', pixel.pixelId);
-        }
-      });
-      
-      // PageView NÃO é disparado pelo FurionPay
-      // O site do usuário dispara PageView, FurionPay dispara apenas:
-      // - InitiateCheckout (quando popup abre)
-      // - PixGenerated (quando gera PIX)
-      // - Purchase (quando paga)
-      console.log('Pixel initialized - PageView skipped (fired by user site)');
-      
-      setIsLoaded(true);
-    }, 100);
+    console.log('Pixel initialized - PageView skipped (fired by user site)');
+    setIsLoaded(true);
   };
 
   // Function to set advanced matching data (call when user enters email/phone)
