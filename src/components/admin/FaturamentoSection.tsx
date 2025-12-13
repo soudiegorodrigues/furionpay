@@ -120,21 +120,30 @@ export const FaturamentoSection = () => {
     }
   };
 
+  // Helper para obter data/hora no timezone de São Paulo
+  const getBrazilDateStr = (date: Date): string => {
+    return date.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+  };
+
+  const getBrazilHour = (date: Date): number => {
+    return parseInt(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false }));
+  };
+
   const globalChartData = useMemo((): ChartData[] => {
     const data: ChartData[] = [];
     const now = new Date();
     
     // If "today" is selected, show hourly data (00:00 to 23:00)
     if (chartFilter === 'today') {
-      const todayStr = now.toISOString().split('T')[0];
+      const todayStr = getBrazilDateStr(now);
       
       for (let hour = 0; hour < 24; hour++) {
         const displayHour = `${hour.toString().padStart(2, '0')}:00`;
         
         const hourTransactions = transactions.filter(tx => {
           const txDate = new Date(tx.created_at);
-          const txDateStr = txDate.toISOString().split('T')[0];
-          const txHour = txDate.getHours();
+          const txDateStr = getBrazilDateStr(txDate);
+          const txHour = getBrazilHour(txDate);
           return txDateStr === todayStr && txHour === hour;
         });
         
