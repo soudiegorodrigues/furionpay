@@ -52,6 +52,7 @@ interface ChartData {
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
+type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
 interface FeeConfig {
   pix_percentage: number;
   pix_fixed: number;
@@ -83,6 +84,7 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -295,33 +297,44 @@ const AdminDashboard = () => {
     }
   };
   const filteredTransactions = useMemo(() => {
-    if (dateFilter === 'all') return transactions;
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return transactions.filter(tx => {
-      const txDate = new Date(tx.created_at);
-      switch (dateFilter) {
-        case 'today':
-          return txDate >= startOfDay;
-        case '7days':
-          const sevenDaysAgo = new Date(startOfDay);
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          return txDate >= sevenDaysAgo;
-        case '15days':
-          const fifteenDaysAgo = new Date(startOfDay);
-          fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
-          return txDate >= fifteenDaysAgo;
-        case 'month':
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-          return txDate >= startOfMonth;
-        case 'year':
-          const startOfYear = new Date(now.getFullYear(), 0, 1);
-          return txDate >= startOfYear;
-        default:
-          return true;
-      }
-    });
-  }, [transactions, dateFilter]);
+    let filtered = transactions;
+    
+    // Filter by date
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      filtered = filtered.filter(tx => {
+        const txDate = new Date(tx.created_at);
+        switch (dateFilter) {
+          case 'today':
+            return txDate >= startOfDay;
+          case '7days':
+            const sevenDaysAgo = new Date(startOfDay);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            return txDate >= sevenDaysAgo;
+          case '15days':
+            const fifteenDaysAgo = new Date(startOfDay);
+            fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+            return txDate >= fifteenDaysAgo;
+          case 'month':
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            return txDate >= startOfMonth;
+          case 'year':
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            return txDate >= startOfYear;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(tx => tx.status === statusFilter);
+    }
+    
+    return filtered;
+  }, [transactions, dateFilter, statusFilter]);
 
   // Helper to get Brazil date string (YYYY-MM-DD) from a date
   const getBrazilDateStr = (date: Date): string => {
@@ -814,9 +827,22 @@ const AdminDashboard = () => {
       {/* Transactions Table */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            <CardTitle className="text-sm sm:text-lg">Histórico de Transações</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <CardTitle className="text-sm sm:text-lg">Histórico de Transações</CardTitle>
+            </div>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as StatusFilter); setCurrentPage(1); }}>
+              <SelectTrigger className="w-[110px] h-8 text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="generated">Gerado</SelectItem>
+                <SelectItem value="expired">Expirado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
