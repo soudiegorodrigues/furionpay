@@ -569,9 +569,9 @@ const AdminDashboard = () => {
         {/* Chart - Visão Geral Style */}
         <Card className="xl:col-span-3 h-full flex flex-col">
           <CardHeader className="pb-2">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
               <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
-              <div className="flex items-center bg-muted rounded-full p-1">
+              <div className="flex items-center bg-muted rounded-full p-1 mt-1 sm:mt-0">
                 {[{
                 value: 'today',
                 label: 'Hoje'
