@@ -568,7 +568,15 @@ const AdminDashboard = () => {
                     fill="url(#barGradient)"
                     animationDuration={800}
                     animationEasing="ease-out"
+                    style={{ cursor: 'pointer' }}
                   >
+                    {chartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`}
+                        fill="url(#barGradient)"
+                        className="transition-all duration-200 hover:opacity-80 hover:drop-shadow-[0_0_8px_hsl(var(--primary))]"
+                      />
+                    ))}
                   <LabelList 
                     dataKey="pagos" 
                     position="top" 
