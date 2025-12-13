@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Facebook } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 
@@ -191,6 +191,17 @@ const AdminDashboard = () => {
         return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Gerado</Badge>;
     }
   };
+
+  // Facebook icon with blue circle background
+  const FacebookIcon = () => (
+    <svg viewBox="0 0 48 48" className="h-5 w-5 mx-auto">
+      <circle cx="24" cy="24" r="24" fill="#1877F2"/>
+      <path 
+        d="M32.5 24.5H27V33H22V24.5H18V20H22V17C22 13.7 24.2 11 28 11H32V15.5H29C27.6 15.5 27 16.3 27 17.5V20H32L32.5 24.5Z" 
+        fill="white"
+      />
+    </svg>
+  );
 
   const getFilterDays = (filter: DateFilter): number => {
     switch (filter) {
@@ -695,7 +706,7 @@ const AdminDashboard = () => {
                           {tx.utm_data?.utm_source?.toLowerCase().includes('facebook') || 
                            tx.utm_data?.utm_source?.toLowerCase().includes('fb') ||
                            tx.utm_data?.utm_source?.toLowerCase().includes('meta') ? (
-                            <Facebook className="h-4 w-4 text-blue-500 mx-auto" />
+                            <FacebookIcon />
                           ) : null}
                         </TableCell>
                       </TableRow>
