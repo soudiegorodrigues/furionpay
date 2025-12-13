@@ -650,17 +650,16 @@ const AdminDashboard = () => {
 
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
-            <CardContent className="p-6">
-              
+            <CardContent className="p-4">
               {rewards.length > 0 ? (
-                <div className="space-y-6">
+                <div className="space-y-3">
                   {rewards.map(reward => {
                     const progress = Math.min((totalBalance / reward.threshold_amount) * 100, 100);
                     const achieved = totalBalance >= reward.threshold_amount;
                     
                     return (
-                      <div key={reward.id} className="space-y-4">
-                        {/* Imagem da placa sem fundo, maior */}
+                      <div key={reward.id} className="space-y-3">
+                        {/* Imagem da placa */}
                         <div className="flex justify-center">
                           <div className="relative">
                             <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-2xl opacity-20" />
@@ -668,43 +667,43 @@ const AdminDashboard = () => {
                               <img 
                                 src={reward.image_url} 
                                 alt={reward.name} 
-                                className="relative w-56 h-56 object-contain drop-shadow-lg" 
+                                className="relative w-36 h-36 object-contain drop-shadow-lg" 
                               />
                             ) : (
-                              <div className="relative w-56 h-56 flex items-center justify-center">
-                                <Trophy className="h-24 w-24 text-primary drop-shadow-lg" />
+                              <div className="relative w-36 h-36 flex items-center justify-center">
+                                <Trophy className="h-14 w-14 text-primary drop-shadow-lg" />
                               </div>
                             )}
                           </div>
                         </div>
                         
-                        {/* Nome e status centralizado */}
+                        {/* Nome e status */}
                         <div className="text-center">
-                          <h3 className="text-lg font-bold">{reward.name}</h3>
+                          <h3 className="text-base font-bold">{reward.name}</h3>
                           {achieved ? (
-                            <Badge className="bg-green-500 text-white mt-2 px-4 py-1 text-sm">
+                            <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
                               🎉 Conquistado!
                             </Badge>
                           ) : (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Faltam <span className="font-bold text-lg text-primary">{formatCurrency(reward.threshold_amount - totalBalance)}</span>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Faltam <span className="font-bold text-sm text-primary">{formatCurrency(reward.threshold_amount - totalBalance)}</span>
                             </p>
                           )}
                         </div>
                         
-                        {/* Barra de progresso ROBUSTA */}
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm font-medium">
-                            <span>Progresso atual</span>
+                        {/* Barra de progresso */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs font-medium">
+                            <span>Progresso</span>
                             <span className="text-primary font-bold">{progress.toFixed(0)}%</span>
                           </div>
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                          <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
                             <div 
                               className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-primary via-red-400 to-red-500'} shadow-lg`}
                               style={{ width: `${progress}%` }} 
                             />
                           </div>
-                          <div className="flex justify-between text-xs text-muted-foreground">
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
                             <span>{formatCurrency(totalBalance)}</span>
                             <span>Meta: {formatCurrency(reward.threshold_amount)}</span>
                           </div>
@@ -713,18 +712,18 @@ const AdminDashboard = () => {
                     );
                   })}
                   
-                  {/* Botão Resgatar no final */}
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-5 text-sm shadow-lg">
-                    <Gift className="h-4 w-4 mr-2" />
+                  {/* Botão Resgatar */}
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2 text-xs shadow-lg">
+                    <Gift className="h-3.5 w-3.5 mr-1.5" />
                     Resgatar Recompensa
                   </Button>
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-3">
-                    <Trophy className="h-10 w-10 text-primary/50" />
+                <div className="text-center py-4">
+                  <div className="p-2 bg-primary/10 rounded-full w-fit mx-auto mb-2">
+                    <Trophy className="h-8 w-8 text-primary/50" />
                   </div>
-                  <p className="text-sm text-muted-foreground">Nenhuma recompensa disponível</p>
+                  <p className="text-xs text-muted-foreground">Nenhuma recompensa disponível</p>
                 </div>
               )}
             </CardContent>
