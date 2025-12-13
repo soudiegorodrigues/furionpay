@@ -334,7 +334,7 @@ export const FaturamentoSection = () => {
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
-                  interval={chartFilter === 'today' ? 1 : 'preserveStartEnd'}
+                  interval={chartFilter === 'today' ? 0 : 'preserveStartEnd'}
                 />
                 <YAxis 
                   tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
