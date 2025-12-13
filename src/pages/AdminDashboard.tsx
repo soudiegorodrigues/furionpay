@@ -667,11 +667,11 @@ const AdminDashboard = () => {
                               <img 
                                 src={reward.image_url} 
                                 alt={reward.name} 
-                                className="relative w-52 h-52 object-contain drop-shadow-xl" 
+                                className="relative w-64 h-64 object-contain drop-shadow-xl" 
                               />
                             ) : (
-                              <div className="relative w-52 h-52 flex items-center justify-center">
-                                <Trophy className="h-20 w-20 text-primary drop-shadow-xl" />
+                              <div className="relative w-64 h-64 flex items-center justify-center">
+                                <Trophy className="h-24 w-24 text-primary drop-shadow-xl" />
                               </div>
                             )}
                           </div>
