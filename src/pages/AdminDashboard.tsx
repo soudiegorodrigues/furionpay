@@ -471,7 +471,7 @@ const AdminDashboard = () => {
               Acompanhe as transações PIX
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end lg:self-auto">
             <Select value={dateFilter} onValueChange={v => setDateFilter(v as DateFilter)}>
               <SelectTrigger className="w-[130px] sm:w-[160px] h-8 text-xs sm:text-sm">
                 <Calendar className="h-3 w-3 mr-1" />
