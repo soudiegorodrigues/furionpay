@@ -277,7 +277,7 @@ const AdminDashboard = () => {
         
         const gerados = hourGerados.length;
         const pagos = hourPagos.length;
-        const valorPago = hourPagos.reduce((sum, tx) => sum + tx.amount, 0);
+        const valorPago = hourPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
         
         data.push({ date: hourStr, gerados, pagos, valorPago });
       }
@@ -304,7 +304,7 @@ const AdminDashboard = () => {
         
         const gerados = dayGerados.length;
         const pagos = dayPagos.length;
-        const valorPago = dayPagos.reduce((sum, tx) => sum + tx.amount, 0);
+        const valorPago = dayPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
         
         data.push({ date: displayDate, gerados, pagos, valorPago });
       }
