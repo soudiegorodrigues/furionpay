@@ -393,7 +393,7 @@ export const ReceitaPlataformaSection = () => {
   }, [transactions, rankingFilter]);
 
   return (
-    <>
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Cards de Lucro por Período */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -983,6 +983,6 @@ export const ReceitaPlataformaSection = () => {
           )}
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };
