@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { DollarSign, TrendingUp, Loader2, RefreshCw, Calendar, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -268,18 +268,23 @@ export const FaturamentoSection = () => {
         <CardContent>
           <div className="h-[250px] sm:h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={globalChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={globalChartData} margin={{ top: 30, right: 5, left: 5, bottom: 5 }} barCategoryGap="50%" barSize={20}>
                 <defs>
-                  <linearGradient id="colorGeradosGlobal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <linearGradient id="barGradientPaidGlobal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
                   </linearGradient>
-                  <linearGradient id="colorPagosGlobal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                  <linearGradient id="barGradientGeneratedGlobal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.6} />
+                    <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  className="stroke-muted" 
+                  opacity={0.3}
+                  vertical={false}
+                />
                 <XAxis 
                   dataKey="date" 
                   tick={{ fontSize: 10 }} 
@@ -292,43 +297,53 @@ export const FaturamentoSection = () => {
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
+                  allowDecimals={false}
                 />
                 <Tooltip 
+                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                     fontSize: '12px'
                   }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
+                  formatter={(value: number, name: string) => {
+                    if (name === 'pagos') return [value, '🔴 Pagos'];
+                    if (name === 'gerados') return [value, '⚫ Gerados'];
+                    return [value, name];
+                  }}
                 />
-                <Area 
-                  type="monotone" 
+                <Bar 
                   dataKey="gerados" 
-                  name="Gerados"
-                  stroke="hsl(var(--primary))" 
-                  fillOpacity={1} 
-                  fill="url(#colorGeradosGlobal)" 
-                  strokeWidth={2}
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={32}
+                  fill="url(#barGradientGeneratedGlobal)"
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
-                <Area 
-                  type="monotone" 
+                <Bar 
                   dataKey="pagos" 
-                  name="Pagos"
-                  stroke="#22c55e" 
-                  fillOpacity={1} 
-                  fill="url(#colorPagosGlobal)" 
-                  strokeWidth={2}
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={32}
+                  fill="url(#barGradientPaidGlobal)"
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                  formatter={(value) => (
-                    <span className="text-xs text-foreground">{value}</span>
-                  )}
-                />
-              </AreaChart>
+              </BarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="flex items-center justify-center gap-4 mt-4">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-muted-foreground/50"></span>
+              <span className="text-xs text-muted-foreground font-medium">Gerados</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-primary"></span>
+              <span className="text-xs text-muted-foreground font-medium">Pagos</span>
+            </div>
           </div>
         </CardContent>
       </Card>
