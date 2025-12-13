@@ -134,8 +134,8 @@ export default function PublicCheckout() {
       if (offerError) throw offerError;
       if (!offer) return null;
 
-      // Step 2: Fetch product, config, and testimonials IN PARALLEL
-      const [productResult, configResult, testimonialsResult] = await Promise.all([
+      // Step 2: Fetch product, config, testimonials, AND pixel config IN PARALLEL
+      const [productResult, configResult, testimonialsResult, pixelConfigResult] = await Promise.all([
         supabase
           .from("products")
           .select("*")
@@ -151,12 +151,30 @@ export default function PublicCheckout() {
           .select("id, author_name, author_photo_url, rating, content")
           .eq("product_id", offer.product_id)
           .eq("is_active", true)
-          .order("display_order", { ascending: true })
+          .order("display_order", { ascending: true }),
+        // Fetch pixel config for the product owner (for CAPI)
+        supabase.functions.invoke('get-pixel-config', {
+          body: { userId: offer.user_id }
+        })
       ]);
 
       const product = productResult.data as Product | null;
       let config = configResult.data as CheckoutConfig | null;
       const testimonials = (testimonialsResult.data || []) as Testimonial[];
+      
+      // Extract first pixel with accessToken for CAPI
+      let pixelConfig: { pixelId?: string; accessToken?: string } = {};
+      if (pixelConfigResult.data?.pixels && pixelConfigResult.data.pixels.length > 0) {
+        const firstPixel = pixelConfigResult.data.pixels[0];
+        pixelConfig = {
+          pixelId: firstPixel.pixelId,
+          accessToken: firstPixel.accessToken || undefined
+        };
+        console.log('[CHECKOUT] Pixel config loaded:', { 
+          pixelId: pixelConfig.pixelId, 
+          hasToken: !!pixelConfig.accessToken 
+        });
+      }
 
       // Handle template mapping if needed (rare case)
       if (config?.template_id) {
@@ -173,7 +191,7 @@ export default function PublicCheckout() {
         }
       }
 
-      return { offer: offer as ProductOffer, product, config, testimonials };
+      return { offer: offer as ProductOffer, product, config, testimonials, pixelConfig };
     },
     enabled: !!offerCode,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
@@ -184,6 +202,7 @@ export default function PublicCheckout() {
   const product = checkoutData?.product;
   const config = checkoutData?.config;
   const testimonials = checkoutData?.testimonials || [];
+  const pixelConfig = checkoutData?.pixelConfig;
 
   // Preload critical images as soon as data is available
   useEffect(() => {
@@ -409,6 +428,8 @@ export default function PublicCheckout() {
         customerEmail={formData.email}
         customerName={formData.name}
         productName={offer?.name || product?.name}
+        pixelId={pixelConfig?.pixelId}
+        accessToken={pixelConfig?.accessToken}
       />
     );
   }
