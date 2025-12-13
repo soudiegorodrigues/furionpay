@@ -303,7 +303,7 @@ export const FaturamentoSection = () => {
         <CardContent>
           <div className="h-[250px] sm:h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={globalChartData} margin={{ top: 30, right: 5, left: 5, bottom: 5 }} barCategoryGap="50%" barSize={20}>
+              <BarChart data={globalChartData} margin={{ top: 30, right: 5, left: 5, bottom: 30 }} barCategoryGap="50%" barSize={20}>
                 <defs>
                   <linearGradient id="barGradientPaidGlobal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
@@ -322,10 +322,14 @@ export const FaturamentoSection = () => {
                 />
                 <XAxis 
                   dataKey="date" 
-                  tick={{ fontSize: 10 }} 
+                  tick={{ fontSize: 8 }} 
+                  angle={-45}
+                  textAnchor="end"
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
+                  interval={chartFilter === 'today' ? 2 : chartFilter === 'year' ? 29 : 'preserveStartEnd'}
+                  height={50}
                 />
                 <YAxis 
                   tick={{ fontSize: 10 }} 
