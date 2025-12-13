@@ -75,6 +75,10 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   }, []);
 
   useEffect(() => {
+    // Log immediately on mount
+    console.log('%c[PIXEL DEBUG] MetaPixelProvider MOUNTED', 'background: blue; color: white; font-size: 14px;');
+    console.log('%c[PIXEL DEBUG] Full URL: ' + window.location.href, 'color: blue;');
+    
     const loadPixelConfig = async () => {
       try {
         // Get userId and pixel from URL params
@@ -82,14 +86,16 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         const userId = urlParams.get('u') || urlParams.get('user');
         const urlPixelId = urlParams.get('pixel');
         
-        console.log('MetaPixelProvider: Full URL:', window.location.href);
-        console.log('MetaPixelProvider: Loading pixel config for userId:', userId, 'URL pixel:', urlPixelId);
+        console.log('%c[PIXEL DEBUG] userId:', 'color: green;', userId);
+        console.log('%c[PIXEL DEBUG] urlPixelId:', 'color: green;', urlPixelId);
 
         // PRIORIDADE 1: Se pixel ID foi passado na URL, usar SEMPRE (mesmo se fbq já existe)
         if (urlPixelId && /^\d+$/.test(urlPixelId)) {
-          console.log('PRIORITY: Using pixel from URL parameter:', urlPixelId);
+          console.log('%c[PIXEL DEBUG] ✅ PRIORITY: Initializing pixel from URL: ' + urlPixelId, 'background: green; color: white; font-size: 14px;');
           initializePixels([{ pixelId: urlPixelId }], true); // força inicialização
           return;
+        } else {
+          console.log('%c[PIXEL DEBUG] ❌ No valid pixel in URL', 'background: red; color: white;');
         }
 
         // PRIORIDADE 2: Se o pixel já existe no window (site do usuário), usar ele
@@ -142,7 +148,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       return;
     }
 
-    console.log('Initializing pixels (forceInit=' + forceInit + '):', validPixels);
+    console.log('%c[PIXEL DEBUG] 🚀 Initializing pixels (forceInit=' + forceInit + ')', 'background: purple; color: white; font-size: 14px;', validPixels);
 
     // Remove any existing fbq script to avoid conflicts
     const existingScript = document.querySelector('script[src*="fbevents.js"]');
@@ -169,7 +175,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     // Initialize all pixels immediately (events will be queued)
     validPixels.forEach(pixel => {
       window.fbq('init', pixel.pixelId);
-      console.log('SUCCESS: Initialized pixel:', pixel.pixelId);
+      console.log('%c[PIXEL DEBUG] ✅ SUCCESS: fbq init called for pixel: ' + pixel.pixelId, 'background: green; color: white; font-size: 16px;');
     });
 
     // Load the actual Facebook script
