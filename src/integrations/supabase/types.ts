@@ -1282,6 +1282,7 @@ export type Database = {
           status: Database["public"]["Enums"]["pix_status"]
           txid: string
           user_email: string
+          utm_data: Json
         }[]
       }
       get_popup_model_stats: {

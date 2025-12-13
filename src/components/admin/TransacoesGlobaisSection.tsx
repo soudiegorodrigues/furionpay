@@ -18,6 +18,7 @@ interface Transaction {
   created_at: string;
   paid_at: string | null;
   user_email: string | null;
+  utm_data: { utm_term?: string; utm_source?: string } | null;
 }
 
 type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
@@ -192,6 +193,7 @@ export const TransacoesGlobaisSection = () => {
                     <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                     <TableHead className="text-xs">Valor</TableHead>
                     <TableHead className="text-xs hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="text-xs hidden md:table-cell">Posicionamento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -214,6 +216,9 @@ export const TransacoesGlobaisSection = () => {
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {getStatusBadge(tx.status)}
+                      </TableCell>
+                      <TableCell className="text-xs hidden md:table-cell max-w-[100px] truncate">
+                        {tx.utm_data?.utm_term || '-'}
                       </TableCell>
                     </TableRow>
                   ))}
