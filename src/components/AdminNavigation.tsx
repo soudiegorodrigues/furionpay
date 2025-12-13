@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, Receipt, PieChart, Wallet, FileCheck, Bug, Award, Activity } from "lucide-react";
+import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, Receipt, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp } from "lucide-react";
 
 const adminSections = {
   analises: {
     label: "Análises",
     items: [
       { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
+      { id: "receita-plataforma", title: "Receita da Plataforma", icon: TrendingUp },
       { id: "transacoes", title: "Transações Globais", icon: Receipt },
       { id: "checkout-global", title: "Checkout Global", icon: PieChart },
       { id: "ranking", title: "Ranking", icon: Trophy },
