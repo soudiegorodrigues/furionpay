@@ -636,7 +636,7 @@ const AdminDashboard = () => {
                 right: 10,
                 left: 10,
                 bottom: isTabletOrSmaller ? 40 : 5
-              }} barCategoryGap={chartFilter === 'today' || chartFilter === '30days' ? '5%' : '20%'}>
+              }} barCategoryGap="5%">
                   <defs>
                     <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
@@ -683,8 +683,8 @@ const AdminDashboard = () => {
                   if (name === 'gerados') return [value, '⚫ Gerados'];
                   return [value, name];
                 }} />
-                  <Bar dataKey="gerados" radius={[4, 4, 0, 0]} fill="url(#barGradientGenerated)" animationDuration={800} animationEasing="ease-out" barSize={chartFilter === 'today' || chartFilter === '30days' ? 12 : undefined} />
-                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={chartFilter === 'today' || chartFilter === '30days' ? 12 : undefined} />
+                  <Bar dataKey="gerados" radius={[4, 4, 0, 0]} fill="url(#barGradientGenerated)" animationDuration={800} animationEasing="ease-out" barSize={12} />
+                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={12} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
