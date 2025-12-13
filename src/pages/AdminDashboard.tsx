@@ -485,172 +485,167 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Chart + Side Cards Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-        {/* Chart - Visão Geral Style */}
-        <Card className="xl:col-span-3">
-          <CardHeader className="pb-2">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
-              <div className="flex items-center bg-muted rounded-full p-1">
-                {[
-                  { value: 'today', label: 'Hoje' },
-                  { value: '7days', label: '7 dias' },
-                  { value: '14days', label: '14 dias' },
-                  { value: '30days', label: '30 dias' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setChartFilter(option.value as ChartFilter)}
-                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
-                      chartFilter === option.value
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+      {/* Chart - Full Width */}
+      <Card className="w-full">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
+            <div className="flex items-center bg-muted rounded-full p-1">
+              {[
+                { value: 'today', label: 'Hoje' },
+                { value: '7days', label: '7 dias' },
+                { value: '14days', label: '14 dias' },
+                { value: '30days', label: '30 dias' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setChartFilter(option.value as ChartFilter)}
+                  className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
+                    chartFilter === option.value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px] sm:h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 30, right: 20, left: 10, bottom: 5 }}>
-                  <CartesianGrid 
-                    stroke="hsl(var(--muted-foreground))"
-                    opacity={0.15} 
-                    horizontal={true}
-                    vertical={false}
-                  />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                    tickLine={false}
-                    axisLine={false}
-                    interval={0}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                    hide
-                  />
-                  <Tooltip 
-                    cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                    }}
-                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '4px' }}
-                    formatter={(value: number, name: string) => {
-                      if (name === 'pagos') return [value, 'Total de vendas'];
-                      return [value, name];
-                    }}
-                  />
-                  <Bar 
-                    dataKey="pagos" 
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={40}
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill="hsl(var(--primary))"
-                      />
-                    ))}
-                  <LabelList 
-                    dataKey="pagos" 
-                    position="top" 
-                    content={(props: any) => {
-                      const { x, y, width, value } = props;
-                      
-                      if (value === 0) return null;
-                      
-                      const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
-                      if (total === 0) return null;
-                      
-                      const percentage = ((value / total) * 100).toFixed(1);
-                      const fontSize = chartFilter === 'today' ? 10 : chartFilter === '30days' ? 11 : 12;
-                      
-                      return (
-                        <text 
-                          x={x + width / 2} 
-                          y={y - 5} 
-                          fill="hsl(var(--muted-foreground))"
-                          fontSize={fontSize}
-                          fontWeight={500}
-                          textAnchor="start"
-                          transform={`rotate(-45, ${x + width / 2}, ${y - 5})`}
-                        >
-                          {percentage}%
-                        </text>
-                      );
-                    }}
-                  />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[350px] sm:h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 30, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid 
+                  stroke="hsl(var(--muted-foreground))"
+                  opacity={0.15} 
+                  horizontal={true}
+                  vertical={false}
+                />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} 
+                  tickLine={false}
+                  axisLine={false}
+                  interval={0}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                  hide
+                />
+                <Tooltip 
+                  cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '4px' }}
+                  formatter={(value: number, name: string) => {
+                    if (name === 'pagos') return [value, 'Total de vendas'];
+                    return [value, name];
+                  }}
+                />
+                <Bar 
+                  dataKey="pagos" 
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={50}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill="hsl(var(--primary))"
+                    />
+                  ))}
+                <LabelList 
+                  dataKey="pagos" 
+                  position="top" 
+                  content={(props: any) => {
+                    const { x, y, width, value } = props;
+                    
+                    if (value === 0) return null;
+                    
+                    const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
+                    if (total === 0) return null;
+                    
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    
+                    return (
+                      <text 
+                        x={x + width / 2} 
+                        y={y - 8} 
+                        fill="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        fontWeight={500}
+                        textAnchor="middle"
+                      >
+                        {percentage}%
+                      </text>
+                    );
+                  }}
+                />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards - Horizontal Grid Below Chart */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Vendas hoje */}
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Vendas hoje</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
           </CardContent>
         </Card>
 
-        {/* Side Cards */}
-        <div className="flex flex-col gap-4">
-          {/* Vendas hoje + Vendas este mês */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Vendas hoje</p>
-                  <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Vendas este mês</p>
-                  <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Vendas este mês */}
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Vendas este mês</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
+          </CardContent>
+        </Card>
 
-          {/* Saldo disponível */}
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Saldo disponível</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(totalBalance)}</p>
-            </CardContent>
-          </Card>
+        {/* Saldo disponível */}
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Saldo disponível</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(totalBalance)}</p>
+          </CardContent>
+        </Card>
 
-          {/* Progresso de Recompensas */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-primary">🏆</span>
-                  <span className="text-sm font-semibold text-primary">Progresso de Recompensas</span>
-                </div>
-                <Button variant="outline" size="sm" className="h-7 text-xs">
-                  🎁 Resgatar
-                </Button>
+        {/* Progresso de Recompensas */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-primary">🏆</span>
+                <span className="text-sm font-semibold text-primary">Recompensas</span>
               </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <span>Progresso atual</span>
-                <span>{formatCurrency(totalBalance)} / 100K</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min((totalBalance / 100000) * 100, 100)}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <Button variant="outline" size="sm" className="h-7 text-xs">
+                🎁 Resgatar
+              </Button>
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+              <span>Progresso</span>
+              <span>{formatCurrency(totalBalance)} / 100K</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all"
+                style={{ width: `${Math.min((totalBalance / 100000) * 100, 100)}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Transactions Table */}
