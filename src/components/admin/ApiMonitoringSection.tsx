@@ -120,19 +120,30 @@ export function ApiMonitoringSection() {
   // Timeline data processing - group events by hour for last 24h
   const timelineData = useMemo(() => {
     const now = new Date();
-    const hours: { [key: string]: { time: string; spedpay: number; inter: number; ativus: number } } = {};
+    const hours: { [key: string]: { time: string; hour: number; spedpay: number; inter: number; ativus: number } } = {};
     
-    // Initialize last 24 hours
+    // Helper to get Brazil hour from Date
+    const getBrazilHour = (date: Date): number => {
+      const brazilTime = date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false });
+      return parseInt(brazilTime, 10);
+    };
+    
+    // Initialize last 24 hours using Brazil timezone
     for (let i = 23; i >= 0; i--) {
-      const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
-      const key = hour.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
-      hours[key] = { time: key, spedpay: 0, inter: 0, ativus: 0 };
+      const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const brazilHour = getBrazilHour(hourDate);
+      const key = `${brazilHour.toString().padStart(2, '0')}h`;
+      if (!hours[key]) {
+        hours[key] = { time: key, hour: brazilHour, spedpay: 0, inter: 0, ativus: 0 };
+      }
     }
     
     // Count events per hour per acquirer
     recentEvents.forEach(event => {
       const eventDate = new Date(event.created_at);
-      const key = eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+      const eventHour = getBrazilHour(eventDate);
+      const key = `${eventHour.toString().padStart(2, '0')}h`;
+      
       if (hours[key]) {
         if (event.acquirer === 'spedpay') hours[key].spedpay++;
         else if (event.acquirer === 'inter') hours[key].inter++;
@@ -140,7 +151,14 @@ export function ApiMonitoringSection() {
       }
     });
     
-    return Object.values(hours);
+    // Sort by hour for proper display
+    return Object.values(hours).sort((a, b) => {
+      // Sort chronologically based on when they appear in 24h window
+      const nowHour = getBrazilHour(now);
+      const aOffset = (a.hour - nowHour + 48) % 24;
+      const bOffset = (b.hour - nowHour + 48) % 24;
+      return aOffset - bOffset;
+    });
   }, [recentEvents]);
 
   const getStatusColor = (health: AcquirerHealth | null) => {
