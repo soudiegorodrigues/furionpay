@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell, Legend } from "recharts";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -618,6 +618,79 @@ export const ReceitaPlataformaSection = () => {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Gráfico de Pizza - Distribuição de Lucro */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <PieChartIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            Distribuição de Lucro por Usuário
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {userProfitRanking.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">
+              Nenhum dado disponível para exibição.
+            </p>
+          ) : (
+            <div className="h-[300px] sm:h-[350px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={userProfitRanking.map((user, index) => ({
+                      name: user.email.length > 20 ? `${user.email.slice(0, 20)}...` : user.email,
+                      value: user.totalProfit,
+                      fullEmail: user.email
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
+                  >
+                    {userProfitRanking.map((_, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={[
+                          'hsl(0, 84%, 60%)',      // primary red
+                          'hsl(142, 76%, 36%)',    // green
+                          'hsl(217, 91%, 60%)',    // blue
+                          'hsl(45, 93%, 47%)',     // yellow
+                          'hsl(280, 65%, 60%)',    // purple
+                          'hsl(180, 70%, 45%)',    // cyan
+                          'hsl(25, 95%, 53%)',     // orange
+                          'hsl(330, 81%, 60%)',    // pink
+                          'hsl(160, 60%, 45%)',    // teal
+                          'hsl(200, 70%, 50%)',    // light blue
+                        ][index % 10]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                      fontSize: '12px'
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), 'Lucro']}
+                  />
+                  <Legend 
+                    layout="vertical" 
+                    align="right" 
+                    verticalAlign="middle"
+                    wrapperStyle={{ fontSize: '11px', paddingLeft: '10px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
