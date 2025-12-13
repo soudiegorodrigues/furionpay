@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
-
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -29,7 +28,6 @@ interface UTMData {
   utm_content?: string;
   utm_term?: string;
 }
-
 interface Transaction {
   id: string;
   amount: number;
@@ -44,23 +42,19 @@ interface Transaction {
   utm_data: UTMData | null;
   popup_model: string | null;
 }
-
 interface ChartData {
   date: string;
   gerados: number;
   pagos: number;
   valorPago: number;
 }
-
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
-
 interface FeeConfig {
   pix_percentage: number;
   pix_fixed: number;
 }
-
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -73,29 +67,31 @@ const AdminDashboard = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { isAuthenticated, signOut } = useAdminAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    isAuthenticated,
+    signOut
+  } = useAdminAuth();
 
   // Calculate net amount after fee deduction - uses stored fee from transaction or fallback to current config
   const calculateNetAmount = (grossAmount: number, storedFeePercentage?: number | null, storedFeeFixed?: number | null): number => {
     // Use stored fees from transaction if available (for historical accuracy)
-    if (storedFeePercentage !== null && storedFeePercentage !== undefined && 
-        storedFeeFixed !== null && storedFeeFixed !== undefined) {
-      const fee = (grossAmount * storedFeePercentage / 100) + storedFeeFixed;
+    if (storedFeePercentage !== null && storedFeePercentage !== undefined && storedFeeFixed !== null && storedFeeFixed !== undefined) {
+      const fee = grossAmount * storedFeePercentage / 100 + storedFeeFixed;
       return Math.max(0, grossAmount - fee);
     }
     // Fallback to current fee config for older transactions without stored fees
     if (!feeConfig) return grossAmount;
-    const fee = (grossAmount * feeConfig.pix_percentage / 100) + feeConfig.pix_fixed;
+    const fee = grossAmount * feeConfig.pix_percentage / 100 + feeConfig.pix_fixed;
     return Math.max(0, grossAmount - fee);
   };
-
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
     }
   }, [isAuthenticated]);
-
   useEffect(() => {
     if (!isAuthenticated) return;
     const interval = setInterval(() => {
@@ -103,56 +99,64 @@ const AdminDashboard = () => {
     }, 60000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
-
   const loadData = async (showLoading = true) => {
     if (showLoading && !stats) setIsLoading(true);
     try {
       // Load user-specific fee config or fallback to default
-      const { data: userSettingsData } = await supabase.rpc('get_user_settings');
+      const {
+        data: userSettingsData
+      } = await supabase.rpc('get_user_settings');
       let userFeeConfigId: string | null = null;
-      
       if (userSettingsData) {
-        const settings = userSettingsData as { key: string; value: string }[];
+        const settings = userSettingsData as {
+          key: string;
+          value: string;
+        }[];
         const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
         userFeeConfigId = feeConfigSetting?.value || null;
       }
-      
+
       // Load fee config - user specific or default
       let feeData;
       if (userFeeConfigId) {
-        const { data } = await supabase
-          .from('fee_configs')
-          .select('pix_percentage, pix_fixed')
-          .eq('id', userFeeConfigId)
-          .maybeSingle();
+        const {
+          data
+        } = await supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('id', userFeeConfigId).maybeSingle();
         feeData = data;
       }
-      
+
       // Fallback to default if no user-specific config
       if (!feeData) {
-        const { data } = await supabase
-          .from('fee_configs')
-          .select('pix_percentage, pix_fixed')
-          .eq('is_default', true)
-          .maybeSingle();
+        const {
+          data
+        } = await supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle();
         feeData = data;
       }
-      
       if (feeData) {
         setFeeConfig(feeData as FeeConfig);
       }
-
-      const { data: statsData, error: statsError } = await supabase.rpc('get_user_dashboard');
+      const {
+        data: statsData,
+        error: statsError
+      } = await supabase.rpc('get_user_dashboard');
       if (statsError) throw statsError;
       setStats(statsData as unknown as DashboardStats);
-
-      const { data: txData, error: txError } = await supabase.rpc('get_user_transactions', { p_limit: 200 });
+      const {
+        data: txData,
+        error: txError
+      } = await supabase.rpc('get_user_transactions', {
+        p_limit: 200
+      });
       if (txError) throw txError;
       setTransactions(txData as unknown as Transaction[] || []);
-
-      const { data: settingsData } = await supabase.rpc('get_user_settings');
+      const {
+        data: settingsData
+      } = await supabase.rpc('get_user_settings');
       if (settingsData) {
-        const settings = settingsData as { key: string; value: string }[];
+        const settings = settingsData as {
+          key: string;
+          value: string;
+        }[];
         const banner = settings.find(s => s.key === 'dashboard_banner_url');
         setBannerUrl(banner?.value || null);
       }
@@ -172,15 +176,15 @@ const AdminDashboard = () => {
       setIsLoading(false);
     }
   };
-
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR');
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
@@ -193,47 +197,48 @@ const AdminDashboard = () => {
   };
 
   // Facebook icon with blue circle background
-  const FacebookIcon = () => (
-    <svg viewBox="0 0 48 48" className="h-5 w-5 mx-auto">
-      <circle cx="24" cy="24" r="24" fill="#1877F2"/>
-      <path 
-        d="M32.5 24.5H27V33H22V24.5H18V20H22V17C22 13.7 24.2 11 28 11H32V15.5H29C27.6 15.5 27 16.3 27 17.5V20H32L32.5 24.5Z" 
-        fill="white"
-      />
-    </svg>
-  );
+  const FacebookIcon = () => <svg viewBox="0 0 48 48" className="h-5 w-5 mx-auto">
+      <circle cx="24" cy="24" r="24" fill="#1877F2" />
+      <path d="M32.5 24.5H27V33H22V24.5H18V20H22V17C22 13.7 24.2 11 28 11H32V15.5H29C27.6 15.5 27 16.3 27 17.5V20H32L32.5 24.5Z" fill="white" />
+    </svg>;
 
   // Google icon with official colors
-  const GoogleIcon = () => (
-    <svg viewBox="0 0 48 48" className="h-5 w-5 mx-auto">
-      <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-      <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-      <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-      <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-    </svg>
-  );
-
+  const GoogleIcon = () => <svg viewBox="0 0 48 48" className="h-5 w-5 mx-auto">
+      <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+      <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+      <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+      <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+    </svg>;
   const getFilterDays = (filter: DateFilter): number => {
     switch (filter) {
-      case 'today': return 1;
-      case '7days': return 7;
-      case '15days': return 15;
-      case 'month': return 30;
-      case 'year': return 365;
-      default: return 30;
+      case 'today':
+        return 1;
+      case '7days':
+        return 7;
+      case '15days':
+        return 15;
+      case 'month':
+        return 30;
+      case 'year':
+        return 365;
+      default:
+        return 30;
     }
   };
-
   const getChartDays = (filter: ChartFilter): number => {
     switch (filter) {
-      case 'today': return 1;
-      case '7days': return 7;
-      case '14days': return 14;
-      case '30days': return 30;
-      default: return 30;
+      case 'today':
+        return 1;
+      case '7days':
+        return 7;
+      case '14days':
+        return 14;
+      case '30days':
+        return 30;
+      default:
+        return 30;
     }
   };
-
   const filteredTransactions = useMemo(() => {
     if (dateFilter === 'all') return transactions;
     const now = new Date();
@@ -265,54 +270,61 @@ const AdminDashboard = () => {
 
   // Helper to get Brazil date string (YYYY-MM-DD) from a date
   const getBrazilDateStr = (date: Date): string => {
-    return date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-  };
-  
-  // Helper to get Brazil hour from a date
-  const getBrazilHour = (date: Date): number => {
-    return parseInt(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }));
+    return date.toLocaleDateString('en-CA', {
+      timeZone: 'America/Sao_Paulo'
+    });
   };
 
+  // Helper to get Brazil hour from a date
+  const getBrazilHour = (date: Date): number => {
+    return parseInt(date.toLocaleString('en-US', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      hour12: false
+    }));
+  };
   const chartData = useMemo((): ChartData[] => {
     const data: ChartData[] = [];
     const now = new Date();
     const todayBrazil = getBrazilDateStr(now);
-    
     if (chartFilter === 'today') {
       // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
       for (let hour = 0; hour < 24; hour++) {
         const hourStr = hour.toString().padStart(2, '0') + ':00';
-        
+
         // Filter transactions created today at this hour (Brazil time)
         const hourGerados = transactions.filter(tx => {
           const txDate = new Date(tx.created_at);
           return getBrazilDateStr(txDate) === todayBrazil && getBrazilHour(txDate) === hour;
         });
-        
+
         // Filter transactions PAID today at this hour (using paid_at, Brazil time)
         const hourPagos = transactions.filter(tx => {
           if (tx.status !== 'paid' || !tx.paid_at) return false;
           const paidDate = new Date(tx.paid_at);
           return getBrazilDateStr(paidDate) === todayBrazil && getBrazilHour(paidDate) === hour;
         });
-        
         const gerados = hourGerados.length;
         const pagos = hourPagos.length;
         const valorPago = hourPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
-        
-        data.push({ date: hourStr, gerados, pagos, valorPago });
+        data.push({
+          date: hourStr,
+          gerados,
+          pagos,
+          valorPago
+        });
       }
     } else {
       // Daily data for other filters - ALWAYS include today (Brazil timezone)
       const days = getChartDays(chartFilter);
-      
+
       // Build array of dates from oldest to newest (ending with today)
       const dates: string[] = [];
-      
+
       // First: get TODAY in São Paulo timezone as string YYYY-MM-DD
       const todayBrazilStr = getBrazilDateStr(new Date());
       const [todayYear, todayMonth, todayDay] = todayBrazilStr.split('-').map(Number);
-      
+
       // Generate dates directly from São Paulo components to avoid any timezone conversion
       for (let i = days - 1; i >= 0; i--) {
         // Calculate the target day (may go to previous months)
@@ -320,44 +332,43 @@ const AdminDashboard = () => {
         const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
         dates.push(dateStr);
       }
-      
+
       // Now generate chart data for each date
       for (const dateStr of dates) {
         // Format display as DD/MM
         const [, m, d] = dateStr.split('-');
         const displayDate = `${d}/${m}`;
-        
+
         // Transactions created on this day (Brazil time)
         const dayGerados = transactions.filter(tx => {
           return getBrazilDateStr(new Date(tx.created_at)) === dateStr;
         });
-        
+
         // Transactions PAID on this day (using paid_at, Brazil time)
         const dayPagos = transactions.filter(tx => {
           if (tx.status !== 'paid' || !tx.paid_at) return false;
           return getBrazilDateStr(new Date(tx.paid_at)) === dateStr;
         });
-        
         const gerados = dayGerados.length;
         const pagos = dayPagos.length;
         const valorPago = dayPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
-        
-        data.push({ date: displayDate, gerados, pagos, valorPago });
+        data.push({
+          date: displayDate,
+          gerados,
+          pagos,
+          valorPago
+        });
       }
     }
-    
     return data;
   }, [transactions, chartFilter]);
-
   const filteredStats = useMemo(() => {
     const generated = filteredTransactions.length;
     const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
     // Calculate net amount (after fee deduction) for ALL transactions (estimated)
     const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
     // Calculate net amount (after fee deduction) for paid transactions
-    const amountPaid = filteredTransactions
-      .filter(tx => tx.status === 'paid')
-      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
+    const amountPaid = filteredTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
     return {
       generated,
       paid,
@@ -371,11 +382,11 @@ const AdminDashboard = () => {
   const todayStats = useMemo(() => {
     const now = new Date();
     const todayBrazil = getBrazilDateStr(now);
-    
+
     // Transactions CREATED today (Brazil time)
     const todayCreated = transactions.filter(tx => getBrazilDateStr(new Date(tx.created_at)) === todayBrazil);
     const generated = todayCreated.length;
-    
+
     // Transactions PAID today (using paid_at, Brazil time)
     const todayPaid = transactions.filter(tx => {
       if (tx.status !== 'paid' || !tx.paid_at) return false;
@@ -384,48 +395,51 @@ const AdminDashboard = () => {
     const paid = todayPaid.length;
     // Calculate net amount (after fee deduction) using stored fees
     const amountPaid = todayPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
-    
-    return { generated, paid, amountPaid };
+    return {
+      generated,
+      paid,
+      amountPaid
+    };
   }, [transactions, feeConfig]);
 
   // Month's stats (using paid_at, Brazil timezone)
   const monthStats = useMemo(() => {
     const now = new Date();
     // Get current month/year in Brazil timezone
-    const brazilNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const brazilNow = new Date(now.toLocaleString('en-US', {
+      timeZone: 'America/Sao_Paulo'
+    }));
     const currentMonth = brazilNow.getMonth();
     const currentYear = brazilNow.getFullYear();
-    
+
     // Filter transactions PAID this month (using paid_at, Brazil time)
     const monthPaid = transactions.filter(tx => {
       if (tx.status !== 'paid' || !tx.paid_at) return false;
       const paidDate = new Date(tx.paid_at);
-      const paidBrazil = new Date(paidDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      const paidBrazil = new Date(paidDate.toLocaleString('en-US', {
+        timeZone: 'America/Sao_Paulo'
+      }));
       return paidBrazil.getMonth() === currentMonth && paidBrazil.getFullYear() === currentYear;
     });
-    
+
     // Calculate net amount (after fee deduction) using stored fees
     const amountPaid = monthPaid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
-    return { amountPaid };
+    return {
+      amountPaid
+    };
   }, [transactions, feeConfig]);
 
   // Total balance (all paid transactions) - net amount using stored fees
   const totalBalance = useMemo(() => {
-    return transactions
-      .filter(tx => tx.status === 'paid')
-      .reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
+    return transactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
   }, [transactions, feeConfig]);
-
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFilter]);
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+  return <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -439,7 +453,7 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+            <Select value={dateFilter} onValueChange={v => setDateFilter(v as DateFilter)}>
               <SelectTrigger className="w-[130px] sm:w-[160px] h-8 text-xs sm:text-sm">
                 <Calendar className="h-3 w-3 mr-1" />
                 <SelectValue placeholder="Período" />
@@ -461,16 +475,11 @@ const AdminDashboard = () => {
       </div>
 
       {/* Banner */}
-      {bannerUrl && (
-        <div className="rounded-lg overflow-hidden border border-border">
-          <img
-            src={bannerUrl}
-            alt="Banner do Dashboard"
-            className="w-full h-auto object-cover max-h-[200px]"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
-        </div>
-      )}
+      {bannerUrl && <div className="rounded-lg overflow-hidden border border-border">
+          <img src={bannerUrl} alt="Banner do Dashboard" className="w-full h-auto object-cover max-h-[200px]" onError={e => {
+        (e.target as HTMLImageElement).style.display = 'none';
+      }} />
+        </div>}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -514,31 +523,33 @@ const AdminDashboard = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
               <div className="flex items-center bg-muted rounded-full p-1">
-                {[
-                  { value: 'today', label: 'Hoje' },
-                  { value: '7days', label: '7 dias' },
-                  { value: '14days', label: '14 dias' },
-                  { value: '30days', label: '30 dias' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setChartFilter(option.value as ChartFilter)}
-                    className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
-                      chartFilter === option.value
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
+                {[{
+                value: 'today',
+                label: 'Hoje'
+              }, {
+                value: '7days',
+                label: '7 dias'
+              }, {
+                value: '14days',
+                label: '14 dias'
+              }, {
+                value: '30days',
+                label: '30 dias'
+              }].map(option => <button key={option.value} onClick={() => setChartFilter(option.value as ChartFilter)} className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${chartFilter === option.value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
                     {option.label}
-                  </button>
-                ))}
+                  </button>)}
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="h-[280px] sm:h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 30, right: 5, left: 5, bottom: 5 }} barCategoryGap="50%" barSize={20}>
+                <BarChart data={chartData} margin={{
+                top: 30,
+                right: 5,
+                left: 5,
+                bottom: 5
+              }} barCategoryGap="50%" barSize={20}>
                   <defs>
                     <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
@@ -549,60 +560,35 @@ const AdminDashboard = () => {
                       <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid 
-                    stroke="hsl(var(--muted-foreground))"
-                    opacity={0.15} 
-                    horizontal={true}
-                    vertical={false}
-                  />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                    tickLine={false}
-                    axisLine={false}
-                    interval={0}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                    hide
-                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]}
-                  />
-                  <Tooltip 
-                    cursor={{ fill: 'hsl(var(--primary) / 0.08)' }}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      padding: '12px 16px',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
-                    }}
-                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
-                    formatter={(value: number, name: string) => {
-                      if (name === 'pagos') return [value, '🔴 Pagos'];
-                      if (name === 'gerados') return [value, '⚫ Gerados'];
-                      return [value, name];
-                    }}
-                  />
-                  <Bar 
-                    dataKey="gerados" 
-                    radius={[6, 6, 0, 0]}
-                    maxBarSize={32}
-                    fill="url(#barGradientGenerated)"
-                    animationDuration={800}
-                    animationEasing="ease-out"
-                  />
-                  <Bar 
-                    dataKey="pagos" 
-                    radius={[6, 6, 0, 0]}
-                    maxBarSize={32}
-                    fill="url(#barGradientPaid)"
-                    animationDuration={800}
-                    animationEasing="ease-out"
-                  />
+                  <CartesianGrid stroke="hsl(var(--muted-foreground))" opacity={0.15} horizontal={true} vertical={false} />
+                  <XAxis dataKey="date" tick={{
+                  fontSize: 10,
+                  fill: 'hsl(var(--muted-foreground))'
+                }} tickLine={false} axisLine={false} interval={0} />
+                  <YAxis tick={{
+                  fontSize: 10,
+                  fill: 'hsl(var(--muted-foreground))'
+                }} tickLine={false} axisLine={false} allowDecimals={false} hide domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} />
+                  <Tooltip cursor={{
+                  fill: 'hsl(var(--primary) / 0.08)'
+                }} contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  padding: '12px 16px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
+                }} labelStyle={{
+                  color: 'hsl(var(--foreground))',
+                  fontWeight: 600,
+                  marginBottom: '6px'
+                }} formatter={(value: number, name: string) => {
+                  if (name === 'pagos') return [value, '🔴 Pagos'];
+                  if (name === 'gerados') return [value, '⚫ Gerados'];
+                  return [value, name];
+                }} />
+                  <Bar dataKey="gerados" radius={[6, 6, 0, 0]} maxBarSize={32} fill="url(#barGradientGenerated)" animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="pagos" radius={[6, 6, 0, 0]} maxBarSize={32} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -662,10 +648,9 @@ const AdminDashboard = () => {
                 <span>{formatCurrency(totalBalance)} / 100K</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min((totalBalance / 100000) * 100, 100)}%` }}
-                />
+                <div className="bg-primary h-2 rounded-full transition-all" style={{
+                width: `${Math.min(totalBalance / 100000 * 100, 100)}%`
+              }} />
               </div>
             </CardContent>
           </Card>
@@ -681,10 +666,7 @@ const AdminDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground text-center py-8 text-sm">Carregando...</p>
-          ) : (
-            <>
+          {isLoading ? <p className="text-muted-foreground text-center py-8 text-sm">Carregando...</p> : <>
               <div className="overflow-x-auto -mx-4 sm:mx-0">
                 <Table>
                   <TableHeader>
@@ -694,49 +676,32 @@ const AdminDashboard = () => {
                       <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                       <TableHead className="text-xs">Valor</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs text-center">UTM</TableHead>
+                      <TableHead className="text-xs text-center">UTM Tracking</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedTransactions.map((tx) => (
-                      <TableRow 
-                        key={tx.id} 
-                        className="cursor-pointer hover:bg-muted/70 transition-colors"
-                        onClick={() => {
-                          setSelectedTransaction(tx);
-                          setIsSheetOpen(true);
-                        }}
-                      >
+                    {paginatedTransactions.map(tx => <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/70 transition-colors" onClick={() => {
+                  setSelectedTransaction(tx);
+                  setIsSheetOpen(true);
+                }}>
                         <TableCell className="text-xs whitespace-nowrap">{formatDate(tx.created_at)}</TableCell>
                         <TableCell className="text-xs max-w-[100px] truncate">{tx.donor_name}</TableCell>
                         <TableCell className="text-xs hidden sm:table-cell max-w-[100px] truncate">{tx.product_name || '-'}</TableCell>
                         <TableCell className="text-xs whitespace-nowrap">{formatCurrency(calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed))}</TableCell>
                         <TableCell>{getStatusBadge(tx.status)}</TableCell>
                         <TableCell className="text-center">
-                          {tx.utm_data?.utm_source?.toLowerCase().includes('facebook') || 
-                           tx.utm_data?.utm_source?.toLowerCase().includes('fb') ||
-                           tx.utm_data?.utm_source?.toLowerCase().includes('meta') ? (
-                            <FacebookIcon />
-                          ) : tx.utm_data?.utm_source?.toLowerCase().includes('google') ||
-                              tx.utm_data?.utm_source?.toLowerCase().includes('gads') ||
-                              tx.utm_data?.utm_source?.toLowerCase().includes('adwords') ? (
-                            <GoogleIcon />
-                          ) : null}
+                          {tx.utm_data?.utm_source?.toLowerCase().includes('facebook') || tx.utm_data?.utm_source?.toLowerCase().includes('fb') || tx.utm_data?.utm_source?.toLowerCase().includes('meta') ? <FacebookIcon /> : tx.utm_data?.utm_source?.toLowerCase().includes('google') || tx.utm_data?.utm_source?.toLowerCase().includes('gads') || tx.utm_data?.utm_source?.toLowerCase().includes('adwords') ? <GoogleIcon /> : null}
                         </TableCell>
-                      </TableRow>
-                    ))}
-                    {paginatedTransactions.length === 0 && (
-                      <TableRow>
+                      </TableRow>)}
+                    {paginatedTransactions.length === 0 && <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
                           Nenhuma transação encontrada
                         </TableCell>
-                      </TableRow>
-                    )}
+                      </TableRow>}
                   </TableBody>
                 </Table>
               </div>
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              {totalPages > 1 && <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <span className="text-xs text-muted-foreground">
                     {filteredTransactions.length} transações
                   </span>
@@ -751,21 +716,13 @@ const AdminDashboard = () => {
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                </div>}
+            </>}
         </CardContent>
       </Card>
 
       {/* Transaction Details Sheet */}
-      <TransactionDetailsSheet
-        transaction={selectedTransaction}
-        open={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
-        calculateNetAmount={calculateNetAmount}
-      />
-    </div>
-  );
+      <TransactionDetailsSheet transaction={selectedTransaction} open={isSheetOpen} onOpenChange={setIsSheetOpen} calculateNetAmount={calculateNetAmount} />
+    </div>;
 };
 export default AdminDashboard;
