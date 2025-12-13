@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, CheckCircle, AlertTriangle, TrendingUp, Eye } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { BarChart3, CheckCircle, AlertTriangle, TrendingUp, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface Transaction {
   id: string;
@@ -27,6 +27,7 @@ interface UTMStats {
 }
 
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+const ITEMS_PER_PAGE = 10;
 
 export function UTMDebugSection() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -35,9 +36,11 @@ export function UTMDebugSection() {
   const [periodFilter, setPeriodFilter] = useState("7");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchTransactions();
+    setCurrentPage(1);
   }, [periodFilter, statusFilter]);
 
   const fetchTransactions = async () => {
@@ -104,6 +107,13 @@ export function UTMDebugSection() {
     name: name === 'sem_utm' ? 'Sem UTM' : name,
     value
   })) : [];
+
+  // Pagination
+  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = transactions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -264,7 +274,14 @@ export function UTMDebugSection() {
       {/* Transactions Table */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Transações Recentes</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium">Transações Recentes</CardTitle>
+            {transactions.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {transactions.length} transações
+              </span>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -272,50 +289,106 @@ export function UTMDebugSection() {
           ) : transactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">Nenhuma transação encontrada</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Data</TableHead>
-                    <TableHead className="text-xs">Produto</TableHead>
-                    <TableHead className="text-xs">Source</TableHead>
-                    <TableHead className="text-xs">Medium</TableHead>
-                    <TableHead className="text-xs">Campaign</TableHead>
-                    <TableHead className="text-xs">Traffic</TableHead>
-                    <TableHead className="text-xs">Status</TableHead>
-                    <TableHead className="text-xs w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.slice(0, 50).map((t) => (
-                    <TableRow 
-                      key={t.id} 
-                      className={`cursor-pointer ${selectedTransaction?.id === t.id ? 'bg-muted' : ''}`}
-                      onClick={() => setSelectedTransaction(t)}
-                    >
-                      <TableCell className="text-xs whitespace-nowrap">{formatDate(t.created_at)}</TableCell>
-                      <TableCell className="text-xs max-w-[120px] truncate">{t.product_name || '-'}</TableCell>
-                      <TableCell className="text-xs">{t.utm_data?.utm_source || '-'}</TableCell>
-                      <TableCell className="text-xs">{t.utm_data?.utm_medium || '-'}</TableCell>
-                      <TableCell className="text-xs max-w-[100px] truncate">{t.utm_data?.utm_campaign || '-'}</TableCell>
-                      <TableCell className="text-xs">{t.utm_data?.traffic_type || '-'}</TableCell>
-                      <TableCell>
-                        {hasUtm(t) ? (
-                          <Badge className="bg-emerald-500/10 text-emerald-600 text-xs">✓</Badge>
-                        ) : (
-                          <Badge className="bg-amber-500/10 text-amber-600 text-xs">⚠</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Data</TableHead>
+                      <TableHead className="text-xs">Produto</TableHead>
+                      <TableHead className="text-xs">Source</TableHead>
+                      <TableHead className="text-xs">Medium</TableHead>
+                      <TableHead className="text-xs">Campaign</TableHead>
+                      <TableHead className="text-xs">Traffic</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs w-10"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedTransactions.map((t) => (
+                      <TableRow 
+                        key={t.id} 
+                        className={`cursor-pointer ${selectedTransaction?.id === t.id ? 'bg-muted' : ''}`}
+                        onClick={() => setSelectedTransaction(t)}
+                      >
+                        <TableCell className="text-xs whitespace-nowrap">{formatDate(t.created_at)}</TableCell>
+                        <TableCell className="text-xs max-w-[120px] truncate">{t.product_name || '-'}</TableCell>
+                        <TableCell className="text-xs">{t.utm_data?.utm_source || '-'}</TableCell>
+                        <TableCell className="text-xs">{t.utm_data?.utm_medium || '-'}</TableCell>
+                        <TableCell className="text-xs max-w-[100px] truncate">{t.utm_data?.utm_campaign || '-'}</TableCell>
+                        <TableCell className="text-xs">{t.utm_data?.traffic_type || '-'}</TableCell>
+                        <TableCell>
+                          {hasUtm(t) ? (
+                            <Badge className="bg-emerald-500/10 text-emerald-600 text-xs">✓</Badge>
+                          ) : (
+                            <Badge className="bg-amber-500/10 text-amber-600 text-xs">⚠</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <span className="text-xs text-muted-foreground">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="h-8 w-8 p-0 text-xs"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
