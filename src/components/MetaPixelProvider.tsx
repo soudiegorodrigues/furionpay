@@ -89,7 +89,14 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   }, []);
 
   const initializePixels = (pixels: PixelConfig[]) => {
-    if (pixels.length === 0 || window.fbq) return;
+    // Se pixel já existe (carregado pelo site do usuário), usar instância existente
+    if (window.fbq) {
+      console.log('Facebook Pixel already exists, using existing instance');
+      setIsLoaded(true);
+      return;
+    }
+
+    if (pixels.length === 0) return;
 
     // Validate and sanitize pixel IDs
     const validPixels = pixels.filter(p => p.pixelId && /^\d+$/.test(p.pixelId));
@@ -123,10 +130,18 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         }
       });
       
-      // Track PageView for all pixels
+      // Verificar se veio de página externa (provavelmente já tem PageView)
+      const referrer = document.referrer;
+      const isFromExternalSite = referrer && !referrer.includes(window.location.hostname);
+      
       if (window.fbq) {
-        window.fbq('track', 'PageView');
-        console.log('Tracked PageView');
+        if (!isFromExternalSite) {
+          // Só disparar PageView se NÃO veio de site externo
+          window.fbq('track', 'PageView');
+          console.log('Tracked PageView (first visit)');
+        } else {
+          console.log('Skipped PageView (came from external site:', referrer, ')');
+        }
       }
       
       setIsLoaded(true);
