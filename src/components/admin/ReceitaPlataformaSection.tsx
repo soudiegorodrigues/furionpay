@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,13 @@ interface Transaction {
 interface ChartData {
   date: string;
   lucro: number;
+}
+
+interface UserProfitRanking {
+  email: string;
+  totalProfit: number;
+  transactionCount: number;
+  averageProfit: number;
 }
 
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
@@ -258,6 +266,35 @@ export const ReceitaPlataformaSection = () => {
     
     return data;
   }, [paidTransactions, chartFilter]);
+
+  // Ranking de usuários por lucro gerado
+  const userProfitRanking = useMemo((): UserProfitRanking[] => {
+    const userStats: Map<string, { totalProfit: number; transactionCount: number }> = new Map();
+    
+    // Usar todas as transações pagas (ignorar filtro de usuário para ranking global)
+    const allPaidTransactions = transactions.filter(tx => tx.status === 'paid');
+    
+    allPaidTransactions.forEach(tx => {
+      const email = tx.user_email || 'Sem usuário';
+      const profit = calculateProfit(tx.amount, tx.fee_percentage, tx.fee_fixed);
+      
+      const existing = userStats.get(email) || { totalProfit: 0, transactionCount: 0 };
+      userStats.set(email, {
+        totalProfit: existing.totalProfit + profit,
+        transactionCount: existing.transactionCount + 1
+      });
+    });
+    
+    return Array.from(userStats.entries())
+      .map(([email, stats]) => ({
+        email,
+        totalProfit: stats.totalProfit,
+        transactionCount: stats.transactionCount,
+        averageProfit: stats.transactionCount > 0 ? stats.totalProfit / stats.transactionCount : 0
+      }))
+      .sort((a, b) => b.totalProfit - a.totalProfit)
+      .slice(0, 10); // Top 10
+  }, [transactions]);
 
   return (
     <>
@@ -539,6 +576,62 @@ export const ReceitaPlataformaSection = () => {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Ranking de Usuários por Lucro */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
+            Ranking de Lucro por Usuário
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {userProfitRanking.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">
+              Nenhuma transação paga encontrada.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead className="text-right">Transações</TableHead>
+                    <TableHead className="text-right">Ticket Médio</TableHead>
+                    <TableHead className="text-right">Lucro Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userProfitRanking.map((user, index) => (
+                    <TableRow key={user.email}>
+                      <TableCell className="font-medium">
+                        {index === 0 ? (
+                          <span className="text-yellow-500 font-bold">🥇</span>
+                        ) : index === 1 ? (
+                          <span className="text-gray-400 font-bold">🥈</span>
+                        ) : index === 2 ? (
+                          <span className="text-amber-600 font-bold">🥉</span>
+                        ) : (
+                          <span className="text-muted-foreground">{index + 1}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {user.email.length > 30 ? `${user.email.slice(0, 30)}...` : user.email}
+                      </TableCell>
+                      <TableCell className="text-right">{user.transactionCount}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(user.averageProfit)}</TableCell>
+                      <TableCell className="text-right font-bold text-green-500">
+                        {formatCurrency(user.totalProfit)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </>
