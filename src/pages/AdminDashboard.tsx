@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Facebook } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 
@@ -673,6 +673,7 @@ const AdminDashboard = () => {
                       <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                       <TableHead className="text-xs">Valor</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs text-center">UTM</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -690,11 +691,18 @@ const AdminDashboard = () => {
                         <TableCell className="text-xs hidden sm:table-cell max-w-[100px] truncate">{tx.product_name || '-'}</TableCell>
                         <TableCell className="text-xs whitespace-nowrap">{formatCurrency(calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed))}</TableCell>
                         <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                        <TableCell className="text-center">
+                          {tx.utm_data?.utm_source?.toLowerCase().includes('facebook') || 
+                           tx.utm_data?.utm_source?.toLowerCase().includes('fb') ||
+                           tx.utm_data?.utm_source?.toLowerCase().includes('meta') ? (
+                            <Facebook className="h-4 w-4 text-blue-500 mx-auto" />
+                          ) : null}
+                        </TableCell>
                       </TableRow>
                     ))}
                     {paginatedTransactions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8 text-sm">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
                           Nenhuma transação encontrada
                         </TableCell>
                       </TableRow>
