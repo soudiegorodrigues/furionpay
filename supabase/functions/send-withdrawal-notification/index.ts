@@ -145,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
                   <tr>
                     <td style="padding: 0 30px 32px 30px; text-align: center;">
                       ${isApproved 
-                        ? '<p style="color: #16a34a; font-size: 15px; margin: 0; font-weight: 500;">O valor será transferido para sua conta em breve.</p>'
+                        ? '<p style="color: #16a34a; font-size: 15px; margin: 0 0 8px 0; font-weight: 500;">O valor foi transferido com sucesso!</p><p style="color: #16a34a; font-size: 15px; margin: 0; font-weight: 500;">Boas Vendas!</p>'
                         : '<p style="color: #6b7280; font-size: 14px; margin: 0;">Entre em contato conosco caso tenha dúvidas.</p>'
                       }
                     </td>
