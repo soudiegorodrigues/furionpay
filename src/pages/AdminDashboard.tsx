@@ -595,7 +595,7 @@ const AdminDashboard = () => {
                 top: 30,
                 right: 5,
                 left: 5,
-                bottom: 5
+                bottom: 40
               }} barCategoryGap="50%" barSize={20}>
                   <defs>
                     <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
@@ -608,10 +608,19 @@ const AdminDashboard = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke="hsl(var(--muted-foreground))" opacity={0.15} horizontal={true} vertical={false} />
-                  <XAxis dataKey="date" tick={{
-                  fontSize: 10,
-                  fill: 'hsl(var(--muted-foreground))'
-                }} tickLine={false} axisLine={false} interval={0} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{
+                      fontSize: 8,
+                      fill: 'hsl(var(--muted-foreground))'
+                    }} 
+                    angle={-90}
+                    textAnchor="end"
+                    tickLine={false} 
+                    axisLine={false} 
+                    interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
+                    height={50}
+                  />
                   <YAxis tick={{
                   fontSize: 10,
                   fill: 'hsl(var(--muted-foreground))'
