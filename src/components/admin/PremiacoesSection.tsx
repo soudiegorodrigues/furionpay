@@ -312,12 +312,12 @@ export function PremiacoesSection() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {rewards.map((reward) => (
                 <Card key={reward.id} className="overflow-hidden">
-                  <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                  <div className="h-64 bg-muted flex items-center justify-center p-4">
                     {reward.image_url ? (
                       <img
                         src={reward.image_url}
                         alt={reward.name}
-                        className="w-full h-full object-cover"
+                        className="max-w-full max-h-full object-contain"
                       />
                     ) : (
                       <Package className="h-16 w-16 text-muted-foreground" />
