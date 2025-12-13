@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { DollarSign, TrendingUp, Loader2, RefreshCw, Calendar, CheckCircle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -37,7 +37,14 @@ interface ChartData {
   valorPago: number;
 }
 
-type ChartFilter = 'today' | '7days' | '15days' | '30days' | 'month' | 'year';
+type ChartFilter = 'today' | '7days' | '14days' | '30days';
+
+const chartFilterOptions: { value: ChartFilter; label: string }[] = [
+  { value: 'today', label: 'Hoje' },
+  { value: '7days', label: '7 dias' },
+  { value: '14days', label: '14 dias' },
+  { value: '30days', label: '30 dias' },
+];
 
 export const FaturamentoSection = () => {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
@@ -112,10 +119,8 @@ export const FaturamentoSection = () => {
     switch (filter) {
       case 'today': return 1;
       case '7days': return 7;
-      case '15days': return 15;
+      case '14days': return 14;
       case '30days': return 30;
-      case 'month': return 30;
-      case 'year': return 365;
       default: return 30;
     }
   };
@@ -279,39 +284,43 @@ export const FaturamentoSection = () => {
       {/* Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               <CardTitle className="text-sm sm:text-lg">Evolução de Transações</CardTitle>
             </div>
-            <Select value={chartFilter} onValueChange={(v) => setChartFilter(v as ChartFilter)}>
-              <SelectTrigger className="w-[120px] h-8 text-xs sm:text-sm">
-                <Calendar className="h-3 w-3 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Hoje</SelectItem>
-                <SelectItem value="7days">7 dias</SelectItem>
-                <SelectItem value="15days">15 dias</SelectItem>
-                <SelectItem value="30days">30 dias</SelectItem>
-                <SelectItem value="month">Este mês</SelectItem>
-                <SelectItem value="year">Este ano</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            {/* Pill-style filter buttons */}
+            <div className="flex items-center bg-muted rounded-full p-1">
+              {chartFilterOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setChartFilter(option.value)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
+                    chartFilter === option.value
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[250px] sm:h-[300px] w-full">
+          <div className="h-[280px] sm:h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={globalChartData} margin={{ top: 30, right: 5, left: 5, bottom: 30 }} barCategoryGap="50%" barSize={20}>
+              <BarChart 
+                data={globalChartData} 
+                margin={{ top: 40, right: 10, left: 10, bottom: 20 }} 
+                barCategoryGap="40%"
+              >
                 <defs>
                   <linearGradient id="barGradientPaidGlobal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                  </linearGradient>
-                  <linearGradient id="barGradientGeneratedGlobal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid 
@@ -322,21 +331,19 @@ export const FaturamentoSection = () => {
                 />
                 <XAxis 
                   dataKey="date" 
-                  tick={{ fontSize: 8 }} 
-                  angle={-45}
-                  textAnchor="end"
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
-                  interval={chartFilter === 'today' ? 0 : chartFilter === 'year' ? 29 : 'preserveStartEnd'}
-                  height={50}
+                  interval={chartFilter === 'today' ? 1 : 'preserveStartEnd'}
                 />
                 <YAxis 
-                  tick={{ fontSize: 10 }} 
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
+                  width={30}
                 />
                 <Tooltip 
                   cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
@@ -350,39 +357,37 @@ export const FaturamentoSection = () => {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
                   formatter={(value: number, name: string) => {
-                    if (name === 'pagos') return [value, '🔴 Pagos'];
-                    if (name === 'gerados') return [value, '⚫ Gerados'];
+                    if (name === 'pagos') return [value, 'Pagos'];
                     return [value, name];
                   }}
                 />
                 <Bar 
-                  dataKey="gerados" 
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={32}
-                  fill="url(#barGradientGeneratedGlobal)"
-                  animationDuration={800}
-                  animationEasing="ease-out"
-                />
-                <Bar 
                   dataKey="pagos" 
                   radius={[6, 6, 0, 0]}
-                  maxBarSize={32}
+                  maxBarSize={40}
                   fill="url(#barGradientPaidGlobal)"
                   animationDuration={800}
                   animationEasing="ease-out"
-                />
+                >
+                  <LabelList 
+                    dataKey={(entry: ChartData) => {
+                      if (entry.gerados === 0) return '';
+                      const rate = ((entry.pagos / entry.gerados) * 100).toFixed(0);
+                      return `${rate}%`;
+                    }}
+                    position="top"
+                    fill="hsl(var(--primary))"
+                    fontSize={11}
+                    fontWeight={600}
+                    offset={8}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-muted-foreground/50"></span>
-              <span className="text-xs text-muted-foreground font-medium">Gerados</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-primary"></span>
-              <span className="text-xs text-muted-foreground font-medium">Pagos</span>
-            </div>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <span className="w-3 h-3 rounded-full bg-primary"></span>
+            <span className="text-xs text-muted-foreground font-medium">Pagos (% conversão)</span>
           </div>
         </CardContent>
       </Card>
