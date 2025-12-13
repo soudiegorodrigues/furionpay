@@ -535,7 +535,7 @@ const AdminDashboard = () => {
       {/* Chart + Side Cards Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 sm:gap-8">
         {/* Chart - Visão Geral Style */}
-        <Card className="xl:col-span-3">
+        <Card className="xl:col-span-3 h-full flex flex-col">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
@@ -558,8 +558,8 @@ const AdminDashboard = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-[280px] sm:h-[320px] w-full">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="flex-1 min-h-[280px] sm:min-h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{
                 top: 30,
