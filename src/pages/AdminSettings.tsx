@@ -360,23 +360,23 @@ const AdminSettings = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Save Button - inside Meta Pixels card */}
+              <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
+                {isSaving ? <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </> : <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar Configurações
+                  </>}
+              </Button>
             </CardContent>
           </Card>
 
           {/* UTM Script Section */}
           <UTMScriptSection />
         </div>
-
-        {/* Save Button */}
-        <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
-          {isSaving ? <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Salvando...
-            </> : <>
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Configurações
-            </>}
-        </Button>
     </div>
   );
 };
