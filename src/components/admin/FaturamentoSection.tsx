@@ -314,8 +314,7 @@ export const FaturamentoSection = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={globalChartData} 
-                margin={{ top: 40, right: 10, left: 10, bottom: 20 }} 
-                barCategoryGap="40%"
+                margin={{ top: 40, right: 10, left: 10, bottom: 20 }}
               >
                 <defs>
                   <linearGradient id="barGradientPaidGlobal" x1="0" y1="0" x2="0" y2="1">
@@ -364,7 +363,7 @@ export const FaturamentoSection = () => {
                 <Bar 
                   dataKey="pagos" 
                   radius={[6, 6, 0, 0]}
-                  maxBarSize={40}
+                  barSize={chartFilter === 'today' ? 12 : chartFilter === '30days' ? 10 : chartFilter === '14days' ? 18 : 32}
                   fill="url(#barGradientPaidGlobal)"
                   animationDuration={800}
                   animationEasing="ease-out"
