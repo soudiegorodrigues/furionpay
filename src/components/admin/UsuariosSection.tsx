@@ -744,43 +744,45 @@ export const UsuariosSection = () => {
                     const achieved = userTotalPaid >= reward.threshold_amount;
                     
                     return (
-                      <div key={reward.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                        {/* Reward Image */}
-                        <div className="w-14 h-14 rounded bg-muted flex-shrink-0 overflow-hidden">
-                          {reward.image_url ? (
-                            <img src={reward.image_url} alt={reward.name} className="w-full h-full object-contain" />
+                      <div key={reward.id} className="p-4 rounded-xl border bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border-amber-500/20">
+                        {/* Imagem da placa em destaque */}
+                        <div className="flex justify-center mb-4">
+                          <div className="w-32 h-32 rounded-lg bg-white/50 dark:bg-black/20 p-2 shadow-sm">
+                            {reward.image_url ? (
+                              <img src={reward.image_url} alt={reward.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Trophy className="h-12 w-12 text-amber-500" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Nome e Status */}
+                        <div className="text-center mb-3">
+                          <h4 className="font-bold text-base">{reward.name}</h4>
+                          {achieved ? (
+                            <Badge className="bg-green-500 text-white mt-1">🎉 Conquistado!</Badge>
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Trophy className="h-6 w-6 text-muted-foreground" />
-                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Faltam <span className="font-semibold text-amber-600 dark:text-amber-400">R$ {(reward.threshold_amount - userTotalPaid).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </p>
                           )}
                         </div>
                         
-                        {/* Info and Progress */}
-                        <div className="flex-1 space-y-1.5 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-sm truncate">{reward.name}</span>
-                            {achieved ? (
-                              <Badge className="bg-green-500 text-white text-[10px] px-1.5 flex-shrink-0">Conquistado!</Badge>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                Faltam R$ {(reward.threshold_amount - userTotalPaid).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Progress Bar */}
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        {/* Barra de progresso */}
+                        <div className="space-y-1.5">
+                          <div className="h-3 bg-muted rounded-full overflow-hidden">
                             <div 
-                              className={`h-full rounded-full transition-all ${achieved ? 'bg-green-500' : 'bg-primary'}`}
+                              className={`h-full rounded-full transition-all ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`}
                               style={{ width: `${progress}%` }}
                             />
                           </div>
                           
-                          {/* Values */}
-                          <div className="flex justify-between text-[10px] text-muted-foreground">
-                            <span>R$ {userTotalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                            <span>R$ {reward.threshold_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          {/* Valores */}
+                          <div className="flex justify-between text-xs">
+                            <span className="font-medium">R$ {userTotalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="text-muted-foreground">Meta: R$ {reward.threshold_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                           </div>
                         </div>
                       </div>
