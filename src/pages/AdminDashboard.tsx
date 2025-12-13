@@ -682,19 +682,38 @@ const AdminDashboard = () => {
                   if (name === 'pagos') return [value, '🔴 Pagos'];
                   return [value, name];
                 }} />
-                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}
-                    label={({ x, y, width, payload }: { x: number; y: number; width: number; payload?: { gerados?: number; pagos?: number } }) => {
-                      if (!payload) return null;
-                      const gerados = payload.gerados ?? 0;
-                      const pagos = payload.pagos ?? 0;
-                      const rate = gerados > 0 ? Math.round((pagos / gerados) * 100) : 0;
-                      return (
-                        <text x={x + width / 2} y={y - 8} textAnchor="middle" fontSize={10} fill="hsl(var(--primary))" fontWeight={600}>
-                          {rate}%
-                        </text>
-                      );
-                    }}
-                  />
+                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}>
+                    <LabelList 
+                      dataKey="pagos"
+                      position="top"
+                      fontSize={10}
+                      fontWeight={600}
+                      fill="hsl(var(--primary))"
+                      formatter={(value: number, entry: { gerados?: number }) => {
+                        const gerados = entry?.gerados ?? 0;
+                        const rate = gerados > 0 ? Math.round((value / gerados) * 100) : 0;
+                        return `${rate}%`;
+                      }}
+                      content={({ x, y, width, value, index }: { x?: number; y?: number; width?: number; value?: number; index?: number }) => {
+                        if (typeof index !== 'number' || !chartData[index]) return null;
+                        const gerados = chartData[index].gerados ?? 0;
+                        const pagos = value ?? 0;
+                        const rate = gerados > 0 ? Math.round((pagos / gerados) * 100) : 0;
+                        return (
+                          <text 
+                            x={(x ?? 0) + (width ?? 0) / 2} 
+                            y={(y ?? 0) - 6} 
+                            textAnchor="middle" 
+                            fontSize={10} 
+                            fill="hsl(var(--primary))" 
+                            fontWeight={600}
+                          >
+                            {rate}%
+                          </text>
+                        );
+                      }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
