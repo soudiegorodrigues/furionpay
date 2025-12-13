@@ -602,6 +602,10 @@ const AdminDashboard = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <span className="w-3 h-3 rounded-full bg-primary"></span>
+              <span className="text-xs text-muted-foreground font-medium">Vendas pagas</span>
+            </div>
           </CardContent>
         </Card>
 
