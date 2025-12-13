@@ -519,9 +519,13 @@ const AdminDashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 30, right: 5, left: 5, bottom: 5 }} barCategoryGap="50%" barSize={20}>
                   <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
                       <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="barGradientGenerated" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.6} />
+                      <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid 
@@ -557,54 +561,39 @@ const AdminDashboard = () => {
                     }}
                     labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
                     formatter={(value: number, name: string) => {
-                      if (name === 'pagos') return [value, '🔴 Vendas pagas'];
+                      if (name === 'pagos') return [value, '🔴 Pagos'];
+                      if (name === 'gerados') return [value, '⚫ Gerados'];
                       return [value, name];
                     }}
                   />
                   <Bar 
-                    dataKey="pagos" 
+                    dataKey="gerados" 
                     radius={[6, 6, 0, 0]}
-                    maxBarSize={40}
-                    fill="url(#barGradient)"
+                    maxBarSize={32}
+                    fill="url(#barGradientGenerated)"
                     animationDuration={800}
                     animationEasing="ease-out"
-                  >
-                  <LabelList 
-                    dataKey="pagos" 
-                    position="top" 
-                    content={(props: any) => {
-                      const { x, y, width, value } = props;
-                      
-                      if (value === 0) return null;
-                      
-                      const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
-                      if (total === 0) return null;
-                      
-                      const percentage = ((value / total) * 100).toFixed(1);
-                      const fontSize = chartFilter === 'today' ? 10 : chartFilter === '30days' ? 11 : 12;
-                      
-                      return (
-                        <text 
-                          x={x + width / 2} 
-                          y={y - 5} 
-                          fill="hsl(var(--muted-foreground))"
-                          fontSize={fontSize}
-                          fontWeight={500}
-                          textAnchor="start"
-                          transform={`rotate(-45, ${x + width / 2}, ${y - 5})`}
-                        >
-                          {percentage}%
-                        </text>
-                      );
-                    }}
                   />
-                  </Bar>
+                  <Bar 
+                    dataKey="pagos" 
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={32}
+                    fill="url(#barGradientPaid)"
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <span className="w-3 h-3 rounded-full bg-primary"></span>
-              <span className="text-xs text-muted-foreground font-medium">Vendas pagas</span>
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-muted-foreground/50"></span>
+                <span className="text-xs text-muted-foreground font-medium">Gerados</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-primary"></span>
+                <span className="text-xs text-muted-foreground font-medium">Pagos</span>
+              </div>
             </div>
           </CardContent>
         </Card>
