@@ -82,23 +82,24 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         const userId = urlParams.get('u') || urlParams.get('user');
         const urlPixelId = urlParams.get('pixel');
         
+        console.log('MetaPixelProvider: Full URL:', window.location.href);
         console.log('MetaPixelProvider: Loading pixel config for userId:', userId, 'URL pixel:', urlPixelId);
 
-        // Se o pixel já existe no window (site do usuário), usar ele
+        // PRIORIDADE 1: Se pixel ID foi passado na URL, usar SEMPRE (mesmo se fbq já existe)
+        if (urlPixelId && /^\d+$/.test(urlPixelId)) {
+          console.log('PRIORITY: Using pixel from URL parameter:', urlPixelId);
+          initializePixels([{ pixelId: urlPixelId }], true); // força inicialização
+          return;
+        }
+
+        // PRIORIDADE 2: Se o pixel já existe no window (site do usuário), usar ele
         if (window.fbq) {
           console.log('Facebook Pixel already exists from user site');
           setIsLoaded(true);
           return;
         }
 
-        // Se pixel ID foi passado diretamente na URL, usar esse
-        if (urlPixelId && /^\d+$/.test(urlPixelId)) {
-          console.log('Using pixel from URL parameter:', urlPixelId);
-          initializePixels([{ pixelId: urlPixelId }]);
-          return;
-        }
-
-        // Caso contrário, buscar do banco de dados
+        // PRIORIDADE 3: Buscar do banco de dados
         const { data, error } = await supabase.functions.invoke('get-pixel-config', {
           body: { userId }
         });
@@ -112,7 +113,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         console.log('Pixel config response:', data);
 
         if (data?.pixels && Array.isArray(data.pixels) && data.pixels.length > 0) {
-          initializePixels(data.pixels);
+          initializePixels(data.pixels, false);
         } else {
           setIsLoaded(true);
         }
@@ -125,9 +126,9 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     loadPixelConfig();
   }, []);
 
-  const initializePixels = (pixels: PixelConfig[]) => {
-    // Se pixel já existe (carregado pelo site do usuário), usar instância existente
-    if (window.fbq) {
+  const initializePixels = (pixels: PixelConfig[], forceInit = false) => {
+    // Se NÃO é forçado e pixel já existe, usar instância existente
+    if (!forceInit && window.fbq) {
       console.log('Facebook Pixel already exists, using existing instance');
       setIsLoaded(true);
       return;
@@ -141,9 +142,16 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       return;
     }
 
-    console.log('Initializing pixels:', validPixels);
+    console.log('Initializing pixels (forceInit=' + forceInit + '):', validPixels);
 
-    // Create fbq function immediately so events can be queued
+    // Remove any existing fbq script to avoid conflicts
+    const existingScript = document.querySelector('script[src*="fbevents.js"]');
+    if (existingScript && forceInit) {
+      console.log('Removing existing Facebook Pixel script');
+      existingScript.remove();
+    }
+
+    // Create/reset fbq function
     const n = window.fbq = function() {
       // @ts-ignore
       n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
@@ -161,7 +169,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     // Initialize all pixels immediately (events will be queued)
     validPixels.forEach(pixel => {
       window.fbq('init', pixel.pixelId);
-      console.log('Initialized pixel:', pixel.pixelId);
+      console.log('SUCCESS: Initialized pixel:', pixel.pixelId);
     });
 
     // Load the actual Facebook script
@@ -170,7 +178,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     script.src = 'https://connect.facebook.net/en_US/fbevents.js';
     document.head.appendChild(script);
 
-    console.log('Pixel initialized - PageView skipped (fired by user site)');
+    console.log('Pixel script loaded - Ready for events');
     setIsLoaded(true);
   };
 
