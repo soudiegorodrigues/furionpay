@@ -103,10 +103,37 @@ export function UTMDebugSection() {
     setStats({ total, withUtm, withoutUtm, successRate, sourceBreakdown, trafficTypeBreakdown });
   };
 
-  const pieData = stats ? Object.entries(stats.sourceBreakdown).map(([name, value]) => ({
-    name: name === 'sem_utm' ? 'Sem UTM' : name,
-    value
-  })) : [];
+  // Simplify pie data: show Sem UTM, Facebook, and group others
+  const pieData = (() => {
+    if (!stats) return [];
+    
+    const result: { name: string; value: number }[] = [];
+    let outrosValue = 0;
+    
+    Object.entries(stats.sourceBreakdown).forEach(([name, value]) => {
+      const lowerName = name.toLowerCase();
+      
+      if (name === 'sem_utm') {
+        result.push({ name: 'Sem UTM', value });
+      } else if (lowerName === 'facebook' || lowerName === 'fb' || lowerName.includes('facebook')) {
+        // Find existing Facebook entry or create new
+        const fbEntry = result.find(r => r.name === 'Facebook');
+        if (fbEntry) {
+          fbEntry.value += value;
+        } else {
+          result.push({ name: 'Facebook', value });
+        }
+      } else {
+        outrosValue += value;
+      }
+    });
+    
+    if (outrosValue > 0) {
+      result.push({ name: 'Outros', value: outrosValue });
+    }
+    
+    return result.sort((a, b) => b.value - a.value);
+  })();
 
   // Pagination
   const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
