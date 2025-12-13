@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Copy, Calendar, User, Package, DollarSign, TrendingUp, ExternalLink, Check } from "lucide-react";
 import { useState } from "react";
-
 interface UTMData {
   utm_source?: string;
   utm_medium?: string;
@@ -12,7 +11,6 @@ interface UTMData {
   utm_content?: string;
   utm_term?: string;
 }
-
 interface Transaction {
   id: string;
   amount: number;
@@ -27,38 +25,39 @@ interface Transaction {
   utm_data: UTMData | null;
   popup_model: string | null;
 }
-
 interface TransactionDetailsSheetProps {
   transaction: Transaction | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   calculateNetAmount: (amount: number, feePercentage?: number | null, feeFixed?: number | null) => number;
 }
-
-const TransactionDetailsSheet = ({ transaction, open, onOpenChange, calculateNetAmount }: TransactionDetailsSheetProps) => {
+const TransactionDetailsSheet = ({
+  transaction,
+  open,
+  onOpenChange,
+  calculateNetAmount
+}: TransactionDetailsSheetProps) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
   if (!transaction) return null;
-
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR');
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Pago</Badge>;
+        return;
       case 'expired':
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Expirado</Badge>;
       default:
         return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Gerado</Badge>;
     }
   };
-
   const getSourceIcon = (source?: string) => {
     if (!source) return null;
     const lower = source.toLowerCase();
@@ -82,19 +81,15 @@ const TransactionDetailsSheet = ({ transaction, open, onOpenChange, calculateNet
     }
     return <ExternalLink className="h-3 w-3" />;
   };
-
   const copyToClipboard = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
-
   const netAmount = calculateNetAmount(transaction.amount, transaction.fee_percentage, transaction.fee_fixed);
   const feeAmount = transaction.amount - netAmount;
   const hasUtmData = transaction.utm_data && Object.values(transaction.utm_data).some(v => v);
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+  return <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -115,12 +110,10 @@ const TransactionDetailsSheet = ({ transaction, open, onOpenChange, calculateNet
                 <span className="text-muted-foreground">Criado em:</span>{" "}
                 <span className="font-medium">{formatDate(transaction.created_at)}</span>
               </p>
-              {transaction.paid_at && (
-                <p className="text-sm">
+              {transaction.paid_at && <p className="text-sm">
                   <span className="text-muted-foreground">Pago em:</span>{" "}
                   <span className="font-medium text-green-500">{formatDate(transaction.paid_at)}</span>
-                </p>
-              )}
+                </p>}
             </div>
           </div>
 
@@ -145,11 +138,9 @@ const TransactionDetailsSheet = ({ transaction, open, onOpenChange, calculateNet
             </div>
             <div className="pl-6 space-y-1">
               <p className="text-sm font-medium">{transaction.product_name || 'Não informado'}</p>
-              {transaction.popup_model && (
-                <p className="text-xs text-muted-foreground">
+              {transaction.popup_model && <p className="text-xs text-muted-foreground">
                   Modelo: <span className="capitalize">{transaction.popup_model}</span>
-                </p>
-              )}
+                </p>}
             </div>
           </div>
 
@@ -170,11 +161,9 @@ const TransactionDetailsSheet = ({ transaction, open, onOpenChange, calculateNet
                 <span className="text-muted-foreground">Taxa</span>
                 <span className="text-red-400">
                   -{formatCurrency(feeAmount)}
-                  {transaction.fee_percentage !== null && (
-                    <span className="text-xs ml-1">
+                  {transaction.fee_percentage !== null && <span className="text-xs ml-1">
                       ({transaction.fee_percentage}% + {formatCurrency(transaction.fee_fixed || 0)})
-                    </span>
-                  )}
+                    </span>}
                 </span>
               </div>
               <Separator className="my-2" />
@@ -193,43 +182,29 @@ const TransactionDetailsSheet = ({ transaction, open, onOpenChange, calculateNet
               <TrendingUp className="h-4 w-4" />
               <span>Rastreamento UTM</span>
             </div>
-            {hasUtmData ? (
-              <div className="pl-6 space-y-2">
-                {transaction.utm_data?.utm_source && (
-                  <div className="flex items-center gap-2 text-sm">
+            {hasUtmData ? <div className="pl-6 space-y-2">
+                {transaction.utm_data?.utm_source && <div className="flex items-center gap-2 text-sm">
                     {getSourceIcon(transaction.utm_data.utm_source)}
                     <span className="text-muted-foreground">Origem:</span>
                     <Badge variant="secondary" className="text-xs">{transaction.utm_data.utm_source}</Badge>
-                  </div>
-                )}
-                {transaction.utm_data?.utm_medium && (
-                  <div className="flex items-center gap-2 text-sm">
+                  </div>}
+                {transaction.utm_data?.utm_medium && <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">Mídia:</span>
                     <Badge variant="outline" className="text-xs">{transaction.utm_data.utm_medium}</Badge>
-                  </div>
-                )}
-                {transaction.utm_data?.utm_campaign && (
-                  <div className="flex items-center gap-2 text-sm">
+                  </div>}
+                {transaction.utm_data?.utm_campaign && <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">Campanha:</span>
                     <span className="text-xs">{transaction.utm_data.utm_campaign}</span>
-                  </div>
-                )}
-                {transaction.utm_data?.utm_content && (
-                  <div className="flex items-center gap-2 text-sm">
+                  </div>}
+                {transaction.utm_data?.utm_content && <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">Conteúdo:</span>
                     <span className="text-xs">{transaction.utm_data.utm_content}</span>
-                  </div>
-                )}
-                {transaction.utm_data?.utm_term && (
-                  <div className="flex items-center gap-2 text-sm">
+                  </div>}
+                {transaction.utm_data?.utm_term && <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">Termo:</span>
                     <span className="text-xs">{transaction.utm_data.utm_term}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="pl-6 text-sm text-muted-foreground italic">Sem dados de UTM</p>
-            )}
+                  </div>}
+              </div> : <p className="pl-6 text-sm text-muted-foreground italic">Sem dados de UTM</p>}
           </div>
 
           <Separator />
@@ -243,37 +218,23 @@ const TransactionDetailsSheet = ({ transaction, open, onOpenChange, calculateNet
                   <p className="text-xs text-muted-foreground">ID</p>
                   <p className="text-xs font-mono truncate">{transaction.id}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(transaction.id, 'id')}
-                  className="h-7 w-7 p-0 shrink-0"
-                >
+                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(transaction.id, 'id')} className="h-7 w-7 p-0 shrink-0">
                   {copiedId === 'id' ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                 </Button>
               </div>
-              {transaction.txid && (
-                <div className="flex items-center justify-between bg-muted/50 rounded-md p-2">
+              {transaction.txid && <div className="flex items-center justify-between bg-muted/50 rounded-md p-2">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-muted-foreground">TXID</p>
                     <p className="text-xs font-mono truncate">{transaction.txid}</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(transaction.txid, 'txid')}
-                    className="h-7 w-7 p-0 shrink-0"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(transaction.txid, 'txid')} className="h-7 w-7 p-0 shrink-0">
                     {copiedId === 'txid' ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                   </Button>
-                </div>
-              )}
+                </div>}
             </div>
           </div>
         </div>
       </SheetContent>
-    </Sheet>
-  );
+    </Sheet>;
 };
-
 export default TransactionDetailsSheet;
