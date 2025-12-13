@@ -34,7 +34,6 @@ const AdminSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [isResettingGlobal, setIsResettingGlobal] = useState(false);
   const navigate = useNavigate();
   const {
     isAuthenticated,
@@ -175,26 +174,6 @@ const AdminSettings = () => {
       });
     } finally {
       setIsResetting(false);
-    }
-  };
-  const handleResetGlobalDashboard = async () => {
-    setIsResettingGlobal(true);
-    try {
-      const { error } = await supabase.rpc('reset_pix_transactions_auth');
-      if (error) throw error;
-      toast({
-        title: "Sucesso",
-        description: "Todas as transações da plataforma foram apagadas!"
-      });
-    } catch (error) {
-      console.error('Error resetting global transactions:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao resetar transações globais",
-        variant: "destructive"
-      });
-    } finally {
-      setIsResettingGlobal(false);
     }
   };
   return (
