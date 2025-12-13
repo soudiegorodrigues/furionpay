@@ -51,7 +51,7 @@ interface ChartData {
 }
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
-type ChartFilter = 'today' | '7days' | '14days' | '30days';
+type ChartFilter = '7days' | '14days' | '30days';
 interface FeeConfig {
   pix_percentage: number;
   pix_fixed: number;
@@ -82,7 +82,7 @@ const AdminDashboard = () => {
   const TRANSACTIONS_PER_LOAD = 100;
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
-  const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
+  const [chartFilter, setChartFilter] = useState<ChartFilter>('7days');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -282,8 +282,6 @@ const AdminDashboard = () => {
   };
   const getChartDays = (filter: ChartFilter): number => {
     switch (filter) {
-      case 'today':
-        return 1;
       case '7days':
         return 7;
       case '14days':
@@ -291,7 +289,7 @@ const AdminDashboard = () => {
       case '30days':
         return 30;
       default:
-        return 30;
+        return 7;
     }
   };
   const filteredTransactions = useMemo(() => {
@@ -340,81 +338,52 @@ const AdminDashboard = () => {
   };
   const chartData = useMemo((): ChartData[] => {
     const data: ChartData[] = [];
-    const now = new Date();
-    const todayBrazil = getBrazilDateStr(now);
-    if (chartFilter === 'today') {
-      // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
-      for (let hour = 0; hour < 24; hour++) {
-        const hourStr = hour.toString().padStart(2, '0') + ':00';
+    
+    // Daily data - ALWAYS include today (Brazil timezone)
+    const days = getChartDays(chartFilter);
 
-        // Filter transactions created today at this hour (Brazil time)
-        const hourGerados = transactions.filter(tx => {
-          const txDate = new Date(tx.created_at);
-          return getBrazilDateStr(txDate) === todayBrazil && getBrazilHour(txDate) === hour;
-        });
+    // Build array of dates from oldest to newest (ending with today)
+    const dates: string[] = [];
 
-        // Filter transactions PAID today at this hour (using paid_at, Brazil time)
-        const hourPagos = transactions.filter(tx => {
-          if (tx.status !== 'paid' || !tx.paid_at) return false;
-          const paidDate = new Date(tx.paid_at);
-          return getBrazilDateStr(paidDate) === todayBrazil && getBrazilHour(paidDate) === hour;
-        });
-        const gerados = hourGerados.length;
-        const pagos = hourPagos.length;
-        const valorPago = hourPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
-        data.push({
-          date: hourStr,
-          gerados,
-          pagos,
-          valorPago
-        });
-      }
-    } else {
-      // Daily data for other filters - ALWAYS include today (Brazil timezone)
-      const days = getChartDays(chartFilter);
+    // First: get TODAY in São Paulo timezone as string YYYY-MM-DD
+    const todayBrazilStr = getBrazilDateStr(new Date());
+    const [todayYear, todayMonth, todayDay] = todayBrazilStr.split('-').map(Number);
 
-      // Build array of dates from oldest to newest (ending with today)
-      const dates: string[] = [];
-
-      // First: get TODAY in São Paulo timezone as string YYYY-MM-DD
-      const todayBrazilStr = getBrazilDateStr(new Date());
-      const [todayYear, todayMonth, todayDay] = todayBrazilStr.split('-').map(Number);
-
-      // Generate dates directly from São Paulo components to avoid any timezone conversion
-      for (let i = days - 1; i >= 0; i--) {
-        // Calculate the target day (may go to previous months)
-        const tempDate = new Date(todayYear, todayMonth - 1, todayDay - i, 12, 0, 0);
-        const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
-        dates.push(dateStr);
-      }
-
-      // Now generate chart data for each date
-      for (const dateStr of dates) {
-        // Format display as DD/MM
-        const [, m, d] = dateStr.split('-');
-        const displayDate = `${d}/${m}`;
-
-        // Transactions created on this day (Brazil time)
-        const dayGerados = transactions.filter(tx => {
-          return getBrazilDateStr(new Date(tx.created_at)) === dateStr;
-        });
-
-        // Transactions PAID on this day (using paid_at, Brazil time)
-        const dayPagos = transactions.filter(tx => {
-          if (tx.status !== 'paid' || !tx.paid_at) return false;
-          return getBrazilDateStr(new Date(tx.paid_at)) === dateStr;
-        });
-        const gerados = dayGerados.length;
-        const pagos = dayPagos.length;
-        const valorPago = dayPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
-        data.push({
-          date: displayDate,
-          gerados,
-          pagos,
-          valorPago
-        });
-      }
+    // Generate dates directly from São Paulo components to avoid any timezone conversion
+    for (let i = days - 1; i >= 0; i--) {
+      // Calculate the target day (may go to previous months)
+      const tempDate = new Date(todayYear, todayMonth - 1, todayDay - i, 12, 0, 0);
+      const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
+      dates.push(dateStr);
     }
+
+    // Now generate chart data for each date
+    for (const dateStr of dates) {
+      // Format display as DD/MM
+      const [, m, d] = dateStr.split('-');
+      const displayDate = `${d}/${m}`;
+
+      // Transactions created on this day (Brazil time)
+      const dayGerados = transactions.filter(tx => {
+        return getBrazilDateStr(new Date(tx.created_at)) === dateStr;
+      });
+
+      // Transactions PAID on this day (using paid_at, Brazil time)
+      const dayPagos = transactions.filter(tx => {
+        if (tx.status !== 'paid' || !tx.paid_at) return false;
+        return getBrazilDateStr(new Date(tx.paid_at)) === dateStr;
+      });
+      const gerados = dayGerados.length;
+      const pagos = dayPagos.length;
+      const valorPago = dayPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
+      data.push({
+        date: displayDate,
+        gerados,
+        pagos,
+        valorPago
+      });
+    }
+    
     return data;
   }, [transactions, chartFilter]);
   const filteredStats = useMemo(() => {
@@ -609,9 +578,6 @@ const AdminDashboard = () => {
               <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
               <div className="flex items-center bg-muted rounded-full p-1 mt-1 sm:mt-0">
                 {[{
-                value: 'today',
-                label: 'Hoje'
-              }, {
                 value: '7days',
                 label: '7 dias'
               }, {
@@ -629,12 +595,12 @@ const AdminDashboard = () => {
           <CardContent className="flex-1 flex flex-col">
             <div className="flex-1 min-h-[280px] sm:min-h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{
+              <BarChart data={chartData} margin={{
                 top: 30,
                 right: 10,
                 left: 10,
                 bottom: isTabletOrSmaller ? 40 : 5
-              }} barCategoryGap={chartFilter === 'today' ? '15%' : '30%'}>
+              }} barCategoryGap="20%">
                   <defs>
                     <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
@@ -656,7 +622,7 @@ const AdminDashboard = () => {
                     textAnchor={isTabletOrSmaller ? "end" : "middle"}
                     tickLine={false} 
                     axisLine={false} 
-                    interval={chartFilter === 'today' ? 1 : 0}
+                    interval={0}
                     height={isTabletOrSmaller ? 50 : 30}
                   />
                   <YAxis tick={{
