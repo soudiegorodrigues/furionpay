@@ -658,7 +658,7 @@ const AdminDashboard = () => {
                     textAnchor={isTabletOrSmaller ? "end" : "middle"}
                     tickLine={false} 
                     axisLine={false} 
-                    interval={chartFilter === 'today' ? 1 : 0}
+                    interval={0}
                     height={isTabletOrSmaller ? 50 : 30}
                   />
                   <YAxis tick={{
