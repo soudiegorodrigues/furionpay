@@ -517,7 +517,7 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="h-[280px] sm:h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 30, right: 5, left: 5, bottom: 5 }} barCategoryGap="25%" barSize={18}>
+                <BarChart data={chartData} margin={{ top: 30, right: 5, left: 5, bottom: 5 }} barCategoryGap="25%" barSize={20}>
                   <CartesianGrid 
                     stroke="hsl(var(--muted-foreground))"
                     opacity={0.15} 
