@@ -82,7 +82,7 @@ const AdminDashboard = () => {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [rewards, setRewards] = useState<Reward[] | null>(null);
   const navigate = useNavigate();
   const {
     toast
@@ -184,9 +184,7 @@ const AdminDashboard = () => {
         .select('id, name, threshold_amount, image_url')
         .eq('is_active', true)
         .order('threshold_amount', { ascending: true });
-      if (rewardsData) {
-        setRewards(rewardsData);
-      }
+      setRewards(rewardsData || []);
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       if (error.message?.includes('Not authenticated')) {
@@ -676,7 +674,7 @@ const AdminDashboard = () => {
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
             <CardContent className="p-5">
-              {rewards.length > 0 ? (
+              {rewards === null ? null : rewards.length > 0 ? (
                 <div className="space-y-4">
                   {rewards.map(reward => {
                     const progress = Math.min((totalBalance / reward.threshold_amount) * 100, 100);
