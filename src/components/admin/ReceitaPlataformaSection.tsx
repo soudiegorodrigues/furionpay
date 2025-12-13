@@ -707,9 +707,9 @@ export const ReceitaPlataformaSection = () => {
 
       {/* Meta Mensal */}
       <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Goal className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Goal className="h-4 w-4 text-green-500" />
             Meta Mensal
           </CardTitle>
           <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
@@ -717,9 +717,10 @@ export const ReceitaPlataformaSection = () => {
               <Button 
                 variant="outline" 
                 size="sm"
+                className="h-7 text-xs"
                 onClick={() => setGoalInput(monthlyGoal.toString())}
               >
-                <Pencil className="h-4 w-4 mr-1" />
+                <Pencil className="h-3 w-3 mr-1" />
                 Editar
               </Button>
             </DialogTrigger>
@@ -749,14 +750,14 @@ export const ReceitaPlataformaSection = () => {
         </CardHeader>
         <CardContent>
           {monthlyGoal > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Progresso</span>
                 <span className="font-medium">
                   {formatCurrency(profitStats.thisMonth)} / {formatCurrency(monthlyGoal)}
                 </span>
               </div>
-              <div className="relative h-4 w-full bg-muted rounded-full overflow-hidden">
+              <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
                 <div 
                   className={cn(
                     "absolute left-0 top-0 h-full rounded-full transition-all duration-500",
@@ -769,22 +770,22 @@ export const ReceitaPlataformaSection = () => {
                   style={{ width: `${Math.min((profitStats.thisMonth / monthlyGoal) * 100, 100)}%` }}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-sm sm:text-base font-semibold text-foreground">
                     {((profitStats.thisMonth / monthlyGoal) * 100).toFixed(1)}%
                   </p>
                   <p className="text-xs text-muted-foreground">Alcançado</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-sm sm:text-base font-semibold text-foreground">
                     {formatCurrency(Math.max(monthlyGoal - profitStats.thisMonth, 0))}
                   </p>
                   <p className="text-xs text-muted-foreground">Faltam</p>
                 </div>
                 <div>
                   <p className={cn(
-                    "text-2xl font-bold",
+                    "text-sm sm:text-base font-semibold",
                     profitStats.thisMonth >= monthlyGoal ? "text-green-500" : "text-muted-foreground"
                   )}>
                     {profitStats.thisMonth >= monthlyGoal ? '🎉' : '⏳'}
@@ -817,53 +818,53 @@ export const ReceitaPlataformaSection = () => {
 
       {/* Comparativo Mensal */}
       <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <GitCompare className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <GitCompare className="h-4 w-4 text-blue-500" />
             Comparativo Mensal
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
-              <div className="text-2xl sm:text-3xl font-bold text-foreground">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className="text-center p-2 sm:p-3 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-sm sm:text-base font-semibold text-foreground">
                 {formatCurrency(profitStats.lastMonth)}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Mês Anterior</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Mês Anterior</p>
               <p className="text-xs text-muted-foreground">
                 {new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })}
               </p>
             </div>
-            <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <div className="text-2xl sm:text-3xl font-bold text-primary">
+            <div className="text-center p-2 sm:p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="text-sm sm:text-base font-semibold text-primary">
                 {formatCurrency(profitStats.thisMonth)}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Mês Atual</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Mês Atual</p>
               <p className="text-xs text-muted-foreground">
                 {new Date().toLocaleDateString('pt-BR', { month: 'long' })}
               </p>
             </div>
-            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+            <div className="text-center p-2 sm:p-3 bg-background/50 rounded-lg border border-border/50">
               <div className={cn(
-                "text-2xl sm:text-3xl font-bold flex items-center justify-center gap-1",
+                "text-sm sm:text-base font-semibold flex items-center justify-center gap-1",
                 profitStats.monthOverMonthChange > 0 ? "text-green-500" : profitStats.monthOverMonthChange < 0 ? "text-red-500" : "text-muted-foreground"
               )}>
                 {profitStats.monthOverMonthChange > 0 ? (
-                  <ArrowUpRight className="h-5 w-5" />
+                  <ArrowUpRight className="h-3 w-3" />
                 ) : profitStats.monthOverMonthChange < 0 ? (
-                  <ArrowDownRight className="h-5 w-5" />
+                  <ArrowDownRight className="h-3 w-3" />
                 ) : null}
                 {profitStats.monthOverMonthChange > 0 ? '+' : ''}{profitStats.monthOverMonthChange.toFixed(1)}%
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Variação</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Variação</p>
               <p className="text-xs text-muted-foreground">
                 {profitStats.monthOverMonthChange > 0 ? "crescimento" : profitStats.monthOverMonthChange < 0 ? "redução" : "sem variação"}
               </p>
             </div>
           </div>
           {profitStats.lastMonth === 0 && profitStats.thisMonth === 0 && (
-            <p className="text-center text-sm text-muted-foreground mt-4">
-              Sem dados para comparativo. Aguarde transações neste e no mês anterior.
+            <p className="text-center text-xs text-muted-foreground mt-3">
+              Sem dados para comparativo.
             </p>
           )}
         </CardContent>
@@ -871,39 +872,39 @@ export const ReceitaPlataformaSection = () => {
 
       {/* Estatísticas Gerais */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Calculator className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Calculator className="h-4 w-4 text-primary" />
             Estatísticas Gerais
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-              <div className="p-3 bg-blue-500/10 rounded-full">
-                <Receipt className="h-5 w-5 text-blue-500" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className="flex items-center gap-3 p-2 sm:p-3 bg-muted/30 rounded-lg">
+              <div className="p-2 bg-blue-500/10 rounded-full">
+                <Receipt className="h-4 w-4 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{profitStats.transactionCount}</p>
-                <p className="text-sm text-muted-foreground">Transações Pagas</p>
+                <p className="text-sm sm:text-base font-semibold">{profitStats.transactionCount}</p>
+                <p className="text-xs text-muted-foreground">Transações Pagas</p>
               </div>
             </div>
-            <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-              <div className="p-3 bg-green-500/10 rounded-full">
-                <DollarSign className="h-5 w-5 text-green-500" />
+            <div className="flex items-center gap-3 p-2 sm:p-3 bg-muted/30 rounded-lg">
+              <div className="p-2 bg-green-500/10 rounded-full">
+                <DollarSign className="h-4 w-4 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{formatCurrency(profitStats.total)}</p>
-                <p className="text-sm text-muted-foreground">Lucro Acumulado</p>
+                <p className="text-sm sm:text-base font-semibold">{formatCurrency(profitStats.total)}</p>
+                <p className="text-xs text-muted-foreground">Lucro Acumulado</p>
               </div>
             </div>
-            <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <TrendingUp className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-3 p-2 sm:p-3 bg-muted/30 rounded-lg">
+              <div className="p-2 bg-primary/10 rounded-full">
+                <TrendingUp className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{formatCurrency(profitStats.averageProfit)}</p>
-                <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                <p className="text-sm sm:text-base font-semibold">{formatCurrency(profitStats.averageProfit)}</p>
+                <p className="text-xs text-muted-foreground">Ticket Médio</p>
               </div>
             </div>
           </div>
