@@ -587,19 +587,28 @@ const AdminDashboard = () => {
         {/* Row 2: Conversão + Ticket Médio | Vendas Este Mês */}
         <Card>
           <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs md:text-sm text-muted-foreground">Conversão</p>
-              <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-yellow-500" />
+            <div className="flex gap-4">
+              {/* Conversão */}
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs md:text-sm text-muted-foreground">Conversão</p>
+                  <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-yellow-500" />
+                </div>
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{filteredStats.conversionRate}%</p>
+              </div>
+              
+              {/* Divisor */}
+              <div className="w-px bg-border/50" />
+              
+              {/* Ticket Médio */}
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs md:text-sm text-muted-foreground">Ticket Médio</p>
+                  <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-purple-500" />
+                </div>
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{formatCurrency(filteredStats.ticketMedio)}</p>
+              </div>
             </div>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{filteredStats.conversionRate}%</p>
-            
-            <div className="border-t border-border/50 my-2" />
-            
-            <div className="flex items-center justify-between">
-              <p className="text-xs md:text-sm text-muted-foreground">Ticket Médio</p>
-              <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-purple-500" />
-            </div>
-            <p className="text-sm sm:text-base md:text-lg font-bold text-foreground mt-1">{formatCurrency(filteredStats.ticketMedio)}</p>
           </CardContent>
         </Card>
         <Card>
