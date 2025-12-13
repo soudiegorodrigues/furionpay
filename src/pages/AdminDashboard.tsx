@@ -76,6 +76,10 @@ const AdminDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
+  const [transactionOffset, setTransactionOffset] = useState(0);
+  const TRANSACTIONS_PER_LOAD = 100;
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
@@ -116,7 +120,7 @@ const AdminDashboard = () => {
     }, 60000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
-  const loadData = async (showLoading = true) => {
+  const loadData = async (showLoading = true, resetTransactions = true) => {
     if (showLoading && !stats) setIsLoading(true);
     try {
       // Execute ALL queries in parallel - including fee configs
@@ -129,7 +133,7 @@ const AdminDashboard = () => {
       ] = await Promise.all([
         supabase.rpc('get_user_settings'),
         supabase.rpc('get_user_dashboard'),
-        supabase.rpc('get_user_transactions', { p_limit: 500 }),
+        supabase.rpc('get_user_transactions', { p_limit: TRANSACTIONS_PER_LOAD }),
         supabase.from('rewards')
           .select('id, name, threshold_amount, image_url')
           .eq('is_active', true)
@@ -147,7 +151,12 @@ const AdminDashboard = () => {
 
       // Set transactions immediately
       if (!txResult.error) {
-        setTransactions(txResult.data as unknown as Transaction[] || []);
+        const newTx = txResult.data as unknown as Transaction[] || [];
+        if (resetTransactions) {
+          setTransactions(newTx);
+          setTransactionOffset(TRANSACTIONS_PER_LOAD);
+          setHasMoreTransactions(newTx.length === TRANSACTIONS_PER_LOAD);
+        }
       }
 
       // Set rewards immediately
@@ -193,6 +202,33 @@ const AdminDashboard = () => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMoreTransactions = async () => {
+    if (isLoadingMore || !hasMoreTransactions) return;
+    setIsLoadingMore(true);
+    try {
+      // We need to fetch all and slice since RPC doesn't support offset
+      const { data, error } = await supabase.rpc('get_user_transactions', { 
+        p_limit: transactionOffset + TRANSACTIONS_PER_LOAD 
+      });
+      
+      if (error) throw error;
+      
+      const allTx = data as unknown as Transaction[] || [];
+      setTransactions(allTx);
+      setTransactionOffset(transactionOffset + TRANSACTIONS_PER_LOAD);
+      setHasMoreTransactions(allTx.length === transactionOffset + TRANSACTIONS_PER_LOAD);
+    } catch (error) {
+      console.error('Error loading more transactions:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar mais transações",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingMore(false);
     }
   };
   const formatCurrency = (value: number) => {
@@ -792,22 +828,36 @@ const AdminDashboard = () => {
                   </TableBody>
                 </Table>
               </div>
-              {totalPages > 1 && <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
+                <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {filteredTransactions.length} transações
+                    {filteredTransactions.length} transações carregadas
                   </span>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-xs text-muted-foreground px-2">
-                      {currentPage}/{totalPages}
-                    </span>
-                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>}
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground px-2">
+                        {currentPage}/{totalPages}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {hasMoreTransactions && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={loadMoreTransactions}
+                    disabled={isLoadingMore}
+                  >
+                    {isLoadingMore ? 'Carregando...' : 'Carregar mais transações'}
+                  </Button>
+                )}
+              </div>
             </>}
         </CardContent>
       </Card>
