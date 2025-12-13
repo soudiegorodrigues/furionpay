@@ -499,7 +499,7 @@ const AdminDashboard = () => {
         </div>}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -533,7 +533,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Grid 2 - Vendas e Saldo */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
