@@ -85,18 +85,33 @@ export default function PublicCheckout() {
     console.log('[UTM DEBUG] Search params:', window.location.search);
     console.log('[UTM DEBUG] Referrer:', document.referrer);
     
-    // Capture current UTMs from URL
-    const currentUtms = captureUTMParams();
-    console.log('[UTM DEBUG] UTMs capturados:', currentUtms);
+    // PRIORIDADE: Verificar fbclid diretamente na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const fbclid = urlParams.get("fbclid");
     
-    // Always save if we have meaningful params
-    if (currentUtms.utm_source && currentUtms.utm_source !== "direct") {
-      saveUTMParams(currentUtms);
-      console.log('[UTM DEBUG] UTMs salvos (source relevante)');
+    if (fbclid) {
+      // fbclid encontrado - salvar IMEDIATAMENTE como Facebook Ads
+      const facebookUtms = {
+        fbclid: fbclid,
+        utm_source: urlParams.get("utm_source") || "facebook",
+        utm_medium: urlParams.get("utm_medium") || "paid",
+        utm_campaign: urlParams.get("utm_campaign") || undefined,
+        traffic_type: "ad" as const,
+      };
+      saveUTMParams(facebookUtms);
+      console.log('[UTM DEBUG] fbclid DETECTADO e SALVO:', facebookUtms);
     } else {
-      // Check if we have saved params with real UTMs
-      const savedUtms = getUTMParams();
-      console.log('[UTM DEBUG] UTMs salvos recuperados:', savedUtms);
+      // Sem fbclid - usar lógica normal
+      const currentUtms = captureUTMParams();
+      console.log('[UTM DEBUG] UTMs capturados:', currentUtms);
+      
+      if (currentUtms.utm_source && currentUtms.utm_source !== "direct") {
+        saveUTMParams(currentUtms);
+        console.log('[UTM DEBUG] UTMs salvos (source relevante)');
+      } else {
+        const savedUtms = getUTMParams();
+        console.log('[UTM DEBUG] UTMs salvos recuperados:', savedUtms);
+      }
     }
     
     console.log('[UTM DEBUG] ====================================');

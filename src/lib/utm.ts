@@ -92,14 +92,40 @@ export function captureUTMParams(): UTMParams {
   }
 
   const params = new URLSearchParams(window.location.search);
+  
+  // PRIORIDADE MÁXIMA: Capturar fbclid PRIMEIRO
+  const fbclid = params.get("fbclid");
+  
+  if (fbclid) {
+    console.log('[UTM DEBUG] fbclid encontrado na URL:', fbclid.substring(0, 20) + '...');
+    const facebookUtms: UTMParams = {
+      fbclid: fbclid,
+      utm_source: params.get("utm_source") || "facebook",
+      utm_medium: params.get("utm_medium") || "paid",
+      utm_campaign: params.get("utm_campaign") || undefined,
+      utm_content: params.get("utm_content") || undefined,
+      utm_term: params.get("utm_term") || undefined,
+      traffic_type: "ad",
+    };
+    
+    // Remove undefined values
+    Object.keys(facebookUtms).forEach((key) => {
+      if (facebookUtms[key as keyof UTMParams] === undefined) {
+        delete facebookUtms[key as keyof UTMParams];
+      }
+    });
+    
+    console.log('[UTM DEBUG] UTMs do Facebook capturados:', facebookUtms);
+    return facebookUtms;
+  }
 
+  // Se não tem fbclid, continuar com lógica normal
   const utmParams: UTMParams = {
     utm_source: params.get("utm_source") || undefined,
     utm_medium: params.get("utm_medium") || undefined,
     utm_campaign: params.get("utm_campaign") || undefined,
     utm_content: params.get("utm_content") || undefined,
     utm_term: params.get("utm_term") || undefined,
-    fbclid: params.get("fbclid") || undefined,
   };
 
   // Remove undefined values
@@ -108,14 +134,6 @@ export function captureUTMParams(): UTMParams {
       delete utmParams[key as keyof UTMParams];
     }
   });
-
-  // If we have fbclid but no utm_source, it's from Facebook Ads
-  if (utmParams.fbclid && !utmParams.utm_source) {
-    utmParams.utm_source = "facebook";
-    utmParams.utm_medium = "paid";
-    utmParams.traffic_type = "ad";
-    console.log('[UTM DEBUG] fbclid detectado, marcando como Facebook Ads');
-  }
 
   // If no UTMs, try to capture from referrer
   if (!utmParams.utm_source) {
