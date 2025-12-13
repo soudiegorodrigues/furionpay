@@ -1,7 +1,7 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Calendar, User, Package, DollarSign, TrendingUp, Check, X } from "lucide-react";
+import { Copy, Calendar, User, Package, TrendingUp, Check } from "lucide-react";
 import { useState } from "react";
 
 interface UTMData {
@@ -86,19 +86,9 @@ const TransactionDetailsSheet = ({
             <div className={`w-2 h-2 rounded-full ${statusConfig.bg}`} />
             <span className="font-medium text-sm">Transação</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className={`${statusConfig.bg} ${statusConfig.text} text-xs px-2 py-0.5`}>
-              {statusConfig.label}
-            </Badge>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => onOpenChange(false)}
-              className="h-7 w-7 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <Badge className={`${statusConfig.bg} ${statusConfig.text} text-xs px-2 py-0.5`}>
+            {statusConfig.label}
+          </Badge>
         </div>
 
         {/* Content scrollable */}
