@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,9 @@ import {
   RefreshCw, 
   Server,
   Zap,
-  XCircle
+  XCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -43,17 +45,20 @@ interface ApiEvent {
   created_at: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export function ApiMonitoringSection() {
   const [healthData, setHealthData] = useState<HealthSummary | null>(null);
   const [recentEvents, setRecentEvents] = useState<ApiEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = async () => {
     try {
       const [healthResult, eventsResult] = await Promise.all([
         supabase.rpc('get_api_health_summary'),
-        supabase.rpc('get_recent_api_events', { p_limit: 20 })
+        supabase.rpc('get_recent_api_events', { p_limit: 100 })
       ]);
 
       if (healthResult.error) throw healthResult.error;
@@ -78,8 +83,17 @@ export function ApiMonitoringSection() {
 
   const handleRefresh = () => {
     setRefreshing(true);
+    setCurrentPage(1);
     fetchData();
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(recentEvents.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedEvents = useMemo(() => 
+    recentEvents.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [recentEvents, startIndex]
+  );
 
   const getStatusColor = (health: AcquirerHealth | null) => {
     if (!health || health.total_calls_24h === 0) return "bg-muted text-muted-foreground";
@@ -230,34 +244,67 @@ export function ApiMonitoringSection() {
         </CardHeader>
         <CardContent>
           {recentEvents.length > 0 ? (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {recentEvents.map(event => (
-                <div key={event.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div className="flex items-center gap-3">
-                    <Badge variant={getEventBadgeVariant(event.event_type)} className="text-xs capitalize">
-                      {event.event_type.replace('_', ' ')}
-                    </Badge>
-                    <span className="text-sm font-medium capitalize">{event.acquirer}</span>
-                    {event.retry_attempt && (
-                      <span className="text-xs text-muted-foreground">
-                        (tentativa {event.retry_attempt})
-                      </span>
-                    )}
+            <>
+              <div className="space-y-2">
+                {paginatedEvents.map(event => (
+                  <div key={event.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b last:border-0 gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={getEventBadgeVariant(event.event_type)} className="text-xs capitalize">
+                        {event.event_type.replace('_', ' ')}
+                      </Badge>
+                      <span className="text-sm font-medium capitalize">{event.acquirer}</span>
+                      {event.retry_attempt && (
+                        <span className="text-xs text-muted-foreground">
+                          (tentativa {event.retry_attempt})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {event.response_time_ms && (
+                        <span>{event.response_time_ms}ms</span>
+                      )}
+                      <span>{formatTime(event.created_at)}</span>
+                    </div>
                     {event.error_message && (
-                      <span className="text-xs text-destructive truncate max-w-xs">
+                      <span className="text-xs text-destructive truncate w-full sm:hidden">
                         {event.error_message}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {event.response_time_ms && (
-                      <span>{event.response_time_ms}ms</span>
-                    )}
-                    <span>{formatTime(event.created_at)}</span>
+                ))}
+              </div>
+              
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, recentEvents.length)} de {recentEvents.length}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 px-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-2">
+                      {currentPage}/{totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 px-2"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">
               Nenhum evento registrado ainda
