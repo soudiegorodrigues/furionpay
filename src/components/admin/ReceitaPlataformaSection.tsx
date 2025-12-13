@@ -657,41 +657,41 @@ export const ReceitaPlataformaSection = () => {
 
       {/* Projeção Mensal */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Target className="h-4 w-4 text-primary" />
             Projeção Mensal
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
-              <div className="text-2xl sm:text-3xl font-bold text-foreground">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className="text-center p-2 sm:p-3 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-sm sm:text-base font-semibold text-foreground">
                 {formatCurrency(profitStats.averageDailyProfit)}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Média Diária</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Média Diária</p>
               <p className="text-xs text-muted-foreground">(últimos 7 dias)</p>
             </div>
-            <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <div className="text-2xl sm:text-3xl font-bold text-primary">
+            <div className="text-center p-2 sm:p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="text-sm sm:text-base font-semibold text-primary">
                 {formatCurrency(profitStats.monthlyProjection)}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Projeção Mensal</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Projeção Mensal</p>
               <p className="text-xs text-muted-foreground">(média × 30 dias)</p>
             </div>
-            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+            <div className="text-center p-2 sm:p-3 bg-background/50 rounded-lg border border-border/50">
               <div className={cn(
-                "text-2xl sm:text-3xl font-bold flex items-center justify-center gap-1",
+                "text-sm sm:text-base font-semibold flex items-center justify-center gap-1",
                 profitStats.trendPercentage > 0 ? "text-green-500" : profitStats.trendPercentage < 0 ? "text-red-500" : "text-muted-foreground"
               )}>
                 {profitStats.trendPercentage > 0 ? (
-                  <ArrowUpRight className="h-5 w-5" />
+                  <ArrowUpRight className="h-4 w-4" />
                 ) : profitStats.trendPercentage < 0 ? (
-                  <ArrowDownRight className="h-5 w-5" />
+                  <ArrowDownRight className="h-4 w-4" />
                 ) : null}
                 {Math.abs(profitStats.trendPercentage).toFixed(1)}%
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Tendência</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Tendência</p>
               <p className="text-xs text-muted-foreground">
                 {profitStats.trendPercentage > 0 ? "em alta" : profitStats.trendPercentage < 0 ? "em queda" : "estável"}
               </p>
