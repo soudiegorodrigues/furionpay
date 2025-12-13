@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 
 interface DashboardStats {
@@ -502,17 +502,11 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="h-[250px] sm:h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorGerados" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+                <BarChart data={chartData} margin={{ top: 30, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid 
                     strokeDasharray="3 3" 
                     className="stroke-muted" 
-                    opacity={0.3} 
+                    opacity={0.2} 
                     horizontal={true}
                     vertical={false}
                   />
@@ -528,31 +522,48 @@ const AdminDashboard = () => {
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
+                    hide
                   />
                   <Tooltip 
+                    cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
-                      fontSize: '12px'
+                      fontSize: '12px',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                     }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: number, name: string) => [
-                      name === 'valorPago' ? formatCurrency(value) : value,
-                      name === 'valorPago' ? 'Valor Pago' : name === 'gerados' ? 'Gerados' : 'Pagos'
-                    ]}
+                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '4px' }}
+                    formatter={(value: number, name: string) => {
+                      if (name === 'pagos') return [value, 'Total de vendas'];
+                      return [value, name];
+                    }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="valorPago" 
-                    name="valorPago"
-                    stroke="hsl(var(--primary))" 
-                    fillOpacity={1} 
-                    fill="url(#colorGerados)" 
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </AreaChart>
+                  <Bar 
+                    dataKey="pagos" 
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill="hsl(217 91% 60%)"
+                      />
+                    ))}
+                    <LabelList 
+                      dataKey="pagos" 
+                      position="top" 
+                      fill="hsl(var(--muted-foreground))"
+                      fontSize={10}
+                      formatter={(value: number) => {
+                        const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
+                        if (total === 0) return '';
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${percentage}%`;
+                      }}
+                    />
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
