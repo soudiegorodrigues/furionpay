@@ -499,7 +499,7 @@ const AdminDashboard = () => {
         </div>}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -520,7 +520,7 @@ const AdminDashboard = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{formatCurrency(filteredStats.amountPaid)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="col-span-2 sm:col-span-1">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs sm:text-sm text-muted-foreground">Conversão</p>
@@ -533,7 +533,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Grid 2 - Vendas e Saldo */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -552,7 +552,7 @@ const AdminDashboard = () => {
             <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="col-span-2 sm:col-span-1">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs sm:text-sm text-muted-foreground">Saldo Disponível</p>
