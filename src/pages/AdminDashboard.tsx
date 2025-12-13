@@ -282,17 +282,19 @@ const AdminDashboard = () => {
         data.push({ date: hourStr, gerados, pagos, valorPago });
       }
     } else {
-      // Daily data for other filters - ALWAYS include today
+      // Daily data for other filters - ALWAYS include today (Brazil timezone)
       const days = getChartDays(chartFilter);
+      
+      // Get today's date in Brazil timezone
+      const brazilDateString = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      const [year, month, day] = brazilDateString.split('-').map(Number);
+      const todayBrazilDate = new Date(year, month - 1, day);
       
       // Generate dates from (days-1) days ago up to and including today
       for (let i = days - 1; i >= 0; i--) {
-        const date = new Date();
-        // Use Brazil timezone for accurate date calculation
-        const brazilNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-        date.setFullYear(brazilNow.getFullYear(), brazilNow.getMonth(), brazilNow.getDate());
-        date.setDate(date.getDate() - i);
-        const dateStr = getBrazilDateStr(date);
+        const date = new Date(todayBrazilDate);
+        date.setDate(todayBrazilDate.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
         const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         
         // Transactions created on this day (Brazil time)
