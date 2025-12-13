@@ -17,6 +17,98 @@ const RETRY_CONFIG = {
   retryableStatusCodes: [408, 429, 500, 502, 503, 504],
 };
 
+// Circuit Breaker configuration per acquirer
+interface CircuitBreakerState {
+  failures: number;
+  lastFailure: number;
+  isOpen: boolean;
+  openUntil: number;
+}
+
+const CIRCUIT_BREAKER_CONFIG = {
+  failureThreshold: 5,      // Open circuit after 5 consecutive failures
+  resetTimeMs: 60000,       // Try to close after 60 seconds
+  halfOpenMaxAttempts: 2,   // Allow 2 test requests when half-open
+};
+
+// In-memory circuit breaker state (per acquirer)
+const circuitBreakers: Record<string, CircuitBreakerState> = {
+  spedpay: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
+  inter: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
+  ativus: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
+};
+
+// Circuit Breaker functions
+function getCircuitState(acquirer: string): CircuitBreakerState {
+  if (!circuitBreakers[acquirer]) {
+    circuitBreakers[acquirer] = { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 };
+  }
+  return circuitBreakers[acquirer];
+}
+
+function isCircuitOpen(acquirer: string): boolean {
+  const state = getCircuitState(acquirer);
+  const now = Date.now();
+  
+  if (!state.isOpen) return false;
+  
+  // Check if reset time has passed (half-open state)
+  if (now >= state.openUntil) {
+    console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Transitioning to HALF-OPEN state`);
+    return false; // Allow test request
+  }
+  
+  console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Circuit is OPEN, blocking request (resets in ${Math.round((state.openUntil - now) / 1000)}s)`);
+  return true;
+}
+
+function recordSuccess(acquirer: string): void {
+  const state = getCircuitState(acquirer);
+  
+  if (state.failures > 0 || state.isOpen) {
+    console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Success recorded, resetting to CLOSED state`);
+  }
+  
+  state.failures = 0;
+  state.isOpen = false;
+  state.openUntil = 0;
+}
+
+function recordFailure(acquirer: string): void {
+  const state = getCircuitState(acquirer);
+  const now = Date.now();
+  
+  state.failures++;
+  state.lastFailure = now;
+  
+  console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Failure recorded (${state.failures}/${CIRCUIT_BREAKER_CONFIG.failureThreshold})`);
+  
+  if (state.failures >= CIRCUIT_BREAKER_CONFIG.failureThreshold) {
+    state.isOpen = true;
+    state.openUntil = now + CIRCUIT_BREAKER_CONFIG.resetTimeMs;
+    console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Circuit OPENED, will reset at ${new Date(state.openUntil).toISOString()}`);
+  }
+}
+
+function getCircuitStatus(): Record<string, { state: string; failures: number; openUntil?: string }> {
+  const now = Date.now();
+  const status: Record<string, { state: string; failures: number; openUntil?: string }> = {};
+  
+  for (const [acquirer, cb] of Object.entries(circuitBreakers)) {
+    let state = 'CLOSED';
+    if (cb.isOpen) {
+      state = now >= cb.openUntil ? 'HALF-OPEN' : 'OPEN';
+    }
+    status[acquirer] = {
+      state,
+      failures: cb.failures,
+      ...(cb.isOpen && { openUntil: new Date(cb.openUntil).toISOString() }),
+    };
+  }
+  
+  return status;
+}
+
 // Utility function for retry with exponential backoff
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -388,6 +480,11 @@ async function getInterAccessToken(client: Deno.HttpClient, supabase: any): Prom
 async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Banco Inter, txid:', txid);
   
+  // Check circuit breaker
+  if (isCircuitOpen('inter')) {
+    return { isPaid: false, status: 'circuit_open' };
+  }
+  
   try {
     const mtlsClient = createMtlsClient();
     const accessToken = await getInterAccessToken(mtlsClient, supabase);
@@ -409,11 +506,15 @@ async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Erro ao consultar PIX Inter:', response.status, errorText);
+      recordFailure('inter');
       return { isPaid: false, status: 'error' };
     }
 
     const data = await response.json();
     console.log('Status Inter:', data.status);
+
+    // Success - reset circuit breaker
+    recordSuccess('inter');
 
     const isPaid = data.status === 'CONCLUIDA';
     
@@ -433,12 +534,18 @@ async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: 
     };
   } catch (error) {
     console.error(`Inter status check failed after retries for ${txid}:`, error);
+    recordFailure('inter');
     return { isPaid: false, status: 'retry_failed' };
   }
 }
 
 async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no SpedPay, txid:', txid);
+
+  // Check circuit breaker
+  if (isCircuitOpen('spedpay')) {
+    return { isPaid: false, status: 'circuit_open' };
+  }
 
   try {
     const response = await fetchWithRetry(
@@ -456,12 +563,16 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('SpedPay API error:', response.status, errorText);
+      recordFailure('spedpay');
       return { isPaid: false, status: 'error' };
     }
 
     const data = await response.json();
     const spedpayStatus = data.status?.toLowerCase() || '';
     const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
+
+    // Success - reset circuit breaker
+    recordSuccess('spedpay');
 
     if (isPaid) {
       const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
@@ -478,6 +589,7 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
     };
   } catch (error) {
     console.error(`SpedPay status check failed after retries for ${txid}:`, error);
+    recordFailure('spedpay');
     return { isPaid: false, status: 'retry_failed' };
   }
 }
@@ -487,6 +599,11 @@ const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/ge
 
 async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Ativus Hub, id_transaction:', idTransaction);
+
+  // Check circuit breaker
+  if (isCircuitOpen('ativus')) {
+    return { isPaid: false, status: 'circuit_open' };
+  }
 
   // Check if API key is already Base64 encoded
   const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
@@ -514,6 +631,7 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
 
     if (!response.ok) {
       console.error('Ativus status check failed:', response.status, responseText);
+      recordFailure('ativus');
       return { isPaid: false, status: 'pending' };
     }
 
@@ -522,8 +640,12 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
       data = JSON.parse(responseText);
     } catch {
       console.error('Failed to parse Ativus response');
+      recordFailure('ativus');
       return { isPaid: false, status: 'pending' };
     }
+
+    // Success - reset circuit breaker
+    recordSuccess('ativus');
 
     // According to documentation, response format is:
     // { "situacao": "AGUARDANDO_PAGAMENTO" | "CONCLUIDO" | etc, "tipo": "CASH IN", ... }
@@ -562,6 +684,7 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
     };
   } catch (error) {
     console.error(`Ativus status check failed after retries for ${idTransaction}:`, error);
+    recordFailure('ativus');
     return { isPaid: false, status: 'retry_failed' };
   }
 }
