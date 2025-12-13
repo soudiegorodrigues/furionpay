@@ -443,75 +443,71 @@ export const MultiAcquirersSection = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* BANCO INTER Card */}
         <Card className={`border-primary/50 transition-opacity ${interEnabled === false ? 'opacity-60' : ''}`}>
-          <CardHeader className="pb-3">
+          <CardHeader className="p-3 pb-2">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold text-primary">BANCO INTER</CardTitle>
-                <CardDescription className="text-sm">
+                <CardTitle className="text-sm font-bold text-primary">BANCO INTER</CardTitle>
+                <CardDescription className="text-xs">
                   Gateway PIX via Banco Inter
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {isLoadingStates ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
                 ) : (
                   <Switch
                     checked={interEnabled ?? true}
                     onCheckedChange={(checked) => toggleAcquirer('inter', checked)}
+                    className="scale-75"
                   />
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">Métodos de pagamento disponíveis:</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 bg-emerald-500/10 rounded flex items-center justify-center">
-                      <svg width="12" height="12" viewBox="0 0 32 32" fill="none">
-                        <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                        <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
-                        <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
-                        <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                      </svg>
-                    </div>
-                    <span className="text-sm font-medium">PIX</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{interEnabled !== false ? 'Ativo' : 'Inativo'}</span>
+          <CardContent className="p-3 pt-0 space-y-2">
+            <div className="flex items-center justify-between py-1.5 px-2 bg-muted/50 rounded">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
+                  <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                  </svg>
                 </div>
+                <span className="text-xs font-medium">PIX</span>
               </div>
+              <span className="text-[10px] text-muted-foreground">{interEnabled !== false ? 'Ativo' : 'Inativo'}</span>
             </div>
             
             {/* Fee Configuration */}
-            <div className="space-y-3 pt-2 border-t">
-              <p className="text-sm font-medium text-muted-foreground">Taxas:</p>
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
               <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Taxa (%)</Label>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Taxa (%)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     value={interFeeRate}
                     onChange={(e) => setInterFeeRate(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-7 text-xs"
                     disabled={interEnabled === false}
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Valor Fixo (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     value={interFixedFee}
                     onChange={(e) => setInterFixedFee(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-7 text-xs"
                     disabled={interEnabled === false}
                   />
                 </div>
@@ -520,35 +516,36 @@ export const MultiAcquirersSection = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => saveFeeSettings('inter', interFeeRate, interFixedFee)}
-                className="w-full h-7 text-xs"
+                className="w-full h-6 text-[10px]"
                 disabled={interEnabled === false}
               >
                 Salvar Taxas
               </Button>
             </div>
 
-            {/* Set as Default - only show if enabled */}
+            {/* Set as Default */}
             {interEnabled !== false && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Adquirente principal:</span>
+                <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
                 <Switch
                   checked={defaultAcquirer === 'inter'}
                   onCheckedChange={(checked) => {
                     if (checked) setAsDefaultAcquirer('inter');
                   }}
+                  className="scale-75"
                 />
               </div>
             )}
             
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+            <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
               <Badge 
                 variant="outline" 
                 className={interEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-xs"
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
                 }
               >
-                {interEnabled !== false ? <Check className="w-3 h-3 mr-1" /> : <Power className="w-3 h-3 mr-1" />}
+                {interEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
                 {interEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
@@ -556,10 +553,10 @@ export const MultiAcquirersSection = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => setShowInterConfigDialog(true)}
-                  className="h-7 text-xs px-2"
+                  className="h-5 text-[10px] px-1.5"
                   disabled={interEnabled === false}
                 >
-                  <Settings className="w-3 h-3 mr-1" />
+                  <Settings className="w-2.5 h-2.5 mr-0.5" />
                   Config
                 </Button>
                 <Button 
@@ -567,10 +564,10 @@ export const MultiAcquirersSection = () => {
                   size="sm" 
                   onClick={testInterConnection}
                   disabled={isTestingInter || interEnabled === false}
-                  className="h-7 text-xs px-2"
+                  className="h-5 text-[10px] px-1.5"
                 >
                   {isTestingInter ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
                   ) : (
                     "Testar"
                   )}
@@ -656,72 +653,68 @@ export const MultiAcquirersSection = () => {
 
         {/* SPEDPAY Card */}
         <Card className={`border-primary/50 transition-opacity ${spedpayEnabled === false ? 'opacity-60' : ''}`}>
-          <CardHeader className="pb-3">
+          <CardHeader className="p-3 pb-2">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold text-primary">SPEDPAY</CardTitle>
-                <CardDescription className="text-sm">
+                <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
+                <CardDescription className="text-xs">
                   Adquirente integrada ao sistema
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {isLoadingStates ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
                 ) : (
                   <Switch
                     checked={spedpayEnabled ?? true}
                     onCheckedChange={(checked) => toggleAcquirer('spedpay', checked)}
+                    className="scale-75"
                   />
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">Métodos de pagamento disponíveis:</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 bg-emerald-500/10 rounded flex items-center justify-center">
-                      <svg width="12" height="12" viewBox="0 0 32 32" fill="none">
-                        <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                        <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
-                        <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
-                        <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                      </svg>
-                    </div>
-                    <span className="text-sm font-medium">PIX</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{spedpayEnabled !== false ? 'Ativo' : 'Inativo'}</span>
+          <CardContent className="p-3 pt-0 space-y-2">
+            <div className="flex items-center justify-between py-1.5 px-2 bg-muted/50 rounded">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
+                  <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                  </svg>
                 </div>
+                <span className="text-xs font-medium">PIX</span>
               </div>
+              <span className="text-[10px] text-muted-foreground">{spedpayEnabled !== false ? 'Ativo' : 'Inativo'}</span>
             </div>
             
             {/* Fee Configuration */}
-            <div className="space-y-3 pt-2 border-t">
-              <p className="text-sm font-medium text-muted-foreground">Taxas:</p>
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
               <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Taxa (%)</Label>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Taxa (%)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     value={spedpayFeeRate}
                     onChange={(e) => setSpedpayFeeRate(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-7 text-xs"
                     disabled={spedpayEnabled === false}
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Valor Fixo (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     value={spedpayFixedFee}
                     onChange={(e) => setSpedpayFixedFee(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-7 text-xs"
                     disabled={spedpayEnabled === false}
                   />
                 </div>
@@ -730,35 +723,36 @@ export const MultiAcquirersSection = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => saveFeeSettings('spedpay', spedpayFeeRate, spedpayFixedFee)}
-                className="w-full h-7 text-xs"
+                className="w-full h-6 text-[10px]"
                 disabled={spedpayEnabled === false}
               >
                 Salvar Taxas
               </Button>
             </div>
 
-            {/* Set as Default - only show if enabled */}
+            {/* Set as Default */}
             {spedpayEnabled !== false && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Adquirente principal:</span>
+                <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
                 <Switch
                   checked={defaultAcquirer === 'spedpay'}
                   onCheckedChange={(checked) => {
                     if (checked) setAsDefaultAcquirer('spedpay');
                   }}
+                  className="scale-75"
                 />
               </div>
             )}
             
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+            <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
               <Badge 
                 variant="outline" 
                 className={spedpayEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-xs"
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
                 }
               >
-                {spedpayEnabled !== false ? <Check className="w-3 h-3 mr-1" /> : <Power className="w-3 h-3 mr-1" />}
+                {spedpayEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
                 {spedpayEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
@@ -766,10 +760,10 @@ export const MultiAcquirersSection = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => setShowSpedpayConfigDialog(true)}
-                  className="h-7 text-xs px-2"
+                  className="h-5 text-[10px] px-1.5"
                   disabled={spedpayEnabled === false}
                 >
-                  <Settings className="w-3 h-3 mr-1" />
+                  <Settings className="w-2.5 h-2.5 mr-0.5" />
                   Config
                 </Button>
                 <Button 
@@ -777,10 +771,10 @@ export const MultiAcquirersSection = () => {
                   size="sm" 
                   onClick={testSpedpayConnection}
                   disabled={isTestingSpedpay || spedpayEnabled === false}
-                  className="h-7 text-xs px-2"
+                  className="h-5 text-[10px] px-1.5"
                 >
                   {isTestingSpedpay ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
                   ) : (
                     "Testar"
                   )}
@@ -828,72 +822,68 @@ export const MultiAcquirersSection = () => {
 
         {/* ATIVUS HUB Card */}
         <Card className={`border-primary/50 transition-opacity ${ativusEnabled === false ? 'opacity-60' : ''}`}>
-          <CardHeader className="pb-3">
+          <CardHeader className="p-3 pb-2">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold text-primary">ATIVUS HUB</CardTitle>
-                <CardDescription className="text-sm">
+                <CardTitle className="text-sm font-bold text-primary">ATIVUS HUB</CardTitle>
+                <CardDescription className="text-xs">
                   Gateway PIX via Ativus Hub
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {isLoadingStates ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
                 ) : (
                   <Switch
                     checked={ativusEnabled ?? true}
                     onCheckedChange={(checked) => toggleAcquirer('ativus', checked)}
+                    className="scale-75"
                   />
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">Métodos de pagamento disponíveis:</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 bg-emerald-500/10 rounded flex items-center justify-center">
-                      <svg width="12" height="12" viewBox="0 0 32 32" fill="none">
-                        <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                        <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
-                        <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
-                        <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                      </svg>
-                    </div>
-                    <span className="text-sm font-medium">PIX</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{ativusEnabled !== false ? 'Ativo' : 'Inativo'}</span>
+          <CardContent className="p-3 pt-0 space-y-2">
+            <div className="flex items-center justify-between py-1.5 px-2 bg-muted/50 rounded">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
+                  <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                  </svg>
                 </div>
+                <span className="text-xs font-medium">PIX</span>
               </div>
+              <span className="text-[10px] text-muted-foreground">{ativusEnabled !== false ? 'Ativo' : 'Inativo'}</span>
             </div>
             
             {/* Fee Configuration */}
-            <div className="space-y-3 pt-2 border-t">
-              <p className="text-sm font-medium text-muted-foreground">Taxas:</p>
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
               <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Taxa (%)</Label>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Taxa (%)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     value={ativusFeeRate}
                     onChange={(e) => setAtivusFeeRate(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-7 text-xs"
                     disabled={ativusEnabled === false}
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Valor Fixo (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     value={ativusFixedFee}
                     onChange={(e) => setAtivusFixedFee(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-7 text-xs"
                     disabled={ativusEnabled === false}
                   />
                 </div>
@@ -902,35 +892,36 @@ export const MultiAcquirersSection = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => saveFeeSettings('ativus', ativusFeeRate, ativusFixedFee)}
-                className="w-full h-7 text-xs"
+                className="w-full h-6 text-[10px]"
                 disabled={ativusEnabled === false}
               >
                 Salvar Taxas
               </Button>
             </div>
 
-            {/* Set as Default - only show if enabled */}
+            {/* Set as Default */}
             {ativusEnabled !== false && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Adquirente principal:</span>
+                <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
                 <Switch
                   checked={defaultAcquirer === 'ativus'}
                   onCheckedChange={(checked) => {
                     if (checked) setAsDefaultAcquirer('ativus');
                   }}
+                  className="scale-75"
                 />
               </div>
             )}
             
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+            <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
               <Badge 
                 variant="outline" 
                 className={ativusEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-xs"
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
                 }
               >
-                {ativusEnabled !== false ? <Check className="w-3 h-3 mr-1" /> : <Power className="w-3 h-3 mr-1" />}
+                {ativusEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
                 {ativusEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
@@ -938,10 +929,10 @@ export const MultiAcquirersSection = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => setShowAtivusConfigDialog(true)}
-                  className="h-7 text-xs px-2"
+                  className="h-5 text-[10px] px-1.5"
                   disabled={ativusEnabled === false}
                 >
-                  <Settings className="w-3 h-3 mr-1" />
+                  <Settings className="w-2.5 h-2.5 mr-0.5" />
                   Config
                 </Button>
                 <Button 
@@ -949,10 +940,10 @@ export const MultiAcquirersSection = () => {
                   size="sm" 
                   onClick={testAtivusConnection}
                   disabled={isTestingAtivus || ativusEnabled === false}
-                  className="h-7 text-xs px-2"
+                  className="h-5 text-[10px] px-1.5"
                 >
                   {isTestingAtivus ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
                   ) : (
                     "Testar"
                   )}
@@ -1000,12 +991,12 @@ export const MultiAcquirersSection = () => {
 
         {/* Add New Acquirer Card (Placeholder) */}
         <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-not-allowed opacity-50">
-          <CardContent className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-              <Plus className="w-6 h-6 text-muted-foreground" />
+          <CardContent className="flex flex-col items-center justify-center h-full min-h-[120px] text-center p-3">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mb-2">
+              <Plus className="w-4 h-4 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-muted-foreground">Adicionar Nova Adquirente</p>
-            <p className="text-xs text-muted-foreground mt-1">Em breve</p>
+            <p className="text-xs font-medium text-muted-foreground">Adicionar Nova</p>
+            <p className="text-[10px] text-muted-foreground">Em breve</p>
           </CardContent>
         </Card>
       </div>
