@@ -81,11 +81,9 @@ const TransactionDetailsSheet = ({
   return <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[340px] sm:w-[380px] p-0 border-l border-border/50 bg-background">
         {/* Header compacto */}
-        <div className="flex items-center justify-between p-4 border-b border-border/50">
-          <div className="flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${statusConfig.bg}`} />
-            <span className="font-medium text-sm">Transação</span>
-          </div>
+        <div className="flex items-center gap-3 p-4 border-b border-border/50">
+          <div className={`w-2 h-2 rounded-full ${statusConfig.bg}`} />
+          <span className="font-medium text-sm">Transação</span>
           <Badge className={`${statusConfig.bg} ${statusConfig.text} text-xs px-2 py-0.5`}>
             {statusConfig.label}
           </Badge>
