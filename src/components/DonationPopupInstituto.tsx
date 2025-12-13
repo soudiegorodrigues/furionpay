@@ -210,6 +210,10 @@ export const DonationPopupInstituto = ({
       trackEvent('PixGenerated', {
         value: amount,
         currency: 'BRL',
+        content_name: 'Donation Instituto',
+      }, {
+        external_id: data.transactionId,
+        country: 'br',
       });
 
       setPixData({

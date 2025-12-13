@@ -40,7 +40,7 @@ export const DonationPopupHot = ({
   const [isPaid, setIsPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams, setAdvancedMatching } = usePixel();
   
   // Prioriza UTMs passados via prop sobre os do contexto
   const utmParams = propUtmParams || contextUtmParams;
@@ -183,11 +183,18 @@ export const DonationPopupHot = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event
+      // Fire PixGenerated event with advanced matching
       trackEvent('PixGenerated', {
         value: fixedAmount,
         currency: 'BRL',
         content_name: 'Donation Hot',
+      }, {
+        fn: name.split(' ')[0]?.toLowerCase(),
+        ln: name.split(' ').slice(1).join(' ')?.toLowerCase(),
+        em: email?.toLowerCase(),
+        ph: phone?.replace(/\D/g, ''),
+        external_id: data.transactionId,
+        country: 'br',
       });
       
       setStep("pix");

@@ -41,8 +41,11 @@ export const PixQRCode = ({
     trackCustomEvent('PixGenerated', {
       value: amount,
       currency: 'BRL',
+    }, {
+      external_id: transactionId,
+      country: 'br',
     });
-  }, [amount, trackCustomEvent]);
+  }, [amount, transactionId, trackCustomEvent]);
 
   // Poll for payment status using active SpedPay polling
   useEffect(() => {
@@ -65,6 +68,9 @@ export const PixQRCode = ({
             content_name: 'Doação PIX',
             content_type: 'donation',
             transaction_id: transactionId,
+          }, {
+            external_id: transactionId,
+            country: 'br',
           });
           toast({
             title: "🎉 Pagamento confirmado!",

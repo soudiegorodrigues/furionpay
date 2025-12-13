@@ -9,11 +9,24 @@ declare global {
   }
 }
 
+// Advanced matching parameters for better match quality
+interface AdvancedMatchingParams {
+  em?: string; // Email (will be hashed by Facebook)
+  ph?: string; // Phone (will be hashed by Facebook)
+  fn?: string; // First name
+  ln?: string; // Last name
+  external_id?: string; // External ID (transaction ID)
+  country?: string; // Country code
+  ct?: string; // City
+  st?: string; // State
+}
+
 interface MetaPixelContextType {
-  trackEvent: (eventName: string, params?: Record<string, any>) => void;
-  trackCustomEvent: (eventName: string, params?: Record<string, any>) => void;
+  trackEvent: (eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => void;
+  trackCustomEvent: (eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => void;
   isLoaded: boolean;
   utmParams: UTMParams;
+  setAdvancedMatching: (params: AdvancedMatchingParams) => void;
 }
 
 const MetaPixelContext = createContext<MetaPixelContextType>({
@@ -21,6 +34,7 @@ const MetaPixelContext = createContext<MetaPixelContextType>({
   trackCustomEvent: () => {},
   isLoaded: false,
   utmParams: {},
+  setAdvancedMatching: () => {},
 });
 
 export const usePixel = () => useContext(MetaPixelContext);
@@ -37,6 +51,9 @@ interface PixelConfig {
 export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [utmParams, setUtmParams] = useState<UTMParams>({});
+  const [advancedMatchingData, setAdvancedMatchingData] = useState<AdvancedMatchingParams>({
+    country: 'br' // Default to Brazil
+  });
 
   // Capture UTM params on mount and whenever URL changes
   useEffect(() => {
@@ -148,26 +165,61 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     }, 100);
   };
 
-  const trackEvent = useCallback((eventName: string, params?: Record<string, any>) => {
-    if (typeof window !== 'undefined' && window.fbq) {
-      // Include UTM params in all events
-      const eventParams = { ...params, ...utmParams };
-      window.fbq('track', eventName, eventParams);
-      console.log(`Pixel Event: ${eventName}`, eventParams);
-    }
-  }, [utmParams]);
+  // Function to set advanced matching data (call when user enters email/phone)
+  const setAdvancedMatching = useCallback((params: AdvancedMatchingParams) => {
+    setAdvancedMatchingData(prev => ({ ...prev, ...params }));
+    console.log('Advanced Matching updated:', params);
+  }, []);
 
-  const trackCustomEvent = useCallback((eventName: string, params?: Record<string, any>) => {
+  const trackEvent = useCallback((eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => {
     if (typeof window !== 'undefined' && window.fbq) {
-      // Include UTM params in all events
-      const eventParams = { ...params, ...utmParams };
-      window.fbq('trackCustom', eventName, eventParams);
-      console.log(`Pixel Custom Event: ${eventName}`, eventParams);
+      // Merge advanced matching params
+      const matchingData = { ...advancedMatchingData, ...advancedMatching };
+      
+      // Include UTM params and user data in all events
+      const eventParams = { 
+        ...params, 
+        ...utmParams,
+        // Add external_id for deduplication
+        ...(matchingData.external_id && { event_id: matchingData.external_id })
+      };
+      
+      // Use fbq with user_data for advanced matching
+      if (Object.keys(matchingData).length > 0) {
+        window.fbq('track', eventName, eventParams, { user_data: matchingData });
+        console.log(`Pixel Event: ${eventName}`, eventParams, 'User Data:', matchingData);
+      } else {
+        window.fbq('track', eventName, eventParams);
+        console.log(`Pixel Event: ${eventName}`, eventParams);
+      }
     }
-  }, [utmParams]);
+  }, [utmParams, advancedMatchingData]);
+
+  const trackCustomEvent = useCallback((eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => {
+    if (typeof window !== 'undefined' && window.fbq) {
+      // Merge advanced matching params
+      const matchingData = { ...advancedMatchingData, ...advancedMatching };
+      
+      // Include UTM params in all events
+      const eventParams = { 
+        ...params, 
+        ...utmParams,
+        ...(matchingData.external_id && { event_id: matchingData.external_id })
+      };
+      
+      // Use fbq with user_data for advanced matching
+      if (Object.keys(matchingData).length > 0) {
+        window.fbq('trackCustom', eventName, eventParams, { user_data: matchingData });
+        console.log(`Pixel Custom Event: ${eventName}`, eventParams, 'User Data:', matchingData);
+      } else {
+        window.fbq('trackCustom', eventName, eventParams);
+        console.log(`Pixel Custom Event: ${eventName}`, eventParams);
+      }
+    }
+  }, [utmParams, advancedMatchingData]);
 
   return (
-    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams }}>
+    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams, setAdvancedMatching }}>
       {children}
     </MetaPixelContext.Provider>
   );

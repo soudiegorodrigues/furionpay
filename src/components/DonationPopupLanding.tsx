@@ -179,6 +179,10 @@ export const DonationPopupLanding = ({
       trackEvent('PixGenerated', {
         value: total,
         currency: 'BRL',
+        content_name: 'Donation Landing',
+      }, {
+        external_id: data.transactionId,
+        country: 'br',
       });
 
       setPixData({
