@@ -521,14 +521,14 @@ const AdminDashboard = () => {
                   <CartesianGrid 
                     stroke="hsl(var(--muted-foreground))"
                     opacity={0.15} 
-                    horizontal={true}
+                    horizontal={false}
                     vertical={false}
                   />
                   <XAxis 
                     dataKey="date" 
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                     tickLine={false}
-                    axisLine={false}
+                    axisLine={{ stroke: 'hsl(var(--muted-foreground))', opacity: 0.15 }}
                     interval={0}
                   />
                   <YAxis 
@@ -537,7 +537,7 @@ const AdminDashboard = () => {
                     axisLine={false}
                     allowDecimals={false}
                     hide
-                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.4)]}
+                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.8)]}
                   />
                   <Tooltip 
                     cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
