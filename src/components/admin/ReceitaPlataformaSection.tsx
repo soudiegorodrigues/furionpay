@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -110,15 +110,22 @@ export const ReceitaPlataformaSection = () => {
     const fifteenDaysAgo = new Date(now);
     fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
     
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisYearStart = new Date(now.getFullYear(), 0, 1);
 
     let todayProfit = 0;
     let sevenDaysProfit = 0;
     let fifteenDaysProfit = 0;
+    let thirtyDaysProfit = 0;
     let thisMonthProfit = 0;
     let thisYearProfit = 0;
     let totalProfit = 0;
+
+    // Para calcular média diária dos últimos 7 dias
+    const dailyProfits: Map<string, number> = new Map();
 
     paidTransactions.forEach(tx => {
       const profit = calculateProfit(tx.amount, tx.fee_percentage, tx.fee_fixed);
@@ -135,11 +142,19 @@ export const ReceitaPlataformaSection = () => {
       // 7 dias
       if (txDate >= sevenDaysAgo) {
         sevenDaysProfit += profit;
+        // Acumular lucro diário para cálculo de média
+        const existingProfit = dailyProfits.get(txDateStr) || 0;
+        dailyProfits.set(txDateStr, existingProfit + profit);
       }
 
       // 15 dias
       if (txDate >= fifteenDaysAgo) {
         fifteenDaysProfit += profit;
+      }
+
+      // 30 dias
+      if (txDate >= thirtyDaysAgo) {
+        thirtyDaysProfit += profit;
       }
 
       // Este mês
@@ -153,15 +168,42 @@ export const ReceitaPlataformaSection = () => {
       }
     });
 
+    // Calcular média diária baseada nos últimos 7 dias
+    const daysWithData = dailyProfits.size;
+    const averageDailyProfit = daysWithData > 0 ? sevenDaysProfit / 7 : 0;
+    
+    // Projeção mensal = média diária × 30
+    const monthlyProjection = averageDailyProfit * 30;
+    
+    // Calcular tendência (comparar primeira metade vs segunda metade dos últimos 7 dias)
+    const sortedDays = Array.from(dailyProfits.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    let firstHalfProfit = 0;
+    let secondHalfProfit = 0;
+    sortedDays.forEach((entry, index) => {
+      if (index < sortedDays.length / 2) {
+        firstHalfProfit += entry[1];
+      } else {
+        secondHalfProfit += entry[1];
+      }
+    });
+    const trendPercentage = firstHalfProfit > 0 
+      ? ((secondHalfProfit - firstHalfProfit) / firstHalfProfit) * 100 
+      : 0;
+
     return {
       today: todayProfit,
       sevenDays: sevenDaysProfit,
       fifteenDays: fifteenDaysProfit,
+      thirtyDays: thirtyDaysProfit,
       thisMonth: thisMonthProfit,
       thisYear: thisYearProfit,
       total: totalProfit,
       transactionCount: paidTransactions.length,
-      averageProfit: paidTransactions.length > 0 ? totalProfit / paidTransactions.length : 0
+      averageProfit: paidTransactions.length > 0 ? totalProfit / paidTransactions.length : 0,
+      averageDailyProfit,
+      monthlyProjection,
+      trendPercentage,
+      daysWithData
     };
   }, [paidTransactions]);
 
@@ -406,6 +448,56 @@ export const ReceitaPlataformaSection = () => {
             <span className="w-3 h-3 rounded-full bg-green-500"></span>
             <span className="text-xs text-muted-foreground font-medium">Lucro (Taxas cobradas)</span>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Projeção Mensal */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            Projeção Mensal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                {formatCurrency(profitStats.averageDailyProfit)}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Média Diária</p>
+              <p className="text-xs text-muted-foreground">(últimos 7 dias)</p>
+            </div>
+            <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">
+                {formatCurrency(profitStats.monthlyProjection)}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Projeção Mensal</p>
+              <p className="text-xs text-muted-foreground">(média × 30 dias)</p>
+            </div>
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className={cn(
+                "text-2xl sm:text-3xl font-bold flex items-center justify-center gap-1",
+                profitStats.trendPercentage > 0 ? "text-green-500" : profitStats.trendPercentage < 0 ? "text-red-500" : "text-muted-foreground"
+              )}>
+                {profitStats.trendPercentage > 0 ? (
+                  <ArrowUpRight className="h-5 w-5" />
+                ) : profitStats.trendPercentage < 0 ? (
+                  <ArrowDownRight className="h-5 w-5" />
+                ) : null}
+                {Math.abs(profitStats.trendPercentage).toFixed(1)}%
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Tendência</p>
+              <p className="text-xs text-muted-foreground">
+                {profitStats.trendPercentage > 0 ? "em alta" : profitStats.trendPercentage < 0 ? "em queda" : "estável"}
+              </p>
+            </div>
+          </div>
+          {profitStats.daysWithData === 0 && (
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Sem dados suficientes para projeção. Aguarde transações nos últimos 7 dias.
+            </p>
+          )}
         </CardContent>
       </Card>
 
