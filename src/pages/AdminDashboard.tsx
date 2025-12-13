@@ -568,15 +568,17 @@ const AdminDashboard = () => {
                     dataKey="pagos" 
                     position="top" 
                     fill="hsl(var(--muted-foreground))"
-                    fontSize={12}
+                    fontSize={chartFilter === '30days' ? 10 : 12}
                     fontWeight={500}
-                      formatter={(value: number) => {
-                        const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
-                        if (total === 0 || value === 0) return '';
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return `${percentage}%`;
-                      }}
-                    />
+                    formatter={(value: number, entry: any) => {
+                      // Only show percentage for days with paid transactions
+                      if (value === 0) return '';
+                      const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
+                      if (total === 0) return '';
+                      const percentage = ((value / total) * 100).toFixed(1);
+                      return `${percentage}%`;
+                    }}
+                  />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
