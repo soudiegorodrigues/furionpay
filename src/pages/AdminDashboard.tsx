@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +63,7 @@ interface Reward {
   image_url: string | null;
 }
 const AdminDashboard = () => {
+  const isMobile = useIsMobile();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
@@ -595,7 +597,7 @@ const AdminDashboard = () => {
                 top: 30,
                 right: 5,
                 left: 5,
-                bottom: 40
+                bottom: isMobile ? 40 : 5
               }} barCategoryGap="50%" barSize={20}>
                   <defs>
                     <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
@@ -611,15 +613,15 @@ const AdminDashboard = () => {
                   <XAxis 
                     dataKey="date" 
                     tick={{
-                      fontSize: 8,
+                      fontSize: isMobile ? 8 : 10,
                       fill: 'hsl(var(--muted-foreground))'
                     }} 
-                    angle={-90}
-                    textAnchor="end"
+                    angle={isMobile ? -90 : 0}
+                    textAnchor={isMobile ? "end" : "middle"}
                     tickLine={false} 
                     axisLine={false} 
-                    interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
-                    height={50}
+                    interval={isMobile ? 2 : 0}
+                    height={isMobile ? 50 : 30}
                   />
                   <YAxis tick={{
                   fontSize: 10,
