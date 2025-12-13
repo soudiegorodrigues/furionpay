@@ -452,7 +452,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -486,7 +486,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Chart + Side Cards Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 sm:gap-8">
         {/* Chart - Visão Geral Style */}
         <Card className="xl:col-span-3">
           <CardHeader className="pb-2">
