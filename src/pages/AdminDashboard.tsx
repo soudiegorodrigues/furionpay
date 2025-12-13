@@ -282,11 +282,15 @@ const AdminDashboard = () => {
         data.push({ date: hourStr, gerados, pagos, valorPago });
       }
     } else {
-      // Daily data for other filters
+      // Daily data for other filters - ALWAYS include today
       const days = getChartDays(chartFilter);
       
+      // Generate dates from (days-1) days ago up to and including today
       for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(now);
+        const date = new Date();
+        // Use Brazil timezone for accurate date calculation
+        const brazilNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        date.setFullYear(brazilNow.getFullYear(), brazilNow.getMonth(), brazilNow.getDate());
         date.setDate(date.getDate() - i);
         const dateStr = getBrazilDateStr(date);
         const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
