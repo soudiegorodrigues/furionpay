@@ -1,9 +1,11 @@
 /**
- * FurionPay Universal UTM Tracker v2.1
+ * FurionPay Universal UTM Tracker v2.2
  * Atualizado: 2025-12-13
  * Adicione este script nas suas páginas de vendas para preservar UTMs automaticamente
  * 
  * Uso: <script src="https://SEU_DOMINIO/utm-tracker.js"></script>
+ * 
+ * NOVIDADE v2.2: Preserva fbclid entre navegações internas do site
  */
 (function() {
   'use strict';
@@ -104,16 +106,27 @@
       }
     });
 
-    // Verificar se tem UTMs relevantes
+    // Verificar se tem UTMs relevantes na URL
     var hasUTMs = utmData.utm_source || utmData.fbclid || utmData.gclid || utmData.ttclid;
 
-    // Captura referrer se não tiver UTMs
+    // NÃO capturar referrer se for navegação interna (mesmo domínio)
+    // Isso evita sobrescrever o fbclid salvo com "referral"
     if (!hasUTMs && document.referrer) {
       try {
         var referrerUrl = new URL(document.referrer);
         var referrerHost = referrerUrl.hostname.toLowerCase();
+        var currentHost = window.location.hostname.toLowerCase();
         
-        // Detecta fonte pelo referrer
+        // Se é navegação interna (mesmo domínio), NÃO sobrescrever
+        if (referrerHost === currentHost || 
+            referrerHost.endsWith('.' + currentHost) || 
+            currentHost.endsWith('.' + referrerHost)) {
+          log('Navegação interna detectada - preservando UTMs salvos');
+          utmData._isInternalNavigation = true;
+          return utmData;
+        }
+        
+        // Detecta fonte pelo referrer (apenas para navegação externa)
         if (referrerHost.includes('facebook') || referrerHost.includes('fb.com')) {
           utmData.utm_source = 'facebook';
           utmData.utm_medium = 'social';
@@ -129,7 +142,7 @@
         } else if (referrerHost.includes('youtube')) {
           utmData.utm_source = 'youtube';
           utmData.utm_medium = 'social';
-        } else if (referrerHost !== window.location.hostname) {
+        } else {
           utmData.utm_source = referrerHost;
           utmData.utm_medium = 'referral';
         }
@@ -176,6 +189,22 @@
       // Ignora erros
     }
     return null;
+  }
+
+  // Verifica se é um link interno (mesmo domínio)
+  function isInternalLink(href) {
+    if (!href) return false;
+    try {
+      var url = new URL(href, window.location.origin);
+      var linkHost = url.hostname.toLowerCase();
+      var currentHost = window.location.hostname.toLowerCase();
+      
+      return linkHost === currentHost || 
+             linkHost.endsWith('.' + currentHost) || 
+             currentHost.endsWith('.' + linkHost);
+    } catch (e) {
+      return false;
+    }
   }
 
   // Verifica se é um link de checkout
@@ -231,15 +260,16 @@
     }
   }
 
-  // Atualiza todos os links de checkout na página
-  function updateCheckoutLinks(utmData) {
-    if (!utmData) return;
+  // Atualiza todos os links na página (internos E de checkout)
+  function updateAllLinks(utmData) {
+    if (!utmData || (!utmData.fbclid && !utmData.gclid && !utmData.ttclid)) return;
 
     var links = document.querySelectorAll('a[href]');
     var updatedCount = 0;
     
     links.forEach(function(link) {
-      if (isCheckoutLink(link.href)) {
+      // Atualizar links internos E de checkout
+      if (isInternalLink(link.href) || isCheckoutLink(link.href)) {
         var newHref = addUTMsToUrl(link.href, utmData);
         if (newHref !== link.href) {
           link.href = newHref;
@@ -249,21 +279,21 @@
     });
     
     if (updatedCount > 0) {
-      log('Links de checkout atualizados:', updatedCount);
+      log('Links atualizados com UTMs:', updatedCount);
     }
   }
 
   // Intercepta cliques em links
   function interceptClicks(utmData) {
-    if (!utmData) return;
+    if (!utmData || (!utmData.fbclid && !utmData.gclid && !utmData.ttclid)) return;
 
     document.addEventListener('click', function(e) {
       var link = e.target.closest('a[href]');
-      if (link && isCheckoutLink(link.href)) {
+      if (link && (isInternalLink(link.href) || isCheckoutLink(link.href))) {
         var newHref = addUTMsToUrl(link.href, utmData);
         if (newHref !== link.href) {
           link.href = newHref;
-          log('UTMs adicionados no clique:', newHref);
+          log('UTMs adicionados no clique:', newHref.substring(0, 100) + '...');
         }
       }
     }, true);
@@ -275,7 +305,7 @@
 
     document.addEventListener('submit', function(e) {
       var form = e.target;
-      if (form.action && isCheckoutLink(form.action)) {
+      if (form.action && (isInternalLink(form.action) || isCheckoutLink(form.action))) {
         // Adicionar UTMs como campos hidden
         UTM_PARAMS.forEach(function(param) {
           if (utmData[param]) {
@@ -298,18 +328,19 @@
   // Observa novos links adicionados dinamicamente
   function observeNewLinks(utmData) {
     if (!utmData || !window.MutationObserver) return;
+    if (!utmData.fbclid && !utmData.gclid && !utmData.ttclid) return;
 
     var observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         mutation.addedNodes.forEach(function(node) {
           if (node.nodeType === 1) { // Element node
-            if (node.tagName === 'A' && isCheckoutLink(node.href)) {
+            if (node.tagName === 'A' && (isInternalLink(node.href) || isCheckoutLink(node.href))) {
               node.href = addUTMsToUrl(node.href, utmData);
             }
             // Verifica links dentro do elemento adicionado
             var innerLinks = node.querySelectorAll ? node.querySelectorAll('a[href]') : [];
             innerLinks.forEach(function(link) {
-              if (isCheckoutLink(link.href)) {
+              if (isInternalLink(link.href) || isCheckoutLink(link.href)) {
                 link.href = addUTMsToUrl(link.href, utmData);
               }
             });
@@ -324,10 +355,64 @@
     });
   }
 
+  // Mescla UTMs salvos com UTMs atuais (prioriza fbclid salvo)
+  function mergeUTMs(currentUTMs, savedUTMs) {
+    if (!savedUTMs) return currentUTMs;
+    if (!currentUTMs) return savedUTMs;
+    
+    var merged = {};
+    
+    // Se é navegação interna, usar os UTMs salvos completamente
+    if (currentUTMs._isInternalNavigation) {
+      log('🔄 Navegação interna - usando UTMs salvos');
+      return savedUTMs;
+    }
+    
+    // Priorizar fbclid/gclid/ttclid salvos se não tiver na URL atual
+    if (savedUTMs.fbclid && !currentUTMs.fbclid) {
+      log('🔄 Usando fbclid salvo:', savedUTMs.fbclid.substring(0, 20) + '...');
+      merged.fbclid = savedUTMs.fbclid;
+      merged.traffic_type = savedUTMs.traffic_type || 'ad';
+    }
+    
+    if (savedUTMs.gclid && !currentUTMs.gclid) {
+      merged.gclid = savedUTMs.gclid;
+      merged.traffic_type = savedUTMs.traffic_type || 'ad';
+    }
+    
+    if (savedUTMs.ttclid && !currentUTMs.ttclid) {
+      merged.ttclid = savedUTMs.ttclid;
+      merged.traffic_type = savedUTMs.traffic_type || 'ad';
+    }
+    
+    // Copiar todos os UTMs do atual
+    Object.keys(currentUTMs).forEach(function(key) {
+      if (key !== '_isInternalNavigation' && !merged[key]) {
+        merged[key] = currentUTMs[key];
+      }
+    });
+    
+    // Copiar UTMs salvos que não existem no atual
+    Object.keys(savedUTMs).forEach(function(key) {
+      if (!merged[key]) {
+        merged[key] = savedUTMs[key];
+      }
+    });
+    
+    // Se temos fbclid, garantir source/medium corretos
+    if (merged.fbclid) {
+      merged.utm_source = merged.utm_source || 'facebook';
+      merged.utm_medium = merged.utm_medium || 'paid';
+      merged.traffic_type = 'ad';
+    }
+    
+    return merged;
+  }
+
   // Inicialização
   function init() {
     log('====================================');
-    log('Tracker iniciando...');
+    log('Tracker v2.2 iniciando...');
     log('URL atual:', window.location.href);
     log('Referrer:', document.referrer || '(nenhum)');
     
@@ -337,28 +422,29 @@
     log('gclid na URL:', params.get('gclid') ? 'SIM ✅' : 'NÃO');
     log('utm_source na URL:', params.get('utm_source') || '(nenhum)');
     
+    // Carrega UTMs salvos PRIMEIRO
+    var savedUTMs = loadUTMs();
+    if (savedUTMs && savedUTMs.fbclid) {
+      log('📦 fbclid SALVO encontrado:', savedUTMs.fbclid.substring(0, 20) + '...');
+    }
+    
     // Captura UTMs da URL atual
     var currentUTMs = captureUTMs();
     
-    // Carrega UTMs salvos anteriormente
-    var savedUTMs = loadUTMs();
+    // MESCLA os UTMs - prioriza fbclid salvo se não tiver na URL
+    var utmData = mergeUTMs(currentUTMs, savedUTMs);
     
-    // Prioriza UTMs da URL atual se tiver fbclid/gclid/ttclid ou utm_source
-    var hasCurrentUTMs = currentUTMs.fbclid || currentUTMs.gclid || currentUTMs.ttclid || currentUTMs.utm_source;
-    
-    var utmData = hasCurrentUTMs ? currentUTMs : (savedUTMs || currentUTMs);
-    
-    // Salva os UTMs
+    // Salva os UTMs mesclados
     saveUTMs(utmData);
     
-    // Atualiza links existentes
+    // Atualiza TODOS os links (internos e de checkout)
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() {
-        updateCheckoutLinks(utmData);
+        updateAllLinks(utmData);
         observeNewLinks(utmData);
       });
     } else {
-      updateCheckoutLinks(utmData);
+      updateAllLinks(utmData);
       observeNewLinks(utmData);
     }
     
@@ -370,7 +456,7 @@
     window.FurionPayUTM = {
       getUTMs: function() { return utmData; },
       getSaved: loadUTMs,
-      updateLinks: function() { updateCheckoutLinks(utmData); },
+      updateLinks: function() { updateAllLinks(utmData); },
       debug: function() {
         log('====== DEBUG INFO ======');
         log('UTMs ativos:', utmData);
