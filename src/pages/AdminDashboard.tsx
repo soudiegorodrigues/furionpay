@@ -545,9 +545,9 @@ const AdminDashboard = () => {
                     maxBarSize={40}
                   >
                     {chartData.map((entry, index) => (
-                      <Cell 
+                    <Cell 
                         key={`cell-${index}`} 
-                        fill="hsl(217 91% 60%)"
+                        fill="hsl(var(--primary))"
                       />
                     ))}
                     <LabelList 
