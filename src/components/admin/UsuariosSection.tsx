@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Users, Loader2, RefreshCw, ChevronLeft, ChevronRight, Search, Pencil, 
-  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX, Percent 
+  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX, Percent, Trophy 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +36,13 @@ interface FeeConfig {
   is_default: boolean;
 }
 
+interface Reward {
+  id: string;
+  name: string;
+  image_url: string | null;
+  threshold_amount: number;
+}
+
 const USERS_PER_PAGE = 10;
 
 export const UsuariosSection = () => {
@@ -57,11 +64,28 @@ export const UsuariosSection = () => {
   const [isSavingUserSettings, setIsSavingUserSettings] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [userToPromote, setUserToPromote] = useState<User | null>(null);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [userTotalPaid, setUserTotalPaid] = useState(0);
 
   useEffect(() => {
     loadUsers();
     loadFeeConfigs();
+    loadRewards();
   }, []);
+
+  const loadRewards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('rewards')
+        .select('id, name, image_url, threshold_amount')
+        .eq('is_active', true)
+        .order('threshold_amount', { ascending: true });
+      if (error) throw error;
+      setRewards(data || []);
+    } catch (error: any) {
+      console.error('Error loading rewards:', error);
+    }
+  };
 
   const loadFeeConfigs = async () => {
     try {
@@ -284,6 +308,7 @@ export const UsuariosSection = () => {
   const openUserDetails = async (u: User) => {
     setSelectedUser(u);
     setUserDetailsOpen(true);
+    setUserTotalPaid(0);
     try {
       const { data: acquirerData } = await supabase
         .from('admin_settings')
@@ -300,6 +325,18 @@ export const UsuariosSection = () => {
         .eq('key', 'user_fee_config')
         .single();
       setSelectedUserFeeConfig(feeData?.value || '');
+
+      // Fetch user total paid amount
+      const { data: transactionData } = await supabase
+        .from('pix_transactions')
+        .select('amount')
+        .eq('user_id', u.id)
+        .eq('status', 'paid');
+      
+      if (transactionData) {
+        const total = transactionData.reduce((sum, t) => sum + (t.amount || 0), 0);
+        setUserTotalPaid(total);
+      }
     } catch {
       setSelectedUserAcquirer('spedpay');
       setSelectedUserFeeConfig('');
@@ -693,6 +730,64 @@ export const UsuariosSection = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Rewards Progress Section */}
+              {rewards.length > 0 && (
+                <div className="space-y-3 pt-4 border-t">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-primary" />
+                    Progresso de Recompensas
+                  </Label>
+                  
+                  {rewards.map(reward => {
+                    const progress = Math.min((userTotalPaid / reward.threshold_amount) * 100, 100);
+                    const achieved = userTotalPaid >= reward.threshold_amount;
+                    
+                    return (
+                      <div key={reward.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                        {/* Reward Image */}
+                        <div className="w-14 h-14 rounded bg-muted flex-shrink-0 overflow-hidden">
+                          {reward.image_url ? (
+                            <img src={reward.image_url} alt={reward.name} className="w-full h-full object-contain" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Trophy className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Info and Progress */}
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-sm truncate">{reward.name}</span>
+                            {achieved ? (
+                              <Badge className="bg-green-500 text-white text-[10px] px-1.5 flex-shrink-0">Conquistado!</Badge>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                Faltam R$ {(reward.threshold_amount - userTotalPaid).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Progress Bar */}
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all ${achieved ? 'bg-green-500' : 'bg-primary'}`}
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          
+                          {/* Values */}
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>R$ {userTotalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span>R$ {reward.threshold_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
