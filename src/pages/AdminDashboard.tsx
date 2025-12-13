@@ -506,9 +506,9 @@ const AdminDashboard = () => {
                   <CartesianGrid 
                     strokeDasharray="3 3" 
                     className="stroke-muted" 
-                    opacity={0.2} 
+                    opacity={0.3} 
                     horizontal={true}
-                    vertical={false}
+                    vertical={true}
                   />
                   <XAxis 
                     dataKey="date" 
