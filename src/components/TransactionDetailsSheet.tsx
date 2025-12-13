@@ -105,13 +105,8 @@ const TransactionDetailsSheet = ({
         <div className="overflow-y-auto h-[calc(100vh-60px)] p-4 space-y-4">
           {/* Valor em destaque */}
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Valor líquido</p>
+            <p className="text-xs text-muted-foreground mb-1">Valor</p>
             <p className="text-2xl font-bold text-primary">{formatCurrency(netAmount)}</p>
-            <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
-              <span>{formatCurrency(transaction.amount)}</span>
-              <span>-</span>
-              <span className="text-red-400">{formatCurrency(feeAmount)}</span>
-            </div>
           </div>
 
           {/* Grid de informações */}
@@ -146,33 +141,6 @@ const TransactionDetailsSheet = ({
                   {transaction.popup_model}
                 </Badge>
               )}
-            </div>
-          </div>
-
-          {/* Detalhes de valores */}
-          <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-            <div className="flex items-center gap-1.5 mb-2">
-              <DollarSign className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Detalhes do valor</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Bruto</span>
-              <span>{formatCurrency(transaction.amount)}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Taxa</span>
-              <span className="text-red-400">
-                -{formatCurrency(feeAmount)}
-                {transaction.fee_percentage !== null && (
-                  <span className="text-[10px] ml-1 opacity-70">
-                    ({transaction.fee_percentage}%)
-                  </span>
-                )}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs pt-2 border-t border-border/50">
-              <span className="font-medium">Líquido</span>
-              <span className="font-medium text-primary">{formatCurrency(netAmount)}</span>
             </div>
           </div>
 
