@@ -289,8 +289,7 @@ const AdminDashboard = () => {
       const dates: string[] = [];
       
       // First: get TODAY in São Paulo timezone as string YYYY-MM-DD
-      const todayBrazilStr = getBrazilDateStr(new Date()); // Ex: "2025-12-14"
-      console.log('[Chart Debug] Today in São Paulo:', todayBrazilStr);
+      const todayBrazilStr = getBrazilDateStr(new Date());
       const [todayYear, todayMonth, todayDay] = todayBrazilStr.split('-').map(Number);
       
       // Generate dates directly from São Paulo components to avoid any timezone conversion
@@ -300,9 +299,6 @@ const AdminDashboard = () => {
         const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
         dates.push(dateStr);
       }
-      
-      console.log('[Chart Debug] Generated dates:', dates);
-      console.log('[Chart Debug] Last date (should be today):', dates[dates.length - 1]);
       
       // Now generate chart data for each date
       for (const dateStr of dates) {
