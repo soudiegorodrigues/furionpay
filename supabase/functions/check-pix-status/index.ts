@@ -9,6 +9,77 @@ const corsHeaders = {
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 
+// Retry with exponential backoff configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 1000,
+  maxDelayMs: 10000,
+  retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+};
+
+// Utility function for retry with exponential backoff
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  context: string,
+  config = RETRY_CONFIG
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Check if error is retryable
+      const isRetryable = 
+        error instanceof TypeError || // Network errors
+        (error instanceof Response && config.retryableStatusCodes.includes(error.status)) ||
+        lastError.message.includes('timeout') ||
+        lastError.message.includes('network') ||
+        lastError.message.includes('ECONNRESET') ||
+        lastError.message.includes('ETIMEDOUT');
+      
+      if (!isRetryable || attempt === config.maxRetries) {
+        console.error(`[RETRY] ${context} - Failed after ${attempt + 1} attempts:`, lastError.message);
+        throw lastError;
+      }
+      
+      // Calculate delay with exponential backoff and jitter
+      const exponentialDelay = Math.min(
+        config.baseDelayMs * Math.pow(2, attempt),
+        config.maxDelayMs
+      );
+      const jitter = Math.random() * 0.3 * exponentialDelay; // 0-30% jitter
+      const delay = exponentialDelay + jitter;
+      
+      console.log(`[RETRY] ${context} - Attempt ${attempt + 1} failed, retrying in ${Math.round(delay)}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
+// Wrapper for fetch with retry logic
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit & { client?: Deno.HttpClient },
+  context: string
+): Promise<Response> {
+  return withRetry(async () => {
+    const response = await fetch(url, options);
+    
+    // Throw error for retryable status codes
+    if (RETRY_CONFIG.retryableStatusCodes.includes(response.status)) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    return response;
+  }, context);
+}
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -317,80 +388,98 @@ async function getInterAccessToken(client: Deno.HttpClient, supabase: any): Prom
 async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Banco Inter, txid:', txid);
   
-  const mtlsClient = createMtlsClient();
-  const accessToken = await getInterAccessToken(mtlsClient, supabase);
-  const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
+  try {
+    const mtlsClient = createMtlsClient();
+    const accessToken = await getInterAccessToken(mtlsClient, supabase);
+    const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
 
-  const response = await fetch(cobUrl, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    client: mtlsClient,
-  });
+    const response = await fetchWithRetry(
+      cobUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        client: mtlsClient,
+      },
+      `Inter status check for ${txid}`
+    );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Erro ao consultar PIX Inter:', response.status, errorText);
-    return { isPaid: false, status: 'error' };
-  }
-
-  const data = await response.json();
-  console.log('Status Inter:', data.status);
-
-  const isPaid = data.status === 'CONCLUIDA';
-  
-  if (isPaid) {
-    const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
-    if (error) {
-      console.error('Erro ao marcar PIX como pago:', error);
-    } else {
-      console.log('PIX marcado como pago com sucesso');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Erro ao consultar PIX Inter:', response.status, errorText);
+      return { isPaid: false, status: 'error' };
     }
-  }
 
-  return {
-    isPaid,
-    status: isPaid ? 'paid' : data.status,
-    paidAt: data.pix?.[0]?.horario || undefined,
-  };
+    const data = await response.json();
+    console.log('Status Inter:', data.status);
+
+    const isPaid = data.status === 'CONCLUIDA';
+    
+    if (isPaid) {
+      const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
+      if (error) {
+        console.error('Erro ao marcar PIX como pago:', error);
+      } else {
+        console.log('PIX marcado como pago com sucesso');
+      }
+    }
+
+    return {
+      isPaid,
+      status: isPaid ? 'paid' : data.status,
+      paidAt: data.pix?.[0]?.horario || undefined,
+    };
+  } catch (error) {
+    console.error(`Inter status check failed after retries for ${txid}:`, error);
+    return { isPaid: false, status: 'retry_failed' };
+  }
 }
 
 async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no SpedPay, txid:', txid);
 
-  const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${txid}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-secret': apiKey,
-    },
-  });
+  try {
+    const response = await fetchWithRetry(
+      `${SPEDPAY_API_URL}/v1/transactions/${txid}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-secret': apiKey,
+        },
+      },
+      `SpedPay status check for ${txid}`
+    );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('SpedPay API error:', response.status, errorText);
-    return { isPaid: false, status: 'error' };
-  }
-
-  const data = await response.json();
-  const spedpayStatus = data.status?.toLowerCase() || '';
-  const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
-
-  if (isPaid) {
-    const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
-    if (error) {
-      console.error('Erro ao marcar PIX como pago:', error);
-    } else {
-      console.log('PIX marcado como pago com sucesso');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('SpedPay API error:', response.status, errorText);
+      return { isPaid: false, status: 'error' };
     }
-  }
 
-  return {
-    isPaid,
-    status: isPaid ? 'paid' : spedpayStatus,
-  };
+    const data = await response.json();
+    const spedpayStatus = data.status?.toLowerCase() || '';
+    const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
+
+    if (isPaid) {
+      const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
+      if (error) {
+        console.error('Erro ao marcar PIX como pago:', error);
+      } else {
+        console.log('PIX marcado como pago com sucesso');
+      }
+    }
+
+    return {
+      isPaid,
+      status: isPaid ? 'paid' : spedpayStatus,
+    };
+  } catch (error) {
+    console.error(`SpedPay status check failed after retries for ${txid}:`, error);
+    return { isPaid: false, status: 'retry_failed' };
+  }
 }
 
 // Ativus Hub correct API URL for status check - from documentation
@@ -408,13 +497,17 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
   console.log('Ativus status URL:', statusUrl);
 
   try {
-    const response = await fetch(statusUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${authHeader}`,
-        'Content-Type': 'application/json',
+    const response = await fetchWithRetry(
+      statusUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json',
+        },
       },
-    });
+      `Ativus status check for ${idTransaction}`
+    );
 
     const responseText = await response.text();
     console.log('Ativus status response:', response.status, responseText);
@@ -468,8 +561,8 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
       paidAt: data.data_transacao || undefined,
     };
   } catch (error) {
-    console.error('Error checking Ativus status:', error);
-    return { isPaid: false, status: 'pending' };
+    console.error(`Ativus status check failed after retries for ${idTransaction}:`, error);
+    return { isPaid: false, status: 'retry_failed' };
   }
 }
 

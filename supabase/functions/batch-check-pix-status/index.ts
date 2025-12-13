@@ -10,6 +10,78 @@ const SPEDPAY_API_URL = 'https://api.spedpay.space';
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/getTransactionStatus.php';
 
+// Retry with exponential backoff configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 500,
+  maxDelayMs: 5000,
+  retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+};
+
+// Utility function for retry with exponential backoff
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  context: string,
+  config = RETRY_CONFIG
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Check if error is retryable
+      const isRetryable = 
+        error instanceof TypeError || // Network errors
+        lastError.message.includes('timeout') ||
+        lastError.message.includes('network') ||
+        lastError.message.includes('ECONNRESET') ||
+        lastError.message.includes('ETIMEDOUT') ||
+        lastError.message.includes('HTTP 429') ||
+        lastError.message.includes('HTTP 5');
+      
+      if (!isRetryable || attempt === config.maxRetries) {
+        console.error(`[RETRY] ${context} - Failed after ${attempt + 1} attempts:`, lastError.message);
+        throw lastError;
+      }
+      
+      // Calculate delay with exponential backoff and jitter
+      const exponentialDelay = Math.min(
+        config.baseDelayMs * Math.pow(2, attempt),
+        config.maxDelayMs
+      );
+      const jitter = Math.random() * 0.3 * exponentialDelay;
+      const delay = exponentialDelay + jitter;
+      
+      console.log(`[RETRY] ${context} - Attempt ${attempt + 1} failed, retrying in ${Math.round(delay)}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
+// Wrapper for fetch with retry logic
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit & { client?: Deno.HttpClient },
+  context: string
+): Promise<Response> {
+  return withRetry(async () => {
+    const response = await fetch(url, options);
+    
+    // Throw error for retryable status codes to trigger retry
+    if (RETRY_CONFIG.retryableStatusCodes.includes(response.status)) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    return response;
+  }, context);
+}
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -256,50 +328,63 @@ async function checkInterStatus(
 ): Promise<{ isPaid: boolean; status: string }> {
   const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
 
-  const response = await fetch(cobUrl, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    client: mtlsClient,
-  });
+  try {
+    const response = await fetchWithRetry(
+      cobUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        client: mtlsClient,
+      },
+      `Batch Inter status check for ${txid}`
+    );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Inter API error for ${txid}:`, response.status, errorText);
-    return { isPaid: false, status: 'error' };
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Inter API error for ${txid}:`, response.status, errorText);
+      return { isPaid: false, status: 'error' };
+    }
+
+    const data = await response.json();
+    const isPaid = data.status === 'CONCLUIDA';
+
+    return {
+      isPaid,
+      status: data.status,
+    };
+  } catch (err) {
+    console.error(`Inter status check failed after retries for ${txid}:`, err);
+    return { isPaid: false, status: 'retry_failed' };
   }
-
-  const data = await response.json();
-  const isPaid = data.status === 'CONCLUIDA';
-
-  return {
-    isPaid,
-    status: data.status,
-  };
 }
 
 async function checkAtivusStatus(
   idTransaction: string,
   apiKey: string
 ): Promise<{ isPaid: boolean; status: string }> {
+  // Build auth header - check if API key is already Base64 encoded
+  const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
+  const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
+
+  const statusUrl = `${ATIVUS_STATUS_URL}?id_transaction=${idTransaction}`;
+  
+  console.log(`Checking Ativus status for id_transaction: ${idTransaction}`);
+
   try {
-    // Build auth header - check if API key is already Base64 encoded
-    const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
-    const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
-
-    const statusUrl = `${ATIVUS_STATUS_URL}?id_transaction=${idTransaction}`;
-    
-    console.log(`Checking Ativus status for id_transaction: ${idTransaction}`);
-
-    const response = await fetch(statusUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${authHeader}`,
-        'Content-Type': 'application/json',
+    const response = await fetchWithRetry(
+      statusUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json',
+        },
       },
-    });
+      `Batch Ativus status check for ${idTransaction}`
+    );
 
     if (!response.ok) {
       console.error(`Ativus API error for ${idTransaction}:`, response.status);
@@ -318,8 +403,8 @@ async function checkAtivusStatus(
       status: situacao,
     };
   } catch (err) {
-    console.error(`Error checking Ativus status for ${idTransaction}:`, err);
-    return { isPaid: false, status: 'error' };
+    console.error(`Ativus status check failed after retries for ${idTransaction}:`, err);
+    return { isPaid: false, status: 'retry_failed' };
   }
 }
 
@@ -497,44 +582,53 @@ serve(async (req) => {
 
           console.log(`Checking SpedPay status for txid: ${transaction.txid}`);
           
-          const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${transaction.txid}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-secret': apiKey,
-            },
-          });
+          try {
+            const response = await fetchWithRetry(
+              `${SPEDPAY_API_URL}/v1/transactions/${transaction.txid}`,
+              {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'api-secret': apiKey,
+                },
+              },
+              `Batch SpedPay status check for ${transaction.txid}`
+            );
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`SpedPay API error for ${transaction.txid}:`, response.status, errorText);
-            results.push({ id: transaction.id, txid: transaction.txid, status: 'error', reason: errorText });
-            continue;
-          }
-
-          const spedpayData = await response.json();
-          const spedpayStatus = spedpayData.status?.toLowerCase() || '';
-          
-          console.log(`Transaction ${transaction.txid} SpedPay status: ${spedpayStatus}`);
-
-          const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
-
-          if (isPaid) {
-            console.log(`Marking transaction ${transaction.txid} as paid (SpedPay)`);
-            
-            const { error: updateError } = await supabase.rpc('mark_pix_paid', {
-              p_txid: transaction.txid
-            });
-
-            if (updateError) {
-              console.error(`Error updating transaction ${transaction.txid}:`, updateError);
-              results.push({ id: transaction.id, txid: transaction.txid, status: 'update_error', reason: updateError.message });
-            } else {
-              updatedCount++;
-              results.push({ id: transaction.id, txid: transaction.txid, status: 'updated_to_paid', amount: transaction.amount, acquirer: 'spedpay' });
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error(`SpedPay API error for ${transaction.txid}:`, response.status, errorText);
+              results.push({ id: transaction.id, txid: transaction.txid, status: 'error', reason: errorText });
+              continue;
             }
-          } else {
-            results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', spedpay_status: spedpayStatus, acquirer: 'spedpay' });
+
+            const spedpayData = await response.json();
+            const spedpayStatus = spedpayData.status?.toLowerCase() || '';
+            
+            console.log(`Transaction ${transaction.txid} SpedPay status: ${spedpayStatus}`);
+
+            const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
+
+            if (isPaid) {
+              console.log(`Marking transaction ${transaction.txid} as paid (SpedPay)`);
+              
+              const { error: updateError } = await supabase.rpc('mark_pix_paid', {
+                p_txid: transaction.txid
+              });
+
+              if (updateError) {
+                console.error(`Error updating transaction ${transaction.txid}:`, updateError);
+                results.push({ id: transaction.id, txid: transaction.txid, status: 'update_error', reason: updateError.message });
+              } else {
+                updatedCount++;
+                results.push({ id: transaction.id, txid: transaction.txid, status: 'updated_to_paid', amount: transaction.amount, acquirer: 'spedpay' });
+              }
+            } else {
+              results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', spedpay_status: spedpayStatus, acquirer: 'spedpay' });
+            }
+          } catch (spedpayErr) {
+            console.error(`SpedPay check failed after retries for ${transaction.txid}:`, spedpayErr);
+            results.push({ id: transaction.id, txid: transaction.txid, status: 'retry_failed', reason: String(spedpayErr) });
           }
         }
 
