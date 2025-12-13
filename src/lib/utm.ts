@@ -213,20 +213,22 @@ export function getUTMParams(): UTMParams {
 
   // Se os params atuais têm UTMs reais (não apenas direct), use-os
   const hasRealUtms = currentParams.utm_source && currentParams.utm_source !== "direct";
+  const savedHasRealUtms = savedParams.utm_source && savedParams.utm_source !== "direct";
   
   // Mescla os parâmetros, dando prioridade aos atuais se tiverem UTMs reais
   let merged: UTMParams;
   if (hasRealUtms) {
     merged = { ...savedParams, ...currentParams };
-  } else if (savedParams.utm_source && savedParams.utm_source !== "direct") {
-    // Se salvos têm UTMs reais, use-os
+  } else if (savedHasRealUtms) {
+    // Se salvos têm UTMs reais, use-os mas mantenha traffic_type atual se for direct
     merged = { ...currentParams, ...savedParams };
   } else {
     merged = { ...savedParams, ...currentParams };
   }
 
-  // Salva os parâmetros mesclados se tiverem conteúdo relevante
-  if (merged.utm_source && merged.utm_source !== "direct") {
+  // SEMPRE salva os parâmetros - inclusive tráfego direto
+  // Isso garante que todas as transações tenham utm_data registrado
+  if (Object.keys(merged).length > 0) {
     saveUTMParams(merged);
   }
 
