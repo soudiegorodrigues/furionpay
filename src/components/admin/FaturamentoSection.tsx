@@ -328,7 +328,7 @@ export const FaturamentoSection = () => {
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
-                  interval={chartFilter === 'today' ? 2 : chartFilter === 'year' ? 29 : 'preserveStartEnd'}
+                  interval={chartFilter === 'today' ? 0 : chartFilter === 'year' ? 29 : 'preserveStartEnd'}
                   height={50}
                 />
                 <YAxis 
