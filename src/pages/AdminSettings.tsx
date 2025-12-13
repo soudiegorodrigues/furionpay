@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Settings, Activity, Save, Loader2, Plus, Trash2, AlertTriangle, Pencil, ChevronDown, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { UTMScriptSection } from "@/components/admin/UTMScriptSection";
 
 interface MetaPixel {
   id: string;
@@ -359,6 +360,9 @@ const AdminSettings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* UTM Script Section */}
+        <UTMScriptSection />
 
         {/* Save Button */}
         <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
