@@ -290,18 +290,19 @@ const AdminDashboard = () => {
       
       // First: get TODAY in São Paulo timezone as string YYYY-MM-DD
       const todayBrazilStr = getBrazilDateStr(new Date()); // Ex: "2025-12-14"
+      console.log('[Chart Debug] Today in São Paulo:', todayBrazilStr);
       const [todayYear, todayMonth, todayDay] = todayBrazilStr.split('-').map(Number);
       
-      // Create base date using São Paulo date components (noon to avoid timezone edge cases)
-      const baseDate = new Date(todayYear, todayMonth - 1, todayDay, 12, 0, 0);
-      
+      // Generate dates directly from São Paulo components to avoid any timezone conversion
       for (let i = days - 1; i >= 0; i--) {
-        const targetDate = new Date(baseDate);
-        targetDate.setDate(baseDate.getDate() - i);
-        // Format manually to avoid timezone conversion issues
-        const dateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+        // Calculate the target day (may go to previous months)
+        const tempDate = new Date(todayYear, todayMonth - 1, todayDay - i, 12, 0, 0);
+        const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
         dates.push(dateStr);
       }
+      
+      console.log('[Chart Debug] Generated dates:', dates);
+      console.log('[Chart Debug] Last date (should be today):', dates[dates.length - 1]);
       
       // Now generate chart data for each date
       for (const dateStr of dates) {
