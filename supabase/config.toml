@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.send-withdrawal-notification]
 verify_jwt = false
+
+[functions.track-conversion]
+verify_jwt = false

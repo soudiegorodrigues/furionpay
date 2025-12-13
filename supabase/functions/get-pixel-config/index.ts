@@ -48,9 +48,18 @@ serve(async (req) => {
       try {
         const pixelsArray = JSON.parse(multiplePixels.value);
         if (Array.isArray(pixelsArray) && pixelsArray.length > 0) {
-          console.log('Returning multiple pixels:', pixelsArray);
+          // Ensure accessToken is included for CAPI support
+          const pixelsWithTokens = pixelsArray.map((pixel: any) => ({
+            pixelId: pixel.pixelId,
+            name: pixel.name,
+            accessToken: pixel.accessToken || null, // Include token for CAPI
+          }));
+          console.log('Returning multiple pixels with tokens:', pixelsWithTokens.map((p: any) => ({
+            ...p,
+            accessToken: p.accessToken ? '***MASKED***' : null
+          })));
           return new Response(
-            JSON.stringify({ pixels: pixelsArray }),
+            JSON.stringify({ pixels: pixelsWithTokens }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }

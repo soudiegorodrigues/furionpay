@@ -17,6 +17,8 @@ interface CheckoutPixPaymentProps {
   customerEmail?: string;
   customerName?: string;
   productName?: string;
+  pixelId?: string;
+  accessToken?: string;
 }
 
 export const CheckoutPixPayment = ({
@@ -29,44 +31,102 @@ export const CheckoutPixPayment = ({
   customerEmail,
   customerName,
   productName,
+  pixelId,
+  accessToken,
 }: CheckoutPixPaymentProps) => {
   const [copied, setCopied] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const { trackEvent, setAdvancedMatching } = usePixel();
+  const { trackEvent, setAdvancedMatching, isLoaded } = usePixel();
 
-  // Track Purchase event when payment is confirmed
-  const trackPurchaseEvent = () => {
-    console.log('[PIXEL DEBUG] 🎯 Disparando evento Purchase');
-    
-    // Set advanced matching data for better attribution
-    if (customerEmail || customerName) {
-      const [firstName, ...lastNameParts] = (customerName || '').split(' ');
-      setAdvancedMatching({
-        em: customerEmail,
-        fn: firstName || undefined,
-        ln: lastNameParts.join(' ') || undefined,
-        external_id: transactionId,
-      });
+  // Generate unique event_id for deduplication
+  const generateEventId = () => `${transactionId}_${Date.now()}`;
+
+  // Send event via Conversions API (server-side backup)
+  const sendCAPIEvent = async (eventId: string) => {
+    if (!pixelId || !accessToken) {
+      console.log('[CAPI] ⚠️ Pixel ID ou Access Token não disponível, pulando CAPI');
+      return;
     }
 
-    // Fire Purchase event IMMEDIATELY
-    trackEvent('Purchase', {
-      value: amount,
-      currency: 'BRL',
-      content_name: productName || 'Produto',
-      content_type: 'product',
-      transaction_id: transactionId,
-    }, {
-      external_id: transactionId,
-      em: customerEmail,
-    });
+    try {
+      console.log('[CAPI] 📤 Enviando evento Purchase via servidor...');
+      
+      // Get Meta cookies for better attribution
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+        return undefined;
+      };
 
-    console.log('[PIXEL DEBUG] ✅ Evento Purchase disparado:', {
-      value: amount,
-      currency: 'BRL',
-      transaction_id: transactionId,
-    });
+      const response = await supabase.functions.invoke('track-conversion', {
+        body: {
+          pixelId,
+          accessToken,
+          eventName: 'Purchase',
+          eventId, // Same ID for deduplication
+          value: amount,
+          currency: 'BRL',
+          transactionId,
+          customerEmail,
+          customerName,
+          productName: productName || 'Produto',
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.href,
+          fbc: getCookie('_fbc'),
+          fbp: getCookie('_fbp'),
+        },
+      });
+
+      if (response.error) {
+        console.error('[CAPI] ❌ Erro ao enviar evento:', response.error);
+      } else {
+        console.log('[CAPI] ✅ Evento enviado com sucesso:', response.data);
+      }
+    } catch (error) {
+      console.error('[CAPI] ❌ Erro inesperado:', error);
+    }
+  };
+
+  // Track Purchase event when payment is confirmed (browser + server)
+  const trackPurchaseEvent = async () => {
+    const eventId = generateEventId();
+    console.log('[PIXEL DEBUG] 🎯 Disparando evento Purchase (event_id:', eventId, ')');
+    
+    // 1. Send via Conversions API (server-side) - GARANTIDO
+    sendCAPIEvent(eventId);
+    
+    // 2. Send via browser pixel (if loaded)
+    if (isLoaded) {
+      // Set advanced matching data for better attribution
+      if (customerEmail || customerName) {
+        const [firstName, ...lastNameParts] = (customerName || '').split(' ');
+        setAdvancedMatching({
+          em: customerEmail,
+          fn: firstName || undefined,
+          ln: lastNameParts.join(' ') || undefined,
+          external_id: transactionId,
+        });
+      }
+
+      // Fire Purchase event with same event_id for deduplication
+      trackEvent('Purchase', {
+        value: amount,
+        currency: 'BRL',
+        content_name: productName || 'Produto',
+        content_type: 'product',
+        transaction_id: transactionId,
+        eventID: eventId, // Meta uses this for deduplication
+      }, {
+        external_id: transactionId,
+        em: customerEmail,
+      });
+
+      console.log('[PIXEL DEBUG] ✅ Evento Purchase disparado via browser');
+    } else {
+      console.log('[PIXEL DEBUG] ⚠️ Pixel não carregado, evento enviado apenas via CAPI');
+    }
   };
 
   const formattedAmount = new Intl.NumberFormat("pt-BR", {
