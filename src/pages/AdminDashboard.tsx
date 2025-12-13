@@ -680,22 +680,25 @@ const AdminDashboard = () => {
                   marginBottom: '6px'
                 }} formatter={(value: number, name: string) => {
                   if (name === 'pagos') return [value, '🔴 Pagos'];
-                  if (name === 'gerados') return [value, '⚫ Gerados'];
                   return [value, name];
                 }} />
-                  <Bar dataKey="gerados" radius={[4, 4, 0, 0]} fill="url(#barGradientGenerated)" animationDuration={800} animationEasing="ease-out" barSize={16} />
-                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={16} />
+                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}
+                    label={({ x, y, width, payload }: { x: number; y: number; width: number; payload: { gerados: number; pagos: number } }) => {
+                      const rate = payload.gerados > 0 ? Math.round((payload.pagos / payload.gerados) * 100) : 0;
+                      return (
+                        <text x={x + width / 2} y={y - 8} textAnchor="middle" fontSize={10} fill="hsl(var(--primary))" fontWeight={600}>
+                          {rate}%
+                        </text>
+                      );
+                    }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-muted-foreground/50"></span>
-                <span className="text-xs text-muted-foreground font-medium">Gerados</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-primary"></span>
-                <span className="text-xs text-muted-foreground font-medium">Pagos</span>
+                <span className="text-xs text-muted-foreground font-medium">Pagos (% conversão)</span>
               </div>
             </div>
           </CardContent>
