@@ -6,6 +6,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
+import { UTMParams } from "@/lib/utm";
 
 
 interface DonationPopupDirectProps {
@@ -14,6 +15,7 @@ interface DonationPopupDirectProps {
   userId?: string;
   fixedAmount?: number;
   showCloseButton?: boolean;
+  utmParams?: UTMParams;
 }
 
 type Step = "loading" | "pix" | "success";
@@ -23,7 +25,8 @@ export const DonationPopupDirect = ({
   onClose,
   userId,
   fixedAmount = 100,
-  showCloseButton = false
+  showCloseButton = false,
+  utmParams: propUtmParams
 }: DonationPopupDirectProps) => {
   const [step, setStep] = useState<Step>("loading");
   const [pixData, setPixData] = useState<{
@@ -35,8 +38,11 @@ export const DonationPopupDirect = ({
   const [isPaid, setIsPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const { toast } = useToast();
-  const { trackEvent, utmParams } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const hasGenerated = useRef(false);
+  
+  // Prioriza UTMs passados via prop sobre os do contexto
+  const utmParams = propUtmParams || contextUtmParams;
 
   // Generate PIX automatically on open
   useEffect(() => {

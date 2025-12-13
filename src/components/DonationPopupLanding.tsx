@@ -11,6 +11,8 @@ import { usePixel } from "./MetaPixelProvider";
 import { cn } from "@/lib/utils";
 import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
+import { UTMParams } from "@/lib/utm";
+
 interface DonationPopupLandingProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +20,7 @@ interface DonationPopupLandingProps {
   userId?: string;
   showCloseButton?: boolean;
   isPreview?: boolean;
+  utmParams?: UTMParams;
 }
 
 const DONATION_AMOUNTS = [
@@ -46,6 +49,7 @@ export const DonationPopupLanding = ({
   userId,
   showCloseButton = false,
   isPreview = false,
+  utmParams: propUtmParams,
 }: DonationPopupLandingProps) => {
   const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -57,7 +61,10 @@ export const DonationPopupLanding = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
-  const { trackEvent, utmParams } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  
+  // Prioriza UTMs passados via prop sobre os do contexto
+  const utmParams = propUtmParams || contextUtmParams;
 
   useEffect(() => {
     if (!isOpen) {
