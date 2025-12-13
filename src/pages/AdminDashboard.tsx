@@ -518,6 +518,12 @@ const AdminDashboard = () => {
             <div className="h-[280px] sm:h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 30, right: 5, left: 5, bottom: 5 }} barCategoryGap="50%" barSize={20}>
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid 
                     stroke="hsl(var(--muted-foreground))"
                     opacity={0.15} 
@@ -540,31 +546,29 @@ const AdminDashboard = () => {
                     domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]}
                   />
                   <Tooltip 
-                    cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
+                    cursor={{ fill: 'hsl(var(--primary) / 0.08)' }}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
+                      borderRadius: '12px',
                       fontSize: '12px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                      padding: '12px 16px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
                     }}
-                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '4px' }}
+                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
                     formatter={(value: number, name: string) => {
-                      if (name === 'pagos') return [value, 'Total de vendas'];
+                      if (name === 'pagos') return [value, '🔴 Vendas pagas'];
                       return [value, name];
                     }}
                   />
                   <Bar 
                     dataKey="pagos" 
-                    radius={[4, 4, 0, 0]}
+                    radius={[6, 6, 0, 0]}
                     maxBarSize={40}
+                    fill="url(#barGradient)"
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill="hsl(var(--primary))"
-                      />
-                    ))}
                   <LabelList 
                     dataKey="pagos" 
                     position="top" 
