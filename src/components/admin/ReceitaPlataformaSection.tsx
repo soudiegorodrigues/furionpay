@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell, Legend } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check, Search, ChevronDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +77,8 @@ export const ReceitaPlataformaSection = () => {
   const [monthlyGoal, setMonthlyGoal] = useState<number>(0);
   const [goalInput, setGoalInput] = useState<string>('');
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState<string>('');
+  const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
 
   useEffect(() => {
     loadTransactions();
@@ -143,6 +145,15 @@ export const ReceitaPlataformaSection = () => {
     });
     return Array.from(usersSet).sort();
   }, [transactions]);
+
+  // Filtrar usuários baseado na busca
+  const filteredUsers = useMemo(() => {
+    if (!userSearchQuery.trim()) return uniqueUsers;
+    const query = userSearchQuery.toLowerCase();
+    return uniqueUsers.filter(email => 
+      email.toLowerCase().includes(query)
+    );
+  }, [uniqueUsers, userSearchQuery]);
 
   // Filtrar transações pagas e por usuário selecionado
   const paidTransactions = useMemo(() => {
@@ -402,22 +413,82 @@ export const ReceitaPlataformaSection = () => {
             Receita da Plataforma
           </CardTitle>
           <div className="flex items-center gap-2">
-            {/* Filtro por usuário */}
+            {/* Filtro por usuário com busca */}
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground hidden sm:block" />
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger className="w-[180px] sm:w-[220px] h-9 text-xs sm:text-sm">
-                  <SelectValue placeholder="Filtrar por usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os usuários</SelectItem>
-                  {uniqueUsers.map(email => (
-                    <SelectItem key={email} value={email}>
-                      {email.length > 25 ? `${email.slice(0, 25)}...` : email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={isUserPopoverOpen} onOpenChange={setIsUserPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-[180px] sm:w-[220px] h-9 text-xs sm:text-sm justify-between"
+                  >
+                    <span className="truncate">
+                      {selectedUser === 'all' 
+                        ? 'Todos os usuários' 
+                        : selectedUser.length > 20 
+                          ? `${selectedUser.slice(0, 20)}...` 
+                          : selectedUser}
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[280px] p-0" align="start">
+                  <div className="p-2 border-b">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por email..."
+                        value={userSearchQuery}
+                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                        className="pl-8 h-9"
+                      />
+                      {userSearchQuery && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-1 top-1 h-7 w-7 p-0"
+                          onClick={() => setUserSearchQuery('')}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-[250px] overflow-y-auto p-1">
+                    <Button
+                      variant={selectedUser === 'all' ? 'secondary' : 'ghost'}
+                      className="w-full justify-start text-sm h-8"
+                      onClick={() => {
+                        setSelectedUser('all');
+                        setUserSearchQuery('');
+                        setIsUserPopoverOpen(false);
+                      }}
+                    >
+                      Todos os usuários
+                    </Button>
+                    {filteredUsers.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Nenhum usuário encontrado
+                      </p>
+                    ) : (
+                      filteredUsers.map(email => (
+                        <Button
+                          key={email}
+                          variant={selectedUser === email ? 'secondary' : 'ghost'}
+                          className="w-full justify-start text-sm h-8 truncate"
+                          onClick={() => {
+                            setSelectedUser(email);
+                            setUserSearchQuery('');
+                            setIsUserPopoverOpen(false);
+                          }}
+                        >
+                          {email}
+                        </Button>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <Button 
               variant="outline" 
