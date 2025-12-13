@@ -260,7 +260,7 @@ const AdminDashboard = () => {
     if (chartFilter === 'today') {
       // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
       for (let hour = 0; hour < 24; hour++) {
-        const hourStr = hour.toString().padStart(2, '0') + 'h';
+        const hourStr = hour.toString().padStart(2, '0') + ':00';
         
         // Filter transactions created today at this hour (Brazil time)
         const hourGerados = transactions.filter(tx => {
@@ -512,10 +512,10 @@ const AdminDashboard = () => {
                   />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                    tick={{ fontSize: 8, fill: 'hsl(var(--muted-foreground))' }} 
                     tickLine={false}
                     axisLine={false}
-                    interval={chartFilter === 'today' ? 3 : 'preserveStartEnd'}
+                    interval={0}
                   />
                   <YAxis 
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
@@ -545,11 +545,23 @@ const AdminDashboard = () => {
                     maxBarSize={40}
                   >
                     {chartData.map((entry, index) => (
-                    <Cell 
+                      <Cell 
                         key={`cell-${index}`} 
                         fill="hsl(var(--primary))"
                       />
                     ))}
+                    <LabelList 
+                      dataKey="pagos" 
+                      position="top" 
+                      fill="hsl(var(--muted-foreground))"
+                      fontSize={9}
+                      formatter={(value: number) => {
+                        const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
+                        if (total === 0 || value === 0) return '';
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${percentage}%`;
+                      }}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
