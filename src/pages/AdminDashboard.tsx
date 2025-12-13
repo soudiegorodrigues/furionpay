@@ -260,7 +260,7 @@ const AdminDashboard = () => {
     if (chartFilter === 'today') {
       // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
       for (let hour = 0; hour < 24; hour++) {
-        const hourStr = hour.toString().padStart(2, '0') + ':00';
+        const hourStr = hour.toString().padStart(2, '0') + 'h';
         
         // Filter transactions created today at this hour (Brazil time)
         const hourGerados = transactions.filter(tx => {
@@ -515,7 +515,7 @@ const AdminDashboard = () => {
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                     tickLine={false}
                     axisLine={false}
-                    interval={0}
+                    interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
                   />
                   <YAxis 
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
@@ -550,18 +550,6 @@ const AdminDashboard = () => {
                         fill="hsl(var(--primary))"
                       />
                     ))}
-                    <LabelList 
-                      dataKey="pagos" 
-                      position="top" 
-                      fill="hsl(var(--muted-foreground))"
-                      fontSize={10}
-                      formatter={(value: number) => {
-                        const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
-                        if (total === 0) return '';
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return `${percentage}%`;
-                      }}
-                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
