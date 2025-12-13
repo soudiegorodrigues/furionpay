@@ -69,7 +69,7 @@ export const TransacoesGlobaisSection = () => {
       case 'expired':
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Expirado</Badge>;
       default:
-        return <Badge className="bg-red-500/20 text-white border-red-500/30">Gerado</Badge>;
+        return <Badge className="bg-red-500/80 text-white border-red-500/50">Gerado</Badge>;
     }
   };
 
