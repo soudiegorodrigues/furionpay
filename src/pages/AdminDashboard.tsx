@@ -285,17 +285,17 @@ const AdminDashboard = () => {
       // Daily data for other filters - ALWAYS include today (Brazil timezone)
       const days = getChartDays(chartFilter);
       
-      // Get today's date in Brazil timezone
-      const brazilDateString = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-      const [year, month, day] = brazilDateString.split('-').map(Number);
-      const todayBrazilDate = new Date(year, month - 1, day);
+      // Get today's date in Brazil timezone using the helper
+      const todayBrazil = getBrazilDateStr(new Date()); // Returns YYYY-MM-DD in Brazil TZ
+      const [year, month, day] = todayBrazil.split('-').map(Number);
       
       // Generate dates from (days-1) days ago up to and including today
       for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(todayBrazilDate);
-        date.setDate(todayBrazilDate.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-        const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        // Calculate the date by subtracting days from today (Brazil date)
+        const targetDate = new Date(year, month - 1, day - i);
+        // Format as YYYY-MM-DD for comparison
+        const dateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+        const displayDate = `${String(targetDate.getDate()).padStart(2, '0')}/${String(targetDate.getMonth() + 1).padStart(2, '0')}`;
         
         // Transactions created on this day (Brazil time)
         const dayGerados = transactions.filter(tx => {
