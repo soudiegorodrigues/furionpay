@@ -406,6 +406,9 @@ export default function PublicCheckout() {
         qrCodeUrl={pixData.qrCode}
         transactionId={pixData.transactionId}
         primaryColor={config?.primary_color || "#16A34A"}
+        customerEmail={formData.email}
+        customerName={formData.name}
+        productName={offer?.name || product?.name}
       />
     );
   }

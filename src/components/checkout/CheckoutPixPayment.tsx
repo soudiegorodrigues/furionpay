@@ -5,6 +5,7 @@ import { Copy, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
+import { usePixel } from "@/components/MetaPixelProvider";
 
 interface CheckoutPixPaymentProps {
   amount: number;
@@ -13,6 +14,9 @@ interface CheckoutPixPaymentProps {
   transactionId?: string;
   primaryColor?: string;
   onPaymentConfirmed?: () => void;
+  customerEmail?: string;
+  customerName?: string;
+  productName?: string;
 }
 
 export const CheckoutPixPayment = ({
@@ -22,10 +26,48 @@ export const CheckoutPixPayment = ({
   transactionId,
   primaryColor = "#16A34A",
   onPaymentConfirmed,
+  customerEmail,
+  customerName,
+  productName,
 }: CheckoutPixPaymentProps) => {
   const [copied, setCopied] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const { trackEvent, setAdvancedMatching } = usePixel();
+
+  // Track Purchase event when payment is confirmed
+  const trackPurchaseEvent = () => {
+    console.log('[PIXEL DEBUG] 🎯 Disparando evento Purchase');
+    
+    // Set advanced matching data for better attribution
+    if (customerEmail || customerName) {
+      const [firstName, ...lastNameParts] = (customerName || '').split(' ');
+      setAdvancedMatching({
+        em: customerEmail,
+        fn: firstName || undefined,
+        ln: lastNameParts.join(' ') || undefined,
+        external_id: transactionId,
+      });
+    }
+
+    // Fire Purchase event IMMEDIATELY
+    trackEvent('Purchase', {
+      value: amount,
+      currency: 'BRL',
+      content_name: productName || 'Produto',
+      content_type: 'product',
+      transaction_id: transactionId,
+    }, {
+      external_id: transactionId,
+      em: customerEmail,
+    });
+
+    console.log('[PIXEL DEBUG] ✅ Evento Purchase disparado:', {
+      value: amount,
+      currency: 'BRL',
+      transaction_id: transactionId,
+    });
+  };
 
   const formattedAmount = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -45,6 +87,7 @@ export const CheckoutPixPayment = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
+          trackPurchaseEvent(); // Fire Meta Pixel Purchase event
           toast.success("Pagamento confirmado!");
           onPaymentConfirmed?.();
           clearInterval(pollInterval);
@@ -79,6 +122,7 @@ export const CheckoutPixPayment = ({
 
       if (!error && data && data.status === "paid") {
         setIsPaid(true);
+        trackPurchaseEvent(); // Fire Meta Pixel Purchase event
         toast.success("Pagamento confirmado!");
         onPaymentConfirmed?.();
       } else {
