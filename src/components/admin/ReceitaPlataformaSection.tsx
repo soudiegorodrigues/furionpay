@@ -3,8 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell, Legend } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -71,10 +74,44 @@ export const ReceitaPlataformaSection = () => {
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [rankingFilter, setRankingFilter] = useState<RankingFilter>('all');
+  const [monthlyGoal, setMonthlyGoal] = useState<number>(0);
+  const [goalInput, setGoalInput] = useState<string>('');
+  const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
 
   useEffect(() => {
     loadTransactions();
+    loadMonthlyGoal();
   }, []);
+
+  const loadMonthlyGoal = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      if (error) throw error;
+      const goalSetting = data?.find((s: { key: string; value: string }) => s.key === 'monthly_profit_goal');
+      if (goalSetting) {
+        setMonthlyGoal(parseFloat(goalSetting.value) || 0);
+      }
+    } catch (error) {
+      console.error('Error loading monthly goal:', error);
+    }
+  };
+
+  const saveMonthlyGoal = async () => {
+    const newGoal = parseFloat(goalInput.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'monthly_profit_goal',
+        setting_value: newGoal.toString()
+      });
+      if (error) throw error;
+      setMonthlyGoal(newGoal);
+      setIsGoalDialogOpen(false);
+      toast.success('Meta mensal atualizada com sucesso!');
+    } catch (error) {
+      console.error('Error saving monthly goal:', error);
+      toast.error('Erro ao salvar meta mensal');
+    }
+  };
 
   const loadTransactions = async () => {
     setIsLoading(true);
@@ -593,6 +630,116 @@ export const ReceitaPlataformaSection = () => {
             <p className="text-center text-sm text-muted-foreground mt-4">
               Sem dados suficientes para projeção. Aguarde transações nos últimos 7 dias.
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Meta Mensal */}
+      <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Goal className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+            Meta Mensal
+          </CardTitle>
+          <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setGoalInput(monthlyGoal.toString())}
+              >
+                <Pencil className="h-4 w-4 mr-1" />
+                Editar
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Definir Meta Mensal de Lucro</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">
+                    Meta de lucro mensal (R$)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Ex: 10000"
+                    value={goalInput}
+                    onChange={(e) => setGoalInput(e.target.value)}
+                  />
+                </div>
+                <Button onClick={saveMonthlyGoal} className="w-full">
+                  <Check className="h-4 w-4 mr-2" />
+                  Salvar Meta
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          {monthlyGoal > 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progresso</span>
+                <span className="font-medium">
+                  {formatCurrency(profitStats.thisMonth)} / {formatCurrency(monthlyGoal)}
+                </span>
+              </div>
+              <div className="relative h-4 w-full bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={cn(
+                    "absolute left-0 top-0 h-full rounded-full transition-all duration-500",
+                    profitStats.thisMonth >= monthlyGoal 
+                      ? "bg-green-500" 
+                      : profitStats.thisMonth >= monthlyGoal * 0.7 
+                        ? "bg-yellow-500" 
+                        : "bg-primary"
+                  )}
+                  style={{ width: `${Math.min((profitStats.thisMonth / monthlyGoal) * 100, 100)}%` }}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {((profitStats.thisMonth / monthlyGoal) * 100).toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">Alcançado</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatCurrency(Math.max(monthlyGoal - profitStats.thisMonth, 0))}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Faltam</p>
+                </div>
+                <div>
+                  <p className={cn(
+                    "text-2xl font-bold",
+                    profitStats.thisMonth >= monthlyGoal ? "text-green-500" : "text-muted-foreground"
+                  )}>
+                    {profitStats.thisMonth >= monthlyGoal ? '🎉' : '⏳'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {profitStats.thisMonth >= monthlyGoal ? 'Meta batida!' : 'Em andamento'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground mb-4">
+                Nenhuma meta definida. Defina uma meta para acompanhar seu progresso.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setGoalInput('');
+                  setIsGoalDialogOpen(true);
+                }}
+              >
+                <Goal className="h-4 w-4 mr-2" />
+                Definir Meta
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
