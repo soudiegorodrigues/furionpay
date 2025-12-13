@@ -486,9 +486,9 @@ const AdminDashboard = () => {
       </div>
 
       {/* Chart + Side Cards Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
         {/* Chart - Visão Geral Style */}
-        <Card className="lg:col-span-2">
+        <Card className="xl:col-span-3">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
