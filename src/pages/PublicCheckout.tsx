@@ -117,30 +117,47 @@ export default function PublicCheckout() {
     console.log('[UTM DEBUG] ====================================');
   }, []);
 
-  // Fetch ALL checkout data in a single optimized query
+  // Fetch ALL checkout data using secure RPC function (no user_id exposure)
   const { data: checkoutData, isLoading, error } = useQuery({
     queryKey: ["public-checkout", offerCode],
     queryFn: async () => {
       if (!offerCode) return null;
       
-      // Step 1: Get offer
-      const { data: offer, error: offerError } = await supabase
-        .from("product_offers")
-        .select("*")
-        .eq("offer_code", offerCode)
-        .eq("is_active", true)
-        .maybeSingle();
+      // Step 1: Get offer via secure RPC function (no user_id exposed)
+      const { data: offerData, error: offerError } = await supabase
+        .rpc("get_public_offer_by_code", { p_offer_code: offerCode });
       
       if (offerError) throw offerError;
-      if (!offer) return null;
+      if (!offerData || offerData.length === 0) return null;
+      
+      const offerRow = offerData[0];
+      
+      // Map RPC result to ProductOffer format
+      const offer: ProductOffer = {
+        id: offerRow.id,
+        product_id: offerRow.product_id,
+        name: offerRow.name,
+        type: offerRow.type,
+        domain: offerRow.domain,
+        price: offerRow.price,
+        offer_code: offerRow.offer_code,
+        is_active: true,
+        user_id: "", // Not exposed for security
+      };
+      
+      // Map to Product format
+      const product: Product = {
+        id: offerRow.product_id,
+        name: offerRow.product_name,
+        description: offerRow.product_description,
+        image_url: offerRow.product_image_url,
+        price: offerRow.product_price,
+        product_code: offerRow.product_code,
+        is_active: true,
+      };
 
-      // Step 2: Fetch product, config, testimonials, AND pixel config IN PARALLEL
-      const [productResult, configResult, testimonialsResult, pixelConfigResult] = await Promise.all([
-        supabase
-          .from("products")
-          .select("*")
-          .eq("id", offer.product_id)
-          .maybeSingle(),
+      // Step 2: Fetch config and testimonials IN PARALLEL
+      const [configResult, testimonialsResult] = await Promise.all([
         supabase
           .from("product_checkout_configs")
           .select("*")
@@ -152,28 +169,28 @@ export default function PublicCheckout() {
           .eq("product_id", offer.product_id)
           .eq("is_active", true)
           .order("display_order", { ascending: true }),
-        // Fetch pixel config for the product owner (for CAPI)
-        supabase.functions.invoke('get-pixel-config', {
-          body: { userId: offer.user_id }
-        })
       ]);
 
-      const product = productResult.data as Product | null;
       let config = configResult.data as CheckoutConfig | null;
       const testimonials = (testimonialsResult.data || []) as Testimonial[];
       
-      // Extract first pixel with accessToken for CAPI
+      // Fetch pixel config using config's user_id (separate call to avoid circular reference)
       let pixelConfig: { pixelId?: string; accessToken?: string } = {};
-      if (pixelConfigResult.data?.pixels && pixelConfigResult.data.pixels.length > 0) {
-        const firstPixel = pixelConfigResult.data.pixels[0];
-        pixelConfig = {
-          pixelId: firstPixel.pixelId,
-          accessToken: firstPixel.accessToken || undefined
-        };
-        console.log('[CHECKOUT] Pixel config loaded:', { 
-          pixelId: pixelConfig.pixelId, 
-          hasToken: !!pixelConfig.accessToken 
+      if (config?.user_id) {
+        const { data: pixelData } = await supabase.functions.invoke('get-pixel-config', {
+          body: { userId: config.user_id }
         });
+        if (pixelData?.pixels && pixelData.pixels.length > 0) {
+          const firstPixel = pixelData.pixels[0];
+          pixelConfig = {
+            pixelId: firstPixel.pixelId,
+            accessToken: firstPixel.accessToken || undefined
+          };
+          console.log('[CHECKOUT] Pixel config loaded:', { 
+            pixelId: pixelConfig.pixelId, 
+            hasToken: !!pixelConfig.accessToken 
+          });
+        }
       }
 
       // Handle template mapping if needed (rare case)
@@ -191,7 +208,7 @@ export default function PublicCheckout() {
         }
       }
 
-      return { offer: offer as ProductOffer, product, config, testimonials, pixelConfig };
+      return { offer, product, config, testimonials, pixelConfig };
     },
     enabled: !!offerCode,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes

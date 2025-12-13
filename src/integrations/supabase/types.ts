@@ -1261,6 +1261,23 @@ export type Database = {
           total_paid: number
         }[]
       }
+      get_public_offer_by_code: {
+        Args: { p_offer_code: string }
+        Returns: {
+          domain: string
+          id: string
+          name: string
+          offer_code: string
+          price: number
+          product_code: string
+          product_description: string
+          product_id: string
+          product_image_url: string
+          product_name: string
+          product_price: number
+          type: string
+        }[]
+      }
       get_sent_reward_requests: {
         Args: never
         Returns: {

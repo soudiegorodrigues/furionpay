@@ -16,9 +16,12 @@ export interface Product {
   description: string | null;
   price: number;
   image_url: string | null;
+  product_code?: string | null;
+  is_active?: boolean;
 }
 
 export interface CheckoutConfig {
+  user_id?: string;
   discount_popup_color?: string | null;
   discount_popup_image_url?: string | null;
   primary_color: string | null;
