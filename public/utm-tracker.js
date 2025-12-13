@@ -1,5 +1,6 @@
 /**
- * FurionPay Universal UTM Tracker
+ * FurionPay Universal UTM Tracker v2.1
+ * Atualizado: 2025-12-13
  * Adicione este script nas suas páginas de vendas para preservar UTMs automaticamente
  * 
  * Uso: <script src="https://SEU_DOMINIO/utm-tracker.js"></script>
