@@ -32,12 +32,21 @@ interface UserProfitRanking {
 }
 
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
+type RankingFilter = 'all' | 'today' | '7days' | '30days' | 'thisMonth';
 
 const chartFilterOptions: { value: ChartFilter; label: string }[] = [
   { value: 'today', label: 'Hoje' },
   { value: '7days', label: '7 dias' },
   { value: '14days', label: '14 dias' },
   { value: '30days', label: '30 dias' },
+];
+
+const rankingFilterOptions: { value: RankingFilter; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'today', label: 'Hoje' },
+  { value: '7days', label: '7 dias' },
+  { value: '30days', label: '30 dias' },
+  { value: 'thisMonth', label: 'Este mês' },
 ];
 
 // Helper para calcular lucro de uma transação
@@ -61,6 +70,7 @@ export const ReceitaPlataformaSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
   const [selectedUser, setSelectedUser] = useState<string>('all');
+  const [rankingFilter, setRankingFilter] = useState<RankingFilter>('all');
 
   useEffect(() => {
     loadTransactions();
@@ -271,10 +281,42 @@ export const ReceitaPlataformaSection = () => {
   const userProfitRanking = useMemo((): UserProfitRanking[] => {
     const userStats: Map<string, { totalProfit: number; transactionCount: number }> = new Map();
     
-    // Usar todas as transações pagas (ignorar filtro de usuário para ranking global)
-    const allPaidTransactions = transactions.filter(tx => tx.status === 'paid');
+    const now = new Date();
+    const todayStr = getBrazilDateStr(now);
     
-    allPaidTransactions.forEach(tx => {
+    // Calcular datas de referência para filtros
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    // Filtrar transações pagas por período
+    const filteredTransactions = transactions.filter(tx => {
+      if (tx.status !== 'paid') return false;
+      
+      if (rankingFilter === 'all') return true;
+      
+      const txDate = tx.paid_at ? new Date(tx.paid_at) : new Date(tx.created_at);
+      const txDateStr = getBrazilDateStr(txDate);
+      
+      switch (rankingFilter) {
+        case 'today':
+          return txDateStr === todayStr;
+        case '7days':
+          return txDate >= sevenDaysAgo;
+        case '30days':
+          return txDate >= thirtyDaysAgo;
+        case 'thisMonth':
+          return txDate >= thisMonthStart;
+        default:
+          return true;
+      }
+    });
+    
+    filteredTransactions.forEach(tx => {
       const email = tx.user_email || 'Sem usuário';
       const profit = calculateProfit(tx.amount, tx.fee_percentage, tx.fee_fixed);
       
@@ -294,7 +336,7 @@ export const ReceitaPlataformaSection = () => {
       }))
       .sort((a, b) => b.totalProfit - a.totalProfit)
       .slice(0, 10); // Top 10
-  }, [transactions]);
+  }, [transactions, rankingFilter]);
 
   return (
     <>
@@ -581,11 +623,27 @@ export const ReceitaPlataformaSection = () => {
 
       {/* Ranking de Usuários por Lucro */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
             Ranking de Lucro por Usuário
           </CardTitle>
+          <div className="flex items-center bg-muted rounded-full p-1">
+            {rankingFilterOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setRankingFilter(option.value)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
+                  rankingFilter === option.value
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           {userProfitRanking.length === 0 ? (
