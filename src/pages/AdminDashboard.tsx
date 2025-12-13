@@ -192,7 +192,7 @@ const AdminDashboard = () => {
       case 'expired':
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Expirado</Badge>;
       default:
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Gerado</Badge>;
+        return <Badge className="bg-red-500/20 text-white border-red-500/30">Gerado</Badge>;
     }
   };
 

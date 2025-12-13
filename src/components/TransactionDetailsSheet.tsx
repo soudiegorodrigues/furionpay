@@ -64,7 +64,7 @@ const TransactionDetailsSheet = ({
       default:
         return {
           label: 'Gerado',
-          bg: 'bg-amber-500',
+          bg: 'bg-red-500/70',
           text: 'text-white'
         };
     }
