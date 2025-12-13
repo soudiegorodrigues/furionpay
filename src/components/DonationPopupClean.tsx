@@ -158,11 +158,14 @@ export const DonationPopupClean = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event
+      // Fire PixGenerated event with advanced matching
       trackEvent('PixGenerated', {
         value: totalAmount,
         currency: 'BRL',
         content_name: 'Donation Clean',
+      }, {
+        external_id: data.transactionId,
+        country: 'br',
       });
       
       setStep("pix");
