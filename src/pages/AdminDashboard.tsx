@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
+import { UTMScriptSection } from "@/components/admin/UTMScriptSection";
 
 interface DashboardStats {
   total_generated: number;
@@ -435,6 +436,9 @@ const AdminDashboard = () => {
           />
         </div>
       )}
+
+      {/* UTM Script Section */}
+      <UTMScriptSection />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
