@@ -520,7 +520,7 @@ const AdminDashboard = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{formatCurrency(filteredStats.amountPaid)}</p>
           </CardContent>
         </Card>
-        <Card className="col-span-2 sm:col-span-1">
+        <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs sm:text-sm text-muted-foreground">Conversão</p>
@@ -552,7 +552,7 @@ const AdminDashboard = () => {
             <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
           </CardContent>
         </Card>
-        <Card className="col-span-2 sm:col-span-1">
+        <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs sm:text-sm text-muted-foreground">Saldo Disponível</p>
