@@ -511,7 +511,7 @@ const AdminDashboard = () => {
               <span>Dashboard Financeiro</span>
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm">
-              Acompanhe as transações tempo real  
+              Acompanhe as transações    
             </p>
           </div>
           <div className="flex items-center gap-2 self-end lg:self-auto">
