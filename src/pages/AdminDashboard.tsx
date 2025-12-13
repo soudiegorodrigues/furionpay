@@ -498,8 +498,9 @@ const AdminDashboard = () => {
       }} />
         </div>}
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Unified */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4 lg:gap-6">
+        {/* Row 1: PIX Gerados | PIX Pagos */}
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -520,6 +521,7 @@ const AdminDashboard = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{formatCurrency(filteredStats.amountPaid)}</p>
           </CardContent>
         </Card>
+        {/* Row 2: Conversão | Vendas Este Mês */}
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -530,19 +532,6 @@ const AdminDashboard = () => {
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Taxa geral</p>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Stats Grid 2 - Vendas e Saldo */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4 lg:gap-6">
-        <Card>
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs sm:text-sm text-muted-foreground">Vendas Hoje</p>
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
-            </div>
-            <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
-          </CardContent>
-        </Card>
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -550,6 +539,16 @@ const AdminDashboard = () => {
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
             </div>
             <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
+          </CardContent>
+        </Card>
+        {/* Row 3: Vendas Hoje | Saldo Disponível */}
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs sm:text-sm text-muted-foreground">Vendas Hoje</p>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+            </div>
+            <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
           </CardContent>
         </Card>
         <Card>
