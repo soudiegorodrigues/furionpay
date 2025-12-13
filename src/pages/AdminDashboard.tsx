@@ -89,6 +89,7 @@ const AdminDashboard = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [rewards, setRewards] = useState<Reward[] | null>(null);
+  const [availableBalance, setAvailableBalance] = useState<number>(0);
   const navigate = useNavigate();
   const {
     toast
@@ -131,7 +132,8 @@ const AdminDashboard = () => {
         statsResult,
         txResult,
         rewardsResult,
-        defaultFeeResult
+        defaultFeeResult,
+        availableBalanceResult
       ] = await Promise.all([
         supabase.rpc('get_user_settings'),
         supabase.rpc('get_user_dashboard'),
@@ -143,8 +145,14 @@ const AdminDashboard = () => {
         supabase.from('fee_configs')
           .select('pix_percentage, pix_fixed')
           .eq('is_default', true)
-          .maybeSingle()
+          .maybeSingle(),
+        supabase.rpc('get_user_available_balance')
       ]);
+
+      // Set available balance immediately
+      if (!availableBalanceResult.error && availableBalanceResult.data !== null) {
+        setAvailableBalance(availableBalanceResult.data);
+      }
 
       // Set stats immediately
       if (!statsResult.error && statsResult.data) {
@@ -610,7 +618,7 @@ const AdminDashboard = () => {
               <p className="text-xs md:text-sm text-muted-foreground">Saldo Disponível</p>
               <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-primary" />
             </div>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{formatCurrency(totalBalance)}</p>
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{formatCurrency(availableBalance)}</p>
           </CardContent>
         </Card>
       </div>
