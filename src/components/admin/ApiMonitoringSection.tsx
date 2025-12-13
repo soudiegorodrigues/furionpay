@@ -54,6 +54,14 @@ export function ApiMonitoringSection() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [acquirerFilter, setAcquirerFilter] = useState<string>('all');
+
+  const acquirerOptions = [
+    { value: 'all', label: 'Todos' },
+    { value: 'spedpay', label: 'SpedPay' },
+    { value: 'inter', label: 'Banco Inter' },
+    { value: 'ativus', label: 'Ativus Hub' }
+  ];
 
   const fetchData = async () => {
     try {
@@ -88,12 +96,25 @@ export function ApiMonitoringSection() {
     fetchData();
   };
 
+  // Filter events by acquirer
+  const filteredEvents = useMemo(() => 
+    acquirerFilter === 'all' 
+      ? recentEvents 
+      : recentEvents.filter(e => e.acquirer === acquirerFilter),
+    [recentEvents, acquirerFilter]
+  );
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [acquirerFilter]);
+
   // Pagination logic
-  const totalPages = Math.ceil(recentEvents.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedEvents = useMemo(() => 
-    recentEvents.slice(startIndex, startIndex + ITEMS_PER_PAGE),
-    [recentEvents, startIndex]
+    filteredEvents.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [filteredEvents, startIndex]
   );
 
   // Timeline data processing - group events by hour for last 24h
@@ -334,10 +355,25 @@ export function ApiMonitoringSection() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Eventos Recentes</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="text-sm font-medium">Eventos Recentes</CardTitle>
+            <div className="flex flex-wrap gap-1">
+              {acquirerOptions.map(option => (
+                <Button
+                  key={option.value}
+                  variant={acquirerFilter === option.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setAcquirerFilter(option.value)}
+                  className="h-7 text-xs px-2"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {recentEvents.length > 0 ? (
+          {filteredEvents.length > 0 ? (
             <>
               <div className="space-y-2">
                 {paginatedEvents.map(event => (
@@ -371,7 +407,7 @@ export function ApiMonitoringSection() {
               {totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
                   <p className="text-xs text-muted-foreground">
-                    {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, recentEvents.length)} de {recentEvents.length}
+                    {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredEvents.length)} de {filteredEvents.length}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -401,7 +437,7 @@ export function ApiMonitoringSection() {
             </>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Nenhum evento registrado ainda
+              {acquirerFilter === 'all' ? 'Nenhum evento registrado ainda' : `Nenhum evento de ${acquirerOptions.find(o => o.value === acquirerFilter)?.label}`}
             </p>
           )}
         </CardContent>
