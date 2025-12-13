@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
 import {
   ProductOffer,
   Product,
@@ -76,6 +77,22 @@ export default function PublicCheckout() {
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [discountApplied, setDiscountApplied] = useState(false);
+
+  // Capture and save UTM params on component mount
+  useEffect(() => {
+    const currentUtms = captureUTMParams();
+    console.log('[UTM DEBUG] URL atual:', window.location.href);
+    console.log('[UTM DEBUG] Search params:', window.location.search);
+    console.log('[UTM DEBUG] UTMs capturados da URL:', currentUtms);
+    
+    if (Object.keys(currentUtms).length > 0) {
+      saveUTMParams(currentUtms);
+      console.log('[UTM DEBUG] UTMs salvos no sessionStorage');
+    }
+    
+    const allUtms = getUTMParams();
+    console.log('[UTM DEBUG] UTMs finais (merged com sessionStorage):', allUtms);
+  }, []);
 
   // Fetch ALL checkout data in a single optimized query
   const { data: checkoutData, isLoading, error } = useQuery({
@@ -256,15 +273,27 @@ export default function PublicCheckout() {
     try {
       const finalPrice = getCurrentPrice();
       
+      // Get UTM params to send with PIX generation
+      const utmParams = getUTMParams();
+      console.log('[UTM DEBUG] UTMs sendo enviados para generate-pix:', utmParams);
+      
+      const requestBody = {
+        amount: finalPrice,
+        customerName: formData.name,
+        customerEmail: formData.email,
+        userId: offer.user_id,
+        productName: offer.name,
+        popupModel: "checkout",
+        utmParams: Object.keys(utmParams).length > 0 ? utmParams : undefined,
+      };
+      
+      console.log('[UTM DEBUG] Body completo da requisição:', requestBody);
+      
       const { data, error } = await supabase.functions.invoke("generate-pix", {
-        body: {
-          amount: finalPrice,
-          donorName: formData.name,
-          userId: offer.user_id,
-          productName: offer.name,
-          popupModel: "checkout",
-        },
+        body: requestBody,
       });
+
+      console.log('[UTM DEBUG] Resposta do generate-pix:', data);
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error || "Erro ao gerar PIX");
