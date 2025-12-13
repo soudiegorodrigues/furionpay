@@ -252,24 +252,24 @@ export function SaquesGlobaisSection() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="p-4 rounded-lg border bg-card">
+            <div className="p-3 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-yellow-600 font-medium">Saques Pendentes</p>
-                  <p className="text-2xl font-bold">{stats.totalPending}</p>
-                  <p className="text-xs text-muted-foreground">{formatCurrency(stats.pendingValue)}</p>
+                  <p className="text-xs text-yellow-600 font-medium">Saques Pendentes</p>
+                  <p className="text-lg font-bold">{stats.totalPending}</p>
+                  <p className="text-[10px] text-muted-foreground">{formatCurrency(stats.pendingValue)}</p>
                 </div>
-                <FileText className="h-5 w-5 text-yellow-500" />
+                <FileText className="h-4 w-4 text-yellow-500" />
               </div>
             </div>
-            <div className="p-4 rounded-lg border bg-card">
+            <div className="p-3 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-600 font-medium">Saques Aprovados</p>
-                  <p className="text-2xl font-bold">{formatCurrency(stats.approvedValue)}</p>
-                  <p className="text-xs text-muted-foreground">{stats.totalApproved} saques processados</p>
+                  <p className="text-xs text-green-600 font-medium">Saques Aprovados</p>
+                  <p className="text-lg font-bold">{formatCurrency(stats.approvedValue)}</p>
+                  <p className="text-[10px] text-muted-foreground">{stats.totalApproved} saques processados</p>
                 </div>
-                <DollarSign className="h-5 w-5 text-green-500" />
+                <DollarSign className="h-4 w-4 text-green-500" />
               </div>
             </div>
           </div>
