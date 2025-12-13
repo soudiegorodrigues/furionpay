@@ -564,11 +564,12 @@ const AdminDashboard = () => {
                         fill="hsl(var(--primary))"
                       />
                     ))}
-                    <LabelList 
-                      dataKey="pagos" 
-                      position="top" 
-                      fill="hsl(var(--muted-foreground))"
-                      fontSize={9}
+                  <LabelList 
+                    dataKey="pagos" 
+                    position="top" 
+                    fill="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    fontWeight={500}
                       formatter={(value: number) => {
                         const total = chartData.reduce((sum, item) => sum + item.pagos, 0);
                         if (total === 0 || value === 0) return '';
