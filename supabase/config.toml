@@ -47,3 +47,9 @@ verify_jwt = false
 
 [functions.track-conversion]
 verify_jwt = false
+
+[functions.send-document-verification-notification]
+verify_jwt = false
+
+[functions.ativus-webhook]
+verify_jwt = false
