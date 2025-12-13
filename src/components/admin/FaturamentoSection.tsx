@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { DollarSign, TrendingUp, Loader2, RefreshCw, Calendar, CheckCircle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { DollarSign, Loader2, RefreshCw, CheckCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -45,6 +45,7 @@ export const FaturamentoSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     loadGlobalStats();
@@ -279,109 +280,125 @@ export const FaturamentoSection = () => {
       {/* Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <CardTitle className="text-sm sm:text-lg">Evolução de Transações</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
+            <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
+            <div className="flex items-center bg-muted rounded-full p-1 mt-1 sm:mt-0">
+              {[
+                { value: 'today', label: 'Hoje' },
+                { value: '7days', label: '7 dias' },
+                { value: '15days', label: '15 dias' },
+                { value: '30days', label: '30 dias' }
+              ].map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => setChartFilter(option.value as ChartFilter)}
+                  className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${
+                    chartFilter === option.value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
-            <Select value={chartFilter} onValueChange={(v) => setChartFilter(v as ChartFilter)}>
-              <SelectTrigger className="w-[120px] h-8 text-xs sm:text-sm">
-                <Calendar className="h-3 w-3 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Hoje</SelectItem>
-                <SelectItem value="7days">7 dias</SelectItem>
-                <SelectItem value="15days">15 dias</SelectItem>
-                <SelectItem value="30days">30 dias</SelectItem>
-                <SelectItem value="month">Este mês</SelectItem>
-                <SelectItem value="year">Este ano</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="h-[250px] sm:h-[300px] w-full">
+        <CardContent className="flex-1 flex flex-col">
+          <div className="flex-1 min-h-[280px] sm:min-h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={globalChartData} margin={{ top: 30, right: 5, left: 5, bottom: 30 }} barCategoryGap="50%" barSize={20}>
+              <BarChart 
+                data={globalChartData} 
+                margin={{ top: 30, right: 10, left: 10, bottom: isMobile ? 40 : 5 }} 
+                barCategoryGap="5%"
+              >
                 <defs>
                   <linearGradient id="barGradientPaidGlobal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
                     <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
                   </linearGradient>
-                  <linearGradient id="barGradientGeneratedGlobal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
-                  </linearGradient>
                 </defs>
                 <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  className="stroke-muted" 
-                  opacity={0.3}
+                  stroke="hsl(var(--muted-foreground))" 
+                  opacity={0.15}
+                  horizontal={true}
                   vertical={false}
                 />
                 <XAxis 
                   dataKey="date" 
-                  tick={{ fontSize: 8 }} 
-                  angle={-45}
-                  textAnchor="end"
-                  className="text-muted-foreground"
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                  angle={isMobile ? -90 : 0}
+                  textAnchor={isMobile ? "end" : "middle"}
                   tickLine={false}
                   axisLine={false}
-                  interval={chartFilter === 'today' ? 0 : chartFilter === 'year' ? 29 : 'preserveStartEnd'}
-                  height={50}
+                  interval={0}
+                  height={isMobile ? 50 : 30}
                 />
                 <YAxis 
-                  tick={{ fontSize: 10 }} 
-                  className="text-muted-foreground"
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
+                  hide
+                  domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]}
                 />
                 <Tooltip 
-                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
+                  cursor={{ fill: 'hsl(var(--primary) / 0.08)' }}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '12px',
+                    fontSize: '12px',
                     padding: '12px 16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                    fontSize: '12px'
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
                   formatter={(value: number, name: string) => {
                     if (name === 'pagos') return [value, '🔴 Pagos'];
-                    if (name === 'gerados') return [value, '⚫ Gerados'];
                     return [value, name];
                   }}
                 />
                 <Bar 
-                  dataKey="gerados" 
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={32}
-                  fill="url(#barGradientGeneratedGlobal)"
-                  animationDuration={800}
-                  animationEasing="ease-out"
-                />
-                <Bar 
                   dataKey="pagos" 
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={32}
+                  radius={[4, 4, 0, 0]}
                   fill="url(#barGradientPaidGlobal)"
                   animationDuration={800}
                   animationEasing="ease-out"
-                />
+                  barSize={24}
+                >
+                  <LabelList
+                    dataKey="pagos"
+                    position="top"
+                    fontSize={10}
+                    fontWeight={600}
+                    fill="hsl(var(--primary))"
+                    content={({ x, y, width, value, index }: { x?: number; y?: number; width?: number; value?: number; index?: number }) => {
+                      if (typeof index !== 'number' || !globalChartData[index]) return null;
+                      const gerados = globalChartData[index].gerados ?? 0;
+                      const pagos = value ?? 0;
+                      const rate = gerados > 0 ? Math.round((pagos / gerados) * 100) : 0;
+                      return (
+                        <text 
+                          x={(x ?? 0) + (width ?? 0) / 2} 
+                          y={(y ?? 0) - 6} 
+                          textAnchor="middle" 
+                          fontSize={10} 
+                          fill="hsl(var(--primary))" 
+                          fontWeight={600}
+                        >
+                          {rate}%
+                        </text>
+                      );
+                    }}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="flex items-center justify-center gap-4 mt-4">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-muted-foreground/50"></span>
-              <span className="text-xs text-muted-foreground font-medium">Gerados</span>
-            </div>
-            <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-primary"></span>
-              <span className="text-xs text-muted-foreground font-medium">Pagos</span>
+              <span className="text-xs text-muted-foreground font-medium">Pagos (% conversão)</span>
             </div>
           </div>
         </CardContent>
