@@ -44,7 +44,7 @@ export const FaturamentoSection = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
-  const [chartFilter, setChartFilter] = useState<ChartFilter>('30days');
+  const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
 
   useEffect(() => {
     loadGlobalStats();
