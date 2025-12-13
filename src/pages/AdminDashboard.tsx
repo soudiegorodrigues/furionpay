@@ -537,7 +537,7 @@ const AdminDashboard = () => {
                     axisLine={false}
                     allowDecimals={false}
                     hide
-                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.25)]}
+                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]}
                   />
                   <Tooltip 
                     cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
