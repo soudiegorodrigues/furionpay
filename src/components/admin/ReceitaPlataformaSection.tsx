@@ -515,36 +515,36 @@ export const ReceitaPlataformaSection = () => {
                   </p>
                 </div>
               )}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-                <div className="text-center p-3 sm:p-4 bg-primary/10 rounded-lg">
-                  <div className="text-lg sm:text-2xl font-bold text-primary">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+                <div className="text-center p-2 sm:p-3 bg-primary/10 rounded-lg">
+                  <div className="text-sm sm:text-base font-semibold text-primary">
                     {formatCurrency(profitStats.today)}
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Hoje</p>
+                  <p className="text-xs text-muted-foreground">Hoje</p>
                 </div>
-                <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                  <div className="text-lg sm:text-2xl font-bold text-foreground">
+                <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                  <div className="text-sm sm:text-base font-semibold text-foreground">
                     {formatCurrency(profitStats.sevenDays)}
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">7 Dias</p>
+                  <p className="text-xs text-muted-foreground">7 Dias</p>
                 </div>
-                <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                  <div className="text-lg sm:text-2xl font-bold text-foreground">
+                <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                  <div className="text-sm sm:text-base font-semibold text-foreground">
                     {formatCurrency(profitStats.fifteenDays)}
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">15 Dias</p>
+                  <p className="text-xs text-muted-foreground">15 Dias</p>
                 </div>
-                <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                  <div className="text-lg sm:text-2xl font-bold text-foreground">
+                <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                  <div className="text-sm sm:text-base font-semibold text-foreground">
                     {formatCurrency(profitStats.thisMonth)}
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Este Mês</p>
+                  <p className="text-xs text-muted-foreground">Este Mês</p>
                 </div>
-                <div className="text-center p-3 sm:p-4 bg-green-500/10 rounded-lg col-span-2 sm:col-span-1">
-                  <div className="text-lg sm:text-2xl font-bold text-green-500">
+                <div className="text-center p-2 sm:p-3 bg-green-500/10 rounded-lg col-span-2 sm:col-span-1">
+                  <div className="text-sm sm:text-base font-semibold text-green-500">
                     {formatCurrency(profitStats.thisYear)}
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Este Ano</p>
+                  <p className="text-xs text-muted-foreground">Este Ano</p>
                 </div>
               </div>
             </>
