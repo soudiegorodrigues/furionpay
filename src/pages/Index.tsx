@@ -8,6 +8,7 @@ import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { supabase } from "@/integrations/supabase/client";
+import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +17,27 @@ const Index = () => {
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   // Lê o modelo da URL para evitar flash - PRIORIDADE MÁXIMA
   const urlModel = searchParams.get('m') || searchParams.get('model');
+  
+  // Estado para UTMs capturados
+  const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
+  
+  // Captura UTMs IMEDIATAMENTE ao carregar a página
+  useEffect(() => {
+    console.log('[UTM DEBUG] Index.tsx - URL completa:', window.location.href);
+    console.log('[UTM DEBUG] Index.tsx - Search params:', window.location.search);
+    console.log('[UTM DEBUG] Index.tsx - Referrer:', document.referrer);
+    
+    const captured = captureUTMParams();
+    console.log('[UTM DEBUG] Index.tsx - UTMs capturados:', captured);
+    
+    if (Object.keys(captured).length > 0) {
+      saveUTMParams(captured);
+    }
+    
+    const finalUtms = getUTMParams();
+    console.log('[UTM DEBUG] Index.tsx - UTMs finais:', finalUtms);
+    setUtmParams(finalUtms);
+  }, []);
   
   // Redireciona para admin se não houver userId
   useEffect(() => {
@@ -69,12 +91,14 @@ const Index = () => {
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
+          utmParams={utmParams || undefined}
         />
       ) : popupModel === 'clean' ? (
         <DonationPopupClean
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
+          utmParams={utmParams || undefined}
         />
       ) : popupModel === 'direct' ? (
         <DonationPopupDirect
@@ -82,6 +106,7 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           fixedAmount={fixedAmount}
+          utmParams={utmParams || undefined}
         />
       ) : popupModel === 'hot' ? (
         <DonationPopupHot
@@ -89,12 +114,14 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           fixedAmount={fixedAmount}
+          utmParams={utmParams || undefined}
         />
       ) : popupModel === 'landing' ? (
         <DonationPopupLanding
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
+          utmParams={utmParams || undefined}
         />
       ) : popupModel === 'instituto' ? (
         <DonationPopupInstituto
@@ -102,12 +129,14 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           fixedAmount={fixedAmount}
+          utmParams={utmParams || undefined}
         />
       ) : (
         <DonationPopup
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
+          utmParams={utmParams || undefined}
         />
       )}
     </div>

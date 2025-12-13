@@ -9,12 +9,15 @@ import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { cn } from "@/lib/utils";
 
+import { UTMParams } from "@/lib/utm";
+
 interface DonationPopupSimpleProps {
   isOpen: boolean;
   onClose: () => void;
   recipientName?: string;
   userId?: string;
   showCloseButton?: boolean;
+  utmParams?: UTMParams;
 }
 
 const DONATION_AMOUNTS = [
@@ -41,7 +44,8 @@ export const DonationPopupSimple = ({
   onClose,
   recipientName = "Davizinho",
   userId,
-  showCloseButton = false
+  showCloseButton = false,
+  utmParams: propUtmParams
 }: DonationPopupSimpleProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [step, setStep] = useState<Step>("select");
@@ -51,7 +55,10 @@ export const DonationPopupSimple = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
-  const { trackEvent, utmParams } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  
+  // Prioriza UTMs passados via prop sobre os do contexto
+  const utmParams = propUtmParams || contextUtmParams;
 
   useEffect(() => {
     if (!isOpen) {

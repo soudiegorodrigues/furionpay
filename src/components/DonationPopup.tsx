@@ -8,6 +8,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
+import { UTMParams } from "@/lib/utm";
 
 interface DonationPopupProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface DonationPopupProps {
   autoShowDelay?: number;
   userId?: string;
   showCloseButton?: boolean;
+  utmParams?: UTMParams;
 }
 
 const BOOST_OPTIONS = [
@@ -34,7 +36,8 @@ export const DonationPopup = ({
   onClose,
   recipientName = "Davizinho",
   userId,
-  showCloseButton = false
+  showCloseButton = false,
+  utmParams: propUtmParams
 }: DonationPopupProps) => {
   const [customAmount, setCustomAmount] = useState<string>("");
   const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
@@ -45,7 +48,10 @@ export const DonationPopup = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
-  const { trackEvent, utmParams } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  
+  // Prioriza UTMs passados via prop sobre os do contexto
+  const utmParams = propUtmParams || contextUtmParams;
 
   useEffect(() => {
     if (!isOpen) {

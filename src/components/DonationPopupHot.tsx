@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { cn } from "@/lib/utils";
+import { UTMParams } from "@/lib/utm";
 
 interface DonationPopupHotProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface DonationPopupHotProps {
   userId?: string;
   fixedAmount?: number;
   showCloseButton?: boolean;
+  utmParams?: UTMParams;
 }
 
 type Step = "email" | "loading" | "pix";
@@ -22,7 +24,8 @@ export const DonationPopupHot = ({
   onClose,
   userId,
   fixedAmount = 19.90,
-  showCloseButton = false
+  showCloseButton = false,
+  utmParams: propUtmParams
 }: DonationPopupHotProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -37,7 +40,10 @@ export const DonationPopupHot = ({
   const [isPaid, setIsPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const { toast } = useToast();
-  const { trackEvent, utmParams } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  
+  // Prioriza UTMs passados via prop sobre os do contexto
+  const utmParams = propUtmParams || contextUtmParams;
 
   useEffect(() => {
     if (!isOpen) {

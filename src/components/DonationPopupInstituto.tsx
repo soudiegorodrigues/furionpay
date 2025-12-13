@@ -17,6 +17,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+import { UTMParams } from "@/lib/utm";
+
 interface DonationPopupInstitutoProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,6 +27,7 @@ interface DonationPopupInstitutoProps {
   showCloseButton?: boolean;
   fixedAmount?: number;
   isPreview?: boolean;
+  utmParams?: UTMParams;
 }
 
 const DONATION_AMOUNTS = [
@@ -50,6 +53,7 @@ export const DonationPopupInstituto = ({
   showCloseButton = false,
   fixedAmount,
   isPreview = false,
+  utmParams: propUtmParams,
 }: DonationPopupInstitutoProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [step, setStep] = useState<Step>("select");
@@ -70,7 +74,10 @@ export const DonationPopupInstituto = ({
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
   
   const { toast } = useToast();
-  const { trackEvent, utmParams } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  
+  // Prioriza UTMs passados via prop sobre os do contexto
+  const utmParams = propUtmParams || contextUtmParams;
 
   // Reset timer when PIX is generated
   useEffect(() => {
