@@ -838,6 +838,89 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_requests: {
+        Row: {
+          created_at: string
+          delivery_address: string | null
+          id: string
+          requested_at: string
+          reward_id: string
+          sent_at: string | null
+          status: string
+          tracking_code: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_address?: string | null
+          id?: string
+          requested_at?: string
+          reward_id: string
+          sent_at?: string | null
+          status?: string
+          tracking_code?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_address?: string | null
+          id?: string
+          requested_at?: string
+          reward_id?: string
+          sent_at?: string | null
+          status?: string
+          tracking_code?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_requests_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards: {
+        Row: {
+          created_at: string
+          delivery_method: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          threshold_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_method?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          threshold_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_method?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          threshold_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_documents: {
         Row: {
           created_at: string | null
@@ -1100,6 +1183,19 @@ export type Database = {
           status: string
         }[]
       }
+      get_pending_reward_requests: {
+        Args: never
+        Returns: {
+          delivery_address: string
+          id: string
+          requested_at: string
+          reward_id: string
+          reward_image_url: string
+          reward_name: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       get_pending_verifications: {
         Args: never
         Returns: {
@@ -1163,6 +1259,21 @@ export type Database = {
           popup_model: string
           total_generated: number
           total_paid: number
+        }[]
+      }
+      get_sent_reward_requests: {
+        Args: never
+        Returns: {
+          delivery_address: string
+          id: string
+          requested_at: string
+          reward_id: string
+          reward_image_url: string
+          reward_name: string
+          sent_at: string
+          tracking_code: string
+          user_email: string
+          user_id: string
         }[]
       }
       get_transaction_status_by_id: {
@@ -1344,6 +1455,10 @@ export type Database = {
             Returns: string
           }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
+      mark_reward_sent: {
+        Args: { p_request_id: string; p_tracking_code?: string }
+        Returns: boolean
+      }
       process_withdrawal: {
         Args: {
           p_rejection_reason?: string

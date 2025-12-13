@@ -16,6 +16,7 @@ import { TaxasSection } from "@/components/admin/TaxasSection";
 import { SaquesGlobaisSection } from "@/components/admin/SaquesGlobaisSection";
 import { DocumentosSection } from "@/components/admin/DocumentosSection";
 import { UTMDebugSection } from "@/components/admin/UTMDebugSection";
+import { PremiacoesSection } from "@/components/admin/PremiacoesSection";
 
 const Admin = () => {
   const location = useLocation();
@@ -56,6 +57,7 @@ const Admin = () => {
       {activeSection === "email" && <EmailSection />}
       {activeSection === "taxas" && <TaxasSection />}
       {activeSection === "utm-debug" && <UTMDebugSection />}
+      {activeSection === "premiacoes" && <PremiacoesSection />}
     </div>
   );
 };
