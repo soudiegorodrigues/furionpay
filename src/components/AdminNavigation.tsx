@@ -12,7 +12,8 @@ import {
   Receipt,
   PieChart,
   Wallet,
-  FileCheck
+  FileCheck,
+  Bug
 } from "lucide-react";
 
 const adminSections = [
@@ -26,6 +27,7 @@ const adminSections = [
   { id: "multi", title: "Multi-adquirência", icon: CreditCard },
   { id: "usuarios", title: "Usuários", icon: Users },
   { id: "taxas", title: "Taxas", icon: Percent },
+  { id: "utm-debug", title: "UTM Debug", icon: Bug },
   { id: "personalizacao", title: "Personalização", icon: Palette },
   { id: "email", title: "Email", icon: Mail },
   { id: "zona-perigo", title: "Zona de Perigo", icon: AlertTriangle },

@@ -15,6 +15,7 @@ import { ZonaDePerigo } from "@/components/admin/ZonaDePerigo";
 import { TaxasSection } from "@/components/admin/TaxasSection";
 import { SaquesGlobaisSection } from "@/components/admin/SaquesGlobaisSection";
 import { DocumentosSection } from "@/components/admin/DocumentosSection";
+import { UTMDebugSection } from "@/components/admin/UTMDebugSection";
 
 const Admin = () => {
   const location = useLocation();
@@ -54,6 +55,7 @@ const Admin = () => {
       {activeSection === "personalizacao" && <PersonalizacaoSection userId={user?.id} />}
       {activeSection === "email" && <EmailSection />}
       {activeSection === "taxas" && <TaxasSection />}
+      {activeSection === "utm-debug" && <UTMDebugSection />}
     </div>
   );
 };
