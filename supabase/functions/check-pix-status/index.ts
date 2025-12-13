@@ -62,8 +62,9 @@ function isCircuitOpen(acquirer: string): boolean {
   return true;
 }
 
-function recordSuccess(acquirer: string): void {
+function recordSuccess(acquirer: string, supabase?: any, responseTimeMs?: number): void {
   const state = getCircuitState(acquirer);
+  const wasOpen = state.isOpen;
   
   if (state.failures > 0 || state.isOpen) {
     console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Success recorded, resetting to CLOSED state`);
@@ -72,9 +73,22 @@ function recordSuccess(acquirer: string): void {
   state.failures = 0;
   state.isOpen = false;
   state.openUntil = 0;
+
+  // Log to monitoring table
+  if (supabase) {
+    logMonitoringEvent(supabase, acquirer, 'success', responseTimeMs).catch(err => 
+      console.error('Failed to log monitoring event:', err)
+    );
+    
+    if (wasOpen) {
+      logMonitoringEvent(supabase, acquirer, 'circuit_close').catch(err => 
+        console.error('Failed to log circuit close event:', err)
+      );
+    }
+  }
 }
 
-function recordFailure(acquirer: string): void {
+function recordFailure(acquirer: string, supabase?: any, errorMessage?: string): void {
   const state = getCircuitState(acquirer);
   const now = Date.now();
   
@@ -83,10 +97,48 @@ function recordFailure(acquirer: string): void {
   
   console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Failure recorded (${state.failures}/${CIRCUIT_BREAKER_CONFIG.failureThreshold})`);
   
-  if (state.failures >= CIRCUIT_BREAKER_CONFIG.failureThreshold) {
+  const wasOpen = state.isOpen;
+  
+  if (state.failures >= CIRCUIT_BREAKER_CONFIG.failureThreshold && !wasOpen) {
     state.isOpen = true;
     state.openUntil = now + CIRCUIT_BREAKER_CONFIG.resetTimeMs;
     console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Circuit OPENED, will reset at ${new Date(state.openUntil).toISOString()}`);
+    
+    // Log circuit open event
+    if (supabase) {
+      logMonitoringEvent(supabase, acquirer, 'circuit_open', undefined, 'Circuit breaker opened after consecutive failures').catch(err => 
+        console.error('Failed to log circuit open event:', err)
+      );
+    }
+  }
+
+  // Log failure event
+  if (supabase) {
+    logMonitoringEvent(supabase, acquirer, 'failure', undefined, errorMessage).catch(err => 
+      console.error('Failed to log failure event:', err)
+    );
+  }
+}
+
+// Log monitoring event to database
+async function logMonitoringEvent(
+  supabase: any, 
+  acquirer: string, 
+  eventType: string, 
+  responseTimeMs?: number, 
+  errorMessage?: string,
+  retryAttempt?: number
+): Promise<void> {
+  try {
+    await supabase.from('api_monitoring_events').insert({
+      acquirer,
+      event_type: eventType,
+      response_time_ms: responseTimeMs || null,
+      error_message: errorMessage || null,
+      retry_attempt: retryAttempt || null,
+    });
+  } catch (err) {
+    console.error('Error logging monitoring event:', err);
   }
 }
 
@@ -479,9 +531,11 @@ async function getInterAccessToken(client: Deno.HttpClient, supabase: any): Prom
 
 async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Banco Inter, txid:', txid);
+  const startTime = Date.now();
   
   // Check circuit breaker
   if (isCircuitOpen('inter')) {
+    await logMonitoringEvent(supabase, 'inter', 'circuit_open', undefined, 'Request blocked by circuit breaker');
     return { isPaid: false, status: 'circuit_open' };
   }
   
@@ -503,18 +557,20 @@ async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: 
       `Inter status check for ${txid}`
     );
 
+    const responseTime = Date.now() - startTime;
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Erro ao consultar PIX Inter:', response.status, errorText);
-      recordFailure('inter');
+      recordFailure('inter', supabase, `HTTP ${response.status}: ${errorText}`);
       return { isPaid: false, status: 'error' };
     }
 
     const data = await response.json();
     console.log('Status Inter:', data.status);
 
-    // Success - reset circuit breaker
-    recordSuccess('inter');
+    // Success - reset circuit breaker and log
+    recordSuccess('inter', supabase, responseTime);
 
     const isPaid = data.status === 'CONCLUIDA';
     
@@ -534,16 +590,18 @@ async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: 
     };
   } catch (error) {
     console.error(`Inter status check failed after retries for ${txid}:`, error);
-    recordFailure('inter');
+    recordFailure('inter', supabase, error instanceof Error ? error.message : 'Unknown error');
     return { isPaid: false, status: 'retry_failed' };
   }
 }
 
 async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no SpedPay, txid:', txid);
+  const startTime = Date.now();
 
   // Check circuit breaker
   if (isCircuitOpen('spedpay')) {
+    await logMonitoringEvent(supabase, 'spedpay', 'circuit_open', undefined, 'Request blocked by circuit breaker');
     return { isPaid: false, status: 'circuit_open' };
   }
 
@@ -560,10 +618,12 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
       `SpedPay status check for ${txid}`
     );
 
+    const responseTime = Date.now() - startTime;
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('SpedPay API error:', response.status, errorText);
-      recordFailure('spedpay');
+      recordFailure('spedpay', supabase, `HTTP ${response.status}: ${errorText}`);
       return { isPaid: false, status: 'error' };
     }
 
@@ -571,8 +631,8 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
     const spedpayStatus = data.status?.toLowerCase() || '';
     const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
 
-    // Success - reset circuit breaker
-    recordSuccess('spedpay');
+    // Success - reset circuit breaker and log
+    recordSuccess('spedpay', supabase, responseTime);
 
     if (isPaid) {
       const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
@@ -589,7 +649,7 @@ async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): 
     };
   } catch (error) {
     console.error(`SpedPay status check failed after retries for ${txid}:`, error);
-    recordFailure('spedpay');
+    recordFailure('spedpay', supabase, error instanceof Error ? error.message : 'Unknown error');
     return { isPaid: false, status: 'retry_failed' };
   }
 }
@@ -599,9 +659,11 @@ const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/ge
 
 async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
   console.log('Verificando status no Ativus Hub, id_transaction:', idTransaction);
+  const startTime = Date.now();
 
   // Check circuit breaker
   if (isCircuitOpen('ativus')) {
+    await logMonitoringEvent(supabase, 'ativus', 'circuit_open', undefined, 'Request blocked by circuit breaker');
     return { isPaid: false, status: 'circuit_open' };
   }
 
@@ -626,12 +688,13 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
       `Ativus status check for ${idTransaction}`
     );
 
+    const responseTime = Date.now() - startTime;
     const responseText = await response.text();
     console.log('Ativus status response:', response.status, responseText);
 
     if (!response.ok) {
       console.error('Ativus status check failed:', response.status, responseText);
-      recordFailure('ativus');
+      recordFailure('ativus', supabase, `HTTP ${response.status}: ${responseText}`);
       return { isPaid: false, status: 'pending' };
     }
 
@@ -640,12 +703,12 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
       data = JSON.parse(responseText);
     } catch {
       console.error('Failed to parse Ativus response');
-      recordFailure('ativus');
+      recordFailure('ativus', supabase, 'Failed to parse JSON response');
       return { isPaid: false, status: 'pending' };
     }
 
-    // Success - reset circuit breaker
-    recordSuccess('ativus');
+    // Success - reset circuit breaker and log
+    recordSuccess('ativus', supabase, responseTime);
 
     // According to documentation, response format is:
     // { "situacao": "AGUARDANDO_PAGAMENTO" | "CONCLUIDO" | etc, "tipo": "CASH IN", ... }
@@ -684,7 +747,7 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
     };
   } catch (error) {
     console.error(`Ativus status check failed after retries for ${idTransaction}:`, error);
-    recordFailure('ativus');
+    recordFailure('ativus', supabase, error instanceof Error ? error.message : 'Unknown error');
     return { isPaid: false, status: 'retry_failed' };
   }
 }

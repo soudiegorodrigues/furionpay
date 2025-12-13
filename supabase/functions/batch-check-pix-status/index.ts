@@ -62,31 +62,50 @@ function isCircuitOpen(acquirer: string): boolean {
   return true;
 }
 
-function recordSuccess(acquirer: string): void {
+function recordSuccess(acquirer: string, supabase?: any, responseTimeMs?: number): void {
   const state = getCircuitState(acquirer);
-  
-  if (state.failures > 0 || state.isOpen) {
-    console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Success recorded, resetting to CLOSED state`);
-  }
+  const wasOpen = state.isOpen;
   
   state.failures = 0;
   state.isOpen = false;
   state.openUntil = 0;
+
+  if (supabase) {
+    supabase.from('api_monitoring_events').insert({
+      acquirer, event_type: 'success', response_time_ms: responseTimeMs || null
+    }).then(() => {}).catch(() => {});
+    
+    if (wasOpen) {
+      supabase.from('api_monitoring_events').insert({
+        acquirer, event_type: 'circuit_close'
+      }).then(() => {}).catch(() => {});
+    }
+  }
 }
 
-function recordFailure(acquirer: string): void {
+function recordFailure(acquirer: string, supabase?: any, errorMessage?: string): void {
   const state = getCircuitState(acquirer);
   const now = Date.now();
+  const wasOpen = state.isOpen;
   
   state.failures++;
   state.lastFailure = now;
   
-  console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Failure recorded (${state.failures}/${CIRCUIT_BREAKER_CONFIG.failureThreshold})`);
-  
-  if (state.failures >= CIRCUIT_BREAKER_CONFIG.failureThreshold) {
+  if (state.failures >= CIRCUIT_BREAKER_CONFIG.failureThreshold && !wasOpen) {
     state.isOpen = true;
     state.openUntil = now + CIRCUIT_BREAKER_CONFIG.resetTimeMs;
-    console.log(`[CIRCUIT BREAKER] ${acquirer.toUpperCase()} - Circuit OPENED, will reset at ${new Date(state.openUntil).toISOString()}`);
+    
+    if (supabase) {
+      supabase.from('api_monitoring_events').insert({
+        acquirer, event_type: 'circuit_open', error_message: 'Circuit breaker opened'
+      }).then(() => {}).catch(() => {});
+    }
+  }
+
+  if (supabase) {
+    supabase.from('api_monitoring_events').insert({
+      acquirer, event_type: 'failure', error_message: errorMessage || null
+    }).then(() => {}).catch(() => {});
   }
 }
 
