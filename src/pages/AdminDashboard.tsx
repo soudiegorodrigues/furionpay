@@ -668,19 +668,21 @@ const AdminDashboard = () => {
                     
                     return (
                       <div key={reward.id} className="space-y-4">
-                        {/* Imagem da placa em DESTAQUE MÁXIMO */}
+                        {/* Imagem da placa sem fundo, maior */}
                         <div className="flex justify-center">
                           <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-xl opacity-30" />
-                            <div className="relative w-40 h-40 rounded-xl bg-white dark:bg-gray-900 p-3 shadow-xl border-2 border-primary/20">
-                              {reward.image_url ? (
-                                <img src={reward.image_url} alt={reward.name} className="w-full h-full object-contain" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Trophy className="h-16 w-16 text-primary" />
-                                </div>
-                              )}
-                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-2xl opacity-20" />
+                            {reward.image_url ? (
+                              <img 
+                                src={reward.image_url} 
+                                alt={reward.name} 
+                                className="relative w-56 h-56 object-contain drop-shadow-lg" 
+                              />
+                            ) : (
+                              <div className="relative w-56 h-56 flex items-center justify-center">
+                                <Trophy className="h-24 w-24 text-primary drop-shadow-lg" />
+                              </div>
+                            )}
                           </div>
                         </div>
                         
