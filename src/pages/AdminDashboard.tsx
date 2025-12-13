@@ -119,72 +119,66 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true) => {
     if (showLoading && !stats) setIsLoading(true);
     try {
-      // Load user-specific fee config or fallback to default
-      const {
-        data: userSettingsData
-      } = await supabase.rpc('get_user_settings');
-      let userFeeConfigId: string | null = null;
-      if (userSettingsData) {
-        const settings = userSettingsData as {
-          key: string;
-          value: string;
-        }[];
+      // Execute all queries in parallel for faster loading
+      const [
+        userSettingsResult,
+        statsResult,
+        txResult,
+        rewardsResult
+      ] = await Promise.all([
+        supabase.rpc('get_user_settings'),
+        supabase.rpc('get_user_dashboard'),
+        supabase.rpc('get_user_transactions', { p_limit: 200 }),
+        supabase.from('rewards')
+          .select('id, name, threshold_amount, image_url')
+          .eq('is_active', true)
+          .order('threshold_amount', { ascending: true })
+      ]);
+
+      // Process user settings and fee config
+      let feeData = null;
+      if (userSettingsResult.data) {
+        const settings = userSettingsResult.data as { key: string; value: string; }[];
         const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
-        userFeeConfigId = feeConfigSetting?.value || null;
-      }
-
-      // Load fee config - user specific or default
-      let feeData;
-      if (userFeeConfigId) {
-        const {
-          data
-        } = await supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('id', userFeeConfigId).maybeSingle();
-        feeData = data;
-      }
-
-      // Fallback to default if no user-specific config
-      if (!feeData) {
-        const {
-          data
-        } = await supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle();
-        feeData = data;
-      }
-      if (feeData) {
-        setFeeConfig(feeData as FeeConfig);
-      }
-      const {
-        data: statsData,
-        error: statsError
-      } = await supabase.rpc('get_user_dashboard');
-      if (statsError) throw statsError;
-      setStats(statsData as unknown as DashboardStats);
-      const {
-        data: txData,
-        error: txError
-      } = await supabase.rpc('get_user_transactions', {
-        p_limit: 200
-      });
-      if (txError) throw txError;
-      setTransactions(txData as unknown as Transaction[] || []);
-      const {
-        data: settingsData
-      } = await supabase.rpc('get_user_settings');
-      if (settingsData) {
-        const settings = settingsData as {
-          key: string;
-          value: string;
-        }[];
+        const userFeeConfigId = feeConfigSetting?.value || null;
+        
+        // Load fee config
+        if (userFeeConfigId) {
+          const { data } = await supabase.from('fee_configs')
+            .select('pix_percentage, pix_fixed')
+            .eq('id', userFeeConfigId)
+            .maybeSingle();
+          feeData = data;
+        }
+        
+        // Get banner URL
         const banner = settings.find(s => s.key === 'dashboard_banner_url');
         setBannerUrl(banner?.value || null);
       }
 
-      // Load rewards
-      const { data: rewardsData } = await supabase
-        .from('rewards')
-        .select('id, name, threshold_amount, image_url')
-        .eq('is_active', true)
-        .order('threshold_amount', { ascending: true });
-      setRewards(rewardsData || []);
+      // Fallback to default fee config if no user-specific config
+      if (!feeData) {
+        const { data } = await supabase.from('fee_configs')
+          .select('pix_percentage, pix_fixed')
+          .eq('is_default', true)
+          .maybeSingle();
+        feeData = data;
+      }
+      
+      if (feeData) {
+        setFeeConfig(feeData as FeeConfig);
+      }
+
+      // Set stats
+      if (statsResult.error) throw statsResult.error;
+      setStats(statsResult.data as unknown as DashboardStats);
+
+      // Set transactions
+      if (txResult.error) throw txResult.error;
+      setTransactions(txResult.data as unknown as Transaction[] || []);
+
+      // Set rewards
+      setRewards(rewardsResult.data || []);
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       if (error.message?.includes('Not authenticated')) {
