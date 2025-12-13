@@ -515,7 +515,7 @@ const AdminDashboard = () => {
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                     tickLine={false}
                     axisLine={false}
-                    interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
+                    interval={chartFilter === 'today' ? 3 : 'preserveStartEnd'}
                   />
                   <YAxis 
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
