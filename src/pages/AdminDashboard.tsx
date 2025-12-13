@@ -461,7 +461,7 @@ const AdminDashboard = () => {
   return <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
               <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
