@@ -64,6 +64,14 @@ interface Reward {
 }
 const AdminDashboard = () => {
   const isMobile = useIsMobile();
+  const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
+
+  useEffect(() => {
+    const checkSize = () => setIsTabletOrSmaller(window.innerWidth < 1024);
+    checkSize();
+    window.addEventListener('resize', checkSize);
+    return () => window.removeEventListener('resize', checkSize);
+  }, []);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
@@ -597,7 +605,7 @@ const AdminDashboard = () => {
                 top: 30,
                 right: 5,
                 left: 5,
-                bottom: isMobile ? 40 : 5
+                bottom: isTabletOrSmaller ? 40 : 5
               }} barCategoryGap="50%" barSize={20}>
                   <defs>
                     <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
@@ -616,12 +624,12 @@ const AdminDashboard = () => {
                       fontSize: 10,
                       fill: 'hsl(var(--muted-foreground))'
                     }}
-                    angle={isMobile ? -90 : 0}
-                    textAnchor={isMobile ? "end" : "middle"}
+                    angle={isTabletOrSmaller ? -90 : 0}
+                    textAnchor={isTabletOrSmaller ? "end" : "middle"}
                     tickLine={false} 
                     axisLine={false} 
-                    interval={isMobile ? 2 : 0}
-                    height={isMobile ? 50 : 30}
+                    interval={isTabletOrSmaller ? 2 : 0}
+                    height={isTabletOrSmaller ? 50 : 30}
                   />
                   <YAxis tick={{
                   fontSize: 10,
