@@ -129,7 +129,7 @@ const AdminDashboard = () => {
       ] = await Promise.all([
         supabase.rpc('get_user_settings'),
         supabase.rpc('get_user_dashboard'),
-        supabase.rpc('get_user_transactions', { p_limit: 50 }),
+        supabase.rpc('get_user_transactions', { p_limit: 500 }),
         supabase.from('rewards')
           .select('id, name, threshold_amount, image_url')
           .eq('is_active', true)
