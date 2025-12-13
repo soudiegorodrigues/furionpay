@@ -613,9 +613,9 @@ const AdminDashboard = () => {
                   <XAxis 
                     dataKey="date" 
                     tick={{
-                      fontSize: isMobile ? 8 : 10,
+                      fontSize: 10,
                       fill: 'hsl(var(--muted-foreground))'
-                    }} 
+                    }}
                     angle={isMobile ? -90 : 0}
                     textAnchor={isMobile ? "end" : "middle"}
                     tickLine={false} 
