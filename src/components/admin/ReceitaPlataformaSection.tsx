@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell, Legend } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -133,12 +133,17 @@ export const ReceitaPlataformaSection = () => {
     
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisYearStart = new Date(now.getFullYear(), 0, 1);
+    
+    // Mês anterior
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
     let todayProfit = 0;
     let sevenDaysProfit = 0;
     let fifteenDaysProfit = 0;
     let thirtyDaysProfit = 0;
     let thisMonthProfit = 0;
+    let lastMonthProfit = 0;
     let thisYearProfit = 0;
     let totalProfit = 0;
 
@@ -180,6 +185,11 @@ export const ReceitaPlataformaSection = () => {
         thisMonthProfit += profit;
       }
 
+      // Mês anterior
+      if (txDate >= lastMonthStart && txDate <= lastMonthEnd) {
+        lastMonthProfit += profit;
+      }
+
       // Este ano
       if (txDate >= thisYearStart) {
         thisYearProfit += profit;
@@ -208,12 +218,19 @@ export const ReceitaPlataformaSection = () => {
       ? ((secondHalfProfit - firstHalfProfit) / firstHalfProfit) * 100 
       : 0;
 
+    // Variação mês atual vs mês anterior
+    const monthOverMonthChange = lastMonthProfit > 0 
+      ? ((thisMonthProfit - lastMonthProfit) / lastMonthProfit) * 100 
+      : thisMonthProfit > 0 ? 100 : 0;
+
     return {
       today: todayProfit,
       sevenDays: sevenDaysProfit,
       fifteenDays: fifteenDaysProfit,
       thirtyDays: thirtyDaysProfit,
       thisMonth: thisMonthProfit,
+      lastMonth: lastMonthProfit,
+      monthOverMonthChange,
       thisYear: thisYearProfit,
       total: totalProfit,
       transactionCount: paidTransactions.length,
@@ -575,6 +592,60 @@ export const ReceitaPlataformaSection = () => {
           {profitStats.daysWithData === 0 && (
             <p className="text-center text-sm text-muted-foreground mt-4">
               Sem dados suficientes para projeção. Aguarde transações nos últimos 7 dias.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Comparativo Mensal */}
+      <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <GitCompare className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+            Comparativo Mensal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                {formatCurrency(profitStats.lastMonth)}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Mês Anterior</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">
+                {formatCurrency(profitStats.thisMonth)}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Mês Atual</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date().toLocaleDateString('pt-BR', { month: 'long' })}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-background/50 rounded-lg border border-border/50">
+              <div className={cn(
+                "text-2xl sm:text-3xl font-bold flex items-center justify-center gap-1",
+                profitStats.monthOverMonthChange > 0 ? "text-green-500" : profitStats.monthOverMonthChange < 0 ? "text-red-500" : "text-muted-foreground"
+              )}>
+                {profitStats.monthOverMonthChange > 0 ? (
+                  <ArrowUpRight className="h-5 w-5" />
+                ) : profitStats.monthOverMonthChange < 0 ? (
+                  <ArrowDownRight className="h-5 w-5" />
+                ) : null}
+                {profitStats.monthOverMonthChange > 0 ? '+' : ''}{profitStats.monthOverMonthChange.toFixed(1)}%
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Variação</p>
+              <p className="text-xs text-muted-foreground">
+                {profitStats.monthOverMonthChange > 0 ? "crescimento" : profitStats.monthOverMonthChange < 0 ? "redução" : "sem variação"}
+              </p>
+            </div>
+          </div>
+          {profitStats.lastMonth === 0 && profitStats.thisMonth === 0 && (
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Sem dados para comparativo. Aguarde transações neste e no mês anterior.
             </p>
           )}
         </CardContent>
