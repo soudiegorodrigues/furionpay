@@ -500,19 +500,18 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] sm:h-[300px] w-full">
+            <div className="h-[350px] sm:h-[400px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 30, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid 
-                    strokeDasharray="3 3" 
-                    className="stroke-muted" 
-                    opacity={0.3} 
+                    stroke="hsl(var(--muted-foreground))"
+                    opacity={0.15} 
                     horizontal={true}
-                    vertical={true}
+                    vertical={false}
                   />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 8, fill: 'hsl(var(--muted-foreground))' }} 
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                     tickLine={false}
                     axisLine={false}
                     interval={0}
