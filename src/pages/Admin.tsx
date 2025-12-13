@@ -18,6 +18,7 @@ import { DocumentosSection } from "@/components/admin/DocumentosSection";
 import { UTMDebugSection } from "@/components/admin/UTMDebugSection";
 import { PremiacoesSection } from "@/components/admin/PremiacoesSection";
 import { ApiMonitoringSection } from "@/components/admin/ApiMonitoringSection";
+import { ReceitaPlataformaSection } from "@/components/admin/ReceitaPlataformaSection";
 
 const Admin = () => {
   const location = useLocation();
@@ -45,6 +46,7 @@ const Admin = () => {
       <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
 
       {activeSection === "faturamento" && <FaturamentoSection />}
+      {activeSection === "receita-plataforma" && <ReceitaPlataformaSection />}
       {activeSection === "transacoes" && <TransacoesGlobaisSection />}
       {activeSection === "ranking" && <RankingSection />}
       {activeSection === "dominios" && <DominiosSection />}
