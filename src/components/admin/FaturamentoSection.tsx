@@ -121,9 +121,35 @@ export const FaturamentoSection = () => {
   };
 
   const globalChartData = useMemo((): ChartData[] => {
-    const days = getChartDays(chartFilter);
     const data: ChartData[] = [];
     const now = new Date();
+    
+    // If "today" is selected, show hourly data (00:00 to 23:00)
+    if (chartFilter === 'today') {
+      const todayStr = now.toISOString().split('T')[0];
+      
+      for (let hour = 0; hour < 24; hour++) {
+        const displayHour = `${hour.toString().padStart(2, '0')}:00`;
+        
+        const hourTransactions = transactions.filter(tx => {
+          const txDate = new Date(tx.created_at);
+          const txDateStr = txDate.toISOString().split('T')[0];
+          const txHour = txDate.getHours();
+          return txDateStr === todayStr && txHour === hour;
+        });
+        
+        const gerados = hourTransactions.length;
+        const pagos = hourTransactions.filter(tx => tx.status === 'paid').length;
+        const valorPago = hourTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+        
+        data.push({ date: displayHour, gerados, pagos, valorPago });
+      }
+      
+      return data;
+    }
+    
+    // For other filters, show daily data
+    const days = getChartDays(chartFilter);
     
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now);
