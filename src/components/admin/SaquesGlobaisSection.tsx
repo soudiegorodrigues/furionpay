@@ -96,10 +96,12 @@ export function SaquesGlobaisSection() {
 
   const stats = useMemo(() => {
     const pending = withdrawals.filter(w => w.status === 'pending');
-    const totalValue = pending.reduce((acc, w) => acc + w.amount, 0);
+    const approved = withdrawals.filter(w => w.status === 'approved');
     return {
       totalPending: pending.length,
-      totalValue
+      pendingValue: pending.reduce((acc, w) => acc + w.amount, 0),
+      totalApproved: approved.length,
+      approvedValue: approved.reduce((acc, w) => acc + w.amount, 0)
     };
   }, [withdrawals]);
 
@@ -253,21 +255,21 @@ export function SaquesGlobaisSection() {
             <div className="p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-primary font-medium">Total de Saques</p>
+                  <p className="text-sm text-yellow-600 font-medium">Saques Pendentes</p>
                   <p className="text-2xl font-bold">{stats.totalPending}</p>
-                  <p className="text-xs text-muted-foreground">Saques pendentes</p>
+                  <p className="text-xs text-muted-foreground">{formatCurrency(stats.pendingValue)}</p>
                 </div>
-                <FileText className="h-5 w-5 text-muted-foreground" />
+                <FileText className="h-5 w-5 text-yellow-500" />
               </div>
             </div>
             <div className="p-4 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-primary font-medium">Valor Total</p>
-                  <p className="text-2xl font-bold">{formatCurrency(stats.totalValue)}</p>
-                  <p className="text-xs text-muted-foreground">Valor total dos saques</p>
+                  <p className="text-sm text-green-600 font-medium">Saques Aprovados</p>
+                  <p className="text-2xl font-bold">{formatCurrency(stats.approvedValue)}</p>
+                  <p className="text-xs text-muted-foreground">{stats.totalApproved} saques processados</p>
                 </div>
-                <DollarSign className="h-5 w-5 text-muted-foreground" />
+                <DollarSign className="h-5 w-5 text-green-500" />
               </div>
             </div>
           </div>
