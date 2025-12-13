@@ -75,7 +75,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
@@ -119,66 +119,66 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true) => {
     if (showLoading && !stats) setIsLoading(true);
     try {
-      // Execute all queries in parallel for faster loading
+      // Execute ALL queries in parallel - including fee configs
       const [
         userSettingsResult,
         statsResult,
         txResult,
-        rewardsResult
+        rewardsResult,
+        defaultFeeResult
       ] = await Promise.all([
         supabase.rpc('get_user_settings'),
         supabase.rpc('get_user_dashboard'),
-        supabase.rpc('get_user_transactions', { p_limit: 200 }),
+        supabase.rpc('get_user_transactions', { p_limit: 50 }),
         supabase.from('rewards')
           .select('id, name, threshold_amount, image_url')
           .eq('is_active', true)
-          .order('threshold_amount', { ascending: true })
+          .order('threshold_amount', { ascending: true }),
+        supabase.from('fee_configs')
+          .select('pix_percentage, pix_fixed')
+          .eq('is_default', true)
+          .maybeSingle()
       ]);
 
-      // Process user settings and fee config
-      let feeData = null;
+      // Set stats immediately
+      if (!statsResult.error && statsResult.data) {
+        setStats(statsResult.data as unknown as DashboardStats);
+      }
+
+      // Set transactions immediately
+      if (!txResult.error) {
+        setTransactions(txResult.data as unknown as Transaction[] || []);
+      }
+
+      // Set rewards immediately
+      setRewards(rewardsResult.data || []);
+
+      // Process settings and fee config in background
+      let feeData = defaultFeeResult.data;
       if (userSettingsResult.data) {
         const settings = userSettingsResult.data as { key: string; value: string; }[];
         const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
         const userFeeConfigId = feeConfigSetting?.value || null;
         
-        // Load fee config
-        if (userFeeConfigId) {
-          const { data } = await supabase.from('fee_configs')
-            .select('pix_percentage, pix_fixed')
-            .eq('id', userFeeConfigId)
-            .maybeSingle();
-          feeData = data;
-        }
-        
         // Get banner URL
         const banner = settings.find(s => s.key === 'dashboard_banner_url');
         setBannerUrl(banner?.value || null);
-      }
-
-      // Fallback to default fee config if no user-specific config
-      if (!feeData) {
-        const { data } = await supabase.from('fee_configs')
-          .select('pix_percentage, pix_fixed')
-          .eq('is_default', true)
-          .maybeSingle();
-        feeData = data;
+        
+        // Load user-specific fee config if exists (secondary, non-blocking)
+        if (userFeeConfigId) {
+          supabase.from('fee_configs')
+            .select('pix_percentage, pix_fixed')
+            .eq('id', userFeeConfigId)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (data) setFeeConfig(data as FeeConfig);
+            });
+        }
       }
       
       if (feeData) {
         setFeeConfig(feeData as FeeConfig);
       }
-
-      // Set stats
-      if (statsResult.error) throw statsResult.error;
-      setStats(statsResult.data as unknown as DashboardStats);
-
-      // Set transactions
-      if (txResult.error) throw txResult.error;
-      setTransactions(txResult.data as unknown as Transaction[] || []);
-
-      // Set rewards
-      setRewards(rewardsResult.data || []);
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       if (error.message?.includes('Not authenticated')) {
