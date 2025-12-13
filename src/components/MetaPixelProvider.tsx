@@ -9,6 +9,27 @@ declare global {
   }
 }
 
+// Function to get cookie value by name
+const getCookie = (name: string): string | undefined => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(';').shift();
+  }
+  return undefined;
+};
+
+// Function to get Meta cookies for attribution
+const getMetaCookies = () => {
+  const fbc = getCookie('_fbc'); // Facebook Click ID (from ad clicks)
+  const fbp = getCookie('_fbp'); // Facebook Browser ID
+  
+  console.log('[META COOKIES] _fbc:', fbc || 'não encontrado');
+  console.log('[META COOKIES] _fbp:', fbp || 'não encontrado');
+  
+  return { fbc, fbp };
+};
+
 // Advanced matching parameters for better match quality
 interface AdvancedMatchingParams {
   em?: string; // Email (will be hashed by Facebook)
@@ -19,6 +40,9 @@ interface AdvancedMatchingParams {
   country?: string; // Country code
   ct?: string; // City
   st?: string; // State
+  fbc?: string; // Facebook Click ID
+  fbp?: string; // Facebook Browser ID
+  client_user_agent?: string; // User agent
 }
 
 interface MetaPixelContextType {
@@ -52,8 +76,22 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [utmParams, setUtmParams] = useState<UTMParams>({});
   const [advancedMatchingData, setAdvancedMatchingData] = useState<AdvancedMatchingParams>({
-    country: 'br' // Default to Brazil
+    country: 'br', // Default to Brazil
+    client_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
   });
+
+  // Capture Meta cookies on mount and update advanced matching data
+  useEffect(() => {
+    const { fbc, fbp } = getMetaCookies();
+    if (fbc || fbp) {
+      setAdvancedMatchingData(prev => ({
+        ...prev,
+        ...(fbc && { fbc }),
+        ...(fbp && { fbp }),
+      }));
+      console.log('[META COOKIES] Cookies capturados e adicionados ao Advanced Matching');
+    }
+  }, []);
 
   // Capture UTM params on mount and whenever URL changes
   useEffect(() => {
