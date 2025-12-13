@@ -4,6 +4,52 @@ export interface UTMParams {
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+  referrer?: string;
+  traffic_type?: string;
+}
+
+/**
+ * Parse referrer URL to identify traffic source
+ */
+function parseReferrer(): { source: string; medium: string } | null {
+  if (typeof window === "undefined" || !document.referrer) {
+    return null;
+  }
+
+  try {
+    const referrerUrl = new URL(document.referrer);
+    const hostname = referrerUrl.hostname.toLowerCase();
+
+    // Map known domains to sources
+    const sourceMap: Record<string, { source: string; medium: string }> = {
+      "google": { source: "google", medium: "organic" },
+      "facebook": { source: "facebook", medium: "social" },
+      "fb": { source: "facebook", medium: "social" },
+      "instagram": { source: "instagram", medium: "social" },
+      "twitter": { source: "twitter", medium: "social" },
+      "x.com": { source: "twitter", medium: "social" },
+      "linkedin": { source: "linkedin", medium: "social" },
+      "youtube": { source: "youtube", medium: "social" },
+      "tiktok": { source: "tiktok", medium: "social" },
+      "pinterest": { source: "pinterest", medium: "social" },
+      "bing": { source: "bing", medium: "organic" },
+      "yahoo": { source: "yahoo", medium: "organic" },
+      "duckduckgo": { source: "duckduckgo", medium: "organic" },
+      "whatsapp": { source: "whatsapp", medium: "social" },
+      "telegram": { source: "telegram", medium: "social" },
+    };
+
+    for (const [key, value] of Object.entries(sourceMap)) {
+      if (hostname.includes(key)) {
+        return value;
+      }
+    }
+
+    // Return the domain as source for unknown referrers
+    return { source: hostname.replace("www.", ""), medium: "referral" };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -30,6 +76,27 @@ export function captureUTMParams(): UTMParams {
       delete utmParams[key as keyof UTMParams];
     }
   });
+
+  // If no UTMs, try to capture from referrer
+  if (Object.keys(utmParams).length === 0) {
+    const referrerData = parseReferrer();
+    
+    if (referrerData) {
+      utmParams.utm_source = referrerData.source;
+      utmParams.utm_medium = referrerData.medium;
+      utmParams.referrer = document.referrer;
+      utmParams.traffic_type = "organic";
+      console.log('[UTM DEBUG] UTMs criados a partir do referrer:', referrerData);
+    } else {
+      // No UTMs and no referrer = direct traffic
+      utmParams.utm_source = "direct";
+      utmParams.utm_medium = "none";
+      utmParams.traffic_type = "direct";
+      console.log('[UTM DEBUG] Tráfego direto detectado (sem UTMs e sem referrer)');
+    }
+  } else {
+    utmParams.traffic_type = "campaign";
+  }
 
   return utmParams;
 }
