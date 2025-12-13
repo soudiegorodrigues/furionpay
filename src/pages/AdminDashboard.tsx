@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 interface DashboardStats {
@@ -55,6 +55,12 @@ interface FeeConfig {
   pix_percentage: number;
   pix_fixed: number;
 }
+interface Reward {
+  id: string;
+  name: string;
+  threshold_amount: number;
+  image_url: string | null;
+}
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -66,6 +72,7 @@ const AdminDashboard = () => {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [rewards, setRewards] = useState<Reward[]>([]);
   const navigate = useNavigate();
   const {
     toast
@@ -159,6 +166,16 @@ const AdminDashboard = () => {
         }[];
         const banner = settings.find(s => s.key === 'dashboard_banner_url');
         setBannerUrl(banner?.value || null);
+      }
+
+      // Load rewards
+      const { data: rewardsData } = await supabase
+        .from('rewards')
+        .select('id, name, threshold_amount, image_url')
+        .eq('is_active', true)
+        .order('threshold_amount', { ascending: true });
+      if (rewardsData) {
+        setRewards(rewardsData);
       }
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
@@ -632,26 +649,74 @@ const AdminDashboard = () => {
           </Card>
 
           {/* Progresso de Recompensas */}
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border-amber-500/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-primary">🏆</span>
-                  <span className="text-sm font-semibold text-primary">Progresso de Recompensas</span>
+                  <Trophy className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">Progresso de Recompensas</span>
                 </div>
-                <Button variant="outline" size="sm" className="h-7 text-xs">
+                <Button variant="outline" size="sm" className="h-7 text-xs border-amber-500/30 text-amber-600 hover:bg-amber-500/10">
                   🎁 Resgatar
                 </Button>
               </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <span>Progresso atual</span>
-                <span>{formatCurrency(totalBalance)} / 100K</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full transition-all" style={{
-                width: `${Math.min(totalBalance / 100000 * 100, 100)}%`
-              }} />
-              </div>
+              
+              {rewards.length > 0 ? (
+                <div className="space-y-4">
+                  {rewards.map(reward => {
+                    const progress = Math.min((totalBalance / reward.threshold_amount) * 100, 100);
+                    const achieved = totalBalance >= reward.threshold_amount;
+                    
+                    return (
+                      <div key={reward.id} className="space-y-3">
+                        {/* Imagem da placa em destaque */}
+                        <div className="flex justify-center">
+                          <div className="w-24 h-24 rounded-lg bg-white/50 dark:bg-black/20 p-2 shadow-sm">
+                            {reward.image_url ? (
+                              <img src={reward.image_url} alt={reward.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Trophy className="h-10 w-10 text-amber-500" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="text-center">
+                          <p className="font-semibold text-sm">{reward.name}</p>
+                          {achieved ? (
+                            <Badge className="bg-green-500 text-white mt-1">🎉 Conquistado!</Badge>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              Faltam <span className="font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(reward.threshold_amount - totalBalance)}</span>
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Progress */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Progresso atual</span>
+                            <span>{formatCurrency(totalBalance)} / {formatCurrency(reward.threshold_amount)}</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2.5">
+                            <div 
+                              className={`h-full rounded-full transition-all ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`}
+                              style={{ width: `${progress}%` }} 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground">Nenhuma recompensa disponível</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
