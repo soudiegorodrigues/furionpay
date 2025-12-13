@@ -15,6 +15,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 
 interface AcquirerHealth {
@@ -94,6 +95,32 @@ export function ApiMonitoringSection() {
     recentEvents.slice(startIndex, startIndex + ITEMS_PER_PAGE),
     [recentEvents, startIndex]
   );
+
+  // Timeline data processing - group events by hour for last 24h
+  const timelineData = useMemo(() => {
+    const now = new Date();
+    const hours: { [key: string]: { time: string; spedpay: number; inter: number; ativus: number } } = {};
+    
+    // Initialize last 24 hours
+    for (let i = 23; i >= 0; i--) {
+      const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const key = hour.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+      hours[key] = { time: key, spedpay: 0, inter: 0, ativus: 0 };
+    }
+    
+    // Count events per hour per acquirer
+    recentEvents.forEach(event => {
+      const eventDate = new Date(event.created_at);
+      const key = eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+      if (hours[key]) {
+        if (event.acquirer === 'spedpay') hours[key].spedpay++;
+        else if (event.acquirer === 'inter') hours[key].inter++;
+        else if (event.acquirer === 'ativus') hours[key].ativus++;
+      }
+    });
+    
+    return Object.values(hours);
+  }, [recentEvents]);
 
   const getStatusColor = (health: AcquirerHealth | null) => {
     if (!health || health.total_calls_24h === 0) return "bg-muted text-muted-foreground";
@@ -237,6 +264,73 @@ export function ApiMonitoringSection() {
         <AcquirerCard name="Banco Inter" health={healthData?.inter ?? null} />
         <AcquirerCard name="Ativus Hub" health={healthData?.ativus ?? null} />
       </div>
+
+      {/* Timeline Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Timeline de Eventos (24h)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px] md:h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={timelineData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="time" 
+                  tick={{ fontSize: 10 }} 
+                  interval="preserveStartEnd"
+                  className="text-muted-foreground"
+                />
+                <YAxis 
+                  tick={{ fontSize: 10 }} 
+                  allowDecimals={false}
+                  className="text-muted-foreground"
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px' }}
+                  iconSize={10}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="spedpay" 
+                  name="SpedPay"
+                  stroke="#3B82F6" 
+                  strokeWidth={2}
+                  dot={{ r: 2 }}
+                  activeDot={{ r: 4 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="inter" 
+                  name="Banco Inter"
+                  stroke="#F97316" 
+                  strokeWidth={2}
+                  dot={{ r: 2 }}
+                  activeDot={{ r: 4 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="ativus" 
+                  name="Ativus Hub"
+                  stroke="#22C55E" 
+                  strokeWidth={2}
+                  dot={{ r: 2 }}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">
