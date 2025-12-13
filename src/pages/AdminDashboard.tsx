@@ -683,8 +683,8 @@ const AdminDashboard = () => {
                   if (name === 'gerados') return [value, '⚫ Gerados'];
                   return [value, name];
                 }} />
-                  <Bar dataKey="gerados" radius={[4, 4, 0, 0]} fill="url(#barGradientGenerated)" animationDuration={800} animationEasing="ease-out" barSize={14} />
-                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={14} />
+                  <Bar dataKey="gerados" radius={[4, 4, 0, 0]} fill="url(#barGradientGenerated)" animationDuration={800} animationEasing="ease-out" barSize={16} />
+                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
