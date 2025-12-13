@@ -66,7 +66,6 @@ interface Reward {
 const AdminDashboard = () => {
   const isMobile = useIsMobile();
   const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
-
   useEffect(() => {
     const checkSize = () => setIsTabletOrSmaller(window.innerWidth < 1024);
     checkSize();
@@ -127,27 +126,13 @@ const AdminDashboard = () => {
     if (showLoading && !stats) setIsLoading(true);
     try {
       // Execute ALL queries in parallel - including fee configs
-      const [
-        userSettingsResult,
-        statsResult,
-        txResult,
-        rewardsResult,
-        defaultFeeResult,
-        availableBalanceResult
-      ] = await Promise.all([
-        supabase.rpc('get_user_settings'),
-        supabase.rpc('get_user_dashboard'),
-        supabase.rpc('get_user_transactions', { p_limit: 0 }), // Load ALL for accurate stats
-        supabase.from('rewards')
-          .select('id, name, threshold_amount, image_url')
-          .eq('is_active', true)
-          .order('threshold_amount', { ascending: true }),
-        supabase.from('fee_configs')
-          .select('pix_percentage, pix_fixed')
-          .eq('is_default', true)
-          .maybeSingle(),
-        supabase.rpc('get_user_available_balance')
-      ]);
+      const [userSettingsResult, statsResult, txResult, rewardsResult, defaultFeeResult, availableBalanceResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard'), supabase.rpc('get_user_transactions', {
+        p_limit: 0
+      }),
+      // Load ALL for accurate stats
+      supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
+        ascending: true
+      }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance')]);
 
       // Set available balance immediately
       if (!availableBalanceResult.error && availableBalanceResult.data !== null) {
@@ -175,26 +160,26 @@ const AdminDashboard = () => {
       // Process settings and fee config in background
       let feeData = defaultFeeResult.data;
       if (userSettingsResult.data) {
-        const settings = userSettingsResult.data as { key: string; value: string; }[];
+        const settings = userSettingsResult.data as {
+          key: string;
+          value: string;
+        }[];
         const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
         const userFeeConfigId = feeConfigSetting?.value || null;
-        
+
         // Get banner URL
         const banner = settings.find(s => s.key === 'dashboard_banner_url');
         setBannerUrl(banner?.value || null);
-        
+
         // Load user-specific fee config if exists (secondary, non-blocking)
         if (userFeeConfigId) {
-          supabase.from('fee_configs')
-            .select('pix_percentage, pix_fixed')
-            .eq('id', userFeeConfigId)
-            .maybeSingle()
-            .then(({ data }) => {
-              if (data) setFeeConfig(data as FeeConfig);
-            });
+          supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('id', userFeeConfigId).maybeSingle().then(({
+            data
+          }) => {
+            if (data) setFeeConfig(data as FeeConfig);
+          });
         }
       }
-      
       if (feeData) {
         setFeeConfig(feeData as FeeConfig);
       }
@@ -214,18 +199,18 @@ const AdminDashboard = () => {
       setIsLoading(false);
     }
   };
-
   const loadMoreTransactions = async () => {
     if (isLoadingMore || !hasMoreTransactions) return;
     setIsLoadingMore(true);
     try {
       // We need to fetch all and slice since RPC doesn't support offset
-      const { data, error } = await supabase.rpc('get_user_transactions', { 
-        p_limit: transactionOffset + TRANSACTIONS_PER_LOAD 
+      const {
+        data,
+        error
+      } = await supabase.rpc('get_user_transactions', {
+        p_limit: transactionOffset + TRANSACTIONS_PER_LOAD
       });
-      
       if (error) throw error;
-      
       const allTx = data as unknown as Transaction[] || [];
       setTransactions(allTx);
       setTransactionOffset(transactionOffset + TRANSACTIONS_PER_LOAD);
@@ -306,7 +291,7 @@ const AdminDashboard = () => {
   };
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
-    
+
     // Filter by date
     if (dateFilter !== 'all') {
       const now = new Date();
@@ -335,12 +320,11 @@ const AdminDashboard = () => {
         }
       });
     }
-    
+
     // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(tx => tx.status === statusFilter);
     }
-    
     return filtered;
   }, [transactions, dateFilter, statusFilter]);
 
@@ -363,7 +347,6 @@ const AdminDashboard = () => {
     const data: ChartData[] = [];
     const now = new Date();
     const todayBrazil = getBrazilDateStr(now);
-    
     if (chartFilter === 'today') {
       // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
       for (let hour = 0; hour < 24; hour++) {
@@ -437,7 +420,6 @@ const AdminDashboard = () => {
         });
       }
     }
-    
     return data;
   }, [transactions, chartFilter]);
   const filteredStats = useMemo(() => {
@@ -529,7 +511,7 @@ const AdminDashboard = () => {
               <span>Dashboard Financeiro</span>
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm">
-              Acompanhe as transações PIX
+              Acompanhe as transações tempo real  
             </p>
           </div>
           <div className="flex items-center gap-2 self-end lg:self-auto">
@@ -687,19 +669,10 @@ const AdminDashboard = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke="hsl(var(--muted-foreground))" opacity={0.15} horizontal={true} vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{
-                      fontSize: 10,
-                      fill: 'hsl(var(--muted-foreground))'
-                    }}
-                    angle={isTabletOrSmaller ? -90 : 0}
-                    textAnchor={isTabletOrSmaller ? "end" : "middle"}
-                    tickLine={false} 
-                    axisLine={false} 
-                    interval={0}
-                    height={isTabletOrSmaller ? 50 : 30}
-                  />
+                  <XAxis dataKey="date" tick={{
+                  fontSize: 10,
+                  fill: 'hsl(var(--muted-foreground))'
+                }} angle={isTabletOrSmaller ? -90 : 0} textAnchor={isTabletOrSmaller ? "end" : "middle"} tickLine={false} axisLine={false} interval={0} height={isTabletOrSmaller ? 50 : 30} />
                   <YAxis tick={{
                   fontSize: 10,
                   fill: 'hsl(var(--muted-foreground))'
@@ -722,36 +695,33 @@ const AdminDashboard = () => {
                   return [value, name];
                 }} />
                   <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}>
-                    <LabelList 
-                      dataKey="pagos"
-                      position="top"
-                      fontSize={10}
-                      fontWeight={600}
-                      fill="hsl(var(--primary))"
-                      formatter={(value: number, entry: { gerados?: number }) => {
-                        const gerados = entry?.gerados ?? 0;
-                        const rate = gerados > 0 ? Math.round((value / gerados) * 100) : 0;
-                        return `${rate}%`;
-                      }}
-                      content={({ x, y, width, value, index }: { x?: number; y?: number; width?: number; value?: number; index?: number }) => {
-                        if (typeof index !== 'number' || !chartData[index]) return null;
-                        const gerados = chartData[index].gerados ?? 0;
-                        const pagos = value ?? 0;
-                        const rate = gerados > 0 ? Math.round((pagos / gerados) * 100) : 0;
-                        return (
-                          <text 
-                            x={(x ?? 0) + (width ?? 0) / 2} 
-                            y={(y ?? 0) - 6} 
-                            textAnchor="middle" 
-                            fontSize={10} 
-                            fill="hsl(var(--primary))" 
-                            fontWeight={600}
-                          >
+                    <LabelList dataKey="pagos" position="top" fontSize={10} fontWeight={600} fill="hsl(var(--primary))" formatter={(value: number, entry: {
+                    gerados?: number;
+                  }) => {
+                    const gerados = entry?.gerados ?? 0;
+                    const rate = gerados > 0 ? Math.round(value / gerados * 100) : 0;
+                    return `${rate}%`;
+                  }} content={({
+                    x,
+                    y,
+                    width,
+                    value,
+                    index
+                  }: {
+                    x?: number;
+                    y?: number;
+                    width?: number;
+                    value?: number;
+                    index?: number;
+                  }) => {
+                    if (typeof index !== 'number' || !chartData[index]) return null;
+                    const gerados = chartData[index].gerados ?? 0;
+                    const pagos = value ?? 0;
+                    const rate = gerados > 0 ? Math.round(pagos / gerados * 100) : 0;
+                    return <text x={(x ?? 0) + (width ?? 0) / 2} y={(y ?? 0) - 6} textAnchor="middle" fontSize={10} fill="hsl(var(--primary))" fontWeight={600}>
                             {rate}%
-                          </text>
-                        );
-                      }}
-                    />
+                          </text>;
+                  }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -770,44 +740,29 @@ const AdminDashboard = () => {
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
             <CardContent className="p-5">
-              {rewards === null ? null : rewards.length > 0 ? (
-                <div className="space-y-4">
+              {rewards === null ? null : rewards.length > 0 ? <div className="space-y-4">
                   {rewards.map(reward => {
-                    const progress = Math.min((totalBalance / reward.threshold_amount) * 100, 100);
-                    const achieved = totalBalance >= reward.threshold_amount;
-                    
-                    return (
-                      <div key={reward.id} className="space-y-4">
+                const progress = Math.min(totalBalance / reward.threshold_amount * 100, 100);
+                const achieved = totalBalance >= reward.threshold_amount;
+                return <div key={reward.id} className="space-y-4">
                         {/* Imagem da placa */}
                         <div className="flex justify-center">
                           <div className="relative">
                             <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-2xl opacity-30" />
-                            {reward.image_url ? (
-                              <img 
-                                src={reward.image_url} 
-                                alt={reward.name} 
-                                className="relative w-64 h-64 object-contain drop-shadow-xl" 
-                              />
-                            ) : (
-                              <div className="relative w-64 h-64 flex items-center justify-center">
+                            {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="relative w-64 h-64 object-contain drop-shadow-xl" /> : <div className="relative w-64 h-64 flex items-center justify-center">
                                 <Trophy className="h-24 w-24 text-primary drop-shadow-xl" />
-                              </div>
-                            )}
+                              </div>}
                           </div>
                         </div>
                         
                         {/* Nome e status */}
                         <div className="text-center">
                           <h3 className="text-base font-bold">{reward.name}</h3>
-                          {achieved ? (
-                            <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
+                          {achieved ? <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
                               🎉 Conquistado!
-                            </Badge>
-                          ) : (
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            </Badge> : <p className="text-xs text-muted-foreground mt-0.5">
                               Faltam <span className="font-bold text-sm text-primary">{formatCurrency(reward.threshold_amount - totalBalance)}</span>
-                            </p>
-                          )}
+                            </p>}
                         </div>
                         
                         {/* Barra de progresso */}
@@ -817,34 +772,29 @@ const AdminDashboard = () => {
                             <span className="text-primary font-bold">{progress.toFixed(0)}%</span>
                           </div>
                           <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
-                            <div 
-                              className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-primary via-red-400 to-red-500'} shadow-lg`}
-                              style={{ width: `${progress}%` }} 
-                            />
+                            <div className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-primary via-red-400 to-red-500'} shadow-lg`} style={{
+                        width: `${progress}%`
+                      }} />
                           </div>
                           <div className="flex justify-between text-[10px] text-muted-foreground">
                             <span>{formatCurrency(totalBalance)}</span>
                             <span>Meta: {formatCurrency(reward.threshold_amount)}</span>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      </div>;
+              })}
                   
                   {/* Botão Resgatar */}
                   <Button className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2 text-xs shadow-lg">
                     <Gift className="h-3.5 w-3.5 mr-1.5" />
                     Resgatar Recompensa
                   </Button>
-                </div>
-              ) : (
-                <div className="text-center py-4">
+                </div> : <div className="text-center py-4">
                   <div className="p-2 bg-primary/10 rounded-full w-fit mx-auto mb-2">
                     <Trophy className="h-8 w-8 text-primary/50" />
                   </div>
                   <p className="text-xs text-muted-foreground">Nenhuma recompensa disponível</p>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
         </div>
@@ -858,7 +808,10 @@ const AdminDashboard = () => {
               <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               <CardTitle className="text-sm sm:text-lg">Histórico de Transações</CardTitle>
             </div>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as StatusFilter); setCurrentPage(1); }}>
+            <Select value={statusFilter} onValueChange={v => {
+            setStatusFilter(v as StatusFilter);
+            setCurrentPage(1);
+          }}>
               <SelectTrigger className="w-[110px] h-8 text-xs">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -913,8 +866,7 @@ const AdminDashboard = () => {
                   <span className="text-xs text-muted-foreground">
                     {filteredTransactions.length} transações carregadas
                   </span>
-                  {totalPages > 1 && (
-                    <div className="flex items-center gap-2">
+                  {totalPages > 1 && <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
@@ -924,19 +876,11 @@ const AdminDashboard = () => {
                       <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
                         <ChevronRight className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
+                    </div>}
                 </div>
-                {hasMoreTransactions && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={loadMoreTransactions}
-                    disabled={isLoadingMore}
-                  >
+                {hasMoreTransactions && <Button variant="outline" className="w-full" onClick={loadMoreTransactions} disabled={isLoadingMore}>
                     {isLoadingMore ? 'Carregando...' : 'Carregar mais transações'}
-                  </Button>
-                )}
+                  </Button>}
               </div>
             </>}
         </CardContent>
