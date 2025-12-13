@@ -651,14 +651,6 @@ const AdminDashboard = () => {
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
             <CardContent className="p-6">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="p-2 bg-primary/20 rounded-full">
-                  <Trophy className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-base font-bold text-primary">
-                  Progresso de Recompensas
-                </span>
-              </div>
               
               {rewards.length > 0 ? (
                 <div className="space-y-6">
