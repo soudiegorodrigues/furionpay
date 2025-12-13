@@ -78,20 +78,28 @@ export default function PublicCheckout() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [discountApplied, setDiscountApplied] = useState(false);
 
-  // Capture and save UTM params on component mount
+  // Capture and save UTM params IMMEDIATELY on component mount
   useEffect(() => {
-    const currentUtms = captureUTMParams();
-    console.log('[UTM DEBUG] URL atual:', window.location.href);
+    console.log('[UTM DEBUG] ========= CHECKOUT MOUNT =========');
+    console.log('[UTM DEBUG] URL completa:', window.location.href);
     console.log('[UTM DEBUG] Search params:', window.location.search);
-    console.log('[UTM DEBUG] UTMs capturados da URL:', currentUtms);
+    console.log('[UTM DEBUG] Referrer:', document.referrer);
     
-    if (Object.keys(currentUtms).length > 0) {
+    // Capture current UTMs from URL
+    const currentUtms = captureUTMParams();
+    console.log('[UTM DEBUG] UTMs capturados:', currentUtms);
+    
+    // Always save if we have meaningful params
+    if (currentUtms.utm_source && currentUtms.utm_source !== "direct") {
       saveUTMParams(currentUtms);
-      console.log('[UTM DEBUG] UTMs salvos no sessionStorage');
+      console.log('[UTM DEBUG] UTMs salvos (source relevante)');
+    } else {
+      // Check if we have saved params with real UTMs
+      const savedUtms = getUTMParams();
+      console.log('[UTM DEBUG] UTMs salvos recuperados:', savedUtms);
     }
     
-    const allUtms = getUTMParams();
-    console.log('[UTM DEBUG] UTMs finais (merged com sessionStorage):', allUtms);
+    console.log('[UTM DEBUG] ====================================');
   }, []);
 
   // Fetch ALL checkout data in a single optimized query
@@ -275,7 +283,15 @@ export default function PublicCheckout() {
       
       // Get UTM params to send with PIX generation
       const utmParams = getUTMParams();
-      console.log('[UTM DEBUG] UTMs sendo enviados para generate-pix:', utmParams);
+      console.log('[UTM DEBUG] ========= GERANDO PIX =========');
+      console.log('[UTM DEBUG] UTMs para enviar:', utmParams);
+      
+      // Ensure we always send UTM data, even if minimal
+      const utmToSend = Object.keys(utmParams).length > 0 ? utmParams : {
+        utm_source: "direct",
+        utm_medium: "none",
+        traffic_type: "direct"
+      };
       
       const requestBody = {
         amount: finalPrice,
@@ -284,10 +300,11 @@ export default function PublicCheckout() {
         userId: offer.user_id,
         productName: offer.name,
         popupModel: "checkout",
-        utmParams: Object.keys(utmParams).length > 0 ? utmParams : undefined,
+        utmParams: utmToSend,
       };
       
-      console.log('[UTM DEBUG] Body completo da requisição:', requestBody);
+      console.log('[UTM DEBUG] Body completo:', JSON.stringify(requestBody, null, 2));
+      console.log('[UTM DEBUG] ===============================');
       
       const { data, error } = await supabase.functions.invoke("generate-pix", {
         body: requestBody,
