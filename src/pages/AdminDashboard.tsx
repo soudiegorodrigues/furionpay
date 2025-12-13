@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy, Gift } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy, Gift, Wallet } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 interface DashboardStats {
@@ -532,6 +532,37 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
+      {/* Stats Grid 2 - Vendas e Saldo */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs sm:text-sm text-muted-foreground">Vendas Hoje</p>
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+            </div>
+            <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs sm:text-sm text-muted-foreground">Vendas Este Mês</p>
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+            </div>
+            <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs sm:text-sm text-muted-foreground">Saldo Disponível</p>
+              <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+            </div>
+            <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{formatCurrency(totalBalance)}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Chart + Side Cards Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 sm:gap-8">
         {/* Chart - Visão Geral Style */}
@@ -624,30 +655,6 @@ const AdminDashboard = () => {
 
         {/* Side Cards */}
         <div className="flex flex-col gap-4">
-          {/* Vendas hoje + Vendas este mês */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Vendas hoje</p>
-                  <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Vendas este mês</p>
-                  <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Saldo disponível */}
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Saldo disponível</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(totalBalance)}</p>
-            </CardContent>
-          </Card>
-
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
             <CardContent className="p-5">
