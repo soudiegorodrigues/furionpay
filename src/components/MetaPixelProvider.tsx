@@ -1,6 +1,6 @@
 import { useEffect, createContext, useContext, ReactNode, useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getUTMParams, UTMParams } from "@/lib/utm";
+import { getUTMParams, captureUTMParams, saveUTMParams, UTMParams } from "@/lib/utm";
 
 declare global {
   interface Window {
@@ -38,11 +38,23 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [utmParams, setUtmParams] = useState<UTMParams>({});
 
-  // Capture UTM params on mount
+  // Capture UTM params on mount and whenever URL changes
   useEffect(() => {
-    const params = getUTMParams();
-    setUtmParams(params);
-    console.log('UTM params captured:', params);
+    // Capture from current URL first
+    const currentParams = captureUTMParams();
+    console.log('[UTM DEBUG] MetaPixelProvider - URL:', window.location.href);
+    console.log('[UTM DEBUG] MetaPixelProvider - Params capturados:', currentParams);
+    
+    // Save to sessionStorage if we have params
+    if (Object.keys(currentParams).length > 0) {
+      saveUTMParams(currentParams);
+    }
+    
+    // Get merged params (current + saved)
+    const mergedParams = getUTMParams();
+    console.log('[UTM DEBUG] MetaPixelProvider - Params finais:', mergedParams);
+    
+    setUtmParams(mergedParams);
   }, []);
 
   useEffect(() => {
