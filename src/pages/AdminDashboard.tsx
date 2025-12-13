@@ -683,8 +683,11 @@ const AdminDashboard = () => {
                   return [value, name];
                 }} />
                   <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}
-                    label={({ x, y, width, payload }: { x: number; y: number; width: number; payload: { gerados: number; pagos: number } }) => {
-                      const rate = payload.gerados > 0 ? Math.round((payload.pagos / payload.gerados) * 100) : 0;
+                    label={({ x, y, width, payload }: { x: number; y: number; width: number; payload?: { gerados?: number; pagos?: number } }) => {
+                      if (!payload) return null;
+                      const gerados = payload.gerados ?? 0;
+                      const pagos = payload.pagos ?? 0;
+                      const rate = gerados > 0 ? Math.round((pagos / gerados) * 100) : 0;
                       return (
                         <text x={x + width / 2} y={y - 8} textAnchor="middle" fontSize={10} fill="hsl(var(--primary))" fontWeight={600}>
                           {rate}%
