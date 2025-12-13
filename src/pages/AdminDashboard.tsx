@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy, Gift } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 interface DashboardStats {
@@ -649,20 +649,15 @@ const AdminDashboard = () => {
           </Card>
 
           {/* Progresso de Recompensas */}
-          <Card className="bg-gradient-to-br from-amber-500/15 via-yellow-500/10 to-orange-500/5 border-2 border-amber-500/30 shadow-lg">
+          <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-amber-500/20 rounded-full">
-                    <Trophy className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <span className="text-base font-bold text-amber-600 dark:text-amber-400">
-                    Progresso de Recompensas
-                  </span>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="p-2 bg-primary/20 rounded-full">
+                  <Trophy className="h-5 w-5 text-primary" />
                 </div>
-                <Button className="bg-amber-500 hover:bg-amber-600 text-white h-8 text-xs font-semibold">
-                  🎁 Resgatar
-                </Button>
+                <span className="text-base font-bold text-primary">
+                  Progresso de Recompensas
+                </span>
               </div>
               
               {rewards.length > 0 ? (
@@ -676,13 +671,13 @@ const AdminDashboard = () => {
                         {/* Imagem da placa em DESTAQUE MÁXIMO */}
                         <div className="flex justify-center">
                           <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-yellow-300 rounded-xl blur-xl opacity-30" />
-                            <div className="relative w-40 h-40 rounded-xl bg-white dark:bg-gray-900 p-3 shadow-xl border border-amber-200 dark:border-amber-500/30">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-xl opacity-30" />
+                            <div className="relative w-40 h-40 rounded-xl bg-white dark:bg-gray-900 p-3 shadow-xl border-2 border-primary/20">
                               {reward.image_url ? (
                                 <img src={reward.image_url} alt={reward.name} className="w-full h-full object-contain" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                  <Trophy className="h-16 w-16 text-amber-500" />
+                                  <Trophy className="h-16 w-16 text-primary" />
                                 </div>
                               )}
                             </div>
@@ -698,7 +693,7 @@ const AdminDashboard = () => {
                             </Badge>
                           ) : (
                             <p className="text-sm text-muted-foreground mt-1">
-                              Faltam <span className="font-bold text-lg text-amber-500">{formatCurrency(reward.threshold_amount - totalBalance)}</span>
+                              Faltam <span className="font-bold text-lg text-primary">{formatCurrency(reward.threshold_amount - totalBalance)}</span>
                             </p>
                           )}
                         </div>
@@ -707,11 +702,11 @@ const AdminDashboard = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm font-medium">
                             <span>Progresso atual</span>
-                            <span className="text-amber-600 dark:text-amber-400 font-bold">{progress.toFixed(0)}%</span>
+                            <span className="text-primary font-bold">{progress.toFixed(0)}%</span>
                           </div>
                           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
                             <div 
-                              className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-400'} shadow-lg`}
+                              className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-primary via-red-400 to-red-500'} shadow-lg`}
                               style={{ width: `${progress}%` }} 
                             />
                           </div>
@@ -723,11 +718,17 @@ const AdminDashboard = () => {
                       </div>
                     );
                   })}
+                  
+                  {/* Botão Resgatar no final */}
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-5 text-sm shadow-lg">
+                    <Gift className="h-4 w-4 mr-2" />
+                    Resgatar Recompensa
+                  </Button>
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <div className="p-3 bg-amber-500/10 rounded-full w-fit mx-auto mb-3">
-                    <Trophy className="h-10 w-10 text-amber-500/50" />
+                  <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-3">
+                    <Trophy className="h-10 w-10 text-primary/50" />
                   </div>
                   <p className="text-sm text-muted-foreground">Nenhuma recompensa disponível</p>
                 </div>
