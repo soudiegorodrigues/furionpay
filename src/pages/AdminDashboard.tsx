@@ -676,7 +676,24 @@ const AdminDashboard = () => {
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
             <CardContent className="p-5">
-              {rewards.length > 0 ? (
+              {isLoading ? (
+                <div className="space-y-4 animate-pulse">
+                  <div className="flex justify-center">
+                    <div className="w-64 h-64 bg-primary/20 rounded-xl" />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <div className="h-4 bg-primary/20 rounded w-32 mx-auto" />
+                    <div className="h-3 bg-primary/10 rounded w-24 mx-auto" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                    <div className="flex justify-between">
+                      <div className="h-2 bg-primary/10 rounded w-16" />
+                      <div className="h-2 bg-primary/10 rounded w-20" />
+                    </div>
+                  </div>
+                </div>
+              ) : rewards.length > 0 ? (
                 <div className="space-y-4">
                   {rewards.map(reward => {
                     const progress = Math.min((totalBalance / reward.threshold_amount) * 100, 100);
