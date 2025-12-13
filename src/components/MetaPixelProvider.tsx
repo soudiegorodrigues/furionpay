@@ -147,19 +147,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         }
       });
       
-      // Verificar se veio de página externa (provavelmente já tem PageView)
-      const referrer = document.referrer;
-      const isFromExternalSite = referrer && !referrer.includes(window.location.hostname);
-      
-      if (window.fbq) {
-        if (!isFromExternalSite) {
-          // Só disparar PageView se NÃO veio de site externo
-          window.fbq('track', 'PageView');
-          console.log('Tracked PageView (first visit)');
-        } else {
-          console.log('Skipped PageView (came from external site:', referrer, ')');
-        }
-      }
+      // PageView NÃO é disparado pelo FurionPay
+      // O site do usuário dispara PageView, FurionPay dispara apenas:
+      // - InitiateCheckout (quando popup abre)
+      // - PixGenerated (quando gera PIX)
+      // - Purchase (quando paga)
+      console.log('Pixel initialized - PageView skipped (fired by user site)');
       
       setIsLoaded(true);
     }, 100);
