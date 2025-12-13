@@ -576,7 +576,7 @@ const AdminDashboard = () => {
                       if (total === 0) return null;
                       
                       const percentage = ((value / total) * 100).toFixed(1);
-                      const fontSize = chartFilter === 'today' ? 8 : chartFilter === '30days' ? 9 : 10;
+                      const fontSize = chartFilter === 'today' ? 10 : chartFilter === '30days' ? 11 : 12;
                       
                       return (
                         <text 
