@@ -113,12 +113,28 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       return;
     }
 
-    if (pixels.length === 0) return;
+    if (pixels.length === 0) {
+      // Mesmo sem pixels configurados, marcar como "loaded" para não bloquear eventos
+      // O site do usuário pode ter seu próprio pixel
+      console.log('No pixels configured, checking if window.fbq exists from user site...');
+      
+      // Aguardar um pouco para ver se o pixel do usuário carrega
+      setTimeout(() => {
+        if (window.fbq) {
+          console.log('Facebook Pixel found from user site');
+        } else {
+          console.log('No Facebook Pixel available');
+        }
+        setIsLoaded(true);
+      }, 500);
+      return;
+    }
 
     // Validate and sanitize pixel IDs
     const validPixels = pixels.filter(p => p.pixelId && /^\d+$/.test(p.pixelId));
     if (validPixels.length === 0) {
       console.log('No valid pixels found');
+      setIsLoaded(true);
       return;
     }
 
