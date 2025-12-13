@@ -363,7 +363,7 @@ export const FaturamentoSection = () => {
                 <Bar 
                   dataKey="pagos" 
                   radius={[6, 6, 0, 0]}
-                  barSize={chartFilter === 'today' ? 12 : chartFilter === '30days' ? 10 : chartFilter === '14days' ? 18 : 32}
+                  barSize={24}
                   fill="url(#barGradientPaidGlobal)"
                   animationDuration={800}
                   animationEasing="ease-out"
