@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +15,7 @@ interface Transaction {
   paid_at: string | null;
   fee_percentage: number | null;
   fee_fixed: number | null;
+  user_email: string | null;
 }
 
 interface ChartData {
@@ -50,6 +52,7 @@ export const ReceitaPlataformaSection = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
+  const [selectedUser, setSelectedUser] = useState<string>('all');
 
   useEffect(() => {
     loadTransactions();
@@ -75,10 +78,25 @@ export const ReceitaPlataformaSection = () => {
     }).format(value);
   };
 
-  // Filtrar apenas transações pagas
-  const paidTransactions = useMemo(() => {
-    return transactions.filter(tx => tx.status === 'paid');
+  // Extrair lista única de usuários
+  const uniqueUsers = useMemo(() => {
+    const usersSet = new Set<string>();
+    transactions.forEach(tx => {
+      if (tx.user_email) {
+        usersSet.add(tx.user_email);
+      }
+    });
+    return Array.from(usersSet).sort();
   }, [transactions]);
+
+  // Filtrar transações pagas e por usuário selecionado
+  const paidTransactions = useMemo(() => {
+    return transactions.filter(tx => {
+      const isPaid = tx.status === 'paid';
+      const matchesUser = selectedUser === 'all' || tx.user_email === selectedUser;
+      return isPaid && matchesUser;
+    });
+  }, [transactions, selectedUser]);
 
   // Calcular lucros por período
   const profitStats = useMemo(() => {
@@ -208,15 +226,34 @@ export const ReceitaPlataformaSection = () => {
             <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Receita da Plataforma
           </CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={loadTransactions} 
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="ml-2 hidden sm:inline">Atualizar</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Filtro por usuário */}
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground hidden sm:block" />
+              <Select value={selectedUser} onValueChange={setSelectedUser}>
+                <SelectTrigger className="w-[180px] sm:w-[220px] h-9 text-xs sm:text-sm">
+                  <SelectValue placeholder="Filtrar por usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os usuários</SelectItem>
+                  {uniqueUsers.map(email => (
+                    <SelectItem key={email} value={email}>
+                      {email.length > 25 ? `${email.slice(0, 25)}...` : email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={loadTransactions} 
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="ml-2 hidden sm:inline">Atualizar</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -224,38 +261,47 @@ export const ReceitaPlataformaSection = () => {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-              <div className="text-center p-3 sm:p-4 bg-primary/10 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-primary">
-                  {formatCurrency(profitStats.today)}
+            <>
+              {selectedUser !== 'all' && (
+                <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Filtrando por: <span className="font-medium text-foreground">{selectedUser}</span>
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Hoje</p>
-              </div>
-              <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-foreground">
-                  {formatCurrency(profitStats.sevenDays)}
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div className="text-center p-3 sm:p-4 bg-primary/10 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-primary">
+                    {formatCurrency(profitStats.today)}
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Hoje</p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">7 Dias</p>
-              </div>
-              <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-foreground">
-                  {formatCurrency(profitStats.fifteenDays)}
+                <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-foreground">
+                    {formatCurrency(profitStats.sevenDays)}
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">7 Dias</p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">15 Dias</p>
-              </div>
-              <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold text-foreground">
-                  {formatCurrency(profitStats.thisMonth)}
+                <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-foreground">
+                    {formatCurrency(profitStats.fifteenDays)}
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">15 Dias</p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Este Mês</p>
-              </div>
-              <div className="text-center p-3 sm:p-4 bg-green-500/10 rounded-lg col-span-2 sm:col-span-1">
-                <div className="text-lg sm:text-2xl font-bold text-green-500">
-                  {formatCurrency(profitStats.thisYear)}
+                <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-foreground">
+                    {formatCurrency(profitStats.thisMonth)}
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Este Mês</p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Este Ano</p>
+                <div className="text-center p-3 sm:p-4 bg-green-500/10 rounded-lg col-span-2 sm:col-span-1">
+                  <div className="text-lg sm:text-2xl font-bold text-green-500">
+                    {formatCurrency(profitStats.thisYear)}
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Este Ano</p>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>
