@@ -123,7 +123,10 @@ const AdminIntegrations = () => {
 
       {/* Utmify Configuration Dialog */}
       <Dialog open={utmifyDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0" aria-describedby={undefined}>
+        <DialogContent 
+          className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 !animate-none !duration-0 data-[state=open]:!animate-none data-[state=closed]:!animate-none" 
+          aria-describedby={undefined}
+        >
           <DialogTitle className="sr-only">Configuração Utmify</DialogTitle>
           <div className="p-4">
             <UtmifySection />
