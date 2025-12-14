@@ -501,7 +501,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFilter]);
-  return <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+  return <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
