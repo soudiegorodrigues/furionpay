@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle, Lock, Loader2 } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle, Lock, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -76,6 +77,8 @@ const AdminFinanceiro = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+  const [withdrawalPage, setWithdrawalPage] = useState(1);
+  const WITHDRAWALS_PER_PAGE = 10;
   const { toast } = useToast();
 
   const banks = [
@@ -1258,7 +1261,7 @@ const AdminFinanceiro = () => {
 
         <TabsContent value="historico" className="mt-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <History className="h-5 w-5 text-primary" />
@@ -1275,75 +1278,97 @@ const AdminFinanceiro = () => {
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {withdrawalHistory.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Nenhum saque realizado ainda.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {withdrawalHistory.map((withdrawal) => (
-                    <div 
-                      key={withdrawal.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-muted/30"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-lg">
-                            {formatCurrency(withdrawal.amount)}
-                          </p>
-                          {withdrawal.status === 'pending' && (
-                            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                              <Clock className="h-3 w-3 mr-1" />
-                              Pendente
-                            </Badge>
-                          )}
-                          {withdrawal.status === 'approved' && (
-                            <Badge variant="outline" className="text-green-600 border-green-600">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Aprovado
-                            </Badge>
-                          )}
-                          {withdrawal.status === 'rejected' && (
-                            <Badge variant="outline" className="text-destructive border-destructive">
-                              <X className="h-3 w-3 mr-1" />
-                              Rejeitado
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {withdrawal.bank_name} • {withdrawal.pix_key}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Solicitado em {new Date(withdrawal.created_at).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                        {withdrawal.processed_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Processado em {new Date(withdrawal.processed_at).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        )}
-                        {withdrawal.rejection_reason && (
-                          <p className="text-xs text-destructive mt-1">
-                            Motivo: {withdrawal.rejection_reason}
-                          </p>
-                        )}
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Valor</TableHead>
+                        <TableHead className="hidden sm:table-cell">Banco/PIX</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="hidden md:table-cell">Data</TableHead>
+                        <TableHead className="hidden lg:table-cell">Motivo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {withdrawalHistory
+                        .slice((withdrawalPage - 1) * WITHDRAWALS_PER_PAGE, withdrawalPage * WITHDRAWALS_PER_PAGE)
+                        .map((withdrawal) => (
+                          <TableRow key={withdrawal.id}>
+                            <TableCell className="font-medium">
+                              {formatCurrency(withdrawal.amount)}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                              <span className="block truncate max-w-[150px]">
+                                {withdrawal.bank_name}
+                              </span>
+                              <span className="block truncate max-w-[150px] text-xs">
+                                {withdrawal.pix_key.length > 20 ? `${withdrawal.pix_key.substring(0, 20)}...` : withdrawal.pix_key}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {withdrawal.status === 'pending' && (
+                                <Badge variant="outline" className="text-yellow-600 border-yellow-600 text-xs">
+                                  Pendente
+                                </Badge>
+                              )}
+                              {withdrawal.status === 'approved' && (
+                                <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
+                                  Aprovado
+                                </Badge>
+                              )}
+                              {withdrawal.status === 'rejected' && (
+                                <Badge variant="outline" className="text-destructive border-destructive text-xs">
+                                  Rejeitado
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                              {new Date(withdrawal.created_at).toLocaleDateString('pt-BR')}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                              {withdrawal.rejection_reason || '—'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                  
+                  {/* Pagination */}
+                  {withdrawalHistory.length > WITHDRAWALS_PER_PAGE && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Página {withdrawalPage} de {Math.ceil(withdrawalHistory.length / WITHDRAWALS_PER_PAGE)}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setWithdrawalPage(p => Math.max(1, p - 1))}
+                          disabled={withdrawalPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Anterior
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setWithdrawalPage(p => Math.min(Math.ceil(withdrawalHistory.length / WITHDRAWALS_PER_PAGE), p + 1))}
+                          disabled={withdrawalPage >= Math.ceil(withdrawalHistory.length / WITHDRAWALS_PER_PAGE)}
+                        >
+                          Próxima
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
