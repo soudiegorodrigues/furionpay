@@ -204,7 +204,12 @@ export function UtmifySection() {
       {/* How it works */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Como Funciona</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white">
+              <img src={utmifyLogo} alt="Utmify" className="w-6 h-6 object-contain" />
+            </div>
+            <CardTitle className="text-lg">Como Funciona</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
