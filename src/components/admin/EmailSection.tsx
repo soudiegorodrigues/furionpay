@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Save, Eye, EyeOff, ExternalLink, CheckCircle2, Image, Upload, Trash2 } from "lucide-react";
+import { EmailTemplatesSection } from "./EmailTemplatesSection";
 
 export function EmailSection() {
   const [resendApiKey, setResendApiKey] = useState("");
@@ -491,6 +492,8 @@ export function EmailSection() {
           </div>
         </CardContent>
       </Card>
+
+      <EmailTemplatesSection />
     </div>
   );
 }

@@ -262,6 +262,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          available_variables: Json | null
+          created_at: string | null
+          html_content: string
+          id: string
+          is_customized: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at: string | null
+        }
+        Insert: {
+          available_variables?: Json | null
+          created_at?: string | null
+          html_content: string
+          id?: string
+          is_customized?: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at?: string | null
+        }
+        Update: {
+          available_variables?: Json | null
+          created_at?: string | null
+          html_content?: string
+          id?: string
+          is_customized?: boolean | null
+          name?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       fee_configs: {
         Row: {
           boleto_fixed: number
