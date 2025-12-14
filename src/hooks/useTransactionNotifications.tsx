@@ -256,6 +256,8 @@ export const useTransactionNotifications = (userId: string | null) => {
             // Show toast notification
             if (currentSettings.enableToast) {
               const logoSize = currentSettings.logoSize || 40;
+              // Set CSS variable for toast logo size
+              document.documentElement.style.setProperty('--toast-logo-size', `${logoSize}px`);
               toast.info(title, {
                 description,
                 duration: currentSettings.pixGeneratedDuration || undefined,
@@ -263,7 +265,14 @@ export const useTransactionNotifications = (userId: string | null) => {
                   <img 
                     src={currentSettings.customLogoUrl} 
                     alt="Logo" 
-                    style={{ width: logoSize, height: logoSize, borderRadius: Math.round(logoSize * 0.15), objectFit: 'contain' }} 
+                    style={{ 
+                      width: logoSize, 
+                      height: logoSize, 
+                      minWidth: logoSize, 
+                      minHeight: logoSize, 
+                      borderRadius: Math.round(logoSize * 0.15), 
+                      objectFit: 'contain' 
+                    }} 
                   />
                 ) : undefined,
               });
@@ -312,6 +321,8 @@ export const useTransactionNotifications = (userId: string | null) => {
             // Show success toast
             if (currentSettings.enableToast) {
               const logoSize = currentSettings.logoSize || 40;
+              // Set CSS variable for toast logo size
+              document.documentElement.style.setProperty('--toast-logo-size', `${logoSize}px`);
               toast.success(title, {
                 description,
                 duration: currentSettings.pixPaidDuration || undefined,
@@ -319,7 +330,14 @@ export const useTransactionNotifications = (userId: string | null) => {
                   <img 
                     src={currentSettings.customLogoUrl} 
                     alt="Logo" 
-                    style={{ width: logoSize, height: logoSize, borderRadius: Math.round(logoSize * 0.15), objectFit: 'contain' }} 
+                    style={{ 
+                      width: logoSize, 
+                      height: logoSize, 
+                      minWidth: logoSize, 
+                      minHeight: logoSize, 
+                      borderRadius: Math.round(logoSize * 0.15), 
+                      objectFit: 'contain' 
+                    }} 
                   />
                 ) : undefined,
               });
