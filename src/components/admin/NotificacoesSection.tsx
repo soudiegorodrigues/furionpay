@@ -49,6 +49,7 @@ interface NotificationSettings {
   customSoundName: string;
   customLogoUrl: string;
   customLogoName: string;
+  logoSize: number;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -69,6 +70,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   customSoundName: "",
   customLogoUrl: "",
   customLogoName: "",
+  logoSize: 40,
 };
 
 export function NotificacoesSection() {
@@ -114,6 +116,7 @@ export function NotificacoesSection() {
           customSoundName: settingsMap.get('notification_custom_sound_name') || '',
           customLogoUrl: settingsMap.get('notification_custom_logo_url') || '',
           customLogoName: settingsMap.get('notification_custom_logo_name') || '',
+          logoSize: parseInt(settingsMap.get('notification_logo_size') || '40'),
         };
         setSettings(loadedSettings);
         setSavedSettings(loadedSettings);
@@ -146,6 +149,7 @@ export function NotificacoesSection() {
         { key: 'notification_custom_sound_name', value: settings.customSoundName },
         { key: 'notification_custom_logo_url', value: settings.customLogoUrl },
         { key: 'notification_custom_logo_name', value: settings.customLogoName },
+        { key: 'notification_logo_size', value: String(settings.logoSize) },
       ];
 
       for (const setting of settingsToSave) {
@@ -379,11 +383,12 @@ export function NotificacoesSection() {
       .replace('{produto}', 'Produto Teste');
 
     if (settings.enableToast) {
+      const logoSize = settings.logoSize || 40;
       const customIcon = settings.customLogoUrl ? (
         <img 
           src={settings.customLogoUrl} 
           alt="Logo" 
-          style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain' }} 
+          style={{ width: logoSize, height: logoSize, borderRadius: Math.round(logoSize * 0.15), objectFit: 'contain' }} 
         />
       ) : undefined;
 
@@ -695,7 +700,7 @@ export function NotificacoesSection() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    A logo aparecerá nas notificações do navegador
+                    A logo aparecerá nas notificações do navegador e nos toasts
                   </p>
                   
                   {settings.customLogoUrl ? (
@@ -751,6 +756,26 @@ export function NotificacoesSection() {
                       </p>
                     </div>
                   )}
+
+                  {/* Logo Size Slider */}
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label>Tamanho da Logo no Toast</Label>
+                      <span className="text-sm font-medium text-muted-foreground">{settings.logoSize}px</span>
+                    </div>
+                    <Slider
+                      value={[settings.logoSize]}
+                      onValueChange={(value) => setSettings({ ...settings, logoSize: value[0] })}
+                      min={24}
+                      max={64}
+                      step={4}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Pequeno (24px)</span>
+                      <span>Grande (64px)</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
