@@ -24,7 +24,7 @@ interface UtmifySummary {
 }
 
 export function UtmifySection() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [apiToken, setApiToken] = useState("");
@@ -67,7 +67,6 @@ export function UtmifySection() {
 
   const loadSettings = async () => {
     try {
-      setLoading(true);
       
       const { data: enabledData } = await supabase
         .from('admin_settings')
@@ -91,8 +90,6 @@ export function UtmifySection() {
       }
     } catch (error) {
       console.error('Error loading Utmify settings:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -158,14 +155,6 @@ export function UtmifySection() {
   const successRate = summary ? (summary.today_total > 0 
     ? Math.round((summary.today_success / summary.today_total) * 100) 
     : 100) : 0;
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-6">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
