@@ -544,84 +544,81 @@ const AdminDashboard = () => {
         </div>}
 
       {/* Stats Grid - Unified */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4 lg:gap-6">
-        {/* Row 1: PIX Gerados | PIX Pagos */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3 lg:gap-4">
+        {/* PIX Gerados */}
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs md:text-sm text-muted-foreground">PIX Gerados</p>
               <QrCode className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-primary" />
             </div>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{filteredStats.generated}</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1">{filteredStats.generated}</p>
             <p className="text-[10px] sm:text-[11px] md:text-xs text-muted-foreground mt-1">{formatCurrency(filteredStats.amountGenerated)}</p>
           </CardContent>
         </Card>
+        {/* PIX Pagos */}
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs md:text-sm text-muted-foreground">PIX Pagos</p>
               <BarChart3 className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-green-500" />
             </div>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-green-500 mt-1">{filteredStats.paid}</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-500 mt-1">{filteredStats.paid}</p>
             <p className="text-[10px] sm:text-[11px] md:text-xs text-muted-foreground mt-1">{formatCurrency(filteredStats.amountPaid)}</p>
           </CardContent>
         </Card>
-        {/* Row 2: Conversão + Ticket Médio | Vendas Este Mês */}
+        {/* Conversão */}
         <Card>
           <CardContent className="p-3 sm:p-4">
-            <div className="flex gap-4">
-              {/* Conversão */}
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs md:text-sm text-muted-foreground">Conversão</p>
-                  <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-yellow-500" />
-                </div>
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{filteredStats.conversionRate}%</p>
-              </div>
-              
-              {/* Divisor */}
-              <div className="w-px bg-border/50" />
-              
-              {/* Ticket Médio */}
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs md:text-sm text-muted-foreground">Ticket Médio</p>
-                  <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-purple-500" />
-                </div>
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{formatCurrency(filteredStats.ticketMedio)}</p>
-              </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs md:text-sm text-muted-foreground">Conversão</p>
+              <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-yellow-500" />
             </div>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1">{filteredStats.conversionRate}%</p>
           </CardContent>
         </Card>
+        {/* Ticket Médio */}
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs md:text-sm text-muted-foreground">Ticket Médio</p>
+              <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-purple-500" />
+            </div>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1">{formatCurrency(filteredStats.ticketMedio)}</p>
+          </CardContent>
+        </Card>
+        {/* Vendas Este Mês */}
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs md:text-sm text-muted-foreground">Vendas Este Mês</p>
               <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-blue-500" />
             </div>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
           </CardContent>
         </Card>
-        {/* Row 3: Vendas Hoje | Saldo Disponível */}
+        {/* Vendas Hoje */}
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs md:text-sm text-muted-foreground">Vendas Hoje</p>
               <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-green-500" />
             </div>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs md:text-sm text-muted-foreground">Saldo Disponível</p>
-              <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-primary" />
-            </div>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-foreground mt-1">{formatCurrency(availableBalance)}</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Saldo Disponível - Separate Card */}
+      <Card className="max-w-sm">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs md:text-sm text-muted-foreground">Saldo Disponível</p>
+            <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 text-primary" />
+          </div>
+          <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1">{formatCurrency(availableBalance)}</p>
+        </CardContent>
+      </Card>
 
       {/* Chart + Side Cards Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 sm:gap-8">
