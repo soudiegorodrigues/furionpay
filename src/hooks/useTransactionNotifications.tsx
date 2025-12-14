@@ -259,7 +259,7 @@ export const useTransactionNotifications = (userId: string | null) => {
                   <img 
                     src={currentSettings.customLogoUrl} 
                     alt="Logo" 
-                    style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'contain' }} 
+                    style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain' }}
                   />
                 ) : undefined,
               });
@@ -314,7 +314,7 @@ export const useTransactionNotifications = (userId: string | null) => {
                   <img 
                     src={currentSettings.customLogoUrl} 
                     alt="Logo" 
-                    style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'contain' }} 
+                    style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain' }} 
                   />
                 ) : undefined,
               });
