@@ -73,6 +73,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 
 export function NotificacoesSection() {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
+  const [savedSettings, setSavedSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -80,6 +81,9 @@ export function NotificacoesSection() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = JSON.stringify(settings) !== JSON.stringify(savedSettings);
 
   useEffect(() => {
     loadSettings();
@@ -92,7 +96,7 @@ export function NotificacoesSection() {
 
       if (data && data.length > 0) {
         const settingsMap = new Map(data.map((s: { key: string; value: string }) => [s.key, s.value]));
-        setSettings({
+        const loadedSettings = {
           enabled: settingsMap.get('notification_enabled') !== 'false',
           enableToast: settingsMap.get('notification_enable_toast') !== 'false',
           enableBrowser: settingsMap.get('notification_enable_browser') !== 'false',
@@ -110,7 +114,9 @@ export function NotificacoesSection() {
           customSoundName: settingsMap.get('notification_custom_sound_name') || '',
           customLogoUrl: settingsMap.get('notification_custom_logo_url') || '',
           customLogoName: settingsMap.get('notification_custom_logo_name') || '',
-        });
+        };
+        setSettings(loadedSettings);
+        setSavedSettings(loadedSettings);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -150,6 +156,7 @@ export function NotificacoesSection() {
         if (error) throw error;
       }
 
+      setSavedSettings(settings);
       toast.success('Configurações salvas com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar:', error);
@@ -353,7 +360,13 @@ export function NotificacoesSection() {
     }
   };
 
-  const testNotification = (type: 'generated' | 'paid') => {
+  const testNotification = async (type: 'generated' | 'paid') => {
+    // Check for unsaved changes and auto-save if needed
+    if (hasUnsavedChanges) {
+      toast.warning('Salvando configurações antes de testar...', { duration: 2000 });
+      await saveSettings();
+    }
+
     const title = type === 'generated' ? settings.pixGeneratedTitle : settings.pixPaidTitle;
     const description = type === 'generated' ? settings.pixGeneratedDescription : settings.pixPaidDescription;
     const soundId = type === 'generated' ? settings.pixGeneratedSound : settings.pixPaidSound;
