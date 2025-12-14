@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,27 +7,63 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2, RefreshCw, Send } from "lucide-react";
+import { 
+  Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, 
+  Loader2, RefreshCw, Activity, Clock, TrendingUp, XCircle,
+  ChevronLeft, ChevronRight
+} from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import utmifyLogo from "@/assets/utmify-logo.png";
+
+interface UtmifyEvent {
+  id: string;
+  event_type: string;
+  error_message: string | null;
+  response_time_ms: number | null;
+  created_at: string;
+  total_count: number;
+}
+
+interface UtmifySummary {
+  today_total: number;
+  today_success: number;
+  today_failure: number;
+  last_event: string | null;
+  last_24h_total: number;
+  last_24h_success: number;
+}
 
 export function UtmifySection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [apiToken, setApiToken] = useState("");
   const [showToken, setShowToken] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
 
+  // Monitoring state
+  const [monitoringLoading, setMonitoringLoading] = useState(false);
+  const [summary, setSummary] = useState<UtmifySummary | null>(null);
+  const [events, setEvents] = useState<UtmifyEvent[]>([]);
+  const [period, setPeriod] = useState<'today' | '7days' | '30days'>('today');
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    if (isConfigured) {
+      loadMonitoringData();
+    }
+  }, [isConfigured, period, page]);
 
   const loadSettings = async () => {
     try {
       setLoading(true);
       
-      // Load enabled status
       const { data: enabledData } = await supabase
         .from('admin_settings')
         .select('value')
@@ -37,7 +73,6 @@ export function UtmifySection() {
       
       setEnabled(enabledData?.value === 'true');
 
-      // Load API token
       const { data: tokenData } = await supabase
         .from('admin_settings')
         .select('value')
@@ -56,11 +91,41 @@ export function UtmifySection() {
     }
   };
 
+  const loadMonitoringData = useCallback(async () => {
+    try {
+      setMonitoringLoading(true);
+
+      // Load summary
+      const { data: summaryData } = await supabase.rpc('get_utmify_summary');
+      if (summaryData) {
+        setSummary(summaryData as unknown as UtmifySummary);
+      }
+
+      // Load events with pagination
+      const { data: eventsData } = await supabase.rpc('get_utmify_events', {
+        p_period: period,
+        p_limit: itemsPerPage,
+        p_offset: page * itemsPerPage
+      });
+
+      if (eventsData && eventsData.length > 0) {
+        setEvents(eventsData as UtmifyEvent[]);
+        setTotalCount(eventsData[0].total_count || 0);
+      } else {
+        setEvents([]);
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error('Error loading monitoring data:', error);
+    } finally {
+      setMonitoringLoading(false);
+    }
+  }, [period, page]);
+
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      // Save enabled status
       const { error: enabledError } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'utmify_enabled',
         setting_value: enabled.toString()
@@ -68,7 +133,6 @@ export function UtmifySection() {
 
       if (enabledError) throw enabledError;
 
-      // Save API token if provided
       if (apiToken.trim()) {
         const { error: tokenError } = await supabase.rpc('update_admin_setting_auth', {
           setting_key: 'utmify_api_token',
@@ -88,81 +152,44 @@ export function UtmifySection() {
     }
   };
 
-  const handleSyncToday = async () => {
-    try {
-      setSyncing(true);
-      
-      // Get today's paid transactions for the current user only
-      const { data: transactions, error: fetchError } = await supabase.rpc('get_user_transactions', {
-        p_limit: 500
-      });
+  const formatTimeAgo = (dateStr: string | null) => {
+    if (!dateStr) return 'Nunca';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-      if (fetchError) throw fetchError;
+    if (diffMins < 1) return 'Agora';
+    if (diffMins < 60) return `${diffMins} min atrás`;
+    if (diffHours < 24) return `${diffHours}h atrás`;
+    return `${diffDays}d atrás`;
+  };
 
-      // Filter for today's transactions
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const todayTransactions = (transactions || []).filter((tx: any) => {
-        if (!tx.paid_at || tx.status !== 'paid') return false;
-        const paidDate = new Date(tx.paid_at);
-        return paidDate >= today;
-      });
+  const formatDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
-      if (todayTransactions.length === 0) {
-        toast.info('Nenhuma transação paga encontrada hoje');
-        return;
-      }
-
-      let successCount = 0;
-      let errorCount = 0;
-
-      // Send each transaction to Utmify
-      for (const tx of todayTransactions) {
-        try {
-          const { error } = await supabase.functions.invoke('utmify-send-order', {
-            body: {
-              txid: tx.txid,
-              amount: tx.amount,
-              status: 'paid',
-              donorName: tx.donor_name,
-              productName: tx.product_name,
-              paidAt: tx.paid_at,
-              utmData: tx.utm_data
-            }
-          });
-
-          if (error) {
-            console.error('Error sending to Utmify:', error);
-            errorCount++;
-          } else {
-            successCount++;
-          }
-        } catch (err) {
-          console.error('Error processing transaction:', err);
-          errorCount++;
-        }
-      }
-
-      if (successCount > 0) {
-        toast.success(`${successCount} transação(ões) enviada(s) para o Utmify`);
-      }
-      if (errorCount > 0) {
-        toast.error(`${errorCount} transação(ões) falharam ao enviar`);
-      }
-    } catch (error) {
-      console.error('Error syncing to Utmify:', error);
-      toast.error('Erro ao sincronizar com Utmify');
-    } finally {
-      setSyncing(false);
+  const parseOrderInfo = (errorMessage: string | null) => {
+    if (!errorMessage) return { orderId: '-', status: '-' };
+    const match = errorMessage.match(/Order ([a-z0-9_]+) - Status: (\w+)/i);
+    if (match) {
+      return { orderId: match[1].substring(0, 12) + '...', status: match[2] };
     }
+    return { orderId: '-', status: errorMessage.substring(0, 20) };
   };
 
-  const getMaskedToken = (token: string) => {
-    if (!token) return '';
-    if (token.length <= 8) return '••••••••';
-    return token.slice(0, 4) + '••••' + token.slice(-4);
-  };
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const successRate = summary ? (summary.today_total > 0 
+    ? Math.round((summary.today_success / summary.today_total) * 100) 
+    : 100) : 0;
 
   if (loading) {
     return (
@@ -222,7 +249,7 @@ export function UtmifySection() {
             <div className="space-y-0.5">
               <Label className="text-base font-medium">Ativar integração</Label>
               <p className="text-sm text-muted-foreground">
-                Enviar eventos de PIX gerado e pago para o Utmify
+                Enviar eventos de PIX gerado e pago para o Utmify automaticamente
               </p>
             </div>
             <Switch
@@ -272,35 +299,169 @@ export function UtmifySection() {
         </CardContent>
       </Card>
 
-      {/* Sync Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Sincronização Manual</CardTitle>
-          <CardDescription>
-            Reenvie as transações de hoje para o Utmify caso precisem ser sincronizadas novamente
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={handleSyncToday} 
-            disabled={syncing || !isConfigured}
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            {syncing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      {/* Monitoring Card */}
+      {isConfigured && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Monitoramento de Eventos</CardTitle>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadMonitoringData}
+                disabled={monitoringLoading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${monitoringLoading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 border rounded-lg text-center">
+                <div className="text-2xl font-bold text-primary">
+                  {summary?.today_total || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">Eventos Hoje</div>
+              </div>
+              <div className="p-4 border rounded-lg text-center">
+                <div className="text-2xl font-bold text-green-500">
+                  {successRate}%
+                </div>
+                <div className="text-sm text-muted-foreground">Taxa de Sucesso</div>
+              </div>
+              <div className="p-4 border rounded-lg text-center">
+                <div className="text-2xl font-bold text-red-500">
+                  {summary?.today_failure || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">Falhas</div>
+              </div>
+              <div className="p-4 border rounded-lg text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {formatTimeAgo(summary?.last_event || null)}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground">Último Evento</div>
+              </div>
+            </div>
+
+            {/* Period Filter */}
+            <div className="flex gap-2">
+              <Button
+                variant={period === 'today' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setPeriod('today'); setPage(0); }}
+              >
+                Hoje
+              </Button>
+              <Button
+                variant={period === '7days' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setPeriod('7days'); setPage(0); }}
+              >
+                7 dias
+              </Button>
+              <Button
+                variant={period === '30days' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setPeriod('30days'); setPage(0); }}
+              >
+                30 dias
+              </Button>
+            </div>
+
+            {/* Events Table */}
+            {monitoringLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum evento encontrado no período selecionado
+              </div>
             ) : (
-              <Send className="w-4 h-4 mr-2" />
+              <>
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data/Hora</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="hidden sm:table-cell">Order ID</TableHead>
+                        <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {events.map((event) => {
+                        const { orderId, status } = parseOrderInfo(event.error_message);
+                        return (
+                          <TableRow key={event.id}>
+                            <TableCell className="font-mono text-sm">
+                              {formatDateTime(event.created_at)}
+                            </TableCell>
+                            <TableCell>
+                              {event.event_type === 'success' ? (
+                                <Badge variant="default" className="bg-green-500 hover:bg-green-500">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Sucesso
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                  Falha
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell font-mono text-sm">
+                              {orderId}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <Badge variant="outline">{status}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Página {page + 1} de {totalPages}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(0, p - 1))}
+                        disabled={page === 0}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={page >= totalPages - 1}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
-            {syncing ? 'Enviando...' : 'Enviar Transações de Hoje'}
-          </Button>
-          {!isConfigured && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Configure o token da API primeiro para sincronizar
-            </p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* How it works */}
       <Card>
@@ -322,7 +483,7 @@ export function UtmifySection() {
                 <span className="font-medium">PIX Gerado</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Quando um PIX é gerado, enviamos o pedido com status "waiting_payment" para o Utmify
+                Quando um PIX é gerado, enviamos o pedido com status "waiting_payment" para o Utmify automaticamente
               </p>
             </div>
             <div className="p-4 border rounded-lg">
@@ -333,7 +494,7 @@ export function UtmifySection() {
                 <span className="font-medium">PIX Pago</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Quando o pagamento é confirmado, atualizamos o pedido com status "paid" no Utmify
+                Quando o pagamento é confirmado, atualizamos o pedido com status "paid" no Utmify automaticamente
               </p>
             </div>
           </div>
