@@ -26,23 +26,24 @@ interface UtmifyOrder {
   products: Array<{
     id: string;
     name: string;
-    planName?: string;
+    planId: string;
+    planName: string;
     quantity: number;
-    price: number;
+    priceInCents: number;
   }>;
   trackingParameters: {
-    src?: string;
-    sck?: string;
-    utm_source?: string;
-    utm_campaign?: string;
-    utm_medium?: string;
-    utm_content?: string;
-    utm_term?: string;
+    src: string | null;
+    sck: string | null;
+    utm_source: string | null;
+    utm_campaign: string | null;
+    utm_medium: string | null;
+    utm_content: string | null;
+    utm_term: string | null;
   };
-  commission?: {
-    totalPrice: number;
-    gatewayFee: number;
-    totalComission: number;
+  commission: {
+    totalPriceInCents: number;
+    gatewayFeeInCents: number;
+    userCommissionInCents: number;
   };
 }
 
@@ -185,6 +186,8 @@ serve(async (req) => {
       );
     }
 
+    const priceInCents = Math.round(amount * 100);
+    
     // Build Utmify order payload
     const order: UtmifyOrder = {
       orderId: txid,
@@ -205,26 +208,27 @@ serve(async (req) => {
         {
           id: productId || `prod_${txid}`,
           name: productName || 'Produto',
+          planId: productId || `plan_${txid}`,
           planName: productName || 'Produto',
           quantity: 1,
-          price: Math.round(amount * 100), // Utmify expects cents
+          priceInCents: priceInCents,
         }
       ],
-      trackingParameters: {},
+      trackingParameters: {
+        src: utmData?.src || utmData?.utm_source || null,
+        sck: utmData?.sck || null,
+        utm_source: utmData?.utm_source || null,
+        utm_campaign: utmData?.utm_campaign || null,
+        utm_medium: utmData?.utm_medium || null,
+        utm_content: utmData?.utm_content || null,
+        utm_term: utmData?.utm_term || null,
+      },
+      commission: {
+        totalPriceInCents: priceInCents,
+        gatewayFeeInCents: Math.round(priceInCents * 0.05), // 5% estimated gateway fee
+        userCommissionInCents: Math.round(priceInCents * 0.95), // 95% to user
+      },
     };
-
-    // Map UTM data to Utmify format
-    if (utmData) {
-      order.trackingParameters = {
-        src: utmData.src || utmData.utm_source || undefined,
-        sck: utmData.sck || undefined,
-        utm_source: utmData.utm_source || undefined,
-        utm_campaign: utmData.utm_campaign || undefined,
-        utm_medium: utmData.utm_medium || undefined,
-        utm_content: utmData.utm_content || undefined,
-        utm_term: utmData.utm_term || undefined,
-      };
-    }
 
     console.log('[UTMIFY] Sending order:', JSON.stringify(order, null, 2));
 
