@@ -187,8 +187,7 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
             Pendente
           </Badge>
         )}
-        <div className="flex-1" />
-        <Button
+            <Button
           variant="outline"
           size="sm"
           className="h-8 text-xs"
