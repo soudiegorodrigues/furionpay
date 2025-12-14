@@ -191,7 +191,7 @@ serve(async (req) => {
     // Build Utmify order payload
     const order: UtmifyOrder = {
       orderId: txid,
-      platform: 'FurionPay',
+      platform: 'furionpay',
       paymentMethod: 'pix',
       status: status === 'paid' ? 'paid' : 'waiting_payment',
       createdAt: createdAt || new Date().toISOString(),
