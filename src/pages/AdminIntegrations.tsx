@@ -63,7 +63,7 @@ const AdminIntegrations = () => {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Utmify Card - Modern Square */}
         <Card 
-          className="group relative overflow-hidden cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border-0 bg-gradient-to-br from-card via-card to-muted/30"
+          className="relative overflow-hidden cursor-pointer shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/30"
           onClick={() => setUtmifyDialogOpen(true)}
         >
           {/* Status indicator */}
@@ -87,25 +87,25 @@ const AdminIntegrations = () => {
           </div>
 
           <CardContent className="p-6 flex flex-col items-center text-center min-h-[220px]">
-            {/* Logo container with glow effect */}
+            {/* Logo container with glow effect - always visible */}
             <div className="relative mt-4 mb-6">
-              <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center p-3 group-hover:scale-110 transition-transform duration-300">
+              <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl" />
+              <div className="relative w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center p-3 scale-110">
                 <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-contain" />
               </div>
             </div>
             
             {/* Content */}
-            <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">Utmify</h3>
+            <h3 className="font-bold text-xl mb-2 text-primary">Utmify</h3>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               Rastreamento avançado de UTM e atribuição de conversões
             </p>
             
-            {/* Action button */}
+            {/* Action button - always visible */}
             <Button 
               variant="outline" 
               size="sm"
-              className="mt-auto opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300"
+              className="mt-auto"
               onClick={(e) => {
                 e.stopPropagation();
                 setUtmifyDialogOpen(true);
@@ -116,8 +116,8 @@ const AdminIntegrations = () => {
             </Button>
           </CardContent>
           
-          {/* Decorative gradient line */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Decorative gradient line - always visible */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
         </Card>
       </div>
 
