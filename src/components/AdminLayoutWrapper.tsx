@@ -5,7 +5,7 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut } from "lucide-react";
+import { Menu, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,7 +138,9 @@ export function AdminLayoutWrapper() {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Mobile header with sidebar trigger */}
           <header className="md:hidden sticky top-0 z-20 h-14 border-b border-border bg-background flex items-center px-4">
-            <SidebarTrigger className="mr-3" />
+            <SidebarTrigger className="mr-3">
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
             <img 
               src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} 
               alt="FurionPay" 
