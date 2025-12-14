@@ -129,7 +129,7 @@ export function UtmifySection() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => window.open('https://utmify.com.br', '_blank')}
+          onClick={() => window.open('https://app.utmify.com.br/login/', '_blank')}
         >
           <ExternalLink className="w-4 h-4 mr-2" />
           Acessar Utmify
