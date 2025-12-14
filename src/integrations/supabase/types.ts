@@ -1020,6 +1020,93 @@ export type Database = {
         }
         Relationships: []
       }
+      system_backups: {
+        Row: {
+          admin_settings_data: Json | null
+          available_domains_data: Json | null
+          backed_up_at: string
+          backed_up_by: string | null
+          backup_name: string
+          backup_type: string
+          chat_blocks_data: Json | null
+          chat_flows_data: Json | null
+          checkout_offers_data: Json | null
+          checkout_templates_data: Json | null
+          created_at: string
+          fee_configs_data: Json | null
+          id: string
+          pix_transactions_data: Json | null
+          popup_configurations_data: Json | null
+          product_checkout_configs_data: Json | null
+          product_folders_data: Json | null
+          product_offers_data: Json | null
+          product_testimonials_data: Json | null
+          products_data: Json | null
+          profiles_data: Json | null
+          reward_requests_data: Json | null
+          rewards_data: Json | null
+          size_bytes: number | null
+          total_records: number | null
+          withdrawal_requests_data: Json | null
+        }
+        Insert: {
+          admin_settings_data?: Json | null
+          available_domains_data?: Json | null
+          backed_up_at?: string
+          backed_up_by?: string | null
+          backup_name: string
+          backup_type?: string
+          chat_blocks_data?: Json | null
+          chat_flows_data?: Json | null
+          checkout_offers_data?: Json | null
+          checkout_templates_data?: Json | null
+          created_at?: string
+          fee_configs_data?: Json | null
+          id?: string
+          pix_transactions_data?: Json | null
+          popup_configurations_data?: Json | null
+          product_checkout_configs_data?: Json | null
+          product_folders_data?: Json | null
+          product_offers_data?: Json | null
+          product_testimonials_data?: Json | null
+          products_data?: Json | null
+          profiles_data?: Json | null
+          reward_requests_data?: Json | null
+          rewards_data?: Json | null
+          size_bytes?: number | null
+          total_records?: number | null
+          withdrawal_requests_data?: Json | null
+        }
+        Update: {
+          admin_settings_data?: Json | null
+          available_domains_data?: Json | null
+          backed_up_at?: string
+          backed_up_by?: string | null
+          backup_name?: string
+          backup_type?: string
+          chat_blocks_data?: Json | null
+          chat_flows_data?: Json | null
+          checkout_offers_data?: Json | null
+          checkout_templates_data?: Json | null
+          created_at?: string
+          fee_configs_data?: Json | null
+          id?: string
+          pix_transactions_data?: Json | null
+          popup_configurations_data?: Json | null
+          product_checkout_configs_data?: Json | null
+          product_folders_data?: Json | null
+          product_offers_data?: Json | null
+          product_testimonials_data?: Json | null
+          products_data?: Json | null
+          profiles_data?: Json | null
+          reward_requests_data?: Json | null
+          rewards_data?: Json | null
+          size_bytes?: number | null
+          total_records?: number | null
+          withdrawal_requests_data?: Json | null
+        }
+        Relationships: []
+      }
       user_documents: {
         Row: {
           created_at: string | null
@@ -1228,7 +1315,12 @@ export type Database = {
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
+      create_full_system_backup: {
+        Args: { p_backup_name?: string }
+        Returns: string
+      }
       create_manual_backup: { Args: never; Returns: string }
+      delete_system_backup: { Args: { p_backup_id: string }; Returns: boolean }
       delete_transaction_backup: {
         Args: { p_backup_id: string }
         Returns: boolean
@@ -1412,6 +1504,23 @@ export type Database = {
           tracking_code: string
           user_email: string
           user_id: string
+        }[]
+      }
+      get_system_backups: {
+        Args: never
+        Returns: {
+          backed_up_at: string
+          backed_up_by_email: string
+          backup_name: string
+          backup_type: string
+          fee_count: number
+          id: string
+          pix_count: number
+          products_count: number
+          profiles_count: number
+          settings_count: number
+          total_records: number
+          withdrawal_count: number
         }[]
       }
       get_transaction_backups: {
@@ -1648,6 +1757,10 @@ export type Database = {
       }
       reset_pix_transactions_auth: { Args: never; Returns: boolean }
       reset_user_transactions: { Args: never; Returns: boolean }
+      restore_full_system_backup: {
+        Args: { p_backup_id: string }
+        Returns: boolean
+      }
       restore_transactions_from_backup: {
         Args: { p_backup_id: string }
         Returns: boolean
