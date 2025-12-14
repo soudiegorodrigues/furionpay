@@ -90,7 +90,7 @@ const AdminIntegrations = () => {
             {/* Logo container - no background, larger size */}
             <div className="relative mt-4 mb-6">
               <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg" />
-              <div className="relative w-24 h-24 flex items-center justify-center">
+              <div className="relative w-20 h-20 flex items-center justify-center">
                 <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-contain drop-shadow-lg" />
               </div>
             </div>
