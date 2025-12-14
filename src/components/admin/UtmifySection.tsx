@@ -92,17 +92,24 @@ export function UtmifySection() {
     try {
       setSyncing(true);
       
-      // Get today's paid transactions
-      const { data: transactions, error: fetchError } = await supabase
-        .from('pix_transactions')
-        .select('id, txid, amount, donor_name, product_name, paid_at, utm_data, user_id')
-        .eq('status', 'paid')
-        .gte('paid_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
-        .order('paid_at', { ascending: false });
+      // Get today's paid transactions using RPC function (admin access)
+      const { data: transactions, error: fetchError } = await supabase.rpc('get_pix_transactions_auth', {
+        p_limit: 500
+      });
 
       if (fetchError) throw fetchError;
 
-      if (!transactions || transactions.length === 0) {
+      // Filter for today's transactions
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todayTransactions = (transactions || []).filter((tx: any) => {
+        if (!tx.paid_at || tx.status !== 'paid') return false;
+        const paidDate = new Date(tx.paid_at);
+        return paidDate >= today;
+      });
+
+      if (todayTransactions.length === 0) {
         toast.info('Nenhuma transação paga encontrada hoje');
         return;
       }
@@ -111,7 +118,7 @@ export function UtmifySection() {
       let errorCount = 0;
 
       // Send each transaction to Utmify
-      for (const tx of transactions) {
+      for (const tx of todayTransactions) {
         try {
           const { error } = await supabase.functions.invoke('utmify-send-order', {
             body: {
@@ -121,8 +128,7 @@ export function UtmifySection() {
               donorName: tx.donor_name,
               productName: tx.product_name,
               paidAt: tx.paid_at,
-              utmData: tx.utm_data,
-              userId: tx.user_id
+              utmData: tx.utm_data
             }
           });
 
