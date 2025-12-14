@@ -1224,6 +1224,7 @@ export type Database = {
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
+      create_manual_backup: { Args: never; Returns: string }
       delete_transaction_backup: {
         Args: { p_backup_id: string }
         Returns: boolean
@@ -1413,7 +1414,9 @@ export type Database = {
         Args: never
         Returns: {
           backed_up_at: string
+          backed_up_by_email: string
           backup_id: string
+          backup_type: string
           transaction_count: number
         }[]
       }

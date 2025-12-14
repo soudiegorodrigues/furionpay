@@ -20,6 +20,7 @@ import { PremiacoesSection } from "@/components/admin/PremiacoesSection";
 import { ApiMonitoringSection } from "@/components/admin/ApiMonitoringSection";
 import { ReceitaPlataformaSection } from "@/components/admin/ReceitaPlataformaSection";
 import { NotificacoesSection } from "@/components/admin/NotificacoesSection";
+import { BackupsSection } from "@/components/admin/BackupsSection";
 
 
 const Admin = () => {
@@ -65,6 +66,7 @@ const Admin = () => {
       {activeSection === "utm-debug" && <UTMDebugSection />}
       {activeSection === "premiacoes" && <PremiacoesSection />}
       {activeSection === "api-monitoring" && <ApiMonitoringSection />}
+      {activeSection === "backups" && <BackupsSection />}
     </div>
   );
 };
