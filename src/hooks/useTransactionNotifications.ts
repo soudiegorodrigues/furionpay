@@ -164,11 +164,11 @@ export const useTransactionNotifications = (userId: string | null) => {
   useEffect(() => {
     if (!userId || !settings.enabled) return;
 
-    console.log('Configurando listener de notificações para usuário:', userId);
+    console.log('🔔 Configurando listener de notificações para usuário:', userId);
 
     // Subscribe to realtime changes on pix_transactions for this user
     const channel = supabase
-      .channel('transaction-notifications')
+      .channel(`transaction-notifications-${userId}`)
       .on(
         'postgres_changes',
         {
@@ -178,7 +178,7 @@ export const useTransactionNotifications = (userId: string | null) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('Nova transação detectada:', payload);
+          console.log('🔔 Nova transação detectada:', payload);
           const { new: transaction } = payload;
           
           if (transaction) {
@@ -190,6 +190,8 @@ export const useTransactionNotifications = (userId: string | null) => {
             
             const title = settings.pixGeneratedTitle;
             const description = formatMessage(settings.pixGeneratedDescription, data);
+            
+            console.log('🔔 Exibindo notificação PIX Gerado:', { title, description });
             
             // Show toast notification
             if (settings.enableToast) {
@@ -216,7 +218,7 @@ export const useTransactionNotifications = (userId: string | null) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('Transação atualizada:', payload);
+          console.log('🔔 Transação atualizada:', payload);
           const { new: transaction, old: oldTransaction } = payload;
           
           // Check if status changed to 'paid'
@@ -232,6 +234,8 @@ export const useTransactionNotifications = (userId: string | null) => {
             
             const title = settings.pixPaidTitle;
             const description = formatMessage(settings.pixPaidDescription, data);
+            
+            console.log('🔔 Exibindo notificação PIX Pago:', { title, description });
             
             // Show success toast
             if (settings.enableToast) {
@@ -250,11 +254,14 @@ export const useTransactionNotifications = (userId: string | null) => {
         }
       )
       .subscribe((status) => {
-        console.log('Status do canal de notificações:', status);
+        console.log('🔔 Status do canal de notificações:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Canal de notificações ativo para usuário:', userId);
+        }
       });
 
     return () => {
-      console.log('Removendo listener de notificações');
+      console.log('🔔 Removendo listener de notificações');
       supabase.removeChannel(channel);
     };
   }, [userId, settings]);
