@@ -54,62 +54,45 @@ function getSupabaseClient() {
 }
 
 async function getUtmifyApiToken(supabase: any, userId?: string): Promise<string | null> {
-  // First try user-specific token
-  if (userId) {
-    const { data: userToken } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('key', 'utmify_api_token')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (userToken?.value) {
-      console.log('[UTMIFY-SYNC] Using user-specific API token');
-      return userToken.value;
-    }
+  // Only use user-specific token - no global fallback
+  if (!userId) {
+    console.log('[UTMIFY-SYNC] No userId provided, cannot get token');
+    return null;
   }
   
-  // Fallback to global token
-  const { data: globalToken } = await supabase
+  const { data: userToken } = await supabase
     .from('admin_settings')
     .select('value')
     .eq('key', 'utmify_api_token')
-    .is('user_id', null)
+    .eq('user_id', userId)
     .maybeSingle();
   
-  if (globalToken?.value) {
-    console.log('[UTMIFY-SYNC] Using global API token');
-    return globalToken.value;
+  if (userToken?.value) {
+    console.log('[UTMIFY-SYNC] Using user-specific API token for user:', userId);
+    return userToken.value;
   }
   
-  console.log('[UTMIFY-SYNC] No API token configured');
+  console.log('[UTMIFY-SYNC] No API token configured for user:', userId);
   return null;
 }
 
 async function isUtmifyEnabled(supabase: any, userId?: string): Promise<boolean> {
-  // Check user-specific setting first
-  if (userId) {
-    const { data: userEnabled } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('key', 'utmify_enabled')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (userEnabled?.value === 'true') {
-      return true;
-    }
+  // Only check user-specific setting - no global fallback
+  if (!userId) {
+    console.log('[UTMIFY-SYNC] No userId provided, Utmify disabled');
+    return false;
   }
   
-  // Check global setting
-  const { data: globalEnabled } = await supabase
+  const { data: userEnabled } = await supabase
     .from('admin_settings')
     .select('value')
     .eq('key', 'utmify_enabled')
-    .is('user_id', null)
+    .eq('user_id', userId)
     .maybeSingle();
   
-  return globalEnabled?.value === 'true';
+  const enabled = userEnabled?.value === 'true';
+  console.log('[UTMIFY-SYNC] Utmify enabled for user', userId, ':', enabled);
+  return enabled;
 }
 
 function generateRandomDocument(): string {
