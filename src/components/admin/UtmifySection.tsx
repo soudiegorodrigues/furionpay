@@ -23,22 +23,34 @@ interface UtmifySummary {
   last_24h_success: number;
 }
 
-export function UtmifySection() {
-  const [loading, setLoading] = useState(false);
+export interface UtmifyInitialData {
+  enabled: boolean;
+  apiToken: string;
+  isConfigured: boolean;
+  summary?: UtmifySummary | null;
+}
+
+interface UtmifySectionProps {
+  initialData?: UtmifyInitialData;
+}
+
+export function UtmifySection({ initialData }: UtmifySectionProps) {
   const [saving, setSaving] = useState(false);
-  const [enabled, setEnabled] = useState(false);
-  const [apiToken, setApiToken] = useState("");
+  const [enabled, setEnabled] = useState(initialData?.enabled ?? false);
+  const [apiToken, setApiToken] = useState(initialData?.apiToken ?? "");
   const [showToken, setShowToken] = useState(false);
-  const [isConfigured, setIsConfigured] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(initialData?.isConfigured ?? false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   // Monitoring state
   const [monitoringLoading, setMonitoringLoading] = useState(false);
-  const [summary, setSummary] = useState<UtmifySummary | null>(null);
+  const [summary, setSummary] = useState<UtmifySummary | null>(initialData?.summary ?? null);
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (!initialData) {
+      loadSettings();
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (!isConfigured) return;

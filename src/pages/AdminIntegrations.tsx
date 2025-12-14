@@ -1,18 +1,18 @@
-import { useState } from "react";
-import { Puzzle, CheckCircle, AlertCircle, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Puzzle, Settings, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { UtmifySection } from "@/components/admin/UtmifySection";
+import { UtmifySection, UtmifyInitialData } from "@/components/admin/UtmifySection";
 import utmifyLogo from "@/assets/utmify-logo.png";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminIntegrations = () => {
   const [utmifyDialogOpen, setUtmifyDialogOpen] = useState(false);
   const [utmifyConfigured, setUtmifyConfigured] = useState(false);
   const [utmifyEnabled, setUtmifyEnabled] = useState(false);
+  const [loadingUtmify, setLoadingUtmify] = useState(false);
+  const [utmifyInitialData, setUtmifyInitialData] = useState<UtmifyInitialData | null>(null);
 
   useEffect(() => {
     loadUtmifyStatus();
@@ -41,8 +41,36 @@ const AdminIntegrations = () => {
     }
   };
 
+  const handleUtmifyClick = async () => {
+    setLoadingUtmify(true);
+    try {
+      // Pré-carregar todos os dados antes de abrir
+      const [tokenResult, enabledResult, summaryResult] = await Promise.all([
+        supabase.from('admin_settings').select('value').eq('key', 'utmify_api_token').is('user_id', null).maybeSingle(),
+        supabase.from('admin_settings').select('value').eq('key', 'utmify_enabled').is('user_id', null).maybeSingle(),
+        supabase.rpc('get_utmify_summary')
+      ]);
+
+      const isConfigured = !!tokenResult.data?.value;
+      
+      setUtmifyInitialData({
+        enabled: enabledResult.data?.value === 'true',
+        apiToken: tokenResult.data?.value || '',
+        isConfigured,
+        summary: isConfigured ? (summaryResult.data as unknown as UtmifyInitialData['summary']) : null
+      });
+
+      setUtmifyDialogOpen(true);
+    } catch (error) {
+      console.error('Error loading Utmify data:', error);
+    } finally {
+      setLoadingUtmify(false);
+    }
+  };
+
   const handleDialogClose = () => {
     setUtmifyDialogOpen(false);
+    setUtmifyInitialData(null);
     loadUtmifyStatus();
   };
 
@@ -64,7 +92,7 @@ const AdminIntegrations = () => {
         {/* Utmify Card - Modern Square */}
         <Card 
           className="relative overflow-hidden cursor-pointer shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/30"
-          onClick={() => setUtmifyDialogOpen(true)}
+          onClick={() => !loadingUtmify && handleUtmifyClick()}
         >
           {/* Status indicator */}
           <div className="absolute top-4 right-4 z-10">
@@ -106,12 +134,17 @@ const AdminIntegrations = () => {
               variant="outline" 
               size="sm"
               className="mt-auto"
+              disabled={loadingUtmify}
               onClick={(e) => {
                 e.stopPropagation();
-                setUtmifyDialogOpen(true);
+                handleUtmifyClick();
               }}
             >
-              <Settings className="w-4 h-4 mr-2" />
+              {loadingUtmify ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Settings className="w-4 h-4 mr-2" />
+              )}
               Configurar
             </Button>
           </CardContent>
@@ -129,7 +162,7 @@ const AdminIntegrations = () => {
         >
           <DialogTitle className="sr-only">Configuração Utmify</DialogTitle>
           <div className="p-4">
-            <UtmifySection />
+            {utmifyInitialData && <UtmifySection initialData={utmifyInitialData} />}
           </div>
         </DialogContent>
       </Dialog>
