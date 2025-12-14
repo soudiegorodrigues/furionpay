@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTransactionNotifications } from '@/hooks/useTransactionNotifications';
 
-export const TransactionNotificationProvider = ({ children }: { children: React.ReactNode }) => {
+export const TransactionNotificationProvider = () => {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,5 +33,5 @@ export const TransactionNotificationProvider = ({ children }: { children: React.
   // Use the notification hook
   useTransactionNotifications(userId);
 
-  return <>{children}</>;
+  return null;
 };
