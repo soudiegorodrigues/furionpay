@@ -59,46 +59,53 @@ const AdminIntegrations = () => {
         </div>
       </div>
 
-      {/* Integration Cards Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Utmify Card */}
-        <Card className="relative overflow-hidden hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg overflow-hidden">
-                <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-cover" />
+      {/* Integration Cards */}
+      <div className="space-y-3">
+        {/* Utmify Card - Horizontal Layout */}
+        <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              {/* Logo à esquerda */}
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0 p-2 border">
+                <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-contain" />
               </div>
-              {utmifyConfigured && utmifyEnabled ? (
-                <Badge variant="default" className="bg-green-500 hover:bg-green-500">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Ativo
-                </Badge>
-              ) : utmifyConfigured ? (
-                <Badge variant="secondary">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  Desativado
-                </Badge>
-              ) : (
-                <Badge variant="outline">
-                  Não configurado
-                </Badge>
-              )}
+              
+              {/* Informações no centro */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-lg">Utmify</h3>
+                <p className="text-sm text-muted-foreground truncate">
+                  Rastreamento avançado de UTM e atribuição de conversões
+                </p>
+              </div>
+              
+              {/* Status e botão à direita */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {utmifyConfigured && utmifyEnabled ? (
+                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20 border">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Ativo
+                  </Badge>
+                ) : utmifyConfigured ? (
+                  <Badge variant="secondary">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Desativado
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    Não configurado
+                  </Badge>
+                )}
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setUtmifyDialogOpen(true)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configurar
+                </Button>
+              </div>
             </div>
-            
-            <h3 className="font-semibold text-lg mb-1">Utmify</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Rastreamento avançado de UTM e atribuição de conversões
-            </p>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full"
-              onClick={() => setUtmifyDialogOpen(true)}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configurar
-            </Button>
           </CardContent>
         </Card>
       </div>
