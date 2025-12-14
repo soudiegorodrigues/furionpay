@@ -60,53 +60,64 @@ const AdminIntegrations = () => {
       </div>
 
       {/* Integration Cards */}
-      <div className="space-y-3">
-        {/* Utmify Card - Horizontal Layout */}
-        <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              {/* Logo à esquerda */}
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0 p-2 border">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Utmify Card - Modern Square */}
+        <Card 
+          className="group relative overflow-hidden cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border-0 bg-gradient-to-br from-card via-card to-muted/30"
+          onClick={() => setUtmifyDialogOpen(true)}
+        >
+          {/* Status indicator */}
+          <div className="absolute top-4 right-4 z-10">
+            {utmifyConfigured && utmifyEnabled ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-medium text-green-600">Ativo</span>
+              </div>
+            ) : utmifyConfigured ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+                <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                <span className="text-xs font-medium text-yellow-600">Pausado</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted border border-border">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-xs font-medium text-muted-foreground">Pendente</span>
+              </div>
+            )}
+          </div>
+
+          <CardContent className="p-6 flex flex-col items-center text-center min-h-[220px]">
+            {/* Logo container with glow effect */}
+            <div className="relative mt-4 mb-6">
+              <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center p-3 group-hover:scale-110 transition-transform duration-300">
                 <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-contain" />
               </div>
-              
-              {/* Informações no centro */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg">Utmify</h3>
-                <p className="text-sm text-muted-foreground truncate">
-                  Rastreamento avançado de UTM e atribuição de conversões
-                </p>
-              </div>
-              
-              {/* Status e botão à direita */}
-              <div className="flex items-center gap-3 flex-shrink-0">
-                {utmifyConfigured && utmifyEnabled ? (
-                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20 border">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Ativo
-                  </Badge>
-                ) : utmifyConfigured ? (
-                  <Badge variant="secondary">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Desativado
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Não configurado
-                  </Badge>
-                )}
-                
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setUtmifyDialogOpen(true)}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configurar
-                </Button>
-              </div>
             </div>
+            
+            {/* Content */}
+            <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">Utmify</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              Rastreamento avançado de UTM e atribuição de conversões
+            </p>
+            
+            {/* Action button */}
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-auto opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                setUtmifyDialogOpen(true);
+              }}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Configurar
+            </Button>
           </CardContent>
+          
+          {/* Decorative gradient line */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
       </div>
 
