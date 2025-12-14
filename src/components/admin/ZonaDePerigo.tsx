@@ -5,18 +5,37 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2, Trash2, Lock, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, Loader2, Trash2, Lock, Eye, EyeOff, Key } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
+const RESET_KEYWORD = "APAGAR";
+
 export const ZonaDePerigo = () => {
   const [isResettingGlobal, setIsResettingGlobal] = useState(false);
+  const [showKeywordDialog, setShowKeywordDialog] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [keyword, setKeyword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const handleKeywordSubmit = () => {
+    if (keyword.toUpperCase() !== RESET_KEYWORD) {
+      toast({
+        title: "Palavra-chave incorreta",
+        description: "Digite a palavra-chave correta para continuar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowKeywordDialog(false);
+    setKeyword("");
+    setShowAuthDialog(true);
+  };
 
   const handleAuthenticate = async () => {
     if (!email || !password) {
@@ -41,7 +60,6 @@ export const ZonaDePerigo = () => {
         return;
       }
 
-      // Check if user is admin
       const { data: isAdmin } = await supabase.rpc('is_admin_authenticated');
       if (!isAdmin) {
         toast({
@@ -129,7 +147,7 @@ export const ZonaDePerigo = () => {
               <Button 
                 variant="destructive" 
                 disabled={isResettingGlobal}
-                onClick={() => setShowAuthDialog(true)}
+                onClick={() => setShowKeywordDialog(true)}
                 className="w-full sm:w-auto shadow-lg shadow-destructive/25 hover:shadow-destructive/40 transition-all duration-300"
               >
                 <Lock className="w-4 h-4 mr-2" />
@@ -140,7 +158,51 @@ export const ZonaDePerigo = () => {
         </CardContent>
       </Card>
 
-      {/* Auth Dialog */}
+      {/* Keyword Dialog - Step 1 */}
+      <Dialog open={showKeywordDialog} onOpenChange={setShowKeywordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-destructive/15">
+                <Key className="w-5 h-5 text-destructive" />
+              </div>
+              <DialogTitle>Palavra-chave de Segurança</DialogTitle>
+            </div>
+            <DialogDescription>
+              Digite <strong className="text-destructive">{RESET_KEYWORD}</strong> para continuar com esta ação crítica.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="keyword">Palavra-chave</Label>
+              <Input
+                id="keyword"
+                type="text"
+                placeholder="Digite a palavra-chave"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleKeywordSubmit()}
+                className="uppercase"
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => { setShowKeywordDialog(false); setKeyword(""); }}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleKeywordSubmit}
+            >
+              Continuar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Auth Dialog - Step 2 */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -148,10 +210,10 @@ export const ZonaDePerigo = () => {
               <div className="p-2 rounded-lg bg-destructive/15">
                 <Lock className="w-5 h-5 text-destructive" />
               </div>
-              <DialogTitle>Autenticação Necessária</DialogTitle>
+              <DialogTitle>Autenticação do Administrador</DialogTitle>
             </div>
             <DialogDescription>
-              Para executar esta ação crítica, confirme suas credenciais de administrador.
+              Confirme suas credenciais de administrador para prosseguir.
             </DialogDescription>
           </DialogHeader>
           
@@ -191,7 +253,7 @@ export const ZonaDePerigo = () => {
           </div>
           
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
+            <Button variant="outline" onClick={() => { setShowAuthDialog(false); setEmail(""); setPassword(""); }}>
               Cancelar
             </Button>
             <Button 
@@ -212,7 +274,7 @@ export const ZonaDePerigo = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm Dialog */}
+      {/* Confirm Dialog - Step 3 */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent className="border-destructive/30">
           <AlertDialogHeader>
