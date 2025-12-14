@@ -92,8 +92,8 @@ export function UtmifySection() {
     try {
       setSyncing(true);
       
-      // Get today's paid transactions using RPC function (admin access)
-      const { data: transactions, error: fetchError } = await supabase.rpc('get_pix_transactions_auth', {
+      // Get today's paid transactions for the current user only
+      const { data: transactions, error: fetchError } = await supabase.rpc('get_user_transactions', {
         p_limit: 500
       });
 
