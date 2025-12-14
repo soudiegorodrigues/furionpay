@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -96,42 +96,76 @@ export const useTransactionNotifications = (userId: string | null) => {
     settingsRef.current = settings;
   }, [settings]);
 
-  // Load user settings
-  useEffect(() => {
-    const loadSettings = async () => {
-      if (!userId) return;
-      
-      try {
-        const { data, error } = await supabase.rpc('get_user_settings');
-        if (error) throw error;
+  // Load settings function - extracted as useCallback for reuse
+  const loadSettings = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('get_user_settings');
+      if (error) throw error;
 
-        if (data && data.length > 0) {
-          const settingsMap = new Map(data.map((s: { key: string; value: string }) => [s.key, s.value]));
-          setSettings({
-            enabled: settingsMap.get('notification_enabled') !== 'false',
-            enableToast: settingsMap.get('notification_enable_toast') !== 'false',
-            enableBrowser: settingsMap.get('notification_enable_browser') !== 'false',
-            enableSound: settingsMap.get('notification_enable_sound') !== 'false',
-            volume: parseInt(settingsMap.get('notification_volume') || '50'),
-            pixGeneratedTitle: settingsMap.get('notification_pix_generated_title') || DEFAULT_SETTINGS.pixGeneratedTitle,
-            pixGeneratedDescription: settingsMap.get('notification_pix_generated_description') || DEFAULT_SETTINGS.pixGeneratedDescription,
-            pixGeneratedSound: settingsMap.get('notification_pix_generated_sound') || DEFAULT_SETTINGS.pixGeneratedSound,
-            pixGeneratedDuration: parseInt(settingsMap.get('notification_pix_generated_duration') || '5000'),
-            pixPaidTitle: settingsMap.get('notification_pix_paid_title') || DEFAULT_SETTINGS.pixPaidTitle,
-            pixPaidDescription: settingsMap.get('notification_pix_paid_description') || DEFAULT_SETTINGS.pixPaidDescription,
-            pixPaidSound: settingsMap.get('notification_pix_paid_sound') || DEFAULT_SETTINGS.pixPaidSound,
-            pixPaidDuration: parseInt(settingsMap.get('notification_pix_paid_duration') || '8000'),
-            customSoundUrl: settingsMap.get('notification_custom_sound_url') || '',
-            customLogoUrl: settingsMap.get('notification_custom_logo_url') || '',
-          });
-        }
-      } catch (error) {
-        console.error('Erro ao carregar configurações de notificação:', error);
+      if (data && data.length > 0) {
+        const settingsMap = new Map(data.map((s: { key: string; value: string }) => [s.key, s.value]));
+        const newSettings = {
+          enabled: settingsMap.get('notification_enabled') !== 'false',
+          enableToast: settingsMap.get('notification_enable_toast') !== 'false',
+          enableBrowser: settingsMap.get('notification_enable_browser') !== 'false',
+          enableSound: settingsMap.get('notification_enable_sound') !== 'false',
+          volume: parseInt(settingsMap.get('notification_volume') || '50'),
+          pixGeneratedTitle: settingsMap.get('notification_pix_generated_title') || DEFAULT_SETTINGS.pixGeneratedTitle,
+          pixGeneratedDescription: settingsMap.get('notification_pix_generated_description') || DEFAULT_SETTINGS.pixGeneratedDescription,
+          pixGeneratedSound: settingsMap.get('notification_pix_generated_sound') || DEFAULT_SETTINGS.pixGeneratedSound,
+          pixGeneratedDuration: parseInt(settingsMap.get('notification_pix_generated_duration') || '5000'),
+          pixPaidTitle: settingsMap.get('notification_pix_paid_title') || DEFAULT_SETTINGS.pixPaidTitle,
+          pixPaidDescription: settingsMap.get('notification_pix_paid_description') || DEFAULT_SETTINGS.pixPaidDescription,
+          pixPaidSound: settingsMap.get('notification_pix_paid_sound') || DEFAULT_SETTINGS.pixPaidSound,
+          pixPaidDuration: parseInt(settingsMap.get('notification_pix_paid_duration') || '8000'),
+          customSoundUrl: settingsMap.get('notification_custom_sound_url') || '',
+          customLogoUrl: settingsMap.get('notification_custom_logo_url') || '',
+        };
+        setSettings(newSettings);
+        console.log('🔔 Settings carregadas/atualizadas:', { customLogoUrl: newSettings.customLogoUrl });
       }
-    };
-
-    loadSettings();
+    } catch (error) {
+      console.error('Erro ao carregar configurações de notificação:', error);
+    }
   }, [userId]);
+
+  // Load settings on mount and userId change
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  // Subscribe to admin_settings changes for auto-sync
+  useEffect(() => {
+    if (!userId) return;
+
+    console.log('🔔 Configurando listener de sincronização de settings para usuário:', userId);
+
+    const settingsChannel = supabase
+      .channel(`settings-sync-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'admin_settings',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log('🔔 Settings alteradas no banco, recarregando...', payload);
+          loadSettings();
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔔 Status do canal de sincronização de settings:', status);
+      });
+
+    return () => {
+      console.log('🔔 Removendo listener de sincronização de settings');
+      supabase.removeChannel(settingsChannel);
+    };
+  }, [userId, loadSettings]);
 
   // Play notification sound - uses settingsRef for current values
   const playNotificationSound = (soundId: string) => {
@@ -182,7 +216,7 @@ export const useTransactionNotifications = (userId: string | null) => {
   }, []);
 
   useEffect(() => {
-    if (!userId || !settings.enabled) return;
+    if (!userId || !settingsRef.current.enabled) return;
 
     console.log('🔔 Configurando listener de notificações para usuário:', userId);
 
@@ -201,23 +235,26 @@ export const useTransactionNotifications = (userId: string | null) => {
           console.log('🔔 Nova transação detectada:', payload);
           const { new: transaction } = payload;
           
-          if (transaction) {
+          // Use settingsRef for current values
+          const currentSettings = settingsRef.current;
+          
+          if (transaction && currentSettings.enabled) {
             const data = {
               nome: transaction.donor_name || 'Cliente',
               valor: formatCurrency(transaction.amount),
               produto: transaction.product_name || '',
             };
             
-            const title = settings.pixGeneratedTitle;
-            const description = formatMessage(settings.pixGeneratedDescription, data);
+            const title = currentSettings.pixGeneratedTitle;
+            const description = formatMessage(currentSettings.pixGeneratedDescription, data);
             
-            console.log('🔔 Exibindo notificação PIX Gerado:', { title, description });
+            console.log('🔔 Exibindo notificação PIX Gerado:', { title, description, logo: currentSettings.customLogoUrl });
             
             // Show toast notification
-            if (settings.enableToast) {
+            if (currentSettings.enableToast) {
               toast.info(title, {
                 description,
-                duration: settings.pixGeneratedDuration || undefined,
+                duration: currentSettings.pixGeneratedDuration || undefined,
               });
             }
             
@@ -225,7 +262,7 @@ export const useTransactionNotifications = (userId: string | null) => {
             showBrowserNotification(title, description);
             
             // Play sound
-            playNotificationSound(settings.pixGeneratedSound);
+            playNotificationSound(currentSettings.pixGeneratedSound);
           }
         }
       )
@@ -241,10 +278,14 @@ export const useTransactionNotifications = (userId: string | null) => {
           console.log('🔔 Transação atualizada:', payload);
           const { new: transaction, old: oldTransaction } = payload;
           
+          // Use settingsRef for current values
+          const currentSettings = settingsRef.current;
+          
           // Check if status changed to 'paid'
           if (transaction && oldTransaction && 
               oldTransaction.status !== 'paid' && 
-              transaction.status === 'paid') {
+              transaction.status === 'paid' &&
+              currentSettings.enabled) {
             
             const data = {
               nome: transaction.donor_name || 'Cliente',
@@ -252,16 +293,16 @@ export const useTransactionNotifications = (userId: string | null) => {
               produto: transaction.product_name || '',
             };
             
-            const title = settings.pixPaidTitle;
-            const description = formatMessage(settings.pixPaidDescription, data);
+            const title = currentSettings.pixPaidTitle;
+            const description = formatMessage(currentSettings.pixPaidDescription, data);
             
-            console.log('🔔 Exibindo notificação PIX Pago:', { title, description });
+            console.log('🔔 Exibindo notificação PIX Pago:', { title, description, logo: currentSettings.customLogoUrl });
             
             // Show success toast
-            if (settings.enableToast) {
+            if (currentSettings.enableToast) {
               toast.success(title, {
                 description,
-                duration: settings.pixPaidDuration || undefined,
+                duration: currentSettings.pixPaidDuration || undefined,
               });
             }
             
@@ -269,7 +310,7 @@ export const useTransactionNotifications = (userId: string | null) => {
             showBrowserNotification(title, description);
             
             // Play sound
-            playNotificationSound(settings.pixPaidSound);
+            playNotificationSound(currentSettings.pixPaidSound);
           }
         }
       )
@@ -284,7 +325,7 @@ export const useTransactionNotifications = (userId: string | null) => {
       console.log('🔔 Removendo listener de notificações');
       supabase.removeChannel(channel);
     };
-  }, [userId, settings]);
+  }, [userId]);
 
   return {
     requestPermission: requestNotificationPermission,
