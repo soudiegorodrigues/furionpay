@@ -9,8 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, Share, Smartphone, Zap, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-// PWA logo is in public folder, reference directly
-const pwaLogo = "/pwa-512x512.png";
+import pwaLogo from "/pwa-512x512.png";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
