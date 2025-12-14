@@ -3,7 +3,7 @@ import { Puzzle, CheckCircle, AlertCircle, Settings } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { UtmifySection } from "@/components/admin/UtmifySection";
 import utmifyLogo from "@/assets/utmify-logo.png";
 import { useEffect } from "react";
@@ -123,8 +123,11 @@ const AdminIntegrations = () => {
 
       {/* Utmify Configuration Dialog */}
       <Dialog open={utmifyDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
-          <UtmifySection />
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Configuração Utmify</DialogTitle>
+          <div className="p-4">
+            <UtmifySection />
+          </div>
         </DialogContent>
       </Dialog>
     </>
