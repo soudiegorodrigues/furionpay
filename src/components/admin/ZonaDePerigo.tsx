@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -17,8 +17,31 @@ export const ZonaDePerigo = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [ownerEmail, setOwnerEmail] = useState<string | null>(null);
+  const [isLoadingOwner, setIsLoadingOwner] = useState(true);
 
-  const OWNER_EMAIL = "suporte.soudiego@gmail.com";
+  useEffect(() => {
+    const loadOwnerEmail = async () => {
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('value')
+          .eq('key', 'system_owner_email')
+          .is('user_id', null)
+          .single();
+        
+        if (data?.value) {
+          setOwnerEmail(data.value);
+        }
+      } catch (error) {
+        console.error('Error loading owner email:', error);
+      } finally {
+        setIsLoadingOwner(false);
+      }
+    };
+    
+    loadOwnerEmail();
+  }, []);
 
   const handleAuthenticate = async () => {
     if (!email || !password) {
@@ -30,8 +53,8 @@ export const ZonaDePerigo = () => {
       return;
     }
 
-    // Check if email matches owner email
-    if (email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+    // Check if email matches owner email from database
+    if (!ownerEmail || email.toLowerCase() !== ownerEmail.toLowerCase()) {
       toast({
         title: "Acesso negado",
         description: "Apenas o proprietário do sistema pode acessar esta área",
