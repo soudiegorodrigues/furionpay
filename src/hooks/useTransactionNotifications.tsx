@@ -255,6 +255,13 @@ export const useTransactionNotifications = (userId: string | null) => {
               toast.info(title, {
                 description,
                 duration: currentSettings.pixGeneratedDuration || undefined,
+                icon: currentSettings.customLogoUrl ? (
+                  <img 
+                    src={currentSettings.customLogoUrl} 
+                    alt="Logo" 
+                    style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'contain' }} 
+                  />
+                ) : undefined,
               });
             }
             
@@ -303,6 +310,13 @@ export const useTransactionNotifications = (userId: string | null) => {
               toast.success(title, {
                 description,
                 duration: currentSettings.pixPaidDuration || undefined,
+                icon: currentSettings.customLogoUrl ? (
+                  <img 
+                    src={currentSettings.customLogoUrl} 
+                    alt="Logo" 
+                    style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'contain' }} 
+                  />
+                ) : undefined,
               });
             }
             
