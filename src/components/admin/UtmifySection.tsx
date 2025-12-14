@@ -9,20 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, 
-  Loader2, RefreshCw, Activity, Clock, TrendingUp, XCircle,
-  ChevronLeft, ChevronRight
+  Loader2, RefreshCw, Activity, Clock
 } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import utmifyLogo from "@/assets/utmify-logo.png";
-
-interface UtmifyEvent {
-  id: string;
-  event_type: string;
-  error_message: string | null;
-  response_time_ms: number | null;
-  created_at: string;
-  total_count: number;
-}
 
 interface UtmifySummary {
   today_total: number;
@@ -44,11 +33,6 @@ export function UtmifySection() {
   // Monitoring state
   const [monitoringLoading, setMonitoringLoading] = useState(false);
   const [summary, setSummary] = useState<UtmifySummary | null>(null);
-  const [events, setEvents] = useState<UtmifyEvent[]>([]);
-  const [period, setPeriod] = useState<'today' | '7days' | '30days'>('today');
-  const [page, setPage] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
-  const itemsPerPage = 10;
 
   useEffect(() => {
     loadSettings();
@@ -58,7 +42,7 @@ export function UtmifySection() {
     if (isConfigured) {
       loadMonitoringData();
     }
-  }, [isConfigured, period, page]);
+  }, [isConfigured]);
 
   const loadSettings = async () => {
     try {
@@ -100,27 +84,12 @@ export function UtmifySection() {
       if (summaryData) {
         setSummary(summaryData as unknown as UtmifySummary);
       }
-
-      // Load events with pagination
-      const { data: eventsData } = await supabase.rpc('get_utmify_events', {
-        p_period: period,
-        p_limit: itemsPerPage,
-        p_offset: page * itemsPerPage
-      });
-
-      if (eventsData && eventsData.length > 0) {
-        setEvents(eventsData as UtmifyEvent[]);
-        setTotalCount(eventsData[0].total_count || 0);
-      } else {
-        setEvents([]);
-        setTotalCount(0);
-      }
     } catch (error) {
       console.error('Error loading monitoring data:', error);
     } finally {
       setMonitoringLoading(false);
     }
-  }, [period, page]);
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -167,26 +136,6 @@ export function UtmifySection() {
     return `${diffDays}d atrás`;
   };
 
-  const formatDateTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const parseOrderInfo = (errorMessage: string | null) => {
-    if (!errorMessage) return { orderId: '-', status: '-' };
-    const match = errorMessage.match(/Order ([a-z0-9_]+) - Status: (\w+)/i);
-    if (match) {
-      return { orderId: match[1].substring(0, 12) + '...', status: match[2] };
-    }
-    return { orderId: '-', status: errorMessage.substring(0, 20) };
-  };
-
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
   const successRate = summary ? (summary.today_total > 0 
     ? Math.round((summary.today_success / summary.today_total) * 100) 
     : 100) : 0;
@@ -351,114 +300,6 @@ export function UtmifySection() {
               </div>
             </div>
 
-            {/* Period Filter */}
-            <div className="flex gap-2">
-              <Button
-                variant={period === 'today' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => { setPeriod('today'); setPage(0); }}
-              >
-                Hoje
-              </Button>
-              <Button
-                variant={period === '7days' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => { setPeriod('7days'); setPage(0); }}
-              >
-                7 dias
-              </Button>
-              <Button
-                variant={period === '30days' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => { setPeriod('30days'); setPage(0); }}
-              >
-                30 dias
-              </Button>
-            </div>
-
-            {/* Events Table */}
-            {monitoringLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : events.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum evento encontrado no período selecionado
-              </div>
-            ) : (
-              <>
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data/Hora</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="hidden sm:table-cell">Order ID</TableHead>
-                        <TableHead className="hidden md:table-cell">Tipo</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {events.map((event) => {
-                        const { orderId, status } = parseOrderInfo(event.error_message);
-                        return (
-                          <TableRow key={event.id}>
-                            <TableCell className="font-mono text-sm">
-                              {formatDateTime(event.created_at)}
-                            </TableCell>
-                            <TableCell>
-                              {event.event_type === 'success' ? (
-                                <Badge variant="default" className="bg-green-500 hover:bg-green-500">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Sucesso
-                                </Badge>
-                              ) : (
-                                <Badge variant="destructive">
-                                  <XCircle className="w-3 h-3 mr-1" />
-                                  Falha
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell font-mono text-sm">
-                              {orderId}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <Badge variant="outline">{status}</Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      Página {page + 1} de {totalPages}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage(p => Math.max(0, p - 1))}
-                        disabled={page === 0}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                        disabled={page >= totalPages - 1}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
           </CardContent>
         </Card>
       )}
