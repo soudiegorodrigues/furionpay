@@ -41,9 +41,28 @@ export function UtmifySection() {
   }, []);
 
   useEffect(() => {
-    if (isConfigured) {
-      loadMonitoringData();
-    }
+    if (!isConfigured) return;
+    
+    const fetchData = async () => {
+      try {
+        setMonitoringLoading(true);
+        const { data: summaryData } = await supabase.rpc('get_utmify_summary');
+        if (summaryData) {
+          setSummary(summaryData as unknown as UtmifySummary);
+        }
+      } catch (error) {
+        console.error('Error loading monitoring data:', error);
+      } finally {
+        setMonitoringLoading(false);
+      }
+    };
+    
+    fetchData();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchData, 30000);
+    
+    return () => clearInterval(interval);
   }, [isConfigured]);
 
   const loadSettings = async () => {
@@ -80,7 +99,6 @@ export function UtmifySection() {
   const loadMonitoringData = useCallback(async () => {
     try {
       setMonitoringLoading(true);
-
       const { data: summaryData } = await supabase.rpc('get_utmify_summary');
       if (summaryData) {
         setSummary(summaryData as unknown as UtmifySummary);
