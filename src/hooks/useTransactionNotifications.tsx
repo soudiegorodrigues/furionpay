@@ -91,6 +91,7 @@ export const useTransactionNotifications = (userId: string | null) => {
   const hasPermission = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const settingsRef = useRef<NotificationSettings>(DEFAULT_SETTINGS);
 
   // Keep settingsRef always up to date
@@ -126,14 +127,17 @@ export const useTransactionNotifications = (userId: string | null) => {
           logoSize: parseInt(settingsMap.get('notification_logo_size') || '40'),
         };
         setSettings(newSettings);
+        settingsRef.current = newSettings;
         console.log('🔔 Settings globais carregadas:', { customLogoUrl: newSettings.customLogoUrl });
       }
+      setSettingsLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar configurações globais de notificação:', error);
+      setSettingsLoaded(true);
     }
   }, []);
 
-  // Load settings on mount and userId change
+  // Load settings on mount
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
@@ -219,9 +223,11 @@ export const useTransactionNotifications = (userId: string | null) => {
   }, []);
 
   useEffect(() => {
-    if (!userId || !settingsRef.current.enabled) return;
+    // Wait for settings to be loaded before subscribing
+    if (!userId || !settingsLoaded) return;
+    if (!settingsRef.current.enabled) return;
 
-    console.log('🔔 Configurando listener de notificações para usuário:', userId);
+    console.log('🔔 Configurando listener de notificações para usuário:', userId, 'Logo:', settingsRef.current.customLogoUrl);
 
     // Subscribe to realtime changes on pix_transactions for this user
     const channel = supabase
@@ -362,7 +368,7 @@ export const useTransactionNotifications = (userId: string | null) => {
       console.log('🔔 Removendo listener de notificações');
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, settingsLoaded]);
 
   return {
     requestPermission: requestNotificationPermission,
