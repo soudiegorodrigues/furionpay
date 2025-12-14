@@ -93,7 +93,8 @@ export function NotificacoesSection() {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_settings');
+      // Load global notification settings (user_id IS NULL)
+      const { data, error } = await supabase.rpc('get_global_notification_settings');
       if (error) throw error;
 
       if (data && data.length > 0) {
@@ -152,8 +153,9 @@ export function NotificacoesSection() {
         { key: 'notification_logo_size', value: String(settings.logoSize) },
       ];
 
+      // Save as global settings (user_id = NULL) using the new RPC function
       for (const setting of settingsToSave) {
-        const { error } = await supabase.rpc('update_user_setting', {
+        const { error } = await supabase.rpc('update_global_notification_setting', {
           setting_key: setting.key,
           setting_value: setting.value,
         });
@@ -161,7 +163,7 @@ export function NotificacoesSection() {
       }
 
       setSavedSettings(settings);
-      toast.success('Configurações salvas com sucesso!');
+      toast.success('Configurações globais salvas com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar:', error);
       toast.error('Erro ao salvar configurações');
