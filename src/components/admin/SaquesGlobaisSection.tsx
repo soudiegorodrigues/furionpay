@@ -312,6 +312,7 @@ export function SaquesGlobaisSection() {
                   <TableHead className="font-semibold">Data de Solicitação</TableHead>
                   <TableHead className="font-semibold">ID</TableHead>
                   <TableHead className="font-semibold">Valor do Saque</TableHead>
+                  <TableHead className="font-semibold">Chave PIX</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   {statusFilter === 'pending' && <TableHead className="font-semibold text-right">Ações</TableHead>}
                 </TableRow>
@@ -319,7 +320,7 @@ export function SaquesGlobaisSection() {
               <TableBody>
                 {paginatedWithdrawals.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={statusFilter === 'pending' ? 6 : 5} className="text-center py-12">
+                    <TableCell colSpan={statusFilter === 'pending' ? 7 : 6} className="text-center py-12">
                       <div className="flex flex-col items-center text-muted-foreground">
                         <Search className="h-12 w-12 mb-4 opacity-30" />
                         <p>Nenhum saque encontrado</p>
@@ -342,6 +343,24 @@ export function SaquesGlobaisSection() {
                         <span className="font-bold text-primary">
                           {formatCurrency(withdrawal.amount)}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs text-muted-foreground">{withdrawal.pix_key_type}</span>
+                            <span className="text-sm font-mono truncate max-w-[150px]" title={withdrawal.pix_key}>
+                              {withdrawal.pix_key}
+                            </span>
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => copyToClipboard(withdrawal.pix_key)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(withdrawal.status)}
