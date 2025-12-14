@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, Receipt, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp } from "lucide-react";
+import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, Receipt, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp, Bell } from "lucide-react";
 
 const adminSections = {
   analises: {
@@ -27,9 +27,9 @@ const adminSections = {
     label: "Configurações",
     items: [
       { id: "taxas", title: "Taxas", icon: Percent },
+      { id: "notificacoes", title: "Notificações", icon: Bell },
       { id: "personalizacao", title: "Personalização", icon: Palette },
       { id: "email", title: "Email", icon: Mail },
-      
       { id: "utm-debug", title: "UTM Debug", icon: Bug },
       { id: "api-monitoring", title: "API Status", icon: Activity },
       { id: "zona-perigo", title: "Zona de Perigo", icon: AlertTriangle },

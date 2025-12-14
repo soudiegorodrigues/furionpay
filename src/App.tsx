@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
+import { TransactionNotificationProvider } from "@/components/TransactionNotificationProvider";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
 import Admin from "./pages/Admin";
@@ -28,6 +29,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <MetaPixelProvider>
+          <TransactionNotificationProvider />
           <Toaster />
           <Sonner />
           <BrowserRouter>
