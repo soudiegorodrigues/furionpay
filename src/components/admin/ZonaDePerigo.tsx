@@ -9,7 +9,7 @@ import { AlertTriangle, Loader2, Trash2, Lock, Eye, EyeOff, Key } from "lucide-r
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-const RESET_KEYWORD = "APAGAR";
+const RESET_KEYWORD = "MELCHIADES";
 
 export const ZonaDePerigo = () => {
   const [isResettingGlobal, setIsResettingGlobal] = useState(false);
