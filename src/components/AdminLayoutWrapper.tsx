@@ -137,14 +137,14 @@ export function AdminLayoutWrapper() {
         />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Mobile header with sidebar trigger */}
-          <header className="md:hidden sticky top-0 z-20 h-14 border-b border-border bg-background flex items-center px-4">
-            <SidebarTrigger className="mr-3">
+          <header className="md:hidden sticky top-0 z-20 h-14 border-b border-border bg-background flex items-center justify-center px-4 relative">
+            <SidebarTrigger className="absolute left-4">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
             <img 
               src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} 
               alt="FurionPay" 
-              className="h-8 w-auto object-contain" 
+              className="h-10 w-auto object-contain" 
             />
           </header>
           <BlockedUserAlert isBlocked={isBlocked} />
