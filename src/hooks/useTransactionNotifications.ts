@@ -28,6 +28,7 @@ interface NotificationSettings {
   pixPaidDescription: string;
   pixPaidSound: string;
   pixPaidDuration: number;
+  customSoundUrl: string;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -44,6 +45,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   pixPaidDescription: "{nome} pagou {valor}",
   pixPaidSound: "cash-register",
   pixPaidDuration: 8000,
+  customSoundUrl: "",
 };
 
 // Check if browser supports notifications
@@ -111,6 +113,7 @@ export const useTransactionNotifications = (userId: string | null) => {
             pixPaidDescription: settingsMap.get('notification_pix_paid_description') || DEFAULT_SETTINGS.pixPaidDescription,
             pixPaidSound: settingsMap.get('notification_pix_paid_sound') || DEFAULT_SETTINGS.pixPaidSound,
             pixPaidDuration: parseInt(settingsMap.get('notification_pix_paid_duration') || '8000'),
+            customSoundUrl: settingsMap.get('notification_custom_sound_url') || '',
           });
         }
       } catch (error) {
@@ -125,7 +128,13 @@ export const useTransactionNotifications = (userId: string | null) => {
   const playNotificationSound = (soundId: string) => {
     if (!settings.enableSound) return;
     
-    const soundUrl = PREDEFINED_SOUNDS[soundId] || PREDEFINED_SOUNDS.coin;
+    let soundUrl = '';
+    
+    if (soundId === 'custom' && settings.customSoundUrl) {
+      soundUrl = settings.customSoundUrl;
+    } else {
+      soundUrl = PREDEFINED_SOUNDS[soundId] || PREDEFINED_SOUNDS.coin;
+    }
     
     if (audioRef.current) {
       audioRef.current.pause();
