@@ -64,6 +64,7 @@ const AdminFinanceiro = () => {
   const [showBankDialog, setShowBankDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawPixKey, setWithdrawPixKey] = useState("");
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
   const [userFeeConfig, setUserFeeConfig] = useState<FeeConfig | null>(null);
   const [bankData, setBankData] = useState<BankAccountData>({
@@ -741,7 +742,7 @@ const AdminFinanceiro = () => {
         p_bank_code: savedBankData.bank,
         p_bank_name: bankName,
         p_pix_key_type: savedBankData.pixKeyType,
-        p_pix_key: savedBankData.pixKey
+        p_pix_key: withdrawPixKey || savedBankData.pixKey
       });
 
       if (error) throw error;
@@ -754,6 +755,7 @@ const AdminFinanceiro = () => {
       setShowPasswordConfirmDialog(false);
       setShowWithdrawDialog(false);
       setWithdrawAmount("");
+      setWithdrawPixKey("");
       setConfirmPassword("");
       loadAvailableBalance();
       loadWithdrawalHistory();
@@ -858,6 +860,7 @@ const AdminFinanceiro = () => {
                         });
                         return;
                       }
+                      setWithdrawPixKey(savedBankData.pixKey);
                       setShowWithdrawDialog(true);
                     }}
                   >
@@ -1099,10 +1102,17 @@ const AdminFinanceiro = () => {
                 </div>
 
                 {savedBankData && (
-                  <div className="p-4 rounded-lg bg-muted/30 space-y-2">
+                  <div className="p-4 rounded-lg bg-muted/30 space-y-3">
                     <p className="text-sm text-muted-foreground">Conta de destino:</p>
                     <p className="font-medium">{getBankName(savedBankData.bank)}</p>
-                    <p className="text-sm">Chave PIX: {savedBankData.pixKey}</p>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Chave PIX</Label>
+                      <Input
+                        value={withdrawPixKey}
+                        onChange={(e) => setWithdrawPixKey(e.target.value)}
+                        placeholder={savedBankData.pixKey}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -1171,6 +1181,7 @@ const AdminFinanceiro = () => {
                   onClick={() => {
                     setShowWithdrawDialog(false);
                     setWithdrawAmount("");
+                    setWithdrawPixKey("");
                   }}
                 >
                   Cancelar
