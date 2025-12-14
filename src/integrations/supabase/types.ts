@@ -448,6 +448,7 @@ export type Database = {
           backed_up_at: string
           backed_up_by: string | null
           backup_id: string
+          backup_type: string | null
           created_at: string | null
           donor_name: string | null
           expired_at: string | null
@@ -469,6 +470,7 @@ export type Database = {
           backed_up_at?: string
           backed_up_by?: string | null
           backup_id: string
+          backup_type?: string | null
           created_at?: string | null
           donor_name?: string | null
           expired_at?: string | null
@@ -490,6 +492,7 @@ export type Database = {
           backed_up_at?: string
           backed_up_by?: string | null
           backup_id?: string
+          backup_type?: string | null
           created_at?: string | null
           donor_name?: string | null
           expired_at?: string | null
@@ -1217,6 +1220,7 @@ export type Database = {
         Returns: boolean
       }
       approve_user: { Args: { target_user_id: string }; Returns: boolean }
+      auto_backup_transactions: { Args: never; Returns: string }
       backup_and_reset_transactions: { Args: never; Returns: string }
       block_user: { Args: { target_user_id: string }; Returns: boolean }
       bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
