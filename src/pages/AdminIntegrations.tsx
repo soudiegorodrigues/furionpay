@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Puzzle, BarChart3, CheckCircle, AlertCircle, Settings } from "lucide-react";
+import { Puzzle, CheckCircle, AlertCircle, Settings } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UtmifySection } from "@/components/admin/UtmifySection";
+import utmifyLogo from "@/assets/utmify-logo.png";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -63,9 +64,9 @@ const AdminIntegrations = () => {
         {/* Utmify Card */}
         <Card className="relative overflow-hidden hover:shadow-md transition-shadow">
           <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-primary" />
+          <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-lg overflow-hidden">
+                <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-cover" />
               </div>
               {utmifyConfigured && utmifyEnabled ? (
                 <Badge variant="default" className="bg-green-500 hover:bg-green-500">
