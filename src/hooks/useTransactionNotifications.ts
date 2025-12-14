@@ -5,11 +5,13 @@ import { toast } from 'sonner';
 // Pre-defined sounds map
 const PREDEFINED_SOUNDS: Record<string, string> = {
   "coin": "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3",
-  "bell": "https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3",
-  "notification": "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
   "cash-register": "https://assets.mixkit.co/active_storage/sfx/1063/1063-preview.mp3",
+  "money-collect": "https://assets.mixkit.co/active_storage/sfx/888/888-preview.mp3",
+  "cha-ching": "https://assets.mixkit.co/active_storage/sfx/1991/1991-preview.mp3",
   "success": "https://assets.mixkit.co/active_storage/sfx/2190/2190-preview.mp3",
   "celebration": "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
+  "bell": "https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3",
+  "notification": "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
 };
 
 interface NotificationSettings {

@@ -13,11 +13,13 @@ import { toast } from "sonner";
 // Pre-defined sounds
 const PREDEFINED_SOUNDS = [
   { id: "coin", name: "💰 Moeda", url: "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" },
+  { id: "cash-register", name: "💵 Caixa Registradora", url: "https://assets.mixkit.co/active_storage/sfx/1063/1063-preview.mp3" },
+  { id: "money-collect", name: "💸 Dinheiro Coletado", url: "https://assets.mixkit.co/active_storage/sfx/888/888-preview.mp3" },
+  { id: "cha-ching", name: "🤑 Cha-Ching", url: "https://assets.mixkit.co/active_storage/sfx/1991/1991-preview.mp3" },
+  { id: "success", name: "✅ Sucesso", url: "https://assets.mixkit.co/active_storage/sfx/2190/2190-preview.mp3" },
+  { id: "celebration", name: "🎉 Celebração", url: "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" },
   { id: "bell", name: "🔔 Sino", url: "https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3" },
   { id: "notification", name: "📱 Notificação", url: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" },
-  { id: "cash-register", name: "💵 Caixa Registradora", url: "https://assets.mixkit.co/active_storage/sfx/1063/1063-preview.mp3" },
-  { id: "success", name: "🎵 Sucesso", url: "https://assets.mixkit.co/active_storage/sfx/2190/2190-preview.mp3" },
-  { id: "celebration", name: "🎉 Celebração", url: "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" },
 ];
 
 const DURATION_OPTIONS = [
