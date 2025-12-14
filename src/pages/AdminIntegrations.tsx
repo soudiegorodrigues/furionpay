@@ -87,11 +87,11 @@ const AdminIntegrations = () => {
           </div>
 
           <CardContent className="p-6 flex flex-col items-center text-center min-h-[220px]">
-            {/* Logo container with glow effect - always visible */}
+            {/* Logo container - no background, larger size */}
             <div className="relative mt-4 mb-6">
-              <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl" />
-              <div className="relative w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center p-3 scale-110">
-                <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-contain" />
+              <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl scale-125" />
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-contain drop-shadow-lg" />
               </div>
             </div>
             
