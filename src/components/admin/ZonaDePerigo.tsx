@@ -169,7 +169,7 @@ export const ZonaDePerigo = () => {
               <DialogTitle>Palavra-chave de Segurança</DialogTitle>
             </div>
             <DialogDescription>
-              Digite <strong className="text-destructive">{RESET_KEYWORD}</strong> para continuar com esta ação crítica.
+              Digite a palavra-chave secreta para continuar com esta ação crítica.
             </DialogDescription>
           </DialogHeader>
           
