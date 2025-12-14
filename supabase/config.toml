@@ -54,8 +54,5 @@ verify_jwt = false
 [functions.ativus-webhook]
 verify_jwt = false
 
-[functions.utmify-send-order]
-verify_jwt = false
-
 [functions.utmify-sync]
 verify_jwt = false
