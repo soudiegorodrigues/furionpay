@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, 
-  Loader2, RefreshCw, Activity, Clock
+  Loader2, RefreshCw, Activity, Clock, ChevronDown
 } from "lucide-react";
 import utmifyLogo from "@/assets/utmify-logo.png";
 
@@ -29,6 +30,7 @@ export function UtmifySection() {
   const [apiToken, setApiToken] = useState("");
   const [showToken, setShowToken] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   // Monitoring state
   const [monitoringLoading, setMonitoringLoading] = useState(false);
@@ -79,7 +81,6 @@ export function UtmifySection() {
     try {
       setMonitoringLoading(true);
 
-      // Load summary
       const { data: summaryData } = await supabase.rpc('get_utmify_summary');
       if (summaryData) {
         setSummary(summaryData as unknown as UtmifySummary);
@@ -131,9 +132,9 @@ export function UtmifySection() {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'Agora';
-    if (diffMins < 60) return `${diffMins} min atrás`;
-    if (diffHours < 24) return `${diffHours}h atrás`;
-    return `${diffDays}d atrás`;
+    if (diffMins < 60) return `${diffMins}min`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
   };
 
   const successRate = summary ? (summary.today_total > 0 
@@ -142,63 +143,55 @@ export function UtmifySection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-white">
-          <img src={utmifyLogo} alt="Utmify" className="w-8 h-8 object-contain" />
+    <div className="space-y-4">
+      {/* Header - Compact */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="w-7 h-7 rounded-md overflow-hidden flex items-center justify-center bg-white shrink-0">
+          <img src={utmifyLogo} alt="Utmify" className="w-5 h-5 object-contain" />
         </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold">Utmify</h2>
-            {isConfigured ? (
-              <Badge variant="default" className="bg-green-500 hover:bg-green-500">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Configurado
-              </Badge>
-            ) : (
-              <Badge variant="secondary">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                Não configurado
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Rastreamento avançado de UTM e atribuição de conversões
-          </p>
-        </div>
+        <h2 className="text-lg font-bold">Utmify</h2>
+        {isConfigured ? (
+          <Badge variant="default" className="bg-green-500 hover:bg-green-500 text-xs">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Configurado
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="text-xs">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Pendente
+          </Badge>
+        )}
+        <div className="flex-1" />
         <Button
           variant="outline"
           size="sm"
+          className="h-8 text-xs"
           onClick={() => window.open('https://app.utmify.com.br/login/', '_blank')}
         >
-          <ExternalLink className="w-4 h-4 mr-2" />
+          <ExternalLink className="w-3 h-3 mr-1.5" />
           Acessar Utmify
         </Button>
       </div>
 
-      {/* Configuration Card */}
+      {/* Configuration Card - Compact */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Configuração da API</CardTitle>
-          <CardDescription>
-            Configure sua integração com o Utmify para rastrear conversões e atribuições de UTM
-          </CardDescription>
+        <CardHeader className="pb-3 pt-4 px-4">
+          <CardTitle className="text-base">Configuração da API</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Enable Toggle */}
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="space-y-0.5">
-              <Label className="text-base font-medium">Ativar integração</Label>
-              <p className="text-sm text-muted-foreground">
-                Enviar eventos de PIX gerado e pago para o Utmify automaticamente
+        <CardContent className="space-y-4 px-4 pb-4">
+          {/* Enable Toggle - Compact */}
+          <div className="flex items-center justify-between p-3 border rounded-lg gap-3">
+            <div className="min-w-0">
+              <Label className="text-sm font-medium">Ativar integração</Label>
+              <p className="text-xs text-muted-foreground truncate">
+                Enviar eventos de PIX automaticamente
               </p>
             </div>
             <Switch
@@ -207,150 +200,154 @@ export function UtmifySection() {
             />
           </div>
 
-          {/* API Token */}
-          <div className="space-y-2">
-            <Label htmlFor="api-token">Token da API (x-api-token)</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  id="api-token"
-                  type={showToken ? "text" : "password"}
-                  value={apiToken}
-                  onChange={(e) => setApiToken(e.target.value)}
-                  placeholder="Cole seu token da API do Utmify aqui"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full"
-                  onClick={() => setShowToken(!showToken)}
-                >
-                  {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-              </div>
+          {/* API Token - Compact */}
+          <div className="space-y-1.5">
+            <Label htmlFor="api-token" className="text-sm">Token da API</Label>
+            <div className="relative">
+              <Input
+                id="api-token"
+                type={showToken ? "text" : "password"}
+                value={apiToken}
+                onChange={(e) => setApiToken(e.target.value)}
+                placeholder="Cole seu token aqui"
+                className="pr-9 h-9 text-sm"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-9 w-9"
+                onClick={() => setShowToken(!showToken)}
+              >
+                {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Encontre seu token em: Utmify → Configurações → API → Token de Acesso
+              Utmify → Configurações → API → Token
             </p>
           </div>
 
           {/* Save Button */}
-          <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+          <Button onClick={handleSave} disabled={saving} size="sm" className="h-8">
             {saving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             ) : (
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-3.5 h-3.5 mr-1.5" />
             )}
-            Salvar Configurações
+            Salvar
           </Button>
         </CardContent>
       </Card>
 
-      {/* Monitoring Card */}
+      {/* Monitoring Card - Compact */}
       {isConfigured && (
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3 pt-4 px-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Monitoramento de Eventos</CardTitle>
+                <Activity className="w-4 h-4 text-primary" />
+                <CardTitle className="text-base">Monitoramento</CardTitle>
               </div>
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
+                className="h-7 px-2"
                 onClick={loadMonitoringData}
                 disabled={monitoringLoading}
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${monitoringLoading ? 'animate-spin' : ''}`} />
-                Atualizar
+                <RefreshCw className={`w-3.5 h-3.5 ${monitoringLoading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 border rounded-lg text-center">
-                <div className="text-2xl font-bold text-primary">
+          <CardContent className="px-4 pb-4">
+            {/* Summary Stats - Compact Grid */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="p-2.5 border rounded-lg text-center">
+                <div className="text-lg font-bold text-primary leading-none">
                   {summary?.today_total || 0}
                 </div>
-                <div className="text-sm text-muted-foreground">Eventos Hoje</div>
+                <div className="text-[10px] text-muted-foreground mt-1">Eventos</div>
               </div>
-              <div className="p-4 border rounded-lg text-center">
-                <div className="text-2xl font-bold text-green-500">
+              <div className="p-2.5 border rounded-lg text-center">
+                <div className="text-lg font-bold text-green-500 leading-none">
                   {successRate}%
                 </div>
-                <div className="text-sm text-muted-foreground">Taxa de Sucesso</div>
+                <div className="text-[10px] text-muted-foreground mt-1">Sucesso</div>
               </div>
-              <div className="p-4 border rounded-lg text-center">
-                <div className="text-2xl font-bold text-red-500">
+              <div className="p-2.5 border rounded-lg text-center">
+                <div className="text-lg font-bold text-red-500 leading-none">
                   {summary?.today_failure || 0}
                 </div>
-                <div className="text-sm text-muted-foreground">Falhas</div>
+                <div className="text-[10px] text-muted-foreground mt-1">Falhas</div>
               </div>
-              <div className="p-4 border rounded-lg text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">
+              <div className="p-2.5 border rounded-lg text-center">
+                <div className="flex items-center justify-center gap-0.5">
+                  <Clock className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs font-medium">
                     {formatTimeAgo(summary?.last_event || null)}
                   </span>
                 </div>
-                <div className="text-sm text-muted-foreground">Último Evento</div>
+                <div className="text-[10px] text-muted-foreground mt-1">Último</div>
               </div>
             </div>
-
           </CardContent>
         </Card>
       )}
 
-      {/* How it works */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white">
-              <img src={utmifyLogo} alt="Utmify" className="w-6 h-6 object-contain" />
-            </div>
-            <CardTitle className="text-lg">Como Funciona</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-yellow-500/10 rounded-full flex items-center justify-center text-xs font-bold text-yellow-500">
-                  1
+      {/* How it works - Collapsible */}
+      <Collapsible open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded overflow-hidden flex items-center justify-center bg-white shrink-0">
+                    <img src={utmifyLogo} alt="Utmify" className="w-4 h-4 object-contain" />
+                  </div>
+                  <CardTitle className="text-sm">Como Funciona</CardTitle>
                 </div>
-                <span className="font-medium">PIX Gerado</span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${howItWorksOpen ? 'rotate-180' : ''}`} />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Quando um PIX é gerado, enviamos o pedido com status "waiting_payment" para o Utmify automaticamente
-              </p>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-green-500/10 rounded-full flex items-center justify-center text-xs font-bold text-green-500">
-                  2
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0 px-4 pb-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-5 h-5 bg-yellow-500/10 rounded-full flex items-center justify-center text-[10px] font-bold text-yellow-500">
+                      1
+                    </div>
+                    <span className="text-sm font-medium">PIX Gerado</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Enviamos o pedido com status "waiting_payment"
+                  </p>
                 </div>
-                <span className="font-medium">PIX Pago</span>
+                <div className="p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-5 h-5 bg-green-500/10 rounded-full flex items-center justify-center text-[10px] font-bold text-green-500">
+                      2
+                    </div>
+                    <span className="text-sm font-medium">PIX Pago</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Atualizamos o pedido com status "paid"
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Quando o pagamento é confirmado, atualizamos o pedido com status "paid" no Utmify automaticamente
-              </p>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-medium mb-2">Dados Enviados</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• <strong>orderId:</strong> ID da transação (txid)</li>
-              <li>• <strong>customer:</strong> Nome, email, telefone, CPF</li>
-              <li>• <strong>products:</strong> Nome e valor do produto</li>
-              <li>• <strong>trackingParameters:</strong> UTM source, medium, campaign, content, term</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+              
+              <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                <h4 className="text-xs font-medium mb-1.5">Dados Enviados</h4>
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  <div>• orderId, customer (nome, email, tel, CPF)</div>
+                  <div>• products (nome, valor), UTM params</div>
+                </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }
