@@ -89,6 +89,12 @@ export const useTransactionNotifications = (userId: string | null) => {
   const hasPermission = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
+  const settingsRef = useRef<NotificationSettings>(DEFAULT_SETTINGS);
+
+  // Keep settingsRef always up to date
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   // Load user settings
   useEffect(() => {
@@ -127,14 +133,15 @@ export const useTransactionNotifications = (userId: string | null) => {
     loadSettings();
   }, [userId]);
 
-  // Play notification sound
+  // Play notification sound - uses settingsRef for current values
   const playNotificationSound = (soundId: string) => {
-    if (!settings.enableSound) return;
+    const currentSettings = settingsRef.current;
+    if (!currentSettings.enableSound) return;
     
     let soundUrl = '';
     
-    if (soundId === 'custom' && settings.customSoundUrl) {
-      soundUrl = settings.customSoundUrl;
+    if (soundId === 'custom' && currentSettings.customSoundUrl) {
+      soundUrl = currentSettings.customSoundUrl;
     } else {
       soundUrl = PREDEFINED_SOUNDS[soundId] || PREDEFINED_SOUNDS.coin;
     }
@@ -143,20 +150,21 @@ export const useTransactionNotifications = (userId: string | null) => {
       audioRef.current.pause();
     }
     audioRef.current = new Audio(soundUrl);
-    audioRef.current.volume = settings.volume / 100;
+    audioRef.current.volume = currentSettings.volume / 100;
     audioRef.current.play().catch(() => {
       // Ignore audio play errors (user interaction required)
     });
   };
 
-  // Show browser notification
+  // Show browser notification - uses settingsRef for current values
   const showBrowserNotification = (title: string, body: string) => {
-    if (!settings.enableBrowser) return;
+    const currentSettings = settingsRef.current;
+    if (!currentSettings.enableBrowser) return;
     
     if (Notification.permission === 'granted') {
       new Notification(title, {
         body,
-        icon: settings.customLogoUrl || '/pwa-192x192.png',
+        icon: currentSettings.customLogoUrl || '/pwa-192x192.png',
         badge: '/pix-icon.png',
         tag: 'furionpay-notification',
       });
