@@ -4,28 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Database, Clock, Download, Trash2, RotateCcw, Plus, RefreshCw } from "lucide-react";
+import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface Backup {
-  backup_id: string;
-  backed_up_at: string;
-  transaction_count: number;
+interface SystemBackup {
+  id: string;
+  backup_name: string;
   backup_type: string;
+  backed_up_at: string;
   backed_up_by_email: string | null;
+  total_records: number;
+  pix_count: number;
+  withdrawal_count: number;
+  fee_count: number;
+  settings_count: number;
+  products_count: number;
+  profiles_count: number;
 }
 
 export function BackupsSection() {
-  const [backups, setBackups] = useState<Backup[]>([]);
+  const [backups, setBackups] = useState<SystemBackup[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
+  const [selectedBackup, setSelectedBackup] = useState<SystemBackup | null>(null);
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
 
   const loadBackups = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_transaction_backups');
+      const { data, error } = await supabase.rpc('get_system_backups');
       if (error) throw error;
       setBackups(data || []);
     } catch (error: any) {
@@ -43,9 +50,9 @@ export function BackupsSection() {
   const handleCreateBackup = async () => {
     setActionLoading(true);
     try {
-      const { data, error } = await supabase.rpc('create_manual_backup');
+      const { data, error } = await supabase.rpc('create_full_system_backup');
       if (error) throw error;
-      toast.success('Backup criado com sucesso!');
+      toast.success('Backup completo criado com sucesso!');
       loadBackups();
     } catch (error: any) {
       console.error('Error creating backup:', error);
@@ -59,11 +66,11 @@ export function BackupsSection() {
     if (!selectedBackup) return;
     setActionLoading(true);
     try {
-      const { error } = await supabase.rpc('restore_transactions_from_backup', {
-        p_backup_id: selectedBackup.backup_id
+      const { error } = await supabase.rpc('restore_full_system_backup', {
+        p_backup_id: selectedBackup.id
       });
       if (error) throw error;
-      toast.success('Backup restaurado com sucesso!');
+      toast.success('Sistema restaurado com sucesso!');
       setDialogType(null);
       setSelectedBackup(null);
     } catch (error: any) {
@@ -78,8 +85,8 @@ export function BackupsSection() {
     if (!selectedBackup) return;
     setActionLoading(true);
     try {
-      const { error } = await supabase.rpc('delete_transaction_backup', {
-        p_backup_id: selectedBackup.backup_id
+      const { error } = await supabase.rpc('delete_system_backup', {
+        p_backup_id: selectedBackup.id
       });
       if (error) throw error;
       toast.success('Backup deletado com sucesso!');
@@ -105,6 +112,7 @@ export function BackupsSection() {
     });
   };
 
+  const totalRecords = backups.reduce((acc, b) => acc + b.total_records, 0);
   const automaticCount = backups.filter(b => b.backup_type === 'automatic').length;
   const manualCount = backups.filter(b => b.backup_type === 'manual').length;
 
@@ -130,11 +138,11 @@ export function BackupsSection() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-500/10">
-                <Clock className="h-5 w-5 text-green-500" />
+                <ShieldCheck className="h-5 w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Automáticos</p>
-                <p className="text-2xl font-bold">{automaticCount}</p>
+                <p className="text-sm text-muted-foreground">Registros Protegidos</p>
+                <p className="text-2xl font-bold">{totalRecords.toLocaleString('pt-BR')}</p>
               </div>
             </div>
           </CardContent>
@@ -144,26 +152,28 @@ export function BackupsSection() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/10">
-                <Download className="h-5 w-5 text-blue-500" />
+                <Clock className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Manuais</p>
-                <p className="text-2xl font-bold">{manualCount}</p>
+                <p className="text-sm text-muted-foreground">Manual / Automático</p>
+                <p className="text-2xl font-bold">{manualCount} / {automaticCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Next backup info */}
+      {/* Create backup */}
       <Card>
         <CardContent className="py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground" />
+              <Database className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-medium">Próximo backup automático</p>
-                <p className="text-sm text-muted-foreground">Diariamente às 03:00 (horário de Brasília)</p>
+                <p className="font-medium">Backup Completo do Sistema</p>
+                <p className="text-sm text-muted-foreground">
+                  Inclui: transações, saques, taxas, produtos, configurações e mais
+                </p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -182,7 +192,7 @@ export function BackupsSection() {
                 disabled={actionLoading}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Criar Backup Manual
+                {actionLoading ? 'Criando...' : 'Criar Backup Completo'}
               </Button>
             </div>
           </div>
@@ -203,36 +213,67 @@ export function BackupsSection() {
             <div className="text-center py-8 text-muted-foreground">
               <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nenhum backup encontrado</p>
-              <p className="text-sm">Crie um backup manual ou aguarde o backup automático</p>
+              <p className="text-sm">Crie um backup completo do sistema</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data</TableHead>
+                    <TableHead>Nome / Data</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Transações</TableHead>
-                    <TableHead className="hidden sm:table-cell">Criado por</TableHead>
+                    <TableHead>Conteúdo</TableHead>
+                    <TableHead className="hidden lg:table-cell">Criado por</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {backups.map((backup) => (
-                    <TableRow key={backup.backup_id}>
-                      <TableCell className="font-medium">
-                        {formatDate(backup.backed_up_at)}
+                    <TableRow key={backup.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{backup.backup_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(backup.backed_up_at)}
+                          </p>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge 
                           variant={backup.backup_type === 'automatic' ? 'default' : 'secondary'}
                           className={backup.backup_type === 'automatic' ? 'bg-green-500/10 text-green-600 border-green-500/20' : ''}
                         >
-                          {backup.backup_type === 'automatic' ? 'Automático' : 'Manual'}
+                          {backup.backup_type === 'automatic' ? 'Auto' : 'Manual'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{backup.transaction_count.toLocaleString('pt-BR')}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            {backup.pix_count} PIX
+                          </Badge>
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            {backup.withdrawal_count} Saques
+                          </Badge>
+                          <Badge variant="outline" className="text-xs gap-1 hidden sm:flex">
+                            <Package className="h-3 w-3" />
+                            {backup.products_count} Produtos
+                          </Badge>
+                          <Badge variant="outline" className="text-xs gap-1 hidden md:flex">
+                            <Settings className="h-3 w-3" />
+                            {backup.settings_count} Configs
+                          </Badge>
+                          <Badge variant="outline" className="text-xs gap-1 hidden lg:flex">
+                            <Users className="h-3 w-3" />
+                            {backup.profiles_count} Perfis
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Total: {backup.total_records.toLocaleString('pt-BR')} registros
+                        </p>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {backup.backed_up_by_email || 'Sistema'}
                       </TableCell>
                       <TableCell className="text-right">
@@ -273,18 +314,33 @@ export function BackupsSection() {
       <AlertDialog open={dialogType === 'restore'} onOpenChange={() => setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Restaurar Backup</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja restaurar este backup? As transações do backup serão adicionadas ao sistema.
-              <br /><br />
-              <strong>Data:</strong> {selectedBackup && formatDate(selectedBackup.backed_up_at)}<br />
-              <strong>Transações:</strong> {selectedBackup?.transaction_count.toLocaleString('pt-BR')}
+            <AlertDialogTitle>Restaurar Sistema</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Tem certeza que deseja restaurar este backup? O sistema será restaurado para o estado do backup.</p>
+                
+                {selectedBackup && (
+                  <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
+                    <p><strong>Backup:</strong> {selectedBackup.backup_name}</p>
+                    <p><strong>Data:</strong> {formatDate(selectedBackup.backed_up_at)}</p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Badge variant="outline">{selectedBackup.pix_count} transações PIX</Badge>
+                      <Badge variant="outline">{selectedBackup.withdrawal_count} saques</Badge>
+                      <Badge variant="outline">{selectedBackup.products_count} produtos</Badge>
+                      <Badge variant="outline">{selectedBackup.fee_count} taxas</Badge>
+                      <Badge variant="outline">{selectedBackup.settings_count} configs</Badge>
+                      <Badge variant="outline">{selectedBackup.profiles_count} perfis</Badge>
+                    </div>
+                    <p className="pt-1"><strong>Total:</strong> {selectedBackup.total_records.toLocaleString('pt-BR')} registros</p>
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleRestore} disabled={actionLoading}>
-              {actionLoading ? 'Restaurando...' : 'Restaurar'}
+              {actionLoading ? 'Restaurando...' : 'Restaurar Sistema'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -295,11 +351,18 @@ export function BackupsSection() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Deletar Backup</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja deletar este backup? Esta ação não pode ser desfeita.
-              <br /><br />
-              <strong>Data:</strong> {selectedBackup && formatDate(selectedBackup.backed_up_at)}<br />
-              <strong>Transações:</strong> {selectedBackup?.transaction_count.toLocaleString('pt-BR')}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Tem certeza que deseja deletar este backup? Esta ação não pode ser desfeita.</p>
+                
+                {selectedBackup && (
+                  <div className="bg-muted p-3 rounded-lg space-y-1 text-sm">
+                    <p><strong>Backup:</strong> {selectedBackup.backup_name}</p>
+                    <p><strong>Data:</strong> {formatDate(selectedBackup.backed_up_at)}</p>
+                    <p><strong>Total:</strong> {selectedBackup.total_records.toLocaleString('pt-BR')} registros</p>
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
