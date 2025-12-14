@@ -19,6 +19,7 @@ import { UTMDebugSection } from "@/components/admin/UTMDebugSection";
 import { PremiacoesSection } from "@/components/admin/PremiacoesSection";
 import { ApiMonitoringSection } from "@/components/admin/ApiMonitoringSection";
 import { ReceitaPlataformaSection } from "@/components/admin/ReceitaPlataformaSection";
+import { UtmifySection } from "@/components/admin/UtmifySection";
 
 const Admin = () => {
   const location = useLocation();
@@ -59,6 +60,7 @@ const Admin = () => {
       {activeSection === "personalizacao" && <PersonalizacaoSection userId={user?.id} />}
       {activeSection === "email" && <EmailSection />}
       {activeSection === "taxas" && <TaxasSection />}
+      {activeSection === "utmify" && <UtmifySection />}
       {activeSection === "utm-debug" && <UTMDebugSection />}
       {activeSection === "premiacoes" && <PremiacoesSection />}
       {activeSection === "api-monitoring" && <ApiMonitoringSection />}
