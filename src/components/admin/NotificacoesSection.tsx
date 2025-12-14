@@ -384,11 +384,22 @@ export function NotificacoesSection() {
 
     if (settings.enableToast) {
       const logoSize = settings.logoSize || 40;
+      
+      // Set CSS variable for toast logo size
+      document.documentElement.style.setProperty('--toast-logo-size', `${logoSize}px`);
+      
       const customIcon = settings.customLogoUrl ? (
         <img 
           src={settings.customLogoUrl} 
           alt="Logo" 
-          style={{ width: logoSize, height: logoSize, borderRadius: Math.round(logoSize * 0.15), objectFit: 'contain' }} 
+          style={{ 
+            width: logoSize, 
+            height: logoSize, 
+            minWidth: logoSize, 
+            minHeight: logoSize, 
+            borderRadius: Math.round(logoSize * 0.15), 
+            objectFit: 'contain' 
+          }} 
         />
       ) : undefined;
 

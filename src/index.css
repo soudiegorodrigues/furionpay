@@ -159,3 +159,16 @@
     transform: translateY(0);
   }
 }
+
+/* Sonner toast custom logo size override */
+[data-sonner-toast] [data-icon] {
+  width: auto !important;
+  height: auto !important;
+}
+
+[data-sonner-toast] [data-icon] img {
+  width: var(--toast-logo-size, 40px) !important;
+  height: var(--toast-logo-size, 40px) !important;
+  min-width: var(--toast-logo-size, 40px) !important;
+  min-height: var(--toast-logo-size, 40px) !important;
+}
