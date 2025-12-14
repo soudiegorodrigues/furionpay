@@ -379,15 +379,25 @@ export function NotificacoesSection() {
       .replace('{produto}', 'Produto Teste');
 
     if (settings.enableToast) {
+      const customIcon = settings.customLogoUrl ? (
+        <img 
+          src={settings.customLogoUrl} 
+          alt="Logo" 
+          style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'contain' }} 
+        />
+      ) : undefined;
+
       if (type === 'paid') {
         toast.success(title, {
           description: formattedDesc,
           duration: duration || undefined,
+          icon: customIcon,
         });
       } else {
         toast.info(title, {
           description: formattedDesc,
           duration: duration || undefined,
+          icon: customIcon,
         });
       }
     }
