@@ -98,12 +98,11 @@ export const useTransactionNotifications = (userId: string | null) => {
     settingsRef.current = settings;
   }, [settings]);
 
-  // Load settings function - extracted as useCallback for reuse
+  // Load GLOBAL settings function - all users use the same notification appearance
   const loadSettings = useCallback(async () => {
-    if (!userId) return;
-    
     try {
-      const { data, error } = await supabase.rpc('get_user_settings');
+      // Load global notification settings (user_id IS NULL)
+      const { data, error } = await supabase.rpc('get_global_notification_settings');
       if (error) throw error;
 
       if (data && data.length > 0) {
@@ -127,48 +126,49 @@ export const useTransactionNotifications = (userId: string | null) => {
           logoSize: parseInt(settingsMap.get('notification_logo_size') || '40'),
         };
         setSettings(newSettings);
-        console.log('🔔 Settings carregadas/atualizadas:', { customLogoUrl: newSettings.customLogoUrl });
+        console.log('🔔 Settings globais carregadas:', { customLogoUrl: newSettings.customLogoUrl });
       }
     } catch (error) {
-      console.error('Erro ao carregar configurações de notificação:', error);
+      console.error('Erro ao carregar configurações globais de notificação:', error);
     }
-  }, [userId]);
+  }, []);
 
   // Load settings on mount and userId change
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
 
-  // Subscribe to admin_settings changes for auto-sync
+  // Subscribe to GLOBAL admin_settings changes for auto-sync (user_id IS NULL)
   useEffect(() => {
-    if (!userId) return;
-
-    console.log('🔔 Configurando listener de sincronização de settings para usuário:', userId);
+    console.log('🔔 Configurando listener de sincronização de settings globais');
 
     const settingsChannel = supabase
-      .channel(`settings-sync-${userId}`)
+      .channel('global-settings-sync')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'admin_settings',
-          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('🔔 Settings alteradas no banco, recarregando...', payload);
-          loadSettings();
+          // Only reload if it's a global notification setting
+          const record = payload.new as { user_id?: string; key?: string } | null;
+          if (record && record.user_id === null && record.key?.startsWith('notification_')) {
+            console.log('🔔 Settings globais alteradas, recarregando...', payload);
+            loadSettings();
+          }
         }
       )
       .subscribe((status) => {
-        console.log('🔔 Status do canal de sincronização de settings:', status);
+        console.log('🔔 Status do canal de sincronização de settings globais:', status);
       });
 
     return () => {
-      console.log('🔔 Removendo listener de sincronização de settings');
+      console.log('🔔 Removendo listener de sincronização de settings globais');
       supabase.removeChannel(settingsChannel);
     };
-  }, [userId, loadSettings]);
+  }, [loadSettings]);
 
   // Play notification sound - uses settingsRef for current values
   const playNotificationSound = (soundId: string) => {

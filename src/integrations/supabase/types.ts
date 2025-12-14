@@ -1416,6 +1416,13 @@ export type Database = {
         }[]
       }
       get_api_health_summary: { Args: never; Returns: Json }
+      get_global_notification_settings: {
+        Args: never
+        Returns: {
+          key: string
+          value: string
+        }[]
+      }
       get_my_verification_status: {
         Args: never
         Returns: {
@@ -1825,6 +1832,10 @@ export type Database = {
         Returns: boolean
       }
       update_admin_setting_auth: {
+        Args: { setting_key: string; setting_value: string }
+        Returns: boolean
+      }
+      update_global_notification_setting: {
         Args: { setting_key: string; setting_value: string }
         Returns: boolean
       }
