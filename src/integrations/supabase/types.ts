@@ -1206,6 +1206,9 @@ export type Database = {
           bank_code: string
           bank_name: string
           created_at: string
+          fee_fixed: number | null
+          fee_percentage: number | null
+          gross_amount: number | null
           id: string
           pix_key: string
           pix_key_type: string
@@ -1221,6 +1224,9 @@ export type Database = {
           bank_code: string
           bank_name: string
           created_at?: string
+          fee_fixed?: number | null
+          fee_percentage?: number | null
+          gross_amount?: number | null
           id?: string
           pix_key: string
           pix_key_type: string
@@ -1236,6 +1242,9 @@ export type Database = {
           bank_code?: string
           bank_name?: string
           created_at?: string
+          fee_fixed?: number | null
+          fee_percentage?: number | null
+          gross_amount?: number | null
           id?: string
           pix_key?: string
           pix_key_type?: string
