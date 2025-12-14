@@ -226,7 +226,7 @@ const AdminFinanceiro = () => {
     { code: '298', name: 'Vip\'s CC Ltda.' },
     { code: '299', name: 'Sorocred CFI S.A.' },
     { code: '300', name: 'Banco de la Nación Argentina' },
-    { code: '301', name: 'BPP IP S.A.' },
+    { code: '301', name: 'Conta Simples / Dock / BPP IP S.A.' },
     { code: '306', name: 'Portopar DTVM Ltda.' },
     { code: '307', name: 'Terra Investimentos DTVM Ltda.' },
     { code: '309', name: 'Cambionet CC Ltda.' },
