@@ -29,6 +29,7 @@ interface NotificationSettings {
   pixPaidSound: string;
   pixPaidDuration: number;
   customSoundUrl: string;
+  customLogoUrl: string;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -46,6 +47,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   pixPaidSound: "cash-register",
   pixPaidDuration: 8000,
   customSoundUrl: "",
+  customLogoUrl: "",
 };
 
 // Check if browser supports notifications
@@ -114,6 +116,7 @@ export const useTransactionNotifications = (userId: string | null) => {
             pixPaidSound: settingsMap.get('notification_pix_paid_sound') || DEFAULT_SETTINGS.pixPaidSound,
             pixPaidDuration: parseInt(settingsMap.get('notification_pix_paid_duration') || '8000'),
             customSoundUrl: settingsMap.get('notification_custom_sound_url') || '',
+            customLogoUrl: settingsMap.get('notification_custom_logo_url') || '',
           });
         }
       } catch (error) {
@@ -153,7 +156,7 @@ export const useTransactionNotifications = (userId: string | null) => {
     if (Notification.permission === 'granted') {
       new Notification(title, {
         body,
-        icon: '/pwa-192x192.png',
+        icon: settings.customLogoUrl || '/pwa-192x192.png',
         badge: '/pix-icon.png',
         tag: 'furionpay-notification',
       });

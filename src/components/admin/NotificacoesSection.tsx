@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Bell, Volume2, Play, Save, Upload, Loader2, Trash2, Music } from "lucide-react";
+import { Bell, Volume2, Play, Save, Upload, Loader2, Trash2, Music, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -47,6 +47,8 @@ interface NotificationSettings {
   pixPaidDuration: string;
   customSoundUrl: string;
   customSoundName: string;
+  customLogoUrl: string;
+  customLogoName: string;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -65,6 +67,8 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   pixPaidDuration: "8000",
   customSoundUrl: "",
   customSoundName: "",
+  customLogoUrl: "",
+  customLogoName: "",
 };
 
 export function NotificacoesSection() {
@@ -72,8 +76,10 @@ export function NotificacoesSection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -102,6 +108,8 @@ export function NotificacoesSection() {
           pixPaidDuration: settingsMap.get('notification_pix_paid_duration') || DEFAULT_SETTINGS.pixPaidDuration,
           customSoundUrl: settingsMap.get('notification_custom_sound_url') || '',
           customSoundName: settingsMap.get('notification_custom_sound_name') || '',
+          customLogoUrl: settingsMap.get('notification_custom_logo_url') || '',
+          customLogoName: settingsMap.get('notification_custom_logo_name') || '',
         });
       }
     } catch (error) {
@@ -130,6 +138,8 @@ export function NotificacoesSection() {
         { key: 'notification_pix_paid_duration', value: settings.pixPaidDuration },
         { key: 'notification_custom_sound_url', value: settings.customSoundUrl },
         { key: 'notification_custom_sound_name', value: settings.customSoundName },
+        { key: 'notification_custom_logo_url', value: settings.customLogoUrl },
+        { key: 'notification_custom_logo_name', value: settings.customLogoName },
       ];
 
       for (const setting of settingsToSave) {
@@ -259,6 +269,90 @@ export function NotificacoesSection() {
     }
   };
 
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Formato inválido. Use PNG, JPG ou WEBP.');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo 2MB.');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/custom-logo.${fileExt}`;
+
+      // Delete existing file if any
+      await supabase.storage
+        .from('notification-sounds')
+        .remove([`${user.id}/custom-logo.png`, `${user.id}/custom-logo.jpg`, `${user.id}/custom-logo.jpeg`, `${user.id}/custom-logo.webp`]);
+
+      // Upload new file
+      const { error: uploadError } = await supabase.storage
+        .from('notification-sounds')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('notification-sounds')
+        .getPublicUrl(fileName);
+
+      setSettings({
+        ...settings,
+        customLogoUrl: publicUrl,
+        customLogoName: file.name,
+      });
+
+      toast.success('Logo personalizada enviada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar logo:', error);
+      toast.error('Erro ao enviar imagem');
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) {
+        logoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveCustomLogo = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Delete file from storage
+      const files = [`${user.id}/custom-logo.png`, `${user.id}/custom-logo.jpg`, `${user.id}/custom-logo.jpeg`, `${user.id}/custom-logo.webp`];
+      await supabase.storage
+        .from('notification-sounds')
+        .remove(files);
+
+      setSettings({
+        ...settings,
+        customLogoUrl: '',
+        customLogoName: '',
+      });
+
+      toast.success('Logo personalizada removida');
+    } catch (error) {
+      console.error('Erro ao remover logo:', error);
+      toast.error('Erro ao remover logo');
+    }
+  };
+
   const testNotification = (type: 'generated' | 'paid') => {
     const title = type === 'generated' ? settings.pixGeneratedTitle : settings.pixPaidTitle;
     const description = type === 'generated' ? settings.pixGeneratedDescription : settings.pixPaidDescription;
@@ -288,7 +382,7 @@ export function NotificacoesSection() {
     if (settings.enableBrowser && Notification.permission === 'granted') {
       new Notification(title, {
         body: formattedDesc,
-        icon: '/pwa-192x192.png',
+        icon: settings.customLogoUrl || '/pwa-192x192.png',
       });
     }
 
@@ -565,6 +659,75 @@ export function NotificacoesSection() {
                     <Play className="h-4 w-4 mr-2" />
                     Testar Notificação PIX Pago
                   </Button>
+                </CardContent>
+              </Card>
+
+              {/* Custom Logo Section */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Image className="h-4 w-4" />
+                    Logo das Notificações
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    A logo aparecerá nas notificações do navegador
+                  </p>
+                  
+                  {settings.customLogoUrl ? (
+                    <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg border">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-background border flex-shrink-0">
+                        <img 
+                          src={settings.customLogoUrl} 
+                          alt="Logo personalizada" 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{settings.customLogoName || 'Logo personalizada'}</p>
+                        <p className="text-xs text-muted-foreground">Logo personalizada ativa</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleRemoveCustomLogo}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp,.png,.jpg,.jpeg,.webp"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={uploadingLogo}
+                        className="w-full"
+                      >
+                        {uploadingLogo ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Enviar Logo Personalizada
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Formatos: PNG, JPG, WEBP • Máx: 2MB
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
