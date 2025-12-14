@@ -18,11 +18,23 @@ export const ZonaDePerigo = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
+  const OWNER_EMAIL = "suporte.soudiego@gmail.com";
+
   const handleAuthenticate = async () => {
     if (!email || !password) {
       toast({
         title: "Erro",
         description: "Preencha email e senha",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if email matches owner email
+    if (email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+      toast({
+        title: "Acesso negado",
+        description: "Apenas o proprietário do sistema pode acessar esta área",
         variant: "destructive"
       });
       return;
