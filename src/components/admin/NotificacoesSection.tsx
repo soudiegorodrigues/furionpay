@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Bell, Volume2, Play, Save, Upload, Loader2 } from "lucide-react";
+import { Bell, Volume2, Play, Save, Upload, Loader2, Trash2, Music } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ const PREDEFINED_SOUNDS = [
   { id: "celebration", name: "🎉 Celebração", url: "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" },
   { id: "bell", name: "🔔 Sino", url: "https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3" },
   { id: "notification", name: "📱 Notificação", url: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" },
+  { id: "custom", name: "🎵 Personalizado", url: "" },
 ];
 
 const DURATION_OPTIONS = [
@@ -44,6 +45,8 @@ interface NotificationSettings {
   pixPaidDescription: string;
   pixPaidSound: string;
   pixPaidDuration: string;
+  customSoundUrl: string;
+  customSoundName: string;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -60,13 +63,17 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   pixPaidDescription: "{nome} pagou {valor}",
   pixPaidSound: "cash-register",
   pixPaidDuration: "8000",
+  customSoundUrl: "",
+  customSoundName: "",
 };
 
 export function NotificacoesSection() {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -93,6 +100,8 @@ export function NotificacoesSection() {
           pixPaidDescription: settingsMap.get('notification_pix_paid_description') || DEFAULT_SETTINGS.pixPaidDescription,
           pixPaidSound: settingsMap.get('notification_pix_paid_sound') || DEFAULT_SETTINGS.pixPaidSound,
           pixPaidDuration: settingsMap.get('notification_pix_paid_duration') || DEFAULT_SETTINGS.pixPaidDuration,
+          customSoundUrl: settingsMap.get('notification_custom_sound_url') || '',
+          customSoundName: settingsMap.get('notification_custom_sound_name') || '',
         });
       }
     } catch (error) {
@@ -119,6 +128,8 @@ export function NotificacoesSection() {
         { key: 'notification_pix_paid_description', value: settings.pixPaidDescription },
         { key: 'notification_pix_paid_sound', value: settings.pixPaidSound },
         { key: 'notification_pix_paid_duration', value: settings.pixPaidDuration },
+        { key: 'notification_custom_sound_url', value: settings.customSoundUrl },
+        { key: 'notification_custom_sound_name', value: settings.customSoundName },
       ];
 
       for (const setting of settingsToSave) {
@@ -139,14 +150,112 @@ export function NotificacoesSection() {
   };
 
   const playTestSound = (soundId: string) => {
-    const sound = PREDEFINED_SOUNDS.find(s => s.id === soundId);
-    if (sound) {
+    let soundUrl = '';
+    
+    if (soundId === 'custom' && settings.customSoundUrl) {
+      soundUrl = settings.customSoundUrl;
+    } else {
+      const sound = PREDEFINED_SOUNDS.find(s => s.id === soundId);
+      if (sound) {
+        soundUrl = sound.url;
+      }
+    }
+    
+    if (soundUrl) {
       if (audioRef.current) {
         audioRef.current.pause();
       }
-      audioRef.current = new Audio(sound.url);
+      audioRef.current = new Audio(soundUrl);
       audioRef.current.volume = settings.volume / 100;
       audioRef.current.play().catch(() => {});
+    } else if (soundId === 'custom') {
+      toast.error('Nenhum som personalizado configurado');
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|ogg|m4a)$/i)) {
+      toast.error('Formato inválido. Use MP3, WAV, OGG ou M4A.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 5MB.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/custom-sound.${fileExt}`;
+
+      // Delete existing file if any
+      await supabase.storage
+        .from('notification-sounds')
+        .remove([fileName]);
+
+      // Upload new file
+      const { error: uploadError } = await supabase.storage
+        .from('notification-sounds')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('notification-sounds')
+        .getPublicUrl(fileName);
+
+      setSettings({
+        ...settings,
+        customSoundUrl: publicUrl,
+        customSoundName: file.name,
+        pixPaidSound: 'custom',
+      });
+
+      toast.success('Som personalizado enviado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar arquivo:', error);
+      toast.error('Erro ao enviar arquivo de áudio');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveCustomSound = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Delete file from storage
+      const files = [`${user.id}/custom-sound.mp3`, `${user.id}/custom-sound.wav`, `${user.id}/custom-sound.ogg`, `${user.id}/custom-sound.m4a`];
+      await supabase.storage
+        .from('notification-sounds')
+        .remove(files);
+
+      setSettings({
+        ...settings,
+        customSoundUrl: '',
+        customSoundName: '',
+        pixPaidSound: settings.pixPaidSound === 'custom' ? 'cash-register' : settings.pixPaidSound,
+      });
+
+      toast.success('Som personalizado removido');
+    } catch (error) {
+      console.error('Erro ao remover som:', error);
+      toast.error('Erro ao remover som');
     }
   };
 
@@ -350,8 +459,8 @@ export function NotificacoesSection() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {PREDEFINED_SOUNDS.map((sound) => (
-                              <SelectItem key={sound.id} value={sound.id}>
+                            {PREDEFINED_SOUNDS.filter(s => s.id !== 'custom' || settings.customSoundUrl).map((sound) => (
+                              <SelectItem key={sound.id} value={sound.id} disabled={sound.id === 'custom' && !settings.customSoundUrl}>
                                 {sound.name}
                               </SelectItem>
                             ))}
@@ -385,6 +494,69 @@ export function NotificacoesSection() {
                       </Select>
                     </div>
                   </div>
+
+                  {/* Custom Sound Upload Section */}
+                  <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Music className="h-4 w-4 text-muted-foreground" />
+                      <Label className="font-medium">Som Personalizado</Label>
+                    </div>
+                    
+                    {settings.customSoundUrl ? (
+                      <div className="flex items-center gap-3 p-3 bg-background rounded-lg border">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{settings.customSoundName || 'Som personalizado'}</p>
+                          <p className="text-xs text-muted-foreground">Clique em ▶ para ouvir</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => playTestSound('custom')}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleRemoveCustomSound}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="audio/mp3,audio/wav,audio/ogg,audio/m4a,.mp3,.wav,.ogg,.m4a"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                          className="w-full"
+                        >
+                          {uploading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Enviar Som Personalizado
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Formatos: MP3, WAV, OGG, M4A • Máx: 5MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   <Button
                     variant="outline"
                     className="w-full"
