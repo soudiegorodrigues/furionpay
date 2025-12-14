@@ -442,6 +442,72 @@ export type Database = {
         }
         Relationships: []
       }
+      pix_transactions_backup: {
+        Row: {
+          amount: number
+          backed_up_at: string
+          backed_up_by: string | null
+          backup_id: string
+          created_at: string | null
+          donor_name: string | null
+          expired_at: string | null
+          fee_fixed: number | null
+          fee_percentage: number | null
+          id: string
+          original_id: string
+          paid_at: string | null
+          pix_code: string | null
+          popup_model: string | null
+          product_name: string | null
+          status: string
+          txid: string | null
+          user_id: string | null
+          utm_data: Json | null
+        }
+        Insert: {
+          amount: number
+          backed_up_at?: string
+          backed_up_by?: string | null
+          backup_id: string
+          created_at?: string | null
+          donor_name?: string | null
+          expired_at?: string | null
+          fee_fixed?: number | null
+          fee_percentage?: number | null
+          id?: string
+          original_id: string
+          paid_at?: string | null
+          pix_code?: string | null
+          popup_model?: string | null
+          product_name?: string | null
+          status: string
+          txid?: string | null
+          user_id?: string | null
+          utm_data?: Json | null
+        }
+        Update: {
+          amount?: number
+          backed_up_at?: string
+          backed_up_by?: string | null
+          backup_id?: string
+          created_at?: string | null
+          donor_name?: string | null
+          expired_at?: string | null
+          fee_fixed?: number | null
+          fee_percentage?: number | null
+          id?: string
+          original_id?: string
+          paid_at?: string | null
+          pix_code?: string | null
+          popup_model?: string | null
+          product_name?: string | null
+          status?: string
+          txid?: string | null
+          user_id?: string | null
+          utm_data?: Json | null
+        }
+        Relationships: []
+      }
       popup_configurations: {
         Row: {
           background_color: string | null
@@ -1151,12 +1217,17 @@ export type Database = {
         Returns: boolean
       }
       approve_user: { Args: { target_user_id: string }; Returns: boolean }
+      backup_and_reset_transactions: { Args: never; Returns: string }
       block_user: { Args: { target_user_id: string }; Returns: boolean }
       bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
       check_login_blocked: { Args: { p_email: string }; Returns: Json }
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
+      delete_transaction_backup: {
+        Args: { p_backup_id: string }
+        Returns: boolean
+      }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
       get_admin_settings: {
         Args: { input_token: string }
@@ -1336,6 +1407,14 @@ export type Database = {
           tracking_code: string
           user_email: string
           user_id: string
+        }[]
+      }
+      get_transaction_backups: {
+        Args: never
+        Returns: {
+          backed_up_at: string
+          backup_id: string
+          transaction_count: number
         }[]
       }
       get_transaction_status_by_id: {
@@ -1562,6 +1641,10 @@ export type Database = {
       }
       reset_pix_transactions_auth: { Args: never; Returns: boolean }
       reset_user_transactions: { Args: never; Returns: boolean }
+      restore_transactions_from_backup: {
+        Args: { p_backup_id: string }
+        Returns: boolean
+      }
       revoke_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       revoke_user_approval: {
         Args: { target_user_id: string }
