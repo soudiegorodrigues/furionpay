@@ -7,12 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2, RefreshCw, Send } from "lucide-react";
 import utmifyLogo from "@/assets/utmify-logo.png";
 
 export function UtmifySection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [apiToken, setApiToken] = useState("");
   const [showToken, setShowToken] = useState(false);
@@ -84,6 +85,70 @@ export function UtmifySection() {
       toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSyncToday = async () => {
+    try {
+      setSyncing(true);
+      
+      // Get today's paid transactions
+      const { data: transactions, error: fetchError } = await supabase
+        .from('pix_transactions')
+        .select('id, txid, amount, donor_name, product_name, paid_at, utm_data, user_id')
+        .eq('status', 'paid')
+        .gte('paid_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+        .order('paid_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      if (!transactions || transactions.length === 0) {
+        toast.info('Nenhuma transação paga encontrada hoje');
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Send each transaction to Utmify
+      for (const tx of transactions) {
+        try {
+          const { error } = await supabase.functions.invoke('utmify-send-order', {
+            body: {
+              txid: tx.txid,
+              amount: tx.amount,
+              status: 'paid',
+              donorName: tx.donor_name,
+              productName: tx.product_name,
+              paidAt: tx.paid_at,
+              utmData: tx.utm_data,
+              userId: tx.user_id
+            }
+          });
+
+          if (error) {
+            console.error('Error sending to Utmify:', error);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          console.error('Error processing transaction:', err);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount} transação(ões) enviada(s) para o Utmify`);
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} transação(ões) falharam ao enviar`);
+      }
+    } catch (error) {
+      console.error('Error syncing to Utmify:', error);
+      toast.error('Erro ao sincronizar com Utmify');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -198,6 +263,36 @@ export function UtmifySection() {
             )}
             Salvar Configurações
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Sync Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Sincronização Manual</CardTitle>
+          <CardDescription>
+            Reenvie as transações de hoje para o Utmify caso precisem ser sincronizadas novamente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            onClick={handleSyncToday} 
+            disabled={syncing || !isConfigured}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            {syncing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            {syncing ? 'Enviando...' : 'Enviar Transações de Hoje'}
+          </Button>
+          {!isConfigured && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Configure o token da API primeiro para sincronizar
+            </p>
+          )}
         </CardContent>
       </Card>
 
