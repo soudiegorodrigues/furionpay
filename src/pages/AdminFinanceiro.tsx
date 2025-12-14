@@ -570,7 +570,6 @@ const AdminFinanceiro = () => {
   useEffect(() => {
     loadTransactions();
     loadAvailableBalance();
-    loadWithdrawalHistory();
     loadBankAccountData();
     loadUserFeeConfig();
     const interval = setInterval(() => {
@@ -579,6 +578,13 @@ const AdminFinanceiro = () => {
     }, 60000);
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  // Load withdrawal history separately when isAdmin is determined
+  useEffect(() => {
+    if (user?.id) {
+      loadWithdrawalHistory();
+    }
+  }, [user?.id, isAdmin]);
 
   const stats = useMemo(() => {
     const paid = transactions.filter(tx => tx.status === 'paid');
