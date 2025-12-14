@@ -546,7 +546,7 @@ const AdminDashboard = () => {
       {/* Stats Grid - Unified */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 lg:gap-4">
         {/* Row 1: PIX Gerados | PIX Pagos */}
-        <Card>
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-2 sm:p-3">
             <div className="flex items-center justify-between">
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">PIX Gerados</p>
@@ -556,7 +556,7 @@ const AdminDashboard = () => {
             <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{formatCurrency(filteredStats.amountGenerated)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-2 sm:p-3">
             <div className="flex items-center justify-between">
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">PIX Pagos</p>
@@ -567,7 +567,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
         {/* Row 2: Conversão + Ticket Médio | Vendas Este Mês */}
-        <Card>
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-2 sm:p-3">
             <div className="flex gap-3">
               {/* Conversão */}
@@ -593,7 +593,7 @@ const AdminDashboard = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-2 sm:p-3">
             <div className="flex items-center justify-between">
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Vendas Este Mês</p>
@@ -603,7 +603,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
         {/* Row 3: Vendas Hoje | Saldo Disponível */}
-        <Card>
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-2 sm:p-3">
             <div className="flex items-center justify-between">
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Vendas Hoje</p>
@@ -612,7 +612,7 @@ const AdminDashboard = () => {
             <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-2 sm:p-3">
             <div className="flex items-center justify-between">
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Saldo Disponível</p>
