@@ -1446,6 +1446,18 @@ export type Database = {
               user_id: string
             }[]
           }
+      get_utmify_events: {
+        Args: { p_limit?: number; p_offset?: number; p_period?: string }
+        Returns: {
+          created_at: string
+          error_message: string
+          event_type: string
+          id: string
+          response_time_ms: number
+          total_count: number
+        }[]
+      }
+      get_utmify_summary: { Args: never; Returns: Json }
       grant_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       has_role: {
         Args: {
