@@ -414,34 +414,7 @@ serve(async (req) => {
       feeConfig?.pix_fixed
     );
 
-    // Send to Utmify (async, don't wait for response)
-    try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-      
-      console.log('[UTMIFY] Sending pending transaction to Utmify:', txid);
-      
-      fetch(`${supabaseUrl}/functions/v1/utmify-send-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({
-          txid,
-          amount,
-          status: 'waiting_payment',
-          customerName: finalDonorName,
-          productName: finalProductName,
-          createdAt: new Date().toISOString(),
-          utmData,
-          userId,
-        }),
-      }).catch(err => console.log('[UTMIFY] Error sending order (non-blocking):', err));
-    } catch (utmifyError) {
-      console.log('[UTMIFY] Error preparing request (non-blocking):', utmifyError);
-    }
-
+    // Utmify integration handled by database trigger (utmify-sync)
     return new Response(
       JSON.stringify({
         success: true,

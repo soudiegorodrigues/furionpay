@@ -117,40 +117,7 @@ serve(async (req) => {
         console.log('Transaction marked as paid successfully via RPC');
       }
 
-      // Send to Utmify (async, don't wait for response)
-      try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-        
-        // Get transaction details for Utmify
-        const { data: txData } = await supabase
-          .from('pix_transactions')
-          .select('amount, donor_name, product_name, utm_data, user_id')
-          .eq('txid', transactionId)
-          .maybeSingle();
-        
-        if (txData) {
-          fetch(`${supabaseUrl}/functions/v1/utmify-send-order`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseAnonKey}`,
-            },
-            body: JSON.stringify({
-              txid: transactionId,
-              amount: txData.amount,
-              status: 'paid',
-              customerName: txData.donor_name,
-              productName: txData.product_name,
-              paidAt: paidAt || new Date().toISOString(),
-              utmData: txData.utm_data,
-              userId: txData.user_id,
-            }),
-          }).catch(err => console.log('[UTMIFY] Error sending paid order (non-blocking):', err));
-        }
-      } catch (utmifyError) {
-        console.log('[UTMIFY] Error preparing paid request (non-blocking):', utmifyError);
-      }
+      // Utmify integration handled by database trigger (utmify-sync)
     } else {
       console.log('Webhook received but status is not paid:', status);
     }
