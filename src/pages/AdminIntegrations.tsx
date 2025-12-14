@@ -20,18 +20,21 @@ const AdminIntegrations = () => {
 
   const loadUtmifyStatus = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data: tokenData } = await supabase
         .from('admin_settings')
         .select('value')
         .eq('key', 'utmify_api_token')
-        .is('user_id', null)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       const { data: enabledData } = await supabase
         .from('admin_settings')
         .select('value')
         .eq('key', 'utmify_enabled')
-        .is('user_id', null)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       setUtmifyConfigured(!!tokenData?.value);
@@ -44,10 +47,13 @@ const AdminIntegrations = () => {
   const handleUtmifyClick = async () => {
     setLoadingUtmify(true);
     try {
-      // Pré-carregar todos os dados antes de abrir
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Pré-carregar todos os dados do usuário atual
       const [tokenResult, enabledResult, summaryResult] = await Promise.all([
-        supabase.from('admin_settings').select('value').eq('key', 'utmify_api_token').is('user_id', null).maybeSingle(),
-        supabase.from('admin_settings').select('value').eq('key', 'utmify_enabled').is('user_id', null).maybeSingle(),
+        supabase.from('admin_settings').select('value').eq('key', 'utmify_api_token').eq('user_id', user.id).maybeSingle(),
+        supabase.from('admin_settings').select('value').eq('key', 'utmify_enabled').eq('user_id', user.id).maybeSingle(),
         supabase.rpc('get_utmify_summary')
       ]);
 

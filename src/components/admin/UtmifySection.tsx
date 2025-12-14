@@ -79,12 +79,14 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
 
   const loadSettings = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
       
       const { data: enabledData } = await supabase
         .from('admin_settings')
         .select('value')
         .eq('key', 'utmify_enabled')
-        .is('user_id', null)
+        .eq('user_id', user.id)
         .maybeSingle();
       
       setEnabled(enabledData?.value === 'true');
@@ -93,7 +95,7 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
         .from('admin_settings')
         .select('value')
         .eq('key', 'utmify_api_token')
-        .is('user_id', null)
+        .eq('user_id', user.id)
         .maybeSingle();
       
       if (tokenData?.value) {
@@ -123,7 +125,8 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
     try {
       setSaving(true);
 
-      const { error: enabledError } = await supabase.rpc('update_admin_setting_auth', {
+      // Use update_user_setting to save with current user's ID
+      const { error: enabledError } = await supabase.rpc('update_user_setting', {
         setting_key: 'utmify_enabled',
         setting_value: enabled.toString()
       });
@@ -131,7 +134,7 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
       if (enabledError) throw enabledError;
 
       if (apiToken.trim()) {
-        const { error: tokenError } = await supabase.rpc('update_admin_setting_auth', {
+        const { error: tokenError } = await supabase.rpc('update_user_setting', {
           setting_key: 'utmify_api_token',
           setting_value: apiToken.trim()
         });
