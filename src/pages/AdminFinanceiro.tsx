@@ -41,6 +41,7 @@ interface WithdrawalHistory {
   created_at: string;
   processed_at: string | null;
   rejection_reason: string | null;
+  user_email?: string;
 }
 
 interface FeeConfig {
@@ -509,9 +510,17 @@ const AdminFinanceiro = () => {
 
   const loadWithdrawalHistory = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_withdrawals', { p_limit: 50 });
-      if (error) throw error;
-      setWithdrawalHistory(data || []);
+      if (isAdmin) {
+        // Admin sees all withdrawals with user emails
+        const { data, error } = await supabase.rpc('get_all_withdrawals_admin', { p_limit: 100 });
+        if (error) throw error;
+        setWithdrawalHistory(data || []);
+      } else {
+        // Regular user sees only their own withdrawals
+        const { data, error } = await supabase.rpc('get_user_withdrawals', { p_limit: 50 });
+        if (error) throw error;
+        setWithdrawalHistory(data || []);
+      }
     } catch (error) {
       console.error('Error loading withdrawal history:', error);
     }
@@ -1289,6 +1298,7 @@ const AdminFinanceiro = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        {isAdmin && <TableHead>Email</TableHead>}
                         <TableHead>Valor</TableHead>
                         <TableHead className="hidden sm:table-cell">Banco/PIX</TableHead>
                         <TableHead>Status</TableHead>
@@ -1301,6 +1311,13 @@ const AdminFinanceiro = () => {
                         .slice((withdrawalPage - 1) * WITHDRAWALS_PER_PAGE, withdrawalPage * WITHDRAWALS_PER_PAGE)
                         .map((withdrawal) => (
                           <TableRow key={withdrawal.id}>
+                            {isAdmin && (
+                              <TableCell className="text-sm">
+                                <span className="block truncate max-w-[180px]" title={withdrawal.user_email}>
+                                  {withdrawal.user_email || '—'}
+                                </span>
+                              </TableCell>
+                            )}
                             <TableCell className="font-medium">
                               {formatCurrency(withdrawal.amount)}
                             </TableCell>
