@@ -30,6 +30,7 @@ interface NotificationSettings {
   pixPaidDuration: number;
   customSoundUrl: string;
   customLogoUrl: string;
+  logoSize: number;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -48,6 +49,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   pixPaidDuration: 8000,
   customSoundUrl: "",
   customLogoUrl: "",
+  logoSize: 40,
 };
 
 // Check if browser supports notifications
@@ -122,6 +124,7 @@ export const useTransactionNotifications = (userId: string | null) => {
           pixPaidDuration: parseInt(settingsMap.get('notification_pix_paid_duration') || '8000'),
           customSoundUrl: settingsMap.get('notification_custom_sound_url') || '',
           customLogoUrl: settingsMap.get('notification_custom_logo_url') || '',
+          logoSize: parseInt(settingsMap.get('notification_logo_size') || '40'),
         };
         setSettings(newSettings);
         console.log('🔔 Settings carregadas/atualizadas:', { customLogoUrl: newSettings.customLogoUrl });
@@ -252,6 +255,7 @@ export const useTransactionNotifications = (userId: string | null) => {
             
             // Show toast notification
             if (currentSettings.enableToast) {
+              const logoSize = currentSettings.logoSize || 40;
               toast.info(title, {
                 description,
                 duration: currentSettings.pixGeneratedDuration || undefined,
@@ -259,7 +263,7 @@ export const useTransactionNotifications = (userId: string | null) => {
                   <img 
                     src={currentSettings.customLogoUrl} 
                     alt="Logo" 
-                    style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain' }}
+                    style={{ width: logoSize, height: logoSize, borderRadius: Math.round(logoSize * 0.15), objectFit: 'contain' }} 
                   />
                 ) : undefined,
               });
@@ -307,6 +311,7 @@ export const useTransactionNotifications = (userId: string | null) => {
             
             // Show success toast
             if (currentSettings.enableToast) {
+              const logoSize = currentSettings.logoSize || 40;
               toast.success(title, {
                 description,
                 duration: currentSettings.pixPaidDuration || undefined,
@@ -314,7 +319,7 @@ export const useTransactionNotifications = (userId: string | null) => {
                   <img 
                     src={currentSettings.customLogoUrl} 
                     alt="Logo" 
-                    style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain' }} 
+                    style={{ width: logoSize, height: logoSize, borderRadius: Math.round(logoSize * 0.15), objectFit: 'contain' }} 
                   />
                 ) : undefined,
               });
