@@ -870,6 +870,34 @@ serve(async (req) => {
       result = await checkSpedPayStatus(txid, apiKey, supabase);
     }
 
+    // If payment was just confirmed, send to Utmify
+    if (result.isPaid) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+        
+        fetch(`${supabaseUrl}/functions/v1/utmify-send-order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({
+            txid: transaction.txid,
+            amount: transaction.amount,
+            status: 'paid',
+            customerName: transaction.donor_name,
+            productName: transaction.product_name,
+            paidAt: result.paidAt || new Date().toISOString(),
+            utmData: transaction.utm_data,
+            userId: transaction.user_id,
+          }),
+        }).catch(err => console.log('[UTMIFY] Error sending paid order (non-blocking):', err));
+      } catch (utmifyError) {
+        console.log('[UTMIFY] Error preparing paid request (non-blocking):', utmifyError);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         status: result.status,
