@@ -20,7 +20,9 @@ import {
   Shield,
   CreditCard,
   Key,
-  UserCheck
+  UserCheck,
+  Send,
+  Loader2
 } from "lucide-react";
 import {
   Sheet,
@@ -98,6 +100,9 @@ export function EmailTemplatesSection() {
   const [isSaving, setIsSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showTestEmail, setShowTestEmail] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState("");
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -226,19 +231,73 @@ export function EmailTemplatesSection() {
     setEditHtmlContent(prev => prev + `{${variable}}`);
   };
 
+  const getSampleVariables = () => {
+    return {
+      logoUrl: 'https://placehold.co/200x60?text=Logo',
+      userName: 'João Silva',
+      userEmail: 'joao@exemplo.com',
+      code: '123456',
+      email: 'joao@exemplo.com',
+      reason: 'Documento ilegível ou inválido',
+      amount: '1.500,00',
+      bankName: 'Banco Inter',
+      pixKey: 'joao@exemplo.com'
+    };
+  };
+
   const getPreviewHtml = () => {
     let html = editHtmlContent;
-    // Replace variables with sample values for preview
-    html = html.replace(/{logoUrl}/g, 'https://placehold.co/200x60?text=Logo');
-    html = html.replace(/{userName}/g, 'João Silva');
-    html = html.replace(/{userEmail}/g, 'joao@exemplo.com');
-    html = html.replace(/{code}/g, '123456');
-    html = html.replace(/{email}/g, 'joao@exemplo.com');
-    html = html.replace(/{reason}/g, 'Documento ilegível ou inválido');
-    html = html.replace(/{amount}/g, '1.500,00');
-    html = html.replace(/{bankName}/g, 'Banco Inter');
-    html = html.replace(/{pixKey}/g, 'joao@exemplo.com');
+    const sampleVars = getSampleVariables();
+    for (const [key, value] of Object.entries(sampleVars)) {
+      const regex = new RegExp(`\\{${key}\\}`, 'g');
+      html = html.replace(regex, value);
+    }
     return html;
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!selectedTemplate || !testEmailAddress) return;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(testEmailAddress)) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira um email válido",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-test-email', {
+        body: {
+          templateKey: selectedTemplate.template_key,
+          recipientEmail: testEmailAddress,
+          subject: editSubject,
+          htmlContent: editHtmlContent,
+          variables: getSampleVariables()
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Email de teste enviado para ${testEmailAddress}`,
+      });
+      setShowTestEmail(false);
+      setTestEmailAddress("");
+    } catch (error: any) {
+      console.error('Error sending test email:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao enviar email de teste",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   if (isLoading) {
@@ -384,18 +443,27 @@ export function EmailTemplatesSection() {
                 variant="outline"
                 onClick={() => setShowResetConfirm(true)}
                 disabled={isSaving || !selectedTemplate?.is_customized}
-                className="sm:flex-1"
+                className="flex-1"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Restaurar Padrão
               </Button>
               <Button
+                variant="secondary"
+                onClick={() => setShowTestEmail(true)}
+                disabled={isSaving}
+                className="flex-1"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Enviar Teste
+              </Button>
+              <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="sm:flex-1"
+                className="flex-1"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? "Salvando..." : "Salvar Template"}
+                {isSaving ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           </div>
@@ -440,6 +508,56 @@ export function EmailTemplatesSection() {
             </Button>
             <Button variant="destructive" onClick={handleReset} disabled={isSaving}>
               {isSaving ? "Restaurando..." : "Restaurar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test Email Dialog */}
+      <Dialog open={showTestEmail} onOpenChange={setShowTestEmail}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Enviar Email de Teste
+            </DialogTitle>
+            <DialogDescription>
+              Envie um email de teste para verificar se o template está funcionando corretamente. As variáveis serão substituídas por valores de exemplo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="test-email">Email de Destino</Label>
+              <Input
+                id="test-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={testEmailAddress}
+                onChange={(e) => setTestEmailAddress(e.target.value)}
+              />
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Assunto:</strong> [TESTE] {editSubject}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTestEmail(false)} disabled={isSendingTest}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSendTestEmail} disabled={isSendingTest || !testEmailAddress}>
+              {isSendingTest ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar Teste
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
