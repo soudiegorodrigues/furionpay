@@ -645,6 +645,7 @@ export type Database = {
       }
       pix_transactions: {
         Row: {
+          acquirer: string | null
           amount: number
           created_at: string | null
           donor_name: string | null
@@ -662,6 +663,7 @@ export type Database = {
           utm_data: Json | null
         }
         Insert: {
+          acquirer?: string | null
           amount: number
           created_at?: string | null
           donor_name?: string | null
@@ -679,6 +681,7 @@ export type Database = {
           utm_data?: Json | null
         }
         Update: {
+          acquirer?: string | null
           amount?: number
           created_at?: string | null
           donor_name?: string | null
