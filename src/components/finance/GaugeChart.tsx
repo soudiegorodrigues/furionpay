@@ -21,10 +21,8 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
   const normalizedValue = Math.max(min, Math.min(max, value));
   // Handle case where max equals min (avoid division by zero) or value is 0 or negative
   const percentage = value <= 0 || (max - min) === 0 ? 0 : ((normalizedValue - min) / (max - min)) * 100;
-  
-  // Calculate needle angle (from 90 to -90 degrees, where 90 is min and -90 is max)
-  // Needle points DOWN into the arc, so: 0% = 90° (left), 50% = 0° (down), 100% = -90° (right)
-  const needleAngle = 90 - (percentage / 100) * 180;
+  // Calculate needle angle (from -90 to 90 degrees, where -90 is min and 90 is max)
+  const needleAngle = -90 + (percentage / 100) * 180;
   
   // Center of the gauge
   const cx = 50;
@@ -100,12 +98,11 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
           style={{
             transform: `rotate(${needleAngle}deg)`,
             transformOrigin: `${cx}px ${cy}px`,
-            transformBox: 'fill-box',
             transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
         >
           <polygon
-            points={`${cx - 2},${cy} ${cx},${cy + 24} ${cx + 2},${cy}`}
+            points={`${cx - 2},${cy} ${cx},${cy - 24} ${cx + 2},${cy}`}
             fill="hsl(var(--foreground))"
           />
         </g>
