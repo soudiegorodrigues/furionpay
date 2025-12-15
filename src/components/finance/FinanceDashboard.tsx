@@ -511,7 +511,7 @@ export const FinanceDashboard = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-3">
         {/* Income vs Expense Comparison - Minimalist Progress Bars */}
-        <Card>
+        <Card className="border border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-4 w-4 text-primary" />
@@ -587,7 +587,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* Monthly Evolution Chart */}
-        <Card>
+        <Card className="border border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -646,7 +646,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* Monthly Balance Bar Chart */}
-        <Card>
+        <Card className="border border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <DollarSign className="h-4 w-4 text-primary" />
@@ -693,7 +693,7 @@ export const FinanceDashboard = () => {
       {/* Category Charts */}
       <div className="grid grid-cols-1 gap-3">
         {/* Income by Category */}
-        <Card>
+        <Card className="border border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <ArrowUpRight className="h-4 w-4 text-green-600" />
@@ -747,7 +747,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* Expenses by Category */}
-        <Card>
+        <Card className="border border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <ArrowDownRight className="h-4 w-4 text-red-600" />
@@ -806,7 +806,7 @@ export const FinanceDashboard = () => {
         <div className="grid grid-cols-1 gap-3">
           {/* Top Expenses */}
           {expensesByCategory.length > 0 && (
-            <Card>
+            <Card className="border border-border/50">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <TrendingDown className="h-4 w-4 text-red-600" />
@@ -839,7 +839,7 @@ export const FinanceDashboard = () => {
 
           {/* Top Income */}
           {incomeByCategory.length > 0 && (
-            <Card>
+            <Card className="border border-border/50">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <TrendingUp className="h-4 w-4 text-green-600" />
