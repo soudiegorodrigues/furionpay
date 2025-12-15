@@ -42,7 +42,8 @@ import {
   ChevronRight,
   Calendar,
   Repeat,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -101,6 +102,7 @@ export const FinanceTransactions = () => {
     recurring_end_date: ''
   });
   const [isGeneratingRecurring, setIsGeneratingRecurring] = useState(false);
+  const [isSyncingWithdrawals, setIsSyncingWithdrawals] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -373,6 +375,103 @@ export const FinanceTransactions = () => {
     }
   }, [user?.id, toast]);
 
+  // Sync approved withdrawals as income
+  const syncWithdrawals = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setIsSyncingWithdrawals(true);
+    try {
+      // Fetch approved withdrawals for this user
+      const { data: withdrawals, error: wError } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'approved');
+
+      if (wError) throw wError;
+      if (!withdrawals || withdrawals.length === 0) {
+        toast({ title: "Nenhum saque aprovado encontrado" });
+        setIsSyncingWithdrawals(false);
+        return;
+      }
+
+      // Get or create "Saques" category
+      let saquesCategory = categories.find(c => c.name === 'Saques' && c.type === 'income');
+      
+      if (!saquesCategory) {
+        const { data: newCategory, error: catError } = await supabase
+          .from('finance_categories')
+          .insert({
+            user_id: user.id,
+            name: 'Saques',
+            type: 'income',
+            color: '#10b981',
+            icon: 'wallet',
+            is_default: false
+          })
+          .select()
+          .single();
+
+        if (catError) throw catError;
+        saquesCategory = newCategory;
+      }
+
+      // Get existing synced transactions to avoid duplicates
+      const { data: existingTxs } = await supabase
+        .from('finance_transactions')
+        .select('description')
+        .eq('user_id', user.id)
+        .eq('type', 'income')
+        .eq('category_id', saquesCategory.id);
+
+      const existingWithdrawalIds = new Set(
+        existingTxs?.map(t => {
+          const match = t.description?.match(/\[ID: ([^\]]+)\]/);
+          return match ? match[1] : null;
+        }).filter(Boolean) || []
+      );
+
+      // Create transactions for non-synced withdrawals
+      const transactionsToCreate = withdrawals
+        .filter(w => !existingWithdrawalIds.has(w.id))
+        .map(w => ({
+          user_id: user.id,
+          type: 'income',
+          amount: w.amount,
+          description: `Saque aprovado - ${w.bank_name} [ID: ${w.id}]`,
+          date: w.processed_at ? new Date(w.processed_at).toISOString().split('T')[0] : new Date(w.created_at).toISOString().split('T')[0],
+          category_id: saquesCategory!.id,
+          is_recurring: false,
+          recurring_frequency: null,
+          recurring_end_date: null
+        }));
+
+      if (transactionsToCreate.length > 0) {
+        const { error: insertError } = await supabase
+          .from('finance_transactions')
+          .insert(transactionsToCreate);
+
+        if (insertError) throw insertError;
+
+        toast({
+          title: "Saques sincronizados!",
+          description: `${transactionsToCreate.length} saque(s) importado(s) como receita`
+        });
+        fetchData();
+      } else {
+        toast({ title: "Todos os saques já estão sincronizados" });
+      }
+    } catch (error) {
+      console.error('Error syncing withdrawals:', error);
+      toast({
+        title: "Erro ao sincronizar saques",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSyncingWithdrawals(false);
+    }
+  }, [user?.id, categories, toast]);
+
   const getCategoryById = (id: string | null) => {
     return categories.find(c => c.id === id);
   };
@@ -443,7 +542,20 @@ export const FinanceTransactions = () => {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            onClick={syncWithdrawals}
+            disabled={isSyncingWithdrawals}
+            className="gap-2"
+          >
+            {isSyncingWithdrawals ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">Sincronizar Saques</span>
+          </Button>
           <Button 
             variant="outline" 
             onClick={generateRecurringTransactions}
