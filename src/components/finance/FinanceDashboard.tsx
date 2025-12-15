@@ -445,6 +445,7 @@ export const FinanceDashboard = () => {
                 min={0}
                 max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
                 label={formatCurrency(stats.totalIncome)}
+                colorScheme="green"
                 size={100}
               />
               {stats.incomeChange !== 0 && periodFilter !== 'all' && (
@@ -466,6 +467,7 @@ export const FinanceDashboard = () => {
                 min={0}
                 max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
                 label={formatCurrency(stats.totalExpense)}
+                colorScheme="green"
                 size={100}
               />
               {stats.expenseChange !== 0 && periodFilter !== 'all' && (
@@ -487,6 +489,7 @@ export const FinanceDashboard = () => {
                 min={0}
                 max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
                 label={formatCurrency(stats.totalInvestment)}
+                colorScheme="red"
                 size={100}
               />
             </div>
@@ -503,6 +506,7 @@ export const FinanceDashboard = () => {
                 min={0}
                 max={Math.max(stats.totalIncome, Math.abs(stats.balance), 1) * 1.2}
                 label={formatCurrency(stats.balance)}
+                colorScheme="purple"
                 size={100}
               />
             </div>
