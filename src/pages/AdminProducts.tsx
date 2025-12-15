@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Package, Plus, FolderPlus, Search, CheckCircle, Pencil, Trash2, Image, Construction } from "lucide-react";
-
 interface Product {
   id: string;
   name: string;
@@ -24,27 +23,36 @@ interface Product {
   folder_id: string | null;
   created_at: string;
 }
-
 interface ProductFolder {
   id: string;
   name: string;
   color: string | null;
 }
-
 export default function AdminProducts() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", description: "", price: 0, image_url: "" });
-  const [newFolder, setNewFolder] = useState({ name: "", color: "#dc2626" });
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    image_url: ""
+  });
+  const [newFolder, setNewFolder] = useState({
+    name: "",
+    color: "#dc2626"
+  });
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   // Check if user is admin
   useEffect(() => {
     const checkAdmin = async () => {
-      const { data, error } = await supabase.rpc('is_admin_authenticated');
+      const {
+        data,
+        error
+      } = await supabase.rpc('is_admin_authenticated');
       if (!error) {
         setIsAdmin(data);
       } else {
@@ -53,140 +61,147 @@ export default function AdminProducts() {
     };
     checkAdmin();
   }, []);
-
-  const { data: products = [], refetch: refetchProducts, isLoading: isLoadingProducts } = useQuery({
+  const {
+    data: products = [],
+    refetch: refetchProducts,
+    isLoading: isLoadingProducts
+  } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      
+      const {
+        data,
+        error
+      } = await supabase.from("products").select("*").eq("user_id", user.id).order("created_at", {
+        ascending: false
+      });
       if (error) throw error;
       return data as Product[];
     },
-    enabled: isAdmin === true,
+    enabled: isAdmin === true
   });
-
-  const { data: folders = [], refetch: refetchFolders } = useQuery({
+  const {
+    data: folders = [],
+    refetch: refetchFolders
+  } = useQuery({
     queryKey: ["product_folders"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from("product_folders")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      
+      const {
+        data,
+        error
+      } = await supabase.from("product_folders").select("*").eq("user_id", user.id).order("created_at", {
+        ascending: false
+      });
       if (error) throw error;
       return data as ProductFolder[];
     },
-    enabled: isAdmin === true,
+    enabled: isAdmin === true
   });
-
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === "all" || 
-      (activeTab === "active" && product.is_active) || 
-      (activeTab === "inactive" && !product.is_active);
+    const matchesTab = activeTab === "all" || activeTab === "active" && product.is_active || activeTab === "inactive" && !product.is_active;
     return matchesSearch && matchesTab;
   });
-
   const handleCreateProduct = async () => {
     if (!newProduct.name.trim()) {
       toast.error("Nome do produto é obrigatório");
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
     if (!user) return;
-
-    const { error } = await supabase
-      .from("products")
-      .insert({
-        name: newProduct.name,
-        description: newProduct.description || null,
-        price: newProduct.price,
-        image_url: newProduct.image_url || null,
-        user_id: user.id,
-      });
-
+    const {
+      error
+    } = await supabase.from("products").insert({
+      name: newProduct.name,
+      description: newProduct.description || null,
+      price: newProduct.price,
+      image_url: newProduct.image_url || null,
+      user_id: user.id
+    });
     if (error) {
       toast.error("Erro ao criar produto");
       return;
     }
-
     toast.success("Produto criado com sucesso");
     setIsCreateDialogOpen(false);
-    setNewProduct({ name: "", description: "", price: 0, image_url: "" });
+    setNewProduct({
+      name: "",
+      description: "",
+      price: 0,
+      image_url: ""
+    });
     refetchProducts();
   };
-
   const handleCreateFolder = async () => {
     if (!newFolder.name.trim()) {
       toast.error("Nome da pasta é obrigatório");
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: {
+        user
+      }
+    } = await supabase.auth.getUser();
     if (!user) return;
-
-    const { error } = await supabase
-      .from("product_folders")
-      .insert({
-        name: newFolder.name,
-        color: newFolder.color,
-        user_id: user.id,
-      });
-
+    const {
+      error
+    } = await supabase.from("product_folders").insert({
+      name: newFolder.name,
+      color: newFolder.color,
+      user_id: user.id
+    });
     if (error) {
       toast.error("Erro ao criar pasta");
       return;
     }
-
     toast.success("Pasta criada com sucesso");
     setIsFolderDialogOpen(false);
-    setNewFolder({ name: "", color: "#dc2626" });
+    setNewFolder({
+      name: "",
+      color: "#dc2626"
+    });
     refetchFolders();
   };
-
   const handleDeleteProduct = async (productId: string) => {
-    const { error } = await supabase
-      .from("products")
-      .delete()
-      .eq("id", productId);
-
+    const {
+      error
+    } = await supabase.from("products").delete().eq("id", productId);
     if (error) {
       toast.error("Erro ao excluir produto");
       return;
     }
-
     toast.success("Produto excluído com sucesso");
     refetchProducts();
   };
 
   // Loading state
   if (isAdmin === null) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <AdminHeader title="Produtos" icon={Package} />
+    return <div className="flex flex-col min-h-screen">
+        
         <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
           <div className="animate-pulse text-muted-foreground">Carregando...</div>
         </main>
-      </div>
-    );
+      </div>;
   }
 
   // Non-admin users see the "Página em Produção" notice
   if (!isAdmin) {
-    return (
-      <div className="flex flex-col min-h-screen">
+    return <div className="flex flex-col min-h-screen">
         <AdminHeader title="Produtos" icon={Package} />
         <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
           <Card className="max-w-md w-full">
@@ -202,13 +217,11 @@ export default function AdminProducts() {
             </CardContent>
           </Card>
         </main>
-      </div>
-    );
+      </div>;
   }
 
   // Admin users see the full products page
-  return (
-    <div className="flex flex-col min-h-screen">
+  return <div className="flex flex-col min-h-screen">
       <AdminHeader title="Produtos" icon={Package} />
       
       <main className="flex-1 p-4 md:p-6">
@@ -233,28 +246,24 @@ export default function AdminProducts() {
                 <div className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label>Nome do produto</Label>
-                    <Input
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                      placeholder="Ex: Ebook de Marketing"
-                    />
+                    <Input value={newProduct.name} onChange={e => setNewProduct({
+                    ...newProduct,
+                    name: e.target.value
+                  })} placeholder="Ex: Ebook de Marketing" />
                   </div>
                   <div className="space-y-2">
                     <Label>Descrição</Label>
-                    <Textarea
-                      value={newProduct.description}
-                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                      placeholder="Descreva seu produto..."
-                    />
+                    <Textarea value={newProduct.description} onChange={e => setNewProduct({
+                    ...newProduct,
+                    description: e.target.value
+                  })} placeholder="Descreva seu produto..." />
                   </div>
                   <div className="space-y-2">
                     <Label>Preço (R$)</Label>
-                    <Input
-                      type="number"
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.00"
-                    />
+                    <Input type="number" value={newProduct.price} onChange={e => setNewProduct({
+                    ...newProduct,
+                    price: parseFloat(e.target.value) || 0
+                  })} placeholder="0.00" />
                   </div>
                   <Button onClick={handleCreateProduct} className="w-full">
                     Criar produto
@@ -277,19 +286,17 @@ export default function AdminProducts() {
                 <div className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label>Nome da pasta</Label>
-                    <Input
-                      value={newFolder.name}
-                      onChange={(e) => setNewFolder({ ...newFolder, name: e.target.value })}
-                      placeholder="Ex: Cursos"
-                    />
+                    <Input value={newFolder.name} onChange={e => setNewFolder({
+                    ...newFolder,
+                    name: e.target.value
+                  })} placeholder="Ex: Cursos" />
                   </div>
                   <div className="space-y-2">
                     <Label>Cor</Label>
-                    <Input
-                      type="color"
-                      value={newFolder.color}
-                      onChange={(e) => setNewFolder({ ...newFolder, color: e.target.value })}
-                    />
+                    <Input type="color" value={newFolder.color} onChange={e => setNewFolder({
+                    ...newFolder,
+                    color: e.target.value
+                  })} />
                   </div>
                   <Button onClick={handleCreateFolder} className="w-full">
                     Criar pasta
@@ -304,12 +311,7 @@ export default function AdminProducts() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar produtos..."
-              className="pl-9"
-            />
+            <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar produtos..." className="pl-9" />
           </div>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
@@ -321,51 +323,29 @@ export default function AdminProducts() {
         </div>
 
         {/* Products Grid */}
-        {isLoadingProducts ? null : filteredProducts.length === 0 ? (
-          <Card>
+        {isLoadingProducts ? null : filteredProducts.length === 0 ? <Card>
             <CardContent className="p-12 text-center">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>
               <p className="text-muted-foreground">Crie seu primeiro produto para começar.</p>
             </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden group cursor-pointer" onClick={() => navigate(`/admin/products/${product.id}`)}>
+          </Card> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredProducts.map(product => <Card key={product.id} className="overflow-hidden group cursor-pointer" onClick={() => navigate(`/admin/products/${product.id}`)}>
                 <div className="aspect-square bg-muted relative">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
+                  {product.image_url ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">
                       <Image className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                  )}
+                    </div>}
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/admin/products/${product.id}`);
-                      }}
-                    >
+                    <Button size="icon" variant="secondary" className="h-8 w-8" onClick={e => {
+                e.stopPropagation();
+                navigate(`/admin/products/${product.id}`);
+              }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteProduct(product.id);
-                      }}
-                    >
+                    <Button size="icon" variant="destructive" className="h-8 w-8" onClick={e => {
+                e.stopPropagation();
+                handleDeleteProduct(product.id);
+              }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -393,11 +373,8 @@ export default function AdminProducts() {
                     </p>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
       </main>
-    </div>
-  );
+    </div>;
 }
