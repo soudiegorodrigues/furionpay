@@ -35,19 +35,19 @@ const AdminGestaoFinanceira = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
-          <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <PieChart className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
           </TabsTrigger>
-          <TabsTrigger value="transactions" className="flex items-center gap-2 py-3">
+          <TabsTrigger value="transactions" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Wallet className="h-4 w-4" />
             <span className="hidden sm:inline">Transações</span>
           </TabsTrigger>
-          <TabsTrigger value="categories" className="flex items-center gap-2 py-3">
+          <TabsTrigger value="categories" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">Categorias</span>
           </TabsTrigger>
-          <TabsTrigger value="goals" className="flex items-center gap-2 py-3">
+          <TabsTrigger value="goals" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <TrendingUp className="h-4 w-4" />
             <span className="hidden sm:inline">Metas</span>
           </TabsTrigger>
