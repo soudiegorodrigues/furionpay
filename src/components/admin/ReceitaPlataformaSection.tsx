@@ -37,6 +37,13 @@ interface UserProfitRanking {
 
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
 type RankingFilter = 'all' | 'today' | '7days' | '30days' | 'thisMonth';
+type AcquirerCostFilter = 'today' | '7days' | 'thisMonth';
+
+const acquirerCostFilterOptions: { value: AcquirerCostFilter; label: string }[] = [
+  { value: 'today', label: 'Hoje' },
+  { value: '7days', label: '7 dias' },
+  { value: 'thisMonth', label: 'Este mês' },
+];
 
 const chartFilterOptions: { value: ChartFilter; label: string }[] = [
   { value: 'today', label: 'Hoje' },
@@ -96,6 +103,7 @@ export const ReceitaPlataformaSection = () => {
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [rankingFilter, setRankingFilter] = useState<RankingFilter>('all');
+  const [acquirerCostFilter, setAcquirerCostFilter] = useState<AcquirerCostFilter>('thisMonth');
   const [monthlyGoal, setMonthlyGoal] = useState<number>(0);
   const [goalInput, setGoalInput] = useState<string>('');
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
@@ -261,11 +269,26 @@ export const ReceitaPlataformaSection = () => {
     let thisYearAcquirerCost = 0;
     let totalAcquirerCost = 0;
     
-    // Contadores por adquirente (total e este mês)
+    // Contadores por adquirente (por período)
     const acquirerBreakdown = {
-      spedpay: { count: 0, cost: 0, volume: 0, thisMonth: { count: 0, cost: 0, volume: 0 } },
-      inter: { count: 0, cost: 0, volume: 0, thisMonth: { count: 0, cost: 0, volume: 0 } },
-      ativus: { count: 0, cost: 0, volume: 0, thisMonth: { count: 0, cost: 0, volume: 0 } }
+      spedpay: { 
+        total: { count: 0, cost: 0, volume: 0 },
+        today: { count: 0, cost: 0, volume: 0 },
+        sevenDays: { count: 0, cost: 0, volume: 0 },
+        thisMonth: { count: 0, cost: 0, volume: 0 }
+      },
+      inter: { 
+        total: { count: 0, cost: 0, volume: 0 },
+        today: { count: 0, cost: 0, volume: 0 },
+        sevenDays: { count: 0, cost: 0, volume: 0 },
+        thisMonth: { count: 0, cost: 0, volume: 0 }
+      },
+      ativus: { 
+        total: { count: 0, cost: 0, volume: 0 },
+        today: { count: 0, cost: 0, volume: 0 },
+        sevenDays: { count: 0, cost: 0, volume: 0 },
+        thisMonth: { count: 0, cost: 0, volume: 0 }
+      }
     };
 
     // Para calcular média diária dos últimos 7 dias
@@ -278,22 +301,37 @@ export const ReceitaPlataformaSection = () => {
       totalGross += grossProfit;
       totalAcquirerCost += acquirerCost;
       
-      // Track acquirer breakdown (total)
+      // Track acquirer breakdown por período
       const acq = (tx.acquirer || 'spedpay') as keyof typeof acquirerBreakdown;
-      if (acquirerBreakdown[acq]) {
-        acquirerBreakdown[acq].count++;
-        acquirerBreakdown[acq].cost += acquirerCost;
-        acquirerBreakdown[acq].volume += tx.amount;
-      }
-
       const txDate = tx.paid_at ? new Date(tx.paid_at) : new Date(tx.created_at);
       const txDateStr = getBrazilDateStr(txDate);
-
-      // Track acquirer breakdown (thisMonth) - precisa verificar a data
-      if (txDate >= thisMonthStart && acquirerBreakdown[acq]) {
-        acquirerBreakdown[acq].thisMonth.count++;
-        acquirerBreakdown[acq].thisMonth.cost += acquirerCost;
-        acquirerBreakdown[acq].thisMonth.volume += tx.amount;
+      
+      if (acquirerBreakdown[acq]) {
+        // Total
+        acquirerBreakdown[acq].total.count++;
+        acquirerBreakdown[acq].total.cost += acquirerCost;
+        acquirerBreakdown[acq].total.volume += tx.amount;
+        
+        // Hoje
+        if (txDateStr === todayStr) {
+          acquirerBreakdown[acq].today.count++;
+          acquirerBreakdown[acq].today.cost += acquirerCost;
+          acquirerBreakdown[acq].today.volume += tx.amount;
+        }
+        
+        // 7 dias
+        if (txDate >= sevenDaysAgo) {
+          acquirerBreakdown[acq].sevenDays.count++;
+          acquirerBreakdown[acq].sevenDays.cost += acquirerCost;
+          acquirerBreakdown[acq].sevenDays.volume += tx.amount;
+        }
+        
+        // Este mês
+        if (txDate >= thisMonthStart) {
+          acquirerBreakdown[acq].thisMonth.count++;
+          acquirerBreakdown[acq].thisMonth.cost += acquirerCost;
+          acquirerBreakdown[acq].thisMonth.volume += tx.amount;
+        }
       }
 
       // Hoje
@@ -730,15 +768,57 @@ export const ReceitaPlataformaSection = () => {
       </Card>
 
       {/* Card Detalhado: Custos por Adquirente */}
-      {(profitStats.acquirerBreakdown.spedpay.thisMonth.count > 0 || 
-        profitStats.acquirerBreakdown.inter.thisMonth.count > 0 || 
-        profitStats.acquirerBreakdown.ativus.thisMonth.count > 0) && (
+      {(profitStats.acquirerBreakdown.spedpay.total.count > 0 || 
+        profitStats.acquirerBreakdown.inter.total.count > 0 || 
+        profitStats.acquirerBreakdown.ativus.total.count > 0) && (() => {
+        // Helper para obter dados do período selecionado
+        const getPeriodKey = () => {
+          if (acquirerCostFilter === '7days') return 'sevenDays';
+          return acquirerCostFilter;
+        };
+        const periodKey = getPeriodKey();
+        const getPeriodLabel = () => {
+          switch(acquirerCostFilter) {
+            case 'today': return 'Hoje';
+            case '7days': return '7 dias';
+            case 'thisMonth': return 'Este mês';
+          }
+        };
+        
+        const spedpayData = profitStats.acquirerBreakdown.spedpay[periodKey];
+        const interData = profitStats.acquirerBreakdown.inter[periodKey];
+        const ativusData = profitStats.acquirerBreakdown.ativus[periodKey];
+        
+        const totalCost = spedpayData.cost + interData.cost + ativusData.cost;
+        const totalCount = spedpayData.count + interData.count + ativusData.count;
+        const avgCost = totalCount > 0 ? totalCost / totalCount : 0;
+        
+        return (
         <Card className="border-primary/20">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <PieChartIcon className="h-4 w-4 text-primary" />
-              Custos por Adquirente (Este Mês)
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <PieChartIcon className="h-4 w-4 text-primary" />
+                Custos por Adquirente ({getPeriodLabel()})
+              </CardTitle>
+              
+              <div className="flex items-center bg-muted rounded-full p-1">
+                {acquirerCostFilterOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setAcquirerCostFilter(option.value)}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-full transition-all",
+                      acquirerCostFilter === option.value
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {/* Resumo e Gráfico de Pizza */}
@@ -749,9 +829,9 @@ export const ReceitaPlataformaSection = () => {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'SpedPay', value: profitStats.acquirerBreakdown.spedpay.thisMonth.cost, color: '#3B82F6' },
-                        { name: 'Banco Inter', value: profitStats.acquirerBreakdown.inter.thisMonth.cost, color: '#F97316' },
-                        { name: 'Ativus Hub', value: profitStats.acquirerBreakdown.ativus.thisMonth.cost, color: '#10B981' }
+                        { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
+                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' }
                       ].filter(d => d.value > 0)}
                       cx="50%"
                       cy="50%"
@@ -763,9 +843,9 @@ export const ReceitaPlataformaSection = () => {
                       labelLine={false}
                     >
                       {[
-                        { name: 'SpedPay', value: profitStats.acquirerBreakdown.spedpay.thisMonth.cost, color: '#3B82F6' },
-                        { name: 'Banco Inter', value: profitStats.acquirerBreakdown.inter.thisMonth.cost, color: '#F97316' },
-                        { name: 'Ativus Hub', value: profitStats.acquirerBreakdown.ativus.thisMonth.cost, color: '#10B981' }
+                        { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
+                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' }
                       ].filter(d => d.value > 0).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -786,26 +866,19 @@ export const ReceitaPlataformaSection = () => {
               <div className="grid grid-cols-2 gap-2 content-start">
                 <div className="text-center p-3 bg-muted/30 rounded-lg">
                   <div className="text-lg font-bold text-foreground">
-                    {formatCurrency(profitStats.acquirerCosts.thisMonth)}
+                    {formatCurrency(totalCost)}
                   </div>
                   <p className="text-xs text-muted-foreground">Custo Total</p>
                 </div>
                 <div className="text-center p-3 bg-muted/30 rounded-lg">
                   <div className="text-lg font-bold text-foreground">
-                    {profitStats.acquirerBreakdown.spedpay.thisMonth.count + 
-                     profitStats.acquirerBreakdown.inter.thisMonth.count + 
-                     profitStats.acquirerBreakdown.ativus.thisMonth.count}
+                    {totalCount}
                   </div>
                   <p className="text-xs text-muted-foreground">Transações</p>
                 </div>
                 <div className="col-span-2 text-center p-3 bg-muted/30 rounded-lg">
                   <div className="text-lg font-bold text-foreground">
-                    {formatCurrency(
-                      profitStats.acquirerCosts.thisMonth / 
-                      Math.max(1, profitStats.acquirerBreakdown.spedpay.thisMonth.count + 
-                       profitStats.acquirerBreakdown.inter.thisMonth.count + 
-                       profitStats.acquirerBreakdown.ativus.thisMonth.count)
-                    )}
+                    {formatCurrency(avgCost)}
                   </div>
                   <p className="text-xs text-muted-foreground">Custo Médio/TX</p>
                 </div>
@@ -827,7 +900,7 @@ export const ReceitaPlataformaSection = () => {
                 </TableHeader>
                 <TableBody>
                   {/* SpedPay */}
-                  <TableRow className={profitStats.acquirerBreakdown.spedpay.thisMonth.count === 0 ? 'opacity-50' : ''}>
+                  <TableRow className={spedpayData.count === 0 ? 'opacity-50' : ''}>
                     <TableCell className="py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
@@ -838,23 +911,23 @@ export const ReceitaPlataformaSection = () => {
                       {acquirerFees.spedpay.rate}% + R$ {acquirerFees.spedpay.fixed.toFixed(2)}
                     </TableCell>
                     <TableCell className="text-xs text-center font-medium">
-                      {profitStats.acquirerBreakdown.spedpay.thisMonth.count}
+                      {spedpayData.count}
                     </TableCell>
                     <TableCell className="text-xs text-right hidden sm:table-cell">
-                      {formatCurrency(profitStats.acquirerBreakdown.spedpay.thisMonth.volume)}
+                      {formatCurrency(spedpayData.volume)}
                     </TableCell>
                     <TableCell className="text-xs text-right font-medium text-red-500">
-                      {formatCurrency(profitStats.acquirerBreakdown.spedpay.thisMonth.cost)}
+                      {formatCurrency(spedpayData.cost)}
                     </TableCell>
                     <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
-                      {profitStats.acquirerBreakdown.spedpay.thisMonth.count > 0 
-                        ? formatCurrency(profitStats.acquirerBreakdown.spedpay.thisMonth.cost / profitStats.acquirerBreakdown.spedpay.thisMonth.count)
+                      {spedpayData.count > 0 
+                        ? formatCurrency(spedpayData.cost / spedpayData.count)
                         : '-'}
                     </TableCell>
                   </TableRow>
 
                   {/* Banco Inter */}
-                  <TableRow className={profitStats.acquirerBreakdown.inter.thisMonth.count === 0 ? 'opacity-50' : ''}>
+                  <TableRow className={interData.count === 0 ? 'opacity-50' : ''}>
                     <TableCell className="py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
@@ -865,23 +938,23 @@ export const ReceitaPlataformaSection = () => {
                       {acquirerFees.inter.rate}% + R$ {acquirerFees.inter.fixed.toFixed(2)}
                     </TableCell>
                     <TableCell className="text-xs text-center font-medium">
-                      {profitStats.acquirerBreakdown.inter.thisMonth.count}
+                      {interData.count}
                     </TableCell>
                     <TableCell className="text-xs text-right hidden sm:table-cell">
-                      {formatCurrency(profitStats.acquirerBreakdown.inter.thisMonth.volume)}
+                      {formatCurrency(interData.volume)}
                     </TableCell>
                     <TableCell className="text-xs text-right font-medium text-red-500">
-                      {formatCurrency(profitStats.acquirerBreakdown.inter.thisMonth.cost)}
+                      {formatCurrency(interData.cost)}
                     </TableCell>
                     <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
-                      {profitStats.acquirerBreakdown.inter.thisMonth.count > 0 
-                        ? formatCurrency(profitStats.acquirerBreakdown.inter.thisMonth.cost / profitStats.acquirerBreakdown.inter.thisMonth.count)
+                      {interData.count > 0 
+                        ? formatCurrency(interData.cost / interData.count)
                         : '-'}
                     </TableCell>
                   </TableRow>
 
                   {/* Ativus Hub */}
-                  <TableRow className={profitStats.acquirerBreakdown.ativus.thisMonth.count === 0 ? 'opacity-50' : ''}>
+                  <TableRow className={ativusData.count === 0 ? 'opacity-50' : ''}>
                     <TableCell className="py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -892,17 +965,17 @@ export const ReceitaPlataformaSection = () => {
                       {acquirerFees.ativus.rate}% + R$ {acquirerFees.ativus.fixed.toFixed(2)}
                     </TableCell>
                     <TableCell className="text-xs text-center font-medium">
-                      {profitStats.acquirerBreakdown.ativus.thisMonth.count}
+                      {ativusData.count}
                     </TableCell>
                     <TableCell className="text-xs text-right hidden sm:table-cell">
-                      {formatCurrency(profitStats.acquirerBreakdown.ativus.thisMonth.volume)}
+                      {formatCurrency(ativusData.volume)}
                     </TableCell>
                     <TableCell className="text-xs text-right font-medium text-red-500">
-                      {formatCurrency(profitStats.acquirerBreakdown.ativus.thisMonth.cost)}
+                      {formatCurrency(ativusData.cost)}
                     </TableCell>
                     <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
-                      {profitStats.acquirerBreakdown.ativus.thisMonth.count > 0 
-                        ? formatCurrency(profitStats.acquirerBreakdown.ativus.thisMonth.cost / profitStats.acquirerBreakdown.ativus.thisMonth.count)
+                      {ativusData.count > 0 
+                        ? formatCurrency(ativusData.cost / ativusData.count)
                         : '-'}
                     </TableCell>
                   </TableRow>
@@ -911,7 +984,8 @@ export const ReceitaPlataformaSection = () => {
             </div>
           </CardContent>
         </Card>
-      )}
+        );
+      })()}
 
       {/* Gráfico de Evolução do Lucro */}
       <Card>
