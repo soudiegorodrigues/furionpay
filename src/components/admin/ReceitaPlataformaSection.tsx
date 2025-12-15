@@ -261,11 +261,11 @@ export const ReceitaPlataformaSection = () => {
     let thisYearAcquirerCost = 0;
     let totalAcquirerCost = 0;
     
-    // Contadores por adquirente
+    // Contadores por adquirente (total e este mês)
     const acquirerBreakdown = {
-      spedpay: { count: 0, cost: 0 },
-      inter: { count: 0, cost: 0 },
-      ativus: { count: 0, cost: 0 }
+      spedpay: { count: 0, cost: 0, volume: 0, thisMonth: { count: 0, cost: 0, volume: 0 } },
+      inter: { count: 0, cost: 0, volume: 0, thisMonth: { count: 0, cost: 0, volume: 0 } },
+      ativus: { count: 0, cost: 0, volume: 0, thisMonth: { count: 0, cost: 0, volume: 0 } }
     };
 
     // Para calcular média diária dos últimos 7 dias
@@ -278,15 +278,23 @@ export const ReceitaPlataformaSection = () => {
       totalGross += grossProfit;
       totalAcquirerCost += acquirerCost;
       
-      // Track acquirer breakdown
+      // Track acquirer breakdown (total)
       const acq = (tx.acquirer || 'spedpay') as keyof typeof acquirerBreakdown;
       if (acquirerBreakdown[acq]) {
         acquirerBreakdown[acq].count++;
         acquirerBreakdown[acq].cost += acquirerCost;
+        acquirerBreakdown[acq].volume += tx.amount;
       }
 
       const txDate = tx.paid_at ? new Date(tx.paid_at) : new Date(tx.created_at);
       const txDateStr = getBrazilDateStr(txDate);
+
+      // Track acquirer breakdown (thisMonth) - precisa verificar a data
+      if (txDate >= thisMonthStart && acquirerBreakdown[acq]) {
+        acquirerBreakdown[acq].thisMonth.count++;
+        acquirerBreakdown[acq].thisMonth.cost += acquirerCost;
+        acquirerBreakdown[acq].thisMonth.volume += tx.amount;
+      }
 
       // Hoje
       if (txDateStr === todayStr) {
@@ -708,47 +716,9 @@ export const ReceitaPlataformaSection = () => {
             </div>
           </div>
           
-          {/* Breakdown por adquirente */}
-          {(profitStats.acquirerBreakdown.spedpay.count > 0 || 
-            profitStats.acquirerBreakdown.inter.count > 0 || 
-            profitStats.acquirerBreakdown.ativus.count > 0) && (
-            <div className="mt-4 pt-4 border-t border-border/50">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Custos por Adquirente (Total):</p>
-              <div className="grid grid-cols-3 gap-2">
-                {profitStats.acquirerBreakdown.spedpay.count > 0 && (
-                  <div className="text-center p-2 bg-muted/30 rounded-lg">
-                    <div className="text-xs font-semibold text-foreground">
-                      {formatCurrency(profitStats.acquirerBreakdown.spedpay.cost)}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">SpedPay</p>
-                    <p className="text-[10px] text-muted-foreground">({profitStats.acquirerBreakdown.spedpay.count} tx)</p>
-                  </div>
-                )}
-                {profitStats.acquirerBreakdown.inter.count > 0 && (
-                  <div className="text-center p-2 bg-muted/30 rounded-lg">
-                    <div className="text-xs font-semibold text-foreground">
-                      {formatCurrency(profitStats.acquirerBreakdown.inter.cost)}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">Banco Inter</p>
-                    <p className="text-[10px] text-muted-foreground">({profitStats.acquirerBreakdown.inter.count} tx)</p>
-                  </div>
-                )}
-                {profitStats.acquirerBreakdown.ativus.count > 0 && (
-                  <div className="text-center p-2 bg-muted/30 rounded-lg">
-                    <div className="text-xs font-semibold text-foreground">
-                      {formatCurrency(profitStats.acquirerBreakdown.ativus.cost)}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">Ativus Hub</p>
-                    <p className="text-[10px] text-muted-foreground">({profitStats.acquirerBreakdown.ativus.count} tx)</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
           {/* Taxa de margem */}
           {profitStats.gross.thisMonth > 0 && (
-            <div className="mt-3 text-center">
+            <div className="text-center">
               <span className="text-xs text-muted-foreground">
                 Margem: <span className="font-semibold text-foreground">
                   {((profitStats.thisMonth / profitStats.gross.thisMonth) * 100).toFixed(1)}%
@@ -758,6 +728,190 @@ export const ReceitaPlataformaSection = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Card Detalhado: Custos por Adquirente */}
+      {(profitStats.acquirerBreakdown.spedpay.thisMonth.count > 0 || 
+        profitStats.acquirerBreakdown.inter.thisMonth.count > 0 || 
+        profitStats.acquirerBreakdown.ativus.thisMonth.count > 0) && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <PieChartIcon className="h-4 w-4 text-primary" />
+              Custos por Adquirente (Este Mês)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Resumo e Gráfico de Pizza */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              {/* Gráfico de Pizza */}
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'SpedPay', value: profitStats.acquirerBreakdown.spedpay.thisMonth.cost, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: profitStats.acquirerBreakdown.inter.thisMonth.cost, color: '#F97316' },
+                        { name: 'Ativus Hub', value: profitStats.acquirerBreakdown.ativus.thisMonth.cost, color: '#10B981' }
+                      ].filter(d => d.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={70}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {[
+                        { name: 'SpedPay', value: profitStats.acquirerBreakdown.spedpay.thisMonth.cost, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: profitStats.acquirerBreakdown.inter.thisMonth.cost, color: '#F97316' },
+                        { name: 'Ativus Hub', value: profitStats.acquirerBreakdown.ativus.thisMonth.cost, color: '#10B981' }
+                      ].filter(d => d.value > 0).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              
+              {/* Cards de Resumo */}
+              <div className="grid grid-cols-2 gap-2 content-start">
+                <div className="text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-lg font-bold text-foreground">
+                    {formatCurrency(profitStats.acquirerCosts.thisMonth)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Custo Total</p>
+                </div>
+                <div className="text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-lg font-bold text-foreground">
+                    {profitStats.acquirerBreakdown.spedpay.thisMonth.count + 
+                     profitStats.acquirerBreakdown.inter.thisMonth.count + 
+                     profitStats.acquirerBreakdown.ativus.thisMonth.count}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Transações</p>
+                </div>
+                <div className="col-span-2 text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-lg font-bold text-foreground">
+                    {formatCurrency(
+                      profitStats.acquirerCosts.thisMonth / 
+                      Math.max(1, profitStats.acquirerBreakdown.spedpay.thisMonth.count + 
+                       profitStats.acquirerBreakdown.inter.thisMonth.count + 
+                       profitStats.acquirerBreakdown.ativus.thisMonth.count)
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Custo Médio/TX</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabela Detalhada */}
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="text-xs">Adquirente</TableHead>
+                    <TableHead className="text-xs text-center">Taxa Config.</TableHead>
+                    <TableHead className="text-xs text-center">TXs</TableHead>
+                    <TableHead className="text-xs text-right hidden sm:table-cell">Volume</TableHead>
+                    <TableHead className="text-xs text-right">Custo</TableHead>
+                    <TableHead className="text-xs text-right hidden sm:table-cell">Médio/TX</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {/* SpedPay */}
+                  <TableRow className={profitStats.acquirerBreakdown.spedpay.thisMonth.count === 0 ? 'opacity-50' : ''}>
+                    <TableCell className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                        <span className="text-xs font-medium">SpedPay</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-center text-muted-foreground">
+                      {acquirerFees.spedpay.rate}% + R$ {acquirerFees.spedpay.fixed.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {profitStats.acquirerBreakdown.spedpay.thisMonth.count}
+                    </TableCell>
+                    <TableCell className="text-xs text-right hidden sm:table-cell">
+                      {formatCurrency(profitStats.acquirerBreakdown.spedpay.thisMonth.volume)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-medium text-red-500">
+                      {formatCurrency(profitStats.acquirerBreakdown.spedpay.thisMonth.cost)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
+                      {profitStats.acquirerBreakdown.spedpay.thisMonth.count > 0 
+                        ? formatCurrency(profitStats.acquirerBreakdown.spedpay.thisMonth.cost / profitStats.acquirerBreakdown.spedpay.thisMonth.count)
+                        : '-'}
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Banco Inter */}
+                  <TableRow className={profitStats.acquirerBreakdown.inter.thisMonth.count === 0 ? 'opacity-50' : ''}>
+                    <TableCell className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                        <span className="text-xs font-medium">Banco Inter</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-center text-muted-foreground">
+                      {acquirerFees.inter.rate}% + R$ {acquirerFees.inter.fixed.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {profitStats.acquirerBreakdown.inter.thisMonth.count}
+                    </TableCell>
+                    <TableCell className="text-xs text-right hidden sm:table-cell">
+                      {formatCurrency(profitStats.acquirerBreakdown.inter.thisMonth.volume)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-medium text-red-500">
+                      {formatCurrency(profitStats.acquirerBreakdown.inter.thisMonth.cost)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
+                      {profitStats.acquirerBreakdown.inter.thisMonth.count > 0 
+                        ? formatCurrency(profitStats.acquirerBreakdown.inter.thisMonth.cost / profitStats.acquirerBreakdown.inter.thisMonth.count)
+                        : '-'}
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Ativus Hub */}
+                  <TableRow className={profitStats.acquirerBreakdown.ativus.thisMonth.count === 0 ? 'opacity-50' : ''}>
+                    <TableCell className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <span className="text-xs font-medium">Ativus Hub</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-center text-muted-foreground">
+                      {acquirerFees.ativus.rate}% + R$ {acquirerFees.ativus.fixed.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {profitStats.acquirerBreakdown.ativus.thisMonth.count}
+                    </TableCell>
+                    <TableCell className="text-xs text-right hidden sm:table-cell">
+                      {formatCurrency(profitStats.acquirerBreakdown.ativus.thisMonth.volume)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-medium text-red-500">
+                      {formatCurrency(profitStats.acquirerBreakdown.ativus.thisMonth.cost)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
+                      {profitStats.acquirerBreakdown.ativus.thisMonth.count > 0 
+                        ? formatCurrency(profitStats.acquirerBreakdown.ativus.thisMonth.cost / profitStats.acquirerBreakdown.ativus.thisMonth.count)
+                        : '-'}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Gráfico de Evolução do Lucro */}
       <Card>
