@@ -2004,6 +2004,22 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              p_acquirer?: string
+              p_amount: number
+              p_donor_name: string
+              p_fee_fixed?: number
+              p_fee_percentage?: number
+              p_pix_code: string
+              p_popup_model?: string
+              p_product_name?: string
+              p_txid: string
+              p_user_id?: string
+              p_utm_data?: Json
+            }
+            Returns: string
+          }
       mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
       mark_reward_sent: {
         Args: { p_request_id: string; p_tracking_code?: string }
