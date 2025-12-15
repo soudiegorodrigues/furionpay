@@ -9,7 +9,8 @@ import {
   PiggyBank,
   Target,
   BarChart3,
-  DollarSign
+  DollarSign,
+  Calendar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -28,6 +29,7 @@ import {
   BarChart,
   Bar
 } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Transaction {
   id: string;
@@ -52,6 +54,8 @@ interface MonthlyData {
   balance: number;
 }
 
+type PeriodFilter = 'month' | 'quarter' | 'semester' | 'year' | 'all';
+
 const COLORS = {
   income: '#22c55e',
   expense: '#ef4444',
@@ -59,11 +63,20 @@ const COLORS = {
   balance: '#3b82f6'
 };
 
+const PERIOD_OPTIONS = [
+  { value: 'month', label: 'Este Mês' },
+  { value: 'quarter', label: 'Este Trimestre' },
+  { value: 'semester', label: 'Este Semestre' },
+  { value: 'year', label: 'Este Ano' },
+  { value: 'all', label: 'Todo Período' }
+];
+
 export const FinanceDashboard = () => {
   const { user } = useAdminAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
 
   useEffect(() => {
     if (user?.id) {
@@ -95,44 +108,109 @@ export const FinanceDashboard = () => {
     }
   };
 
-  const stats = useMemo(() => {
+  const getDateRange = (period: PeriodFilter): { start: Date; end: Date } => {
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    let start: Date;
 
-    const monthlyTransactions = transactions.filter(t => {
+    switch (period) {
+      case 'month':
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        const quarterStart = Math.floor(now.getMonth() / 3) * 3;
+        start = new Date(now.getFullYear(), quarterStart, 1);
+        break;
+      case 'semester':
+        const semesterStart = now.getMonth() < 6 ? 0 : 6;
+        start = new Date(now.getFullYear(), semesterStart, 1);
+        break;
+      case 'year':
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+      case 'all':
+      default:
+        start = new Date(2000, 0, 1);
+        break;
+    }
+
+    return { start, end };
+  };
+
+  const filteredTransactions = useMemo(() => {
+    const { start, end } = getDateRange(periodFilter);
+    return transactions.filter(t => {
       const date = new Date(t.date);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      return date >= start && date <= end;
     });
+  }, [transactions, periodFilter]);
 
-    const totalIncome = monthlyTransactions
+  const getPreviousPeriodRange = (period: PeriodFilter): { start: Date; end: Date } => {
+    const now = new Date();
+    let start: Date;
+    let end: Date;
+
+    switch (period) {
+      case 'month':
+        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        start = new Date(prevYear, prevMonth, 1);
+        end = new Date(prevYear, prevMonth + 1, 0, 23, 59, 59);
+        break;
+      case 'quarter':
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+        const prevQuarterYear = currentQuarter === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        start = new Date(prevQuarterYear, prevQuarter * 3, 1);
+        end = new Date(prevQuarterYear, prevQuarter * 3 + 3, 0, 23, 59, 59);
+        break;
+      case 'semester':
+        const currentSemester = now.getMonth() < 6 ? 0 : 1;
+        const prevSemester = currentSemester === 0 ? 1 : 0;
+        const prevSemYear = currentSemester === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        start = new Date(prevSemYear, prevSemester * 6, 1);
+        end = new Date(prevSemYear, prevSemester * 6 + 6, 0, 23, 59, 59);
+        break;
+      case 'year':
+        start = new Date(now.getFullYear() - 1, 0, 1);
+        end = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+        break;
+      default:
+        start = new Date(2000, 0, 1);
+        end = new Date(2000, 0, 1);
+    }
+
+    return { start, end };
+  };
+
+  const stats = useMemo(() => {
+    const totalIncome = filteredTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    const totalExpense = monthlyTransactions
+    const totalExpense = filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    const totalInvestment = monthlyTransactions
+    const totalInvestment = filteredTransactions
       .filter(t => t.type === 'investment')
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const balance = totalIncome - totalExpense - totalInvestment;
 
-    // Calculate previous month for comparison
-    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    // Calculate previous period for comparison
+    const { start: prevStart, end: prevEnd } = getPreviousPeriodRange(periodFilter);
     
-    const prevMonthTransactions = transactions.filter(t => {
+    const prevPeriodTransactions = transactions.filter(t => {
       const date = new Date(t.date);
-      return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
+      return date >= prevStart && date <= prevEnd;
     });
 
-    const prevIncome = prevMonthTransactions
+    const prevIncome = prevPeriodTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    const prevExpense = prevMonthTransactions
+    const prevExpense = prevPeriodTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
@@ -140,23 +218,14 @@ export const FinanceDashboard = () => {
     const expenseChange = prevExpense > 0 ? ((totalExpense - prevExpense) / prevExpense) * 100 : 0;
 
     return { totalIncome, totalExpense, totalInvestment, balance, incomeChange, expenseChange };
-  }, [transactions]);
+  }, [filteredTransactions, transactions, periodFilter]);
 
   const expensesByCategory = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const monthlyExpenses = transactions.filter(t => {
-      const date = new Date(t.date);
-      return t.type === 'expense' && 
-             date.getMonth() === currentMonth && 
-             date.getFullYear() === currentYear;
-    });
+    const periodExpenses = filteredTransactions.filter(t => t.type === 'expense');
 
     const grouped: Record<string, { name: string; value: number; color: string }> = {};
 
-    monthlyExpenses.forEach(t => {
+    periodExpenses.forEach(t => {
       const category = categories.find(c => c.id === t.category_id);
       const key = category?.id || 'uncategorized';
       if (!grouped[key]) {
@@ -170,23 +239,14 @@ export const FinanceDashboard = () => {
     });
 
     return Object.values(grouped).sort((a, b) => b.value - a.value);
-  }, [transactions, categories]);
+  }, [filteredTransactions, categories]);
 
   const incomeByCategory = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const monthlyIncome = transactions.filter(t => {
-      const date = new Date(t.date);
-      return t.type === 'income' && 
-             date.getMonth() === currentMonth && 
-             date.getFullYear() === currentYear;
-    });
+    const periodIncome = filteredTransactions.filter(t => t.type === 'income');
 
     const grouped: Record<string, { name: string; value: number; color: string }> = {};
 
-    monthlyIncome.forEach(t => {
+    periodIncome.forEach(t => {
       const category = categories.find(c => c.id === t.category_id);
       const key = category?.id || 'uncategorized';
       if (!grouped[key]) {
@@ -200,13 +260,18 @@ export const FinanceDashboard = () => {
     });
 
     return Object.values(grouped).sort((a, b) => b.value - a.value);
-  }, [transactions, categories]);
+  }, [filteredTransactions, categories]);
 
   const monthlyData = useMemo(() => {
     const months: MonthlyData[] = [];
     const now = new Date();
+    
+    // Adjust number of months based on period filter
+    const monthsToShow = periodFilter === 'year' ? 12 : 
+                         periodFilter === 'semester' ? 6 :
+                         periodFilter === 'quarter' ? 3 : 6;
 
-    for (let i = 5; i >= 0; i--) {
+    for (let i = monthsToShow - 1; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const month = date.toLocaleDateString('pt-BR', { month: 'short' });
 
@@ -236,7 +301,7 @@ export const FinanceDashboard = () => {
     }
 
     return months;
-  }, [transactions]);
+  }, [transactions, periodFilter]);
 
   const comparisonData = useMemo(() => {
     return [
@@ -272,21 +337,45 @@ export const FinanceDashboard = () => {
     );
   }
 
+  const getPeriodLabel = () => {
+    return PERIOD_OPTIONS.find(o => o.value === periodFilter)?.label || 'Período';
+  };
+
   return (
     <div className="space-y-6">
+      {/* Period Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-lg font-semibold text-foreground">Resumo Financeiro</h2>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Selecionar período" />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-green-500">
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Receitas (mês)</p>
+                <p className="text-sm text-muted-foreground">Receitas ({getPeriodLabel()})</p>
                 <p className="text-xl md:text-2xl font-bold text-green-600">
                   {formatCurrency(stats.totalIncome)}
                 </p>
-                {stats.incomeChange !== 0 && (
+                {stats.incomeChange !== 0 && periodFilter !== 'all' && (
                   <p className={`text-xs mt-1 ${stats.incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPercent(stats.incomeChange)} vs mês anterior
+                    {formatPercent(stats.incomeChange)} vs período anterior
                   </p>
                 )}
               </div>
@@ -301,13 +390,13 @@ export const FinanceDashboard = () => {
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Despesas (mês)</p>
+                <p className="text-sm text-muted-foreground">Despesas ({getPeriodLabel()})</p>
                 <p className="text-xl md:text-2xl font-bold text-red-600">
                   {formatCurrency(stats.totalExpense)}
                 </p>
-                {stats.expenseChange !== 0 && (
+                {stats.expenseChange !== 0 && periodFilter !== 'all' && (
                   <p className={`text-xs mt-1 ${stats.expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPercent(stats.expenseChange)} vs mês anterior
+                    {formatPercent(stats.expenseChange)} vs período anterior
                   </p>
                 )}
               </div>
@@ -322,7 +411,7 @@ export const FinanceDashboard = () => {
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Investimentos (mês)</p>
+                <p className="text-sm text-muted-foreground">Investimentos ({getPeriodLabel()})</p>
                 <p className="text-xl md:text-2xl font-bold text-purple-600">
                   {formatCurrency(stats.totalInvestment)}
                 </p>
@@ -338,7 +427,7 @@ export const FinanceDashboard = () => {
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Saldo (mês)</p>
+                <p className="text-sm text-muted-foreground">Saldo ({getPeriodLabel()})</p>
                 <p className={`text-xl md:text-2xl font-bold ${stats.balance >= 0 ? 'text-primary' : 'text-red-600'}`}>
                   {formatCurrency(stats.balance)}
                 </p>
