@@ -101,7 +101,7 @@ export const AcquirerConfigSection = ({ isAdmin }: AcquirerConfigSectionProps) =
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* PIX Card */}
           <Card className="border-dashed">
             <CardContent className="p-4 space-y-3">

@@ -211,7 +211,7 @@ export function RetryDashboardSection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 max-w-6xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-primary" />
@@ -227,12 +227,12 @@ export function RetryDashboardSection() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 pb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-green-500/10 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-green-500" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Sucesso</p>
@@ -243,10 +243,10 @@ export function RetryDashboardSection() {
         </Card>
         
         <Card>
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 pb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-destructive/10 rounded-lg">
-                <XCircle className="h-5 w-5 text-destructive" />
+                <XCircle className="h-4 w-4 text-destructive" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Falhas</p>
@@ -257,10 +257,10 @@ export function RetryDashboardSection() {
         </Card>
         
         <Card>
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 pb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-yellow-500/10 rounded-lg">
-                <RefreshCw className="h-5 w-5 text-yellow-500" />
+                <RefreshCw className="h-4 w-4 text-yellow-500" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Retentativas</p>
@@ -271,10 +271,10 @@ export function RetryDashboardSection() {
         </Card>
         
         <Card>
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 pb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Target className="h-5 w-5 text-primary" />
+                <Target className="h-4 w-4 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Taxa de Sucesso</p>
@@ -286,7 +286,7 @@ export function RetryDashboardSection() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Timeline Chart */}
         <Card>
           <CardHeader className="pb-2">
@@ -296,7 +296,7 @@ export function RetryDashboardSection() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px]">
+            <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={timelineData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -358,7 +358,7 @@ export function RetryDashboardSection() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px]">
+            <div className="h-[200px]">
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -401,7 +401,7 @@ export function RetryDashboardSection() {
           <CardTitle className="text-sm font-medium">Comparativo por Adquirente</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[250px]">
+          <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -434,10 +434,10 @@ export function RetryDashboardSection() {
       </Card>
 
       {/* Per-Acquirer Success Rate Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {stats.map(stat => (
           <Card key={stat.acquirer}>
-            <CardContent className="pt-4">
+            <CardContent className="pt-3 pb-3">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium">{ACQUIRER_NAMES[stat.acquirer]}</h3>
                 <Badge 
