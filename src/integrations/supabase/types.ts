@@ -372,6 +372,7 @@ export type Database = {
           id: string
           is_default: boolean | null
           name: string
+          spending_limit: number | null
           type: string
           updated_at: string
           user_id: string
@@ -383,6 +384,7 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name: string
+          spending_limit?: number | null
           type: string
           updated_at?: string
           user_id: string
@@ -394,6 +396,7 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name?: string
+          spending_limit?: number | null
           type?: string
           updated_at?: string
           user_id?: string

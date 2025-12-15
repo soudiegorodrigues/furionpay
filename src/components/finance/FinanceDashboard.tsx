@@ -10,7 +10,8 @@ import {
   Target,
   BarChart3,
   DollarSign,
-  Calendar
+  Calendar,
+  AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -44,6 +45,7 @@ interface Category {
   name: string;
   type: string;
   color: string;
+  spending_limit: number | null;
 }
 
 interface MonthlyData {
@@ -223,7 +225,7 @@ export const FinanceDashboard = () => {
   const expensesByCategory = useMemo(() => {
     const periodExpenses = filteredTransactions.filter(t => t.type === 'expense');
 
-    const grouped: Record<string, { name: string; value: number; color: string }> = {};
+    const grouped: Record<string, { name: string; value: number; color: string; categoryId: string }> = {};
 
     periodExpenses.forEach(t => {
       const category = categories.find(c => c.id === t.category_id);
@@ -232,7 +234,8 @@ export const FinanceDashboard = () => {
         grouped[key] = {
           name: category?.name || 'Sem categoria',
           value: 0,
-          color: category?.color || '#6b7280'
+          color: category?.color || '#6b7280',
+          categoryId: key
         };
       }
       grouped[key].value += Number(t.amount);
@@ -311,6 +314,27 @@ export const FinanceDashboard = () => {
     ];
   }, [stats]);
 
+  // Calculate spending alerts for categories that exceeded their limit
+  const spendingAlerts = useMemo(() => {
+    const alerts: { categoryName: string; spent: number; limit: number; percentOver: number; color: string }[] = [];
+    
+    expensesByCategory.forEach(expense => {
+      const category = categories.find(c => c.id === expense.categoryId);
+      if (category?.spending_limit && expense.value > category.spending_limit) {
+        const percentOver = ((expense.value - category.spending_limit) / category.spending_limit) * 100;
+        alerts.push({
+          categoryName: category.name,
+          spent: expense.value,
+          limit: category.spending_limit,
+          percentOver,
+          color: category.color
+        });
+      }
+    });
+
+    return alerts.sort((a, b) => b.percentOver - a.percentOver);
+  }, [expensesByCategory, categories]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -343,6 +367,49 @@ export const FinanceDashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Spending Alerts */}
+      {spendingAlerts.length > 0 && (
+        <Card className="border-l-4 border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-base">
+              <AlertTriangle className="h-5 w-5" />
+              Alertas de Limite de Gastos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {spendingAlerts.map((alert, index) => (
+              <div 
+                key={index} 
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-background/80 border border-amber-200 dark:border-amber-800"
+              >
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: alert.color }}
+                  />
+                  <div>
+                    <p className="font-medium text-foreground">{alert.categoryName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Limite: {formatCurrency(alert.limit)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 sm:text-right">
+                  <div>
+                    <p className="font-semibold text-red-600">
+                      {formatCurrency(alert.spent)}
+                    </p>
+                    <p className="text-xs text-red-500">
+                      +{alert.percentOver.toFixed(0)}% acima do limite
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Period Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-lg font-semibold text-foreground">Resumo Financeiro</h2>
