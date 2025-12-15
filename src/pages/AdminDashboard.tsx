@@ -72,7 +72,17 @@ const AdminDashboard = () => {
     window.addEventListener('resize', checkSize);
     return () => window.removeEventListener('resize', checkSize);
   }, []);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  // Initialize with default values for instant rendering (no null states)
+  const [stats, setStats] = useState<DashboardStats>({
+    total_generated: 0,
+    total_paid: 0,
+    total_expired: 0,
+    total_amount_generated: 0,
+    total_amount_paid: 0,
+    today_generated: 0,
+    today_paid: 0,
+    today_amount_paid: 0
+  });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -87,7 +97,8 @@ const AdminDashboard = () => {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [rewards, setRewards] = useState<Reward[] | null>(null);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [isLoadingRewards, setIsLoadingRewards] = useState(true);
   const [availableBalance, setAvailableBalance] = useState<number>(0);
   const navigate = useNavigate();
   const {
@@ -123,13 +134,13 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
   const loadData = async (showLoading = true, resetTransactions = true) => {
-    if (showLoading && !stats) setIsLoading(true);
+    // Remove blocking loading state - let data populate as it arrives
     try {
-      // Execute ALL queries in parallel - including fee configs
+      // Execute ALL queries in parallel - limit transactions for faster initial load
       const [userSettingsResult, statsResult, txResult, rewardsResult, defaultFeeResult, availableBalanceResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard'), supabase.rpc('get_user_transactions', {
-        p_limit: 0
+        p_limit: 100
       }),
-      // Load ALL for accurate stats
+      // Load first 100 for faster initial render
       supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
         ascending: true
       }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance')]);
@@ -154,8 +165,9 @@ const AdminDashboard = () => {
         }
       }
 
-      // Set rewards immediately
+      // Set rewards immediately and mark loading complete
       setRewards(rewardsResult.data || []);
+      setIsLoadingRewards(false);
 
       // Process settings and fee config in background
       let feeData = defaultFeeResult.data;
@@ -743,7 +755,7 @@ const AdminDashboard = () => {
           {/* Progresso de Recompensas */}
           <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
             <CardContent className="p-5">
-              {rewards === null ? (
+              {isLoadingRewards ? (
                 <div className="space-y-4 animate-pulse">
                   <div className="flex justify-center">
                     <div className="w-64 h-64 bg-muted/50 rounded-xl" />
