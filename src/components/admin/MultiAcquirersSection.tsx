@@ -434,7 +434,7 @@ export const MultiAcquirersSection = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 max-w-6xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
