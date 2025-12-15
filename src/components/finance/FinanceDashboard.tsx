@@ -751,6 +751,13 @@ export const FinanceDashboard = () => {
                     dataKey="balance" 
                     name="Saldo"
                     radius={[4, 4, 0, 0]}
+                    label={{
+                      position: 'top',
+                      formatter: (value: number) => value >= 1000 || value <= -1000 
+                        ? `R$ ${(value / 1000).toFixed(1)}k` 
+                        : `R$ ${value.toFixed(0)}`,
+                      className: 'text-xs fill-foreground font-medium'
+                    }}
                   >
                     {monthlyData.map((entry, index) => (
                       <Cell 
