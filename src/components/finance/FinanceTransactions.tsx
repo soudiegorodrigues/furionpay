@@ -519,15 +519,16 @@ export const FinanceTransactions = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
+      <div className="flex flex-col gap-4">
+        {/* Busca e filtro */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar transações..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
+              className="pl-9 w-full"
             />
           </div>
           <Select value={filterType} onValueChange={setFilterType}>
@@ -542,34 +543,36 @@ export const FinanceTransactions = () => {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+        
+        {/* Botões de ação */}
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
           <Button 
             variant="outline" 
             onClick={syncWithdrawals}
             disabled={isSyncingWithdrawals}
-            className="gap-2"
+            className="w-full sm:w-auto gap-2"
           >
             {isSyncingWithdrawals ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Download className="h-4 w-4" />
             )}
-            <span className="hidden sm:inline">Sincronizar Saques</span>
+            Sincronizar Saques
           </Button>
           <Button 
             variant="outline" 
             onClick={generateRecurringTransactions}
             disabled={isGeneratingRecurring}
-            className="gap-2"
+            className="w-full sm:w-auto gap-2"
           >
             {isGeneratingRecurring ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <RefreshCw className="h-4 w-4" />
             )}
-            <span className="hidden sm:inline">Gerar Recorrentes</span>
+            Gerar Recorrentes
           </Button>
-          <Button onClick={() => handleOpenDialog()} className="gap-2">
+          <Button onClick={() => handleOpenDialog()} className="w-full sm:w-auto gap-2">
             <Plus className="h-4 w-4" />
             Nova Transação
           </Button>
@@ -583,9 +586,9 @@ export const FinanceTransactions = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Descrição</TableHead>
+                  <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                  <TableHead className="hidden md:table-cell">Categoria</TableHead>
+                  <TableHead className="hidden sm:table-cell">Descrição</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -604,22 +607,34 @@ export const FinanceTransactions = () => {
                       <TableRow key={transaction.id}>
                         <TableCell className="whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {formatDate(transaction.date)}
-                            {transaction.is_recurring && (
-                              <Badge variant="outline" className="text-xs gap-1">
-                                <Repeat className="h-3 w-3" />
-                                {RECURRING_OPTIONS.find(o => o.value === transaction.recurring_frequency)?.label || 'Recorrente'}
-                              </Badge>
-                            )}
+                            <Calendar className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                              <span>{formatDate(transaction.date)}</span>
+                              {transaction.is_recurring && (
+                                <Badge variant="outline" className="text-xs gap-1 hidden sm:inline-flex">
+                                  <Repeat className="h-3 w-3" />
+                                  {RECURRING_OPTIONS.find(o => o.value === transaction.recurring_frequency)?.label || 'Recorrente'}
+                                </Badge>
+                              )}
+                              {/* Mobile: show type icon inline */}
+                              <span className="md:hidden flex items-center gap-1">
+                                {getTypeIcon(transaction.type)}
+                                {category && (
+                                  <div 
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: category.color }}
+                                  />
+                                )}
+                              </span>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="flex items-center gap-2">
                             {getTypeIcon(transaction.type)}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {category ? (
                             <div className="flex items-center gap-2">
                               <div 
@@ -632,7 +647,7 @@ export const FinanceTransactions = () => {
                             <span className="text-muted-foreground text-sm">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
+                        <TableCell className="hidden sm:table-cell max-w-[200px] truncate">
                           {transaction.description || '-'}
                         </TableCell>
                         <TableCell className={`text-right font-medium ${getTypeColor(transaction.type)}`}>
@@ -669,8 +684,8 @@ export const FinanceTransactions = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 border-t gap-2">
+              <span className="text-xs sm:text-sm text-muted-foreground">
                 {filteredTransactions.length} transação(ões)
               </span>
               <div className="flex items-center gap-2">
@@ -683,7 +698,7 @@ export const FinanceTransactions = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm">
+                <span className="text-xs sm:text-sm">
                   {currentPage} / {totalPages}
                 </span>
                 <Button
@@ -703,7 +718,7 @@ export const FinanceTransactions = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingTransaction ? 'Editar Transação' : 'Nova Transação'}
