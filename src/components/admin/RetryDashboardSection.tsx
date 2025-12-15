@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -175,16 +173,6 @@ export function RetryDashboardSection() {
     ].filter(d => d.value > 0);
   }, [stats]);
 
-  // Bar chart data for acquirer comparison
-  const barData = useMemo(() => {
-    return stats.map(s => ({
-      name: ACQUIRER_NAMES[s.acquirer] || s.acquirer,
-      Sucesso: s.success,
-      Falha: s.failure,
-      Retry: s.retry,
-      'Taxa de Sucesso': s.successRate
-    }));
-  }, [stats]);
 
   // Overall stats
   const overallStats = useMemo(() => {
@@ -395,43 +383,6 @@ export function RetryDashboardSection() {
         </Card>
       </div>
 
-      {/* Acquirer Comparison */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Comparativo por Adquirente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 11 }}
-                  className="text-muted-foreground"
-                />
-                <YAxis 
-                  tick={{ fontSize: 10 }} 
-                  allowDecimals={false}
-                  className="text-muted-foreground"
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '8px',
-                    fontSize: '12px'
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '11px' }} />
-                <Bar dataKey="Sucesso" fill="#22C55E" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Falha" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Retry" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Per-Acquirer Success Rate Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
