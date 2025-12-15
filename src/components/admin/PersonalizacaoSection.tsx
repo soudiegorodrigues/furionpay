@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Palette, Save, Image, Loader2, Trash2, Upload, Link } from "lucide-react";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 interface PersonalizacaoSectionProps {
   userId?: string;
@@ -50,10 +51,10 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Erro",
-        description: "A imagem deve ter no máximo 5MB",
+        description: "A imagem deve ter no máximo 10MB",
         variant: "destructive"
       });
       return;
@@ -61,12 +62,16 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/banner.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.banner);
+      const fileName = `${userId}/banner.webp`;
 
       const { error: uploadError } = await supabase.storage
         .from('banners')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 

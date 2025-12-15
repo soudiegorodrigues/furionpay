@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Plus, Star, Trash2, Loader2, Pencil, Upload, X } from "lucide-react";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 interface Testimonial {
   id: string;
@@ -67,19 +68,23 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Imagem deve ter no máximo 2MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 10MB");
       return;
     }
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}/${productId}/${Date.now()}.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.avatar);
+      const fileName = `${userId}/${productId}/${Date.now()}.webp`;
       
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -88,7 +93,7 @@ export function TestimonialsManager({ productId, userId }: TestimonialsManagerPr
         .getPublicUrl(fileName);
 
       setFormData(p => ({ ...p, author_photo_url: `${publicUrl}?t=${Date.now()}` }));
-      toast.success("Foto enviada!");
+      toast.success("Foto comprimida e enviada!");
     } catch (error) {
       console.error("Error uploading photo:", error);
       toast.error("Erro ao enviar foto");

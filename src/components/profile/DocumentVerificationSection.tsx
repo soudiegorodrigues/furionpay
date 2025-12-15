@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 type PersonType = "pf" | "pj";
 type DocumentType = "rg" | "cnh" | "passaporte" | "cnpj_card" | "contrato_social";
@@ -143,12 +144,15 @@ export function DocumentVerificationSection({ userId }: { userId: string }) {
       for (const uf of uploadedFiles) {
         if (!uf.file) continue;
 
-        const fileExt = uf.file.name.split(".").pop();
-        const filePath = `${userId}/${Date.now()}_${uf.side}.${fileExt}`;
+        // Compress document image (preserving quality for readability)
+        const compressedBlob = await compressImage(uf.file, compressionPresets.document);
+        const filePath = `${userId}/${Date.now()}_${uf.side}.jpeg`;
 
         const { error: uploadError } = await supabase.storage
           .from("user-documents")
-          .upload(filePath, uf.file);
+          .upload(filePath, compressedBlob, {
+            contentType: 'image/jpeg'
+          });
 
         if (uploadError) throw uploadError;
 

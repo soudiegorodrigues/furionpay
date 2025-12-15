@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Bell, Volume2, Play, Save, Upload, Loader2, Trash2, Music, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 // Pre-defined sounds
 const PREDEFINED_SOUNDS = [
@@ -304,8 +305,9 @@ export function NotificacoesSection() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/custom-logo.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.avatar);
+      const fileName = `${user.id}/custom-logo.webp`;
 
       // Delete existing file if any
       await supabase.storage
@@ -315,7 +317,10 @@ export function NotificacoesSection() {
       // Upload new file
       const { error: uploadError } = await supabase.storage
         .from('notification-sounds')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -326,11 +331,11 @@ export function NotificacoesSection() {
 
       setSettings(prev => ({
         ...prev,
-        customLogoUrl: publicUrl,
+        customLogoUrl: `${publicUrl}?t=${Date.now()}`,
         customLogoName: file.name,
       }));
 
-      toast.success('Logo personalizada enviada com sucesso!');
+      toast.success('Logo comprimida e enviada com sucesso!');
     } catch (error) {
       console.error('Erro ao enviar logo:', error);
       toast.error('Erro ao enviar imagem');
