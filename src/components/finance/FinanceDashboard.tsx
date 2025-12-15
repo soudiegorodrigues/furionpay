@@ -33,6 +33,7 @@ import {
   LabelList
 } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { GaugeChart } from "./GaugeChart";
 
 interface Transaction {
   id: string;
@@ -437,39 +438,20 @@ export const FinanceDashboard = () => {
         {/* Receitas */}
         <Card className="border border-border/50">
           <CardContent className="p-3 md:p-4">
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="relative w-16 h-16">
-                <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    className="stroke-muted"
-                    strokeWidth="3"
-                  />
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${Math.min((stats.totalIncome / (stats.totalIncome + stats.totalExpense + stats.totalInvestment || 1)) * 100, 100)}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ArrowUpRight className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Receitas</p>
-                <p className="text-sm md:text-base font-bold text-green-600">
-                  {formatCurrency(stats.totalIncome)}
+            <div className="flex flex-col items-center text-center gap-1">
+              <p className="text-xs text-muted-foreground mb-1">Receitas</p>
+              <GaugeChart 
+                value={stats.totalIncome}
+                min={0}
+                max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
+                label={formatCurrency(stats.totalIncome)}
+                size={100}
+              />
+              {stats.incomeChange !== 0 && periodFilter !== 'all' && (
+                <p className={`text-xs ${stats.incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatPercent(stats.incomeChange)}
                 </p>
-                {stats.incomeChange !== 0 && periodFilter !== 'all' && (
-                  <p className={`text-xs ${stats.incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPercent(stats.incomeChange)}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -477,39 +459,20 @@ export const FinanceDashboard = () => {
         {/* Despesas */}
         <Card className="border border-border/50">
           <CardContent className="p-3 md:p-4">
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="relative w-16 h-16">
-                <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    className="stroke-muted"
-                    strokeWidth="3"
-                  />
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    stroke="#ef4444"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${Math.min((stats.totalExpense / (stats.totalIncome + stats.totalExpense + stats.totalInvestment || 1)) * 100, 100)}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ArrowDownRight className="h-5 w-5 text-red-600" />
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Despesas</p>
-                <p className="text-sm md:text-base font-bold text-red-600">
-                  {formatCurrency(stats.totalExpense)}
+            <div className="flex flex-col items-center text-center gap-1">
+              <p className="text-xs text-muted-foreground mb-1">Despesas</p>
+              <GaugeChart 
+                value={stats.totalExpense}
+                min={0}
+                max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
+                label={formatCurrency(stats.totalExpense)}
+                size={100}
+              />
+              {stats.expenseChange !== 0 && periodFilter !== 'all' && (
+                <p className={`text-xs ${stats.expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatPercent(stats.expenseChange)}
                 </p>
-                {stats.expenseChange !== 0 && periodFilter !== 'all' && (
-                  <p className={`text-xs ${stats.expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPercent(stats.expenseChange)}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -517,34 +480,15 @@ export const FinanceDashboard = () => {
         {/* Investimentos */}
         <Card className="border border-border/50">
           <CardContent className="p-3 md:p-4">
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="relative w-16 h-16">
-                <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    className="stroke-muted"
-                    strokeWidth="3"
-                  />
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    stroke="#8b5cf6"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${Math.min((stats.totalInvestment / (stats.totalIncome + stats.totalExpense + stats.totalInvestment || 1)) * 100, 100)}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <PiggyBank className="h-5 w-5 text-purple-600" />
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Investimentos</p>
-                <p className="text-sm md:text-base font-bold text-purple-600">
-                  {formatCurrency(stats.totalInvestment)}
-                </p>
-              </div>
+            <div className="flex flex-col items-center text-center gap-1">
+              <p className="text-xs text-muted-foreground mb-1">Investimentos</p>
+              <GaugeChart 
+                value={stats.totalInvestment}
+                min={0}
+                max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
+                label={formatCurrency(stats.totalInvestment)}
+                size={100}
+              />
             </div>
           </CardContent>
         </Card>
@@ -552,34 +496,15 @@ export const FinanceDashboard = () => {
         {/* Saldo */}
         <Card className="border border-border/50">
           <CardContent className="p-3 md:p-4">
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="relative w-16 h-16">
-                <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    className="stroke-muted"
-                    strokeWidth="3"
-                  />
-                  <circle
-                    cx="18" cy="18" r="15.5"
-                    fill="none"
-                    stroke={stats.balance >= 0 ? "hsl(var(--primary))" : "#ef4444"}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${stats.totalIncome > 0 ? Math.min(Math.abs(stats.balance) / stats.totalIncome * 100, 100) : 0}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Wallet className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Saldo</p>
-                <p className={`text-sm md:text-base font-bold ${stats.balance >= 0 ? 'text-primary' : 'text-red-600'}`}>
-                  {formatCurrency(stats.balance)}
-                </p>
-              </div>
+            <div className="flex flex-col items-center text-center gap-1">
+              <p className="text-xs text-muted-foreground mb-1">Saldo</p>
+              <GaugeChart 
+                value={Math.max(0, stats.balance)}
+                min={0}
+                max={Math.max(stats.totalIncome, Math.abs(stats.balance), 1) * 1.2}
+                label={formatCurrency(stats.balance)}
+                size={100}
+              />
             </div>
           </CardContent>
         </Card>
