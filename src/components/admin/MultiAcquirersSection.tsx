@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AcquirerConfigSection } from "./AcquirerConfigSection";
 import { RetryConfigSection } from "./RetryConfigSection";
+import { RetryDashboardSection } from "./RetryDashboardSection";
 
 export const MultiAcquirersSection = () => {
   const { user, isAdmin } = useAdminAuth();
@@ -1016,6 +1017,9 @@ export const MultiAcquirersSection = () => {
 
       {/* Retry Configuration Section */}
       <RetryConfigSection />
+
+      {/* Retry Dashboard - Real-time monitoring */}
+      <RetryDashboardSection />
     </div>
   );
 };
