@@ -29,7 +29,8 @@ import {
   Tooltip,
   Legend,
   BarChart,
-  Bar
+  Bar,
+  LabelList
 } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -744,17 +745,18 @@ export const FinanceDashboard = () => {
                     name="Saldo"
                     radius={[4, 4, 0, 0]}
                     isAnimationActive={false}
-                    label={{
-                      position: 'top',
-                      formatter: (value: number) => {
-                        if (value === 0) return '';
-                        return value >= 1000 || value <= -1000 
-                          ? `R$ ${(value / 1000).toFixed(1)}k` 
-                          : `R$ ${value.toFixed(0)}`;
-                      },
-                      className: 'text-xs fill-foreground font-medium'
-                    }}
                   >
+                    <LabelList
+                      dataKey="balance"
+                      position="top"
+                      formatter={(value: number) => {
+                        if (value === 0) return "";
+                        return value >= 1000 || value <= -1000
+                          ? `R$ ${(value / 1000).toFixed(1)}k`
+                          : `R$ ${value.toFixed(0)}`;
+                      }}
+                      className="text-xs fill-foreground font-medium"
+                    />
                     {monthlyData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
