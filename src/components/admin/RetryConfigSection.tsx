@@ -31,9 +31,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, CheckCircle2, XCircle, ArrowRight, Zap, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle2, XCircle, ArrowRight, Zap, Loader2, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface RetryStep {
   id: string;
@@ -67,6 +85,123 @@ interface AcquirerStats {
   retry: number;
 }
 
+interface SortableStepCardProps {
+  step: RetryStep;
+  index: number;
+  isLast: boolean;
+  stats: Record<string, AcquirerStats>;
+  onEdit: (step: RetryStep) => void;
+  onDelete: (step: RetryStep) => void;
+}
+
+const SortableStepCard = ({ step, index, isLast, stats, onEdit, onDelete }: SortableStepCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: step.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 0,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={`flex items-center justify-between p-4 rounded-lg border ${
+        step.is_active 
+          ? 'bg-card border-border' 
+          : 'bg-muted/30 border-border/50 opacity-60'
+      } ${isDragging ? 'shadow-lg' : ''}`}
+    >
+      <div className="flex items-center gap-4">
+        {/* Drag handle */}
+        <div
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing touch-none"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </div>
+        
+        {/* Order number */}
+        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${ACQUIRER_COLORS[step.acquirer] || 'bg-gray-500'}`}>
+          {index + 1}
+        </div>
+        
+        {/* Acquirer name */}
+        <div>
+          <p className="font-semibold">{ACQUIRER_LABELS[step.acquirer] || step.acquirer.toUpperCase()}</p>
+          <p className="text-xs text-muted-foreground">
+            {step.is_active ? 'Ativo' : 'Inativo'}
+          </p>
+        </div>
+      </div>
+
+      {/* Flow indicators with stats */}
+      <div className="hidden md:flex items-center gap-6 text-sm">
+        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+          <span>Sucesso?</span>
+          <ArrowRight className="h-3 w-3" />
+          <CheckCircle2 className="h-4 w-4" />
+          <span className="font-medium">FIM</span>
+          <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            {stats[step.acquirer]?.success ?? 0}
+          </Badge>
+        </div>
+        
+        <div className={`flex items-center gap-2 ${isLast ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+          <span>Falha?</span>
+          <ArrowRight className="h-3 w-3" />
+          {isLast ? (
+            <>
+              <XCircle className="h-4 w-4" />
+              <span className="font-medium">ERRO</span>
+              <Badge variant="secondary" className="ml-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                {stats[step.acquirer]?.failure ?? 0}
+              </Badge>
+            </>
+          ) : (
+            <>
+              <span className="font-medium">Próximo</span>
+              <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                {stats[step.acquirer]?.failure ?? 0}
+              </Badge>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onEdit(step)}
+          className="h-8 w-8"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDelete(step)}
+          className="h-8 w-8 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const RetryConfigSection = () => {
   const [steps, setSteps] = useState<RetryStep[]>([]);
   const [stats, setStats] = useState<Record<string, AcquirerStats>>({});
@@ -87,6 +222,18 @@ export const RetryConfigSection = () => {
     acquirer: 'ativus',
     is_active: true,
   });
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     loadSteps();
@@ -139,6 +286,49 @@ export const RetryConfigSection = () => {
     const pixSteps = steps.filter(s => s.payment_method === 'pix');
     if (pixSteps.length === 0) return 1;
     return Math.max(...pixSteps.map(s => s.step_order)) + 1;
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    const pixSteps = steps.filter(s => s.payment_method === 'pix').sort((a, b) => a.step_order - b.step_order);
+    const oldIndex = pixSteps.findIndex(s => s.id === active.id);
+    const newIndex = pixSteps.findIndex(s => s.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    // Reorder locally
+    const reorderedSteps = arrayMove(pixSteps, oldIndex, newIndex);
+    
+    // Update local state immediately for smooth UX
+    const updatedSteps = steps.map(s => {
+      const reorderedIndex = reorderedSteps.findIndex(rs => rs.id === s.id);
+      if (reorderedIndex !== -1) {
+        return { ...s, step_order: reorderedIndex + 1 };
+      }
+      return s;
+    });
+    setSteps(updatedSteps);
+    
+    // Update in database
+    try {
+      const updatePromises = reorderedSteps.map((step, index) => 
+        supabase
+          .from('retry_flow_steps')
+          .update({ step_order: index + 1, updated_at: new Date().toISOString() })
+          .eq('id', step.id)
+      );
+      
+      await Promise.all(updatePromises);
+      toast.success('Ordem atualizada com sucesso');
+    } catch (error) {
+      console.error('Erro ao atualizar ordem:', error);
+      toast.error('Erro ao atualizar ordem');
+      // Reload original order on error
+      loadSteps();
+    }
   };
 
   const handleCreate = async () => {
@@ -301,6 +491,9 @@ export const RetryConfigSection = () => {
                 <CardTitle className="text-base">Fluxo de Retentativas</CardTitle>
                 <Badge variant="outline">{pixSteps.length} etapa{pixSteps.length !== 1 ? 's' : ''}</Badge>
               </div>
+              <CardDescription className="text-xs">
+                Arraste pelo ícone ≡ para reordenar as etapas
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {pixSteps.length === 0 ? (
@@ -309,92 +502,32 @@ export const RetryConfigSection = () => {
                   <p className="text-sm mt-1">Clique em "Nova Configuração" para adicionar.</p>
                 </div>
               ) : (
-                pixSteps.map((step, index) => {
-                  const isLast = index === pixSteps.length - 1;
-                  
-                  return (
-                    <div
-                      key={step.id}
-                      className={`flex items-center justify-between p-4 rounded-lg border ${
-                        step.is_active 
-                          ? 'bg-card border-border' 
-                          : 'bg-muted/30 border-border/50 opacity-60'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        {/* Order number */}
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${ACQUIRER_COLORS[step.acquirer] || 'bg-gray-500'}`}>
-                          {step.step_order}
-                        </div>
-                        
-                        {/* Acquirer name */}
-                        <div>
-                          <p className="font-semibold">{ACQUIRER_LABELS[step.acquirer] || step.acquirer.toUpperCase()}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {step.is_active ? 'Ativo' : 'Inativo'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Flow indicators with stats */}
-                      <div className="hidden md:flex items-center gap-6 text-sm">
-                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                          <span>Sucesso?</span>
-                          <ArrowRight className="h-3 w-3" />
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span className="font-medium">FIM</span>
-                          <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                            {stats[step.acquirer]?.success ?? 0}
-                          </Badge>
-                        </div>
-                        
-                        <div className={`flex items-center gap-2 ${isLast ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                          <span>Falha?</span>
-                          <ArrowRight className="h-3 w-3" />
-                          {isLast ? (
-                            <>
-                              <XCircle className="h-4 w-4" />
-                              <span className="font-medium">ERRO</span>
-                              <Badge variant="secondary" className="ml-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                {stats[step.acquirer]?.failure ?? 0}
-                              </Badge>
-                            </>
-                          ) : (
-                            <>
-                              <span className="font-medium">Próximo</span>
-                              <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-                                {stats[step.acquirer]?.failure ?? 0}
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEdit(step)}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setDeletingStep(step);
-                            setDeleteConfirmOpen(true);
-                          }}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  modifiers={[restrictToVerticalAxis]}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={pixSteps.map(s => s.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {pixSteps.map((step, index) => (
+                      <SortableStepCard
+                        key={step.id}
+                        step={step}
+                        index={index}
+                        isLast={index === pixSteps.length - 1}
+                        stats={stats}
+                        onEdit={openEdit}
+                        onDelete={(step) => {
+                          setDeletingStep(step);
+                          setDeleteConfirmOpen(true);
+                        }}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               )}
 
               {/* Legend */}
