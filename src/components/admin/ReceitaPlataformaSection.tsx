@@ -20,6 +20,7 @@ interface Transaction {
   fee_percentage: number | null;
   fee_fixed: number | null;
   user_email: string | null;
+  acquirer: string | null;
 }
 
 interface ChartData {
@@ -52,12 +53,33 @@ const rankingFilterOptions: { value: RankingFilter; label: string }[] = [
   { value: 'thisMonth', label: 'Este mês' },
 ];
 
-// Helper para calcular lucro de uma transação
-const calculateProfit = (amount: number, feePercentage: number | null, feeFixed: number | null): number => {
+// Helper para calcular lucro bruto de uma transação (taxa cobrada do usuário)
+const calculateGrossProfit = (amount: number, feePercentage: number | null, feeFixed: number | null): number => {
   const percentage = feePercentage ?? 0;
   const fixed = feeFixed ?? 0;
   return (amount * percentage / 100) + fixed;
 };
+
+// Interface para configurações de custo de adquirente
+interface AcquirerFees {
+  spedpay: { rate: number; fixed: number };
+  inter: { rate: number; fixed: number };
+  ativus: { rate: number; fixed: number };
+}
+
+// Helper para calcular custo do adquirente sobre a venda bruta
+const calculateAcquirerCost = (
+  amount: number, 
+  acquirer: string | null, 
+  acquirerFees: AcquirerFees
+): number => {
+  const acq = (acquirer || 'spedpay') as keyof AcquirerFees;
+  const fees = acquirerFees[acq] || acquirerFees.spedpay;
+  return (amount * fees.rate / 100) + fees.fixed;
+};
+
+// Manter compatibilidade com nome antigo
+const calculateProfit = calculateGrossProfit;
 
 // Helper para obter data/hora no timezone de São Paulo
 const getBrazilDateStr = (date: Date): string => {
@@ -79,11 +101,44 @@ export const ReceitaPlataformaSection = () => {
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
+  const [acquirerFees, setAcquirerFees] = useState<AcquirerFees>({
+    spedpay: { rate: 0, fixed: 0 },
+    inter: { rate: 0, fixed: 0 },
+    ativus: { rate: 0, fixed: 0 }
+  });
 
   useEffect(() => {
     loadTransactions();
     loadMonthlyGoal();
+    loadAcquirerFees();
   }, []);
+
+  const loadAcquirerFees = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      if (error) throw error;
+      
+      const fees: AcquirerFees = {
+        spedpay: { rate: 0, fixed: 0 },
+        inter: { rate: 0, fixed: 0 },
+        ativus: { rate: 0, fixed: 0 }
+      };
+      
+      data?.forEach((s: { key: string; value: string }) => {
+        if (s.key === 'spedpay_fee_rate') fees.spedpay.rate = parseFloat(s.value) || 0;
+        if (s.key === 'spedpay_fixed_fee') fees.spedpay.fixed = parseFloat(s.value) || 0;
+        if (s.key === 'inter_fee_rate') fees.inter.rate = parseFloat(s.value) || 0;
+        if (s.key === 'inter_fixed_fee') fees.inter.fixed = parseFloat(s.value) || 0;
+        if (s.key === 'ativus_fee_rate') fees.ativus.rate = parseFloat(s.value) || 0;
+        if (s.key === 'ativus_fixed_fee') fees.ativus.fixed = parseFloat(s.value) || 0;
+      });
+      
+      console.log('Loaded acquirer fees:', fees);
+      setAcquirerFees(fees);
+    } catch (error) {
+      console.error('Error loading acquirer fees:', error);
+    }
+  };
 
   const loadMonthlyGoal = async () => {
     try {
@@ -164,7 +219,7 @@ export const ReceitaPlataformaSection = () => {
     });
   }, [transactions, selectedUser]);
 
-  // Calcular lucros por período
+  // Calcular lucros por período (com custos de adquirente)
   const profitStats = useMemo(() => {
     const now = new Date();
     const todayStr = getBrazilDateStr(now);
@@ -186,67 +241,112 @@ export const ReceitaPlataformaSection = () => {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-    let todayProfit = 0;
-    let sevenDaysProfit = 0;
-    let fifteenDaysProfit = 0;
-    let thirtyDaysProfit = 0;
-    let thisMonthProfit = 0;
-    let lastMonthProfit = 0;
-    let thisYearProfit = 0;
-    let totalProfit = 0;
+    // Receita bruta (taxas cobradas dos usuários)
+    let todayGross = 0;
+    let sevenDaysGross = 0;
+    let fifteenDaysGross = 0;
+    let thirtyDaysGross = 0;
+    let thisMonthGross = 0;
+    let lastMonthGross = 0;
+    let thisYearGross = 0;
+    let totalGross = 0;
+    
+    // Custos de adquirentes
+    let todayAcquirerCost = 0;
+    let sevenDaysAcquirerCost = 0;
+    let fifteenDaysAcquirerCost = 0;
+    let thirtyDaysAcquirerCost = 0;
+    let thisMonthAcquirerCost = 0;
+    let lastMonthAcquirerCost = 0;
+    let thisYearAcquirerCost = 0;
+    let totalAcquirerCost = 0;
+    
+    // Contadores por adquirente
+    const acquirerBreakdown = {
+      spedpay: { count: 0, cost: 0 },
+      inter: { count: 0, cost: 0 },
+      ativus: { count: 0, cost: 0 }
+    };
 
     // Para calcular média diária dos últimos 7 dias
     const dailyProfits: Map<string, number> = new Map();
 
     paidTransactions.forEach(tx => {
-      const profit = calculateProfit(tx.amount, tx.fee_percentage, tx.fee_fixed);
-      totalProfit += profit;
+      const grossProfit = calculateGrossProfit(tx.amount, tx.fee_percentage, tx.fee_fixed);
+      const acquirerCost = calculateAcquirerCost(tx.amount, tx.acquirer, acquirerFees);
+      
+      totalGross += grossProfit;
+      totalAcquirerCost += acquirerCost;
+      
+      // Track acquirer breakdown
+      const acq = (tx.acquirer || 'spedpay') as keyof typeof acquirerBreakdown;
+      if (acquirerBreakdown[acq]) {
+        acquirerBreakdown[acq].count++;
+        acquirerBreakdown[acq].cost += acquirerCost;
+      }
 
       const txDate = tx.paid_at ? new Date(tx.paid_at) : new Date(tx.created_at);
       const txDateStr = getBrazilDateStr(txDate);
 
       // Hoje
       if (txDateStr === todayStr) {
-        todayProfit += profit;
+        todayGross += grossProfit;
+        todayAcquirerCost += acquirerCost;
       }
 
       // 7 dias
       if (txDate >= sevenDaysAgo) {
-        sevenDaysProfit += profit;
-        // Acumular lucro diário para cálculo de média
+        sevenDaysGross += grossProfit;
+        sevenDaysAcquirerCost += acquirerCost;
+        // Acumular lucro líquido diário para cálculo de média
         const existingProfit = dailyProfits.get(txDateStr) || 0;
-        dailyProfits.set(txDateStr, existingProfit + profit);
+        dailyProfits.set(txDateStr, existingProfit + (grossProfit - acquirerCost));
       }
 
       // 15 dias
       if (txDate >= fifteenDaysAgo) {
-        fifteenDaysProfit += profit;
+        fifteenDaysGross += grossProfit;
+        fifteenDaysAcquirerCost += acquirerCost;
       }
 
       // 30 dias
       if (txDate >= thirtyDaysAgo) {
-        thirtyDaysProfit += profit;
+        thirtyDaysGross += grossProfit;
+        thirtyDaysAcquirerCost += acquirerCost;
       }
 
       // Este mês
       if (txDate >= thisMonthStart) {
-        thisMonthProfit += profit;
+        thisMonthGross += grossProfit;
+        thisMonthAcquirerCost += acquirerCost;
       }
 
       // Mês anterior
       if (txDate >= lastMonthStart && txDate <= lastMonthEnd) {
-        lastMonthProfit += profit;
+        lastMonthGross += grossProfit;
+        lastMonthAcquirerCost += acquirerCost;
       }
 
       // Este ano
       if (txDate >= thisYearStart) {
-        thisYearProfit += profit;
+        thisYearGross += grossProfit;
+        thisYearAcquirerCost += acquirerCost;
       }
     });
 
-    // Calcular média diária baseada nos últimos 7 dias
+    // Calcular lucros líquidos (receita bruta - custos adquirentes)
+    const todayNet = todayGross - todayAcquirerCost;
+    const sevenDaysNet = sevenDaysGross - sevenDaysAcquirerCost;
+    const fifteenDaysNet = fifteenDaysGross - fifteenDaysAcquirerCost;
+    const thirtyDaysNet = thirtyDaysGross - thirtyDaysAcquirerCost;
+    const thisMonthNet = thisMonthGross - thisMonthAcquirerCost;
+    const lastMonthNet = lastMonthGross - lastMonthAcquirerCost;
+    const thisYearNet = thisYearGross - thisYearAcquirerCost;
+    const totalNet = totalGross - totalAcquirerCost;
+
+    // Calcular média diária baseada nos últimos 7 dias (lucro líquido)
     const daysWithData = dailyProfits.size;
-    const averageDailyProfit = daysWithData > 0 ? sevenDaysProfit / 7 : 0;
+    const averageDailyProfit = daysWithData > 0 ? sevenDaysNet / 7 : 0;
     
     // Projeção mensal = média diária × 30
     const monthlyProjection = averageDailyProfit * 30;
@@ -266,29 +366,52 @@ export const ReceitaPlataformaSection = () => {
       ? ((secondHalfProfit - firstHalfProfit) / firstHalfProfit) * 100 
       : 0;
 
-    // Variação mês atual vs mês anterior
-    const monthOverMonthChange = lastMonthProfit > 0 
-      ? ((thisMonthProfit - lastMonthProfit) / lastMonthProfit) * 100 
-      : thisMonthProfit > 0 ? 100 : 0;
+    // Variação mês atual vs mês anterior (usando lucro líquido)
+    const monthOverMonthChange = lastMonthNet > 0 
+      ? ((thisMonthNet - lastMonthNet) / lastMonthNet) * 100 
+      : thisMonthNet > 0 ? 100 : 0;
 
     return {
-      today: todayProfit,
-      sevenDays: sevenDaysProfit,
-      fifteenDays: fifteenDaysProfit,
-      thirtyDays: thirtyDaysProfit,
-      thisMonth: thisMonthProfit,
-      lastMonth: lastMonthProfit,
+      // Receita bruta (compatibilidade)
+      today: todayNet,
+      sevenDays: sevenDaysNet,
+      fifteenDays: fifteenDaysNet,
+      thirtyDays: thirtyDaysNet,
+      thisMonth: thisMonthNet,
+      lastMonth: lastMonthNet,
       monthOverMonthChange,
-      thisYear: thisYearProfit,
-      total: totalProfit,
+      thisYear: thisYearNet,
+      total: totalNet,
+      // Novos campos detalhados
+      gross: {
+        today: todayGross,
+        sevenDays: sevenDaysGross,
+        fifteenDays: fifteenDaysGross,
+        thirtyDays: thirtyDaysGross,
+        thisMonth: thisMonthGross,
+        lastMonth: lastMonthGross,
+        thisYear: thisYearGross,
+        total: totalGross
+      },
+      acquirerCosts: {
+        today: todayAcquirerCost,
+        sevenDays: sevenDaysAcquirerCost,
+        fifteenDays: fifteenDaysAcquirerCost,
+        thirtyDays: thirtyDaysAcquirerCost,
+        thisMonth: thisMonthAcquirerCost,
+        lastMonth: lastMonthAcquirerCost,
+        thisYear: thisYearAcquirerCost,
+        total: totalAcquirerCost
+      },
+      acquirerBreakdown,
       transactionCount: paidTransactions.length,
-      averageProfit: paidTransactions.length > 0 ? totalProfit / paidTransactions.length : 0,
+      averageProfit: paidTransactions.length > 0 ? totalNet / paidTransactions.length : 0,
       averageDailyProfit,
       monthlyProjection,
       trendPercentage,
       daysWithData
     };
-  }, [paidTransactions]);
+  }, [paidTransactions, acquirerFees]);
 
   // Dados do gráfico
   const chartData = useMemo((): ChartData[] => {
@@ -548,6 +671,90 @@ export const ReceitaPlataformaSection = () => {
                 </div>
               </div>
             </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Breakdown: Receita Bruta vs Custo Adquirentes vs Lucro Líquido */}
+      <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Calculator className="h-4 w-4 text-amber-500" />
+            Breakdown: Receita vs Custos (Este Mês)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="text-center p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <div className="text-sm sm:text-base font-semibold text-blue-500">
+                {formatCurrency(profitStats.gross.thisMonth)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Receita Bruta</p>
+              <p className="text-[10px] text-muted-foreground">(Taxas cobradas dos usuários)</p>
+            </div>
+            <div className="text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+              <div className="text-sm sm:text-base font-semibold text-red-500">
+                -{formatCurrency(profitStats.acquirerCosts.thisMonth)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Custo Adquirentes</p>
+              <p className="text-[10px] text-muted-foreground">(SpedPay, Inter, Ativus)</p>
+            </div>
+            <div className="text-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+              <div className="text-sm sm:text-base font-semibold text-green-500">
+                {formatCurrency(profitStats.thisMonth)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Lucro Líquido</p>
+              <p className="text-[10px] text-muted-foreground">(Receita - Custos)</p>
+            </div>
+          </div>
+          
+          {/* Breakdown por adquirente */}
+          {(profitStats.acquirerBreakdown.spedpay.count > 0 || 
+            profitStats.acquirerBreakdown.inter.count > 0 || 
+            profitStats.acquirerBreakdown.ativus.count > 0) && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Custos por Adquirente (Total):</p>
+              <div className="grid grid-cols-3 gap-2">
+                {profitStats.acquirerBreakdown.spedpay.count > 0 && (
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-xs font-semibold text-foreground">
+                      {formatCurrency(profitStats.acquirerBreakdown.spedpay.cost)}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">SpedPay</p>
+                    <p className="text-[10px] text-muted-foreground">({profitStats.acquirerBreakdown.spedpay.count} tx)</p>
+                  </div>
+                )}
+                {profitStats.acquirerBreakdown.inter.count > 0 && (
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-xs font-semibold text-foreground">
+                      {formatCurrency(profitStats.acquirerBreakdown.inter.cost)}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Banco Inter</p>
+                    <p className="text-[10px] text-muted-foreground">({profitStats.acquirerBreakdown.inter.count} tx)</p>
+                  </div>
+                )}
+                {profitStats.acquirerBreakdown.ativus.count > 0 && (
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-xs font-semibold text-foreground">
+                      {formatCurrency(profitStats.acquirerBreakdown.ativus.cost)}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Ativus Hub</p>
+                    <p className="text-[10px] text-muted-foreground">({profitStats.acquirerBreakdown.ativus.count} tx)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Taxa de margem */}
+          {profitStats.gross.thisMonth > 0 && (
+            <div className="mt-3 text-center">
+              <span className="text-xs text-muted-foreground">
+                Margem: <span className="font-semibold text-foreground">
+                  {((profitStats.thisMonth / profitStats.gross.thisMonth) * 100).toFixed(1)}%
+                </span>
+              </span>
+            </div>
           )}
         </CardContent>
       </Card>

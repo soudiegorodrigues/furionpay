@@ -265,7 +265,8 @@ async function logPixGenerated(
   userId?: string, 
   popupModel?: string,
   feePercentage?: number,
-  feeFixed?: number
+  feeFixed?: number,
+  acquirer: string = 'spedpay'
 ): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
@@ -279,7 +280,8 @@ async function logPixGenerated(
       p_user_id: userId || null,
       p_popup_model: popupModel || null,
       p_fee_percentage: feePercentage ?? null,
-      p_fee_fixed: feeFixed ?? null
+      p_fee_fixed: feeFixed ?? null,
+      p_acquirer: acquirer
     });
     
     if (error) {
@@ -566,7 +568,7 @@ serve(async (req) => {
       );
     }
 
-    // Log to database with fee config
+    // Log to database with fee config and acquirer
     const transactionDbId = await logPixGenerated(
       amount, 
       transactionId, 
@@ -577,7 +579,8 @@ serve(async (req) => {
       userId, 
       popupModel,
       feeConfig?.pix_percentage,
-      feeConfig?.pix_fixed
+      feeConfig?.pix_fixed,
+      'spedpay'
     );
 
     // Utmify integration handled by database trigger (utmify-sync)
