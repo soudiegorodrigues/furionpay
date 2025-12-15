@@ -1195,6 +1195,39 @@ export type Database = {
         }
         Relationships: []
       }
+      retry_configurations: {
+        Row: {
+          acquirer_order: string[]
+          created_at: string
+          delay_between_retries_ms: number
+          enabled: boolean
+          id: string
+          max_retries: number
+          payment_method: string
+          updated_at: string
+        }
+        Insert: {
+          acquirer_order?: string[]
+          created_at?: string
+          delay_between_retries_ms?: number
+          enabled?: boolean
+          id?: string
+          max_retries?: number
+          payment_method?: string
+          updated_at?: string
+        }
+        Update: {
+          acquirer_order?: string[]
+          created_at?: string
+          delay_between_retries_ms?: number
+          enabled?: boolean
+          id?: string
+          max_retries?: number
+          payment_method?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reward_requests: {
         Row: {
           created_at: string
