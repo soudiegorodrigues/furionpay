@@ -56,7 +56,7 @@ export const FinanceCategories = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCustomColor, setShowCustomColor] = useState(false);
+  const [showCustomColor, setShowCustomColor] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     type: 'expense' as string,
@@ -96,7 +96,7 @@ export const FinanceCategories = () => {
   };
 
   const handleOpenDialog = (category?: Category) => {
-    setShowCustomColor(false);
+    setShowCustomColor(true);
     if (category) {
       setEditingCategory(category);
       setFormData({
@@ -105,10 +105,6 @@ export const FinanceCategories = () => {
         color: category.color,
         spending_limit: category.spending_limit?.toString() || ''
       });
-      // Show custom color picker if color is not in predefined list
-      if (!CATEGORY_COLORS.includes(category.color)) {
-        setShowCustomColor(true);
-      }
     } else {
       setEditingCategory(null);
       setFormData({
