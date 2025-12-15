@@ -796,23 +796,36 @@ export const FinanceDashboard = () => {
                       outerRadius={65}
                       paddingAngle={3}
                       dataKey="value"
+                      label={({ cx, cy, midAngle, outerRadius, value }) => {
+                        const RADIAN = Math.PI / 180;
+                        const radius = outerRadius + 20;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        return (
+                          <text 
+                            x={x} 
+                            y={y} 
+                            fill="hsl(var(--foreground))"
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central"
+                            style={{ fontSize: '10px' }}
+                          >
+                            {`R$ ${value.toLocaleString('pt-BR')}`}
+                          </text>
+                        );
+                      }}
+                      labelLine={{
+                        stroke: 'hsl(var(--muted-foreground))',
+                        strokeWidth: 1
+                      }}
                     >
                       {incomeByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
                     <Legend 
-                      formatter={(value, entry) => {
-                        const item = incomeByCategory.find(i => i.name === value);
-                        return `${value} (${item ? formatCurrency(item.value) : ''})`;
+                      formatter={(value) => {
+                        return value;
                       }}
                     />
                   </PieChart>
@@ -850,23 +863,36 @@ export const FinanceDashboard = () => {
                       outerRadius={65}
                       paddingAngle={3}
                       dataKey="value"
+                      label={({ cx, cy, midAngle, outerRadius, value }) => {
+                        const RADIAN = Math.PI / 180;
+                        const radius = outerRadius + 20;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        return (
+                          <text 
+                            x={x} 
+                            y={y} 
+                            fill="hsl(var(--foreground))"
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central"
+                            style={{ fontSize: '10px' }}
+                          >
+                            {`R$ ${value.toLocaleString('pt-BR')}`}
+                          </text>
+                        );
+                      }}
+                      labelLine={{
+                        stroke: 'hsl(var(--muted-foreground))',
+                        strokeWidth: 1
+                      }}
                     >
                       {expensesByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
                     <Legend 
-                      formatter={(value, entry) => {
-                        const item = expensesByCategory.find(i => i.name === value);
-                        return `${value} (${item ? formatCurrency(item.value) : ''})`;
+                      formatter={(value) => {
+                        return value;
                       }}
                     />
                   </PieChart>
