@@ -752,14 +752,12 @@ export const FinanceDashboard = () => {
                     <LabelList
                       dataKey="balance"
                       position="top"
-                      offset={10}
+                      offset={8}
                       formatter={(value: number) => {
                         if (value === 0) return "";
-                        return value >= 1000 || value <= -1000
-                          ? `R$ ${(value / 1000).toFixed(1)}k`
-                          : `R$ ${value.toFixed(0)}`;
+                        return `R$ ${value.toLocaleString("pt-BR")}`;
                       }}
-                      className="text-xs fill-foreground font-medium"
+                      style={{ fontSize: "10px", fill: "hsl(var(--foreground))" }}
                     />
                     {monthlyData.map((entry, index) => (
                       <Cell 
