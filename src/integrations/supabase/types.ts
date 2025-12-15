@@ -364,6 +364,51 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_accounts: {
+        Row: {
+          bank_name: string | null
+          color: string | null
+          created_at: string | null
+          current_balance: number
+          icon: string | null
+          id: string
+          initial_balance: number
+          is_active: boolean | null
+          name: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bank_name?: string | null
+          color?: string | null
+          created_at?: string | null
+          current_balance?: number
+          icon?: string | null
+          id?: string
+          initial_balance?: number
+          is_active?: boolean | null
+          name: string
+          type?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bank_name?: string | null
+          color?: string | null
+          created_at?: string | null
+          current_balance?: number
+          icon?: string | null
+          id?: string
+          initial_balance?: number
+          is_active?: boolean | null
+          name?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       finance_categories: {
         Row: {
           color: string | null
@@ -444,6 +489,7 @@ export type Database = {
       }
       finance_transactions: {
         Row: {
+          account_id: string | null
           amount: number
           category_id: string | null
           created_at: string
@@ -458,6 +504,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           amount: number
           category_id?: string | null
           created_at?: string
@@ -472,6 +519,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           amount?: number
           category_id?: string | null
           created_at?: string
@@ -486,6 +534,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "finance_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "finance_transactions_category_id_fkey"
             columns: ["category_id"]

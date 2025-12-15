@@ -1,22 +1,18 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   TrendingUp, 
-  TrendingDown, 
   Target, 
   PieChart,
   Wallet,
-  ArrowUpRight,
-  ArrowDownRight,
-  Plus
+  CreditCard
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { FinanceDashboard } from "@/components/finance/FinanceDashboard";
 import { FinanceCategories } from "@/components/finance/FinanceCategories";
 import { FinanceTransactions } from "@/components/finance/FinanceTransactions";
 import { FinanceGoals } from "@/components/finance/FinanceGoals";
+import { FinanceWallet } from "@/components/finance/FinanceWallet";
 
 const AdminGestaoFinanceira = () => {
   const { user } = useAdminAuth();
@@ -34,13 +30,17 @@ const AdminGestaoFinanceira = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto">
           <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <PieChart className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
           </TabsTrigger>
-          <TabsTrigger value="transactions" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+          <TabsTrigger value="wallet" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Wallet className="h-4 w-4" />
+            <span className="hidden sm:inline">Carteira</span>
+          </TabsTrigger>
+          <TabsTrigger value="transactions" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Transações</span>
           </TabsTrigger>
           <TabsTrigger value="categories" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
@@ -55,6 +55,10 @@ const AdminGestaoFinanceira = () => {
 
         <TabsContent value="dashboard" className="space-y-6">
           <FinanceDashboard />
+        </TabsContent>
+
+        <TabsContent value="wallet" className="space-y-6">
+          <FinanceWallet />
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-6">
