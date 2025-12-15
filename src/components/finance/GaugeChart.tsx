@@ -19,8 +19,8 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
 }) => {
   // Normalize value to 0-100 range
   const normalizedValue = Math.max(min, Math.min(max, value));
-  // Handle case where max equals min (avoid division by zero) or value is 0
-  const percentage = (max - min) === 0 || value === 0 ? 0 : ((normalizedValue - min) / (max - min)) * 100;
+  // Handle case where max equals min (avoid division by zero) or value is 0 or negative
+  const percentage = value <= 0 || (max - min) === 0 ? 0 : ((normalizedValue - min) / (max - min)) * 100;
   
   // Calculate needle angle (from -90 to 90 degrees, where -90 is min and 90 is max)
   const needleAngle = -90 + (percentage / 100) * 180;
