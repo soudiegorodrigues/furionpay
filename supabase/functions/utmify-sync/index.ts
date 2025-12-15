@@ -175,6 +175,15 @@ serve(async (req) => {
     const createdAt = record.created_at;
     const paidAt = record.paid_at;
 
+    // Skip test transactions - filter out demonstration/test data
+    if (txid?.startsWith('TEST_') || productName === 'Produto Demonstração') {
+      console.log('[UTMIFY-SYNC] Test transaction detected, skipping:', { txid, productName });
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: 'Test transaction' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!txid || !amount) {
       console.log('[UTMIFY-SYNC] Missing txid or amount, skipping');
       return new Response(
