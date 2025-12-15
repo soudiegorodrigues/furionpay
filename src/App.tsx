@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,31 +7,53 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
-import { TransactionNotificationProvider } from "@/components/TransactionNotificationProvider";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
-import Admin from "./pages/Admin";
-import AdminSettings from "./pages/AdminSettings";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminCheckout from "./pages/AdminCheckout";
-import AdminProfile from "./pages/AdminProfile";
-import AdminIntegrations from "./pages/AdminIntegrations";
-import AdminProducts from "./pages/AdminProducts";
-import AdminProductEdit from "./pages/AdminProductEdit";
-import AdminFinanceiro from "./pages/AdminFinanceiro";
-import AdminDocuments from "./pages/AdminDocuments";
-import AdminGestaoFinanceira from "./pages/AdminGestaoFinanceira";
-import PublicCheckout from "./pages/PublicCheckout";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Lazy load admin pages for code splitting
+const Admin = lazy(() => import("./pages/Admin"));
+const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminCheckout = lazy(() => import("./pages/AdminCheckout"));
+const AdminProfile = lazy(() => import("./pages/AdminProfile"));
+const AdminIntegrations = lazy(() => import("./pages/AdminIntegrations"));
+const AdminProducts = lazy(() => import("./pages/AdminProducts"));
+const AdminProductEdit = lazy(() => import("./pages/AdminProductEdit"));
+const AdminFinanceiro = lazy(() => import("./pages/AdminFinanceiro"));
+const AdminDocuments = lazy(() => import("./pages/AdminDocuments"));
+const AdminGestaoFinanceira = lazy(() => import("./pages/AdminGestaoFinanceira"));
+const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
+
+// Optimized QueryClient with caching
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes - data stays fresh
+      gcTime: 1000 * 60 * 10, // 10 minutes - garbage collection time
+      refetchOnWindowFocus: false, // Don't refetch on tab focus
+      retry: 1, // Only retry once on failure
+      refetchOnMount: false, // Don't refetch if data exists
+    },
+  },
+});
+
+// Minimal loading skeleton for lazy pages
+const PageSkeleton = () => (
+  <div className="min-h-screen bg-background animate-pulse">
+    <div className="p-4 md:p-6 space-y-4">
+      <div className="h-8 w-48 bg-muted rounded" />
+      <div className="h-32 bg-muted rounded" />
+      <div className="h-64 bg-muted rounded" />
+    </div>
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <MetaPixelProvider>
-          <TransactionNotificationProvider />
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -40,21 +63,69 @@ const App = () => (
               <Route path="/cadastro" element={<AdminAuth />} />
               
               {/* Public checkout route */}
-              <Route path="/checkout/:offerCode" element={<PublicCheckout />} />
+              <Route path="/checkout/:offerCode" element={
+                <Suspense fallback={<PageSkeleton />}>
+                  <PublicCheckout />
+                </Suspense>
+              } />
               
               {/* Admin routes with shared layout */}
               <Route path="/admin" element={<AdminLayoutWrapper />}>
-                <Route index element={<Admin />} />
-                <Route path="settings" element={<AdminSettings />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="financeiro" element={<AdminFinanceiro />} />
-                <Route path="checkout" element={<AdminCheckout />} />
-                <Route path="profile" element={<AdminProfile />} />
-                <Route path="integrations" element={<AdminIntegrations />} />
-                <Route path="documents" element={<AdminDocuments />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="products/:id" element={<AdminProductEdit />} />
-                <Route path="gestao-financeira" element={<AdminGestaoFinanceira />} />
+                <Route index element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <Admin />
+                  </Suspense>
+                } />
+                <Route path="settings" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminSettings />
+                  </Suspense>
+                } />
+                <Route path="dashboard" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminDashboard />
+                  </Suspense>
+                } />
+                <Route path="financeiro" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminFinanceiro />
+                  </Suspense>
+                } />
+                <Route path="checkout" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminCheckout />
+                  </Suspense>
+                } />
+                <Route path="profile" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminProfile />
+                  </Suspense>
+                } />
+                <Route path="integrations" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminIntegrations />
+                  </Suspense>
+                } />
+                <Route path="documents" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminDocuments />
+                  </Suspense>
+                } />
+                <Route path="products" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminProducts />
+                  </Suspense>
+                } />
+                <Route path="products/:id" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminProductEdit />
+                  </Suspense>
+                } />
+                <Route path="gestao-financeira" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminGestaoFinanceira />
+                  </Suspense>
+                } />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

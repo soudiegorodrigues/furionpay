@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
-import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { supabase } from "@/integrations/supabase/client";
-import { Menu, Clock, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTransactionNotifications } from "@/hooks/useTransactionNotifications";
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
@@ -18,6 +19,9 @@ export function AdminLayoutWrapper() {
   const [userName, setUserName] = useState<string | null>(null);
   const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
+
+  // Transaction notifications - only active for authenticated users inside admin
+  useTransactionNotifications(user?.id || null);
 
   // Redirect if not authenticated - only on initial load
   useEffect(() => {
