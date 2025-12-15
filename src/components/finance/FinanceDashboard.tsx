@@ -508,7 +508,7 @@ export const FinanceDashboard = () => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {/* Income vs Expense Comparison Bar Chart */}
         <Card>
           <CardHeader className="pb-2">
@@ -657,7 +657,7 @@ export const FinanceDashboard = () => {
       </div>
 
       {/* Category Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {/* Income by Category */}
         <Card>
           <CardHeader className="pb-2">
@@ -769,7 +769,7 @@ export const FinanceDashboard = () => {
 
       {/* Top Categories Table */}
       {(expensesByCategory.length > 0 || incomeByCategory.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {/* Top Expenses */}
           {expensesByCategory.length > 0 && (
             <Card>
