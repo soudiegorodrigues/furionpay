@@ -19,6 +19,7 @@ import AdminProducts from "./pages/AdminProducts";
 import AdminProductEdit from "./pages/AdminProductEdit";
 import AdminFinanceiro from "./pages/AdminFinanceiro";
 import AdminDocuments from "./pages/AdminDocuments";
+import AdminGestaoFinanceira from "./pages/AdminGestaoFinanceira";
 import PublicCheckout from "./pages/PublicCheckout";
 import NotFound from "./pages/NotFound";
 
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="documents" element={<AdminDocuments />} />
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="products/:id" element={<AdminProductEdit />} />
+                <Route path="gestao-financeira" element={<AdminGestaoFinanceira />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
