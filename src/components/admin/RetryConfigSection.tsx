@@ -61,8 +61,15 @@ const ACQUIRER_COLORS: Record<string, string> = {
   inter: 'bg-orange-500',
 };
 
+interface AcquirerStats {
+  success: number;
+  failure: number;
+  retry: number;
+}
+
 export const RetryConfigSection = () => {
   const [steps, setSteps] = useState<RetryStep[]>([]);
+  const [stats, setStats] = useState<Record<string, AcquirerStats>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("pix");
@@ -83,6 +90,7 @@ export const RetryConfigSection = () => {
 
   useEffect(() => {
     loadSteps();
+    loadStats();
   }, []);
 
   const loadSteps = async () => {
@@ -99,6 +107,31 @@ export const RetryConfigSection = () => {
       toast.error('Erro ao carregar configurações');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const { data: events, error } = await supabase
+        .rpc('get_recent_api_events', { p_limit: 500 });
+
+      if (error) throw error;
+
+      const acquirers = ['spedpay', 'inter', 'ativus'];
+      const processedStats: Record<string, AcquirerStats> = {};
+      
+      acquirers.forEach(acquirer => {
+        const acquirerEvents = (events || []).filter((e: any) => e.acquirer === acquirer);
+        processedStats[acquirer] = {
+          success: acquirerEvents.filter((e: any) => e.event_type === 'success').length,
+          failure: acquirerEvents.filter((e: any) => e.event_type === 'failure').length,
+          retry: acquirerEvents.filter((e: any) => e.event_type === 'retry').length,
+        };
+      });
+
+      setStats(processedStats);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
     }
   };
 
@@ -303,13 +336,18 @@ export const RetryConfigSection = () => {
                         </div>
                       </div>
 
-                      {/* Flow indicators */}
+                      {/* Flow indicators with stats */}
                       <div className="hidden md:flex items-center gap-6 text-sm">
                         <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                           <span>Sucesso?</span>
                           <ArrowRight className="h-3 w-3" />
                           <CheckCircle2 className="h-4 w-4" />
                           <span className="font-medium">FIM</span>
+                          {stats[step.acquirer]?.success > 0 && (
+                            <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              {stats[step.acquirer].success}
+                            </Badge>
+                          )}
                         </div>
                         
                         <div className={`flex items-center gap-2 ${isLast ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
@@ -319,9 +357,21 @@ export const RetryConfigSection = () => {
                             <>
                               <XCircle className="h-4 w-4" />
                               <span className="font-medium">ERRO</span>
+                              {stats[step.acquirer]?.failure > 0 && (
+                                <Badge variant="secondary" className="ml-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                  {stats[step.acquirer].failure}
+                                </Badge>
+                              )}
                             </>
                           ) : (
-                            <span className="font-medium">Próximo</span>
+                            <>
+                              <span className="font-medium">Próximo</span>
+                              {stats[step.acquirer]?.failure > 0 && (
+                                <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                  {stats[step.acquirer].failure}
+                                </Badge>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
