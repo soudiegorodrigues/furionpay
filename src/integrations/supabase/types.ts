@@ -262,6 +262,39 @@ export type Database = {
         }
         Relationships: []
       }
+      db_performance_metrics: {
+        Row: {
+          collected_at: string
+          dead_tuples: number | null
+          id: string
+          index_scans: number | null
+          row_count: number | null
+          sequential_scans: number | null
+          table_name: string
+          table_size_bytes: number | null
+        }
+        Insert: {
+          collected_at?: string
+          dead_tuples?: number | null
+          id?: string
+          index_scans?: number | null
+          row_count?: number | null
+          sequential_scans?: number | null
+          table_name: string
+          table_size_bytes?: number | null
+        }
+        Update: {
+          collected_at?: string
+          dead_tuples?: number | null
+          id?: string
+          index_scans?: number | null
+          row_count?: number | null
+          sequential_scans?: number | null
+          table_name?: string
+          table_size_bytes?: number | null
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           available_variables: Json | null
@@ -1546,6 +1579,7 @@ export type Database = {
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
+      collect_db_performance_metrics: { Args: never; Returns: undefined }
       create_full_system_backup: {
         Args: { p_backup_name?: string }
         Returns: string
@@ -1606,6 +1640,7 @@ export type Database = {
         }[]
       }
       get_api_health_summary: { Args: never; Returns: Json }
+      get_db_performance_summary: { Args: never; Returns: Json }
       get_global_notification_settings: {
         Args: never
         Returns: {
