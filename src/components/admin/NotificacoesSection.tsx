@@ -238,12 +238,12 @@ export function NotificacoesSection() {
         .from('notification-sounds')
         .getPublicUrl(fileName);
 
-      setSettings({
-        ...settings,
+      setSettings(prev => ({
+        ...prev,
         customSoundUrl: publicUrl,
         customSoundName: file.name,
         pixPaidSound: 'custom',
-      });
+      }));
 
       toast.success('Som personalizado enviado com sucesso!');
     } catch (error) {
@@ -268,12 +268,12 @@ export function NotificacoesSection() {
         .from('notification-sounds')
         .remove(files);
 
-      setSettings({
-        ...settings,
+      setSettings(prev => ({
+        ...prev,
         customSoundUrl: '',
         customSoundName: '',
-        pixPaidSound: settings.pixPaidSound === 'custom' ? 'cash-register' : settings.pixPaidSound,
-      });
+        pixPaidSound: prev.pixPaidSound === 'custom' ? 'cash-register' : prev.pixPaidSound,
+      }));
 
       toast.success('Som personalizado removido');
     } catch (error) {
@@ -324,11 +324,11 @@ export function NotificacoesSection() {
         .from('notification-sounds')
         .getPublicUrl(fileName);
 
-      setSettings({
-        ...settings,
+      setSettings(prev => ({
+        ...prev,
         customLogoUrl: publicUrl,
         customLogoName: file.name,
-      });
+      }));
 
       toast.success('Logo personalizada enviada com sucesso!');
     } catch (error) {
@@ -353,11 +353,11 @@ export function NotificacoesSection() {
         .from('notification-sounds')
         .remove(files);
 
-      setSettings({
-        ...settings,
+      setSettings(prev => ({
+        ...prev,
         customLogoUrl: '',
         customLogoName: '',
-      });
+      }));
 
       toast.success('Logo personalizada removida');
     } catch (error) {
@@ -458,7 +458,7 @@ export function NotificacoesSection() {
             </div>
             <Switch
               checked={settings.enabled}
-              onCheckedChange={(enabled) => setSettings({ ...settings, enabled })}
+              onCheckedChange={(enabled) => setSettings(prev => ({ ...prev, enabled }))}
             />
           </div>
 
@@ -478,7 +478,7 @@ export function NotificacoesSection() {
                       <Label>Título</Label>
                       <Input
                         value={settings.pixGeneratedTitle}
-                        onChange={(e) => setSettings({ ...settings, pixGeneratedTitle: e.target.value })}
+                        onChange={(e) => setSettings(prev => ({ ...prev, pixGeneratedTitle: e.target.value }))}
                         placeholder="💰 PIX Gerado!"
                       />
                     </div>
@@ -486,7 +486,7 @@ export function NotificacoesSection() {
                       <Label>Mensagem</Label>
                       <Input
                         value={settings.pixGeneratedDescription}
-                        onChange={(e) => setSettings({ ...settings, pixGeneratedDescription: e.target.value })}
+                        onChange={(e) => setSettings(prev => ({ ...prev, pixGeneratedDescription: e.target.value }))}
                         placeholder="{nome} - {valor}"
                       />
                       <p className="text-xs text-muted-foreground">
@@ -500,7 +500,7 @@ export function NotificacoesSection() {
                       <div className="flex gap-2">
                         <Select
                           value={settings.pixGeneratedSound}
-                          onValueChange={(value) => setSettings({ ...settings, pixGeneratedSound: value })}
+                          onValueChange={(value) => setSettings(prev => ({ ...prev, pixGeneratedSound: value }))}
                         >
                           <SelectTrigger className="flex-1">
                             <SelectValue />
@@ -526,7 +526,7 @@ export function NotificacoesSection() {
                       <Label>Duração</Label>
                       <Select
                         value={settings.pixGeneratedDuration}
-                        onValueChange={(value) => setSettings({ ...settings, pixGeneratedDuration: value })}
+                        onValueChange={(value) => setSettings(prev => ({ ...prev, pixGeneratedDuration: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -566,7 +566,7 @@ export function NotificacoesSection() {
                       <Label>Título</Label>
                       <Input
                         value={settings.pixPaidTitle}
-                        onChange={(e) => setSettings({ ...settings, pixPaidTitle: e.target.value })}
+                        onChange={(e) => setSettings(prev => ({ ...prev, pixPaidTitle: e.target.value }))}
                         placeholder="🎉 PIX Pago!"
                       />
                     </div>
@@ -574,7 +574,7 @@ export function NotificacoesSection() {
                       <Label>Mensagem</Label>
                       <Input
                         value={settings.pixPaidDescription}
-                        onChange={(e) => setSettings({ ...settings, pixPaidDescription: e.target.value })}
+                        onChange={(e) => setSettings(prev => ({ ...prev, pixPaidDescription: e.target.value }))}
                         placeholder="{nome} pagou {valor}"
                       />
                       <p className="text-xs text-muted-foreground">
@@ -588,7 +588,7 @@ export function NotificacoesSection() {
                       <div className="flex gap-2">
                         <Select
                           value={settings.pixPaidSound}
-                          onValueChange={(value) => setSettings({ ...settings, pixPaidSound: value })}
+                          onValueChange={(value) => setSettings(prev => ({ ...prev, pixPaidSound: value }))}
                         >
                           <SelectTrigger className="flex-1">
                             <SelectValue />
@@ -614,7 +614,7 @@ export function NotificacoesSection() {
                       <Label>Duração</Label>
                       <Select
                         value={settings.pixPaidDuration}
-                        onValueChange={(value) => setSettings({ ...settings, pixPaidDuration: value })}
+                        onValueChange={(value) => setSettings(prev => ({ ...prev, pixPaidDuration: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -778,7 +778,7 @@ export function NotificacoesSection() {
                     </div>
                     <Slider
                       value={[settings.logoSize]}
-                      onValueChange={(value) => setSettings({ ...settings, logoSize: value[0] })}
+                      onValueChange={(value) => setSettings(prev => ({ ...prev, logoSize: value[0] }))}
                       min={24}
                       max={64}
                       step={4}
@@ -805,7 +805,7 @@ export function NotificacoesSection() {
                     </div>
                     <Switch
                       checked={settings.enableToast}
-                      onCheckedChange={(enableToast) => setSettings({ ...settings, enableToast })}
+                      onCheckedChange={(enableToast) => setSettings(prev => ({ ...prev, enableToast }))}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -815,7 +815,7 @@ export function NotificacoesSection() {
                     </div>
                     <Switch
                       checked={settings.enableBrowser}
-                      onCheckedChange={(enableBrowser) => setSettings({ ...settings, enableBrowser })}
+                      onCheckedChange={(enableBrowser) => setSettings(prev => ({ ...prev, enableBrowser }))}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -825,7 +825,7 @@ export function NotificacoesSection() {
                     </div>
                     <Switch
                       checked={settings.enableSound}
-                      onCheckedChange={(enableSound) => setSettings({ ...settings, enableSound })}
+                      onCheckedChange={(enableSound) => setSettings(prev => ({ ...prev, enableSound }))}
                     />
                   </div>
 
@@ -837,7 +837,7 @@ export function NotificacoesSection() {
                       </div>
                       <Slider
                         value={[settings.volume]}
-                        onValueChange={([volume]) => setSettings({ ...settings, volume })}
+                        onValueChange={([volume]) => setSettings(prev => ({ ...prev, volume }))}
                         max={100}
                         step={5}
                         className="w-full"
