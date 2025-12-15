@@ -1720,6 +1720,7 @@ export type Database = {
       get_pix_transactions_auth: {
         Args: { p_limit?: number }
         Returns: {
+          acquirer: string
           amount: number
           created_at: string
           donor_name: string
