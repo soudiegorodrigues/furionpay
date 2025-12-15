@@ -188,15 +188,15 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
     return `${diffDays}d`;
   };
 
-  // Get today's date start in Brazil timezone
+  // Get today's date start in Brazil timezone (America/Sao_Paulo = UTC-3)
   const getTodayStartBrazil = () => {
-    const now = new Date();
-    const brazilOffset = -3 * 60; // Brazil is UTC-3
-    const utcOffset = now.getTimezoneOffset();
-    const brazilTime = new Date(now.getTime() + (utcOffset + brazilOffset) * 60000);
-    brazilTime.setHours(0, 0, 0, 0);
-    // Convert back to UTC for database query
-    return new Date(brazilTime.getTime() - (utcOffset + brazilOffset) * 60000).toISOString();
+    // Get current date in Brazil timezone using Intl API
+    const brazilDate = new Date().toLocaleDateString('en-CA', { 
+      timeZone: 'America/Sao_Paulo' 
+    }); // Returns "YYYY-MM-DD"
+    
+    // Midnight in Brazil (UTC-3) = 03:00 UTC
+    return `${brazilDate}T03:00:00.000Z`;
   };
 
   const loadSyncStats = async () => {
