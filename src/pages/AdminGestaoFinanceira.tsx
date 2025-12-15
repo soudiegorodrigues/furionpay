@@ -23,7 +23,7 @@ const AdminGestaoFinanceira = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
-    <div className="p-4 md:p-8 lg:p-10 space-y-6 animate-fade-in max-w-3xl mx-auto">
+    <div className="p-4 md:p-8 lg:p-10 space-y-6 animate-fade-in max-w-4xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Gestão Financeira</h1>
