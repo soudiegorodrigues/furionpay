@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { 
   Table, 
   TableBody, 
@@ -39,7 +40,9 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Calendar
+  Calendar,
+  Repeat,
+  RefreshCw
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -54,6 +57,7 @@ interface Transaction {
   category_id: string | null;
   is_recurring: boolean;
   recurring_frequency: string | null;
+  recurring_end_date: string | null;
 }
 
 interface Category {
@@ -62,6 +66,14 @@ interface Category {
   type: string;
   color: string;
 }
+
+const RECURRING_OPTIONS = [
+  { value: 'weekly', label: 'Semanal' },
+  { value: 'biweekly', label: 'Quinzenal' },
+  { value: 'monthly', label: 'Mensal' },
+  { value: 'quarterly', label: 'Trimestral' },
+  { value: 'yearly', label: 'Anual' }
+];
 
 const ITEMS_PER_PAGE = 10;
 
@@ -85,8 +97,10 @@ export const FinanceTransactions = () => {
     date: new Date().toISOString().split('T')[0],
     category_id: '',
     is_recurring: false,
-    recurring_frequency: ''
+    recurring_frequency: '',
+    recurring_end_date: ''
   });
+  const [isGeneratingRecurring, setIsGeneratingRecurring] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -147,7 +161,8 @@ export const FinanceTransactions = () => {
         date: transaction.date,
         category_id: transaction.category_id || '',
         is_recurring: transaction.is_recurring,
-        recurring_frequency: transaction.recurring_frequency || ''
+        recurring_frequency: transaction.recurring_frequency || '',
+        recurring_end_date: transaction.recurring_end_date || ''
       });
     } else {
       setEditingTransaction(null);
@@ -158,7 +173,8 @@ export const FinanceTransactions = () => {
         date: new Date().toISOString().split('T')[0],
         category_id: '',
         is_recurring: false,
-        recurring_frequency: ''
+        recurring_frequency: '',
+        recurring_end_date: ''
       });
     }
     setShowDialog(true);
@@ -184,7 +200,8 @@ export const FinanceTransactions = () => {
         date: formData.date,
         category_id: formData.category_id || null,
         is_recurring: formData.is_recurring,
-        recurring_frequency: formData.is_recurring ? formData.recurring_frequency : null
+        recurring_frequency: formData.is_recurring ? formData.recurring_frequency : null,
+        recurring_end_date: formData.is_recurring && formData.recurring_end_date ? formData.recurring_end_date : null
       };
 
       if (editingTransaction) {
@@ -235,6 +252,126 @@ export const FinanceTransactions = () => {
       });
     }
   };
+
+  // Generate recurring transactions
+  const generateRecurringTransactions = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setIsGeneratingRecurring(true);
+    try {
+      // Get all recurring transactions
+      const { data: recurringTxs, error } = await supabase
+        .from('finance_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_recurring', true);
+
+      if (error) throw error;
+      if (!recurringTxs || recurringTxs.length === 0) {
+        toast({ title: "Nenhuma transação recorrente encontrada" });
+        setIsGeneratingRecurring(false);
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const transactionsToCreate: any[] = [];
+
+      for (const tx of recurringTxs) {
+        const startDate = new Date(tx.date + 'T00:00:00');
+        const endDate = tx.recurring_end_date ? new Date(tx.recurring_end_date + 'T00:00:00') : today;
+        
+        if (!tx.recurring_frequency) continue;
+
+        // Calculate all dates based on frequency
+        let currentDate = new Date(startDate);
+        const generatedDates: string[] = [];
+
+        while (currentDate <= endDate && currentDate <= today) {
+          const dateStr = currentDate.toISOString().split('T')[0];
+          
+          // Skip the original transaction date
+          if (dateStr !== tx.date) {
+            generatedDates.push(dateStr);
+          }
+
+          // Increment based on frequency
+          switch (tx.recurring_frequency) {
+            case 'weekly':
+              currentDate.setDate(currentDate.getDate() + 7);
+              break;
+            case 'biweekly':
+              currentDate.setDate(currentDate.getDate() + 14);
+              break;
+            case 'monthly':
+              currentDate.setMonth(currentDate.getMonth() + 1);
+              break;
+            case 'quarterly':
+              currentDate.setMonth(currentDate.getMonth() + 3);
+              break;
+            case 'yearly':
+              currentDate.setFullYear(currentDate.getFullYear() + 1);
+              break;
+            default:
+              currentDate = new Date(endDate.getTime() + 86400000); // exit loop
+          }
+        }
+
+        // Check which dates already exist
+        const { data: existingTxs } = await supabase
+          .from('finance_transactions')
+          .select('date')
+          .eq('user_id', user.id)
+          .eq('type', tx.type)
+          .eq('amount', tx.amount)
+          .eq('category_id', tx.category_id)
+          .in('date', generatedDates);
+
+        const existingDates = new Set(existingTxs?.map(t => t.date) || []);
+
+        // Create transactions for missing dates
+        for (const date of generatedDates) {
+          if (!existingDates.has(date)) {
+            transactionsToCreate.push({
+              user_id: user.id,
+              type: tx.type,
+              amount: tx.amount,
+              description: tx.description ? `${tx.description} (recorrente)` : 'Transação recorrente',
+              date: date,
+              category_id: tx.category_id,
+              is_recurring: false, // Generated transactions are not marked as recurring
+              recurring_frequency: null,
+              recurring_end_date: null
+            });
+          }
+        }
+      }
+
+      if (transactionsToCreate.length > 0) {
+        const { error: insertError } = await supabase
+          .from('finance_transactions')
+          .insert(transactionsToCreate);
+
+        if (insertError) throw insertError;
+
+        toast({
+          title: "Transações geradas!",
+          description: `${transactionsToCreate.length} transação(ões) recorrente(s) criada(s)`
+        });
+        fetchData();
+      } else {
+        toast({ title: "Todas as transações recorrentes já estão em dia" });
+      }
+    } catch (error) {
+      console.error('Error generating recurring transactions:', error);
+      toast({
+        title: "Erro ao gerar transações recorrentes",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingRecurring(false);
+    }
+  }, [user?.id, toast]);
 
   const getCategoryById = (id: string | null) => {
     return categories.find(c => c.id === id);
@@ -306,10 +443,25 @@ export const FinanceTransactions = () => {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="gap-2 w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          Nova Transação
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            onClick={generateRecurringTransactions}
+            disabled={isGeneratingRecurring}
+            className="gap-2"
+          >
+            {isGeneratingRecurring ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">Gerar Recorrentes</span>
+          </Button>
+          <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Transação
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -342,6 +494,12 @@ export const FinanceTransactions = () => {
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                             {formatDate(transaction.date)}
+                            {transaction.is_recurring && (
+                              <Badge variant="outline" className="text-xs gap-1">
+                                <Repeat className="h-3 w-3" />
+                                {RECURRING_OPTIONS.find(o => o.value === transaction.recurring_frequency)?.label || 'Recorrente'}
+                              </Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -535,6 +693,62 @@ export const FinanceTransactions = () => {
                 placeholder="Detalhes da transação..."
                 rows={2}
               />
+            </div>
+
+            {/* Recurring Transaction Options */}
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Transação Recorrente</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Repetir automaticamente
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.is_recurring}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    is_recurring: checked,
+                    recurring_frequency: checked ? 'monthly' : ''
+                  })}
+                />
+              </div>
+
+              {formData.is_recurring && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Frequência</Label>
+                    <Select
+                      value={formData.recurring_frequency}
+                      onValueChange={(value) => setFormData({ ...formData, recurring_frequency: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a frequência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RECURRING_OPTIONS.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Data de término (opcional)</Label>
+                    <Input
+                      type="date"
+                      value={formData.recurring_end_date}
+                      onChange={(e) => setFormData({ ...formData, recurring_end_date: e.target.value })}
+                      min={formData.date}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Deixe em branco para repetir indefinidamente
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
