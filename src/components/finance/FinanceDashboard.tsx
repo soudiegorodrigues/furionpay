@@ -434,22 +434,22 @@ export const FinanceDashboard = () => {
       </div>
 
       {/* Summary Cards with Circular Gauges */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Receitas */}
         <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '0ms' }}>
-          <CardContent className="p-3 md:p-4">
+          <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
-              <p className="text-xs text-muted-foreground mb-1">Receitas</p>
+              <p className="text-sm text-muted-foreground mb-2">Receitas</p>
               <GaugeChart 
                 value={stats.totalIncome}
                 min={0}
                 max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
                 label={formatCurrency(stats.totalIncome)}
                 colorScheme="green"
-                size={100}
+                size={120}
               />
               {stats.incomeChange !== 0 && periodFilter !== 'all' && (
-                <p className={`text-xs ${stats.incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${stats.incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatPercent(stats.incomeChange)}
                 </p>
               )}
@@ -459,19 +459,19 @@ export const FinanceDashboard = () => {
 
         {/* Despesas */}
         <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '50ms' }}>
-          <CardContent className="p-3 md:p-4">
+          <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
-              <p className="text-xs text-muted-foreground mb-1">Despesas</p>
+              <p className="text-sm text-muted-foreground mb-2">Despesas</p>
               <GaugeChart 
                 value={stats.totalExpense}
                 min={0}
                 max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
                 label={formatCurrency(stats.totalExpense)}
                 colorScheme="green"
-                size={100}
+                size={120}
               />
               {stats.expenseChange !== 0 && periodFilter !== 'all' && (
-                <p className={`text-xs ${stats.expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${stats.expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatPercent(stats.expenseChange)}
                 </p>
               )}
@@ -481,16 +481,16 @@ export const FinanceDashboard = () => {
 
         {/* Investimentos */}
         <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <CardContent className="p-3 md:p-4">
+          <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
-              <p className="text-xs text-muted-foreground mb-1">Investimentos</p>
+              <p className="text-sm text-muted-foreground mb-2">Investimentos</p>
               <GaugeChart 
                 value={stats.totalInvestment}
                 min={0}
                 max={Math.max(stats.totalIncome, stats.totalExpense, stats.totalInvestment, 1) * 1.2}
                 label={formatCurrency(stats.totalInvestment)}
                 colorScheme="red"
-                size={100}
+                size={120}
               />
             </div>
           </CardContent>
@@ -498,16 +498,16 @@ export const FinanceDashboard = () => {
 
         {/* Saldo */}
         <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '150ms' }}>
-          <CardContent className="p-3 md:p-4">
+          <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
-              <p className="text-xs text-muted-foreground mb-1">Saldo</p>
+              <p className="text-sm text-muted-foreground mb-2">Saldo</p>
               <GaugeChart 
                 value={Math.max(0, stats.balance)}
                 min={0}
                 max={Math.max(stats.totalIncome, Math.abs(stats.balance), 1) * 1.2}
                 label={formatCurrency(stats.balance)}
                 colorScheme="purple"
-                size={100}
+                size={120}
               />
             </div>
           </CardContent>
