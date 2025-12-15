@@ -39,6 +39,7 @@ interface Category {
   color: string;
   icon: string;
   is_default: boolean;
+  spending_limit: number | null;
 }
 
 const CATEGORY_COLORS = [
@@ -57,7 +58,8 @@ export const FinanceCategories = () => {
   const [formData, setFormData] = useState({
     name: '',
     type: 'expense' as string,
-    color: '#10b981'
+    color: '#10b981',
+    spending_limit: '' as string
   });
 
   useEffect(() => {
@@ -95,14 +97,16 @@ export const FinanceCategories = () => {
       setFormData({
         name: category.name,
         type: category.type,
-        color: category.color
+        color: category.color,
+        spending_limit: category.spending_limit?.toString() || ''
       });
     } else {
       setEditingCategory(null);
       setFormData({
         name: '',
         type: 'expense',
-        color: '#10b981'
+        color: '#10b981',
+        spending_limit: ''
       });
     }
     setShowDialog(true);
@@ -118,6 +122,8 @@ export const FinanceCategories = () => {
     }
 
     setIsSubmitting(true);
+    const spendingLimit = formData.spending_limit ? parseFloat(formData.spending_limit) : null;
+    
     try {
       if (editingCategory) {
         const { error } = await supabase
@@ -125,7 +131,8 @@ export const FinanceCategories = () => {
           .update({
             name: formData.name,
             type: formData.type,
-            color: formData.color
+            color: formData.color,
+            spending_limit: spendingLimit
           })
           .eq('id', editingCategory.id);
 
@@ -139,7 +146,8 @@ export const FinanceCategories = () => {
             name: formData.name,
             type: formData.type,
             color: formData.color,
-            is_default: false
+            is_default: false,
+            spending_limit: spendingLimit
           });
 
         if (error) throw error;
@@ -484,6 +492,23 @@ export const FinanceCategories = () => {
                 ))}
               </div>
             </div>
+
+            {formData.type === 'expense' && (
+              <div className="space-y-2">
+                <Label>Limite Mensal de Gastos (opcional)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.spending_limit}
+                  onChange={(e) => setFormData({ ...formData, spending_limit: e.target.value })}
+                  placeholder="Ex: 500.00"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Receba alertas quando ultrapassar este valor no mês
+                </p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
