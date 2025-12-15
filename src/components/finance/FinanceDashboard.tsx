@@ -436,7 +436,7 @@ export const FinanceDashboard = () => {
       {/* Summary Cards with Circular Gauges */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Receitas */}
-        <Card className="border border-border/50">
+        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '0ms' }}>
           <CardContent className="p-3 md:p-4">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-xs text-muted-foreground mb-1">Receitas</p>
@@ -458,7 +458,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* Despesas */}
-        <Card className="border border-border/50">
+        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '50ms' }}>
           <CardContent className="p-3 md:p-4">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-xs text-muted-foreground mb-1">Despesas</p>
@@ -480,7 +480,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* Investimentos */}
-        <Card className="border border-border/50">
+        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '100ms' }}>
           <CardContent className="p-3 md:p-4">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-xs text-muted-foreground mb-1">Investimentos</p>
@@ -497,7 +497,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* Saldo */}
-        <Card className="border border-border/50">
+        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '150ms' }}>
           <CardContent className="p-3 md:p-4">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-xs text-muted-foreground mb-1">Saldo</p>
@@ -517,7 +517,7 @@ export const FinanceDashboard = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-3">
         {/* Income vs Expense Comparison - Minimalist Progress Bars */}
-        <Card className="border border-border/50">
+        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '200ms' }}>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-4 w-4 text-primary" />
