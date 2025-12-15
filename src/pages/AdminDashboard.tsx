@@ -136,11 +136,11 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true, resetTransactions = true) => {
     // Remove blocking loading state - let data populate as it arrives
     try {
-      // Execute ALL queries in parallel - limit transactions for faster initial load
+      // Execute ALL queries in parallel - load ALL transactions for accurate chart/stats
       const [userSettingsResult, statsResult, txResult, rewardsResult, defaultFeeResult, availableBalanceResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard'), supabase.rpc('get_user_transactions', {
-        p_limit: 100
+        p_limit: 0
       }),
-      // Load first 100 for faster initial render
+      // Load ALL transactions for accurate chart and statistics
       supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
         ascending: true
       }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance')]);
@@ -161,7 +161,7 @@ const AdminDashboard = () => {
         if (resetTransactions) {
           setTransactions(newTx);
           setTransactionOffset(TRANSACTIONS_PER_LOAD);
-          setHasMoreTransactions(newTx.length === TRANSACTIONS_PER_LOAD);
+          setHasMoreTransactions(false); // All loaded
         }
       }
 
