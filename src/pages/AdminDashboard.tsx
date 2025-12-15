@@ -87,6 +87,7 @@ const AdminDashboard = () => {
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
   const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
   const [transactionOffset, setTransactionOffset] = useState(0);
   const TRANSACTIONS_PER_LOAD = 100;
@@ -134,16 +135,15 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
   const loadData = async (showLoading = true, resetTransactions = true) => {
-    // Remove blocking loading state - let data populate as it arrives
     try {
-      // Execute ALL queries in parallel - load ALL transactions for accurate chart/stats
-      const [userSettingsResult, statsResult, txResult, rewardsResult, defaultFeeResult, availableBalanceResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard'), supabase.rpc('get_user_transactions', {
-        p_limit: 0
-      }),
-      // Load ALL transactions for accurate chart and statistics
-      supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
-        ascending: true
-      }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance')]);
+      // PHASE 1: Load small/fast data FIRST (non-blocking for UI)
+      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult] = await Promise.all([
+        supabase.rpc('get_user_settings'), 
+        supabase.rpc('get_user_dashboard'),
+        supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', { ascending: true }), 
+        supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), 
+        supabase.rpc('get_user_available_balance')
+      ]);
 
       // Set available balance immediately
       if (!availableBalanceResult.error && availableBalanceResult.data !== null) {
@@ -155,27 +155,14 @@ const AdminDashboard = () => {
         setStats(statsResult.data as unknown as DashboardStats);
       }
 
-      // Set transactions immediately
-      if (!txResult.error) {
-        const newTx = txResult.data as unknown as Transaction[] || [];
-        if (resetTransactions) {
-          setTransactions(newTx);
-          setTransactionOffset(TRANSACTIONS_PER_LOAD);
-          setHasMoreTransactions(false); // All loaded
-        }
-      }
-
       // Set rewards immediately and mark loading complete
       setRewards(rewardsResult.data || []);
       setIsLoadingRewards(false);
 
-      // Process settings and fee config in background
+      // Process settings and fee config
       let feeData = defaultFeeResult.data;
       if (userSettingsResult.data) {
-        const settings = userSettingsResult.data as {
-          key: string;
-          value: string;
-        }[];
+        const settings = userSettingsResult.data as { key: string; value: string; }[];
         const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
         const userFeeConfigId = feeConfigSetting?.value || null;
 
@@ -183,11 +170,9 @@ const AdminDashboard = () => {
         const banner = settings.find(s => s.key === 'dashboard_banner_url');
         setBannerUrl(banner?.value || null);
 
-        // Load user-specific fee config if exists (secondary, non-blocking)
+        // Load user-specific fee config if exists
         if (userFeeConfigId) {
-          supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('id', userFeeConfigId).maybeSingle().then(({
-            data
-          }) => {
+          supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('id', userFeeConfigId).maybeSingle().then(({ data }) => {
             if (data) setFeeConfig(data as FeeConfig);
           });
         }
@@ -195,6 +180,22 @@ const AdminDashboard = () => {
       if (feeData) {
         setFeeConfig(feeData as FeeConfig);
       }
+
+      // PHASE 2: Load transactions in BACKGROUND (doesn't block UI)
+      if (resetTransactions) {
+        setIsLoadingTransactions(true);
+      }
+      supabase.rpc('get_user_transactions', { p_limit: 0 }).then(({ data, error }) => {
+        if (!error && data) {
+          const newTx = data as unknown as Transaction[] || [];
+          if (resetTransactions) {
+            setTransactions(newTx);
+            setTransactionOffset(TRANSACTIONS_PER_LOAD);
+            setHasMoreTransactions(false);
+          }
+        }
+        setIsLoadingTransactions(false);
+      });
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       if (error.message?.includes('Not authenticated')) {
@@ -666,80 +667,89 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <div className="flex-1 min-h-[280px] sm:min-h-[320px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{
-                top: 30,
-                right: 10,
-                left: 10,
-                bottom: isTabletOrSmaller ? 40 : 5
-              }} barCategoryGap="5%">
-                  <defs>
-                    <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                    </linearGradient>
-                    <linearGradient id="barGradientGenerated" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.6} />
-                      <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="hsl(var(--muted-foreground))" opacity={0.15} horizontal={true} vertical={false} />
-                  <XAxis dataKey="date" tick={{
-                  fontSize: 10,
-                  fill: 'hsl(var(--muted-foreground))'
-                }} angle={isTabletOrSmaller ? -90 : 0} textAnchor={isTabletOrSmaller ? "end" : "middle"} tickLine={false} axisLine={false} interval={0} height={isTabletOrSmaller ? 50 : 30} />
-                  <YAxis tick={{
-                  fontSize: 10,
-                  fill: 'hsl(var(--muted-foreground))'
-                }} tickLine={false} axisLine={false} allowDecimals={false} hide domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} />
-                  <Tooltip cursor={{
-                  fill: 'hsl(var(--primary) / 0.08)'
-                }} contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  padding: '12px 16px',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
-                }} labelStyle={{
-                  color: 'hsl(var(--foreground))',
-                  fontWeight: 600,
-                  marginBottom: '6px'
-                }} formatter={(value: number, name: string) => {
-                  if (name === 'pagos') return [value, '🔴 Pagos'];
-                  return [value, name];
-                }} />
-                  <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}>
-                    <LabelList dataKey="pagos" position="top" fontSize={10} fontWeight={600} fill="hsl(var(--primary))" formatter={(value: number, entry: {
-                    gerados?: number;
-                  }) => {
-                    const gerados = entry?.gerados ?? 0;
-                    const rate = gerados > 0 ? Math.round(value / gerados * 100) : 0;
-                    return `${rate}%`;
-                  }} content={({
-                    x,
-                    y,
-                    width,
-                    value,
-                    index
-                  }: {
-                    x?: number;
-                    y?: number;
-                    width?: number;
-                    value?: number;
-                    index?: number;
-                  }) => {
-                    if (typeof index !== 'number' || !chartData[index]) return null;
-                    const gerados = chartData[index].gerados ?? 0;
-                    const pagos = value ?? 0;
-                    const rate = gerados > 0 ? Math.round(pagos / gerados * 100) : 0;
-                    return <text x={(x ?? 0) + (width ?? 0) / 2} y={(y ?? 0) - 6} textAnchor="middle" fontSize={10} fill="hsl(var(--primary))" fontWeight={600}>
-                            {rate}%
-                          </text>;
+              {isLoadingTransactions ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center gap-3">
+                    <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Carregando gráfico...</span>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{
+                  top: 30,
+                  right: 10,
+                  left: 10,
+                  bottom: isTabletOrSmaller ? 40 : 5
+                }} barCategoryGap="5%">
+                    <defs>
+                      <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                      </linearGradient>
+                      <linearGradient id="barGradientGenerated" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="hsl(var(--muted-foreground))" opacity={0.15} horizontal={true} vertical={false} />
+                    <XAxis dataKey="date" tick={{
+                    fontSize: 10,
+                    fill: 'hsl(var(--muted-foreground))'
+                  }} angle={isTabletOrSmaller ? -90 : 0} textAnchor={isTabletOrSmaller ? "end" : "middle"} tickLine={false} axisLine={false} interval={0} height={isTabletOrSmaller ? 50 : 30} />
+                    <YAxis tick={{
+                    fontSize: 10,
+                    fill: 'hsl(var(--muted-foreground))'
+                  }} tickLine={false} axisLine={false} allowDecimals={false} hide domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} />
+                    <Tooltip cursor={{
+                    fill: 'hsl(var(--primary) / 0.08)'
+                  }} contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    padding: '12px 16px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
+                  }} labelStyle={{
+                    color: 'hsl(var(--foreground))',
+                    fontWeight: 600,
+                    marginBottom: '6px'
+                  }} formatter={(value: number, name: string) => {
+                    if (name === 'pagos') return [value, '🔴 Pagos'];
+                    return [value, name];
                   }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                    <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}>
+                      <LabelList dataKey="pagos" position="top" fontSize={10} fontWeight={600} fill="hsl(var(--primary))" formatter={(value: number, entry: {
+                      gerados?: number;
+                    }) => {
+                      const gerados = entry?.gerados ?? 0;
+                      const rate = gerados > 0 ? Math.round(value / gerados * 100) : 0;
+                      return `${rate}%`;
+                    }} content={({
+                      x,
+                      y,
+                      width,
+                      value,
+                      index
+                    }: {
+                      x?: number;
+                      y?: number;
+                      width?: number;
+                      value?: number;
+                      index?: number;
+                    }) => {
+                      if (typeof index !== 'number' || !chartData[index]) return null;
+                      const gerados = chartData[index].gerados ?? 0;
+                      const pagos = value ?? 0;
+                      const rate = gerados > 0 ? Math.round(pagos / gerados * 100) : 0;
+                      return <text x={(x ?? 0) + (width ?? 0) / 2} y={(y ?? 0) - 6} textAnchor="middle" fontSize={10} fill="hsl(var(--primary))" fontWeight={600}>
+                              {rate}%
+                            </text>;
+                    }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="flex items-center gap-2">
