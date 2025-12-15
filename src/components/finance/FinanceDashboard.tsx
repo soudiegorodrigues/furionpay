@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   TrendingUp, 
@@ -509,46 +510,79 @@ export const FinanceDashboard = () => {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-3">
-        {/* Income vs Expense Comparison Bar Chart */}
+        {/* Income vs Expense Comparison - Minimalist Progress Bars */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-4 w-4 text-primary" />
-              Receitas vs Despesas vs Investimentos
+              Visão Geral Financeira
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={comparisonData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
-                  <XAxis 
-                    type="number" 
-                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                    className="text-xs"
+            {stats.totalIncome === 0 && stats.totalExpense === 0 && stats.totalInvestment === 0 ? (
+              <div className="flex items-center justify-center h-[150px] text-muted-foreground text-sm">
+                Nenhum dado disponível
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {/* Receitas */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <span className="text-sm font-medium">Receitas</span>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                      {formatCurrency(stats.totalIncome)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={stats.totalIncome + stats.totalExpense + stats.totalInvestment > 0 
+                      ? (stats.totalIncome / (stats.totalIncome + stats.totalExpense + stats.totalInvestment)) * 100 
+                      : 0} 
+                    className="h-2.5 bg-muted [&>div]:bg-emerald-500"
                   />
-                  <YAxis 
-                    type="category" 
-                    dataKey="name" 
-                    width={100}
-                    className="text-xs"
+                </div>
+
+                {/* Despesas */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                      <span className="text-sm font-medium">Despesas</span>
+                    </div>
+                    <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                      {formatCurrency(stats.totalExpense)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={stats.totalIncome + stats.totalExpense + stats.totalInvestment > 0 
+                      ? (stats.totalExpense / (stats.totalIncome + stats.totalExpense + stats.totalInvestment)) * 100 
+                      : 0} 
+                    className="h-2.5 bg-muted [&>div]:bg-red-500"
                   />
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                </div>
+
+                {/* Investimentos */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <span className="text-sm font-medium">Investimentos</span>
+                    </div>
+                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      {formatCurrency(stats.totalInvestment)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={stats.totalIncome + stats.totalExpense + stats.totalInvestment > 0 
+                      ? (stats.totalInvestment / (stats.totalIncome + stats.totalExpense + stats.totalInvestment)) * 100 
+                      : 0} 
+                    className="h-2.5 bg-muted [&>div]:bg-blue-500"
                   />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                    {comparisonData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
