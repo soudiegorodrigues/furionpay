@@ -65,6 +65,13 @@ interface FeeConfig {
   pix_fixed: number;
 }
 
+interface RetryConfig {
+  enabled: boolean;
+  max_retries: number;
+  acquirer_order: string[];
+  delay_between_retries_ms: number;
+}
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -111,6 +118,29 @@ async function getUserFeeConfig(userId?: string): Promise<FeeConfig | null> {
   }
   
   console.log('No fee config found');
+  return null;
+}
+
+// Get retry configuration for PIX
+async function getRetryConfig(): Promise<RetryConfig | null> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('retry_configurations')
+    .select('enabled, max_retries, acquirer_order, delay_between_retries_ms')
+    .eq('payment_method', 'pix')
+    .maybeSingle();
+  
+  if (error) {
+    console.log('Error fetching retry config:', error);
+    return null;
+  }
+  
+  if (data) {
+    console.log('Retry config loaded:', data);
+    return data as RetryConfig;
+  }
+  
+  console.log('No retry config found');
   return null;
 }
 
@@ -255,6 +285,28 @@ async function getProductNameFromDatabase(userId?: string, popupModel?: string):
   return DEFAULT_PRODUCT_NAME;
 }
 
+// Log API monitoring event
+async function logApiEvent(
+  acquirer: string, 
+  eventType: 'success' | 'failure' | 'retry' | 'circuit_open' | 'circuit_close',
+  responseTimeMs?: number,
+  errorMessage?: string,
+  retryAttempt?: number
+): Promise<void> {
+  try {
+    const supabase = getSupabaseClient();
+    await supabase.from('api_monitoring_events').insert({
+      acquirer,
+      event_type: eventType,
+      response_time_ms: responseTimeMs || null,
+      error_message: errorMessage || null,
+      retry_attempt: retryAttempt || null
+    });
+  } catch (err) {
+    console.error('Error logging API event:', err);
+  }
+}
+
 async function logPixGenerated(
   amount: number, 
   txid: string, 
@@ -297,6 +349,283 @@ async function logPixGenerated(
   }
 }
 
+// Helper delay function
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Call specific acquirer
+async function callAcquirer(
+  acquirer: string,
+  params: {
+    amount: number;
+    customerName?: string;
+    utmParams?: Record<string, any>;
+    userId?: string;
+    popupModel?: string;
+    productName: string;
+    feeConfig: FeeConfig | null;
+  }
+): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  
+  const startTime = Date.now();
+  
+  try {
+    if (acquirer === 'inter') {
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ 
+          amount: params.amount, 
+          donorName: params.customerName, 
+          utmParams: params.utmParams, 
+          userId: params.userId, 
+          popupModel: params.popupModel 
+        }),
+      });
+      
+      const data = await response.json();
+      const responseTime = Date.now() - startTime;
+      
+      if (data.success) {
+        await logApiEvent('inter', 'success', responseTime);
+        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
+      } else {
+        await logApiEvent('inter', 'failure', responseTime, data.error);
+        return { success: false, error: data.error };
+      }
+    }
+    
+    if (acquirer === 'ativus') {
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-ativus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ 
+          amount: params.amount, 
+          donorName: params.customerName, 
+          utmData: params.utmParams, 
+          userId: params.userId, 
+          popupModel: params.popupModel 
+        }),
+      });
+      
+      const data = await response.json();
+      const responseTime = Date.now() - startTime;
+      
+      if (data.success) {
+        await logApiEvent('ativus', 'success', responseTime);
+        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
+      } else {
+        await logApiEvent('ativus', 'failure', responseTime, data.error);
+        return { success: false, error: data.error };
+      }
+    }
+    
+    if (acquirer === 'spedpay') {
+      // Get SpedPay API key
+      let apiKey = await getApiKeyFromDatabase(params.userId);
+      if (!apiKey) {
+        apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
+      }
+      
+      if (!apiKey) {
+        return { success: false, error: 'SpedPay API key not configured' };
+      }
+      
+      const externalId = `donation_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const donorName = params.customerName || getRandomName();
+      const donorEmail = getRandomEmail(donorName);
+      const donorPhone = getRandomPhone();
+      const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
+
+      const customerData: Record<string, any> = {
+        name: donorName,
+        email: donorEmail,
+        phone: donorPhone,
+        document_type: 'CPF',
+        document: '12345678909',
+      };
+
+      if (params.utmParams) {
+        if (params.utmParams.utm_source) customerData.utm_source = params.utmParams.utm_source;
+        if (params.utmParams.utm_medium) customerData.utm_medium = params.utmParams.utm_medium;
+        if (params.utmParams.utm_campaign) customerData.utm_campaign = params.utmParams.utm_campaign;
+        if (params.utmParams.utm_content) customerData.utm_content = params.utmParams.utm_content;
+        if (params.utmParams.utm_term) customerData.utm_term = params.utmParams.utm_term;
+      }
+
+      const transactionData = {
+        external_id: externalId,
+        total_amount: params.amount,
+        payment_method: 'PIX',
+        webhook_url: webhookUrl,
+        customer: customerData,
+        items: [
+          {
+            id: `item_${externalId}`,
+            title: params.productName,
+            description: params.productName,
+            price: params.amount,
+            quantity: 1,
+            is_physical: false,
+          }
+        ],
+        ip: '0.0.0.0',
+      };
+
+      const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-secret': apiKey,
+        },
+        body: JSON.stringify(transactionData),
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        await logApiEvent('spedpay', 'failure', responseTime, errorText);
+        return { success: false, error: errorText };
+      }
+
+      const data = await response.json();
+      
+      let pixCode = data.pix?.payload || data.pix?.qr_code || data.pixCode || data.qr_code;
+      let qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
+      const transactionId = data.id || externalId;
+
+      // If PIX code not in response, poll for it
+      if (!pixCode && data.id) {
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          await delay(1500);
+          
+          const detailsResponse = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${data.id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'api-secret': apiKey,
+            },
+          });
+          
+          if (detailsResponse.ok) {
+            const detailsData = await detailsResponse.json();
+            pixCode = detailsData.pix?.payload || detailsData.pix?.qr_code || detailsData.pixCode || detailsData.qr_code;
+            qrCodeUrl = detailsData.pix?.qr_code_url || detailsData.qrCodeUrl;
+            
+            if (pixCode) break;
+          }
+        }
+      }
+
+      if (!pixCode) {
+        await logApiEvent('spedpay', 'failure', responseTime, 'PIX code not found after polling');
+        return { success: false, error: 'PIX code not found' };
+      }
+
+      // Log to database
+      await logPixGenerated(
+        params.amount, 
+        transactionId, 
+        pixCode, 
+        donorName, 
+        params.utmParams, 
+        params.productName, 
+        params.userId, 
+        params.popupModel,
+        params.feeConfig?.pix_percentage,
+        params.feeConfig?.pix_fixed,
+        'spedpay'
+      );
+
+      await logApiEvent('spedpay', 'success', responseTime);
+      return { success: true, pixCode, qrCodeUrl, transactionId };
+    }
+    
+    return { success: false, error: `Unknown acquirer: ${acquirer}` };
+  } catch (err) {
+    const responseTime = Date.now() - startTime;
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    await logApiEvent(acquirer, 'failure', responseTime, errorMsg);
+    return { success: false, error: errorMsg };
+  }
+}
+
+// Generate PIX with retry logic
+async function generatePixWithRetry(
+  retryConfig: RetryConfig,
+  params: {
+    amount: number;
+    customerName?: string;
+    utmParams?: Record<string, any>;
+    userId?: string;
+    popupModel?: string;
+    productName: string;
+    feeConfig: FeeConfig | null;
+  }
+): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; acquirerUsed?: string }> {
+  const acquirers = retryConfig.acquirer_order;
+  const maxRetries = retryConfig.max_retries;
+  const delayMs = retryConfig.delay_between_retries_ms;
+  
+  let lastError: string = '';
+  let attemptNumber = 0;
+  
+  console.log(`[RETRY] Starting with config: max_retries=${maxRetries}, acquirers=${acquirers.join(',')}, delay=${delayMs}ms`);
+  
+  for (const acquirer of acquirers) {
+    // Check if acquirer is enabled
+    const isEnabled = await isAcquirerEnabled(acquirer);
+    if (!isEnabled) {
+      console.log(`[RETRY] Acquirer ${acquirer} is disabled, skipping`);
+      continue;
+    }
+    
+    // Calculate attempts per acquirer (distribute retries across acquirers)
+    const attemptsPerAcquirer = Math.ceil(maxRetries / acquirers.length);
+    
+    for (let i = 0; i < attemptsPerAcquirer; i++) {
+      attemptNumber++;
+      if (attemptNumber > maxRetries) break;
+      
+      console.log(`[RETRY] Attempt ${attemptNumber}/${maxRetries} with ${acquirer}`);
+      
+      // Log retry attempt
+      if (attemptNumber > 1) {
+        await logApiEvent(acquirer, 'retry', undefined, undefined, attemptNumber);
+      }
+      
+      const result = await callAcquirer(acquirer, params);
+      
+      if (result.success) {
+        console.log(`[RETRY] Success with ${acquirer} on attempt ${attemptNumber}`);
+        return { ...result, acquirerUsed: acquirer };
+      }
+      
+      lastError = result.error || 'Unknown error';
+      console.log(`[RETRY] Failed with ${acquirer}: ${lastError}`);
+      
+      // Wait before next attempt
+      if (attemptNumber < maxRetries) {
+        console.log(`[RETRY] Waiting ${delayMs}ms before next attempt`);
+        await delay(delayMs);
+      }
+    }
+    
+    if (attemptNumber >= maxRetries) break;
+  }
+  
+  console.log(`[RETRY] All ${attemptNumber} attempts failed. Last error: ${lastError}`);
+  return { success: false, error: `Falha após ${attemptNumber} tentativas: ${lastError}` };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -310,10 +639,60 @@ serve(async (req) => {
     console.log('UTM params received:', utmParams);
     console.log('Amount:', amount);
 
+    if (!amount || amount <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid amount' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get user fee config
     const feeConfig = await getUserFeeConfig(userId);
     console.log('Fee config for transaction:', feeConfig);
 
+    // Get product name from checkout_offers
+    const productName = await getProductNameFromDatabase(userId, popupModel);
+    console.log('Product name:', productName);
+
+    // Get retry configuration
+    const retryConfig = await getRetryConfig();
+    
+    // If retry is enabled, use retry logic
+    if (retryConfig && retryConfig.enabled) {
+      console.log('[RETRY MODE] Using automatic retry with fallback');
+      
+      const result = await generatePixWithRetry(retryConfig, {
+        amount,
+        customerName,
+        utmParams,
+        userId,
+        popupModel,
+        productName,
+        feeConfig
+      });
+      
+      if (result.success) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            pixCode: result.pixCode,
+            qrCodeUrl: result.qrCodeUrl,
+            transactionId: result.transactionId,
+            acquirerUsed: result.acquirerUsed
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        return new Response(
+          JSON.stringify({ error: result.error }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Fallback: Original logic without retry
+    console.log('[STANDARD MODE] Using single acquirer without retry');
+    
     // Check user's acquirer preference
     const acquirer = await getUserAcquirer(userId);
     console.log('Selected acquirer:', acquirer);
@@ -329,271 +708,33 @@ serve(async (req) => {
       );
     }
 
-    // If user has Inter configured, forward to generate-pix-inter
-    if (acquirer === 'inter') {
-      console.log('Redirecting to Banco Inter...');
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-      
-      const interResponse = await fetch(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ 
-          amount, 
-          donorName: customerName, 
-          utmParams, 
-          userId, 
-          popupModel 
-        }),
-      });
-      
-      const interData = await interResponse.text();
-      console.log('Inter response:', interData);
-      
-      return new Response(interData, { 
-        status: interResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
-
-    // If user has Ativus configured, forward to generate-pix-ativus
-    if (acquirer === 'ativus') {
-      console.log('Redirecting to Ativus Hub...');
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-      
-      const ativusResponse = await fetch(`${supabaseUrl}/functions/v1/generate-pix-ativus`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ 
-          amount, 
-          donorName: customerName, 
-          utmData: utmParams, 
-          userId, 
-          popupModel 
-        }),
-      });
-      
-      const ativusData = await ativusResponse.text();
-      console.log('Ativus response:', ativusData);
-      
-      return new Response(ativusData, { 
-        status: ativusResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
-
-    // Continue with SpedPay flow
-    // Get API key from database (user-specific if userId provided)
-    let apiKey = await getApiKeyFromDatabase(userId);
-    
-    // Fallback to env variable if not in database
-    if (!apiKey) {
-      apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
-    }
-    
-    // If no SpedPay API key, fallback to Banco Inter
-    if (!apiKey) {
-      console.log('No SpedPay API key configured, checking if Banco Inter is enabled for fallback...');
-      
-      // Check if Banco Inter is enabled before falling back
-      const interEnabled = await isAcquirerEnabled('inter');
-      if (!interEnabled) {
-        return new Response(
-          JSON.stringify({ error: 'Nenhuma adquirente disponível. SpedPay não configurado e Banco Inter está desativado.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      console.log('Falling back to Banco Inter...');
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-      
-      const interResponse = await fetch(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ 
-          amount, 
-          donorName: customerName, 
-          utmData: utmParams, 
-          userId, 
-          popupModel,
-          productName: await getProductNameFromDatabase(userId)
-        }),
-      });
-      
-      const interData = await interResponse.text();
-      console.log('Inter fallback response:', interData);
-      
-      return new Response(interData, { 
-        status: interResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
-
-    console.log('Using API key from:', apiKey.startsWith('sk_') ? 'database' : 'environment');
-
-    // Get product name from checkout_offers (by userId + popupModel)
-    const productName = await getProductNameFromDatabase(userId, popupModel);
-    console.log('Product name:', productName);
-
-    if (!amount || amount <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid amount' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const externalId = `donation_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const donorName = customerName || getRandomName();
-    const donorEmail = customerEmail || getRandomEmail(donorName);
-    const donorPhone = getRandomPhone();
-
-    // Build webhook URL
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
-
-    // Build customer object with UTM params
-    const customerData: Record<string, any> = {
-      name: donorName,
-      email: donorEmail,
-      phone: donorPhone,
-      document_type: 'CPF',
-      document: customerDocument || '12345678909',
-    };
-
-    // Add UTM params to customer object if available
-    if (utmParams) {
-      if (utmParams.utm_source) customerData.utm_source = utmParams.utm_source;
-      if (utmParams.utm_medium) customerData.utm_medium = utmParams.utm_medium;
-      if (utmParams.utm_campaign) customerData.utm_campaign = utmParams.utm_campaign;
-      if (utmParams.utm_content) customerData.utm_content = utmParams.utm_content;
-      if (utmParams.utm_term) customerData.utm_term = utmParams.utm_term;
-    }
-
-    const transactionData: Record<string, any> = {
-      external_id: externalId,
-      total_amount: amount,
-      payment_method: 'PIX',
-      webhook_url: webhookUrl,
-      customer: customerData,
-      items: [
-        {
-          id: `item_${externalId}`,
-          title: productName,
-          description: productName,
-          price: amount,
-          quantity: 1,
-          is_physical: false,
-        }
-      ],
-      ip: '0.0.0.0',
-    };
-
-    console.log('Creating SpedPay transaction:', JSON.stringify(transactionData, null, 2));
-
-    const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-secret': apiKey,
-      },
-      body: JSON.stringify(transactionData),
+    // Call the selected acquirer directly
+    const result = await callAcquirer(acquirer, {
+      amount,
+      customerName,
+      utmParams,
+      userId,
+      popupModel,
+      productName,
+      feeConfig
     });
 
-    const responseText = await response.text();
-    console.log('SpedPay response status:', response.status);
-    console.log('SpedPay response:', responseText);
-
-    if (!response.ok) {
-      console.error('SpedPay API error:', responseText);
+    if (result.success) {
       return new Response(
-        JSON.stringify({ error: 'Failed to generate PIX', details: responseText }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          success: true,
+          pixCode: result.pixCode,
+          qrCodeUrl: result.qrCodeUrl,
+          transactionId: result.transactionId,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    const data = JSON.parse(responseText);
-    
-    let pixCode = data.pix?.payload || data.pix?.qr_code || data.pixCode || data.qr_code;
-    let qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
-    const transactionId = data.id || externalId;
-
-    // If PIX code not in response, poll for it
-    if (!pixCode && data.id) {
-      console.log('PIX code not in initial response, polling for transaction details...');
-      
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5 seconds
-        
-        console.log(`Fetching transaction details, attempt ${attempt}/5`);
-        
-        const detailsResponse = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${data.id}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'api-secret': apiKey,
-          },
-        });
-        
-        if (detailsResponse.ok) {
-          const detailsData = await detailsResponse.json();
-          console.log(`Transaction details (attempt ${attempt}):`, JSON.stringify(detailsData, null, 2));
-          
-          pixCode = detailsData.pix?.payload || detailsData.pix?.qr_code || detailsData.pixCode || detailsData.qr_code;
-          qrCodeUrl = detailsData.pix?.qr_code_url || detailsData.qrCodeUrl;
-          
-          if (pixCode) {
-            console.log('PIX code found after polling!');
-            break;
-          }
-        }
-      }
-    }
-
-    if (!pixCode) {
-      console.error('PIX code not found after polling. Initial response:', data);
+    } else {
       return new Response(
-        JSON.stringify({ error: 'PIX code not found in response. Please check your SpedPay account configuration.', rawResponse: data }),
+        JSON.stringify({ error: result.error }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Log to database with fee config and acquirer
-    const transactionDbId = await logPixGenerated(
-      amount, 
-      transactionId, 
-      pixCode, 
-      donorName, 
-      utmParams, 
-      productName, 
-      userId, 
-      popupModel,
-      feeConfig?.pix_percentage,
-      feeConfig?.pix_fixed,
-      'spedpay'
-    );
-
-    // Utmify integration handled by database trigger (utmify-sync)
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        pixCode,
-        qrCodeUrl,
-        transactionId,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error generating PIX:', error);

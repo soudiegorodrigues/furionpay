@@ -10,6 +10,8 @@ import { Plus, Loader2, Check, Settings, Power, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { AcquirerConfigSection } from "./AcquirerConfigSection";
+import { RetryConfigSection } from "./RetryConfigSection";
 
 export const MultiAcquirersSection = () => {
   const { user, isAdmin } = useAdminAuth();
@@ -1008,6 +1010,12 @@ export const MultiAcquirersSection = () => {
           </p>
         </CardContent>
       </Card>
+
+      {/* Acquirer Configuration Section */}
+      <AcquirerConfigSection isAdmin={isAdmin} />
+
+      {/* Retry Configuration Section */}
+      <RetryConfigSection />
     </div>
   );
 };
