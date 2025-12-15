@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Package, Send, CheckCircle, MapPin, Clock } from "lucide-react";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 interface Reward {
   id: string;
@@ -119,21 +120,29 @@ export function PremiacoesSection() {
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `rewards/${fileName}`;
+    try {
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.product);
+      const fileName = `${Date.now()}.webp`;
+      const filePath = `rewards/${fileName}`;
 
-    const { error } = await supabase.storage
-      .from("rewards")
-      .upload(filePath, file);
+      const { error } = await supabase.storage
+        .from("rewards")
+        .upload(filePath, compressedBlob, {
+          contentType: 'image/webp'
+        });
 
-    if (error) {
-      console.error("Upload error:", error);
+      if (error) {
+        console.error("Upload error:", error);
+        return null;
+      }
+
+      const { data } = supabase.storage.from("rewards").getPublicUrl(filePath);
+      return `${data.publicUrl}?t=${Date.now()}`;
+    } catch (err) {
+      console.error("Compression/Upload error:", err);
       return null;
     }
-
-    const { data } = supabase.storage.from("rewards").getPublicUrl(filePath);
-    return data.publicUrl;
   };
 
   const openCreateDialog = () => {

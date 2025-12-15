@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FileText, Globe, Copy, Upload, X } from "lucide-react";
-
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 interface Product {
   id: string;
   user_id: string;
@@ -57,20 +57,24 @@ export function ProductDetailsSection({
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 2MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 10MB");
       return;
     }
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${product.id}-${Date.now()}.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.product);
+      const fileName = `${product.id}-${Date.now()}.webp`;
       const filePath = `${product.user_id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -78,8 +82,8 @@ export function ProductDetailsSection({
         .from("product-images")
         .getPublicUrl(filePath);
 
-      setFormData({ ...formData, image_url: publicUrl });
-      toast.success("Imagem enviada com sucesso");
+      setFormData({ ...formData, image_url: `${publicUrl}?t=${Date.now()}` });
+      toast.success("Imagem comprimida e enviada com sucesso");
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Erro ao enviar imagem");

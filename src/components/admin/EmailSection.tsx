@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Save, Eye, EyeOff, ExternalLink, CheckCircle2, Image, Upload, Trash2 } from "lucide-react";
 import { EmailTemplatesSection } from "./EmailTemplatesSection";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 export function EmailSection() {
   const [resendApiKey, setResendApiKey] = useState("");
@@ -156,11 +157,11 @@ export function EmailSection() {
       return;
     }
 
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Erro",
-        description: "A imagem deve ter no máximo 2MB",
+        description: "A imagem deve ter no máximo 10MB",
         variant: "destructive"
       });
       return;
@@ -171,13 +172,17 @@ export function EmailSection() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Usuário não autenticado");
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userData.user.id}/email-logo.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.product);
+      const fileName = `${userData.user.id}/email-logo.webp`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('banners')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -186,7 +191,7 @@ export function EmailSection() {
         .from('banners')
         .getPublicUrl(fileName);
 
-      const logoUrl = urlData.publicUrl;
+      const logoUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       setEmailLogoUrl(logoUrl);
 
       // Save URL to global settings

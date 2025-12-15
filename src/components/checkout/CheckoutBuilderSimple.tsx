@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 import { CheckoutPreviewMini } from "./CheckoutPreviewMini";
 import { TestimonialsManager } from "./TestimonialsManager";
 import {
@@ -216,19 +217,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Imagem deve ter no máximo 2MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 10MB");
       return;
     }
 
     setIsUploadingImage(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}/${productId}-banner.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.banner);
+      const fileName = `${userId}/${productId}-banner.webp`;
 
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -238,7 +243,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
       // Add cache-busting parameter to force reload
       setBannerImageUrl(`${publicUrl}?t=${Date.now()}`);
-      toast.success("Banner carregado!");
+      toast.success("Banner comprimido e carregado!");
     } catch (error) {
       console.error("Erro ao carregar imagem:", error);
       toast.error("Erro ao carregar imagem");
@@ -257,19 +262,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Imagem deve ter no máximo 2MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 10MB");
       return;
     }
 
     setIsUploadingPopupImage(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}/${productId}-popup.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.product);
+      const fileName = `${userId}/${productId}-popup.webp`;
 
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -280,7 +289,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       // Add cache-busting parameter to force reload
       const imageUrl = `${publicUrl}?t=${Date.now()}`;
       setCustomizations(p => ({ ...p, discountPopupImageUrl: imageUrl }));
-      toast.success("Imagem do popup carregada!");
+      toast.success("Imagem do popup comprimida e carregada!");
     } catch (error) {
       console.error("Erro ao carregar imagem:", error);
       toast.error("Erro ao carregar imagem");
