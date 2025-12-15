@@ -343,11 +343,9 @@ export const RetryConfigSection = () => {
                           <ArrowRight className="h-3 w-3" />
                           <CheckCircle2 className="h-4 w-4" />
                           <span className="font-medium">FIM</span>
-                          {stats[step.acquirer]?.success > 0 && (
-                            <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                              {stats[step.acquirer].success}
-                            </Badge>
-                          )}
+                          <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            {stats[step.acquirer]?.success ?? 0}
+                          </Badge>
                         </div>
                         
                         <div className={`flex items-center gap-2 ${isLast ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
@@ -357,20 +355,16 @@ export const RetryConfigSection = () => {
                             <>
                               <XCircle className="h-4 w-4" />
                               <span className="font-medium">ERRO</span>
-                              {stats[step.acquirer]?.failure > 0 && (
-                                <Badge variant="secondary" className="ml-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                  {stats[step.acquirer].failure}
-                                </Badge>
-                              )}
+                              <Badge variant="secondary" className="ml-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                {stats[step.acquirer]?.failure ?? 0}
+                              </Badge>
                             </>
                           ) : (
                             <>
                               <span className="font-medium">Próximo</span>
-                              {stats[step.acquirer]?.failure > 0 && (
-                                <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-                                  {stats[step.acquirer].failure}
-                                </Badge>
-                              )}
+                              <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                {stats[step.acquirer]?.failure ?? 0}
+                              </Badge>
                             </>
                           )}
                         </div>
