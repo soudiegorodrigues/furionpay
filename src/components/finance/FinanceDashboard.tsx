@@ -731,9 +731,12 @@ export const FinanceDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[180px]">
+            <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
+                <BarChart
+                  data={monthlyData}
+                  margin={{ top: 28, right: 8, left: 8, bottom: 0 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs" />
                   <YAxis 
@@ -749,6 +752,7 @@ export const FinanceDashboard = () => {
                     <LabelList
                       dataKey="balance"
                       position="top"
+                      offset={10}
                       formatter={(value: number) => {
                         if (value === 0) return "";
                         return value >= 1000 || value <= -1000
