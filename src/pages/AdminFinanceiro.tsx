@@ -529,12 +529,26 @@ const AdminFinanceiro = () => {
 
   const loadUserFeeConfig = async () => {
     try {
+      // Guard: Only query if user is authenticated
+      if (!user?.id) {
+        // Fallback to default fee config when no user
+        const { data: defaultConfig } = await supabase
+          .from('fee_configs')
+          .select('id, name, pix_percentage, pix_fixed, saque_percentage, saque_fixed')
+          .eq('is_default', true)
+          .maybeSingle();
+        if (defaultConfig) {
+          setUserFeeConfig(defaultConfig);
+        }
+        return;
+      }
+
       // First try to get user's specific fee config
       const { data: userSettings } = await supabase
         .from('admin_settings')
         .select('value')
         .eq('key', 'user_fee_config')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       let feeConfigId = userSettings?.value;
