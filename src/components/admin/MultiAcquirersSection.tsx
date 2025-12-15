@@ -10,7 +10,6 @@ import { Plus, Loader2, Check, Settings, Power, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { AcquirerConfigSection } from "./AcquirerConfigSection";
 import { RetryConfigSection } from "./RetryConfigSection";
 import { RetryDashboardSection } from "./RetryDashboardSection";
 
@@ -435,6 +434,13 @@ export const MultiAcquirersSection = () => {
 
   return (
     <div className="space-y-4 max-w-6xl">
+      {/* 1. Dashboard de Retentativas - Real-time monitoring */}
+      <RetryDashboardSection />
+
+      {/* 2. Configuração de Retentativas */}
+      <RetryConfigSection />
+
+      {/* 3. Adquirentes Ativas */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
@@ -1012,14 +1018,6 @@ export const MultiAcquirersSection = () => {
         </CardContent>
       </Card>
 
-      {/* Acquirer Configuration Section */}
-      <AcquirerConfigSection isAdmin={isAdmin} />
-
-      {/* Retry Configuration Section */}
-      <RetryConfigSection />
-
-      {/* Retry Dashboard - Real-time monitoring */}
-      <RetryDashboardSection />
     </div>
   );
 };
