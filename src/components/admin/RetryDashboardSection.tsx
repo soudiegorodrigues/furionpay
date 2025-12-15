@@ -1,0 +1,482 @@
+import { useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  RefreshCw, 
+  CheckCircle, 
+  XCircle,
+  TrendingUp,
+  Zap,
+  Target,
+  BarChart3
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from "recharts";
+
+interface RetryStats {
+  acquirer: string;
+  total: number;
+  success: number;
+  failure: number;
+  retry: number;
+  successRate: number;
+}
+
+interface TimelinePoint {
+  time: string;
+  success: number;
+  failure: number;
+  retry: number;
+}
+
+const COLORS = {
+  spedpay: '#3B82F6',
+  inter: '#F97316', 
+  ativus: '#22C55E'
+};
+
+const ACQUIRER_NAMES: Record<string, string> = {
+  spedpay: 'SpedPay',
+  inter: 'Banco Inter',
+  ativus: 'Ativus Hub'
+};
+
+export function RetryDashboardSection() {
+  const [stats, setStats] = useState<RetryStats[]>([]);
+  const [recentEvents, setRecentEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const { data: events, error } = await supabase
+        .rpc('get_recent_api_events', { p_limit: 500 });
+
+      if (error) throw error;
+
+      setRecentEvents(events || []);
+      
+      // Process stats per acquirer
+      const acquirers = ['spedpay', 'inter', 'ativus'];
+      const processedStats: RetryStats[] = acquirers.map(acquirer => {
+        const acquirerEvents = (events || []).filter((e: any) => e.acquirer === acquirer);
+        const success = acquirerEvents.filter((e: any) => e.event_type === 'success').length;
+        const failure = acquirerEvents.filter((e: any) => e.event_type === 'failure').length;
+        const retry = acquirerEvents.filter((e: any) => e.event_type === 'retry').length;
+        const total = success + failure;
+        
+        return {
+          acquirer,
+          total: acquirerEvents.length,
+          success,
+          failure,
+          retry,
+          successRate: total > 0 ? Math.round((success / total) * 100) : 0
+        };
+      });
+
+      setStats(processedStats);
+    } catch (error) {
+      console.error('Error fetching retry stats:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    
+    // Real-time subscription
+    const channel = supabase
+      .channel('retry-monitoring')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'api_monitoring_events'
+        },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  // Timeline data - last 12 hours
+  const timelineData = useMemo((): TimelinePoint[] => {
+    const now = new Date();
+    const hours: Record<string, TimelinePoint> = {};
+    
+    const getBrazilHour = (date: Date): number => {
+      const brazilTime = date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false });
+      return parseInt(brazilTime, 10);
+    };
+    
+    // Initialize last 12 hours
+    for (let i = 11; i >= 0; i--) {
+      const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const brazilHour = getBrazilHour(hourDate);
+      const key = `${brazilHour.toString().padStart(2, '0')}h`;
+      hours[key] = { time: key, success: 0, failure: 0, retry: 0 };
+    }
+    
+    // Count events
+    recentEvents.forEach((event: any) => {
+      const eventDate = new Date(event.created_at);
+      const eventHour = getBrazilHour(eventDate);
+      const key = `${eventHour.toString().padStart(2, '0')}h`;
+      
+      if (hours[key]) {
+        if (event.event_type === 'success') hours[key].success++;
+        else if (event.event_type === 'failure') hours[key].failure++;
+        else if (event.event_type === 'retry') hours[key].retry++;
+      }
+    });
+    
+    return Object.values(hours);
+  }, [recentEvents]);
+
+  // Pie chart data for success/failure distribution
+  const pieData = useMemo(() => {
+    const totalSuccess = stats.reduce((acc, s) => acc + s.success, 0);
+    const totalFailure = stats.reduce((acc, s) => acc + s.failure, 0);
+    const totalRetry = stats.reduce((acc, s) => acc + s.retry, 0);
+    
+    return [
+      { name: 'Sucesso', value: totalSuccess, color: '#22C55E' },
+      { name: 'Falha', value: totalFailure, color: '#EF4444' },
+      { name: 'Retry', value: totalRetry, color: '#F59E0B' }
+    ].filter(d => d.value > 0);
+  }, [stats]);
+
+  // Bar chart data for acquirer comparison
+  const barData = useMemo(() => {
+    return stats.map(s => ({
+      name: ACQUIRER_NAMES[s.acquirer] || s.acquirer,
+      Sucesso: s.success,
+      Falha: s.failure,
+      Retry: s.retry,
+      'Taxa de Sucesso': s.successRate
+    }));
+  }, [stats]);
+
+  // Overall stats
+  const overallStats = useMemo(() => {
+    const totalSuccess = stats.reduce((acc, s) => acc + s.success, 0);
+    const totalFailure = stats.reduce((acc, s) => acc + s.failure, 0);
+    const totalRetry = stats.reduce((acc, s) => acc + s.retry, 0);
+    const total = totalSuccess + totalFailure;
+    const overallRate = total > 0 ? Math.round((totalSuccess / total) * 100) : 0;
+    
+    return { totalSuccess, totalFailure, totalRetry, total, overallRate };
+  }, [stats]);
+
+  if (loading) {
+    return (
+      <Card className="animate-pulse">
+        <CardHeader>
+          <div className="h-5 bg-muted rounded w-48" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] bg-muted rounded" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Dashboard de Retentativas</h2>
+          <Badge variant="outline" className="text-xs">
+            Tempo Real
+          </Badge>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Sucesso</p>
+                <p className="text-2xl font-bold text-green-600">{overallStats.totalSuccess}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-destructive/10 rounded-lg">
+                <XCircle className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Falhas</p>
+                <p className="text-2xl font-bold text-destructive">{overallStats.totalFailure}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-yellow-500/10 rounded-lg">
+                <RefreshCw className="h-5 w-5 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Retentativas</p>
+                <p className="text-2xl font-bold text-yellow-600">{overallStats.totalRetry}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Taxa de Sucesso</p>
+                <p className="text-2xl font-bold text-primary">{overallStats.overallRate}%</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Timeline Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Timeline de Tentativas (12h)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={timelineData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="time" 
+                    tick={{ fontSize: 10 }} 
+                    className="text-muted-foreground"
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10 }} 
+                    allowDecimals={false}
+                    className="text-muted-foreground"
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      borderColor: 'hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="success" 
+                    name="Sucesso"
+                    stroke="#22C55E" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="failure" 
+                    name="Falha"
+                    stroke="#EF4444" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="retry" 
+                    name="Retry"
+                    stroke="#F59E0B" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pie Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Distribuição de Resultados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px]">
+              {pieData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        borderColor: 'hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  Sem dados para exibir
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Acquirer Comparison */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Comparativo por Adquirente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 11 }}
+                  className="text-muted-foreground"
+                />
+                <YAxis 
+                  tick={{ fontSize: 10 }} 
+                  allowDecimals={false}
+                  className="text-muted-foreground"
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <Bar dataKey="Sucesso" fill="#22C55E" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Falha" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Retry" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Per-Acquirer Success Rate Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {stats.map(stat => (
+          <Card key={stat.acquirer}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium">{ACQUIRER_NAMES[stat.acquirer]}</h3>
+                <Badge 
+                  variant={stat.successRate >= 90 ? "default" : stat.successRate >= 70 ? "secondary" : "destructive"}
+                >
+                  {stat.successRate}% sucesso
+                </Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total de eventos</span>
+                  <span className="font-medium">{stat.total}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-green-600">Sucesso</span>
+                  <span className="font-medium">{stat.success}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-destructive">Falhas</span>
+                  <span className="font-medium">{stat.failure}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-yellow-600">Retentativas</span>
+                  <span className="font-medium">{stat.retry}</span>
+                </div>
+              </div>
+              
+              {/* Progress bar */}
+              <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-green-500 transition-all"
+                  style={{ width: `${stat.successRate}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
