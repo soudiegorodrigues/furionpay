@@ -33,6 +33,13 @@ export const MultiAcquirersSection = () => {
   const [ativusFixedFee, setAtivusFixedFee] = useState('');
   const [ativusApiKey, setAtivusApiKey] = useState('');
   const [defaultAcquirer, setDefaultAcquirer] = useState<string>('spedpay');
+  // Withdrawal fees per acquirer
+  const [interSaqueFeeRate, setInterSaqueFeeRate] = useState('');
+  const [interSaqueFixedFee, setInterSaqueFixedFee] = useState('');
+  const [spedpaySaqueFeeRate, setSpedpaySaqueFeeRate] = useState('');
+  const [spedpaySaqueFixedFee, setSpedpaySaqueFixedFee] = useState('');
+  const [ativusSaqueFeeRate, setAtivusSaqueFeeRate] = useState('');
+  const [ativusSaqueFixedFee, setAtivusSaqueFixedFee] = useState('');
   const [interConfig, setInterConfig] = useState({
     clientId: '',
     clientSecret: '',
@@ -98,6 +105,13 @@ export const MultiAcquirersSection = () => {
         const ativusFixed = settings.find(s => s.key === 'ativus_fixed_fee');
         const ativusKey = settings.find(s => s.key === 'ativus_api_key');
         const defaultAcq = settings.find(s => s.key === 'default_acquirer');
+        // Withdrawal fees
+        const interSaqueFee = settings.find(s => s.key === 'inter_saque_fee_rate');
+        const interSaqueFixed = settings.find(s => s.key === 'inter_saque_fixed_fee');
+        const spedpaySaqueFee = settings.find(s => s.key === 'spedpay_saque_fee_rate');
+        const spedpaySaqueFixed = settings.find(s => s.key === 'spedpay_saque_fixed_fee');
+        const ativusSaqueFee = settings.find(s => s.key === 'ativus_saque_fee_rate');
+        const ativusSaqueFixed = settings.find(s => s.key === 'ativus_saque_fixed_fee');
         
         // Default to true if not set, false only if explicitly set to 'false'
         setInterEnabled(interState?.value !== 'false');
@@ -112,6 +126,13 @@ export const MultiAcquirersSection = () => {
         setAtivusFixedFee(ativusFixed?.value || '');
         setAtivusApiKey(ativusKey?.value || '');
         setDefaultAcquirer(defaultAcq?.value || 'spedpay');
+        // Withdrawal fees
+        setInterSaqueFeeRate(interSaqueFee?.value || '');
+        setInterSaqueFixedFee(interSaqueFixed?.value || '');
+        setSpedpaySaqueFeeRate(spedpaySaqueFee?.value || '');
+        setSpedpaySaqueFixedFee(spedpaySaqueFixed?.value || '');
+        setAtivusSaqueFeeRate(ativusSaqueFee?.value || '');
+        setAtivusSaqueFixedFee(ativusSaqueFixed?.value || '');
       } else {
         // No data, default to enabled
         setInterEnabled(true);
@@ -207,13 +228,44 @@ export const MultiAcquirersSection = () => {
       
       toast({
         title: "Taxas Atualizadas",
-        description: `Taxas do ${acquirerNames[acquirer]} salvas com sucesso.`
+        description: `Taxas PIX do ${acquirerNames[acquirer]} salvas com sucesso.`
       });
     } catch (error) {
       console.error('Error saving fees:', error);
       toast({
         title: "Erro",
         description: "Falha ao salvar taxas",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const saveSaqueFeeSettings = async (acquirer: 'inter' | 'spedpay' | 'ativus', feeRate: string, fixedFee: string) => {
+    try {
+      const updates = [
+        { key: `${acquirer}_saque_fee_rate`, value: feeRate },
+        { key: `${acquirer}_saque_fixed_fee`, value: fixedFee }
+      ];
+      
+      for (const { key, value } of updates) {
+        const { error } = await supabase.rpc('update_admin_setting_auth', {
+          setting_key: key,
+          setting_value: value
+        });
+        if (error) throw error;
+      }
+      
+      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
+      
+      toast({
+        title: "Taxas de Saque Atualizadas",
+        description: `Taxas de saque do ${acquirerNames[acquirer]} salvas com sucesso.`
+      });
+    } catch (error) {
+      console.error('Error saving withdrawal fees:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar taxas de saque",
         variant: "destructive"
       });
     }
@@ -483,9 +535,9 @@ export const MultiAcquirersSection = () => {
               <span className="text-[10px] text-muted-foreground">{interEnabled !== false ? 'Ativo' : 'Inativo'}</span>
             </div>
             
-            {/* Fee Configuration */}
+            {/* PIX Fee Configuration */}
             <div className="space-y-2 pt-2 border-t">
-              <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+              <p className="text-xs font-medium text-muted-foreground">Taxas PIX:</p>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Taxa (%)</Label>
@@ -519,7 +571,47 @@ export const MultiAcquirersSection = () => {
                 className="w-full h-6 text-[10px]"
                 disabled={interEnabled === false}
               >
-                Salvar Taxas
+                Salvar Taxas PIX
+              </Button>
+            </div>
+
+            {/* Withdrawal Fee Configuration */}
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground">Taxas Saque:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Taxa (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={interSaqueFeeRate}
+                    onChange={(e) => setInterSaqueFeeRate(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={interEnabled === false}
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Valor Fixo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={interSaqueFixedFee}
+                    onChange={(e) => setInterSaqueFixedFee(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={interEnabled === false}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveSaqueFeeSettings('inter', interSaqueFeeRate, interSaqueFixedFee)}
+                className="w-full h-6 text-[10px]"
+                disabled={interEnabled === false}
+              >
+                Salvar Taxas Saque
               </Button>
             </div>
 
@@ -690,9 +782,9 @@ export const MultiAcquirersSection = () => {
               <span className="text-[10px] text-muted-foreground">{spedpayEnabled !== false ? 'Ativo' : 'Inativo'}</span>
             </div>
             
-            {/* Fee Configuration */}
+            {/* PIX Fee Configuration */}
             <div className="space-y-2 pt-2 border-t">
-              <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+              <p className="text-xs font-medium text-muted-foreground">Taxas PIX:</p>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Taxa (%)</Label>
@@ -726,7 +818,47 @@ export const MultiAcquirersSection = () => {
                 className="w-full h-6 text-[10px]"
                 disabled={spedpayEnabled === false}
               >
-                Salvar Taxas
+                Salvar Taxas PIX
+              </Button>
+            </div>
+
+            {/* Withdrawal Fee Configuration */}
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground">Taxas Saque:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Taxa (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={spedpaySaqueFeeRate}
+                    onChange={(e) => setSpedpaySaqueFeeRate(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={spedpayEnabled === false}
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Valor Fixo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={spedpaySaqueFixedFee}
+                    onChange={(e) => setSpedpaySaqueFixedFee(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={spedpayEnabled === false}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveSaqueFeeSettings('spedpay', spedpaySaqueFeeRate, spedpaySaqueFixedFee)}
+                className="w-full h-6 text-[10px]"
+                disabled={spedpayEnabled === false}
+              >
+                Salvar Taxas Saque
               </Button>
             </div>
 
@@ -859,9 +991,9 @@ export const MultiAcquirersSection = () => {
               <span className="text-[10px] text-muted-foreground">{ativusEnabled !== false ? 'Ativo' : 'Inativo'}</span>
             </div>
             
-            {/* Fee Configuration */}
+            {/* PIX Fee Configuration */}
             <div className="space-y-2 pt-2 border-t">
-              <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+              <p className="text-xs font-medium text-muted-foreground">Taxas PIX:</p>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Taxa (%)</Label>
@@ -895,7 +1027,47 @@ export const MultiAcquirersSection = () => {
                 className="w-full h-6 text-[10px]"
                 disabled={ativusEnabled === false}
               >
-                Salvar Taxas
+                Salvar Taxas PIX
+              </Button>
+            </div>
+
+            {/* Withdrawal Fee Configuration */}
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground">Taxas Saque:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Taxa (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={ativusSaqueFeeRate}
+                    onChange={(e) => setAtivusSaqueFeeRate(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={ativusEnabled === false}
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Valor Fixo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={ativusSaqueFixedFee}
+                    onChange={(e) => setAtivusSaqueFixedFee(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={ativusEnabled === false}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveSaqueFeeSettings('ativus', ativusSaqueFeeRate, ativusSaqueFixedFee)}
+                className="w-full h-6 text-[10px]"
+                disabled={ativusEnabled === false}
+              >
+                Salvar Taxas Saque
               </Button>
             </div>
 
