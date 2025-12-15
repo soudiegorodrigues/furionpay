@@ -1460,7 +1460,6 @@ export type Database = {
       }
       withdrawal_requests: {
         Row: {
-          acquirer: string | null
           amount: number
           bank_code: string
           bank_name: string
@@ -1479,7 +1478,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          acquirer?: string | null
           amount: number
           bank_code: string
           bank_name: string
@@ -1498,7 +1496,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          acquirer?: string | null
           amount?: number
           bank_code?: string
           bank_name?: string

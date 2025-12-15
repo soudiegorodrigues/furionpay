@@ -69,18 +69,9 @@ const calculateGrossProfit = (amount: number, feePercentage: number | null, feeF
 
 // Interface para configurações de custo de adquirente
 interface AcquirerFees {
-  spedpay: { rate: number; fixed: number; saqueRate: number; saqueFixed: number };
-  inter: { rate: number; fixed: number; saqueRate: number; saqueFixed: number };
-  ativus: { rate: number; fixed: number; saqueRate: number; saqueFixed: number };
-}
-
-interface Withdrawal {
-  id: string;
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-  processed_at: string | null;
-  acquirer: string | null;
+  spedpay: { rate: number; fixed: number };
+  inter: { rate: number; fixed: number };
+  ativus: { rate: number; fixed: number };
 }
 
 // Helper para calcular custo do adquirente sobre a venda bruta
@@ -92,17 +83,6 @@ const calculateAcquirerCost = (
   const acq = (acquirer || 'spedpay') as keyof AcquirerFees;
   const fees = acquirerFees[acq] || acquirerFees.spedpay;
   return (amount * fees.rate / 100) + fees.fixed;
-};
-
-// Helper para calcular custo de saque do adquirente
-const calculateWithdrawalCost = (
-  amount: number, 
-  acquirer: string | null, 
-  acquirerFees: AcquirerFees
-): number => {
-  const acq = (acquirer || 'ativus') as keyof AcquirerFees;
-  const fees = acquirerFees[acq] || acquirerFees.ativus;
-  return (amount * fees.saqueRate / 100) + fees.saqueFixed;
 };
 
 // Manter compatibilidade com nome antigo
@@ -130,17 +110,15 @@ export const ReceitaPlataformaSection = () => {
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   const [acquirerFees, setAcquirerFees] = useState<AcquirerFees>({
-    spedpay: { rate: 0, fixed: 0, saqueRate: 0, saqueFixed: 0 },
-    inter: { rate: 0, fixed: 0, saqueRate: 0, saqueFixed: 0 },
-    ativus: { rate: 0, fixed: 0, saqueRate: 0, saqueFixed: 0 }
+    spedpay: { rate: 0, fixed: 0 },
+    inter: { rate: 0, fixed: 0 },
+    ativus: { rate: 0, fixed: 0 }
   });
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
 
   useEffect(() => {
     loadTransactions();
     loadMonthlyGoal();
     loadAcquirerFees();
-    loadWithdrawals();
   }, []);
 
   const loadAcquirerFees = async () => {
@@ -149,40 +127,24 @@ export const ReceitaPlataformaSection = () => {
       if (error) throw error;
       
       const fees: AcquirerFees = {
-        spedpay: { rate: 0, fixed: 0, saqueRate: 0, saqueFixed: 0 },
-        inter: { rate: 0, fixed: 0, saqueRate: 0, saqueFixed: 0 },
-        ativus: { rate: 0, fixed: 0, saqueRate: 0, saqueFixed: 0 }
+        spedpay: { rate: 0, fixed: 0 },
+        inter: { rate: 0, fixed: 0 },
+        ativus: { rate: 0, fixed: 0 }
       };
       
       data?.forEach((s: { key: string; value: string }) => {
         if (s.key === 'spedpay_fee_rate') fees.spedpay.rate = parseFloat(s.value) || 0;
         if (s.key === 'spedpay_fixed_fee') fees.spedpay.fixed = parseFloat(s.value) || 0;
-        if (s.key === 'spedpay_saque_fee_rate') fees.spedpay.saqueRate = parseFloat(s.value) || 0;
-        if (s.key === 'spedpay_saque_fixed_fee') fees.spedpay.saqueFixed = parseFloat(s.value) || 0;
         if (s.key === 'inter_fee_rate') fees.inter.rate = parseFloat(s.value) || 0;
         if (s.key === 'inter_fixed_fee') fees.inter.fixed = parseFloat(s.value) || 0;
-        if (s.key === 'inter_saque_fee_rate') fees.inter.saqueRate = parseFloat(s.value) || 0;
-        if (s.key === 'inter_saque_fixed_fee') fees.inter.saqueFixed = parseFloat(s.value) || 0;
         if (s.key === 'ativus_fee_rate') fees.ativus.rate = parseFloat(s.value) || 0;
         if (s.key === 'ativus_fixed_fee') fees.ativus.fixed = parseFloat(s.value) || 0;
-        if (s.key === 'ativus_saque_fee_rate') fees.ativus.saqueRate = parseFloat(s.value) || 0;
-        if (s.key === 'ativus_saque_fixed_fee') fees.ativus.saqueFixed = parseFloat(s.value) || 0;
       });
       
       console.log('Loaded acquirer fees:', fees);
       setAcquirerFees(fees);
     } catch (error) {
       console.error('Error loading acquirer fees:', error);
-    }
-  };
-
-  const loadWithdrawals = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_all_withdrawals_admin', { p_limit: 0 });
-      if (error) throw error;
-      setWithdrawals(data as unknown as Withdrawal[] || []);
-    } catch (error) {
-      console.error('Error loading withdrawals:', error);
     }
   };
 
@@ -307,49 +269,25 @@ export const ReceitaPlataformaSection = () => {
     let thisYearAcquirerCost = 0;
     let totalAcquirerCost = 0;
     
-    // Contadores por adquirente (por período) - inclui PIX e Saque
+    // Contadores por adquirente (por período)
     const acquirerBreakdown = {
       spedpay: { 
-        pix: {
-          total: { count: 0, cost: 0, volume: 0 },
-          today: { count: 0, cost: 0, volume: 0 },
-          sevenDays: { count: 0, cost: 0, volume: 0 },
-          thisMonth: { count: 0, cost: 0, volume: 0 }
-        },
-        saque: {
-          total: { count: 0, cost: 0, volume: 0 },
-          today: { count: 0, cost: 0, volume: 0 },
-          sevenDays: { count: 0, cost: 0, volume: 0 },
-          thisMonth: { count: 0, cost: 0, volume: 0 }
-        }
+        total: { count: 0, cost: 0, volume: 0 },
+        today: { count: 0, cost: 0, volume: 0 },
+        sevenDays: { count: 0, cost: 0, volume: 0 },
+        thisMonth: { count: 0, cost: 0, volume: 0 }
       },
       inter: { 
-        pix: {
-          total: { count: 0, cost: 0, volume: 0 },
-          today: { count: 0, cost: 0, volume: 0 },
-          sevenDays: { count: 0, cost: 0, volume: 0 },
-          thisMonth: { count: 0, cost: 0, volume: 0 }
-        },
-        saque: {
-          total: { count: 0, cost: 0, volume: 0 },
-          today: { count: 0, cost: 0, volume: 0 },
-          sevenDays: { count: 0, cost: 0, volume: 0 },
-          thisMonth: { count: 0, cost: 0, volume: 0 }
-        }
+        total: { count: 0, cost: 0, volume: 0 },
+        today: { count: 0, cost: 0, volume: 0 },
+        sevenDays: { count: 0, cost: 0, volume: 0 },
+        thisMonth: { count: 0, cost: 0, volume: 0 }
       },
       ativus: { 
-        pix: {
-          total: { count: 0, cost: 0, volume: 0 },
-          today: { count: 0, cost: 0, volume: 0 },
-          sevenDays: { count: 0, cost: 0, volume: 0 },
-          thisMonth: { count: 0, cost: 0, volume: 0 }
-        },
-        saque: {
-          total: { count: 0, cost: 0, volume: 0 },
-          today: { count: 0, cost: 0, volume: 0 },
-          sevenDays: { count: 0, cost: 0, volume: 0 },
-          thisMonth: { count: 0, cost: 0, volume: 0 }
-        }
+        total: { count: 0, cost: 0, volume: 0 },
+        today: { count: 0, cost: 0, volume: 0 },
+        sevenDays: { count: 0, cost: 0, volume: 0 },
+        thisMonth: { count: 0, cost: 0, volume: 0 }
       }
     };
 
@@ -369,30 +307,30 @@ export const ReceitaPlataformaSection = () => {
       const txDateStr = getBrazilDateStr(txDate);
       
       if (acquirerBreakdown[acq]) {
-        // Total PIX
-        acquirerBreakdown[acq].pix.total.count++;
-        acquirerBreakdown[acq].pix.total.cost += acquirerCost;
-        acquirerBreakdown[acq].pix.total.volume += tx.amount;
+        // Total
+        acquirerBreakdown[acq].total.count++;
+        acquirerBreakdown[acq].total.cost += acquirerCost;
+        acquirerBreakdown[acq].total.volume += tx.amount;
         
-        // Hoje PIX
+        // Hoje
         if (txDateStr === todayStr) {
-          acquirerBreakdown[acq].pix.today.count++;
-          acquirerBreakdown[acq].pix.today.cost += acquirerCost;
-          acquirerBreakdown[acq].pix.today.volume += tx.amount;
+          acquirerBreakdown[acq].today.count++;
+          acquirerBreakdown[acq].today.cost += acquirerCost;
+          acquirerBreakdown[acq].today.volume += tx.amount;
         }
         
-        // 7 dias PIX
+        // 7 dias
         if (txDate >= sevenDaysAgo) {
-          acquirerBreakdown[acq].pix.sevenDays.count++;
-          acquirerBreakdown[acq].pix.sevenDays.cost += acquirerCost;
-          acquirerBreakdown[acq].pix.sevenDays.volume += tx.amount;
+          acquirerBreakdown[acq].sevenDays.count++;
+          acquirerBreakdown[acq].sevenDays.cost += acquirerCost;
+          acquirerBreakdown[acq].sevenDays.volume += tx.amount;
         }
         
-        // Este mês PIX
+        // Este mês
         if (txDate >= thisMonthStart) {
-          acquirerBreakdown[acq].pix.thisMonth.count++;
-          acquirerBreakdown[acq].pix.thisMonth.cost += acquirerCost;
-          acquirerBreakdown[acq].pix.thisMonth.volume += tx.amount;
+          acquirerBreakdown[acq].thisMonth.count++;
+          acquirerBreakdown[acq].thisMonth.cost += acquirerCost;
+          acquirerBreakdown[acq].thisMonth.volume += tx.amount;
         }
       }
 
@@ -442,42 +380,7 @@ export const ReceitaPlataformaSection = () => {
       }
     });
 
-    // Processar saques aprovados
-    const approvedWithdrawals = withdrawals.filter(w => w.status === 'approved');
-    approvedWithdrawals.forEach(w => {
-      const acq = (w.acquirer || 'ativus') as keyof typeof acquirerBreakdown;
-      const withdrawalCost = calculateWithdrawalCost(w.amount, w.acquirer, acquirerFees);
-      const wDate = w.processed_at ? new Date(w.processed_at) : new Date(w.created_at);
-      const wDateStr = getBrazilDateStr(wDate);
-      
-      if (acquirerBreakdown[acq]) {
-        // Total Saque
-        acquirerBreakdown[acq].saque.total.count++;
-        acquirerBreakdown[acq].saque.total.cost += withdrawalCost;
-        acquirerBreakdown[acq].saque.total.volume += w.amount;
-        
-        // Hoje Saque
-        if (wDateStr === todayStr) {
-          acquirerBreakdown[acq].saque.today.count++;
-          acquirerBreakdown[acq].saque.today.cost += withdrawalCost;
-          acquirerBreakdown[acq].saque.today.volume += w.amount;
-        }
-        
-        // 7 dias Saque
-        if (wDate >= sevenDaysAgo) {
-          acquirerBreakdown[acq].saque.sevenDays.count++;
-          acquirerBreakdown[acq].saque.sevenDays.cost += withdrawalCost;
-          acquirerBreakdown[acq].saque.sevenDays.volume += w.amount;
-        }
-        
-        // Este mês Saque
-        if (wDate >= thisMonthStart) {
-          acquirerBreakdown[acq].saque.thisMonth.count++;
-          acquirerBreakdown[acq].saque.thisMonth.cost += withdrawalCost;
-          acquirerBreakdown[acq].saque.thisMonth.volume += w.amount;
-        }
-      }
-    });
+    // Calcular lucros líquidos (receita bruta - custos adquirentes)
     const todayNet = todayGross - todayAcquirerCost;
     const sevenDaysNet = sevenDaysGross - sevenDaysAcquirerCost;
     const fifteenDaysNet = fifteenDaysGross - fifteenDaysAcquirerCost;
@@ -554,7 +457,7 @@ export const ReceitaPlataformaSection = () => {
       trendPercentage,
       daysWithData
     };
-  }, [paidTransactions, acquirerFees, withdrawals]);
+  }, [paidTransactions, acquirerFees]);
 
   // Dados do gráfico
   const chartData = useMemo((): ChartData[] => {
@@ -865,18 +768,15 @@ export const ReceitaPlataformaSection = () => {
       </Card>
 
       {/* Card Detalhado: Custos por Adquirente */}
-      {(profitStats.acquirerBreakdown.spedpay.pix.total.count > 0 || 
-        profitStats.acquirerBreakdown.inter.pix.total.count > 0 || 
-        profitStats.acquirerBreakdown.ativus.pix.total.count > 0 ||
-        profitStats.acquirerBreakdown.spedpay.saque.total.count > 0 || 
-        profitStats.acquirerBreakdown.inter.saque.total.count > 0 || 
-        profitStats.acquirerBreakdown.ativus.saque.total.count > 0) && (() => {
+      {(profitStats.acquirerBreakdown.spedpay.total.count > 0 || 
+        profitStats.acquirerBreakdown.inter.total.count > 0 || 
+        profitStats.acquirerBreakdown.ativus.total.count > 0) && (() => {
         // Helper para obter dados do período selecionado
         const getPeriodKey = () => {
           if (acquirerCostFilter === '7days') return 'sevenDays';
           return acquirerCostFilter;
         };
-        const periodKey = getPeriodKey() as 'today' | 'sevenDays' | 'thisMonth';
+        const periodKey = getPeriodKey();
         const getPeriodLabel = () => {
           switch(acquirerCostFilter) {
             case 'today': return 'Hoje';
@@ -885,23 +785,12 @@ export const ReceitaPlataformaSection = () => {
           }
         };
         
-        // Dados PIX
-        const spedpayPixData = profitStats.acquirerBreakdown.spedpay.pix[periodKey];
-        const interPixData = profitStats.acquirerBreakdown.inter.pix[periodKey];
-        const ativusPixData = profitStats.acquirerBreakdown.ativus.pix[periodKey];
+        const spedpayData = profitStats.acquirerBreakdown.spedpay[periodKey];
+        const interData = profitStats.acquirerBreakdown.inter[periodKey];
+        const ativusData = profitStats.acquirerBreakdown.ativus[periodKey];
         
-        // Dados Saque
-        const spedpaySaqueData = profitStats.acquirerBreakdown.spedpay.saque[periodKey];
-        const interSaqueData = profitStats.acquirerBreakdown.inter.saque[periodKey];
-        const ativusSaqueData = profitStats.acquirerBreakdown.ativus.saque[periodKey];
-        
-        // Totais combinados
-        const totalPixCost = spedpayPixData.cost + interPixData.cost + ativusPixData.cost;
-        const totalSaqueCost = spedpaySaqueData.cost + interSaqueData.cost + ativusSaqueData.cost;
-        const totalCost = totalPixCost + totalSaqueCost;
-        const totalPixCount = spedpayPixData.count + interPixData.count + ativusPixData.count;
-        const totalSaqueCount = spedpaySaqueData.count + interSaqueData.count + ativusSaqueData.count;
-        const totalCount = totalPixCount + totalSaqueCount;
+        const totalCost = spedpayData.cost + interData.cost + ativusData.cost;
+        const totalCount = spedpayData.count + interData.count + ativusData.count;
         const avgCost = totalCount > 0 ? totalCost / totalCount : 0;
         
         return (
@@ -940,12 +829,9 @@ export const ReceitaPlataformaSection = () => {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'SpedPay PIX', value: spedpayPixData.cost, color: '#3B82F6' },
-                        { name: 'SpedPay Saque', value: spedpaySaqueData.cost, color: '#60A5FA' },
-                        { name: 'Inter PIX', value: interPixData.cost, color: '#F97316' },
-                        { name: 'Inter Saque', value: interSaqueData.cost, color: '#FB923C' },
-                        { name: 'Ativus PIX', value: ativusPixData.cost, color: '#10B981' },
-                        { name: 'Ativus Saque', value: ativusSaqueData.cost, color: '#34D399' }
+                        { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
+                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' }
                       ].filter(d => d.value > 0)}
                       cx="50%"
                       cy="50%"
@@ -953,16 +839,13 @@ export const ReceitaPlataformaSection = () => {
                       outerRadius={70}
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {[
-                        { name: 'SpedPay PIX', value: spedpayPixData.cost, color: '#3B82F6' },
-                        { name: 'SpedPay Saque', value: spedpaySaqueData.cost, color: '#60A5FA' },
-                        { name: 'Inter PIX', value: interPixData.cost, color: '#F97316' },
-                        { name: 'Inter Saque', value: interSaqueData.cost, color: '#FB923C' },
-                        { name: 'Ativus PIX', value: ativusPixData.cost, color: '#10B981' },
-                        { name: 'Ativus Saque', value: ativusSaqueData.cost, color: '#34D399' }
+                        { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
+                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' }
                       ].filter(d => d.value > 0).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -991,19 +874,13 @@ export const ReceitaPlataformaSection = () => {
                   <div className="text-lg font-bold text-foreground">
                     {totalCount}
                   </div>
-                  <p className="text-xs text-muted-foreground">Operações</p>
+                  <p className="text-xs text-muted-foreground">Transações</p>
                 </div>
-                <div className="text-center p-3 bg-muted/30 rounded-lg">
-                  <div className="text-sm font-bold text-foreground">
-                    {formatCurrency(totalPixCost)}
+                <div className="col-span-2 text-center p-3 bg-muted/30 rounded-lg">
+                  <div className="text-lg font-bold text-foreground">
+                    {formatCurrency(avgCost)}
                   </div>
-                  <p className="text-xs text-muted-foreground">Custo PIX</p>
-                </div>
-                <div className="text-center p-3 bg-muted/30 rounded-lg">
-                  <div className="text-sm font-bold text-foreground">
-                    {formatCurrency(totalSaqueCost)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Custo Saque</p>
+                  <p className="text-xs text-muted-foreground">Custo Médio/TX</p>
                 </div>
               </div>
             </div>
@@ -1014,57 +891,93 @@ export const ReceitaPlataformaSection = () => {
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="text-xs">Adquirente</TableHead>
-                    <TableHead className="text-xs text-center">PIX TXs</TableHead>
-                    <TableHead className="text-xs text-right">Custo PIX</TableHead>
-                    <TableHead className="text-xs text-center">Saques</TableHead>
-                    <TableHead className="text-xs text-right">Custo Saque</TableHead>
-                    <TableHead className="text-xs text-right">Total</TableHead>
+                    <TableHead className="text-xs text-center">Taxa Config.</TableHead>
+                    <TableHead className="text-xs text-center">TXs</TableHead>
+                    <TableHead className="text-xs text-right hidden sm:table-cell">Volume</TableHead>
+                    <TableHead className="text-xs text-right">Custo</TableHead>
+                    <TableHead className="text-xs text-right hidden sm:table-cell">Médio/TX</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {/* SpedPay */}
-                  <TableRow className={(spedpayPixData.count + spedpaySaqueData.count) === 0 ? 'opacity-50' : ''}>
+                  <TableRow className={spedpayData.count === 0 ? 'opacity-50' : ''}>
                     <TableCell className="py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                         <span className="text-xs font-medium">SpedPay</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center font-medium">{spedpayPixData.count}</TableCell>
-                    <TableCell className="text-xs text-right text-red-500">{formatCurrency(spedpayPixData.cost)}</TableCell>
-                    <TableCell className="text-xs text-center font-medium">{spedpaySaqueData.count}</TableCell>
-                    <TableCell className="text-xs text-right text-red-500">{formatCurrency(spedpaySaqueData.cost)}</TableCell>
-                    <TableCell className="text-xs text-right font-bold text-red-500">{formatCurrency(spedpayPixData.cost + spedpaySaqueData.cost)}</TableCell>
+                    <TableCell className="text-xs text-center text-muted-foreground">
+                      {acquirerFees.spedpay.rate}% + R$ {acquirerFees.spedpay.fixed.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {spedpayData.count}
+                    </TableCell>
+                    <TableCell className="text-xs text-right hidden sm:table-cell">
+                      {formatCurrency(spedpayData.volume)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-medium text-red-500">
+                      {formatCurrency(spedpayData.cost)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
+                      {spedpayData.count > 0 
+                        ? formatCurrency(spedpayData.cost / spedpayData.count)
+                        : '-'}
+                    </TableCell>
                   </TableRow>
 
                   {/* Banco Inter */}
-                  <TableRow className={(interPixData.count + interSaqueData.count) === 0 ? 'opacity-50' : ''}>
+                  <TableRow className={interData.count === 0 ? 'opacity-50' : ''}>
                     <TableCell className="py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
                         <span className="text-xs font-medium">Banco Inter</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center font-medium">{interPixData.count}</TableCell>
-                    <TableCell className="text-xs text-right text-red-500">{formatCurrency(interPixData.cost)}</TableCell>
-                    <TableCell className="text-xs text-center font-medium">{interSaqueData.count}</TableCell>
-                    <TableCell className="text-xs text-right text-red-500">{formatCurrency(interSaqueData.cost)}</TableCell>
-                    <TableCell className="text-xs text-right font-bold text-red-500">{formatCurrency(interPixData.cost + interSaqueData.cost)}</TableCell>
+                    <TableCell className="text-xs text-center text-muted-foreground">
+                      {acquirerFees.inter.rate}% + R$ {acquirerFees.inter.fixed.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {interData.count}
+                    </TableCell>
+                    <TableCell className="text-xs text-right hidden sm:table-cell">
+                      {formatCurrency(interData.volume)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-medium text-red-500">
+                      {formatCurrency(interData.cost)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
+                      {interData.count > 0 
+                        ? formatCurrency(interData.cost / interData.count)
+                        : '-'}
+                    </TableCell>
                   </TableRow>
 
                   {/* Ativus Hub */}
-                  <TableRow className={(ativusPixData.count + ativusSaqueData.count) === 0 ? 'opacity-50' : ''}>
+                  <TableRow className={ativusData.count === 0 ? 'opacity-50' : ''}>
                     <TableCell className="py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                         <span className="text-xs font-medium">Ativus Hub</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center font-medium">{ativusPixData.count}</TableCell>
-                    <TableCell className="text-xs text-right text-red-500">{formatCurrency(ativusPixData.cost)}</TableCell>
-                    <TableCell className="text-xs text-center font-medium">{ativusSaqueData.count}</TableCell>
-                    <TableCell className="text-xs text-right text-red-500">{formatCurrency(ativusSaqueData.cost)}</TableCell>
-                    <TableCell className="text-xs text-right font-bold text-red-500">{formatCurrency(ativusPixData.cost + ativusSaqueData.cost)}</TableCell>
+                    <TableCell className="text-xs text-center text-muted-foreground">
+                      {acquirerFees.ativus.rate}% + R$ {acquirerFees.ativus.fixed.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {ativusData.count}
+                    </TableCell>
+                    <TableCell className="text-xs text-right hidden sm:table-cell">
+                      {formatCurrency(ativusData.volume)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-medium text-red-500">
+                      {formatCurrency(ativusData.cost)}
+                    </TableCell>
+                    <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
+                      {ativusData.count > 0 
+                        ? formatCurrency(ativusData.cost / ativusData.count)
+                        : '-'}
+                    </TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
