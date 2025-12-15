@@ -362,7 +362,16 @@ const AdminDashboard = () => {
     const todayBrazil = getBrazilDateStr(now);
     if (chartFilter === 'today') {
       // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
-      for (let hour = 0; hour < 24; hour++) {
+      // Mobile: show only last 12 hours for better readability
+      // Desktop: show all 24 hours
+      const currentBrazilHour = getBrazilHour(now);
+      const hoursToShow = isMobile ? 12 : 24;
+      const startHour = isMobile ? Math.max(0, currentBrazilHour - 11) : 0;
+      
+      for (let i = 0; i < hoursToShow; i++) {
+        const hour = startHour + i;
+        if (hour > 23) break;
+        
         const hourStr = hour.toString().padStart(2, '0') + ':00';
 
         // Filter transactions created today at this hour (Brazil time)
