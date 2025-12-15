@@ -381,53 +381,7 @@ export function RetryDashboardSection() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-
-      {/* Per-Acquirer Success Rate Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {stats.map(stat => (
-          <Card key={stat.acquirer}>
-            <CardContent className="pt-3 pb-3">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium">{ACQUIRER_NAMES[stat.acquirer]}</h3>
-                <Badge 
-                  variant={stat.successRate >= 90 ? "default" : stat.successRate >= 70 ? "secondary" : "destructive"}
-                >
-                  {stat.successRate}% sucesso
-                </Badge>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total de eventos</span>
-                  <span className="font-medium">{stat.total}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-green-600">Sucesso</span>
-                  <span className="font-medium">{stat.success}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-destructive">Falhas</span>
-                  <span className="font-medium">{stat.failure}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-yellow-600">Retentativas</span>
-                  <span className="font-medium">{stat.retry}</span>
-                </div>
-              </div>
-              
-              {/* Progress bar */}
-              <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-green-500 transition-all"
-                  style={{ width: `${stat.successRate}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    </div>
     </div>
   );
 }
