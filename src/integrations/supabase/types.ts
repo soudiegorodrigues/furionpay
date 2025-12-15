@@ -1497,6 +1497,10 @@ export type Database = {
       }
       create_manual_backup: { Args: never; Returns: string }
       delete_system_backup: { Args: { p_backup_id: string }; Returns: boolean }
+      delete_test_transaction: {
+        Args: { p_transaction_id: string }
+        Returns: boolean
+      }
       delete_transaction_backup: {
         Args: { p_backup_id: string }
         Returns: boolean
