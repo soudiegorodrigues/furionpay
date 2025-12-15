@@ -95,15 +95,16 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
         ))}
         
         {/* Needle */}
-        <g 
-          transform={`rotate(${needleAngle}, ${cx}, ${cy})`}
-          style={{ 
+        <g
+          style={{
+            transform: `rotate(${needleAngle}deg)`,
+            transformOrigin: `${cx}px ${cy}px`,
+            transformBox: 'fill-box',
             transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            transformOrigin: `${cx}px ${cy}px`
           }}
         >
           <polygon
-            points={`${cx - 3},${cy} ${cx},${cy - 28} ${cx + 3},${cy}`}
+            points={`${cx - 2},${cy} ${cx},${cy - 24} ${cx + 2},${cy}`}
             fill="hsl(var(--foreground))"
           />
         </g>
