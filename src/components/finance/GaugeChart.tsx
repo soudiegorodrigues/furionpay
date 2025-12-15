@@ -154,8 +154,8 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
         {/* Value label */}
         <text
           x={cx}
-          y="72"
-          fontSize="9"
+          y="70"
+          fontSize="11"
           fontWeight="bold"
           fill="hsl(var(--foreground))"
           textAnchor="middle"
