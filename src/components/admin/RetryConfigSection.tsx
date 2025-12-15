@@ -1,386 +1,550 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, GripVertical, RefreshCcw, AlertTriangle, Check, Save, Trash2 } from "lucide-react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Pencil, Trash2, CheckCircle2, XCircle, ArrowRight, Zap, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
-interface RetryConfig {
+interface RetryStep {
   id: string;
   payment_method: string;
-  enabled: boolean;
-  max_retries: number;
-  acquirer_order: string[];
-  delay_between_retries_ms: number;
+  step_order: number;
+  acquirer: string;
+  is_active: boolean;
 }
 
-const acquirerLabels: Record<string, string> = {
-  ativus: 'Ativus Hub',
-  spedpay: 'SpedPay',
-  inter: 'Banco Inter'
+const ACQUIRERS = [
+  { value: 'ativus', label: 'Ativus Hub', color: 'bg-purple-500' },
+  { value: 'spedpay', label: 'SpedPay', color: 'bg-blue-500' },
+  { value: 'inter', label: 'Banco Inter', color: 'bg-orange-500' },
+];
+
+const ACQUIRER_LABELS: Record<string, string> = {
+  ativus: 'ATIVUS HUB',
+  spedpay: 'SPEDPAY',
+  inter: 'BANCO INTER',
+};
+
+const ACQUIRER_COLORS: Record<string, string> = {
+  ativus: 'bg-purple-500',
+  spedpay: 'bg-blue-500',
+  inter: 'bg-orange-500',
 };
 
 export const RetryConfigSection = () => {
-  const [configs, setConfigs] = useState<RetryConfig[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('pix');
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [configToDelete, setConfigToDelete] = useState<string | null>(null);
+  const [steps, setSteps] = useState<RetryStep[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("pix");
   
-  // Editable state
-  const [editedConfig, setEditedConfig] = useState<Partial<RetryConfig>>({});
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  // Dialog states
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingStep, setEditingStep] = useState<RetryStep | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deletingStep, setDeletingStep] = useState<RetryStep | null>(null);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    step_order: 1,
+    acquirer: 'ativus',
+    is_active: true,
+  });
 
   useEffect(() => {
-    loadConfigs();
+    loadSteps();
   }, []);
 
-  useEffect(() => {
-    // Initialize edited config when configs load or tab changes
-    const currentConfig = configs.find(c => c.payment_method === activeTab);
-    if (currentConfig) {
-      setEditedConfig({
-        enabled: currentConfig.enabled,
-        max_retries: currentConfig.max_retries,
-        acquirer_order: [...currentConfig.acquirer_order],
-        delay_between_retries_ms: currentConfig.delay_between_retries_ms
-      });
-    } else {
-      setEditedConfig({
-        enabled: true,
-        max_retries: 5,
-        acquirer_order: ['ativus', 'spedpay', 'inter'],
-        delay_between_retries_ms: 1000
-      });
-    }
-  }, [configs, activeTab]);
-
-  const loadConfigs = async () => {
-    setIsLoading(true);
+  const loadSteps = async () => {
     try {
       const { data, error } = await supabase
-        .from('retry_configurations')
-        .select('*');
-      
+        .from('retry_flow_steps')
+        .select('*')
+        .order('step_order', { ascending: true });
+
       if (error) throw error;
-      
-      setConfigs(data || []);
+      setSteps((data as RetryStep[]) || []);
     } catch (error) {
-      console.error('Error loading retry configs:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar configurações de retry",
-        variant: "destructive"
-      });
+      console.error('Erro ao carregar etapas:', error);
+      toast.error('Erro ao carregar configurações');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const saveConfig = async () => {
-    setIsSaving(true);
-    try {
-      const currentConfig = configs.find(c => c.payment_method === activeTab);
-      
-      if (currentConfig) {
-        // Update existing
-        const { error } = await supabase
-          .from('retry_configurations')
-          .update({
-            enabled: editedConfig.enabled,
-            max_retries: editedConfig.max_retries,
-            acquirer_order: editedConfig.acquirer_order,
-            delay_between_retries_ms: editedConfig.delay_between_retries_ms
-          })
-          .eq('id', currentConfig.id);
-        
-        if (error) throw error;
-      } else {
-        // Insert new
-        const { error } = await supabase
-          .from('retry_configurations')
-          .insert({
-            payment_method: activeTab,
-            enabled: editedConfig.enabled ?? true,
-            max_retries: editedConfig.max_retries ?? 5,
-            acquirer_order: editedConfig.acquirer_order ?? ['ativus', 'spedpay', 'inter'],
-            delay_between_retries_ms: editedConfig.delay_between_retries_ms ?? 1000
-          });
-        
-        if (error) throw error;
-      }
-      
-      toast({
-        title: "Sucesso",
-        description: "Configuração de retry salva!"
-      });
-      
-      loadConfigs();
-    } catch (error) {
-      console.error('Error saving retry config:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao salvar configuração",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
+  const getNextOrder = () => {
+    const pixSteps = steps.filter(s => s.payment_method === 'pix');
+    if (pixSteps.length === 0) return 1;
+    return Math.max(...pixSteps.map(s => s.step_order)) + 1;
   };
 
-  const deleteConfig = async () => {
-    if (!configToDelete) return;
-    
+  const handleCreate = async () => {
+    setSaving(true);
     try {
       const { error } = await supabase
-        .from('retry_configurations')
-        .delete()
-        .eq('id', configToDelete);
-      
+        .from('retry_flow_steps')
+        .insert({
+          payment_method: 'pix',
+          step_order: formData.step_order,
+          acquirer: formData.acquirer,
+          is_active: formData.is_active,
+        });
+
       if (error) throw error;
       
-      toast({
-        title: "Sucesso",
-        description: "Configuração excluída!"
-      });
-      
-      setShowDeleteDialog(false);
-      setConfigToDelete(null);
-      loadConfigs();
-    } catch (error) {
-      console.error('Error deleting config:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao excluir configuração",
-        variant: "destructive"
-      });
+      toast.success('Etapa criada com sucesso');
+      setIsCreateOpen(false);
+      loadSteps();
+    } catch (error: any) {
+      console.error('Erro ao criar etapa:', error);
+      if (error.code === '23505') {
+        toast.error('Já existe uma etapa com esta ordem');
+      } else {
+        toast.error('Erro ao criar etapa');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
+  const handleEdit = async () => {
+    if (!editingStep) return;
     
-    const newOrder = [...(editedConfig.acquirer_order || [])];
-    const draggedItem = newOrder[draggedIndex];
-    newOrder.splice(draggedIndex, 1);
-    newOrder.splice(index, 0, draggedItem);
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('retry_flow_steps')
+        .update({
+          step_order: formData.step_order,
+          acquirer: formData.acquirer,
+          is_active: formData.is_active,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', editingStep.id);
+
+      if (error) throw error;
+      
+      toast.success('Etapa atualizada com sucesso');
+      setIsEditOpen(false);
+      setEditingStep(null);
+      loadSteps();
+    } catch (error: any) {
+      console.error('Erro ao atualizar etapa:', error);
+      if (error.code === '23505') {
+        toast.error('Já existe uma etapa com esta ordem');
+      } else {
+        toast.error('Erro ao atualizar etapa');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingStep) return;
     
-    setEditedConfig(prev => ({ ...prev, acquirer_order: newOrder }));
-    setDraggedIndex(index);
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('retry_flow_steps')
+        .delete()
+        .eq('id', deletingStep.id);
+
+      if (error) throw error;
+      
+      toast.success('Etapa excluída com sucesso');
+      setDeleteConfirmOpen(false);
+      setDeletingStep(null);
+      loadSteps();
+    } catch (error) {
+      console.error('Erro ao excluir etapa:', error);
+      toast.error('Erro ao excluir etapa');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
+  const openCreate = () => {
+    setFormData({
+      step_order: getNextOrder(),
+      acquirer: 'ativus',
+      is_active: true,
+    });
+    setIsCreateOpen(true);
   };
 
-  const currentConfig = configs.find(c => c.payment_method === activeTab);
-  const hasChanges = currentConfig ? (
-    editedConfig.enabled !== currentConfig.enabled ||
-    editedConfig.max_retries !== currentConfig.max_retries ||
-    editedConfig.delay_between_retries_ms !== currentConfig.delay_between_retries_ms ||
-    JSON.stringify(editedConfig.acquirer_order) !== JSON.stringify(currentConfig.acquirer_order)
-  ) : true;
+  const openEdit = (step: RetryStep) => {
+    setEditingStep(step);
+    setFormData({
+      step_order: step.step_order,
+      acquirer: step.acquirer,
+      is_active: step.is_active,
+    });
+    setIsEditOpen(true);
+  };
+
+  const pixSteps = steps.filter(s => s.payment_method === 'pix').sort((a, b) => a.step_order - b.step_order);
+  const activeCount = pixSteps.filter(s => s.is_active).length;
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base flex items-center gap-2">
-              <RefreshCcw className="w-4 h-4" />
-              Configuração de Retentativas
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Configure as tentativas automáticas de reprocessamento para pagamentos.
-            </CardDescription>
+    <div className="space-y-4">
+      {/* Header */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Configuração de Retentativas
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Configure as tentativas automáticas de reprocessamento para pagamentos com falha.
+              </CardDescription>
+            </div>
+            <Button onClick={openCreate} size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              Nova Configuração
+            </Button>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pix" className="flex items-center gap-1.5">
-              <div className="w-3 h-3 bg-emerald-500 rounded" />
-              PIX
-            </TabsTrigger>
-            <TabsTrigger value="card" disabled className="flex items-center gap-1.5 opacity-50">
-              <div className="w-3 h-3 bg-blue-500 rounded" />
-              CARTÃO
-            </TabsTrigger>
-            <TabsTrigger value="boleto" disabled className="flex items-center gap-1.5 opacity-50">
-              <div className="w-3 h-3 bg-amber-500 rounded" />
-              BOLETO
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value={activeTab} className="mt-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardHeader>
+      </Card>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="pix" className="gap-2">
+            PIX
+            <Badge variant="secondary" className="ml-1">
+              {activeCount} ativa{activeCount !== 1 ? 's' : ''}
+            </Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pix" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                <CardTitle className="text-base">Fluxo de Retentativas</CardTitle>
+                <Badge variant="outline">{pixSteps.length} etapa{pixSteps.length !== 1 ? 's' : ''}</Badge>
               </div>
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="p-4 space-y-4">
-                  {/* Enable/Disable + Max Retries */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Switch
-                        checked={editedConfig.enabled ?? true}
-                        onCheckedChange={(checked) => setEditedConfig(prev => ({ ...prev, enabled: checked }))}
-                      />
-                      <span className="text-sm font-medium">
-                        {editedConfig.enabled ? 'Retentativas Ativas' : 'Retentativas Desativadas'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs text-muted-foreground">Máximo:</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={editedConfig.max_retries ?? 5}
-                        onChange={(e) => setEditedConfig(prev => ({ 
-                          ...prev, 
-                          max_retries: Math.min(10, Math.max(1, parseInt(e.target.value) || 1))
-                        }))}
-                        className="w-16 h-8 text-center"
-                        disabled={!editedConfig.enabled}
-                      />
-                      <span className="text-xs text-muted-foreground">tentativas</span>
-                    </div>
-                  </div>
-
-                  {/* Acquirer Order */}
-                  <div className="space-y-2">
-                    <Label className="text-sm">Ordem de Fallback (arrastar para reordenar):</Label>
-                    <div className="space-y-1.5">
-                      {(editedConfig.acquirer_order || ['ativus', 'spedpay', 'inter']).map((acquirer, index) => (
-                        <div
-                          key={acquirer}
-                          draggable={editedConfig.enabled}
-                          onDragStart={() => handleDragStart(index)}
-                          onDragOver={(e) => handleDragOver(e, index)}
-                          onDragEnd={handleDragEnd}
-                          className={`
-                            flex items-center justify-between p-2.5 rounded-lg border transition-all
-                            ${editedConfig.enabled ? 'cursor-grab active:cursor-grabbing hover:bg-muted/50' : 'opacity-50 cursor-not-allowed'}
-                            ${draggedIndex === index ? 'ring-2 ring-primary bg-muted/50' : ''}
-                          `}
-                        >
-                          <div className="flex items-center gap-3">
-                            <GripVertical className="w-4 h-4 text-muted-foreground" />
-                            <div className={`
-                              w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                              ${index === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
-                            `}>
-                              {index + 1}
-                            </div>
-                            <span className="font-medium">{acquirerLabels[acquirer] || acquirer}</span>
-                          </div>
-                          <Badge variant={index === 0 ? 'default' : 'outline'} className="text-xs">
-                            {index === 0 ? 'Principal' : `Fallback ${index}`}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Delay */}
-                  <div className="flex items-center gap-3 pt-2 border-t">
-                    <Label className="text-sm whitespace-nowrap">Delay entre tentativas:</Label>
-                    <Input
-                      type="number"
-                      min={500}
-                      max={10000}
-                      step={100}
-                      value={editedConfig.delay_between_retries_ms ?? 1000}
-                      onChange={(e) => setEditedConfig(prev => ({ 
-                        ...prev, 
-                        delay_between_retries_ms: Math.min(10000, Math.max(500, parseInt(e.target.value) || 1000))
-                      }))}
-                      className="w-24 h-8 text-center"
-                      disabled={!editedConfig.enabled}
-                    />
-                    <span className="text-sm text-muted-foreground">ms</span>
-                  </div>
-
-                  {/* Info Box */}
-                  {editedConfig.enabled && (
-                    <div className="flex items-start gap-2 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-amber-700 dark:text-amber-400">
-                        Se a adquirente principal falhar, o sistema tentará automaticamente 
-                        as próximas na ordem configurada, até {editedConfig.max_retries} tentativas 
-                        no total, com {editedConfig.delay_between_retries_ms}ms de intervalo.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    {currentConfig && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setConfigToDelete(currentConfig.id);
-                          setShowDeleteDialog(true);
-                        }}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1.5" />
-                        Excluir
-                      </Button>
-                    )}
-                    <Button
-                      onClick={saveConfig}
-                      disabled={isSaving || !hasChanges}
-                      className="ml-auto"
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pixSteps.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhuma etapa configurada.</p>
+                  <p className="text-sm mt-1">Clique em "Nova Configuração" para adicionar.</p>
+                </div>
+              ) : (
+                pixSteps.map((step, index) => {
+                  const isLast = index === pixSteps.length - 1;
+                  
+                  return (
+                    <div
+                      key={step.id}
+                      className={`flex items-center justify-between p-4 rounded-lg border ${
+                        step.is_active 
+                          ? 'bg-card border-border' 
+                          : 'bg-muted/30 border-border/50 opacity-60'
+                      }`}
                     >
-                      {isSaving ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Salvar Configuração
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
+                      <div className="flex items-center gap-4">
+                        {/* Order number */}
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${ACQUIRER_COLORS[step.acquirer] || 'bg-gray-500'}`}>
+                          {step.step_order}
+                        </div>
+                        
+                        {/* Acquirer name */}
+                        <div>
+                          <p className="font-semibold">{ACQUIRER_LABELS[step.acquirer] || step.acquirer.toUpperCase()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {step.is_active ? 'Ativo' : 'Inativo'}
+                          </p>
+                        </div>
+                      </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                      {/* Flow indicators */}
+                      <div className="hidden md:flex items-center gap-6 text-sm">
+                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                          <span>Sucesso?</span>
+                          <ArrowRight className="h-3 w-3" />
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span className="font-medium">FIM</span>
+                        </div>
+                        
+                        <div className={`flex items-center gap-2 ${isLast ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                          <span>Falha?</span>
+                          <ArrowRight className="h-3 w-3" />
+                          {isLast ? (
+                            <>
+                              <XCircle className="h-4 w-4" />
+                              <span className="font-medium">ERRO</span>
+                            </>
+                          ) : (
+                            <span className="font-medium">Próximo</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(step)}
+                          className="h-8 w-8"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setDeletingStep(step);
+                            setDeleteConfirmOpen(true);
+                          }}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+
+              {/* Legend */}
+              {pixSteps.length > 0 && (
+                <div className="flex flex-wrap gap-4 pt-4 border-t text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span>Sucesso = Pagamento aprovado</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                    <span>Falha = Tenta próxima adquirente</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-red-500" />
+                    <span>Erro final = Todas falharam</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Configuração de Retentativa</DialogTitle>
+            <DialogDescription>
+              Adicione uma nova etapa ao fluxo de retentativas.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="order">Ordem *</Label>
+              <Input
+                id="order"
+                type="number"
+                min={1}
+                value={formData.step_order}
+                onChange={(e) => setFormData({ ...formData, step_order: parseInt(e.target.value) || 1 })}
+              />
+              <p className="text-xs text-muted-foreground">
+                1 = primeira tentativa, 2 = segunda, etc.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Método</Label>
+              <Select value="pix" disabled>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pix">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                      PIX
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Adquirente *</Label>
+              <Select
+                value={formData.acquirer}
+                onValueChange={(value) => setFormData({ ...formData, acquirer: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACQUIRERS.map((acq) => (
+                    <SelectItem key={acq.value} value={acq.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2 w-2 rounded-full ${acq.color}`} />
+                        {acq.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="active">Ativo</Label>
+              <Switch
+                id="active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreate} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Configuração</DialogTitle>
+            <DialogDescription>
+              Modifique a etapa do fluxo de retentativas.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-order">Ordem *</Label>
+              <Input
+                id="edit-order"
+                type="number"
+                min={1}
+                value={formData.step_order}
+                onChange={(e) => setFormData({ ...formData, step_order: parseInt(e.target.value) || 1 })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Adquirente *</Label>
+              <Select
+                value={formData.acquirer}
+                onValueChange={(value) => setFormData({ ...formData, acquirer: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACQUIRERS.map((acq) => (
+                    <SelectItem key={acq.value} value={acq.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2 w-2 rounded-full ${acq.color}`} />
+                        {acq.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-active">Ativo</Label>
+              <Switch
+                id="edit-active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEdit} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Configuração?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir etapa?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O sistema voltará ao comportamento padrão (sem retry automático).
+              Esta ação não pode ser desfeita. A etapa será removida do fluxo de retentativas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteConfig} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   );
 };

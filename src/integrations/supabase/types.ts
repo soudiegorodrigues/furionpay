@@ -1228,6 +1228,36 @@ export type Database = {
         }
         Relationships: []
       }
+      retry_flow_steps: {
+        Row: {
+          acquirer: string
+          created_at: string
+          id: string
+          is_active: boolean
+          payment_method: string
+          step_order: number
+          updated_at: string
+        }
+        Insert: {
+          acquirer: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          payment_method?: string
+          step_order: number
+          updated_at?: string
+        }
+        Update: {
+          acquirer?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          payment_method?: string
+          step_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reward_requests: {
         Row: {
           created_at: string
