@@ -366,7 +366,7 @@ export const FinanceDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Spending Alerts */}
       {spendingAlerts.length > 0 && (
         <Card className="border-l-4 border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10">
@@ -431,137 +431,137 @@ export const FinanceDashboard = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Receitas ({getPeriodLabel()})</p>
-                <p className="text-xl md:text-2xl font-bold text-green-600">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">Receitas ({getPeriodLabel()})</p>
+                <p className="text-base md:text-lg font-bold text-green-600">
                   {formatCurrency(stats.totalIncome)}
                 </p>
                 {stats.incomeChange !== 0 && periodFilter !== 'all' && (
-                  <p className={`text-xs mt-1 ${stats.incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPercent(stats.incomeChange)} vs período anterior
+                  <p className={`text-xs mt-0.5 ${stats.incomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatPercent(stats.incomeChange)} vs anterior
                   </p>
                 )}
               </div>
-              <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/30">
-                <ArrowUpRight className="h-5 w-5 text-green-600" />
+              <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/30 shrink-0">
+                <ArrowUpRight className="h-4 w-4 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-red-500">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Despesas ({getPeriodLabel()})</p>
-                <p className="text-xl md:text-2xl font-bold text-red-600">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">Despesas ({getPeriodLabel()})</p>
+                <p className="text-base md:text-lg font-bold text-red-600">
                   {formatCurrency(stats.totalExpense)}
                 </p>
                 {stats.expenseChange !== 0 && periodFilter !== 'all' && (
-                  <p className={`text-xs mt-1 ${stats.expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatPercent(stats.expenseChange)} vs período anterior
+                  <p className={`text-xs mt-0.5 ${stats.expenseChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatPercent(stats.expenseChange)} vs anterior
                   </p>
                 )}
               </div>
-              <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
-                <ArrowDownRight className="h-5 w-5 text-red-600" />
+              <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/30 shrink-0">
+                <ArrowDownRight className="h-4 w-4 text-red-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-purple-500">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Investimentos ({getPeriodLabel()})</p>
-                <p className="text-xl md:text-2xl font-bold text-purple-600">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">Investimentos ({getPeriodLabel()})</p>
+                <p className="text-base md:text-lg font-bold text-purple-600">
                   {formatCurrency(stats.totalInvestment)}
                 </p>
               </div>
-              <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900/30">
-                <PiggyBank className="h-5 w-5 text-purple-600" />
+              <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30 shrink-0">
+                <PiggyBank className="h-4 w-4 text-purple-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-primary">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Saldo ({getPeriodLabel()})</p>
-                <p className={`text-xl md:text-2xl font-bold ${stats.balance >= 0 ? 'text-primary' : 'text-red-600'}`}>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">Saldo ({getPeriodLabel()})</p>
+                <p className={`text-base md:text-lg font-bold ${stats.balance >= 0 ? 'text-primary' : 'text-red-600'}`}>
                   {formatCurrency(stats.balance)}
                 </p>
               </div>
-              <div className="p-3 rounded-full bg-primary/10">
-                <Wallet className="h-5 w-5 text-primary" />
+              <div className="p-2 rounded-full bg-primary/10 shrink-0">
+                <Wallet className="h-4 w-4 text-primary" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Income vs Expense Comparison Bar Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            Comparativo: Receitas vs Despesas vs Investimentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={comparisonData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
-                <XAxis 
-                  type="number" 
-                  tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                  className="text-xs"
-                />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  width={100}
-                  className="text-xs"
-                />
-                <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                  {comparisonData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Income vs Expense Comparison Bar Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              Receitas vs Despesas vs Investimentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={comparisonData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
+                  <XAxis 
+                    type="number" 
+                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                    className="text-xs"
+                  />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    width={100}
+                    className="text-xs"
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {comparisonData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Monthly Evolution Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <TrendingUp className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4 text-primary" />
               Evolução Mensal
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyData}>
                   <defs>
@@ -613,14 +613,14 @@ export const FinanceDashboard = () => {
 
         {/* Monthly Balance Bar Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <DollarSign className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <DollarSign className="h-4 w-4 text-primary" />
               Saldo Mensal
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -657,17 +657,17 @@ export const FinanceDashboard = () => {
       </div>
 
       {/* Category Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Income by Category */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <ArrowUpRight className="h-5 w-5 text-green-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ArrowUpRight className="h-4 w-4 text-green-600" />
               Receitas por Categoria
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[220px]">
               {incomeByCategory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -675,8 +675,8 @@ export const FinanceDashboard = () => {
                       data={incomeByCategory}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={90}
+                      innerRadius={35}
+                      outerRadius={65}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -714,14 +714,14 @@ export const FinanceDashboard = () => {
 
         {/* Expenses by Category */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <ArrowDownRight className="h-5 w-5 text-red-600" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ArrowDownRight className="h-4 w-4 text-red-600" />
               Despesas por Categoria
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[220px]">
               {expensesByCategory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -729,8 +729,8 @@ export const FinanceDashboard = () => {
                       data={expensesByCategory}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={90}
+                      innerRadius={35}
+                      outerRadius={65}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -769,18 +769,18 @@ export const FinanceDashboard = () => {
 
       {/* Top Categories Table */}
       {(expensesByCategory.length > 0 || incomeByCategory.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Top Expenses */}
           {expensesByCategory.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingDown className="h-5 w-5 text-red-600" />
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <TrendingDown className="h-4 w-4 text-red-600" />
                   Top Despesas do Mês
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {expensesByCategory.slice(0, 5).map((item, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -806,14 +806,14 @@ export const FinanceDashboard = () => {
           {/* Top Income */}
           {incomeByCategory.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
                   Top Receitas do Mês
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {incomeByCategory.slice(0, 5).map((item, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
