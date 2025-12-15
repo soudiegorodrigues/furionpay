@@ -26,7 +26,8 @@ import {
   TrendingUp, 
   TrendingDown, 
   PiggyBank,
-  Loader2
+  Loader2,
+  Palette
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -55,12 +56,15 @@ export const FinanceCategories = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCustomColor, setShowCustomColor] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     type: 'expense' as string,
     color: '#10b981',
     spending_limit: '' as string
   });
+
+  const isValidHex = (hex: string) => /^#[0-9A-Fa-f]{6}$/.test(hex);
 
   useEffect(() => {
     if (user?.id) {
@@ -92,6 +96,7 @@ export const FinanceCategories = () => {
   };
 
   const handleOpenDialog = (category?: Category) => {
+    setShowCustomColor(false);
     if (category) {
       setEditingCategory(category);
       setFormData({
@@ -100,6 +105,10 @@ export const FinanceCategories = () => {
         color: category.color,
         spending_limit: category.spending_limit?.toString() || ''
       });
+      // Show custom color picker if color is not in predefined list
+      if (!CATEGORY_COLORS.includes(category.color)) {
+        setShowCustomColor(true);
+      }
     } else {
       setEditingCategory(null);
       setFormData({
@@ -474,8 +483,10 @@ export const FinanceCategories = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Cor</Label>
+              
+              {/* Cores predefinidas */}
               <div className="flex flex-wrap gap-2">
                 {CATEGORY_COLORS.map(color => (
                   <button
@@ -487,10 +498,74 @@ export const FinanceCategories = () => {
                         : 'border-transparent hover:scale-105'
                     }`}
                     style={{ backgroundColor: color }}
-                    onClick={() => setFormData({ ...formData, color })}
+                    onClick={() => {
+                      setFormData({ ...formData, color });
+                      setShowCustomColor(false);
+                    }}
                   />
                 ))}
+                
+                {/* Botão para cor customizada */}
+                <button
+                  type="button"
+                  className={`w-8 h-8 rounded-full border-2 border-dashed transition-all flex items-center justify-center ${
+                    showCustomColor || !CATEGORY_COLORS.includes(formData.color)
+                      ? 'border-foreground bg-muted scale-110' 
+                      : 'border-muted-foreground/50 hover:scale-105 hover:border-foreground'
+                  }`}
+                  onClick={() => setShowCustomColor(!showCustomColor)}
+                >
+                  <Palette className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
+
+              {/* Color picker customizado */}
+              {showCustomColor && (
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  {/* Input type="color" nativo */}
+                  <input
+                    type="color"
+                    value={isValidHex(formData.color) ? formData.color : '#10b981'}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
+                  />
+                  
+                  {/* Input hex manual */}
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      value={formData.color}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        if (!value.startsWith('#')) value = '#' + value;
+                        if (value.length <= 7) {
+                          setFormData({ ...formData, color: value });
+                        }
+                      }}
+                      placeholder="#000000"
+                      className="font-mono uppercase"
+                      maxLength={7}
+                    />
+                  </div>
+                  
+                  {/* Preview da cor */}
+                  <div 
+                    className="w-10 h-10 rounded-lg border-2 border-border"
+                    style={{ backgroundColor: isValidHex(formData.color) ? formData.color : '#000000' }}
+                  />
+                </div>
+              )}
+              
+              {/* Mostrar cor atual se for customizada */}
+              {!CATEGORY_COLORS.includes(formData.color) && !showCustomColor && (
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  <span 
+                    className="w-4 h-4 rounded-full inline-block" 
+                    style={{ backgroundColor: formData.color }}
+                  />
+                  Cor personalizada: {formData.color}
+                </p>
+              )}
             </div>
 
             {formData.type === 'expense' && (
