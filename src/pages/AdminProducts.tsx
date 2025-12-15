@@ -222,7 +222,7 @@ export default function AdminProducts() {
 
   // Admin users see the full products page
   return <div className="flex flex-col min-h-screen">
-      <AdminHeader title="Produtos" icon={Package} />
+      
       
       <main className="flex-1 p-4 md:p-6">
         {/* Header */}
