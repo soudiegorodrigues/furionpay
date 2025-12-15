@@ -263,8 +263,8 @@ serve(async (req) => {
       },
       commission: {
         totalPriceInCents: priceInCents,
-        gatewayFeeInCents: Math.round(priceInCents * 0.05),
-        userCommissionInCents: Math.round(priceInCents * 0.95),
+        gatewayFeeInCents: 0,
+        userCommissionInCents: priceInCents,
       },
     };
 
