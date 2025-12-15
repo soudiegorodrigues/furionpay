@@ -739,23 +739,19 @@ export const FinanceDashboard = () => {
                     className="text-xs"
                     tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
                   />
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
                   <Bar 
                     dataKey="balance" 
                     name="Saldo"
                     radius={[4, 4, 0, 0]}
+                    isAnimationActive={false}
                     label={{
                       position: 'top',
-                      formatter: (value: number) => value >= 1000 || value <= -1000 
-                        ? `R$ ${(value / 1000).toFixed(1)}k` 
-                        : `R$ ${value.toFixed(0)}`,
+                      formatter: (value: number) => {
+                        if (value === 0) return '';
+                        return value >= 1000 || value <= -1000 
+                          ? `R$ ${(value / 1000).toFixed(1)}k` 
+                          : `R$ ${value.toFixed(0)}`;
+                      },
                       className: 'text-xs fill-foreground font-medium'
                     }}
                   >
