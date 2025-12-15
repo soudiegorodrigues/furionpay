@@ -103,7 +103,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
           }}
         >
           <polygon
-            points={`${cx},${cy - 3} ${cx - 28},${cy} ${cx},${cy + 3}`}
+            points={`${cx - 3},${cy} ${cx},${cy - 28} ${cx + 3},${cy}`}
             fill="hsl(var(--foreground))"
           />
         </g>
