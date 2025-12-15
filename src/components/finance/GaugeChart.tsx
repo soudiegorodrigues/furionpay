@@ -5,7 +5,7 @@ interface GaugeChartProps {
   min?: number;
   max?: number;
   label?: string;
-  color?: string;
+  colorScheme?: 'green' | 'red' | 'blue' | 'purple' | 'rainbow';
   size?: number;
 }
 
@@ -14,7 +14,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
   min = 0,
   max = 100,
   label,
-  color = 'hsl(var(--primary))',
+  colorScheme = 'rainbow',
   size = 120,
 }) => {
   // Normalize value to 0-100 range
@@ -29,14 +29,23 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
   const cy = 50;
   const radius = 40;
   
-  // Get color based on percentage
-  const getSegmentColor = (startPercent: number) => {
-    if (startPercent < 20) return '#ef4444'; // Red
-    if (startPercent < 40) return '#f97316'; // Orange
-    if (startPercent < 60) return '#eab308'; // Yellow
-    if (startPercent < 80) return '#22c55e'; // Green
-    return '#14b8a6'; // Teal
+  // Get segment colors based on color scheme
+  const getSegmentColors = () => {
+    switch (colorScheme) {
+      case 'green':
+        return ['#dcfce7', '#bbf7d0', '#86efac', '#4ade80', '#22c55e'];
+      case 'red':
+        return ['#fee2e2', '#fecaca', '#fca5a5', '#f87171', '#ef4444'];
+      case 'blue':
+        return ['#dbeafe', '#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6'];
+      case 'purple':
+        return ['#f3e8ff', '#e9d5ff', '#d8b4fe', '#c084fc', '#a855f7'];
+      default: // rainbow
+        return ['#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6'];
+    }
   };
+  
+  const segmentColors = getSegmentColors();
   
   // Create arc segments
   const createArc = (startPercent: number, endPercent: number) => {
@@ -78,7 +87,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
             key={index}
             d={createArc(segment.start, segment.end)}
             fill="none"
-            stroke={getSegmentColor(segment.start)}
+            stroke={segmentColors[index]}
             strokeWidth="8"
             strokeLinecap="butt"
           />
