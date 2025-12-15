@@ -6,13 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, 
-  Loader2, RefreshCw, Activity, Clock, ChevronDown
+  Loader2, RefreshCw, Activity, Clock, ChevronDown, Upload
 } from "lucide-react";
 import utmifyLogo from "@/assets/utmify-logo.png";
+
+interface SyncStats {
+  pixGerados: number;
+  pixPagos: number;
+  transactions: Array<{
+    id: string;
+    txid: string;
+    amount: number;
+    status: string;
+    donor_name: string;
+    product_name: string;
+    utm_data: any;
+  }>;
+}
 
 interface UtmifySummary {
   today_total: number;
@@ -45,6 +60,12 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
   // Monitoring state
   const [monitoringLoading, setMonitoringLoading] = useState(false);
   const [summary, setSummary] = useState<UtmifySummary | null>(initialData?.summary ?? null);
+
+  // Manual sync state
+  const [showSyncConfirmDialog, setShowSyncConfirmDialog] = useState(false);
+  const [syncStats, setSyncStats] = useState<SyncStats | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isLoadingSyncStats, setIsLoadingSyncStats] = useState(false);
 
   useEffect(() => {
     if (!initialData) {
@@ -167,6 +188,107 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
     return `${diffDays}d`;
   };
 
+  // Get today's date start in Brazil timezone
+  const getTodayStartBrazil = () => {
+    const now = new Date();
+    const brazilOffset = -3 * 60; // Brazil is UTC-3
+    const utcOffset = now.getTimezoneOffset();
+    const brazilTime = new Date(now.getTime() + (utcOffset + brazilOffset) * 60000);
+    brazilTime.setHours(0, 0, 0, 0);
+    // Convert back to UTC for database query
+    return new Date(brazilTime.getTime() - (utcOffset + brazilOffset) * 60000).toISOString();
+  };
+
+  const loadSyncStats = async () => {
+    try {
+      setIsLoadingSyncStats(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const todayStart = getTodayStartBrazil();
+
+      const { data: transactions, error } = await supabase
+        .from('pix_transactions')
+        .select('id, txid, amount, status, donor_name, product_name, utm_data')
+        .eq('user_id', user.id)
+        .gte('created_at', todayStart)
+        .in('status', ['generated', 'paid']);
+
+      if (error) throw error;
+
+      const pixGerados = transactions?.filter(t => t.status === 'generated').length || 0;
+      const pixPagos = transactions?.filter(t => t.status === 'paid').length || 0;
+
+      setSyncStats({
+        pixGerados,
+        pixPagos,
+        transactions: transactions || []
+      });
+      setShowSyncConfirmDialog(true);
+    } catch (error) {
+      console.error('Error loading sync stats:', error);
+      toast.error('Erro ao carregar estatísticas');
+    } finally {
+      setIsLoadingSyncStats(false);
+    }
+  };
+
+  const handleManualSync = async () => {
+    if (!syncStats || syncStats.transactions.length === 0) {
+      toast.error('Nenhuma transação para sincronizar');
+      return;
+    }
+
+    try {
+      setIsSyncing(true);
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const tx of syncStats.transactions) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          const { error } = await supabase.functions.invoke('utmify-sync', {
+            body: {
+              txid: tx.txid,
+              amount: tx.amount,
+              status: tx.status,
+              user_id: user?.id,
+              donor_name: tx.donor_name,
+              product_name: tx.product_name,
+              utm_data: tx.utm_data
+            }
+          });
+
+          if (error) {
+            console.error(`Error syncing tx ${tx.txid}:`, error);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          console.error(`Error syncing tx ${tx.txid}:`, err);
+          errorCount++;
+        }
+      }
+
+      if (errorCount === 0) {
+        toast.success(`${successCount} transações sincronizadas com sucesso!`);
+      } else {
+        toast.warning(`${successCount} sincronizadas, ${errorCount} com erro`);
+      }
+
+      setShowSyncConfirmDialog(false);
+      setSyncStats(null);
+      loadMonitoringData();
+    } catch (error) {
+      console.error('Error during manual sync:', error);
+      toast.error('Erro durante sincronização');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const successRate = summary ? (summary.today_total > 0 
     ? Math.round((summary.today_success / summary.today_total) * 100) 
     : 100) : 0;
@@ -269,15 +391,33 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
                 <Activity className="w-4 h-4 text-primary" />
                 <CardTitle className="text-base">Monitoramento</CardTitle>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 px-2"
-                onClick={loadMonitoringData}
-                disabled={monitoringLoading}
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${monitoringLoading ? 'animate-spin' : ''}`} />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-2 text-xs"
+                  onClick={loadSyncStats}
+                  disabled={isLoadingSyncStats || isSyncing}
+                >
+                  {isLoadingSyncStats ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5 mr-1" />
+                      Sincronizar
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2"
+                  onClick={loadMonitoringData}
+                  disabled={monitoringLoading}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${monitoringLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="px-4 pb-4">
@@ -314,6 +454,63 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Sync Confirmation Dialog */}
+      <AlertDialog open={showSyncConfirmDialog} onOpenChange={setShowSyncConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-primary" />
+              Sincronização Manual
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p className="text-sm">
+                  Serão sincronizadas apenas as transações de <strong>HOJE</strong>:
+                </p>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 border rounded-lg text-center">
+                    <div className="text-2xl font-bold text-yellow-500">
+                      {syncStats?.pixGerados || 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">PIX Gerados</div>
+                  </div>
+                  <div className="p-3 border rounded-lg text-center">
+                    <div className="text-2xl font-bold text-green-500">
+                      {syncStats?.pixPagos || 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">PIX Pagos</div>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <div className="text-lg font-bold text-primary">
+                    {(syncStats?.pixGerados || 0) + (syncStats?.pixPagos || 0)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Total de transações</div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSyncing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleManualSync}
+              disabled={isSyncing || !syncStats || syncStats.transactions.length === 0}
+            >
+              {isSyncing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sincronizando...
+                </>
+              ) : (
+                'Confirmar Sincronização'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* How it works - Collapsible */}
       <Collapsible open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
