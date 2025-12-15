@@ -74,11 +74,11 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
   ];
 
   return (
-    <div className="relative" style={{ width: size, height: size * 0.65 }}>
+    <div className="relative" style={{ width: size, height: size * 0.75 }}>
       <svg
-        viewBox="0 0 100 65"
+        viewBox="0 0 100 75"
         width={size}
-        height={size * 0.65}
+        height={size * 0.75}
         className="overflow-visible"
       >
         {/* Background arc segments */}
@@ -114,8 +114,8 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
         {/* Min label */}
         <text
           x="12"
-          y="58"
-          fontSize="8"
+          y="56"
+          fontSize="7"
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
         >
@@ -125,8 +125,8 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
         {/* Max label */}
         <text
           x="88"
-          y="58"
-          fontSize="8"
+          y="56"
+          fontSize="7"
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
         >
@@ -136,8 +136,8 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
         {/* Value label */}
         <text
           x={cx}
-          y="62"
-          fontSize="10"
+          y="72"
+          fontSize="9"
           fontWeight="bold"
           fill="hsl(var(--foreground))"
           textAnchor="middle"
