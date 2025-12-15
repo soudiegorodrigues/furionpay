@@ -79,6 +79,14 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+// Calculate net amount (after fees)
+const calculateNetAmount = (amount: number, feePercentage: number | null, feeFixed: number | null): number => {
+  const percentage = feePercentage ?? 0;
+  const fixed = feeFixed ?? 0;
+  const feeAmount = (amount * percentage / 100) + fixed;
+  return Math.max(0, amount - feeAmount);
+};
+
 // Format message with variables
 const formatMessage = (template: string, data: { nome: string; valor: string; produto: string }) => {
   return template
@@ -248,9 +256,14 @@ export const useTransactionNotifications = (userId: string | null) => {
           const currentSettings = settingsRef.current;
           
           if (transaction && currentSettings.enabled) {
+            const netAmount = calculateNetAmount(
+              transaction.amount,
+              transaction.fee_percentage,
+              transaction.fee_fixed
+            );
             const data = {
               nome: transaction.donor_name || 'Cliente',
-              valor: formatCurrency(transaction.amount),
+              valor: formatCurrency(netAmount),
               produto: transaction.product_name || '',
             };
             
@@ -313,9 +326,14 @@ export const useTransactionNotifications = (userId: string | null) => {
               transaction.status === 'paid' &&
               currentSettings.enabled) {
             
+            const netAmount = calculateNetAmount(
+              transaction.amount,
+              transaction.fee_percentage,
+              transaction.fee_fixed
+            );
             const data = {
               nome: transaction.donor_name || 'Cliente',
-              valor: formatCurrency(transaction.amount),
+              valor: formatCurrency(netAmount),
               produto: transaction.product_name || '',
             };
             
