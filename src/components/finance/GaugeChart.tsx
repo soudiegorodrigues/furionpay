@@ -7,7 +7,18 @@ interface GaugeChartProps {
   label?: string;
   colorScheme?: 'green' | 'red' | 'blue' | 'purple' | 'rainbow';
   size?: number;
+  formatValue?: (value: number) => string;
 }
+
+const formatCurrency = (value: number): string => {
+  if (value >= 1000000) {
+    return `R$ ${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `R$ ${(value / 1000).toFixed(0)}k`;
+  }
+  return `R$ ${value.toFixed(0)}`;
+};
 
 export const GaugeChart: React.FC<GaugeChartProps> = ({
   value,
@@ -16,6 +27,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
   label,
   colorScheme = 'rainbow',
   size = 120,
+  formatValue = formatCurrency,
 }) => {
   // Normalize value to 0-100 range
   const normalizedValue = Math.max(min, Math.min(max, value));
@@ -121,22 +133,22 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
         <text
           x="12"
           y="56"
-          fontSize="7"
+          fontSize="5"
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
         >
-          min
+          {formatValue(min)}
         </text>
         
         {/* Max label */}
         <text
           x="88"
           y="56"
-          fontSize="7"
+          fontSize="5"
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
         >
-          max
+          {formatValue(max)}
         </text>
         
         {/* Value label */}
