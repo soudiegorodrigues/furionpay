@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Puzzle, Settings, Loader2, Key } from "lucide-react";
+import { Puzzle, Settings, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { UtmifySection, UtmifyInitialData } from "@/components/admin/UtmifySection";
 import { ApiKeysSection } from "@/components/admin/ApiKeysSection";
 import utmifyLogo from "@/assets/utmify-logo.png";
+import apiLogo from "@/assets/api-logo.webp";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminIntegrations = () => {
@@ -209,11 +210,11 @@ const AdminIntegrations = () => {
           </div>
 
           <CardContent className="p-6 flex flex-col items-center text-center min-h-[220px]">
-            {/* Icon container */}
+            {/* Logo container */}
             <div className="relative mt-4 mb-6">
               <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg" />
               <div className="relative w-20 h-20 flex items-center justify-center">
-                <Key className="w-12 h-12 text-primary drop-shadow-lg" />
+                <img src={apiLogo} alt="API de Pagamentos" className="w-full h-full object-contain drop-shadow-lg" />
               </div>
             </div>
             
