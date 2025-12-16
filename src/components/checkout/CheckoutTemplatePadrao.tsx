@@ -17,13 +17,13 @@ import { AddressFields } from "./AddressFields";
 const StarRating = memo(({ rating }: { rating: number }) => (
   <div className="flex gap-0.5">
     {[1, 2, 3, 4, 5].map((star) => (
-      <Star
-        key={star}
-        className={cn(
-          "h-5 w-5 sm:h-4 sm:w-4",
-          star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-        )}
-      />
+        <Star
+          key={star}
+          className={cn(
+            "h-6 w-6 sm:h-4 sm:w-4",
+            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+          )}
+        />
     ))}
   </div>
 ));
@@ -405,23 +405,23 @@ export function CheckoutTemplatePadrao({
                     <>
                       <Separator />
                       <div>
-                        <h3 className="text-lg sm:text-base font-semibold text-gray-700 mb-3">O que dizem nossos clientes</h3>
+                        <h3 className="text-xl sm:text-base font-semibold text-gray-700 mb-3">O que dizem nossos clientes</h3>
                         <div className="space-y-3">
                           {testimonials.slice(0, 3).map((testimonial) => (
-                            <div key={testimonial.id} className="flex items-start gap-4 sm:gap-3 p-4 sm:p-3 bg-gray-50 rounded-lg">
+                            <div key={testimonial.id} className="flex items-start gap-5 sm:gap-3 p-5 sm:p-3 bg-gray-50 rounded-lg">
                               {testimonial.author_photo_url ? (
                                 <img
                                   src={testimonial.author_photo_url}
                                   alt={testimonial.author_name}
-                                  className="w-12 h-12 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
+                                  className="w-14 h-14 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
                                   loading="lazy"
                                   decoding="async"
-                                  width={48}
-                                  height={48}
+                                  width={56}
+                                  height={56}
                                 />
                               ) : (
                                 <div 
-                                  className="w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                                  className="w-14 h-14 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-base font-bold shrink-0"
                                   style={{ backgroundColor: getAvatarColor(testimonial.author_name) }}
                                 >
                                   {getInitials(testimonial.author_name)}
@@ -429,10 +429,10 @@ export function CheckoutTemplatePadrao({
                               )}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-base sm:text-sm font-medium text-gray-800">{testimonial.author_name}</span>
+                                  <span className="text-lg sm:text-sm font-medium text-gray-800">{testimonial.author_name}</span>
                                   <StarRating rating={testimonial.rating} />
                                 </div>
-                                <p className="text-base sm:text-sm text-gray-600 mt-0.5">"{testimonial.content}"</p>
+                                <p className="text-lg sm:text-sm text-gray-600 mt-0.5">"{testimonial.content}"</p>
                               </div>
                             </div>
                           ))}
