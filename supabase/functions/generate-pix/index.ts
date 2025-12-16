@@ -711,6 +711,32 @@ async function logPixGenerated(
 // Helper delay function
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Check if test mode is enabled for a specific acquirer
+async function checkTestMode(acquirer: string): Promise<boolean> {
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .is('user_id', null)
+      .eq('key', 'retry_test_fail_acquirer')
+      .maybeSingle();
+    
+    if (error || !data) {
+      return false;
+    }
+    
+    const shouldFail = data.value === acquirer;
+    if (shouldFail) {
+      console.log(`[TEST MODE] Forçando falha no ${acquirer} para teste de retry`);
+    }
+    return shouldFail;
+  } catch (err) {
+    console.error('[TEST MODE] Error checking test mode:', err);
+    return false;
+  }
+}
+
 // Call specific acquirer
 async function callAcquirer(
   acquirer: string,
@@ -726,6 +752,14 @@ async function callAcquirer(
     clientIp?: string;
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string }> {
+  
+  // Check if test mode is forcing failure for this acquirer
+  const shouldSimulateFail = await checkTestMode(acquirer);
+  if (shouldSimulateFail) {
+    await logApiEvent(acquirer, 'failure', 50, '[TESTE] Falha simulada para teste de retry');
+    return { success: false, error: '[TESTE] Falha simulada para teste de retry' };
+  }
+  
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
   
