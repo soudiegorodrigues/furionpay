@@ -11,8 +11,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, CheckCircle, Pencil, Trash2, Image, Construction } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X } from "lucide-react";
 
 interface Product {
   id: string;
@@ -56,13 +57,15 @@ export default function AdminProducts() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
     price: 0,
-    image_url: ""
+    image_url: "",
+    folder_id: ""
   });
   const [newFolder, setNewFolder] = useState({
     name: "",
@@ -120,12 +123,17 @@ export default function AdminProducts() {
     enabled: isAdmin === true
   });
 
+  const countProductsInFolder = (folderId: string) => {
+    return products.filter(p => p.folder_id === folderId).length;
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === "all" || 
       (activeTab === "active" && product.is_active) || 
       (activeTab === "inactive" && !product.is_active);
-    return matchesSearch && matchesTab;
+    const matchesFolder = !selectedFolder || product.folder_id === selectedFolder;
+    return matchesSearch && matchesTab && matchesFolder;
   });
 
   const handleCreateProduct = async () => {
@@ -140,6 +148,7 @@ export default function AdminProducts() {
       description: newProduct.description || null,
       price: newProduct.price,
       image_url: newProduct.image_url || null,
+      folder_id: newProduct.folder_id && newProduct.folder_id !== "none" ? newProduct.folder_id : null,
       user_id: user.id
     });
     if (error) {
@@ -148,7 +157,7 @@ export default function AdminProducts() {
     }
     toast.success("Produto criado com sucesso");
     setIsCreateDialogOpen(false);
-    setNewProduct({ name: "", description: "", price: 0, image_url: "" });
+    setNewProduct({ name: "", description: "", price: 0, image_url: "", folder_id: "" });
     refetchProducts();
   };
 
@@ -172,6 +181,23 @@ export default function AdminProducts() {
     setIsFolderDialogOpen(false);
     setNewFolder({ name: "", color: "#dc2626" });
     refetchFolders();
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    // Remove folder association from products first
+    await supabase.from("products").update({ folder_id: null }).eq("folder_id", folderId);
+    // Then delete the folder
+    const { error } = await supabase.from("product_folders").delete().eq("id", folderId);
+    if (error) {
+      toast.error("Erro ao excluir pasta");
+      return;
+    }
+    if (selectedFolder === folderId) {
+      setSelectedFolder(null);
+    }
+    toast.success("Pasta excluída com sucesso");
+    refetchFolders();
+    refetchProducts();
   };
 
   const handleDeleteProduct = async (productId: string) => {
@@ -255,10 +281,74 @@ export default function AdminProducts() {
                       placeholder="0.00" 
                     />
                   </div>
+                  {folders.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Pasta (opcional)</Label>
+                      <Select 
+                        value={newProduct.folder_id} 
+                        onValueChange={v => setNewProduct({ ...newProduct, folder_id: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma pasta" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sem pasta</SelectItem>
+                          {folders.map(folder => (
+                            <SelectItem key={folder.id} value={folder.id}>
+                              <div className="flex items-center gap-2">
+                                <Folder className="h-4 w-4" style={{ color: folder.color || undefined }} />
+                                {folder.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <Button onClick={handleCreateProduct} className="w-full">
                     Criar produto
                   </Button>
+        </div>
+
+        {/* Folders Section */}
+        {folders.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-3">Pastas</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedFolder === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFolder(null)}
+              >
+                Todos
+                <Badge variant="secondary" className="ml-2">{products.length}</Badge>
+              </Button>
+              {folders.map(folder => (
+                <div key={folder.id} className="flex items-center gap-1">
+                  <Button
+                    variant={selectedFolder === folder.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedFolder(selectedFolder === folder.id ? null : folder.id)}
+                    className="gap-1"
+                    style={{ borderColor: selectedFolder !== folder.id ? (folder.color || undefined) : undefined }}
+                  >
+                    <Folder className="h-4 w-4" style={{ color: selectedFolder === folder.id ? undefined : (folder.color || undefined) }} />
+                    {folder.name}
+                    <Badge variant="secondary" className="ml-1">{countProductsInFolder(folder.id)}</Badge>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDeleteFolder(folder.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
               </DialogContent>
             </Dialog>
 
