@@ -826,11 +826,9 @@ const AdminDashboard = () => {
                         <div className="text-center">
                           {userName && <p className="text-sm text-muted-foreground mb-1">{userName}</p>}
                           <h3 className="text-base font-bold">{reward.name}</h3>
-                          {achieved ? <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
+                          {achieved && <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
                               🎉 Conquistado!
-                            </Badge> : <p className="text-xs text-muted-foreground mt-0.5">
-                              Faltam <span className="font-bold text-sm text-primary">{maskValue(reward.threshold_amount - totalBalance)}</span>
-                            </p>}
+                            </Badge>}
                         </div>
                         
                         {/* Imagem da placa */}
