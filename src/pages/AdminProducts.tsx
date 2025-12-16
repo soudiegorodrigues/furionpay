@@ -381,14 +381,8 @@ export default function AdminProducts() {
                   </div>
                 </div>
                 <CardContent className="p-2 sm:p-4">
-                  <div className="flex items-start justify-between gap-1 sm:gap-2">
-                    <div className="min-w-0">
-                      <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
-                    </div>
-                    <Badge variant={product.is_active ? "default" : "secondary"} className="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                      {product.is_active ? <CheckCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" /> : null}
-                      {product.is_active ? "Ativo" : "Inativo"}
-                    </Badge>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
                   </div>
                   <div className="mt-2 sm:mt-3">
                     <p className="text-xs sm:text-sm text-muted-foreground">Receba até</p>
