@@ -308,6 +308,9 @@ async function updateRateLimitRecord(fingerprint: string | undefined, clientIp: 
   const now = new Date().toISOString();
 
   try {
+    // Get rate limit config to know the limit
+    const config = await getRateLimitConfig();
+    
     // Check if record exists
     const { data: existing } = await supabase
       .from('pix_rate_limits')
@@ -316,21 +319,36 @@ async function updateRateLimitRecord(fingerprint: string | undefined, clientIp: 
       .maybeSingle();
 
     if (existing) {
-      // Update existing record - increment unpaid_count
+      const newUnpaidCount = existing.unpaid_count + 1;
+      
+      // Check if reached limit NOW - block immediately
+      const shouldBlock = config.enabled && newUnpaidCount >= config.maxUnpaidPix;
+      const blockedUntil = shouldBlock 
+        ? new Date(Date.now() + (config.windowHours * 60 * 60 * 1000)).toISOString()
+        : null;
+      
+      // Update existing record - increment unpaid_count and potentially block
       const { error: updateError } = await supabase
         .from('pix_rate_limits')
         .update({
-          unpaid_count: existing.unpaid_count + 1,
+          unpaid_count: newUnpaidCount,
           last_generation_at: now,
           updated_at: now,
           ip_address: clientIp || null,
+          blocked_until: blockedUntil,
         })
         .eq('id', existing.id);
 
       if (updateError) {
         console.error('[RATE-LIMIT] Error updating record:', updateError);
       } else {
-        console.log(`[RATE-LIMIT] Updated unpaid_count to ${existing.unpaid_count + 1} for fingerprint: ${identifier.substring(0, 8)}...`);
+        console.log(`[RATE-LIMIT] Updated unpaid_count to ${newUnpaidCount} for fingerprint: ${identifier.substring(0, 8)}...`);
+        
+        // If blocked immediately, log the event
+        if (shouldBlock) {
+          await logRateLimitEvent(identifier, clientIp, 'blocked', 'max_unpaid_reached_immediate', newUnpaidCount);
+          console.log(`[RATE-LIMIT] Device BLOCKED IMMEDIATELY after reaching ${newUnpaidCount} unpaid PIX (limit: ${config.maxUnpaidPix})`);
+        }
       }
     } else {
       // Insert new record
