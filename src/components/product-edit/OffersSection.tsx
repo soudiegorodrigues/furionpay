@@ -61,12 +61,13 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
   });
 
   const { data: domains = [] } = useQuery({
-    queryKey: ["available-domains"],
+    queryKey: ["available-domains-checkout"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("available_domains")
         .select("*")
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .eq("domain_type", "checkout");
       
       if (error) throw error;
       return data as AvailableDomain[];
