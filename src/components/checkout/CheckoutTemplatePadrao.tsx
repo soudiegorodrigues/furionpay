@@ -551,49 +551,6 @@ export function CheckoutTemplatePadrao({
         )}
       </main>
 
-      {/* Trust Footer */}
-      <footer className="bg-gray-50 border-t py-6">
-        <div className="container max-w-4xl mx-auto px-4">
-          <div className="flex flex-col items-center gap-4">
-            {/* Security Badges */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
-                  <ShieldCheck className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800 uppercase">Compra Segura</p>
-                  <p className="text-xs text-gray-500">Ambiente protegido</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
-                  <Lock className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800 uppercase">Dados Protegidos</p>
-                  <p className="text-xs text-gray-500">Criptografia SSL</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Legal Links */}
-            <div className="text-center text-xs text-gray-500">
-              <p>
-                Ao continuar, você concorda com nossa{' '}
-                <a href="#" className="text-gray-700 hover:underline font-medium">Política de Privacidade</a>
-                {' '}e{' '}
-                <a href="#" className="text-gray-700 hover:underline font-medium">Termos de Uso</a>
-              </p>
-            </div>
-
-            {/* Footer Text */}
-            <p className="text-xs text-gray-400 text-center">
-              {config?.footer_text || "© 2024 - Pagamento processado com segurança"}
-            </p>
-          </div>
-        </div>
-      </footer>
 
       {/* Floating WhatsApp Button */}
       {config?.show_whatsapp_button && config?.whatsapp_number && (
