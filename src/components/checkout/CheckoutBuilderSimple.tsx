@@ -354,7 +354,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-5xl mx-auto">
       {/* Compact Navigation */}
       {onNavigate && (
         <div className="flex items-center gap-3 pb-4 border-b">
@@ -370,9 +370,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         </div>
       )}
 
-      <div className="flex flex-col xl:flex-row gap-6">
+      <div className="flex flex-col xl:flex-row gap-6 justify-center">
         {/* Preview Panel - Left Side - STICKY */}
-        <div className="flex-1 min-w-0 order-1 xl:order-1">
+        <div className="w-full xl:w-[580px] shrink-0 order-1 xl:order-1">
           <div className="xl:sticky xl:top-4">
             <Card className="h-full">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -403,7 +403,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     previewMode === "mobile" ? "max-w-[375px]" : "w-full"
                   )}
                 >
-                  <ScrollArea className="h-[calc(100vh-280px)] min-h-[500px]">
+                  <ScrollArea className="h-[calc(100vh-300px)] min-h-[450px]">
                     <CheckoutPreviewMini
                       templateName={selectedTemplate?.name || "Padrão"}
                       productName={productName}
