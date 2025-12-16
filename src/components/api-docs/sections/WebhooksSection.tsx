@@ -4,16 +4,15 @@ import { ParameterTable } from '../ParameterTable';
 export const WebhooksSection = () => {
   const webhookPayload = `{
   "event": "payment.paid",
-  "timestamp": "2024-01-15T10:25:30Z",
+  "created_at": "2024-01-15T10:25:30Z",
   "data": {
-    "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
     "txid": "PIX123456789",
+    "external_reference": "pedido-123",
     "amount": 150.00,
     "status": "paid",
     "paid_at": "2024-01-15T10:25:30Z",
-    "customer_name": "João Silva",
-    "customer_email": "joao@email.com",
-    "external_id": "pedido-123"
+    "created_at": "2024-01-15T10:00:00Z",
+    "metadata": {}
   }
 }`;
 
@@ -45,6 +44,8 @@ app.post('/webhook', (req, res) => {
   
   if (event === 'payment.paid') {
     // Atualizar pedido como pago
+    // Use data.txid para identificar a transação
+    // Use data.external_reference para mapear ao seu pedido
   }
   
   res.status(200).json({ received: true });
@@ -52,8 +53,18 @@ app.post('/webhook', (req, res) => {
 
   const webhookParams = [
     { name: 'event', type: 'string', required: true, description: 'Tipo do evento (ex: payment.paid)' },
-    { name: 'timestamp', type: 'string', required: true, description: 'Data/hora do evento em ISO 8601' },
+    { name: 'created_at', type: 'string', required: true, description: 'Data/hora do evento em ISO 8601' },
     { name: 'data', type: 'object', required: true, description: 'Dados da transação' },
+  ];
+
+  const dataParams = [
+    { name: 'data.txid', type: 'string', required: true, description: 'Identificador único da transação' },
+    { name: 'data.external_reference', type: 'string', required: false, description: 'Referência externa enviada na criação' },
+    { name: 'data.amount', type: 'number', required: true, description: 'Valor da transação em reais' },
+    { name: 'data.status', type: 'string', required: true, description: 'Status atual da transação' },
+    { name: 'data.paid_at', type: 'string', required: false, description: 'Data de pagamento (se pago)' },
+    { name: 'data.created_at', type: 'string', required: true, description: 'Data de criação da transação' },
+    { name: 'data.metadata', type: 'object', required: false, description: 'Dados adicionais enviados na criação' },
   ];
 
   const events = [
@@ -108,6 +119,9 @@ app.post('/webhook', (req, res) => {
           <h3 className="text-lg font-semibold mb-3">Payload do Webhook</h3>
           <ParameterTable parameters={webhookParams} />
           <div className="mt-4">
+            <ParameterTable parameters={dataParams} title="Campos do objeto data" />
+          </div>
+          <div className="mt-4">
             <CodeBlock code={webhookPayload} language="json" title="Exemplo de payload" />
           </div>
         </div>
@@ -125,7 +139,8 @@ app.post('/webhook', (req, res) => {
           <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">💡 Boas Práticas</h4>
           <ul className="text-sm space-y-1 text-muted-foreground">
             <li>• Responda rapidamente (HTTP 200) e processe em background</li>
-            <li>• Implemente idempotência usando o transaction_id</li>
+            <li>• Implemente idempotência usando o txid</li>
+            <li>• Use external_reference para mapear transações ao seu sistema</li>
             <li>• Retentativas automáticas são feitas por até 24h em caso de falha</li>
             <li>• Use HTTPS com certificado válido</li>
           </ul>

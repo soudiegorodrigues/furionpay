@@ -16,9 +16,13 @@ curl -X POST https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1/api-v1-pix-cr
   -H "Content-Type: application/json" \\
   -d '{
     "amount": 150.00,
-    "customer_name": "João Silva",
-    "customer_email": "joao@email.com",
-    "customer_document": "12345678900"
+    "description": "Compra de produto XYZ",
+    "external_reference": "pedido-123",
+    "customer": {
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "document": "12345678900"
+    }
   }'
 
 # Consultar Status
@@ -34,9 +38,14 @@ const BASE_URL = 'https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1';
 async function createPix(data) {
   const response = await axios.post(\`\${BASE_URL}/api-v1-pix-create\`, {
     amount: data.amount,
-    customer_name: data.customerName,
-    customer_email: data.customerEmail,
-    customer_document: data.customerDocument,
+    description: data.description,
+    external_reference: data.externalReference,
+    customer: {
+      name: data.customerName,
+      email: data.customerEmail,
+      document: data.customerDocument,
+    },
+    metadata: data.metadata,
   }, {
     headers: {
       'Authorization': \`Bearer \${API_KEY}\`,
@@ -63,13 +72,17 @@ async function checkStatus(txid) {
 async function main() {
   const pix = await createPix({
     amount: 150.00,
+    description: 'Compra de produto XYZ',
+    externalReference: 'pedido-123',
     customerName: 'João Silva',
     customerEmail: 'joao@email.com',
     customerDocument: '12345678900',
+    metadata: { order_id: '123' },
   });
   
   console.log('PIX criado:', pix.data.txid);
   console.log('Código copia e cola:', pix.data.pix_code);
+  console.log('QR Code URL:', pix.data.qr_code_url);
 }
 
 main();`,
@@ -86,12 +99,19 @@ headers = {
 }
 
 # Criar PIX
-def create_pix(amount, customer_name, customer_email=None, customer_document=None):
+def create_pix(amount, description=None, external_reference=None, 
+               customer_name=None, customer_email=None, customer_document=None,
+               metadata=None):
     payload = {
         'amount': amount,
-        'customer_name': customer_name,
-        'customer_email': customer_email,
-        'customer_document': customer_document
+        'description': description,
+        'external_reference': external_reference,
+        'customer': {
+            'name': customer_name,
+            'email': customer_email,
+            'document': customer_document
+        },
+        'metadata': metadata or {}
     }
     
     response = requests.post(
@@ -116,13 +136,17 @@ def check_status(txid):
 if __name__ == '__main__':
     pix = create_pix(
         amount=150.00,
+        description='Compra de produto XYZ',
+        external_reference='pedido-123',
         customer_name='João Silva',
         customer_email='joao@email.com',
-        customer_document='12345678900'
+        customer_document='12345678900',
+        metadata={'order_id': '123'}
     )
     
     print(f"PIX criado: {pix['data']['txid']}")
-    print(f"Código copia e cola: {pix['data']['pix_code']}")`,
+    print(f"Código copia e cola: {pix['data']['pix_code']}")
+    print(f"QR Code URL: {pix['data']['qr_code_url']}")`,
 
   php: `<?php
 
@@ -130,14 +154,21 @@ $apiKey = getenv('FURIONPAY_API_KEY');
 $baseUrl = 'https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1';
 
 // Criar PIX
-function createPix($amount, $customerName, $customerEmail = null, $customerDocument = null) {
+function createPix($amount, $description = null, $externalReference = null,
+                   $customerName = null, $customerEmail = null, $customerDocument = null,
+                   $metadata = []) {
     global $apiKey, $baseUrl;
     
     $payload = json_encode([
         'amount' => $amount,
-        'customer_name' => $customerName,
-        'customer_email' => $customerEmail,
-        'customer_document' => $customerDocument
+        'description' => $description,
+        'external_reference' => $externalReference,
+        'customer' => [
+            'name' => $customerName,
+            'email' => $customerEmail,
+            'document' => $customerDocument
+        ],
+        'metadata' => $metadata
     ]);
     
     $ch = curl_init();
@@ -178,10 +209,19 @@ function checkStatus($txid) {
 }
 
 // Exemplo de uso
-$pix = createPix(150.00, 'João Silva', 'joao@email.com', '12345678900');
+$pix = createPix(
+    150.00,
+    'Compra de produto XYZ',
+    'pedido-123',
+    'João Silva',
+    'joao@email.com',
+    '12345678900',
+    ['order_id' => '123']
+);
 
 echo "PIX criado: " . $pix['data']['txid'] . "\\n";
 echo "Código copia e cola: " . $pix['data']['pix_code'] . "\\n";
+echo "QR Code URL: " . $pix['data']['qr_code_url'] . "\\n";
 
 ?>`,
 };
