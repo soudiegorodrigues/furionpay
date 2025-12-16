@@ -155,7 +155,7 @@ export function CheckoutTemplatePadrao({
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Form */}
             <div className="lg:col-span-3 space-y-4">
-              {/* Buyer Info Card */}
+              {/* Buyer Info + Address Card */}
               <Card className="shadow-md border-0">
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ export function CheckoutTemplatePadrao({
                     </div>
                     <div>
                       <h2 className="font-bold text-gray-900">
-                        {config?.buyer_section_title || "Identificação"}
+                        {config?.buyer_section_title || "Dados do comprador"}
                       </h2>
                       <p className="text-xs text-gray-500">Preencha seus dados</p>
                     </div>
@@ -258,14 +258,31 @@ export function CheckoutTemplatePadrao({
                     </div>
                   )}
 
+                  {/* Section 2: Address */}
                   {config?.require_address && (
-                    <AddressFields
-                      formData={formData}
-                      setFormData={setFormData}
-                      inputClassName="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:border-gray-300"
-                      labelClassName="text-gray-700 font-medium"
-                      variant="light"
-                    />
+                    <>
+                      <div className="pt-4 mt-4 border-t">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div 
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                            style={{ backgroundColor: primaryColor }}
+                          >
+                            2
+                          </div>
+                          <div>
+                            <h2 className="font-bold text-gray-900">Endereço</h2>
+                            <p className="text-xs text-gray-500">Informe seu endereço</p>
+                          </div>
+                        </div>
+                      </div>
+                      <AddressFields
+                        formData={formData}
+                        setFormData={setFormData}
+                        inputClassName="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:border-gray-300"
+                        labelClassName="text-gray-700 font-medium"
+                        variant="light"
+                      />
+                    </>
                   )}
                 </CardContent>
               </Card>
@@ -278,7 +295,7 @@ export function CheckoutTemplatePadrao({
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      2
+                      {config?.require_address ? "3" : "2"}
                     </div>
                     <h2 className="font-medium text-gray-700">Forma de pagamento</h2>
                   </div>
