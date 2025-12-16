@@ -370,63 +370,61 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         </div>
       )}
 
-      <div className="flex flex-col xl:flex-row gap-6">
-        {/* Preview Panel - Left Side - STICKY */}
-        <div className="flex-1 min-w-0 order-1 xl:order-1">
-          <div className="xl:sticky xl:top-4">
-            <Card className="h-full">
-              <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-base">{productName}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={previewMode === "desktop" ? "default" : "outline"}
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setPreviewMode("desktop")}
-                  >
-                    <Monitor className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={previewMode === "mobile" ? "default" : "outline"}
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setPreviewMode("mobile")}
-                  >
-                    <Smartphone className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div 
-                  className={cn(
-                    "mx-auto border rounded-lg overflow-hidden transition-all duration-300",
-                    previewMode === "mobile" ? "max-w-[375px]" : "w-full"
-                  )}
+      <div className="flex flex-col xl:flex-row gap-4">
+        {/* Preview Panel - Main Area */}
+        <div className="flex-1 min-w-0">
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between py-3 px-4">
+              <CardTitle className="text-sm font-medium">{productName}</CardTitle>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant={previewMode === "desktop" ? "default" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setPreviewMode("desktop")}
                 >
-                  <ScrollArea className="h-[calc(100vh-280px)] min-h-[500px]">
-                    <CheckoutPreviewMini
-                      templateName={selectedTemplate?.name || "Padrão"}
-                      productName={productName}
-                      productPrice={productPrice}
-                      primaryColor={primaryColor}
-                      showCountdown={customizations.showCountdown}
-                      countdownMinutes={customizations.countdownMinutes}
-                      showTestimonials={customizations.showTestimonials}
-                      showBanner={customizations.showBanner}
-                      bannerImageUrl={bannerImageUrl}
-                      previewMode={previewMode}
-                      testimonials={testimonials}
-                    />
-                  </ScrollArea>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  <Monitor className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant={previewMode === "mobile" ? "default" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setPreviewMode("mobile")}
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <div 
+                className={cn(
+                  "mx-auto border rounded-lg overflow-hidden transition-all duration-300 bg-muted/30",
+                  previewMode === "mobile" ? "max-w-[375px]" : "w-full"
+                )}
+              >
+                <ScrollArea className="h-[calc(100vh-240px)] min-h-[400px]">
+                  <CheckoutPreviewMini
+                    templateName={selectedTemplate?.name || "Padrão"}
+                    productName={productName}
+                    productPrice={productPrice}
+                    primaryColor={primaryColor}
+                    showCountdown={customizations.showCountdown}
+                    countdownMinutes={customizations.countdownMinutes}
+                    showTestimonials={customizations.showTestimonials}
+                    showBanner={customizations.showBanner}
+                    bannerImageUrl={bannerImageUrl}
+                    previewMode={previewMode}
+                    testimonials={testimonials}
+                  />
+                </ScrollArea>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Config Panel - Right Side - WIDER with TABS */}
-        <div className="w-full xl:w-96 shrink-0 order-2 xl:order-2">
-          <Card>
+        {/* Config Sidebar - Right Side */}
+        <div className="w-full xl:w-80 shrink-0">
+          <Card className="xl:sticky xl:top-4">
             <CardContent className="p-4">
               <Tabs value={configTab} onValueChange={setConfigTab}>
                 <TabsList className="w-full grid grid-cols-3 mb-4">
