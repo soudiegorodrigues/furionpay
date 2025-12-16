@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  ShoppingCart, Lock, Shield, Clock, Star, Users, Zap, Gift, ShieldCheck, CheckCircle
+  ShoppingCart, Lock, Shield, Clock, Star, Users, Zap, Gift, ShieldCheck, CheckCircle, ClipboardCheck, RefreshCw
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
@@ -328,6 +328,70 @@ export function CheckoutTemplatePadrao({
                       </>
                     )}
                   </Button>
+
+                  {/* Trust Section Below Button */}
+                  <div className="space-y-4 pt-6 mt-6 border-t">
+                    {/* Trust Items */}
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <ShieldCheck className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800 text-sm">Dados protegidos</p>
+                          <p className="text-xs text-gray-500">Suas informações são confidenciais e seguras</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <Lock className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800 text-sm">Pagamento 100% Seguro</p>
+                          <p className="text-xs text-gray-500">Todas as transações são criptografadas</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <ClipboardCheck className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800 text-sm">Conteúdo Aprovado</p>
+                          <p className="text-xs text-gray-500">Revisado e validado por especialistas</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <RefreshCw className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800 text-sm">Garantia de 7 dias</p>
+                          <p className="text-xs text-gray-500">Você tem 7 dias para testar o produto</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Security Footer */}
+                    <div className="pt-4 border-t flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2 text-gray-500 text-sm">
+                        <Shield className="h-4 w-4" />
+                        <span>Ambiente 100% seguro</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded">
+                          <ShieldCheck className="h-4 w-4 text-green-600" />
+                          <span className="text-xs font-bold text-gray-700 leading-tight">COMPRA 100%<br/>SEGURA</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded">
+                          <Lock className="h-4 w-4 text-green-600" />
+                          <span className="text-xs font-bold text-gray-700 leading-tight">DADOS PESSOAIS<br/>PROTEGIDOS</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
