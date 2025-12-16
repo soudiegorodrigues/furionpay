@@ -34,6 +34,7 @@ interface CheckoutPreviewMiniProps {
   bannerImageUrl?: string | null;
   previewMode?: "desktop" | "mobile";
   testimonials?: Testimonial[];
+  deliveryDescription?: string;
 }
 
 export function CheckoutPreviewMini({
@@ -48,6 +49,7 @@ export function CheckoutPreviewMini({
   bannerImageUrl = null,
   previewMode = "desktop",
   testimonials = [],
+  deliveryDescription = "Acesso imediato",
 }: CheckoutPreviewMiniProps) {
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -357,14 +359,22 @@ export function CheckoutPreviewMini({
           <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
             <Gift className="h-6 w-6 text-gray-400" />
           </div>
-          <div>
-            <p className="font-medium">{productName}</p>
-            <p className="font-bold" style={{ color: primaryColor }}>
-              1 X de {formatPrice(productPrice)}
+          <div className="flex-1">
+            <p className="font-medium text-sm">{productName}</p>
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              {deliveryDescription}
             </p>
-            <p className="text-xs text-gray-500">
-              ou {formatPrice(productPrice)} à vista
-            </p>
+          </div>
+        </div>
+        <div className="mt-3 pt-3 border-t space-y-1">
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Subtotal</span>
+            <span>{formatPrice(productPrice)}</span>
+          </div>
+          <div className="flex justify-between font-semibold">
+            <span>Total</span>
+            <span style={{ color: primaryColor }}>{formatPrice(productPrice)}</span>
           </div>
         </div>
       </div>
