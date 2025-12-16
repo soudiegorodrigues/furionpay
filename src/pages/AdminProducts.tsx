@@ -340,7 +340,7 @@ export default function AdminProducts() {
                   Criar nova pasta
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-sm">
                 <DialogHeader>
                   <DialogTitle>Criar nova pasta</DialogTitle>
                 </DialogHeader>
