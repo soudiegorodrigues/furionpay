@@ -550,9 +550,8 @@ const AdminDashboard = () => {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
-              <span>Bem Vindo de volta{userName ? <>, <span className="text-primary">{userName}</span></> : ''}!</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+              Bem Vindo de volta {userName ? <><span className="text-primary">{userName}</span> </> : ''}!
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm">
               Acompanhe o resumo que fizemos pra você.    
