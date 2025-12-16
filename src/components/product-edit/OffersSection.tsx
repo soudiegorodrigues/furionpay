@@ -178,11 +178,21 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
     toast.success("Link copiado!");
   };
 
+  const validateDomain = (domain: string): boolean => {
+    const validDomains = domains.map(d => d.domain);
+    if (!validDomains.includes(domain)) {
+      toast.error("Domínio inválido. Selecione um domínio da lista.");
+      return false;
+    }
+    return true;
+  };
+
   const handleCreate = () => {
     if (!formData.name.trim()) {
       toast.error("Nome da oferta é obrigatório");
       return;
     }
+    if (!validateDomain(selectedDomain)) return;
     createMutation.mutate(formData);
   };
 
@@ -192,6 +202,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
       toast.error("Nome da oferta é obrigatório");
       return;
     }
+    if (!validateDomain(selectedDomain)) return;
     updateMutation.mutate({ id: editingOffer.id, data: formData });
   };
 
