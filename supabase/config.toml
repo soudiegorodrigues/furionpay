@@ -59,3 +59,12 @@ verify_jwt = false
 
 [functions.send-test-email]
 verify_jwt = false
+
+[functions.api-v1-pix-create]
+verify_jwt = false
+
+[functions.api-v1-pix-status]
+verify_jwt = false
+
+[functions.api-webhook-dispatch]
+verify_jwt = false

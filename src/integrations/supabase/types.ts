@@ -59,6 +59,54 @@ export type Database = {
         }
         Relationships: []
       }
+      api_clients: {
+        Row: {
+          api_key_hash: string
+          api_key_prefix: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_request_at: string | null
+          name: string
+          rate_limit_per_minute: number | null
+          total_requests: number | null
+          updated_at: string | null
+          user_id: string
+          webhook_secret: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key_hash: string
+          api_key_prefix: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_request_at?: string | null
+          name: string
+          rate_limit_per_minute?: number | null
+          total_requests?: number | null
+          updated_at?: string | null
+          user_id: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key_hash?: string
+          api_key_prefix?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_request_at?: string | null
+          name?: string
+          rate_limit_per_minute?: number | null
+          total_requests?: number | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       api_monitoring_events: {
         Row: {
           acquirer: string
@@ -88,6 +136,59 @@ export type Database = {
           retry_attempt?: number | null
         }
         Relationships: []
+      }
+      api_requests: {
+        Row: {
+          api_client_id: string | null
+          created_at: string | null
+          endpoint: string
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          method: string
+          request_body: Json | null
+          response_body: Json | null
+          response_time_ms: number | null
+          status_code: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          api_client_id?: string | null
+          created_at?: string | null
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method: string
+          request_body?: Json | null
+          response_body?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          api_client_id?: string | null
+          created_at?: string | null
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method?: string
+          request_body?: Json | null
+          response_body?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_requests_api_client_id_fkey"
+            columns: ["api_client_id"]
+            isOneToOne: false
+            referencedRelation: "api_clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       available_domains: {
         Row: {
@@ -1596,6 +1697,62 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_deliveries: {
+        Row: {
+          api_client_id: string | null
+          attempts: number | null
+          created_at: string | null
+          event_type: string
+          id: string
+          last_attempt_at: string | null
+          next_retry_at: string | null
+          payload: Json
+          response_body: string | null
+          response_status: number | null
+          status: string | null
+          transaction_id: string | null
+          webhook_url: string
+        }
+        Insert: {
+          api_client_id?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          last_attempt_at?: string | null
+          next_retry_at?: string | null
+          payload: Json
+          response_body?: string | null
+          response_status?: number | null
+          status?: string | null
+          transaction_id?: string | null
+          webhook_url: string
+        }
+        Update: {
+          api_client_id?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          last_attempt_at?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          status?: string | null
+          transaction_id?: string | null
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_api_client_id_fkey"
+            columns: ["api_client_id"]
+            isOneToOne: false
+            referencedRelation: "api_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       withdrawal_requests: {
         Row: {
           acquirer: string | null
@@ -1726,11 +1883,23 @@ export type Database = {
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
       cleanup_old_rate_limit_events: { Args: never; Returns: undefined }
       collect_db_performance_metrics: { Args: never; Returns: undefined }
+      create_api_client: {
+        Args: { p_name: string; p_webhook_url?: string }
+        Returns: {
+          api_key: string
+          api_key_prefix: string
+          created_at: string
+          id: string
+          name: string
+          webhook_url: string
+        }[]
+      }
       create_full_system_backup: {
         Args: { p_backup_name?: string }
         Returns: string
       }
       create_manual_backup: { Args: never; Returns: string }
+      delete_api_client: { Args: { p_client_id: string }; Returns: boolean }
       delete_system_backup: { Args: { p_backup_id: string }; Returns: boolean }
       delete_test_transaction: {
         Args: { p_transaction_id: string }
@@ -1741,6 +1910,14 @@ export type Database = {
         Returns: boolean
       }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
+      generate_api_key: {
+        Args: never
+        Returns: {
+          api_key: string
+          api_key_hash: string
+          api_key_prefix: string
+        }[]
+      }
       get_admin_settings: {
         Args: { input_token: string }
         Returns: {
@@ -1785,6 +1962,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_api_client_stats: { Args: { p_client_id: string }; Returns: Json }
       get_api_health_summary: { Args: never; Returns: Json }
       get_db_performance_summary: { Args: never; Returns: Json }
       get_global_notification_settings: {
@@ -2024,6 +2202,20 @@ export type Database = {
           status: Database["public"]["Enums"]["pix_status"]
         }[]
       }
+      get_user_api_clients: {
+        Args: never
+        Returns: {
+          api_key_prefix: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_request_at: string
+          name: string
+          rate_limit_per_minute: number
+          total_requests: number
+          webhook_url: string
+        }[]
+      }
       get_user_available_balance: { Args: never; Returns: number }
       get_user_available_balance_admin: {
         Args: { p_user_id: string }
@@ -2129,6 +2321,7 @@ export type Database = {
         }[]
       }
       get_utmify_summary: { Args: never; Returns: Json }
+      get_webhook_secret: { Args: { p_client_id: string }; Returns: string }
       grant_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -2228,6 +2421,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      regenerate_webhook_secret: {
+        Args: { p_client_id: string }
+        Returns: string
+      }
       reject_document_verification: {
         Args: { p_reason: string; p_user_id: string }
         Returns: boolean
@@ -2275,6 +2472,15 @@ export type Database = {
         Args: { setting_key: string; setting_value: string }
         Returns: boolean
       }
+      update_api_client: {
+        Args: {
+          p_client_id: string
+          p_is_active?: boolean
+          p_name?: string
+          p_webhook_url?: string
+        }
+        Returns: boolean
+      }
       update_global_notification_setting: {
         Args: { setting_key: string; setting_value: string }
         Returns: boolean
@@ -2284,6 +2490,18 @@ export type Database = {
         Returns: boolean
       }
       validate_admin_token: { Args: { input_token: string }; Returns: boolean }
+      validate_api_key: {
+        Args: { p_api_key: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          is_valid: boolean
+          rate_limit: number
+          user_id: string
+          webhook_secret: string
+          webhook_url: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"

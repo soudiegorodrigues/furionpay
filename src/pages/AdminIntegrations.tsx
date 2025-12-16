@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { UtmifySection, UtmifyInitialData } from "@/components/admin/UtmifySection";
+import { ApiKeysSection } from "@/components/admin/ApiKeysSection";
 import utmifyLogo from "@/assets/utmify-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -158,6 +159,11 @@ const AdminIntegrations = () => {
           {/* Decorative gradient line - always visible */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
         </Card>
+      </div>
+
+      {/* API Keys Section */}
+      <div className="mt-10">
+        <ApiKeysSection />
       </div>
 
       {/* Utmify Configuration Dialog */}
