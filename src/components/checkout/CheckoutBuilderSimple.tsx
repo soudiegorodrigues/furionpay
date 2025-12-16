@@ -354,7 +354,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   ];
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto">
+    <div className="space-y-4">
       {/* Compact Navigation */}
       {onNavigate && (
         <div className="flex items-center gap-3 pb-4 border-b">
@@ -370,9 +370,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         </div>
       )}
 
-      <div className="flex flex-col xl:flex-row gap-6 justify-center">
+      <div className="flex flex-col xl:flex-row gap-6">
         {/* Preview Panel - Left Side - STICKY */}
-        <div className="w-full xl:w-[580px] shrink-0 order-1 xl:order-1">
+        <div className="flex-1 min-w-0 order-1 xl:order-1">
           <div className="xl:sticky xl:top-4">
             <Card className="h-full">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -403,7 +403,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     previewMode === "mobile" ? "max-w-[375px]" : "w-full"
                   )}
                 >
-                  <ScrollArea className="h-[calc(100vh-300px)] min-h-[450px]">
+                  <ScrollArea className="h-[calc(100vh-280px)] min-h-[500px]">
                     <CheckoutPreviewMini
                       templateName={selectedTemplate?.name || "Padrão"}
                       productName={productName}
@@ -454,10 +454,10 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </Label>
                     <div className="space-y-2">
                       {templates?.map((template) => (
-                        <div
+                          <div
                           key={template.id}
                           className={cn(
-                            "p-3 border rounded-lg cursor-pointer transition-all",
+                            "p-2 border rounded-lg cursor-pointer transition-all",
                             selectedTemplateId === template.id
                               ? "border-primary bg-primary/5"
                               : "hover:border-muted-foreground/50"
@@ -586,13 +586,13 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 </TabsContent>
 
                 {/* TAB: Campos */}
-                <TabsContent value="campos" className="space-y-4 mt-0">
+                <TabsContent value="campos" className="space-y-3 mt-0">
                   <Label className="text-sm font-medium">Campos obrigatórios no checkout</Label>
                   
                   {/* Required Fields as Cards */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className={cn(
-                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      "flex items-center justify-between p-2 border rounded-lg transition-all",
                       requiredFields.address && "border-primary bg-primary/5"
                     )}>
                       <div className="flex items-center gap-2">
@@ -606,7 +606,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </div>
 
                     <div className={cn(
-                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      "flex items-center justify-between p-2 border rounded-lg transition-all",
                       requiredFields.phone && "border-primary bg-primary/5"
                     )}>
                       <div className="flex items-center gap-2">
@@ -620,7 +620,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </div>
 
                     <div className={cn(
-                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      "flex items-center justify-between p-2 border rounded-lg transition-all",
                       requiredFields.birthdate && "border-primary bg-primary/5"
                     )}>
                       <div className="flex items-center gap-2">
@@ -634,7 +634,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </div>
 
                     <div className={cn(
-                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      "flex items-center justify-between p-2 border rounded-lg transition-all",
                       requiredFields.cpf && "border-primary bg-primary/5"
                     )}>
                       <div className="flex items-center gap-2">
@@ -648,7 +648,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </div>
 
                     <div className={cn(
-                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      "flex items-center justify-between p-2 border rounded-lg transition-all",
                       requiredFields.emailConfirmation && "border-primary bg-primary/5"
                     )}>
                       <div className="flex items-center gap-2">
@@ -664,10 +664,10 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 </TabsContent>
 
                 {/* TAB: Recursos */}
-                <TabsContent value="recursos" className="space-y-3 mt-0">
+                <TabsContent value="recursos" className="space-y-2 mt-0">
                   {/* Countdown */}
                   <div className={cn(
-                    "p-3 border rounded-lg transition-all",
+                    "p-2 border rounded-lg transition-all",
                     customizations.showCountdown && "border-primary bg-primary/5"
                   )}>
                     <div className="flex items-center justify-between">
@@ -697,7 +697,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
                   {/* Video */}
                   <div className={cn(
-                    "p-3 border rounded-lg transition-all",
+                    "p-2 border rounded-lg transition-all",
                     customizations.showVideo && "border-primary bg-primary/5"
                   )}>
                     <div className="flex items-center justify-between">
@@ -724,7 +724,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
                   {/* Testimonials */}
                   <div className={cn(
-                    "p-3 border rounded-lg transition-all",
+                    "p-2 border rounded-lg transition-all",
                     customizations.showTestimonials && "border-primary bg-primary/5"
                   )}>
                     <div className="flex items-center justify-between">
@@ -746,7 +746,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
                   {/* Discount Popup */}
                   <div className={cn(
-                    "p-3 border rounded-lg transition-all",
+                    "p-2 border rounded-lg transition-all",
                     customizations.showDiscountPopup && "border-primary bg-primary/5"
                   )}>
                     <div className="flex items-center justify-between">
@@ -830,7 +830,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
                   {/* WhatsApp */}
                   <div className={cn(
-                    "p-3 border rounded-lg transition-all",
+                    "p-2 border rounded-lg transition-all",
                     customizations.showWhatsappButton && "border-primary bg-primary/5"
                   )}>
                     <div className="flex items-center justify-between">
@@ -857,7 +857,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
                   {/* Back Redirect */}
                   <div className={cn(
-                    "p-3 border rounded-lg transition-all",
+                    "p-2 border rounded-lg transition-all",
                     customizations.showBackRedirect && "border-primary bg-primary/5"
                   )}>
                     <div className="flex items-center justify-between">
