@@ -1,6 +1,7 @@
-import { CodeBlock } from '../CodeBlock';
+import { CodeBlock, CodeComparison } from '../CodeBlock';
 import { MethodBadge } from '../MethodBadge';
 import { ParameterTable } from '../ParameterTable';
+import { EndpointCard } from '../EndpointCard';
 
 export const EndpointsSection = () => {
   const createPixRequest = `{
@@ -73,70 +74,96 @@ export const EndpointsSection = () => {
   ];
 
   return (
-    <section id="endpoints" className="scroll-mt-20 space-y-12">
+    <section id="endpoints" className="scroll-mt-20 space-y-8">
       <div>
-        <h2 className="text-2xl font-bold mb-4">Endpoints</h2>
-        <p className="text-muted-foreground mb-6">
-          A API FurionPay oferece endpoints para criar e gerenciar pagamentos PIX.
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-2xl font-bold">Endpoints</h2>
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+            REST API
+          </span>
+        </div>
+        <p className="text-muted-foreground">
+          A API FurionPay oferece endpoints RESTful para criar e gerenciar pagamentos PIX.
+          Todos os endpoints utilizam JSON para request e response bodies.
         </p>
       </div>
 
-      {/* Create PIX */}
-      <div id="create-pix" className="scroll-mt-20">
-        <div className="flex items-center gap-3 mb-4">
-          <MethodBadge method="POST" />
-          <code className="text-lg font-mono">/api-v1-pix-create</code>
+      {/* Quick reference */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        <div className="px-4 py-3 bg-muted/30 border-b border-border">
+          <h3 className="text-sm font-semibold">Referência Rápida</h3>
         </div>
-        <p className="text-muted-foreground mb-4">
-          Cria uma nova cobrança PIX e retorna o código copia e cola e QR Code.
-        </p>
+        <div className="divide-y divide-border">
+          <a 
+            href="#create-pix" 
+            className="flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors group"
+          >
+            <MethodBadge method="POST" size="sm" />
+            <code className="text-sm font-mono flex-1">/api-v1-pix-create</code>
+            <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+              Criar PIX
+            </span>
+          </a>
+          <a 
+            href="#check-status" 
+            className="flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors group"
+          >
+            <MethodBadge method="GET" size="sm" />
+            <code className="text-sm font-mono flex-1">/api-v1-pix-status</code>
+            <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+              Consultar Status
+            </span>
+          </a>
+        </div>
+      </div>
 
+      {/* Create PIX Endpoint */}
+      <EndpointCard
+        id="create-pix"
+        method="POST"
+        endpoint="/api-v1-pix-create"
+        title="Criar PIX"
+        description="Cria uma nova cobrança PIX e retorna o código copia e cola e QR Code."
+      >
         <ParameterTable parameters={createPixParams} title="Body Parameters" />
 
-        <div className="grid gap-4 lg:grid-cols-2 mt-6">
-          <div>
-            <h4 className="text-sm font-semibold mb-2">Request</h4>
-            <CodeBlock code={createPixRequest} language="json" />
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold mb-2">Response</h4>
-            <CodeBlock code={createPixResponse} language="json" />
-          </div>
-        </div>
+        <CodeComparison
+          request={{ code: createPixRequest, language: 'json' }}
+          response={{ code: createPixResponse, language: 'json' }}
+        />
 
-        <div className="mt-6">
-          <ParameterTable parameters={responseParams} title="Response Fields" />
-        </div>
-      </div>
+        <ParameterTable parameters={responseParams} title="Response Fields" />
+      </EndpointCard>
 
-      {/* Check Status */}
-      <div id="check-status" className="scroll-mt-20">
-        <div className="flex items-center gap-3 mb-4">
-          <MethodBadge method="GET" />
-          <code className="text-lg font-mono">/api-v1-pix-status</code>
-        </div>
-        <p className="text-muted-foreground mb-4">
-          Consulta o status de uma transação PIX existente.
-        </p>
-
+      {/* Check Status Endpoint */}
+      <EndpointCard
+        id="check-status"
+        method="GET"
+        endpoint="/api-v1-pix-status"
+        title="Consultar Status"
+        description="Consulta o status de uma transação PIX existente."
+      >
         <ParameterTable parameters={statusParams} title="Query Parameters" />
 
-        <div className="mt-6">
-          <h4 className="text-sm font-semibold mb-2">Response</h4>
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xs font-bold">←</span>
+            <h4 className="text-sm font-semibold">Response</h4>
+          </div>
           <CodeBlock code={checkStatusResponse} language="json" />
         </div>
 
-        <div className="mt-6">
+        <div>
           <h4 className="text-sm font-semibold mb-3">Status possíveis</h4>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { status: 'pending', label: 'Aguardando', color: 'bg-amber-500/20 text-amber-600' },
-              { status: 'paid', label: 'Pago', color: 'bg-emerald-500/20 text-emerald-600' },
-              { status: 'expired', label: 'Expirado', color: 'bg-gray-500/20 text-gray-600' },
-              { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500/20 text-red-600' },
+              { status: 'pending', label: 'Aguardando', color: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+              { status: 'paid', label: 'Pago', color: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' },
+              { status: 'expired', label: 'Expirado', color: 'bg-muted text-muted-foreground border-border' },
+              { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30' },
             ].map((s) => (
-              <div key={s.status} className="flex items-center gap-2 p-2 rounded border border-border">
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${s.color}`}>
+              <div key={s.status} className="flex items-center gap-2 p-3 rounded-lg border bg-card">
+                <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold border ${s.color}`}>
                   {s.status}
                 </span>
                 <span className="text-sm text-muted-foreground">{s.label}</span>
@@ -144,7 +171,7 @@ export const EndpointsSection = () => {
             ))}
           </div>
         </div>
-      </div>
+      </EndpointCard>
     </section>
   );
 };
