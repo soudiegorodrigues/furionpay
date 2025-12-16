@@ -696,7 +696,7 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="flex-1 min-h-[280px] sm:min-h-[320px] w-full">
+            <div className="flex-1 min-h-[220px] sm:min-h-[260px] w-full">
               {isLoadingTransactions ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-3">
