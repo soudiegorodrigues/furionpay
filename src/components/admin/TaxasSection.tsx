@@ -226,9 +226,9 @@ export const TaxasSection = () => {
     repassePercentage?: number;
     repasseDays?: number;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b border-border/50 last:border-0 gap-2">
       <span className="font-medium text-sm">{label}</span>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
         <span className="text-sm bg-muted px-2 py-1 rounded">{formatPercentage(percentage)}</span>
         <span className="text-sm font-medium">{formatCurrency(fixed)}</span>
         {repassePercentage !== undefined && repasseDays !== undefined && (
@@ -242,7 +242,7 @@ export const TaxasSection = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -252,9 +252,9 @@ export const TaxasSection = () => {
           <p className="text-sm text-muted-foreground">Configurar taxas de transação</p>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <h3 className="text-xl font-bold">Controle de Taxas</h3>
-            <Button onClick={handleCreateNew} className="gap-2">
+            <Button onClick={handleCreateNew} className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               Criar nova taxa
             </Button>
@@ -269,7 +269,7 @@ export const TaxasSection = () => {
               Nenhuma taxa configurada. Clique em "Criar nova taxa" para começar.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {feeConfigs.map((config) => (
                 <Card key={config.id} className="border-l-4 border-l-primary">
                   <CardHeader className="pb-2">
@@ -312,7 +312,7 @@ export const TaxasSection = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-4">
                       <Button
                         variant="outline"
                         size="sm"
