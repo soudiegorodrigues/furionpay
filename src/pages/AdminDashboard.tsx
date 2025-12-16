@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy, Gift, Wallet } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 interface DashboardStats {
@@ -98,6 +98,22 @@ const AdminDashboard = () => {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [hideData, setHideData] = useState(() => {
+    return localStorage.getItem('dashboard_hide_data') === 'true';
+  });
+
+  // Persist hide data preference
+  useEffect(() => {
+    localStorage.setItem('dashboard_hide_data', String(hideData));
+  }, [hideData]);
+
+  // Helper to mask monetary values
+  const maskValue = (value: string | number, isMonetary = true): string => {
+    if (!hideData) {
+      return typeof value === 'number' && isMonetary ? formatCurrency(value) : String(value);
+    }
+    return isMonetary ? "R$ •••••" : "•••";
+  };
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoadingRewards, setIsLoadingRewards] = useState(true);
   const [availableBalance, setAvailableBalance] = useState<number>(0);
@@ -547,6 +563,14 @@ const AdminDashboard = () => {
                 <SelectItem value="year">Este ano</SelectItem>
               </SelectContent>
             </Select>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setHideData(!hideData)}
+              title={hideData ? "Mostrar dados" : "Ocultar dados"}
+            >
+              {hideData ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => loadData(false)}>
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -570,8 +594,8 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">PIX Gerados</p>
               <QrCode className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{filteredStats.generated}</p>
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{formatCurrency(filteredStats.amountGenerated)}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{hideData ? "•••" : filteredStats.generated}</p>
+            <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{maskValue(filteredStats.amountGenerated)}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -580,8 +604,8 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">PIX Pagos</p>
               <BarChart3 className="h-3 w-3 md:h-3.5 md:w-3.5 text-green-500" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{filteredStats.paid}</p>
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{formatCurrency(filteredStats.amountPaid)}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{hideData ? "•••" : filteredStats.paid}</p>
+            <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{maskValue(filteredStats.amountPaid)}</p>
           </CardContent>
         </Card>
         {/* Row 2: Conversão + Ticket Médio | Vendas Este Mês */}
@@ -594,7 +618,7 @@ const AdminDashboard = () => {
                   <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Conversão</p>
                   <Clock className="h-3 w-3 md:h-3.5 md:w-3.5 text-yellow-500" />
                 </div>
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{filteredStats.conversionRate}%</p>
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{hideData ? "•••%" : `${filteredStats.conversionRate}%`}</p>
               </div>
               
               {/* Divisor */}
@@ -609,7 +633,7 @@ const AdminDashboard = () => {
                   </p>
                   <TrendingUp className="h-3 w-3 md:h-3.5 md:w-3.5 text-purple-500" />
                 </div>
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{formatCurrency(filteredStats.ticketMedio)}</p>
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(filteredStats.ticketMedio)}</p>
               </div>
             </div>
           </CardContent>
@@ -620,7 +644,7 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Vendas Este Mês</p>
               <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 text-blue-500" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{formatCurrency(monthStats.amountPaid)}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(monthStats.amountPaid)}</p>
           </CardContent>
         </Card>
         {/* Row 3: Vendas Hoje | Saldo Disponível */}
@@ -630,7 +654,7 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Vendas Hoje</p>
               <TrendingUp className="h-3 w-3 md:h-3.5 md:w-3.5 text-green-500" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{formatCurrency(todayStats.amountPaid)}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(todayStats.amountPaid)}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -639,7 +663,7 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Saldo Disponível</p>
               <Wallet className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{formatCurrency(availableBalance)}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(availableBalance)}</p>
           </CardContent>
         </Card>
       </div>
@@ -805,7 +829,7 @@ const AdminDashboard = () => {
                           {achieved ? <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
                               🎉 Conquistado!
                             </Badge> : <p className="text-xs text-muted-foreground mt-0.5">
-                              Faltam <span className="font-bold text-sm text-primary">{formatCurrency(reward.threshold_amount - totalBalance)}</span>
+                              Faltam <span className="font-bold text-sm text-primary">{maskValue(reward.threshold_amount - totalBalance)}</span>
                             </p>}
                         </div>
                         
@@ -821,8 +845,8 @@ const AdminDashboard = () => {
                       }} />
                           </div>
                           <div className="flex justify-between text-[10px] text-muted-foreground">
-                            <span>{formatCurrency(totalBalance)}</span>
-                            <span>Meta: {formatCurrency(reward.threshold_amount)}</span>
+                            <span>{maskValue(totalBalance)}</span>
+                            <span>Meta: {maskValue(reward.threshold_amount)}</span>
                           </div>
                         </div>
                       </div>;
@@ -888,9 +912,9 @@ const AdminDashboard = () => {
                   setIsSheetOpen(true);
                 }}>
                         <TableCell className="text-xs whitespace-nowrap">{formatDate(tx.created_at)}</TableCell>
-                        <TableCell className="text-xs max-w-[100px] truncate">{tx.donor_name}</TableCell>
+                        <TableCell className="text-xs max-w-[100px] truncate">{hideData ? "•••••" : tx.donor_name}</TableCell>
                         <TableCell className="text-xs hidden sm:table-cell max-w-[100px] truncate">{tx.product_name || '-'}</TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">{formatCurrency(calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed))}</TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">{maskValue(calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed))}</TableCell>
                         <TableCell>{getStatusBadge(tx.status)}</TableCell>
                         <TableCell className="text-xs hidden md:table-cell max-w-[100px] truncate">{tx.utm_data?.utm_term || '-'}</TableCell>
                         <TableCell className="text-center">
