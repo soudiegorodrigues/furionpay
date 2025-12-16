@@ -40,6 +40,7 @@ import {
   ArrowLeft,
   Sparkles,
   FormInput,
+  ExternalLink,
 } from "lucide-react";
 
 interface CheckoutBuilderSimpleProps {
@@ -145,6 +146,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         .from("product_checkout_configs")
         .select("*")
         .eq("product_id", productId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch first offer for preview link
+  const { data: firstOffer } = useQuery({
+    queryKey: ["product-first-offer", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_offers")
+        .select("offer_code")
+        .eq("product_id", productId)
+        .eq("is_active", true)
+        .limit(1)
         .maybeSingle();
       
       if (error) throw error;
@@ -820,22 +838,38 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between py-3 px-4">
           <CardTitle className="text-sm font-medium">Preview do Checkout</CardTitle>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <Button
+                variant={previewMode === "desktop" ? "default" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setPreviewMode("desktop")}
+              >
+                <Monitor className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant={previewMode === "mobile" ? "default" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setPreviewMode("mobile")}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <Button
-              variant={previewMode === "desktop" ? "default" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setPreviewMode("desktop")}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              disabled={!firstOffer?.offer_code}
+              onClick={() => {
+                if (firstOffer?.offer_code) {
+                  window.open(`/checkout/${firstOffer.offer_code}`, '_blank');
+                }
+              }}
             >
-              <Monitor className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant={previewMode === "mobile" ? "default" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setPreviewMode("mobile")}
-            >
-              <Smartphone className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5 mr-1" />
+              Visualizar
             </Button>
           </div>
         </CardHeader>
@@ -846,7 +880,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
               previewMode === "mobile" ? "max-w-[375px]" : "w-full"
             )}
           >
-            <ScrollArea className="h-[400px]">
+            <ScrollArea className="h-[600px]">
               <CheckoutPreviewMini
                 templateName={selectedTemplate?.name || "Padrão"}
                 productName={productName}
