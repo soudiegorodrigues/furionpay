@@ -33,15 +33,25 @@ interface ProductFolder {
   color: string | null;
 }
 
-// Skeleton Card Component - Lightweight
+// Skeleton Card Component
 const ProductSkeleton = () => (
-  <div className="rounded-lg overflow-hidden bg-card">
-    <div className="aspect-video bg-muted/50" />
-    <div className="p-3 space-y-2">
-      <div className="h-4 bg-muted/50 rounded w-3/4" />
-      <div className="h-5 bg-muted/50 rounded w-1/2" />
-    </div>
-  </div>
+  <Card className="overflow-hidden">
+    <div className="aspect-[3/4] bg-muted animate-pulse" />
+    <CardContent className="p-2 sm:p-4 space-y-2 sm:space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 space-y-2">
+          <div className="h-4 sm:h-5 bg-muted animate-pulse rounded w-3/4" />
+          <div className="h-3 sm:h-4 bg-muted animate-pulse rounded w-1/2" />
+        </div>
+        <div className="h-5 sm:h-6 bg-muted animate-pulse rounded w-14 sm:w-16" />
+      </div>
+      <div className="space-y-1 mt-2 sm:mt-3">
+        <div className="h-3 bg-muted animate-pulse rounded w-16 sm:w-20" />
+        <div className="h-5 sm:h-6 bg-muted animate-pulse rounded w-20 sm:w-24" />
+        <div className="h-3 bg-muted animate-pulse rounded w-24 sm:w-32" />
+      </div>
+    </CardContent>
+  </Card>
 );
 
 export default function AdminProducts() {
@@ -394,8 +404,8 @@ export default function AdminProducts() {
 
         {/* Products Grid with Skeletons */}
         {isLoadingProducts ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
               <ProductSkeleton key={i} />
             ))}
           </div>
@@ -420,18 +430,19 @@ export default function AdminProducts() {
                   <Folder className="h-5 w-5" />
                   Pastas
                 </h2>
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                   {folders.map(folder => (
                     <div 
                       key={`folder-${folder.id}`}
-                      className="relative flex flex-col items-center justify-center p-3 group cursor-pointer rounded-lg hover:bg-muted/40 transition-all border-0"
+                      className="aspect-square relative flex flex-col items-center justify-center group cursor-pointer rounded-lg hover:bg-muted/50 transition-colors border"
+                      style={{ backgroundColor: `${folder.color}10` }}
                       onClick={() => setSelectedFolder(folder.id)}
                     >
                       {/* Delete button */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute -top-1 -right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-background/80"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteFolder(folder.id);
@@ -442,19 +453,33 @@ export default function AdminProducts() {
                       
                       {/* Folder icon */}
                       <Folder 
-                        className="h-8 w-8" 
+                        className="h-10 w-10 sm:h-12 sm:w-12" 
                         style={{ color: folder.color || 'hsl(var(--muted-foreground))' }} 
                       />
                       
                       {/* Folder name */}
-                      <span className="text-xs font-medium mt-1.5 text-center truncate max-w-full">
+                      <h3 className="text-xs sm:text-sm font-semibold mt-2 px-2 text-center truncate max-w-full">
                         {folder.name}
-                      </span>
+                      </h3>
                       
                       {/* Product count */}
-                      <span className="text-[10px] text-muted-foreground">
-                        {countProductsInFolder(folder.id)}
-                      </span>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        {countProductsInFolder(folder.id)} {countProductsInFolder(folder.id) === 1 ? 'produto' : 'produtos'}
+                      </p>
+                      
+                      {/* Acessar button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 h-7 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFolder(folder.id);
+                        }}
+                      >
+                        <ArrowRight className="h-3 w-3 mr-1" />
+                        Acessar
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -469,100 +494,106 @@ export default function AdminProducts() {
                   Produtos
                 </h2>
               )}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
                 {filteredProducts.map(product => (
-                  <div 
-                    key={product.id} 
-                    className="group cursor-pointer rounded-lg overflow-hidden bg-card border-0 shadow-sm hover:shadow-md transition-shadow" 
-                    onClick={() => navigate(`/admin/products/${product.id}`)}
-                  >
-                    {/* Image - Compact */}
-                    <div className="aspect-video bg-muted/30 relative">
-                      {product.image_url ? (
-                        <img 
-                          src={product.image_url} 
-                          alt={product.name} 
-                          loading="lazy"
-                          className="w-full h-full object-cover" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Image className="h-6 w-6 text-muted-foreground/50" />
-                        </div>
-                      )}
-                      
-                      {/* Hover Actions - Icon only */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button 
-                              size="icon"
-                              variant="secondary"
-                              className="h-7 w-7"
-                              onClick={e => e.stopPropagation()}
-                            >
-                              <FolderInput className="h-3.5 w-3.5" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-40 p-1.5" onClick={e => e.stopPropagation()}>
-                            <div className="space-y-0.5">
-                              <Button
-                                variant={!product.folder_id ? "secondary" : "ghost"}
-                                size="sm"
-                                className="w-full justify-start text-xs h-7"
-                                onClick={() => handleMoveToFolder(product.id, null)}
-                              >
-                                Sem pasta
-                              </Button>
-                              {folders.map(folder => (
-                                <Button
-                                  key={folder.id}
-                                  variant={product.folder_id === folder.id ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start text-xs h-7 gap-1.5"
-                                  onClick={() => handleMoveToFolder(product.id, folder.id)}
-                                >
-                                  <Folder className="h-3 w-3" style={{ color: folder.color || undefined }} />
-                                  {folder.name}
-                                </Button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                        <Button 
-                          size="icon"
-                          variant="secondary"
-                          className="h-7 w-7"
-                          onClick={e => {
-                            e.stopPropagation();
-                            navigate(`/admin/products/${product.id}`);
-                          }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button 
-                          size="icon"
-                          variant="destructive"
-                          className="h-7 w-7"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleDeleteProduct(product.id);
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+              <Card 
+                key={product.id} 
+                className="overflow-hidden group cursor-pointer" 
+                onClick={() => navigate(`/admin/products/${product.id}`)}
+              >
+                <div className="aspect-[3/4] bg-muted relative">
+                  {product.image_url ? (
+                    <img 
+                      src={product.image_url} 
+                      alt={product.name} 
+                      loading="lazy"
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Image className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground" />
                     </div>
-                    
-                    {/* Content - Minimal */}
-                    <div className="p-2.5">
-                      <h3 className="text-sm font-medium truncate">{product.name}</h3>
-                      <p className="text-sm font-semibold text-primary mt-0.5">
-                        R$ {product.price.toFixed(2).replace(".", ",")}
-                      </p>
-                    </div>
+                  )}
+                </div>
+                <CardContent className="p-2 sm:p-4">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
                   </div>
-                ))}
+                  <div className="mt-2 sm:mt-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Receba até</p>
+                    <p className="text-base sm:text-lg font-bold text-primary">
+                      R$ {(product.price * 0.55).toFixed(2).replace(".", ",")}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      Preço máximo: R$ {product.price.toFixed(2).replace(".", ",")}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 h-8 text-xs"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <FolderInput className="h-3 w-3 mr-1" />
+                          Pasta
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" onClick={e => e.stopPropagation()}>
+                        <div className="space-y-1">
+                          <Button
+                            variant={!product.folder_id ? "secondary" : "ghost"}
+                            size="sm"
+                            className="w-full justify-start text-xs"
+                            onClick={() => handleMoveToFolder(product.id, null)}
+                          >
+                            Sem pasta
+                          </Button>
+                          {folders.map(folder => (
+                            <Button
+                              key={folder.id}
+                              variant={product.folder_id === folder.id ? "secondary" : "ghost"}
+                              size="sm"
+                              className="w-full justify-start text-xs gap-2"
+                              onClick={() => handleMoveToFolder(product.id, folder.id)}
+                            >
+                              <Folder className="h-3 w-3" style={{ color: folder.color || undefined }} />
+                              {folder.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-1 h-8 text-xs"
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate(`/admin/products/${product.id}`);
+                      }}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive" 
+                      className="flex-1 h-8 text-xs"
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleDeleteProduct(product.id);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Excluir
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
               </div>
             </div>
           </div>
