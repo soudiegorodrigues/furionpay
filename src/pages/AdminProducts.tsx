@@ -308,47 +308,7 @@ export default function AdminProducts() {
                   <Button onClick={handleCreateProduct} className="w-full">
                     Criar produto
                   </Button>
-        </div>
-
-        {/* Folders Section */}
-        {folders.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium mb-3">Pastas</h3>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedFolder === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedFolder(null)}
-              >
-                Todos
-                <Badge variant="secondary" className="ml-2">{products.length}</Badge>
-              </Button>
-              {folders.map(folder => (
-                <div key={folder.id} className="flex items-center gap-1">
-                  <Button
-                    variant={selectedFolder === folder.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedFolder(selectedFolder === folder.id ? null : folder.id)}
-                    className="gap-1"
-                    style={{ borderColor: selectedFolder !== folder.id ? (folder.color || undefined) : undefined }}
-                  >
-                    <Folder className="h-4 w-4" style={{ color: selectedFolder === folder.id ? undefined : (folder.color || undefined) }} />
-                    {folder.name}
-                    <Badge variant="secondary" className="ml-1">{countProductsInFolder(folder.id)}</Badge>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteFolder(folder.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
               </DialogContent>
             </Dialog>
 
@@ -408,6 +368,46 @@ export default function AdminProducts() {
             </TabsList>
           </Tabs>
         </div>
+
+        {/* Folders Section */}
+        {folders.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-3">Pastas</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedFolder === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFolder(null)}
+              >
+                Todos
+                <Badge variant="secondary" className="ml-2">{products.length}</Badge>
+              </Button>
+              {folders.map(folder => (
+                <div key={folder.id} className="flex items-center gap-1">
+                  <Button
+                    variant={selectedFolder === folder.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedFolder(selectedFolder === folder.id ? null : folder.id)}
+                    className="gap-1"
+                    style={{ borderColor: selectedFolder !== folder.id ? (folder.color || undefined) : undefined }}
+                  >
+                    <Folder className="h-4 w-4" style={{ color: selectedFolder === folder.id ? undefined : (folder.color || undefined) }} />
+                    {folder.name}
+                    <Badge variant="secondary" className="ml-1">{countProductsInFolder(folder.id)}</Badge>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDeleteFolder(folder.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Products Grid with Skeletons */}
         {isLoadingProducts ? (
