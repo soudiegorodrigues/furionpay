@@ -130,7 +130,7 @@ export function ExitIntentPopup({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm text-center rounded-2xl [&>button]:h-8 [&>button]:w-8 [&>button>svg]:h-6 [&>button>svg]:w-6">
+      <DialogContent className="max-w-[85vw] sm:max-w-sm text-center rounded-2xl [&>button]:h-8 [&>button]:w-8 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button>svg]:h-5 [&>button>svg]:w-5">
         {imageUrl ? (
           // Image-only mode
           <div className="space-y-4">
