@@ -2266,6 +2266,24 @@ export type Database = {
           utm_data: Json
         }[]
       }
+      get_user_webhook_deliveries: {
+        Args: { p_client_id?: string; p_limit?: number }
+        Returns: {
+          api_client_id: string
+          api_client_name: string
+          attempts: number
+          created_at: string
+          event_type: string
+          id: string
+          last_attempt_at: string
+          response_body: string
+          response_status: number
+          status: string
+          transaction_id: string
+          webhook_url: string
+        }[]
+      }
+      get_user_webhook_stats: { Args: never; Returns: Json }
       get_user_withdrawals: {
         Args: { p_limit?: number }
         Returns: {
@@ -2452,6 +2470,10 @@ export type Database = {
       }
       restore_transactions_from_backup: {
         Args: { p_backup_id: string }
+        Returns: boolean
+      }
+      retry_webhook_delivery: {
+        Args: { p_delivery_id: string }
         Returns: boolean
       }
       revoke_admin_role: { Args: { target_user_id: string }; Returns: boolean }

@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Key, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw, Activity, Globe, Book } from 'lucide-react';
+import { Key, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw, Activity, Globe, Book, Webhook } from 'lucide-react';
 import { ApiDocsSection } from './ApiDocsSection';
+import { WebhookDeliveriesSection } from './WebhookDeliveriesSection';
 
 interface ApiClient {
   id: string;
@@ -231,6 +232,10 @@ export function ApiKeysSection() {
         <TabsTrigger value="keys" className="flex items-center gap-2">
           <Key className="h-4 w-4" />
           API Keys
+        </TabsTrigger>
+        <TabsTrigger value="webhooks" className="flex items-center gap-2">
+          <Webhook className="h-4 w-4" />
+          Webhooks
         </TabsTrigger>
         <TabsTrigger value="docs" className="flex items-center gap-2">
           <Book className="h-4 w-4" />
@@ -555,6 +560,10 @@ export function ApiKeysSection() {
           </div>
         </DialogContent>
       </Dialog>
+      </TabsContent>
+
+      <TabsContent value="webhooks">
+        <WebhookDeliveriesSection />
       </TabsContent>
 
       <TabsContent value="docs">
