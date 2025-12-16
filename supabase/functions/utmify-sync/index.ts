@@ -174,6 +174,10 @@ serve(async (req) => {
     const utmData = record.utm_data;
     const createdAt = record.created_at;
     const paidAt = record.paid_at;
+    
+    // Extract fees for net amount calculation
+    const feePercentage = record.fee_percentage || 0;
+    const feeFixed = record.fee_fixed || 0;
 
     // Skip test transactions - filter out demonstration/test data
     if (txid?.startsWith('TEST_') || productName === 'Produto Demonstração') {
@@ -223,8 +227,15 @@ serve(async (req) => {
       );
     }
 
-    const priceInCents = Math.round(amount * 100);
+    // Calculate net amount (after fee deduction)
+    const feeAmount = (amount * feePercentage / 100) + feeFixed;
+    const netAmount = amount - feeAmount;
+    const grossPriceInCents = Math.round(amount * 100);
+    const netPriceInCents = Math.round(netAmount * 100);
+    const feeInCents = Math.round(feeAmount * 100);
     const utmifyStatus = mapStatusToUtmify(status);
+    
+    console.log('[UTMIFY-SYNC] Fee calculation:', { amount, feePercentage, feeFixed, feeAmount, netAmount });
     
     // Build Utmify order payload
     const order: UtmifyOrder = {
@@ -249,7 +260,7 @@ serve(async (req) => {
           planId: `plan_${txid}`,
           planName: productName,
           quantity: 1,
-          priceInCents: priceInCents,
+          priceInCents: netPriceInCents,
         }
       ],
       trackingParameters: {
@@ -262,9 +273,9 @@ serve(async (req) => {
         utm_term: utmData?.utm_term || null,
       },
       commission: {
-        totalPriceInCents: priceInCents,
-        gatewayFeeInCents: 0,
-        userCommissionInCents: priceInCents,
+        totalPriceInCents: grossPriceInCents,
+        gatewayFeeInCents: feeInCents,
+        userCommissionInCents: netPriceInCents,
       },
     };
 
