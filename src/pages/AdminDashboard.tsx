@@ -117,12 +117,14 @@ const AdminDashboard = () => {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoadingRewards, setIsLoadingRewards] = useState(true);
   const [availableBalance, setAvailableBalance] = useState<number>(0);
+  const [userName, setUserName] = useState<string>("");
   const navigate = useNavigate();
   const {
     toast
   } = useToast();
   const {
     isAuthenticated,
+    user,
     signOut
   } = useAdminAuth();
 
@@ -153,12 +155,13 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true, resetTransactions = true) => {
     try {
       // PHASE 1: Load small/fast data FIRST (non-blocking for UI)
-      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult] = await Promise.all([
+      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult] = await Promise.all([
         supabase.rpc('get_user_settings'), 
         supabase.rpc('get_user_dashboard'),
         supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', { ascending: true }), 
         supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), 
-        supabase.rpc('get_user_available_balance')
+        supabase.rpc('get_user_available_balance'),
+        user?.id ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null })
       ]);
 
       // Set available balance immediately
@@ -174,6 +177,11 @@ const AdminDashboard = () => {
       // Set rewards immediately and mark loading complete
       setRewards(rewardsResult.data || []);
       setIsLoadingRewards(false);
+
+      // Set user name from profile
+      if (!profileResult.error && profileResult.data?.full_name) {
+        setUserName(profileResult.data.full_name);
+      }
 
       // Process settings and fee config
       let feeData = defaultFeeResult.data;
@@ -814,8 +822,9 @@ const AdminDashboard = () => {
                 const progress = Math.min(totalBalance / reward.threshold_amount * 100, 100);
                 const achieved = totalBalance >= reward.threshold_amount;
                 return <div key={reward.id} className="space-y-4">
-                        {/* Nome e status */}
+                        {/* Nome do usuário e status */}
                         <div className="text-center">
+                          {userName && <p className="text-sm text-muted-foreground mb-1">{userName}</p>}
                           <h3 className="text-base font-bold">{reward.name}</h3>
                           {achieved ? <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
                               🎉 Conquistado!
