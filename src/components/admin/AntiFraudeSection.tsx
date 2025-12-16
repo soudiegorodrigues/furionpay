@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, TrendingUp } from "lucide-react";
+import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, TrendingUp, Fingerprint, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -20,6 +20,14 @@ interface RateLimitStats {
   total_blocked_devices: number;
   blocks_last_24h: number;
   total_records: number;
+  // Estatísticas por Fingerprint
+  fingerprint_blocked: number;
+  fingerprint_blocks_24h: number;
+  fingerprint_total: number;
+  // Estatísticas por IP
+  ip_blocked: number;
+  ip_blocks_24h: number;
+  ip_total: number;
 }
 
 interface ChartData {
@@ -312,35 +320,83 @@ export function AntiFraudeSection() {
           <CardContent className="space-y-6">
             {stats ? (
               <>
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                {/* Totais Gerais */}
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
                     <div className="flex items-center gap-3">
-                      <ShieldX className="h-8 w-8 text-destructive" />
+                      <ShieldX className="h-6 w-6 text-destructive" />
                       <div>
-                        <p className="text-2xl font-bold text-destructive">{stats.total_blocked_devices}</p>
-                        <p className="text-sm text-muted-foreground">Dispositivos bloqueados agora</p>
+                        <p className="text-xl font-bold text-destructive">{stats.total_blocked_devices}</p>
+                        <p className="text-xs text-muted-foreground">Bloqueados agora</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                  <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
                     <div className="flex items-center gap-3">
-                      <Ban className="h-8 w-8 text-orange-500" />
+                      <Ban className="h-6 w-6 text-orange-500" />
                       <div>
-                        <p className="text-2xl font-bold text-orange-500">{stats.blocks_last_24h}</p>
-                        <p className="text-sm text-muted-foreground">Bloqueios nas últimas 24h</p>
+                        <p className="text-xl font-bold text-orange-500">{stats.blocks_last_24h}</p>
+                        <p className="text-xs text-muted-foreground">Bloqueios 24h</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Estatísticas Separadas: Fingerprint vs IP */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Fingerprint Stats */}
+                  <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Fingerprint className="h-4 w-4 text-purple-500" />
+                      <span className="text-xs font-medium text-purple-500">Fingerprint</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Bloqueados</span>
+                        <span className="text-sm font-bold text-destructive">{stats.fingerprint_blocked}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">24h</span>
+                        <span className="text-sm font-medium text-orange-500">{stats.fingerprint_blocks_24h}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Total</span>
+                        <span className="text-sm font-medium">{stats.fingerprint_total}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-lg bg-muted border">
-                    <div className="flex items-center gap-3">
-                      <Shield className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <p className="text-2xl font-bold">{stats.total_records}</p>
-                        <p className="text-sm text-muted-foreground">Dispositivos rastreados</p>
+                  {/* IP Stats */}
+                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Globe className="h-4 w-4 text-blue-500" />
+                      <span className="text-xs font-medium text-blue-500">IP</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Bloqueados</span>
+                        <span className="text-sm font-bold text-destructive">{stats.ip_blocked}</span>
                       </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">24h</span>
+                        <span className="text-sm font-medium text-orange-500">{stats.ip_blocks_24h}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Total</span>
+                        <span className="text-sm font-medium">{stats.ip_total}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total Rastreados */}
+                <div className="p-3 rounded-lg bg-muted border">
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-6 w-6 text-muted-foreground" />
+                    <div>
+                      <p className="text-xl font-bold">{stats.total_records}</p>
+                      <p className="text-xs text-muted-foreground">Total rastreados</p>
                     </div>
                   </div>
                 </div>
@@ -349,7 +405,7 @@ export function AntiFraudeSection() {
                 <div className="space-y-3">
                   <Button variant="outline" onClick={loadStats} className="w-full">
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Atualizar Estatísticas
+                    Atualizar
                   </Button>
                   
                   {stats.total_blocked_devices > 0 && (
