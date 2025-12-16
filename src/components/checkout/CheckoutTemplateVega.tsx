@@ -137,7 +137,7 @@ export function CheckoutTemplateVega({
                     </div>
                     <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
                       <Zap className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
-                      <p className="text-xs text-gray-400">Acesso imediato</p>
+                      <p className="text-xs text-gray-400">{config?.delivery_description || "Acesso imediato"}</p>
                     </div>
                     <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
                       <TrendingUp className="h-5 w-5 text-blue-400 mx-auto mb-1" />
