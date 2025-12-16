@@ -381,32 +381,35 @@ export default function AdminProducts() {
         {folders.length > 0 && (
           <div className="mb-6">
             <h3 className="text-sm font-medium mb-3">Pastas</h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
               <Button
                 variant={selectedFolder === null ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedFolder(null)}
+                className="w-full justify-between"
               >
-                Todos
+                <span>Todos</span>
                 <Badge variant="secondary" className="ml-2">{products.filter(p => !p.folder_id).length}</Badge>
               </Button>
               {folders.map(folder => (
-                <div key={folder.id} className="flex items-center gap-1">
+                <div key={folder.id} className="flex items-center">
                   <Button
                     variant={selectedFolder === folder.id ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedFolder(selectedFolder === folder.id ? null : folder.id)}
-                    className="gap-1"
+                    className="flex-1 justify-between gap-1 min-w-0"
                     style={{ borderColor: selectedFolder !== folder.id ? (folder.color || undefined) : undefined }}
                   >
-                    <Folder className="h-4 w-4" style={{ color: selectedFolder === folder.id ? undefined : (folder.color || undefined) }} />
-                    {folder.name}
-                    <Badge variant="secondary" className="ml-1">{countProductsInFolder(folder.id)}</Badge>
+                    <span className="flex items-center gap-1 truncate">
+                      <Folder className="h-4 w-4 shrink-0" style={{ color: selectedFolder === folder.id ? undefined : (folder.color || undefined) }} />
+                      <span className="truncate">{folder.name}</span>
+                    </span>
+                    <Badge variant="secondary" className="ml-1 shrink-0">{countProductsInFolder(folder.id)}</Badge>
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
                     onClick={() => handleDeleteFolder(folder.id)}
                   >
                     <X className="h-4 w-4" />
