@@ -127,7 +127,7 @@ const AdminIntegrations = () => {
       <div className="flex flex-wrap gap-6">
         {/* Utmify Card - Modern Square */}
         <Card 
-          className="relative overflow-hidden cursor-pointer shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/30 w-full sm:w-[280px]"
+          className="relative overflow-hidden cursor-pointer shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/30 w-full sm:w-[320px]"
           onClick={() => !loadingUtmify && handleUtmifyClick()}
         >
           {/* Status indicator */}
@@ -191,7 +191,7 @@ const AdminIntegrations = () => {
 
         {/* API de Pagamentos Card */}
         <Card 
-          className="relative overflow-hidden cursor-pointer shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/30 w-full sm:w-[280px]"
+          className="relative overflow-hidden cursor-pointer shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/30 w-full sm:w-[320px]"
           onClick={() => !loadingApiKeys && handleApiKeysClick()}
         >
           {/* Status indicator */}
