@@ -172,52 +172,42 @@ async function logRateLimitEvent(
   }
 }
 
-// Check rate limit for fingerprint/IP
-async function checkRateLimit(fingerprint: string | undefined, clientIp: string | undefined, config: RateLimitConfig): Promise<RateLimitResult> {
-  // If rate limiting is disabled, allow all
-  if (!config.enabled) {
-    console.log('[RATE-LIMIT] Rate limiting disabled, allowing request');
-    return { allowed: true };
-  }
-
-  const supabase = getSupabaseClient();
-  
-  // If no fingerprint provided, use IP only
-  const identifier = fingerprint || clientIp;
-  if (!identifier) {
-    console.log('[RATE-LIMIT] No fingerprint or IP available, allowing request');
-    return { allowed: true };
-  }
-
-  const now = new Date();
+// Check single identifier (fingerprint or IP) for rate limiting
+async function checkSingleIdentifier(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  identifier: string,
+  clientIp: string | undefined,
+  config: RateLimitConfig,
+  now: Date,
+  identifierType: 'fingerprint' | 'ip'
+): Promise<RateLimitResult> {
   const windowStart = new Date(now.getTime() - (config.windowHours * 60 * 60 * 1000));
 
   try {
-    // Get or create rate limit record
-    let { data: rateLimitRecord, error: fetchError } = await supabase
+    // Get rate limit record for this identifier
+    const { data: rateLimitRecord, error: fetchError } = await supabase
       .from('pix_rate_limits')
       .select('*')
       .eq('fingerprint_hash', identifier)
       .maybeSingle();
 
     if (fetchError) {
-      console.error('[RATE-LIMIT] Error fetching rate limit:', fetchError);
-      return { allowed: true }; // Allow on error to not block legitimate users
+      console.error(`[RATE-LIMIT] Error fetching ${identifierType} rate limit:`, fetchError);
+      return { allowed: true };
     }
 
-    // If no record exists, this is a new device
+    // If no record exists, this is a new device/IP
     if (!rateLimitRecord) {
-      console.log('[RATE-LIMIT] New device, creating record');
+      console.log(`[RATE-LIMIT] New ${identifierType}, allowing`);
       return { allowed: true };
     }
 
     // Check if blocked
     if (rateLimitRecord.blocked_until && new Date(rateLimitRecord.blocked_until) > now) {
       const retryAfter = Math.ceil((new Date(rateLimitRecord.blocked_until).getTime() - now.getTime()) / 1000);
-      console.log(`[RATE-LIMIT] Device is blocked until ${rateLimitRecord.blocked_until}, retry after ${retryAfter}s`);
+      console.log(`[RATE-LIMIT] ${identifierType} is blocked until ${rateLimitRecord.blocked_until}, retry after ${retryAfter}s`);
       
-      // Log blocked event
-      await logRateLimitEvent(fingerprint, clientIp, 'blocked', 'device_blocked', rateLimitRecord.unpaid_count);
+      await logRateLimitEvent(identifier, clientIp, 'blocked', `${identifierType}_blocked`, rateLimitRecord.unpaid_count);
       
       return {
         allowed: false,
@@ -234,10 +224,9 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
       
       if (secondsSinceLastGen < config.cooldownSeconds) {
         const retryAfter = Math.ceil(config.cooldownSeconds - secondsSinceLastGen);
-        console.log(`[RATE-LIMIT] Cooldown active, retry after ${retryAfter}s`);
+        console.log(`[RATE-LIMIT] ${identifierType} cooldown active, retry after ${retryAfter}s`);
         
-        // Log cooldown event
-        await logRateLimitEvent(fingerprint, clientIp, 'cooldown', 'cooldown_active', rateLimitRecord.unpaid_count);
+        await logRateLimitEvent(identifier, clientIp, 'cooldown', `${identifierType}_cooldown`, rateLimitRecord.unpaid_count);
         
         return {
           allowed: false,
@@ -251,8 +240,7 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
     // Check if record is within the time window
     const recordUpdated = new Date(rateLimitRecord.updated_at);
     if (recordUpdated < windowStart) {
-      // Reset count if outside window
-      console.log('[RATE-LIMIT] Outside window, resetting count');
+      console.log(`[RATE-LIMIT] ${identifierType} outside window, resetting count`);
       await supabase
         .from('pix_rate_limits')
         .update({ 
@@ -267,7 +255,6 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
 
     // Check unpaid count limit
     if (rateLimitRecord.unpaid_count >= config.maxUnpaidPix) {
-      // Block for configured hours
       const blockedUntil = new Date(now.getTime() + (config.windowHours * 60 * 60 * 1000));
       
       await supabase
@@ -276,10 +263,9 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
         .eq('id', rateLimitRecord.id);
       
       const retryAfter = config.windowHours * 60 * 60;
-      console.log(`[RATE-LIMIT] Max unpaid PIX reached (${rateLimitRecord.unpaid_count}), blocking for ${config.windowHours}h`);
+      console.log(`[RATE-LIMIT] ${identifierType} max unpaid PIX reached (${rateLimitRecord.unpaid_count}), blocking for ${config.windowHours}h`);
       
-      // Log max_unpaid event
-      await logRateLimitEvent(fingerprint, clientIp, 'blocked', 'max_unpaid', rateLimitRecord.unpaid_count);
+      await logRateLimitEvent(identifier, clientIp, 'blocked', `${identifierType}_max_unpaid`, rateLimitRecord.unpaid_count);
       
       return {
         allowed: false,
@@ -289,29 +275,66 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
       };
     }
 
-    console.log(`[RATE-LIMIT] Allowed. Current unpaid count: ${rateLimitRecord.unpaid_count}`);
+    console.log(`[RATE-LIMIT] ${identifierType} allowed. Current unpaid count: ${rateLimitRecord.unpaid_count}`);
     return { allowed: true, unpaidCount: rateLimitRecord.unpaid_count };
 
   } catch (err) {
-    console.error('[RATE-LIMIT] Unexpected error:', err);
-    return { allowed: true }; // Allow on error
+    console.error(`[RATE-LIMIT] Unexpected error checking ${identifierType}:`, err);
+    return { allowed: true };
   }
 }
 
-// Update rate limit record after PIX generation
-async function updateRateLimitRecord(fingerprint: string | undefined, clientIp: string | undefined): Promise<void> {
+// Check rate limit for BOTH fingerprint AND IP (combined security)
+async function checkRateLimit(fingerprint: string | undefined, clientIp: string | undefined, config: RateLimitConfig): Promise<RateLimitResult> {
+  // If rate limiting is disabled, allow all
+  if (!config.enabled) {
+    console.log('[RATE-LIMIT] Rate limiting disabled, allowing request');
+    return { allowed: true };
+  }
+
+  // If no identifiers available, allow
+  if (!fingerprint && !clientIp) {
+    console.log('[RATE-LIMIT] No fingerprint or IP available, allowing request');
+    return { allowed: true };
+  }
+
   const supabase = getSupabaseClient();
-  
-  const identifier = fingerprint || clientIp;
-  if (!identifier) return;
+  const now = new Date();
 
-  const now = new Date().toISOString();
+  // Check FINGERPRINT if available
+  if (fingerprint) {
+    console.log(`[RATE-LIMIT] Checking fingerprint: ${fingerprint.substring(0, 8)}...`);
+    const fingerprintResult = await checkSingleIdentifier(supabase, fingerprint, clientIp, config, now, 'fingerprint');
+    if (!fingerprintResult.allowed) {
+      console.log('[RATE-LIMIT] BLOCKED by fingerprint check');
+      return fingerprintResult;
+    }
+  }
 
+  // Check IP if available AND different from fingerprint
+  if (clientIp && clientIp !== fingerprint) {
+    console.log(`[RATE-LIMIT] Checking IP: ${clientIp}`);
+    const ipResult = await checkSingleIdentifier(supabase, clientIp, clientIp, config, now, 'ip');
+    if (!ipResult.allowed) {
+      console.log('[RATE-LIMIT] BLOCKED by IP check');
+      return ipResult;
+    }
+  }
+
+  console.log('[RATE-LIMIT] Both fingerprint and IP checks passed');
+  return { allowed: true };
+}
+
+// Update single rate limit record
+async function updateSingleRateLimitRecord(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  identifier: string,
+  clientIp: string | undefined,
+  config: RateLimitConfig,
+  now: string,
+  identifierType: 'fingerprint' | 'ip'
+): Promise<void> {
   try {
-    // Get rate limit config to know the limit
-    const config = await getRateLimitConfig();
-    
-    // Check if record exists
     const { data: existing } = await supabase
       .from('pix_rate_limits')
       .select('id, unpaid_count')
@@ -327,50 +350,65 @@ async function updateRateLimitRecord(fingerprint: string | undefined, clientIp: 
         ? new Date(Date.now() + (config.windowHours * 60 * 60 * 1000)).toISOString()
         : null;
       
-      // Update existing record - increment unpaid_count and potentially block
       const { error: updateError } = await supabase
         .from('pix_rate_limits')
         .update({
           unpaid_count: newUnpaidCount,
           last_generation_at: now,
           updated_at: now,
-          ip_address: clientIp || null,
+          ip_address: identifierType === 'ip' ? identifier : (clientIp || null),
           blocked_until: blockedUntil,
         })
         .eq('id', existing.id);
 
       if (updateError) {
-        console.error('[RATE-LIMIT] Error updating record:', updateError);
+        console.error(`[RATE-LIMIT] Error updating ${identifierType} record:`, updateError);
       } else {
-        console.log(`[RATE-LIMIT] Updated unpaid_count to ${newUnpaidCount} for fingerprint: ${identifier.substring(0, 8)}...`);
+        console.log(`[RATE-LIMIT] Updated ${identifierType} unpaid_count to ${newUnpaidCount}: ${identifier.substring(0, 8)}...`);
         
-        // If blocked immediately, log the event
         if (shouldBlock) {
-          await logRateLimitEvent(identifier, clientIp, 'blocked', 'max_unpaid_reached_immediate', newUnpaidCount);
-          console.log(`[RATE-LIMIT] Device BLOCKED IMMEDIATELY after reaching ${newUnpaidCount} unpaid PIX (limit: ${config.maxUnpaidPix})`);
+          await logRateLimitEvent(identifier, clientIp, 'blocked', `${identifierType}_max_unpaid_immediate`, newUnpaidCount);
+          console.log(`[RATE-LIMIT] ${identifierType} BLOCKED IMMEDIATELY after reaching ${newUnpaidCount} unpaid PIX`);
         }
       }
     } else {
-      // Insert new record
       const { error: insertError } = await supabase
         .from('pix_rate_limits')
         .insert({
           fingerprint_hash: identifier,
-          ip_address: clientIp || null,
+          ip_address: identifierType === 'ip' ? identifier : (clientIp || null),
           unpaid_count: 1,
           last_generation_at: now,
           updated_at: now,
         });
 
       if (insertError) {
-        console.error('[RATE-LIMIT] Error inserting record:', insertError);
+        console.error(`[RATE-LIMIT] Error inserting ${identifierType} record:`, insertError);
       } else {
-        console.log(`[RATE-LIMIT] Created new rate limit record for fingerprint: ${identifier.substring(0, 8)}...`);
+        console.log(`[RATE-LIMIT] Created new ${identifierType} rate limit record: ${identifier.substring(0, 8)}...`);
       }
     }
-
   } catch (err) {
-    console.error('[RATE-LIMIT] Error updating rate limit record:', err);
+    console.error(`[RATE-LIMIT] Error updating ${identifierType} record:`, err);
+  }
+}
+
+// Update rate limit records for BOTH fingerprint AND IP
+async function updateRateLimitRecord(fingerprint: string | undefined, clientIp: string | undefined): Promise<void> {
+  if (!fingerprint && !clientIp) return;
+
+  const supabase = getSupabaseClient();
+  const config = await getRateLimitConfig();
+  const now = new Date().toISOString();
+
+  // Update FINGERPRINT record if available
+  if (fingerprint) {
+    await updateSingleRateLimitRecord(supabase, fingerprint, clientIp, config, now, 'fingerprint');
+  }
+
+  // Update IP record if available AND different from fingerprint
+  if (clientIp && clientIp !== fingerprint) {
+    await updateSingleRateLimitRecord(supabase, clientIp, clientIp, config, now, 'ip');
   }
 }
 
