@@ -1,0 +1,363 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+interface RateLimitConfig {
+  enabled: boolean;
+  maxUnpaidPix: number;
+  windowHours: number;
+  cooldownSeconds: number;
+}
+
+interface RateLimitStats {
+  total_blocked_devices: number;
+  blocks_last_24h: number;
+  total_records: number;
+}
+
+export function AntiFraudeSection() {
+  const [config, setConfig] = useState<RateLimitConfig>({
+    enabled: true,
+    maxUnpaidPix: 2,
+    windowHours: 36,
+    cooldownSeconds: 30,
+  });
+  const [stats, setStats] = useState<RateLimitStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadConfig();
+    loadStats();
+  }, []);
+
+  const loadConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('key, value')
+        .is('user_id', null)
+        .in('key', [
+          'rate_limit_enabled',
+          'rate_limit_max_unpaid',
+          'rate_limit_window_hours',
+          'rate_limit_cooldown_seconds'
+        ]);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setConfig({
+          enabled: data.find(d => d.key === 'rate_limit_enabled')?.value !== 'false',
+          maxUnpaidPix: parseInt(data.find(d => d.key === 'rate_limit_max_unpaid')?.value || '2'),
+          windowHours: parseInt(data.find(d => d.key === 'rate_limit_window_hours')?.value || '36'),
+          cooldownSeconds: parseInt(data.find(d => d.key === 'rate_limit_cooldown_seconds')?.value || '30'),
+        });
+      }
+    } catch (err) {
+      console.error('Error loading config:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_rate_limit_stats');
+      if (error) throw error;
+      setStats(data as RateLimitStats);
+    } catch (err) {
+      console.error('Error loading stats:', err);
+    }
+  };
+
+  const saveConfig = async () => {
+    setSaving(true);
+    try {
+      const settings = [
+        { key: 'rate_limit_enabled', value: config.enabled.toString() },
+        { key: 'rate_limit_max_unpaid', value: config.maxUnpaidPix.toString() },
+        { key: 'rate_limit_window_hours', value: config.windowHours.toString() },
+        { key: 'rate_limit_cooldown_seconds', value: config.cooldownSeconds.toString() },
+      ];
+
+      for (const setting of settings) {
+        const { data: existing } = await supabase
+          .from('admin_settings')
+          .select('id')
+          .is('user_id', null)
+          .eq('key', setting.key)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from('admin_settings')
+            .update({ value: setting.value, updated_at: new Date().toISOString() })
+            .eq('id', existing.id);
+        } else {
+          await supabase
+            .from('admin_settings')
+            .insert({ key: setting.key, value: setting.value, user_id: null });
+        }
+      }
+
+      toast({
+        title: "Configurações salvas",
+        description: "As configurações de anti-fraude foram atualizadas.",
+      });
+    } catch (err) {
+      console.error('Error saving config:', err);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as configurações.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clearBlockedDevices = async () => {
+    try {
+      const { error } = await supabase
+        .from('pix_rate_limits')
+        .update({ blocked_until: null, unpaid_count: 0 })
+        .not('blocked_until', 'is', null);
+
+      if (error) throw error;
+
+      toast({
+        title: "Dispositivos desbloqueados",
+        description: "Todos os dispositivos bloqueados foram liberados.",
+      });
+      loadStats();
+    } catch (err) {
+      console.error('Error clearing blocked devices:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível desbloquear os dispositivos.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Shield className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold">Sistema Anti-Fraude</h2>
+          <p className="text-sm text-muted-foreground">
+            Proteja sua plataforma contra abusos e gerações excessivas de PIX
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Configuration Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5" />
+              Configuração
+            </CardTitle>
+            <CardDescription>
+              Ajuste os parâmetros de proteção contra fraude
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Enable/Disable Switch */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Rate Limiting Ativo</Label>
+                <p className="text-xs text-muted-foreground">
+                  Ativa a proteção contra gerações excessivas
+                </p>
+              </div>
+              <Switch
+                checked={config.enabled}
+                onCheckedChange={(checked) => setConfig({ ...config, enabled: checked })}
+              />
+            </div>
+
+            {/* Max Unpaid PIX */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Hash className="h-4 w-4" />
+                Máximo de PIX não pagos
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                max={10}
+                value={config.maxUnpaidPix}
+                onChange={(e) => setConfig({ ...config, maxUnpaidPix: parseInt(e.target.value) || 2 })}
+                disabled={!config.enabled}
+              />
+              <p className="text-xs text-muted-foreground">
+                Quantidade máxima de PIX pendentes antes de bloquear
+              </p>
+            </div>
+
+            {/* Window Hours */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Janela de tempo (horas)
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                max={168}
+                value={config.windowHours}
+                onChange={(e) => setConfig({ ...config, windowHours: parseInt(e.target.value) || 36 })}
+                disabled={!config.enabled}
+              />
+              <p className="text-xs text-muted-foreground">
+                Período para contar PIX não pagos e duração do bloqueio
+              </p>
+            </div>
+
+            {/* Cooldown Seconds */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Cooldown entre gerações (segundos)
+              </Label>
+              <Input
+                type="number"
+                min={5}
+                max={300}
+                value={config.cooldownSeconds}
+                onChange={(e) => setConfig({ ...config, cooldownSeconds: parseInt(e.target.value) || 30 })}
+                disabled={!config.enabled}
+              />
+              <p className="text-xs text-muted-foreground">
+                Tempo mínimo entre gerações de PIX do mesmo dispositivo
+              </p>
+            </div>
+
+            <Button onClick={saveConfig} disabled={saving} className="w-full">
+              {saving ? (
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Salvar Configurações
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Statistics Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Estatísticas
+            </CardTitle>
+            <CardDescription>
+              Monitoramento em tempo real do sistema anti-fraude
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {stats ? (
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <div className="flex items-center gap-3">
+                      <ShieldX className="h-8 w-8 text-destructive" />
+                      <div>
+                        <p className="text-2xl font-bold text-destructive">{stats.total_blocked_devices}</p>
+                        <p className="text-sm text-muted-foreground">Dispositivos bloqueados agora</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                    <div className="flex items-center gap-3">
+                      <Ban className="h-8 w-8 text-orange-500" />
+                      <div>
+                        <p className="text-2xl font-bold text-orange-500">{stats.blocks_last_24h}</p>
+                        <p className="text-sm text-muted-foreground">Bloqueios nas últimas 24h</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-muted border">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-8 w-8 text-muted-foreground" />
+                      <div>
+                        <p className="text-2xl font-bold">{stats.total_records}</p>
+                        <p className="text-sm text-muted-foreground">Dispositivos rastreados</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-3">
+                  <Button variant="outline" onClick={loadStats} className="w-full">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Atualizar Estatísticas
+                  </Button>
+                  
+                  {stats.total_blocked_devices > 0 && (
+                    <Button 
+                      variant="destructive" 
+                      onClick={clearBlockedDevices}
+                      className="w-full"
+                    >
+                      <Ban className="h-4 w-4 mr-2" />
+                      Desbloquear Todos ({stats.total_blocked_devices})
+                    </Button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center p-8">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Info Card */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-6">
+          <div className="flex gap-4">
+            <Shield className="h-10 w-10 text-primary shrink-0" />
+            <div className="space-y-2">
+              <h3 className="font-semibold">Como funciona o sistema anti-fraude?</h3>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• <strong>Fingerprint:</strong> Cada dispositivo é identificado por um hash único</li>
+                <li>• <strong>Limite de PIX:</strong> Se o dispositivo atingir o máximo de PIX não pagos, é bloqueado</li>
+                <li>• <strong>Cooldown:</strong> Tempo mínimo obrigatório entre gerações de PIX</li>
+                <li>• <strong>Janela de tempo:</strong> Os PIX não pagos são contados dentro desta janela</li>
+                <li>• <strong>Desbloqueio automático:</strong> O dispositivo é desbloqueado após a janela de tempo expirar</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

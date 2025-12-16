@@ -21,6 +21,7 @@ import { ApiMonitoringSection } from "@/components/admin/ApiMonitoringSection";
 import { ReceitaPlataformaSection } from "@/components/admin/ReceitaPlataformaSection";
 import { NotificacoesSection } from "@/components/admin/NotificacoesSection";
 import { BackupsSection } from "@/components/admin/BackupsSection";
+import { AntiFraudeSection } from "@/components/admin/AntiFraudeSection";
 
 
 const Admin = () => {
@@ -62,6 +63,7 @@ const Admin = () => {
       {activeSection === "personalizacao" && <PersonalizacaoSection userId={user?.id} />}
       {activeSection === "email" && <EmailSection />}
       {activeSection === "taxas" && <TaxasSection />}
+      {activeSection === "anti-fraude" && <AntiFraudeSection />}
       {activeSection === "notificacoes" && <NotificacoesSection />}
       {activeSection === "utm-debug" && <UTMDebugSection />}
       {activeSection === "premiacoes" && <PremiacoesSection />}
