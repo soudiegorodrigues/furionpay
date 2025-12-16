@@ -814,15 +814,6 @@ const AdminDashboard = () => {
                 const progress = Math.min(totalBalance / reward.threshold_amount * 100, 100);
                 const achieved = totalBalance >= reward.threshold_amount;
                 return <div key={reward.id} className="space-y-4">
-                        {/* Imagem da placa */}
-                        <div className="flex justify-center">
-                          <div className="relative">
-                            {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="relative w-44 h-44 object-contain drop-shadow-xl" /> : <div className="relative w-44 h-44 flex items-center justify-center">
-                                <Trophy className="h-16 w-16 text-primary drop-shadow-xl" />
-                              </div>}
-                          </div>
-                        </div>
-                        
                         {/* Nome e status */}
                         <div className="text-center">
                           <h3 className="text-base font-bold">{reward.name}</h3>
@@ -831,6 +822,15 @@ const AdminDashboard = () => {
                             </Badge> : <p className="text-xs text-muted-foreground mt-0.5">
                               Faltam <span className="font-bold text-sm text-primary">{maskValue(reward.threshold_amount - totalBalance)}</span>
                             </p>}
+                        </div>
+                        
+                        {/* Imagem da placa */}
+                        <div className="flex justify-center">
+                          <div className="relative">
+                            {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="relative w-44 h-44 object-contain drop-shadow-xl" /> : <div className="relative w-44 h-44 flex items-center justify-center">
+                                <Trophy className="h-16 w-16 text-primary drop-shadow-xl" />
+                              </div>}
+                          </div>
                         </div>
                         
                         {/* Barra de progresso */}
