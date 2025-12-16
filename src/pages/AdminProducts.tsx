@@ -348,14 +348,6 @@ export default function AdminProducts() {
                       placeholder="Ex: Cursos" 
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Cor</Label>
-                    <Input 
-                      type="color" 
-                      value={newFolder.color} 
-                      onChange={e => setNewFolder({ ...newFolder, color: e.target.value })} 
-                    />
-                  </div>
                   <Button onClick={handleCreateFolder} className="w-full">
                     Criar pasta
                   </Button>
