@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Key, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw, ExternalLink, Activity, Globe } from 'lucide-react';
+import { Key, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw, Activity, Globe, Book } from 'lucide-react';
+import { ApiDocsSection } from './ApiDocsSection';
 
 interface ApiClient {
   id: string;
@@ -224,28 +226,40 @@ export function ApiKeysSection() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            API Keys
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gerencie suas chaves de API para integração externa
-          </p>
+    <Tabs defaultValue="keys" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="keys" className="flex items-center gap-2">
+          <Key className="h-4 w-4" />
+          API Keys
+        </TabsTrigger>
+        <TabsTrigger value="docs" className="flex items-center gap-2">
+          <Book className="h-4 w-4" />
+          Documentação
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="keys" className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              API Keys
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Gerencie suas chaves de API para integração externa
+            </p>
+          </div>
+          <Button onClick={() => {
+            setNewApiKeyName('');
+            setNewWebhookUrl('');
+            setCreatedApiKey(null);
+            setCreateDialogOpen(true);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova API Key
+          </Button>
         </div>
-        <Button onClick={() => {
-          setNewApiKeyName('');
-          setNewWebhookUrl('');
-          setCreatedApiKey(null);
-          setCreateDialogOpen(true);
-        }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova API Key
-        </Button>
-      </div>
 
       {/* Lista de API Keys */}
       <div className="grid gap-4">
@@ -497,14 +511,10 @@ export function ApiKeysSection() {
                 </div>
               )}
 
-              {/* Documentação */}
+              {/* Link para Documentação */}
               <div className="border-t pt-4">
-                <Button variant="outline" className="w-full" disabled>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Ver Documentação da API
-                </Button>
-                <p className="text-xs text-center text-muted-foreground mt-2">
-                  Documentação interativa em breve
+                <p className="text-xs text-center text-muted-foreground">
+                  Consulte a aba "Documentação" para exemplos de integração
                 </p>
               </div>
             </div>
@@ -545,6 +555,11 @@ export function ApiKeysSection() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="docs">
+        <ApiDocsSection />
+      </TabsContent>
+    </Tabs>
   );
 }
