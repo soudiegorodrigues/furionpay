@@ -943,7 +943,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
               disabled={!firstOffer?.offer_code}
               onClick={() => {
                 if (firstOffer?.offer_code) {
-                  window.open(`/checkout/${firstOffer.offer_code}`, '_blank');
+                  window.open(`/${firstOffer.offer_code}`, '_blank');
                 }
               }}
             >
