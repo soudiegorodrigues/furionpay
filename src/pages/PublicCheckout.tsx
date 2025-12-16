@@ -156,13 +156,9 @@ export default function PublicCheckout() {
         is_active: true,
       };
 
-      // Step 2: Fetch config and testimonials IN PARALLEL
+      // Step 2: Fetch config and testimonials IN PARALLEL using secure RPC
       const [configResult, testimonialsResult] = await Promise.all([
-        supabase
-          .from("product_checkout_configs")
-          .select("*")
-          .eq("product_id", offer.product_id)
-          .maybeSingle(),
+        supabase.rpc("get_public_checkout_config", { p_product_id: offer.product_id }),
         supabase
           .from("product_testimonials")
           .select("id, author_name, author_photo_url, rating, content")
@@ -171,7 +167,10 @@ export default function PublicCheckout() {
           .order("display_order", { ascending: true }),
       ]);
 
-      let config = configResult.data as CheckoutConfig | null;
+      // RPC returns array, get first result (cast via unknown to handle type differences)
+      let config = (configResult.data && configResult.data.length > 0 
+        ? configResult.data[0] as unknown
+        : null) as CheckoutConfig | null;
       const testimonials = (testimonialsResult.data || []) as Testimonial[];
       
       // Fetch pixel config using config's user_id (separate call to avoid circular reference)
