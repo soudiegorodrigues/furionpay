@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
@@ -64,11 +64,13 @@ const App = () => (
               <Route path="/cadastro" element={<AdminAuth />} />
               
               {/* API Documentation - public page */}
-              <Route path="/api-docs" element={
+              <Route path="/integration" element={
                 <Suspense fallback={<PageSkeleton />}>
                   <ApiDocs />
                 </Suspense>
               } />
+              {/* Redirect old URL to new one */}
+              <Route path="/api-docs" element={<Navigate to="/integration" replace />} />
               
               {/* Admin routes with shared layout */}
               <Route path="/admin" element={<AdminLayoutWrapper />}>
