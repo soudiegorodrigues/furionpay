@@ -328,29 +328,6 @@ export function CheckoutTemplatePadrao({
                       </>
                     )}
                   </Button>
-
-                  {/* Trust Badges */}
-                  <div className="flex items-center justify-center gap-6 pt-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                        <ShieldCheck className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Compra</p>
-                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Segura</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                        <Lock className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Dados 100%</p>
-                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Protegidos</p>
-                      </div>
-                    </div>
-                  </div>
-
                 </CardContent>
               </Card>
             </div>
