@@ -1,23 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
 import { CheckoutPreviewMini } from "./CheckoutPreviewMini";
 import { TestimonialsManager } from "./TestimonialsManager";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Section } from "@/components/product-edit";
 import {
   LayoutTemplate,
   Clock,
@@ -29,13 +26,8 @@ import {
   Check,
   Loader2,
   Image,
-  User,
-  CreditCard,
-  Shield,
-  Lock,
   Palette,
   Settings2,
-  CheckCircle,
   Percent,
   ChevronDown,
   Trash2,
@@ -45,6 +37,9 @@ import {
   Calendar,
   FileText,
   Mail,
+  ArrowLeft,
+  Sparkles,
+  FormInput,
 } from "lucide-react";
 
 interface CheckoutBuilderSimpleProps {
@@ -52,6 +47,7 @@ interface CheckoutBuilderSimpleProps {
   userId: string;
   productName: string;
   productPrice?: number;
+  onNavigate?: (section: Section) => void;
 }
 
 interface GlobalTemplate {
@@ -65,7 +61,7 @@ interface GlobalTemplate {
   preview_image_url: string | null;
 }
 
-export function CheckoutBuilderSimple({ productId, userId, productName, productPrice = 25 }: CheckoutBuilderSimpleProps) {
+export function CheckoutBuilderSimple({ productId, userId, productName, productPrice = 25, onNavigate }: CheckoutBuilderSimpleProps) {
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
@@ -74,18 +70,12 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [isUploadingPopupImage, setIsUploadingPopupImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const popupImageInputRef = useRef<HTMLInputElement>(null);
+  const [configTab, setConfigTab] = useState("aparencia");
 
   // States
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState("#16A34A");
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
-  
-  // Accordion state - only one section open at a time, all start closed
-  const [openSection, setOpenSection] = useState<string | null>(null);
-  
-  const toggleSection = (section: string) => {
-    setOpenSection(prev => prev === section ? null : section);
-  };
   
   // Required fields state
   const [requiredFields, setRequiredFields] = useState({
@@ -224,7 +214,6 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
     setIsUploadingImage(true);
     try {
-      // Compress image before upload
       const compressedBlob = await compressImage(file, compressionPresets.banner);
       const fileName = `${userId}/${productId}-banner.webp`;
 
@@ -241,9 +230,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         .from("product-images")
         .getPublicUrl(fileName);
 
-      // Add cache-busting parameter to force reload
       setBannerImageUrl(`${publicUrl}?t=${Date.now()}`);
-      toast.success("Banner comprimido e carregado!");
+      toast.success("Banner carregado!");
     } catch (error) {
       console.error("Erro ao carregar imagem:", error);
       toast.error("Erro ao carregar imagem");
@@ -269,7 +257,6 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
     setIsUploadingPopupImage(true);
     try {
-      // Compress image before upload
       const compressedBlob = await compressImage(file, compressionPresets.product);
       const fileName = `${userId}/${productId}-popup.webp`;
 
@@ -286,10 +273,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         .from("product-images")
         .getPublicUrl(fileName);
 
-      // Add cache-busting parameter to force reload
       const imageUrl = `${publicUrl}?t=${Date.now()}`;
       setCustomizations(p => ({ ...p, discountPopupImageUrl: imageUrl }));
-      toast.success("Imagem do popup comprimida e carregada!");
+      toast.success("Imagem do popup carregada!");
     } catch (error) {
       console.error("Erro ao carregar imagem:", error);
       toast.error("Erro ao carregar imagem");
@@ -302,7 +288,6 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      // Get template name to save as template string
       let templateString = "padrao";
       if (selectedTemplate) {
         const name = selectedTemplate.name.toLowerCase();
@@ -313,16 +298,14 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         product_id: productId,
         user_id: userId,
         template_id: selectedTemplateId,
-        template: templateString, // Also save template name for backwards compatibility
+        template: templateString,
         primary_color: primaryColor,
-        header_logo_url: bannerImageUrl, // Save banner URL
-        // Required fields
+        header_logo_url: bannerImageUrl,
         require_address: requiredFields.address,
         require_phone: requiredFields.phone,
         require_birthdate: requiredFields.birthdate,
         require_cpf: requiredFields.cpf,
         require_email_confirmation: requiredFields.emailConfirmation,
-        // Customizations
         show_banners: customizations.showBanner,
         show_countdown: customizations.showCountdown,
         countdown_minutes: customizations.countdownMinutes,
@@ -331,7 +314,6 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         show_notifications: customizations.showTestimonials,
         show_whatsapp_button: customizations.showWhatsappButton,
         whatsapp_number: customizations.whatsappNumber || null,
-        // Discount popup settings
         show_discount_popup: customizations.showDiscountPopup,
         discount_popup_title: customizations.discountPopupTitle || null,
         discount_popup_message: customizations.discountPopupMessage || null,
@@ -371,755 +353,539 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     "#2563eb", "#7c3aed", "#c026d3", "#000000",
   ];
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(price);
-  };
-
   return (
-    <div className="flex flex-col xl:flex-row gap-6">
-      {/* Preview Panel - Left Side */}
-      <div className="flex-1 min-w-0 order-1 xl:order-1">
-        <Card className="h-full">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-base">{productName}</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={previewMode === "desktop" ? "default" : "outline"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setPreviewMode("desktop")}
-              >
-                <Monitor className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={previewMode === "mobile" ? "default" : "outline"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setPreviewMode("mobile")}
-              >
-                <Smartphone className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            {/* Dynamic Preview based on selected template */}
-            <div 
-              className={cn(
-                "mx-auto border rounded-lg overflow-hidden transition-all duration-300",
-                previewMode === "mobile" ? "max-w-[375px]" : "w-full"
-              )}
-            >
-              <ScrollArea className="h-[600px]">
-                <CheckoutPreviewMini
-                  templateName={selectedTemplate?.name || "Padrão"}
-                  productName={productName}
-                  productPrice={productPrice}
-                  primaryColor={primaryColor}
-                  showCountdown={customizations.showCountdown}
-                  countdownMinutes={customizations.countdownMinutes}
-                  showTestimonials={customizations.showTestimonials}
-                  showBanner={customizations.showBanner}
-                  bannerImageUrl={bannerImageUrl}
-                  previewMode={previewMode}
-                  testimonials={testimonials}
-                />
-              </ScrollArea>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="space-y-4">
+      {/* Compact Navigation */}
+      {onNavigate && (
+        <div className="flex items-center gap-3 pb-4 border-b">
+          <Button variant="ghost" size="sm" onClick={() => onNavigate("details")} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Detalhes
+          </Button>
+          <span className="text-muted-foreground">|</span>
+          <Badge variant="default" className="gap-1">
+            <LayoutTemplate className="h-3 w-3" />
+            Checkout
+          </Badge>
+        </div>
+      )}
 
-      {/* Config Panel - Right Side */}
-      <div className="w-full xl:w-80 shrink-0 order-2 xl:order-2 space-y-4">
-        {/* Template Selection */}
-        <Card>
-          <Collapsible open={isTemplateOpen} onOpenChange={setIsTemplateOpen}>
-            <CardHeader className="pb-3">
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <LayoutTemplate className="h-4 w-4" />
-                    Template
-                    {templates && templates.length > 0 && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        {templates.length}
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <ChevronDown className={cn(
-                    "h-4 w-4 text-muted-foreground transition-transform",
-                    isTemplateOpen && "rotate-180"
-                  )} />
+      <div className="flex flex-col xl:flex-row gap-6">
+        {/* Preview Panel - Left Side - STICKY */}
+        <div className="flex-1 min-w-0 order-1 xl:order-1">
+          <div className="xl:sticky xl:top-4">
+            <Card className="h-full">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-base">{productName}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={previewMode === "desktop" ? "default" : "outline"}
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPreviewMode("desktop")}
+                  >
+                    <Monitor className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={previewMode === "mobile" ? "default" : "outline"}
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPreviewMode("mobile")}
+                  >
+                    <Smartphone className="h-4 w-4" />
+                  </Button>
                 </div>
-              </CollapsibleTrigger>
-              {!isTemplateOpen && selectedTemplate && (
-                <div className="mt-2 p-3 border rounded-lg border-primary bg-primary/5">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-sm">{selectedTemplate.name}</span>
-                    {selectedTemplate.is_default && (
-                      <Badge variant="secondary" className="text-[10px]">Padrão</Badge>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div 
+                  className={cn(
+                    "mx-auto border rounded-lg overflow-hidden transition-all duration-300",
+                    previewMode === "mobile" ? "max-w-[375px]" : "w-full"
+                  )}
+                >
+                  <ScrollArea className="h-[calc(100vh-280px)] min-h-[500px]">
+                    <CheckoutPreviewMini
+                      templateName={selectedTemplate?.name || "Padrão"}
+                      productName={productName}
+                      productPrice={productPrice}
+                      primaryColor={primaryColor}
+                      showCountdown={customizations.showCountdown}
+                      countdownMinutes={customizations.countdownMinutes}
+                      showTestimonials={customizations.showTestimonials}
+                      showBanner={customizations.showBanner}
+                      bannerImageUrl={bannerImageUrl}
+                      previewMode={previewMode}
+                      testimonials={testimonials}
+                    />
+                  </ScrollArea>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Config Panel - Right Side - WIDER with TABS */}
+        <div className="w-full xl:w-96 shrink-0 order-2 xl:order-2">
+          <Card>
+            <CardContent className="p-4">
+              <Tabs value={configTab} onValueChange={setConfigTab}>
+                <TabsList className="w-full grid grid-cols-3 mb-4">
+                  <TabsTrigger value="aparencia" className="gap-1 text-xs">
+                    <Palette className="h-3 w-3" />
+                    Aparência
+                  </TabsTrigger>
+                  <TabsTrigger value="campos" className="gap-1 text-xs">
+                    <FormInput className="h-3 w-3" />
+                    Campos
+                  </TabsTrigger>
+                  <TabsTrigger value="recursos" className="gap-1 text-xs">
+                    <Sparkles className="h-3 w-3" />
+                    Recursos
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* TAB: Aparência */}
+                <TabsContent value="aparencia" className="space-y-4 mt-0">
+                  {/* Template Selection */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <LayoutTemplate className="h-4 w-4" />
+                      Template
+                    </Label>
+                    <div className="space-y-2">
+                      {templates?.map((template) => (
+                        <div
+                          key={template.id}
+                          className={cn(
+                            "p-3 border rounded-lg cursor-pointer transition-all",
+                            selectedTemplateId === template.id
+                              ? "border-primary bg-primary/5"
+                              : "hover:border-muted-foreground/50"
+                          )}
+                          onClick={() => setSelectedTemplateId(template.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {selectedTemplateId === template.id && (
+                                <Check className="h-4 w-4 text-primary" />
+                              )}
+                              <span className="font-medium text-sm">{template.name}</span>
+                              {template.is_default && (
+                                <Badge variant="secondary" className="text-[10px]">Padrão</Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Color */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Cor Principal
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {colors.map((color) => (
+                        <button
+                          key={color}
+                          className={cn(
+                            "w-8 h-8 rounded-lg transition-all",
+                            primaryColor === color ? "ring-2 ring-offset-2 ring-primary" : ""
+                          )}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setPrimaryColor(color)}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        className="h-8 text-xs font-mono flex-1"
+                      />
+                      <input
+                        type="color"
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Banner */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Image className="h-4 w-4" />
+                        Banner
+                      </Label>
+                      <Switch
+                        checked={customizations.showBanner}
+                        onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBanner: v }))}
+                      />
+                    </div>
+                    {customizations.showBanner && (
+                      <div className="space-y-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                        {bannerImageUrl ? (
+                          <div className="space-y-2">
+                            <img
+                              src={bannerImageUrl}
+                              alt="Banner"
+                              className="w-full h-24 object-cover rounded-lg"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploadingImage}
+                              >
+                                {isUploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-3 text-destructive hover:text-destructive"
+                                onClick={() => setBannerImageUrl(null)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-12 flex flex-col gap-1"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploadingImage}
+                          >
+                            {isUploadingImage ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4" />
+                                <span className="text-xs">Upload Banner</span>
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {selectedTemplate.description && (
-                    <p className="text-xs text-muted-foreground mt-1">{selectedTemplate.description}</p>
-                  )}
-                </div>
-              )}
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="space-y-2 pt-0">
-                {templates?.map((template) => (
-                  <div
-                    key={template.id}
-                    className={cn(
-                      "p-3 border rounded-lg cursor-pointer transition-all",
-                      selectedTemplateId === template.id
-                        ? "border-primary bg-primary/5"
-                        : "hover:border-muted-foreground/50"
-                    )}
-                    onClick={() => {
-                      setSelectedTemplateId(template.id);
-                      setIsTemplateOpen(false);
-                    }}
-                  >
+                </TabsContent>
+
+                {/* TAB: Campos */}
+                <TabsContent value="campos" className="space-y-4 mt-0">
+                  <Label className="text-sm font-medium">Campos obrigatórios no checkout</Label>
+                  
+                  {/* Required Fields as Cards */}
+                  <div className="space-y-2">
+                    <div className={cn(
+                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      requiredFields.address && "border-primary bg-primary/5"
+                    )}>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Endereço</span>
+                      </div>
+                      <Switch
+                        checked={requiredFields.address}
+                        onCheckedChange={(v) => setRequiredFields(p => ({ ...p, address: v }))}
+                      />
+                    </div>
+
+                    <div className={cn(
+                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      requiredFields.phone && "border-primary bg-primary/5"
+                    )}>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Telefone</span>
+                      </div>
+                      <Switch
+                        checked={requiredFields.phone}
+                        onCheckedChange={(v) => setRequiredFields(p => ({ ...p, phone: v }))}
+                      />
+                    </div>
+
+                    <div className={cn(
+                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      requiredFields.birthdate && "border-primary bg-primary/5"
+                    )}>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Data de nascimento</span>
+                      </div>
+                      <Switch
+                        checked={requiredFields.birthdate}
+                        onCheckedChange={(v) => setRequiredFields(p => ({ ...p, birthdate: v }))}
+                      />
+                    </div>
+
+                    <div className={cn(
+                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      requiredFields.cpf && "border-primary bg-primary/5"
+                    )}>
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">CPF</span>
+                      </div>
+                      <Switch
+                        checked={requiredFields.cpf}
+                        onCheckedChange={(v) => setRequiredFields(p => ({ ...p, cpf: v }))}
+                      />
+                    </div>
+
+                    <div className={cn(
+                      "flex items-center justify-between p-3 border rounded-lg transition-all",
+                      requiredFields.emailConfirmation && "border-primary bg-primary/5"
+                    )}>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Confirmação de email</span>
+                      </div>
+                      <Switch
+                        checked={requiredFields.emailConfirmation}
+                        onCheckedChange={(v) => setRequiredFields(p => ({ ...p, emailConfirmation: v }))}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* TAB: Recursos */}
+                <TabsContent value="recursos" className="space-y-3 mt-0">
+                  {/* Countdown */}
+                  <div className={cn(
+                    "p-3 border rounded-lg transition-all",
+                    customizations.showCountdown && "border-primary bg-primary/5"
+                  )}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {selectedTemplateId === template.id && (
-                          <Check className="h-4 w-4 text-primary" />
-                        )}
-                        <span className="font-medium text-sm">{template.name}</span>
-                        {template.is_default && (
-                          <Badge variant="secondary" className="text-[10px]">Padrão</Badge>
-                        )}
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Contador</span>
                       </div>
+                      <Switch
+                        checked={customizations.showCountdown}
+                        onCheckedChange={(v) => setCustomizations(p => ({ ...p, showCountdown: v }))}
+                      />
                     </div>
-                    {template.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Color */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              Cor Principal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {colors.map((color) => (
-                <button
-                  key={color}
-                  className={cn(
-                    "w-8 h-8 rounded-lg transition-all",
-                    primaryColor === color ? "ring-2 ring-offset-2 ring-primary" : ""
-                  )}
-                  style={{ backgroundColor: color }}
-                  onClick={() => setPrimaryColor(color)}
-                />
-              ))}
-            </div>
-            <div className="flex gap-2 mt-3">
-              <Input
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="h-8 text-xs font-mono flex-1"
-              />
-              <input
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="w-8 h-8 rounded cursor-pointer"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Required Fields */}
-        <Card className="border-l-4 border-l-primary/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-primary">Campos obrigatórios no Checkout</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-xs text-muted-foreground mb-2 block">Itens Obrigatórios</Label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRequiredFields(p => ({ ...p, address: !p.address }))}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
-                    requiredFields.address
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
-                  )}
-                >
-                  <MapPin className="h-4 w-4" />
-                  Endereço
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRequiredFields(p => ({ ...p, phone: !p.phone }))}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
-                    requiredFields.phone
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
-                  )}
-                >
-                  <Phone className="h-4 w-4" />
-                  Telefone
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRequiredFields(p => ({ ...p, birthdate: !p.birthdate }))}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
-                    requiredFields.birthdate
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
-                  )}
-                >
-                  <Calendar className="h-4 w-4" />
-                  Data de nascimento
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRequiredFields(p => ({ ...p, cpf: !p.cpf }))}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
-                    requiredFields.cpf
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
-                  )}
-                >
-                  <FileText className="h-4 w-4" />
-                  CPF
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between py-2 border-t">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm">Confirmação de email</Label>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  O usuário estará condicionado a repetir o email informado em um campo específico para sua confirmação.
-                </p>
-              </div>
-              <Switch
-                checked={requiredFields.emailConfirmation}
-                onCheckedChange={(v) => setRequiredFields(p => ({ ...p, emailConfirmation: v }))}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Settings2 className="h-4 w-4" />
-              Personalizações
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 pt-0">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-
-            {/* Countdown */}
-            <Collapsible 
-              open={customizations.showCountdown && openSection === "countdown"}
-              onOpenChange={() => customizations.showCountdown && toggleSection("countdown")}
-            >
-              <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild>
-                  <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showCountdown ? "cursor-pointer" : "cursor-default opacity-60"
-                  )}>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Contador</Label>
                     {customizations.showCountdown && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        openSection === "countdown" && "rotate-180"
-                      )} />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showCountdown}
-                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showCountdown: v }))}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-2 pl-6">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground">Minutos:</Label>
-                    <Input
-                      type="number"
-                      value={customizations.countdownMinutes}
-                      onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
-                      className="h-7 w-16 text-xs"
-                      min={1}
-                      max={60}
-                    />
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Banner */}
-            <Collapsible 
-              open={customizations.showBanner && openSection === "banner"}
-              onOpenChange={() => customizations.showBanner && toggleSection("banner")}
-            >
-              <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild>
-                  <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showBanner ? "cursor-pointer" : "cursor-default opacity-60"
-                  )}>
-                    <Image className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Banner</Label>
-                    {customizations.showBanner && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        openSection === "banner" && "rotate-180"
-                      )} />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showBanner}
-                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBanner: v }))}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-2 pl-6 space-y-2">
-                  {bannerImageUrl ? (
-                    <div className="space-y-2">
-                      <img
-                        src={bannerImageUrl}
-                        alt="Banner"
-                        className="w-full h-28 object-cover rounded-lg"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 h-8 text-xs"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploadingImage}
-                        >
-                          {isUploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => setBannerImageUrl(null)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-12 flex flex-col gap-1"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingImage}
-                    >
-                      {isUploadingImage ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4" />
-                          <span className="text-xs">Upload</span>
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Video */}
-            <Collapsible 
-              open={customizations.showVideo && openSection === "video"}
-              onOpenChange={() => customizations.showVideo && toggleSection("video")}
-            >
-              <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild>
-                  <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showVideo ? "cursor-pointer" : "cursor-default opacity-60"
-                  )}>
-                    <Video className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Vídeo</Label>
-                    {customizations.showVideo && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        openSection === "video" && "rotate-180"
-                      )} />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showVideo}
-                  onCheckedChange={(v) => {
-                    setCustomizations(p => ({ ...p, showVideo: v }));
-                    if (v) setOpenSection("video");
-                  }}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-2 pl-6 space-y-2">
-                  <Label className="text-xs text-muted-foreground">URL do vídeo (YouTube ou URL direta)</Label>
-                  <Input
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={customizations.videoUrl}
-                    onChange={(e) => setCustomizations(p => ({ ...p, videoUrl: e.target.value }))}
-                    className="h-9 text-sm"
-                  />
-                  {customizations.videoUrl && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => setCustomizations(p => ({ ...p, videoUrl: "" }))}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Remover
-                    </Button>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Testimonials */}
-            <Collapsible 
-              open={customizations.showTestimonials && openSection === "testimonials"}
-              onOpenChange={() => customizations.showTestimonials && toggleSection("testimonials")}
-            >
-              <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild>
-                  <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showTestimonials ? "cursor-pointer" : "cursor-default opacity-60"
-                  )}>
-                    <Star className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Depoimentos</Label>
-                    {customizations.showTestimonials && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        openSection === "testimonials" && "rotate-180"
-                      )} />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showTestimonials}
-                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showTestimonials: v }))}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-2 pl-6">
-                  <TestimonialsManager productId={productId} userId={userId} />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Discount Popup */}
-            <Collapsible 
-              open={customizations.showDiscountPopup && openSection === "discountPopup"}
-              onOpenChange={() => customizations.showDiscountPopup && toggleSection("discountPopup")}
-            >
-              <div className="flex items-center justify-between py-2 border-b">
-                <CollapsibleTrigger asChild>
-                  <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showDiscountPopup ? "cursor-pointer" : "cursor-default opacity-60"
-                  )}>
-                    <Percent className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Popup de Desconto</Label>
-                    {customizations.showDiscountPopup && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        openSection === "discountPopup" && "rotate-180"
-                      )} />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showDiscountPopup}
-                  onCheckedChange={(v) => {
-                    setCustomizations(p => ({ ...p, showDiscountPopup: v }));
-                    if (v) setOpenSection("discountPopup");
-                  }}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-3 pl-6 space-y-3">
-                  {/* Preview */}
-                  <div className="p-4 bg-muted/50 rounded-lg border text-center space-y-2">
-                    {customizations.discountPopupImageUrl ? (
-                      <img 
-                        src={customizations.discountPopupImageUrl} 
-                        alt="Popup" 
-                        className="w-full h-24 object-contain rounded-lg"
-                      />
-                    ) : (
-                      <>
-                        <Badge 
-                          className="text-sm px-3 py-1 font-bold"
-                          style={{ backgroundColor: customizations.discountPopupColor }}
-                        >
-                          {customizations.discountPopupPercentage}% OFF
-                        </Badge>
-                        <p className="font-semibold text-sm">{customizations.discountPopupTitle || "Título"}</p>
-                        <p className="text-xs text-muted-foreground">{customizations.discountPopupMessage || "Mensagem"}</p>
-                        <Button 
-                          size="sm" 
-                          className="mt-2"
-                          style={{ backgroundColor: customizations.discountPopupColor }}
-                        >
-                          {customizations.discountPopupCta || "CTA"}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Color picker */}
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Cor do Popup</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Input
-                        type="color"
-                        value={customizations.discountPopupColor}
-                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupColor: e.target.value }))}
-                        className="h-8 w-12 p-0.5 cursor-pointer"
-                      />
-                      <Input
-                        value={customizations.discountPopupColor}
-                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupColor: e.target.value }))}
-                        className="h-8 text-xs flex-1 font-mono"
-                        placeholder="#16A34A"
-                        maxLength={7}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Popup Image Upload */}
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Imagem do Popup (opcional)</Label>
-                    <input
-                      type="file"
-                      ref={popupImageInputRef}
-                      onChange={handlePopupImageUpload}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    {customizations.discountPopupImageUrl ? (
-                      <div className="relative mt-1">
-                        <img
-                          src={customizations.discountPopupImageUrl}
-                          alt="Popup"
-                          className="w-full h-16 object-cover rounded-lg"
+                      <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                        <Label className="text-xs text-muted-foreground">Minutos:</Label>
+                        <Input
+                          type="number"
+                          value={customizations.countdownMinutes}
+                          onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
+                          className="h-7 w-16 text-xs"
+                          min={1}
+                          max={60}
                         />
-                        <div className="absolute top-1 right-1 flex gap-1">
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Video */}
+                  <div className={cn(
+                    "p-3 border rounded-lg transition-all",
+                    customizations.showVideo && "border-primary bg-primary/5"
+                  )}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Video className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Vídeo</span>
+                      </div>
+                      <Switch
+                        checked={customizations.showVideo}
+                        onCheckedChange={(v) => setCustomizations(p => ({ ...p, showVideo: v }))}
+                      />
+                    </div>
+                    {customizations.showVideo && (
+                      <div className="mt-2 pt-2 border-t">
+                        <Input
+                          placeholder="https://youtube.com/watch?v=..."
+                          value={customizations.videoUrl}
+                          onChange={(e) => setCustomizations(p => ({ ...p, videoUrl: e.target.value }))}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Testimonials */}
+                  <div className={cn(
+                    "p-3 border rounded-lg transition-all",
+                    customizations.showTestimonials && "border-primary bg-primary/5"
+                  )}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Depoimentos</span>
+                      </div>
+                      <Switch
+                        checked={customizations.showTestimonials}
+                        onCheckedChange={(v) => setCustomizations(p => ({ ...p, showTestimonials: v }))}
+                      />
+                    </div>
+                    {customizations.showTestimonials && (
+                      <div className="mt-2 pt-2 border-t">
+                        <TestimonialsManager productId={productId} userId={userId} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Discount Popup */}
+                  <div className={cn(
+                    "p-3 border rounded-lg transition-all",
+                    customizations.showDiscountPopup && "border-primary bg-primary/5"
+                  )}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Percent className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Popup de Desconto</span>
+                      </div>
+                      <Switch
+                        checked={customizations.showDiscountPopup}
+                        onCheckedChange={(v) => setCustomizations(p => ({ ...p, showDiscountPopup: v }))}
+                      />
+                    </div>
+                    {customizations.showDiscountPopup && (
+                      <div className="mt-2 pt-2 border-t space-y-2">
+                        <input
+                          type="file"
+                          ref={popupImageInputRef}
+                          onChange={handlePopupImageUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            type="color"
+                            value={customizations.discountPopupColor}
+                            onChange={(e) => setCustomizations(p => ({ ...p, discountPopupColor: e.target.value }))}
+                            className="h-8 w-12 p-0.5 cursor-pointer"
+                          />
+                          <Input
+                            type="number"
+                            value={customizations.discountPopupPercentage}
+                            onChange={(e) => setCustomizations(p => ({ ...p, discountPopupPercentage: Number(e.target.value) }))}
+                            className="h-8 w-16 text-xs"
+                            min={1}
+                            max={100}
+                          />
+                          <span className="text-xs self-center">%</span>
+                        </div>
+                        <Input
+                          value={customizations.discountPopupTitle}
+                          onChange={(e) => setCustomizations(p => ({ ...p, discountPopupTitle: e.target.value }))}
+                          className="h-8 text-xs"
+                          placeholder="Título"
+                        />
+                        <Input
+                          value={customizations.discountPopupCta}
+                          onChange={(e) => setCustomizations(p => ({ ...p, discountPopupCta: e.target.value }))}
+                          className="h-8 text-xs"
+                          placeholder="Texto do botão"
+                        />
+                        {customizations.discountPopupImageUrl ? (
+                          <div className="relative">
+                            <img
+                              src={customizations.discountPopupImageUrl}
+                              alt="Popup"
+                              className="w-full h-16 object-cover rounded-lg"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-1 right-1 h-6 w-6 p-0"
+                              onClick={() => setCustomizations(p => ({ ...p, discountPopupImageUrl: "" }))}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
                           <Button
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
-                            className="h-6 text-xs px-2"
+                            className="w-full h-8 text-xs"
                             onClick={() => popupImageInputRef.current?.click()}
                             disabled={isUploadingPopupImage}
                           >
-                            {isUploadingPopupImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
+                            {isUploadingPopupImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Upload Imagem"}
                           </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={() => setCustomizations(p => ({ ...p, discountPopupImageUrl: "" }))}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full h-10 flex gap-2 mt-1"
-                        onClick={() => popupImageInputRef.current?.click()}
-                        disabled={isUploadingPopupImage}
-                      >
-                        {isUploadingPopupImage ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            <span className="text-xs">Upload Imagem</span>
-                          </>
                         )}
-                      </Button>
+                      </div>
                     )}
-                    <p className="text-[10px] text-muted-foreground mt-1">Se preenchido, substitui o badge de desconto</p>
                   </div>
-                  
-                  {/* Fields */}
-                  <div className="space-y-2">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Título</Label>
-                      <Input
-                        value={customizations.discountPopupTitle}
-                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupTitle: e.target.value }))}
-                        className="h-8 text-xs mt-1"
-                        placeholder="Que tal um desconto?"
-                        maxLength={100}
-                      />
-                    </div>
-                    <div>
-                      <div className="flex justify-between">
-                        <Label className="text-xs text-muted-foreground">Mensagem</Label>
-                        <span className="text-[10px] text-muted-foreground">
-                          {customizations.discountPopupMessage?.length || 0}/500
-                        </span>
-                      </div>
-                      <textarea
-                        value={customizations.discountPopupMessage}
-                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupMessage: e.target.value }))}
-                        className="w-full h-20 mt-1 text-xs p-2 border rounded-md resize-none bg-background"
-                        placeholder="Você só tem até..."
-                        maxLength={500}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Texto CTA</Label>
-                      <Input
-                        value={customizations.discountPopupCta}
-                        onChange={(e) => setCustomizations(p => ({ ...p, discountPopupCta: e.target.value }))}
-                        className="h-8 text-xs mt-1"
-                        placeholder="Aproveitar oferta"
-                        maxLength={50}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Porcentagem de Desconto</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input
-                          type="number"
-                          value={customizations.discountPopupPercentage}
-                          onChange={(e) => setCustomizations(p => ({ ...p, discountPopupPercentage: Number(e.target.value) }))}
-                          className="h-8 text-xs flex-1"
-                          min={1}
-                          max={100}
-                        />
-                        <span className="text-sm text-muted-foreground">%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
 
-            {/* WhatsApp Button */}
-            <Collapsible 
-              open={customizations.showWhatsappButton && openSection === "whatsapp"}
-              onOpenChange={() => customizations.showWhatsappButton && toggleSection("whatsapp")}
-            >
-              <div className="flex items-center justify-between py-2">
-                <CollapsibleTrigger asChild>
+                  {/* WhatsApp */}
                   <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showWhatsappButton ? "cursor-pointer" : "cursor-default opacity-60"
+                    "p-3 border rounded-lg transition-all",
+                    customizations.showWhatsappButton && "border-primary bg-primary/5"
                   )}>
-                    <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm">Botão WhatsApp</Label>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Botão WhatsApp</span>
+                      </div>
+                      <Switch
+                        checked={customizations.showWhatsappButton}
+                        onCheckedChange={(v) => setCustomizations(p => ({ ...p, showWhatsappButton: v }))}
+                      />
+                    </div>
                     {customizations.showWhatsappButton && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        openSection === "whatsapp" && "rotate-180"
-                      )} />
+                      <div className="mt-2 pt-2 border-t">
+                        <Input
+                          value={customizations.whatsappNumber}
+                          onChange={(e) => setCustomizations(p => ({ ...p, whatsappNumber: e.target.value }))}
+                          className="h-8 text-xs"
+                          placeholder="5511999999999"
+                        />
+                      </div>
                     )}
                   </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showWhatsappButton}
-                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showWhatsappButton: v }))}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-2 pl-6">
-                  <Input
-                    value={customizations.whatsappNumber}
-                    onChange={(e) => setCustomizations(p => ({ ...p, whatsappNumber: e.target.value }))}
-                    className="h-7 text-xs"
-                    placeholder="5511999999999"
-                  />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
 
-            {/* Back Redirect */}
-            <Collapsible 
-              open={customizations.showBackRedirect && openSection === "backredirect"}
-              onOpenChange={() => customizations.showBackRedirect && toggleSection("backredirect")}
-            >
-              <div className="flex items-center justify-between py-2">
-                <CollapsibleTrigger asChild>
+                  {/* Back Redirect */}
                   <div className={cn(
-                    "flex items-center gap-2 flex-1",
-                    customizations.showBackRedirect ? "cursor-pointer" : "cursor-default opacity-60"
+                    "p-3 border rounded-lg transition-all",
+                    customizations.showBackRedirect && "border-primary bg-primary/5"
                   )}>
-                    <Label className="text-sm">Back redirect</Label>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Back redirect</span>
+                      </div>
+                      <Switch
+                        checked={customizations.showBackRedirect}
+                        onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBackRedirect: v }))}
+                      />
+                    </div>
                     {customizations.showBackRedirect && (
-                      <ChevronDown className={cn(
-                        "h-3 w-3 text-muted-foreground transition-transform",
-                        openSection === "backredirect" && "rotate-180"
-                      )} />
+                      <div className="mt-2 pt-2 border-t">
+                        <Input
+                          value={customizations.backRedirectUrl}
+                          onChange={(e) => setCustomizations(p => ({ ...p, backRedirectUrl: e.target.value }))}
+                          className="h-8 text-xs"
+                          placeholder="https://seusite.com"
+                        />
+                      </div>
                     )}
                   </div>
-                </CollapsibleTrigger>
-                <Switch
-                  checked={customizations.showBackRedirect}
-                  onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBackRedirect: v }))}
-                />
-              </div>
-              <CollapsibleContent>
-                <div className="py-2 pl-6">
-                  <p className="text-xs text-muted-foreground mb-2">Link para redirecionar ao sair do checkout</p>
-                  <Input
-                    value={customizations.backRedirectUrl}
-                    onChange={(e) => setCustomizations(p => ({ ...p, backRedirectUrl: e.target.value }))}
-                    className="h-7 text-xs"
-                    placeholder="https://seusite.com"
-                  />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </CardContent>
-        </Card>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
