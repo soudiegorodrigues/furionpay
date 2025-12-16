@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X, FolderInput, ArrowLeft } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -467,6 +467,20 @@ export default function AdminProducts() {
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   {countProductsInFolder(folder.id)} {countProductsInFolder(folder.id) === 1 ? 'produto' : 'produtos'}
                 </p>
+                
+                {/* Acessar button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFolder(folder.id);
+                  }}
+                >
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Acessar
+                </Button>
               </div>
             ))}
             
