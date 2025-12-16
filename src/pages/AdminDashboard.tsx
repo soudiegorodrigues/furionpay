@@ -360,81 +360,86 @@ const AdminDashboard = () => {
     const data: ChartData[] = [];
     const now = new Date();
     const todayBrazil = getBrazilDateStr(now);
+    const days = getChartDays(chartFilter);
+
+    // STEP 1: Pre-process transactions into indexed Maps (O(n) - single pass)
+    const geradosByKey = new Map<string, number>();
+    const pagosByKey = new Map<string, number>();
+    const valorByKey = new Map<string, number>();
+
+    // Calculate date range for filtering (avoid processing old transactions)
+    const [todayYear, todayMonth, todayDay] = todayBrazil.split('-').map(Number);
+    const startDate = new Date(todayYear, todayMonth - 1, todayDay - days + 1);
+    const startDateStr = getBrazilDateStr(startDate);
+
+    for (const tx of transactions) {
+      const txDate = new Date(tx.created_at);
+      const txDateStr = getBrazilDateStr(txDate);
+      
+      // Skip transactions outside our date range
+      if (txDateStr < startDateStr) continue;
+
+      // Index generated transactions
+      if (chartFilter === 'today') {
+        if (txDateStr === todayBrazil) {
+          const hourKey = getBrazilHour(txDate).toString();
+          geradosByKey.set(hourKey, (geradosByKey.get(hourKey) || 0) + 1);
+        }
+      } else {
+        geradosByKey.set(txDateStr, (geradosByKey.get(txDateStr) || 0) + 1);
+      }
+
+      // Index paid transactions (by paid_at date)
+      if (tx.status === 'paid' && tx.paid_at) {
+        const paidDate = new Date(tx.paid_at);
+        const paidDateStr = getBrazilDateStr(paidDate);
+        
+        if (paidDateStr < startDateStr) continue;
+        
+        const netAmount = calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed);
+        
+        if (chartFilter === 'today') {
+          if (paidDateStr === todayBrazil) {
+            const hourKey = getBrazilHour(paidDate).toString();
+            pagosByKey.set(hourKey, (pagosByKey.get(hourKey) || 0) + 1);
+            valorByKey.set(hourKey, (valorByKey.get(hourKey) || 0) + netAmount);
+          }
+        } else {
+          pagosByKey.set(paidDateStr, (pagosByKey.get(paidDateStr) || 0) + 1);
+          valorByKey.set(paidDateStr, (valorByKey.get(paidDateStr) || 0) + netAmount);
+        }
+      }
+    }
+
+    // STEP 2: Generate chart data from indexed Maps (O(points) - constant per point)
     if (chartFilter === 'today') {
-      // Hourly data for today - always show 00:00 to 23:00
       for (let hour = 0; hour <= 23; hour++) {
-        const hourStr = hour.toString().padStart(2, '0') + ':00';
-
-        // Filter transactions created today at this hour (Brazil time)
-        const hourGerados = transactions.filter(tx => {
-          const txDate = new Date(tx.created_at);
-          return getBrazilDateStr(txDate) === todayBrazil && getBrazilHour(txDate) === hour;
-        });
-
-        // Filter transactions PAID today at this hour (using paid_at, Brazil time)
-        const hourPagos = transactions.filter(tx => {
-          if (tx.status !== 'paid' || !tx.paid_at) return false;
-          const paidDate = new Date(tx.paid_at);
-          return getBrazilDateStr(paidDate) === todayBrazil && getBrazilHour(paidDate) === hour;
-        });
-        const gerados = hourGerados.length;
-        const pagos = hourPagos.length;
-        const valorPago = hourPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
+        const hourKey = hour.toString();
         data.push({
-          date: hourStr,
-          gerados,
-          pagos,
-          valorPago
+          date: hour.toString().padStart(2, '0') + ':00',
+          gerados: geradosByKey.get(hourKey) || 0,
+          pagos: pagosByKey.get(hourKey) || 0,
+          valorPago: valorByKey.get(hourKey) || 0
         });
       }
     } else {
-      // Daily data for other filters - ALWAYS include today (Brazil timezone)
-      const days = getChartDays(chartFilter);
-
-      // Build array of dates from oldest to newest (ending with today)
-      const dates: string[] = [];
-
-      // First: get TODAY in São Paulo timezone as string YYYY-MM-DD
-      const todayBrazilStr = getBrazilDateStr(new Date());
-      const [todayYear, todayMonth, todayDay] = todayBrazilStr.split('-').map(Number);
-
-      // Generate dates directly from São Paulo components to avoid any timezone conversion
+      // Generate dates from oldest to newest
       for (let i = days - 1; i >= 0; i--) {
-        // Calculate the target day (may go to previous months)
         const tempDate = new Date(todayYear, todayMonth - 1, todayDay - i, 12, 0, 0);
         const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
-        dates.push(dateStr);
-      }
-
-      // Now generate chart data for each date
-      for (const dateStr of dates) {
-        // Format display as DD/MM
         const [, m, d] = dateStr.split('-');
-        const displayDate = `${d}/${m}`;
-
-        // Transactions created on this day (Brazil time)
-        const dayGerados = transactions.filter(tx => {
-          return getBrazilDateStr(new Date(tx.created_at)) === dateStr;
-        });
-
-        // Transactions PAID on this day (using paid_at, Brazil time)
-        const dayPagos = transactions.filter(tx => {
-          if (tx.status !== 'paid' || !tx.paid_at) return false;
-          return getBrazilDateStr(new Date(tx.paid_at)) === dateStr;
-        });
-        const gerados = dayGerados.length;
-        const pagos = dayPagos.length;
-        const valorPago = dayPagos.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
+        
         data.push({
-          date: displayDate,
-          gerados,
-          pagos,
-          valorPago
+          date: `${d}/${m}`,
+          gerados: geradosByKey.get(dateStr) || 0,
+          pagos: pagosByKey.get(dateStr) || 0,
+          valorPago: valorByKey.get(dateStr) || 0
         });
       }
     }
+
     return data;
-  }, [transactions, chartFilter]);
+  }, [transactions, chartFilter, feeConfig]);
   const filteredStats = useMemo(() => {
     const generated = filteredTransactions.length;
     const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
