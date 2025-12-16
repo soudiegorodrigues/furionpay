@@ -186,7 +186,7 @@ export default function AdminProductEdit() {
       case "details":
         return <ProductDetailsSection formData={formData} setFormData={setFormData} product={product} copyToClipboard={copyToClipboard} />;
       case "checkout":
-        return <CheckoutBuilderSimple productId={product.id} userId={product.user_id} productName={product.name} productPrice={product.price} />;
+        return <CheckoutBuilderSimple productId={product.id} userId={product.user_id} productName={product.name} productPrice={product.price} onNavigate={setActiveSection} />;
       case "offers":
         return <OffersSection productId={product.id} userId={product.user_id} />;
       case "domains":
@@ -265,15 +265,23 @@ export default function AdminProductEdit() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1 min-w-0 order-2 lg:order-1">
+        {activeSection === "checkout" ? (
+          // Full-width layout for checkout builder
+          <div className="w-full">
             {renderSectionContent()}
           </div>
+        ) : (
+          // Normal layout with side navigation
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex-1 min-w-0 order-2 lg:order-1">
+              {renderSectionContent()}
+            </div>
 
-          <div className="lg:w-80 shrink-0 order-1 lg:order-2">
-            <ProductNavigation activeSection={activeSection} setActiveSection={setActiveSection} />
+            <div className="lg:w-80 shrink-0 order-1 lg:order-2">
+              <ProductNavigation activeSection={activeSection} setActiveSection={setActiveSection} />
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
