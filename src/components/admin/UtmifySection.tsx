@@ -51,6 +51,7 @@ interface UtmifySectionProps {
 
 export function UtmifySection({ initialData }: UtmifySectionProps) {
   const [saving, setSaving] = useState(false);
+  const [savingEnabled, setSavingEnabled] = useState(false);
   const [enabled, setEnabled] = useState(initialData?.enabled ?? false);
   const [apiToken, setApiToken] = useState(initialData?.apiToken ?? "");
   const [showToken, setShowToken] = useState(false);
@@ -142,32 +143,50 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
     }
   }, []);
 
-  const handleSave = async () => {
+  // Auto-save toggle state
+  const handleEnabledChange = async (newValue: boolean) => {
+    setEnabled(newValue);
+    setSavingEnabled(true);
+    
+    try {
+      const { error } = await supabase.rpc('update_user_setting', {
+        setting_key: 'utmify_enabled',
+        setting_value: newValue.toString()
+      });
+      
+      if (error) throw error;
+      
+      toast.success(newValue ? 'Integração ativada!' : 'Integração desativada!');
+    } catch (error) {
+      console.error('Error saving enabled state:', error);
+      setEnabled(!newValue); // Revert on error
+      toast.error('Erro ao salvar configuração');
+    } finally {
+      setSavingEnabled(false);
+    }
+  };
+
+  const handleSaveToken = async () => {
+    if (!apiToken.trim()) {
+      toast.error('Digite o token da API');
+      return;
+    }
+    
     try {
       setSaving(true);
 
-      // Use update_user_setting to save with current user's ID
-      const { error: enabledError } = await supabase.rpc('update_user_setting', {
-        setting_key: 'utmify_enabled',
-        setting_value: enabled.toString()
+      const { error: tokenError } = await supabase.rpc('update_user_setting', {
+        setting_key: 'utmify_api_token',
+        setting_value: apiToken.trim()
       });
 
-      if (enabledError) throw enabledError;
+      if (tokenError) throw tokenError;
+      setIsConfigured(true);
 
-      if (apiToken.trim()) {
-        const { error: tokenError } = await supabase.rpc('update_user_setting', {
-          setting_key: 'utmify_api_token',
-          setting_value: apiToken.trim()
-        });
-
-        if (tokenError) throw tokenError;
-        setIsConfigured(true);
-      }
-
-      toast.success('Configurações do Utmify salvas com sucesso!');
+      toast.success('Token salvo com sucesso!');
     } catch (error) {
-      console.error('Error saving Utmify settings:', error);
-      toast.error('Erro ao salvar configurações');
+      console.error('Error saving Utmify token:', error);
+      toast.error('Erro ao salvar token');
     } finally {
       setSaving(false);
     }
@@ -337,10 +356,14 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
                 Enviar eventos de PIX automaticamente
               </p>
             </div>
-            <Switch
-              checked={enabled}
-              onCheckedChange={setEnabled}
-            />
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={enabled}
+                onCheckedChange={handleEnabledChange}
+                disabled={savingEnabled}
+              />
+              {savingEnabled && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+            </div>
           </div>
 
           {/* API Token - Compact */}
@@ -370,14 +393,14 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
             </p>
           </div>
 
-          {/* Save Button */}
-          <Button onClick={handleSave} disabled={saving} size="sm" className="h-8">
+          {/* Save Token Button */}
+          <Button onClick={handleSaveToken} disabled={saving} size="sm" className="h-8">
             {saving ? (
               <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             ) : (
               <Save className="w-3.5 h-3.5 mr-1.5" />
             )}
-            Salvar
+            Salvar Token
           </Button>
         </CardContent>
       </Card>
