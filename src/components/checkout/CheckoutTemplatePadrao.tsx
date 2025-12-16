@@ -394,7 +394,7 @@ export function CheckoutTemplatePadrao({
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{offer.name}</h3>
+                        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{product?.name || offer.name}</h3>
                         <p className="text-xs text-gray-500 mt-1">Acesso imediato</p>
                       </div>
                     </div>
