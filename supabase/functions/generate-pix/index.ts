@@ -146,6 +146,32 @@ async function getRateLimitConfig(): Promise<RateLimitConfig> {
   }
 }
 
+// Log rate limit event to database
+async function logRateLimitEvent(
+  fingerprint: string | undefined, 
+  clientIp: string | undefined, 
+  eventType: 'blocked' | 'cooldown',
+  reason: string,
+  unpaidCount?: number
+): Promise<void> {
+  const supabase = getSupabaseClient();
+  
+  try {
+    await supabase
+      .from('rate_limit_events')
+      .insert({
+        fingerprint_hash: fingerprint || clientIp || 'unknown',
+        ip_address: clientIp || null,
+        event_type: eventType,
+        reason: reason,
+        unpaid_count: unpaidCount || null,
+      });
+    console.log(`[RATE-LIMIT] Event logged: ${eventType} - ${reason}`);
+  } catch (err) {
+    console.error('[RATE-LIMIT] Error logging event:', err);
+  }
+}
+
 // Check rate limit for fingerprint/IP
 async function checkRateLimit(fingerprint: string | undefined, clientIp: string | undefined, config: RateLimitConfig): Promise<RateLimitResult> {
   // If rate limiting is disabled, allow all
@@ -189,6 +215,10 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
     if (rateLimitRecord.blocked_until && new Date(rateLimitRecord.blocked_until) > now) {
       const retryAfter = Math.ceil((new Date(rateLimitRecord.blocked_until).getTime() - now.getTime()) / 1000);
       console.log(`[RATE-LIMIT] Device is blocked until ${rateLimitRecord.blocked_until}, retry after ${retryAfter}s`);
+      
+      // Log blocked event
+      await logRateLimitEvent(fingerprint, clientIp, 'blocked', 'device_blocked', rateLimitRecord.unpaid_count);
+      
       return {
         allowed: false,
         reason: 'BLOCKED',
@@ -205,6 +235,10 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
       if (secondsSinceLastGen < config.cooldownSeconds) {
         const retryAfter = Math.ceil(config.cooldownSeconds - secondsSinceLastGen);
         console.log(`[RATE-LIMIT] Cooldown active, retry after ${retryAfter}s`);
+        
+        // Log cooldown event
+        await logRateLimitEvent(fingerprint, clientIp, 'cooldown', 'cooldown_active', rateLimitRecord.unpaid_count);
+        
         return {
           allowed: false,
           reason: 'COOLDOWN',
@@ -243,6 +277,9 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
       
       const retryAfter = config.windowHours * 60 * 60;
       console.log(`[RATE-LIMIT] Max unpaid PIX reached (${rateLimitRecord.unpaid_count}), blocking for ${config.windowHours}h`);
+      
+      // Log max_unpaid event
+      await logRateLimitEvent(fingerprint, clientIp, 'blocked', 'max_unpaid', rateLimitRecord.unpaid_count);
       
       return {
         allowed: false,

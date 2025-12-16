@@ -1234,6 +1234,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          fingerprint_hash: string
+          id: string
+          ip_address: string | null
+          reason: string | null
+          unpaid_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          fingerprint_hash: string
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          unpaid_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          fingerprint_hash?: string
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          unpaid_count?: number | null
+        }
+        Relationships: []
+      }
       retry_configurations: {
         Row: {
           acquirer_order: string[]
@@ -1688,6 +1718,7 @@ export type Database = {
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
+      cleanup_old_rate_limit_events: { Args: never; Returns: undefined }
       collect_db_performance_metrics: { Args: never; Returns: undefined }
       create_full_system_backup: {
         Args: { p_backup_name?: string }
@@ -1864,6 +1895,14 @@ export type Database = {
           product_name: string
           product_price: number
           type: string
+        }[]
+      }
+      get_rate_limit_chart_data: {
+        Args: { p_days?: number }
+        Returns: {
+          blocks: number
+          cooldowns: number
+          date: string
         }[]
       }
       get_rate_limit_stats: { Args: never; Returns: Json }
