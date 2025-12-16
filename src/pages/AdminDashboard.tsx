@@ -735,7 +735,7 @@ const AdminDashboard = () => {
                       textAnchor={isTabletOrSmaller ? "end" : "middle"} 
                       tickLine={false} 
                       axisLine={false} 
-                      interval={chartFilter === 'today' ? 1 : 0}
+                      interval={0}
                       ticks={chartFilter === 'today' ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'] : undefined}
                       height={isTabletOrSmaller ? 50 : 30} 
                     />
