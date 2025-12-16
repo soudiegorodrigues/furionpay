@@ -170,7 +170,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
     const baseDomain = offer.domain 
       ? `https://${offer.domain}` 
       : window.location.origin;
-    return `${baseDomain}/checkout/${offer.offer_code}`;
+    return `${baseDomain}/${offer.offer_code}`;
   };
 
   const copyLink = (offer: ProductOffer) => {
