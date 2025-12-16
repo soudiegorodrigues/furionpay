@@ -355,30 +355,6 @@ export default function AdminProducts() {
                       <Image className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground" />
                     </div>
                   )}
-                  <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button 
-                      size="icon" 
-                      variant="secondary" 
-                      className="h-6 w-6 sm:h-8 sm:w-8" 
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate(`/admin/products/${product.id}`);
-                      }}
-                    >
-                      <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                    <Button 
-                      size="icon" 
-                      variant="destructive" 
-                      className="h-6 w-6 sm:h-8 sm:w-8" 
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleDeleteProduct(product.id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  </div>
                 </div>
                 <CardContent className="p-2 sm:p-4">
                   <div>
@@ -392,6 +368,32 @@ export default function AdminProducts() {
                     <p className="text-[10px] sm:text-xs text-muted-foreground">
                       Preço máximo: R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
+                  </div>
+                  <div className="flex gap-2 mt-3 pt-3 border-t">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-1 h-8 text-xs"
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate(`/admin/products/${product.id}`);
+                      }}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive" 
+                      className="flex-1 h-8 text-xs"
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleDeleteProduct(product.id);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Excluir
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
