@@ -746,18 +746,8 @@ const AdminDashboard = () => {
                       fill="url(#areaGradientPaid)"
                       animationDuration={800}
                       animationEasing="ease-out"
-                      dot={{
-                        r: 4,
-                        fill: "hsl(var(--primary))",
-                        stroke: "hsl(var(--background))",
-                        strokeWidth: 2
-                      }}
-                      activeDot={{
-                        r: 6,
-                        fill: "hsl(var(--primary))",
-                        stroke: "hsl(var(--background))",
-                        strokeWidth: 2
-                      }}
+                      dot={false}
+                      activeDot={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
