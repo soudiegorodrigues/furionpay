@@ -584,7 +584,7 @@ const AdminDashboard = () => {
 
       {/* Banner */}
       {bannerUrl && <div className="rounded-lg overflow-hidden border border-border">
-          <img src={bannerUrl} alt="Banner do Dashboard" className="w-full h-auto object-cover max-h-[200px]" onError={e => {
+          <img src={bannerUrl} alt="Banner do Dashboard" className="w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px]" onError={e => {
         (e.target as HTMLImageElement).style.display = 'none';
       }} />
         </div>}
