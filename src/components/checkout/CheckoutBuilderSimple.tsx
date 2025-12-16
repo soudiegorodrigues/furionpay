@@ -243,6 +243,19 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         showBackRedirect: !!(config as any).back_redirect_url,
         backRedirectUrl: (config as any).back_redirect_url || "",
       });
+      
+      // Mapear template salvo para o modelo correto
+      if (config.template) {
+        const templateMap: Record<string, string> = {
+          "padrao": "modelo-padrao",
+          "padrão": "modelo-padrao",
+          "afilia": "modelo-clean",
+          "vega": "modelo-dark",
+          "multistep": "modelo-minimal",
+        };
+        const modelId = templateMap[config.template.toLowerCase()] || "modelo-padrao";
+        setSelectedModelId(modelId);
+      }
     }
   }, [config]);
 
@@ -347,11 +360,11 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      let templateString = "padrao";
-      if (selectedTemplate) {
-        const name = selectedTemplate.name.toLowerCase();
-        templateString = name === "padrão" ? "padrao" : name;
-      }
+      // Use o modelo selecionado do array estático templateModels
+      const selectedModel = templateModels.find(m => m.id === selectedModelId);
+      let templateString = selectedModel?.templateName || "padrão";
+      // Normalizar para o formato do banco de dados
+      if (templateString === "padrão") templateString = "padrao";
 
       const configData = {
         product_id: productId,
@@ -405,7 +418,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     return () => {
       delete (window as any).__checkoutSaveConfig;
     };
-  }, [selectedTemplateId, primaryColor, customizations, bannerImageUrl, requiredFields]);
+  }, [selectedTemplateId, primaryColor, customizations, bannerImageUrl, requiredFields, selectedModelId]);
 
   const colors = [
     "#16a34a", "#dc2626", "#ea580c", "#eab308", "#06b6d4", "#3b82f6",
