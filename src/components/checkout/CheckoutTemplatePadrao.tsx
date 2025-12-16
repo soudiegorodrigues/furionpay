@@ -505,23 +505,6 @@ export function CheckoutTemplatePadrao({
                     </>
                   )}
 
-                  {/* Trust Badges */}
-                  {config?.show_security_badges !== false && (
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <Shield className="h-4 w-4 text-green-500" />
-                        <span>Garantia de 7 dias</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <Zap className="h-4 w-4 text-green-500" />
-                        <span>Acesso liberado na hora</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <Gift className="h-4 w-4 text-green-500" />
-                        <span>Bônus exclusivos inclusos</span>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
