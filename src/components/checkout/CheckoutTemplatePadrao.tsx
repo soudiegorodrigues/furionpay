@@ -83,17 +83,15 @@ export function CheckoutTemplatePadrao({
 
       {/* Banner Image */}
       {config?.show_banners && config?.header_logo_url && (
-        <div className="container max-w-4xl mx-auto px-4 pt-1 pb-4 md:pt-2 md:pb-6">
-          <div className="w-full aspect-[16/9] md:aspect-[21/9]">
-            <img 
-              src={config.header_logo_url} 
-              alt="Banner" 
-              className="w-full h-full md:rounded-lg object-contain"
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-            />
-          </div>
+        <div className="container max-w-4xl mx-auto px-4 pt-4">
+          <img 
+            src={config.header_logo_url} 
+            alt="Banner" 
+            className="w-full rounded-lg object-cover"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
         </div>
       )}
 
