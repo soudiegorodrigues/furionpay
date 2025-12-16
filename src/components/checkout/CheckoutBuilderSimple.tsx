@@ -100,7 +100,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [isUploadingPopupImage, setIsUploadingPopupImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const popupImageInputRef = useRef<HTMLInputElement>(null);
-  const [configTab, setConfigTab] = useState("aparencia");
+  const [configTab, setConfigTab] = useState("templates");
 
   // States
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -407,7 +407,11 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       <Card>
         <CardContent className="p-4">
           <Tabs value={configTab} onValueChange={setConfigTab}>
-                <TabsList className="w-full grid grid-cols-3 mb-4">
+                <TabsList className="w-full grid grid-cols-4 mb-4">
+                  <TabsTrigger value="templates" className="gap-1 text-xs">
+                    <LayoutGrid className="h-3 w-3" />
+                    Templates
+                  </TabsTrigger>
                   <TabsTrigger value="aparencia" className="gap-1 text-xs">
                     <Palette className="h-3 w-3" />
                     Aparência
@@ -422,8 +426,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   </TabsTrigger>
                 </TabsList>
 
-                {/* TAB: Aparência */}
-                <TabsContent value="aparencia" className="space-y-4 mt-0">
+                {/* TAB: Templates */}
+                <TabsContent value="templates" className="space-y-4 mt-0">
                   {/* Template Models Gallery */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-2">
@@ -466,7 +470,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </div>
                   </div>
 
-                  {/* Template Selection */}
+                  {/* Template Base Selection */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-2">
                       <LayoutTemplate className="h-4 w-4" />
@@ -474,7 +478,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     </Label>
                     <div className="space-y-2">
                       {templates?.map((template) => (
-                          <div
+                        <div
                           key={template.id}
                           className={cn(
                             "p-2 border rounded-lg cursor-pointer transition-all",
@@ -499,7 +503,10 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       ))}
                     </div>
                   </div>
+                </TabsContent>
 
+                {/* TAB: Aparência */}
+                <TabsContent value="aparencia" className="space-y-4 mt-0">
                   {/* Color */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-2">
