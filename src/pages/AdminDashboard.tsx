@@ -817,7 +817,6 @@ const AdminDashboard = () => {
                         {/* Imagem da placa */}
                         <div className="flex justify-center">
                           <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-red-400 rounded-xl blur-2xl opacity-30" />
                             {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="relative w-44 h-44 object-contain drop-shadow-xl" /> : <div className="relative w-44 h-44 flex items-center justify-center">
                                 <Trophy className="h-16 w-16 text-primary drop-shadow-xl" />
                               </div>}
