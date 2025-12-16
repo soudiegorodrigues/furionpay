@@ -175,18 +175,30 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
     try {
       setSaving(true);
 
-      const { error: tokenError } = await supabase.rpc('update_user_setting', {
-        setting_key: 'utmify_api_token',
-        setting_value: apiToken.trim()
-      });
+      // Auto-activate integration when saving token
+      setEnabled(true);
 
-      if (tokenError) throw tokenError;
+      // Save both token and enabled state together
+      const [tokenResult, enabledResult] = await Promise.all([
+        supabase.rpc('update_user_setting', {
+          setting_key: 'utmify_api_token',
+          setting_value: apiToken.trim()
+        }),
+        supabase.rpc('update_user_setting', {
+          setting_key: 'utmify_enabled',
+          setting_value: 'true'
+        })
+      ]);
+
+      if (tokenResult.error) throw tokenResult.error;
+      if (enabledResult.error) throw enabledResult.error;
+      
       setIsConfigured(true);
-
-      toast.success('Token salvo com sucesso!');
+      toast.success('Integração ativada e configurada!');
     } catch (error) {
-      console.error('Error saving Utmify token:', error);
-      toast.error('Erro ao salvar token');
+      console.error('Error saving Utmify settings:', error);
+      setEnabled(false); // Revert on error
+      toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }
@@ -400,7 +412,7 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
             ) : (
               <Save className="w-3.5 h-3.5 mr-1.5" />
             )}
-            Salvar Token
+            {isConfigured ? 'Atualizar Token' : 'Salvar e Ativar'}
           </Button>
         </CardContent>
       </Card>
