@@ -49,6 +49,14 @@ export function ApiKeysSection() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editWebhookUrl, setEditWebhookUrl] = useState('');
+  const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
+
+  function toggleKeyVisibility(clientId: string) {
+    setVisibleKeys(prev => ({
+      ...prev,
+      [clientId]: !prev[clientId]
+    }));
+  }
 
   useEffect(() => {
     loadApiClients();
@@ -266,8 +274,7 @@ export function ApiKeysSection() {
           </Button>
         </div>
 
-      {/* Lista de API Keys */}
-      <div className="grid gap-4">
+        {/* Lista de API Keys - Tabela */}
         {apiClients.length === 0 ? (
           <Card className="p-8 text-center">
             <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -281,73 +288,65 @@ export function ApiKeysSection() {
             </Button>
           </Card>
         ) : (
-          apiClients.map((client) => (
-            <Card key={client.id} className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium">{client.name}</h3>
-                    <Badge variant={client.is_active ? "default" : "secondary"}>
-                      {client.is_active ? 'Ativa' : 'Inativa'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <code className="bg-muted px-2 py-0.5 rounded text-xs">
-                      {client.api_key_prefix}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyToClipboard(client.api_key_prefix, 'Prefixo da API key');
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                    <span>•</span>
-                    <span>{client.total_requests.toLocaleString()} requests</span>
-                    {client.last_request_at && (
-                      <>
-                        <span>•</span>
-                        <span>Último: {formatDate(client.last_request_at)}</span>
-                      </>
-                    )}
-                  </div>
-                  {client.webhook_url && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                      <Globe className="h-3 w-3" />
-                      <span className="truncate max-w-[300px]">{client.webhook_url}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={client.is_active}
-                    onCheckedChange={(checked) => toggleApiKey(client.id, checked)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => loadClientDetails(client)}
-                  >
-                    <Activity className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteApiKey(client.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Chave de API</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Criada em</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {apiClients.map((client) => (
+                    <tr key={client.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <code className="text-sm font-mono text-foreground">
+                          {visibleKeys[client.id] ? client.api_key_prefix : '••••••••••••••••••••••••••••••••••'}
+                        </code>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {formatDate(client.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => toggleKeyVisibility(client.id)}
+                            title={visibleKeys[client.id] ? 'Esconder' : 'Mostrar'}
+                          >
+                            {visibleKeys[client.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => copyToClipboard(client.api_key_prefix, 'API Key')}
+                            title="Copiar"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => deleteApiKey(client.id)}
+                            title="Deletar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
-      </div>
 
       {/* Dialog: Criar API Key */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
