@@ -62,8 +62,8 @@ const App = () => (
               <Route path="/login" element={<AdminAuth />} />
               <Route path="/cadastro" element={<AdminAuth />} />
               
-              {/* Public checkout route */}
-              <Route path="/checkout/:offerCode" element={
+              {/* Public checkout route - simplified URL without /checkout prefix */}
+              <Route path="/:offerCode" element={
                 <Suspense fallback={<PageSkeleton />}>
                   <PublicCheckout />
                 </Suspense>
