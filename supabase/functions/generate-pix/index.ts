@@ -3,10 +3,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-forwarded-for, x-real-ip',
 };
 
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
+
+// Rate Limit Configuration
+const RATE_LIMIT_CONFIG = {
+  maxUnpaidPix: 3,           // Máximo 3 PIX não pagos
+  windowHours: 36,           // Janela de 36 horas
+  cooldownSeconds: 30,       // 30 segundos entre gerações
+};
 
 // Random names for anonymous donations
 const RANDOM_NAMES = [
@@ -51,6 +58,7 @@ interface GeneratePixRequest {
   customerDocument?: string;
   userId?: string;
   popupModel?: string;
+  fingerprint?: string;
   utmParams?: {
     utm_source?: string;
     utm_medium?: string;
@@ -72,10 +80,184 @@ interface RetryConfig {
   delay_between_retries_ms: number;
 }
 
+interface RateLimitResult {
+  allowed: boolean;
+  reason?: string;
+  retryAfter?: number;
+  unpaidCount?: number;
+}
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   return createClient(supabaseUrl, supabaseServiceKey);
+}
+
+// Check rate limit for fingerprint/IP
+async function checkRateLimit(fingerprint: string | undefined, clientIp: string | undefined): Promise<RateLimitResult> {
+  const supabase = getSupabaseClient();
+  
+  // If no fingerprint provided, use IP only
+  const identifier = fingerprint || clientIp;
+  if (!identifier) {
+    console.log('[RATE-LIMIT] No fingerprint or IP available, allowing request');
+    return { allowed: true };
+  }
+
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - (RATE_LIMIT_CONFIG.windowHours * 60 * 60 * 1000));
+
+  try {
+    // Get or create rate limit record
+    let { data: rateLimitRecord, error: fetchError } = await supabase
+      .from('pix_rate_limits')
+      .select('*')
+      .eq('fingerprint_hash', identifier)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('[RATE-LIMIT] Error fetching rate limit:', fetchError);
+      return { allowed: true }; // Allow on error to not block legitimate users
+    }
+
+    // If no record exists, this is a new device
+    if (!rateLimitRecord) {
+      console.log('[RATE-LIMIT] New device, creating record');
+      return { allowed: true };
+    }
+
+    // Check if blocked
+    if (rateLimitRecord.blocked_until && new Date(rateLimitRecord.blocked_until) > now) {
+      const retryAfter = Math.ceil((new Date(rateLimitRecord.blocked_until).getTime() - now.getTime()) / 1000);
+      console.log(`[RATE-LIMIT] Device is blocked until ${rateLimitRecord.blocked_until}, retry after ${retryAfter}s`);
+      return {
+        allowed: false,
+        reason: 'BLOCKED',
+        retryAfter,
+        unpaidCount: rateLimitRecord.unpaid_count
+      };
+    }
+
+    // Check cooldown (30 seconds between generations)
+    if (rateLimitRecord.last_generation_at) {
+      const lastGen = new Date(rateLimitRecord.last_generation_at);
+      const secondsSinceLastGen = (now.getTime() - lastGen.getTime()) / 1000;
+      
+      if (secondsSinceLastGen < RATE_LIMIT_CONFIG.cooldownSeconds) {
+        const retryAfter = Math.ceil(RATE_LIMIT_CONFIG.cooldownSeconds - secondsSinceLastGen);
+        console.log(`[RATE-LIMIT] Cooldown active, retry after ${retryAfter}s`);
+        return {
+          allowed: false,
+          reason: 'COOLDOWN',
+          retryAfter,
+          unpaidCount: rateLimitRecord.unpaid_count
+        };
+      }
+    }
+
+    // Check if record is within the time window
+    const recordUpdated = new Date(rateLimitRecord.updated_at);
+    if (recordUpdated < windowStart) {
+      // Reset count if outside window
+      console.log('[RATE-LIMIT] Outside window, resetting count');
+      await supabase
+        .from('pix_rate_limits')
+        .update({ 
+          unpaid_count: 0, 
+          updated_at: now.toISOString(),
+          blocked_until: null 
+        })
+        .eq('id', rateLimitRecord.id);
+      
+      return { allowed: true, unpaidCount: 0 };
+    }
+
+    // Check unpaid count limit
+    if (rateLimitRecord.unpaid_count >= RATE_LIMIT_CONFIG.maxUnpaidPix) {
+      // Block for 36 hours
+      const blockedUntil = new Date(now.getTime() + (RATE_LIMIT_CONFIG.windowHours * 60 * 60 * 1000));
+      
+      await supabase
+        .from('pix_rate_limits')
+        .update({ blocked_until: blockedUntil.toISOString() })
+        .eq('id', rateLimitRecord.id);
+      
+      const retryAfter = RATE_LIMIT_CONFIG.windowHours * 60 * 60;
+      console.log(`[RATE-LIMIT] Max unpaid PIX reached (${rateLimitRecord.unpaid_count}), blocking for ${RATE_LIMIT_CONFIG.windowHours}h`);
+      
+      return {
+        allowed: false,
+        reason: 'MAX_UNPAID',
+        retryAfter,
+        unpaidCount: rateLimitRecord.unpaid_count
+      };
+    }
+
+    console.log(`[RATE-LIMIT] Allowed. Current unpaid count: ${rateLimitRecord.unpaid_count}`);
+    return { allowed: true, unpaidCount: rateLimitRecord.unpaid_count };
+
+  } catch (err) {
+    console.error('[RATE-LIMIT] Unexpected error:', err);
+    return { allowed: true }; // Allow on error
+  }
+}
+
+// Update rate limit record after PIX generation
+async function updateRateLimitRecord(fingerprint: string | undefined, clientIp: string | undefined): Promise<void> {
+  const supabase = getSupabaseClient();
+  
+  const identifier = fingerprint || clientIp;
+  if (!identifier) return;
+
+  const now = new Date().toISOString();
+
+  try {
+    // Check if record exists
+    const { data: existing } = await supabase
+      .from('pix_rate_limits')
+      .select('id, unpaid_count')
+      .eq('fingerprint_hash', identifier)
+      .maybeSingle();
+
+    if (existing) {
+      // Update existing record - increment unpaid_count
+      const { error: updateError } = await supabase
+        .from('pix_rate_limits')
+        .update({
+          unpaid_count: existing.unpaid_count + 1,
+          last_generation_at: now,
+          updated_at: now,
+          ip_address: clientIp || null,
+        })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        console.error('[RATE-LIMIT] Error updating record:', updateError);
+      } else {
+        console.log(`[RATE-LIMIT] Updated unpaid_count to ${existing.unpaid_count + 1} for fingerprint: ${identifier.substring(0, 8)}...`);
+      }
+    } else {
+      // Insert new record
+      const { error: insertError } = await supabase
+        .from('pix_rate_limits')
+        .insert({
+          fingerprint_hash: identifier,
+          ip_address: clientIp || null,
+          unpaid_count: 1,
+          last_generation_at: now,
+          updated_at: now,
+        });
+
+      if (insertError) {
+        console.error('[RATE-LIMIT] Error inserting record:', insertError);
+      } else {
+        console.log(`[RATE-LIMIT] Created new rate limit record for fingerprint: ${identifier.substring(0, 8)}...`);
+      }
+    }
+
+  } catch (err) {
+    console.error('[RATE-LIMIT] Error updating rate limit record:', err);
+  }
 }
 
 // Get user fee config or default
@@ -318,30 +500,41 @@ async function logPixGenerated(
   popupModel?: string,
   feePercentage?: number,
   feeFixed?: number,
-  acquirer: string = 'spedpay'
+  acquirer: string = 'spedpay',
+  fingerprintHash?: string,
+  clientIp?: string
 ): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.rpc('log_pix_generated_user', {
-      p_amount: amount,
-      p_txid: txid,
-      p_pix_code: pixCode,
-      p_donor_name: donorName,
-      p_utm_data: utmData || null,
-      p_product_name: productName || null,
-      p_user_id: userId || null,
-      p_popup_model: popupModel || null,
-      p_fee_percentage: feePercentage ?? null,
-      p_fee_fixed: feeFixed ?? null,
-      p_acquirer: acquirer
-    });
+    
+    // Insert with fingerprint and IP
+    const { data, error } = await supabase
+      .from('pix_transactions')
+      .insert({
+        amount,
+        txid,
+        pix_code: pixCode,
+        donor_name: donorName,
+        status: 'generated',
+        utm_data: utmData || null,
+        product_name: productName || null,
+        user_id: userId || null,
+        popup_model: popupModel || null,
+        fee_percentage: feePercentage ?? null,
+        fee_fixed: feeFixed ?? null,
+        acquirer,
+        fingerprint_hash: fingerprintHash || null,
+        client_ip: clientIp || null,
+      })
+      .select('id')
+      .single();
     
     if (error) {
       console.error('Error logging PIX transaction:', error);
       return null;
     } else {
-      console.log('PIX transaction logged with ID:', data);
-      return data as string;
+      console.log('PIX transaction logged with ID:', data.id);
+      return data.id as string;
     }
   } catch (err) {
     console.error('Error in logPixGenerated:', err);
@@ -363,6 +556,8 @@ async function callAcquirer(
     popupModel?: string;
     productName: string;
     feeConfig: FeeConfig | null;
+    fingerprint?: string;
+    clientIp?: string;
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string }> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -383,7 +578,9 @@ async function callAcquirer(
           donorName: params.customerName, 
           utmParams: params.utmParams, 
           userId: params.userId, 
-          popupModel: params.popupModel 
+          popupModel: params.popupModel,
+          fingerprint: params.fingerprint,
+          clientIp: params.clientIp,
         }),
       });
       
@@ -411,7 +608,9 @@ async function callAcquirer(
           donorName: params.customerName, 
           utmData: params.utmParams, 
           userId: params.userId, 
-          popupModel: params.popupModel 
+          popupModel: params.popupModel,
+          fingerprint: params.fingerprint,
+          clientIp: params.clientIp,
         }),
       });
       
@@ -476,7 +675,7 @@ async function callAcquirer(
             is_physical: false,
           }
         ],
-        ip: '0.0.0.0',
+        ip: params.clientIp || '0.0.0.0',
       };
 
       const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions`, {
@@ -530,7 +729,7 @@ async function callAcquirer(
         return { success: false, error: 'PIX code not found' };
       }
 
-      // Log to database
+      // Log to database with fingerprint
       await logPixGenerated(
         params.amount, 
         transactionId, 
@@ -542,7 +741,9 @@ async function callAcquirer(
         params.popupModel,
         params.feeConfig?.pix_percentage,
         params.feeConfig?.pix_fixed,
-        'spedpay'
+        'spedpay',
+        params.fingerprint,
+        params.clientIp
       );
 
       await logApiEvent('spedpay', 'success', responseTime);
@@ -569,6 +770,8 @@ async function generatePixWithRetry(
     popupModel?: string;
     productName: string;
     feeConfig: FeeConfig | null;
+    fingerprint?: string;
+    clientIp?: string;
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; acquirerUsed?: string }> {
   const acquirers = retryConfig.acquirer_order;
@@ -626,18 +829,39 @@ async function generatePixWithRetry(
   return { success: false, error: `Falha após ${attemptNumber} tentativas: ${lastError}` };
 }
 
+// Get client IP from request headers
+function getClientIp(req: Request): string | undefined {
+  const xForwardedFor = req.headers.get('x-forwarded-for');
+  if (xForwardedFor) {
+    // Get the first IP in the list (client's original IP)
+    return xForwardedFor.split(',')[0].trim();
+  }
+  
+  const xRealIp = req.headers.get('x-real-ip');
+  if (xRealIp) {
+    return xRealIp;
+  }
+  
+  return undefined;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { amount, customerName, customerEmail, customerDocument, utmParams, userId, popupModel }: GeneratePixRequest = await req.json();
+    const { amount, customerName, customerEmail, customerDocument, utmParams, userId, popupModel, fingerprint }: GeneratePixRequest = await req.json();
+    
+    // Get client IP
+    const clientIp = getClientIp(req);
 
     console.log('User ID:', userId);
     console.log('Popup Model:', popupModel);
     console.log('UTM params received:', utmParams);
     console.log('Amount:', amount);
+    console.log('Fingerprint:', fingerprint ? `${fingerprint.substring(0, 8)}...` : 'not provided');
+    console.log('Client IP:', clientIp);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -645,6 +869,34 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // ============= RATE LIMIT CHECK =============
+    const rateLimitResult = await checkRateLimit(fingerprint, clientIp);
+    
+    if (!rateLimitResult.allowed) {
+      console.log(`[RATE-LIMIT] Request blocked. Reason: ${rateLimitResult.reason}, RetryAfter: ${rateLimitResult.retryAfter}s`);
+      
+      let errorMessage = 'Limite de geração de PIX atingido.';
+      if (rateLimitResult.reason === 'COOLDOWN') {
+        errorMessage = `Aguarde ${rateLimitResult.retryAfter} segundos antes de gerar outro PIX.`;
+      } else if (rateLimitResult.reason === 'MAX_UNPAID') {
+        errorMessage = `Você atingiu o limite de ${RATE_LIMIT_CONFIG.maxUnpaidPix} PIX não pagos. Pague os PIX pendentes ou aguarde ${RATE_LIMIT_CONFIG.windowHours} horas.`;
+      } else if (rateLimitResult.reason === 'BLOCKED') {
+        const hoursRemaining = Math.ceil((rateLimitResult.retryAfter || 0) / 3600);
+        errorMessage = `Sua conta está temporariamente bloqueada. Tente novamente em ${hoursRemaining} hora(s).`;
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: 'RATE_LIMIT',
+          message: errorMessage,
+          retryAfter: rateLimitResult.retryAfter,
+          unpaidCount: rateLimitResult.unpaidCount,
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // ============================================
 
     // Get user fee config
     const feeConfig = await getUserFeeConfig(userId);
@@ -668,10 +920,15 @@ serve(async (req) => {
         userId,
         popupModel,
         productName,
-        feeConfig
+        feeConfig,
+        fingerprint,
+        clientIp
       });
       
       if (result.success) {
+        // Update rate limit record after successful generation
+        await updateRateLimitRecord(fingerprint, clientIp);
+        
         return new Response(
           JSON.stringify({
             success: true,
@@ -716,10 +973,15 @@ serve(async (req) => {
       userId,
       popupModel,
       productName,
-      feeConfig
+      feeConfig,
+      fingerprint,
+      clientIp
     });
 
     if (result.success) {
+      // Update rate limit record after successful generation
+      await updateRateLimitRecord(fingerprint, clientIp);
+      
       return new Response(
         JSON.stringify({
           success: true,

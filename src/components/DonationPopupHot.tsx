@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
+import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
 
@@ -41,6 +42,7 @@ export const DonationPopupHot = ({
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const { toast } = useToast();
   const { trackEvent, utmParams: contextUtmParams, setAdvancedMatching } = usePixel();
+  const { getFingerprint } = useDeviceFingerprint();
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
@@ -167,6 +169,8 @@ export const DonationPopupHot = ({
     setStep("loading");
 
     try {
+      const fingerprint = await getFingerprint();
+      
       const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
           amount: fixedAmount,
@@ -176,6 +180,7 @@ export const DonationPopupHot = ({
           customerEmail: email,
           customerPhone: phone,
           popupModel: 'hot',
+          fingerprint,
         },
       });
 
