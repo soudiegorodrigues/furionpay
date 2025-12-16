@@ -1043,6 +1043,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 bannerImageUrl={bannerImageUrl}
                 previewMode={previewMode}
                 testimonials={testimonials}
+                deliveryDescription={customizations.deliveryDescription}
               />
             </ScrollArea>
           </div>
@@ -1070,6 +1071,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   showBanner={customizations.showBanner}
                   bannerImageUrl={bannerImageUrl}
                   previewMode="desktop"
+                  deliveryDescription={customizations.deliveryDescription}
                 />
               )}
             </div>
