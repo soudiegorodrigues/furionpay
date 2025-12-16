@@ -34,19 +34,19 @@ interface ProductFolder {
 // Skeleton Card Component
 const ProductSkeleton = () => (
   <Card className="overflow-hidden">
-    <div className="aspect-square bg-muted animate-pulse" />
-    <CardContent className="p-4 space-y-3">
+    <div className="aspect-[4/3] bg-muted animate-pulse" />
+    <CardContent className="p-2 sm:p-4 space-y-2 sm:space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 space-y-2">
-          <div className="h-5 bg-muted animate-pulse rounded w-3/4" />
-          <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+          <div className="h-4 sm:h-5 bg-muted animate-pulse rounded w-3/4" />
+          <div className="h-3 sm:h-4 bg-muted animate-pulse rounded w-1/2" />
         </div>
-        <div className="h-6 bg-muted animate-pulse rounded w-16" />
+        <div className="h-5 sm:h-6 bg-muted animate-pulse rounded w-14 sm:w-16" />
       </div>
-      <div className="space-y-1 mt-3">
-        <div className="h-3 bg-muted animate-pulse rounded w-20" />
-        <div className="h-6 bg-muted animate-pulse rounded w-24" />
-        <div className="h-3 bg-muted animate-pulse rounded w-32" />
+      <div className="space-y-1 mt-2 sm:mt-3">
+        <div className="h-3 bg-muted animate-pulse rounded w-16 sm:w-20" />
+        <div className="h-5 sm:h-6 bg-muted animate-pulse rounded w-20 sm:w-24" />
+        <div className="h-3 bg-muted animate-pulse rounded w-24 sm:w-32" />
       </div>
     </CardContent>
   </Card>
@@ -321,7 +321,7 @@ export default function AdminProducts() {
 
         {/* Products Grid with Skeletons */}
         {isLoadingProducts ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
               <ProductSkeleton key={i} />
             ))}
@@ -335,14 +335,14 @@ export default function AdminProducts() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
                 className="overflow-hidden group cursor-pointer" 
                 onClick={() => navigate(`/admin/products/${product.id}`)}
               >
-                <div className="aspect-square bg-muted relative">
+                <div className="aspect-[4/3] bg-muted relative">
                   {product.image_url ? (
                     <img 
                       src={product.image_url} 
@@ -352,54 +352,54 @@ export default function AdminProducts() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Image className="h-12 w-12 text-muted-foreground" />
+                      <Image className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground" />
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button 
                       size="icon" 
                       variant="secondary" 
-                      className="h-8 w-8" 
+                      className="h-6 w-6 sm:h-8 sm:w-8" 
                       onClick={e => {
                         e.stopPropagation();
                         navigate(`/admin/products/${product.id}`);
                       }}
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                     <Button 
                       size="icon" 
                       variant="destructive" 
-                      className="h-8 w-8" 
+                      className="h-6 w-6 sm:h-8 sm:w-8" 
                       onClick={e => {
                         e.stopPropagation();
                         handleDeleteProduct(product.id);
                       }}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </div>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
+                <CardContent className="p-2 sm:p-4">
+                  <div className="flex items-start justify-between gap-1 sm:gap-2">
                     <div className="min-w-0">
-                      <h3 className="font-semibold truncate">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {product.description || "Sem descrição"}
                       </p>
                     </div>
-                    <Badge variant={product.is_active ? "default" : "secondary"} className="shrink-0">
-                      {product.is_active ? <CheckCircle className="h-3 w-3 mr-1" /> : null}
+                    <Badge variant={product.is_active ? "default" : "secondary"} className="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                      {product.is_active ? <CheckCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" /> : null}
                       {product.is_active ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>
-                  <div className="mt-3">
-                    <p className="text-sm text-muted-foreground">Receba até</p>
-                    <p className="text-lg font-bold text-primary">
+                  <div className="mt-2 sm:mt-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Receba até</p>
+                    <p className="text-base sm:text-lg font-bold text-primary">
                       R$ {(product.price * 0.55).toFixed(2).replace(".", ",")}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Preço máximo do produto: R$ {product.price.toFixed(2).replace(".", ",")}
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      Preço máximo: R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
                 </CardContent>
