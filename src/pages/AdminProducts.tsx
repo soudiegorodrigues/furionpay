@@ -9,11 +9,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X, FolderInput } from "lucide-react";
 
 interface Product {
   id: string;
@@ -207,6 +208,19 @@ export default function AdminProducts() {
       return;
     }
     toast.success("Produto excluído com sucesso");
+    refetchProducts();
+  };
+
+  const handleMoveToFolder = async (productId: string, folderId: string | null) => {
+    const { error } = await supabase
+      .from("products")
+      .update({ folder_id: folderId })
+      .eq("id", productId);
+    if (error) {
+      toast.error("Erro ao mover produto");
+      return;
+    }
+    toast.success(folderId ? "Produto movido para pasta" : "Produto removido da pasta");
     refetchProducts();
   };
 
@@ -459,7 +473,44 @@ export default function AdminProducts() {
                       Preço máximo: R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
-                  <div className="flex gap-2 mt-3 pt-3 border-t">
+                  <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 h-8 text-xs"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <FolderInput className="h-3 w-3 mr-1" />
+                          Pasta
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" onClick={e => e.stopPropagation()}>
+                        <div className="space-y-1">
+                          <Button
+                            variant={!product.folder_id ? "secondary" : "ghost"}
+                            size="sm"
+                            className="w-full justify-start text-xs"
+                            onClick={() => handleMoveToFolder(product.id, null)}
+                          >
+                            Sem pasta
+                          </Button>
+                          {folders.map(folder => (
+                            <Button
+                              key={folder.id}
+                              variant={product.folder_id === folder.id ? "secondary" : "ghost"}
+                              size="sm"
+                              className="w-full justify-start text-xs gap-2"
+                              onClick={() => handleMoveToFolder(product.id, folder.id)}
+                            >
+                              <Folder className="h-3 w-3" style={{ color: folder.color || undefined }} />
+                              {folder.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <Button 
                       size="sm" 
                       variant="outline" 
