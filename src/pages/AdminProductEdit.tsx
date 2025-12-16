@@ -265,23 +265,15 @@ export default function AdminProductEdit() {
           </div>
         )}
 
-        {activeSection === "checkout" ? (
-          // Full-width layout for checkout builder
-          <div className="w-full">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 min-w-0 order-2 lg:order-1">
             {renderSectionContent()}
           </div>
-        ) : (
-          // Normal layout with side navigation
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 min-w-0 order-2 lg:order-1">
-              {renderSectionContent()}
-            </div>
 
-            <div className="lg:w-80 shrink-0 order-1 lg:order-2">
-              <ProductNavigation activeSection={activeSection} setActiveSection={setActiveSection} />
-            </div>
+          <div className="lg:w-80 shrink-0 order-1 lg:order-2">
+            <ProductNavigation activeSection={activeSection} setActiveSection={setActiveSection} />
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
