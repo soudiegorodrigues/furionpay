@@ -100,6 +100,11 @@ export function AdminSidebar({
         </SidebarGroup>
       </SidebarContent>
 
+      {/* Linha separadora antes do footer */}
+      <div className="mx-3">
+        <div className="h-px bg-border" />
+      </div>
+
       {/* Footer moderno */}
       <SidebarFooter className="p-3 mt-auto">
         <div className="bg-gradient-to-r from-muted/40 to-transparent rounded-xl p-2">
