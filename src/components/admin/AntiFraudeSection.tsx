@@ -167,7 +167,7 @@ export function AntiFraudeSection() {
   
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
@@ -181,7 +181,7 @@ export function AntiFraudeSection() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Configuration Card */}
         <Card>
           <CardHeader>
@@ -291,22 +291,22 @@ export function AntiFraudeSection() {
             {stats ? (
               <>
                 {/* Totais Gerais */}
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <div className="flex items-center gap-3">
-                      <ShieldX className="h-6 w-6 text-destructive" />
+                    <div className="flex items-center gap-2">
+                      <ShieldX className="h-5 w-5 text-destructive shrink-0" />
                       <div>
-                        <p className="text-xl font-bold text-destructive">{stats.total_blocked_devices}</p>
+                        <p className="text-lg font-bold text-destructive">{stats.total_blocked_devices}</p>
                         <p className="text-xs text-muted-foreground">Bloqueados agora</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                    <div className="flex items-center gap-3">
-                      <Ban className="h-6 w-6 text-orange-500" />
+                    <div className="flex items-center gap-2">
+                      <Ban className="h-5 w-5 text-orange-500 shrink-0" />
                       <div>
-                        <p className="text-xl font-bold text-orange-500">{stats.blocks_last_24h}</p>
+                        <p className="text-lg font-bold text-orange-500">{stats.blocks_last_24h}</p>
                         <p className="text-xs text-muted-foreground">Bloqueios 24h</p>
                       </div>
                     </div>
@@ -314,7 +314,7 @@ export function AntiFraudeSection() {
                 </div>
 
                 {/* Estatísticas Separadas: Fingerprint vs IP */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Fingerprint Stats */}
                   <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
                     <div className="flex items-center gap-2 mb-2">
@@ -363,17 +363,17 @@ export function AntiFraudeSection() {
                 {/* Total Rastreados */}
                 <div className="p-3 rounded-lg bg-muted border">
                   <div className="flex items-center gap-3">
-                    <Shield className="h-6 w-6 text-muted-foreground" />
+                    <Shield className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-xl font-bold">{stats.total_records}</p>
+                      <p className="text-lg font-bold">{stats.total_records}</p>
                       <p className="text-xs text-muted-foreground">Total rastreados</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="space-y-3">
-                  <Button variant="outline" onClick={loadStats} className="w-full">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button variant="outline" onClick={loadStats} className="flex-1">
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Atualizar
                   </Button>
@@ -382,10 +382,10 @@ export function AntiFraudeSection() {
                     <Button 
                       variant="destructive" 
                       onClick={clearBlockedDevices}
-                      className="w-full"
+                      className="flex-1"
                     >
                       <Ban className="h-4 w-4 mr-2" />
-                      Desbloquear Todos ({stats.total_blocked_devices})
+                      Desbloquear ({stats.total_blocked_devices})
                     </Button>
                   )}
                 </div>
@@ -403,7 +403,7 @@ export function AntiFraudeSection() {
       {/* Info Card */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-6">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Shield className="h-10 w-10 text-primary shrink-0" />
             <div className="space-y-2">
               <h3 className="font-semibold">Como funciona o sistema anti-fraude?</h3>
