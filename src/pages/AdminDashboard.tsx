@@ -700,7 +700,7 @@ const AdminDashboard = () => {
                         <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="hsl(var(--muted-foreground))" opacity={0.15} horizontal={true} vertical={false} />
+                    
                     <XAxis 
                       dataKey="date" 
                       tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
