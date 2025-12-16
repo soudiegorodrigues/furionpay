@@ -455,27 +455,41 @@ async function getUserFeeConfig(userId?: string): Promise<FeeConfig | null> {
   return null;
 }
 
-// Get retry configuration for PIX
+// Get retry configuration for PIX from retry_flow_steps table
 async function getRetryConfig(): Promise<RetryConfig | null> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('retry_configurations')
-    .select('enabled, max_retries, acquirer_order, delay_between_retries_ms')
+  
+  // Fetch active steps from retry_flow_steps table (the table the frontend uses)
+  const { data: steps, error } = await supabase
+    .from('retry_flow_steps')
+    .select('acquirer, step_order')
     .eq('payment_method', 'pix')
-    .maybeSingle();
+    .eq('is_active', true)
+    .order('step_order', { ascending: true });
   
   if (error) {
-    console.log('Error fetching retry config:', error);
+    console.log('[RETRY] Error fetching retry steps:', error);
     return null;
   }
   
-  if (data) {
-    console.log('Retry config loaded:', data);
-    return data as RetryConfig;
+  if (!steps || steps.length === 0) {
+    console.log('[RETRY] No active retry steps configured');
+    return null;
   }
   
-  console.log('No retry config found');
-  return null;
+  // Build acquirer_order array from steps
+  const acquirerOrder = steps.map(s => s.acquirer);
+  
+  // Create config from steps - each acquirer gets 2 attempts before moving to next
+  const config: RetryConfig = {
+    enabled: true,
+    max_retries: steps.length * 2, // 2 attempts per acquirer
+    acquirer_order: acquirerOrder,
+    delay_between_retries_ms: 1000 // 1 second delay between retries
+  };
+  
+  console.log(`[RETRY] Config loaded from retry_flow_steps: acquirers=${acquirerOrder.join(' -> ')}, max_retries=${config.max_retries}`);
+  return config;
 }
 
 async function isAcquirerEnabled(acquirer: string): Promise<boolean> {
