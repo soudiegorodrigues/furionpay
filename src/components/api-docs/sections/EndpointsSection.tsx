@@ -5,49 +5,71 @@ import { ParameterTable } from '../ParameterTable';
 export const EndpointsSection = () => {
   const createPixRequest = `{
   "amount": 150.00,
-  "customer_name": "João Silva",
-  "customer_email": "joao@email.com",
-  "customer_document": "12345678900",
-  "external_id": "pedido-123",
-  "description": "Compra de produto XYZ"
+  "description": "Compra de produto XYZ",
+  "external_reference": "pedido-123",
+  "customer": {
+    "name": "João Silva",
+    "email": "joao@email.com",
+    "document": "12345678900"
+  },
+  "metadata": {
+    "order_id": "123",
+    "custom_field": "valor"
+  }
 }`;
 
   const createPixResponse = `{
   "success": true,
   "data": {
-    "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
     "txid": "PIX123456789",
     "pix_code": "00020126580014br.gov.bcb.pix...",
-    "qr_code_base64": "data:image/png;base64,...",
+    "qr_code_url": "https://api.qrserver.com/...",
     "amount": 150.00,
+    "external_reference": "pedido-123",
     "status": "pending",
-    "expires_at": "2024-01-15T10:30:00Z"
+    "expires_at": "2024-01-15T10:30:00Z",
+    "created_at": "2024-01-15T10:00:00Z"
   }
 }`;
 
   const checkStatusResponse = `{
   "success": true,
   "data": {
-    "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
     "txid": "PIX123456789",
-    "status": "paid",
+    "external_reference": "pedido-123",
     "amount": 150.00,
+    "status": "paid",
     "paid_at": "2024-01-15T10:25:30Z",
-    "customer_name": "João Silva"
+    "expired_at": null,
+    "created_at": "2024-01-15T10:00:00Z",
+    "metadata": {}
   }
 }`;
 
   const createPixParams = [
     { name: 'amount', type: 'number', required: true, description: 'Valor do PIX em reais (mínimo: 0.50)' },
-    { name: 'customer_name', type: 'string', required: true, description: 'Nome completo do cliente' },
-    { name: 'customer_email', type: 'string', required: false, description: 'E-mail do cliente' },
-    { name: 'customer_document', type: 'string', required: false, description: 'CPF/CNPJ do cliente (apenas números)' },
-    { name: 'external_id', type: 'string', required: false, description: 'ID externo para referência no seu sistema' },
     { name: 'description', type: 'string', required: false, description: 'Descrição do pagamento' },
+    { name: 'external_reference', type: 'string', required: false, description: 'ID externo para referência no seu sistema' },
+    { name: 'customer', type: 'object', required: false, description: 'Dados do cliente (objeto)' },
+    { name: 'customer.name', type: 'string', required: false, description: 'Nome completo do cliente' },
+    { name: 'customer.email', type: 'string', required: false, description: 'E-mail do cliente' },
+    { name: 'customer.document', type: 'string', required: false, description: 'CPF/CNPJ do cliente (apenas números)' },
+    { name: 'metadata', type: 'object', required: false, description: 'Dados adicionais em formato chave-valor' },
   ];
 
   const statusParams = [
     { name: 'txid', type: 'string', required: true, description: 'ID da transação retornado na criação do PIX' },
+  ];
+
+  const responseParams = [
+    { name: 'txid', type: 'string', required: true, description: 'Identificador único da transação PIX' },
+    { name: 'pix_code', type: 'string', required: true, description: 'Código copia e cola do PIX' },
+    { name: 'qr_code_url', type: 'string', required: true, description: 'URL da imagem do QR Code' },
+    { name: 'amount', type: 'number', required: true, description: 'Valor do PIX em reais' },
+    { name: 'external_reference', type: 'string', required: false, description: 'Referência externa enviada na criação' },
+    { name: 'status', type: 'string', required: true, description: 'Status da transação' },
+    { name: 'expires_at', type: 'string', required: true, description: 'Data de expiração em ISO 8601' },
+    { name: 'created_at', type: 'string', required: true, description: 'Data de criação em ISO 8601' },
   ];
 
   return (
@@ -80,6 +102,10 @@ export const EndpointsSection = () => {
             <h4 className="text-sm font-semibold mb-2">Response</h4>
             <CodeBlock code={createPixResponse} language="json" />
           </div>
+        </div>
+
+        <div className="mt-6">
+          <ParameterTable parameters={responseParams} title="Response Fields" />
         </div>
       </div>
 
