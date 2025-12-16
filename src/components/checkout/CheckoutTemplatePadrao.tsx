@@ -83,8 +83,8 @@ export function CheckoutTemplatePadrao({
 
       {/* Banner Image */}
       {config?.show_banners && config?.header_logo_url && (
-        <div className="w-full flex justify-center pt-1 pb-4 md:pt-2 md:pb-6">
-          <div className="w-full md:max-w-5xl aspect-[16/9] md:aspect-[21/9]">
+        <div className="w-full flex justify-center pt-1 pb-4 md:pt-2 md:pb-6 px-4">
+          <div className="w-full max-w-4xl aspect-[16/9] md:aspect-[21/9]">
             <img 
               src={config.header_logo_url} 
               alt="Banner" 
