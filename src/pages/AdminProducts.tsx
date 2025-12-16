@@ -34,7 +34,7 @@ interface ProductFolder {
 // Skeleton Card Component
 const ProductSkeleton = () => (
   <Card className="overflow-hidden">
-    <div className="aspect-[4/3] bg-muted animate-pulse" />
+    <div className="aspect-video bg-muted animate-pulse" />
     <CardContent className="p-2 sm:p-4 space-y-2 sm:space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 space-y-2">
@@ -321,7 +321,7 @@ export default function AdminProducts() {
 
         {/* Products Grid with Skeletons */}
         {isLoadingProducts ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
               <ProductSkeleton key={i} />
             ))}
@@ -335,14 +335,14 @@ export default function AdminProducts() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
                 className="overflow-hidden group cursor-pointer" 
                 onClick={() => navigate(`/admin/products/${product.id}`)}
               >
-                <div className="aspect-[4/3] bg-muted relative">
+                <div className="aspect-video bg-muted relative">
                   {product.image_url ? (
                     <img 
                       src={product.image_url} 
