@@ -94,6 +94,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           domain: string
+          domain_type: string
           id: string
           is_active: boolean
           name: string | null
@@ -102,6 +103,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           domain: string
+          domain_type?: string
           id?: string
           is_active?: boolean
           name?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           domain?: string
+          domain_type?: string
           id?: string
           is_active?: boolean
           name?: string | null
