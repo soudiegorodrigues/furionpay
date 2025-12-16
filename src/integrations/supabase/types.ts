@@ -1883,6 +1883,49 @@ export type Database = {
           total_paid: number
         }[]
       }
+      get_public_checkout_config: {
+        Args: { p_product_id: string }
+        Returns: {
+          back_redirect_url: string
+          background_color: string
+          buyer_section_title: string
+          checkout_subtitle: string
+          checkout_title: string
+          countdown_minutes: number
+          custom_button_text: string
+          discount_popup_color: string
+          discount_popup_cta: string
+          discount_popup_image_url: string
+          discount_popup_message: string
+          discount_popup_percentage: number
+          discount_popup_title: string
+          footer_text: string
+          header_logo_url: string
+          id: string
+          payment_section_title: string
+          primary_color: string
+          product_id: string
+          require_address: boolean
+          require_birthdate: boolean
+          require_cpf: boolean
+          require_email_confirmation: boolean
+          require_phone: boolean
+          security_badge_text: string
+          show_banners: boolean
+          show_countdown: boolean
+          show_discount_popup: boolean
+          show_notifications: boolean
+          show_product_image: boolean
+          show_security_badges: boolean
+          show_video: boolean
+          show_whatsapp_button: boolean
+          template: string
+          thank_you_url: string
+          user_id: string
+          video_url: string
+          whatsapp_number: string
+        }[]
+      }
       get_public_offer_by_code: {
         Args: { p_offer_code: string }
         Returns: {
