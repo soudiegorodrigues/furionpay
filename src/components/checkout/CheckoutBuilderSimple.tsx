@@ -42,7 +42,14 @@ import {
   Sparkles,
   FormInput,
   ExternalLink,
+  Eye,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Template models data with template names for preview
 const templateModels = [
@@ -136,6 +143,10 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     showBackRedirect: false,
     backRedirectUrl: "",
   });
+
+  // Preview dialog state
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewingTemplate, setPreviewingTemplate] = useState<string | null>(null);
 
   // Fetch global templates
   const { data: templates } = useQuery({
@@ -465,9 +476,24 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                           {/* Label */}
                           <div className="p-2 bg-background flex items-center justify-between">
                             <span className="text-xs font-medium">{model.name}</span>
-                            {model.isNew && (
-                              <Badge className="text-[10px] h-4 px-1">Novo</Badge>
-                            )}
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewingTemplate(model.templateName);
+                                  setPreviewDialogOpen(true);
+                                }}
+                                title="Ver preview"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                              {model.isNew && (
+                                <Badge className="text-[10px] h-4 px-1">Novo</Badge>
+                              )}
+                            </div>
                           </div>
                           
                           {/* Selected indicator */}
@@ -988,6 +1014,34 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de Preview do Template */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>
+              Preview: {templateModels.find(m => m.templateName === previewingTemplate)?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
+            <div className="border rounded-lg overflow-hidden">
+              {previewingTemplate && (
+                <CheckoutPreviewMini
+                  templateName={previewingTemplate}
+                  productName={productName || "Produto"}
+                  productPrice={productPrice}
+                  primaryColor={primaryColor}
+                  showCountdown={customizations.showCountdown}
+                  showTestimonials={customizations.showTestimonials}
+                  showBanner={customizations.showBanner}
+                  bannerImageUrl={bannerImageUrl}
+                  previewMode="desktop"
+                />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
