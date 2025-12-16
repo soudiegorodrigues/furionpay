@@ -44,30 +44,30 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-// Template models data - placeholders for now
+// Template models data with template names for preview
 const templateModels = [
   {
     id: "modelo-padrao",
     name: "Padrão",
-    previewImage: "/placeholder.svg",
+    templateName: "padrão",
     isNew: false,
   },
   {
     id: "modelo-clean",
     name: "Clean",
-    previewImage: "/placeholder.svg",
+    templateName: "afilia",
     isNew: true,
   },
   {
     id: "modelo-dark",
     name: "Dark",
-    previewImage: "/placeholder.svg",
+    templateName: "vega",
     isNew: false,
   },
   {
     id: "modelo-minimal",
     name: "Minimal",
-    previewImage: "/placeholder.svg",
+    templateName: "multistep",
     isNew: true,
   },
 ];
@@ -446,9 +446,20 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                           )}
                           onClick={() => setSelectedModelId(model.id)}
                         >
-                          {/* Preview Image */}
-                          <div className="w-full h-24 bg-muted flex items-center justify-center">
-                            <LayoutTemplate className="h-8 w-8 text-muted-foreground/50" />
+                          {/* Preview Miniatura */}
+                          <div className="w-full h-24 bg-muted overflow-hidden relative">
+                            <div 
+                              className="absolute inset-0 origin-top-left pointer-events-none"
+                              style={{ transform: 'scale(0.12)', width: '833%', height: '833%' }}
+                            >
+                              <CheckoutPreviewMini
+                                templateName={model.templateName}
+                                productName="Produto"
+                                productPrice={97}
+                                primaryColor={primaryColor}
+                                previewMode="desktop"
+                              />
+                            </div>
                           </div>
                           
                           {/* Label */}
