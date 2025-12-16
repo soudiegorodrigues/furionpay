@@ -226,14 +226,14 @@ export const TaxasSection = () => {
     repassePercentage?: number;
     repasseDays?: number;
   }) => (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b border-border/50 last:border-0 gap-2">
-      <span className="font-medium text-sm">{label}</span>
-      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-        <span className="text-sm bg-muted px-2 py-1 rounded">{formatPercentage(percentage)}</span>
-        <span className="text-sm font-medium">{formatCurrency(fixed)}</span>
+    <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+      <span className="font-medium text-xs">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{formatPercentage(percentage)}</span>
+        <span className="text-xs font-medium">{formatCurrency(fixed)}</span>
         {repassePercentage !== undefined && repasseDays !== undefined && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-            <Clock className="h-3 w-3" />
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+            <Clock className="h-2.5 w-2.5" />
             {repassePercentage}% | D+{repasseDays}
           </div>
         )}
@@ -242,7 +242,7 @@ export const TaxasSection = () => {
   );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -269,20 +269,20 @@ export const TaxasSection = () => {
               Nenhuma taxa configurada. Clique em "Criar nova taxa" para começar.
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {feeConfigs.map((config) => (
                 <Card key={config.id} className="border-l-4 border-l-primary">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg text-primary">
-                      Taxa ID: {config.name}
+                  <CardHeader className="pb-1 px-4 pt-3">
+                    <CardTitle className="text-sm text-primary">
+                      {config.name}
                       {config.is_default && (
-                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                        <span className="ml-2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
                           Padrão
                         </span>
                       )}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-0">
+                  <CardContent className="space-y-0 px-4 pb-3">
                     <FeeRow
                       label="PIX"
                       percentage={config.pix_percentage}
@@ -304,32 +304,32 @@ export const TaxasSection = () => {
                       repassePercentage={config.cartao_repasse_percentage}
                       repasseDays={config.cartao_repasse_days}
                     />
-                    <div className="flex items-center justify-between py-3">
-                      <span className="font-medium text-sm">TAXA DE SAQUE</span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm bg-muted px-2 py-1 rounded">{formatPercentage(config.saque_percentage)}</span>
-                        <span className="text-sm font-medium">{formatCurrency(config.saque_fixed)}</span>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="font-medium text-xs">SAQUE</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{formatPercentage(config.saque_percentage)}</span>
+                        <span className="text-xs font-medium">{formatCurrency(config.saque_fixed)}</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                    <div className="flex gap-2 pt-3">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 gap-2"
+                        className="flex-1 gap-1 text-xs h-8"
                         onClick={() => handleEdit(config)}
                       >
-                        <Edit2 className="h-4 w-4" />
-                        Editar Taxa
+                        <Edit2 className="h-3 w-3" />
+                        Editar
                       </Button>
                       {!config.is_default && (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-2 text-destructive hover:text-destructive"
+                          className="gap-1 text-destructive hover:text-destructive h-8 px-2"
                           onClick={() => handleDelete(config)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
                     </div>
