@@ -340,43 +340,6 @@ export function CheckoutTemplatePadrao({
                     </div>
                   </div>
 
-                  {/* Testimonials Section */}
-                  {config?.show_notifications && testimonials && testimonials.length > 0 && (
-                    <div className="mt-6 pt-4 border-t">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">O que dizem nossos clientes</h3>
-                      <div className="space-y-3">
-                        {testimonials.slice(0, 3).map((testimonial) => (
-                          <div key={testimonial.id} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
-                            {testimonial.author_photo_url ? (
-                              <img
-                                src={testimonial.author_photo_url}
-                                alt={testimonial.author_name}
-                                className="w-8 h-8 rounded-full object-cover shrink-0"
-                                loading="lazy"
-                                decoding="async"
-                                width={32}
-                                height={32}
-                              />
-                            ) : (
-                              <div 
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                                style={{ backgroundColor: getAvatarColor(testimonial.author_name) }}
-                              >
-                                {getInitials(testimonial.author_name)}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-gray-800">{testimonial.author_name}</span>
-                                <StarRating rating={testimonial.rating} />
-                              </div>
-                              <p className="text-xs text-gray-600 mt-0.5">"{testimonial.content}"</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -448,6 +411,47 @@ export function CheckoutTemplatePadrao({
                       <span className="font-medium">+1.847 pessoas compraram</span>
                     </div>
                   </div>
+
+                  {/* Testimonials Section */}
+                  {config?.show_notifications && testimonials && testimonials.length > 0 && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-700 mb-3">O que dizem nossos clientes</h3>
+                        <div className="space-y-3">
+                          {testimonials.slice(0, 3).map((testimonial) => (
+                            <div key={testimonial.id} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
+                              {testimonial.author_photo_url ? (
+                                <img
+                                  src={testimonial.author_photo_url}
+                                  alt={testimonial.author_name}
+                                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                                  loading="lazy"
+                                  decoding="async"
+                                  width={32}
+                                  height={32}
+                                />
+                              ) : (
+                                <div 
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                                  style={{ backgroundColor: getAvatarColor(testimonial.author_name) }}
+                                >
+                                  {getInitials(testimonial.author_name)}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-gray-800">{testimonial.author_name}</span>
+                                  <StarRating rating={testimonial.rating} />
+                                </div>
+                                <p className="text-xs text-gray-600 mt-0.5">"{testimonial.content}"</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {/* Trust Badges */}
                   {config?.show_security_badges !== false && (
