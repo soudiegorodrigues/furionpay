@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -312,40 +312,37 @@ export const FaturamentoSection = () => {
         <CardContent>
           <div className="h-[280px] sm:h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
+              <AreaChart 
                 data={globalChartData} 
-                margin={{ top: 40, right: 10, left: 10, bottom: 20 }}
+                margin={{ top: 20, right: 10, left: 10, bottom: 20 }}
               >
                 <defs>
-                  <linearGradient id="barGradientPaidGlobal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                  <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid 
                   strokeDasharray="3 3" 
                   className="stroke-muted" 
-                  opacity={0.3}
+                  opacity={0.2}
                   vertical={false}
                 />
                 <XAxis 
                   dataKey="date" 
                   tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                  className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
-                  interval={chartFilter === 'today' ? 0 : 'preserveStartEnd'}
+                  interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
                 />
                 <YAxis 
                   tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                  className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
                   width={30}
                 />
                 <Tooltip 
-                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
@@ -360,33 +357,21 @@ export const FaturamentoSection = () => {
                     return [value, name];
                   }}
                 />
-                <Bar 
+                <Area 
+                  type="monotone"
                   dataKey="pagos" 
-                  radius={[6, 6, 0, 0]}
-                  barSize={24}
-                  fill="url(#barGradientPaidGlobal)"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  fill="url(#areaGradientPaid)"
                   animationDuration={800}
                   animationEasing="ease-out"
-                >
-                  <LabelList 
-                    dataKey={(entry: ChartData) => {
-                      if (entry.gerados === 0) return '';
-                      const rate = ((entry.pagos / entry.gerados) * 100).toFixed(0);
-                      return `${rate}%`;
-                    }}
-                    position="top"
-                    fill="hsl(var(--primary))"
-                    fontSize={11}
-                    fontWeight={600}
-                    offset={8}
-                  />
-                </Bar>
-              </BarChart>
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
           <div className="flex items-center justify-center gap-2 mt-4">
             <span className="w-3 h-3 rounded-full bg-primary"></span>
-            <span className="text-xs text-muted-foreground font-medium">Pagos (% conversão)</span>
+            <span className="text-xs text-muted-foreground font-medium">Pagos</span>
           </div>
         </CardContent>
       </Card>
