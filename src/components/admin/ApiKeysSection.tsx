@@ -295,6 +295,17 @@ export function ApiKeysSection() {
                     <code className="bg-muted px-2 py-0.5 rounded text-xs">
                       {client.api_key_prefix}
                     </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(client.api_key_prefix, 'Prefixo da API key');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
                     <span>•</span>
                     <span>{client.total_requests.toLocaleString()} requests</span>
                     {client.last_request_at && (
