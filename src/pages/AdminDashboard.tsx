@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy, Gift, Wallet } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 interface DashboardStats {
   total_generated: number;
@@ -685,85 +685,88 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{
-                  top: 30,
-                  right: 10,
-                  left: 10,
-                  bottom: isTabletOrSmaller ? 40 : 5
-                }} barCategoryGap="5%">
+                  <AreaChart 
+                    data={chartData} 
+                    margin={{
+                      top: 20,
+                      right: 10,
+                      left: 10,
+                      bottom: isTabletOrSmaller ? 40 : 5
+                    }}
+                  >
                     <defs>
-                      <linearGradient id="barGradientPaid" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                      </linearGradient>
-                      <linearGradient id="barGradientGenerated" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.6} />
-                        <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3} />
+                      <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid stroke="hsl(var(--muted-foreground))" opacity={0.15} horizontal={true} vertical={false} />
-                    <XAxis dataKey="date" tick={{
-                    fontSize: 10,
-                    fill: 'hsl(var(--muted-foreground))'
-                  }} angle={isTabletOrSmaller ? -90 : 0} textAnchor={isTabletOrSmaller ? "end" : "middle"} tickLine={false} axisLine={false} interval={0} height={isTabletOrSmaller ? 50 : 30} />
-                    <YAxis tick={{
-                    fontSize: 10,
-                    fill: 'hsl(var(--muted-foreground))'
-                  }} tickLine={false} axisLine={false} allowDecimals={false} hide domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} />
-                    <Tooltip cursor={{
-                    fill: 'hsl(var(--primary) / 0.08)'
-                  }} contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    padding: '12px 16px',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
-                  }} labelStyle={{
-                    color: 'hsl(var(--foreground))',
-                    fontWeight: 600,
-                    marginBottom: '6px'
-                  }} formatter={(value: number, name: string) => {
-                    if (name === 'pagos') return [value, '🔴 Pagos'];
-                    return [value, name];
-                  }} />
-                    <Bar dataKey="pagos" radius={[4, 4, 0, 0]} fill="url(#barGradientPaid)" animationDuration={800} animationEasing="ease-out" barSize={24}>
-                      <LabelList dataKey="pagos" position="top" fontSize={10} fontWeight={600} fill="hsl(var(--primary))" formatter={(value: number, entry: {
-                      gerados?: number;
-                    }) => {
-                      const gerados = entry?.gerados ?? 0;
-                      const rate = gerados > 0 ? Math.round(value / gerados * 100) : 0;
-                      return `${rate}%`;
-                    }} content={({
-                      x,
-                      y,
-                      width,
-                      value,
-                      index
-                    }: {
-                      x?: number;
-                      y?: number;
-                      width?: number;
-                      value?: number;
-                      index?: number;
-                    }) => {
-                      if (typeof index !== 'number' || !chartData[index]) return null;
-                      const gerados = chartData[index].gerados ?? 0;
-                      const pagos = value ?? 0;
-                      const rate = gerados > 0 ? Math.round(pagos / gerados * 100) : 0;
-                      return <text x={(x ?? 0) + (width ?? 0) / 2} y={(y ?? 0) - 6} textAnchor="middle" fontSize={10} fill="hsl(var(--primary))" fontWeight={600}>
-                              {rate}%
-                            </text>;
-                    }} />
-                    </Bar>
-                  </BarChart>
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                      angle={isTabletOrSmaller ? -90 : 0} 
+                      textAnchor={isTabletOrSmaller ? "end" : "middle"} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      interval={0} 
+                      height={isTabletOrSmaller ? 50 : 30} 
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      allowDecimals={false} 
+                      hide 
+                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} 
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        padding: '12px 16px',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
+                      }} 
+                      labelStyle={{
+                        color: 'hsl(var(--foreground))',
+                        fontWeight: 600,
+                        marginBottom: '6px'
+                      }} 
+                      formatter={(value: number, name: string) => {
+                        if (name === 'pagos') return [value, '🔴 Pagos'];
+                        return [value, name];
+                      }} 
+                    />
+                    <Area 
+                      type="monotone"
+                      dataKey="pagos" 
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#areaGradientPaid)"
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                      dot={{
+                        r: 4,
+                        fill: "hsl(var(--primary))",
+                        stroke: "hsl(var(--background))",
+                        strokeWidth: 2
+                      }}
+                      activeDot={{
+                        r: 6,
+                        fill: "hsl(var(--primary))",
+                        stroke: "hsl(var(--background))",
+                        strokeWidth: 2
+                      }}
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               )}
             </div>
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-primary"></span>
-                <span className="text-xs text-muted-foreground font-medium">Pagos (% conversão)</span>
+                <span className="text-xs text-muted-foreground font-medium">Pagos</span>
               </div>
             </div>
           </CardContent>
