@@ -69,9 +69,10 @@ export function AntiFraudeSection() {
 
   const loadStats = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_rate_limit_stats');
+      // Use direct query since RPC type may not be updated yet
+      const { data, error } = await supabase.rpc('get_rate_limit_stats' as any);
       if (error) throw error;
-      setStats(data as RateLimitStats);
+      setStats(data as unknown as RateLimitStats);
     } catch (err) {
       console.error('Error loading stats:', err);
     }
