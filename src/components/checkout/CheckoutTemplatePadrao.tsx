@@ -70,8 +70,8 @@ export function CheckoutTemplatePadrao({
       {/* Urgency Banner */}
       {config?.show_countdown && countdown !== null && countdown > 0 && (
         <div 
-          className="py-3 text-center text-white font-semibold animate-pulse"
-          style={{ backgroundColor: '#dc2626' }}
+          className="py-3 text-center text-white font-semibold"
+          style={{ backgroundColor: config?.primary_color || '#dc2626' }}
         >
           <div className="flex items-center justify-center gap-2">
             <Clock className="h-4 w-4" />
