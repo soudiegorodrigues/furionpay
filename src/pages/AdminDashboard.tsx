@@ -584,7 +584,7 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">PIX Pagos</p>
               <BarChart3 className="h-3 w-3 md:h-3.5 md:w-3.5 text-green-500" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-green-500 mt-1">{filteredStats.paid}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{filteredStats.paid}</p>
             <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{formatCurrency(filteredStats.amountPaid)}</p>
           </CardContent>
         </Card>
