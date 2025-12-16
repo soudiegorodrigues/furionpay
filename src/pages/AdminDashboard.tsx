@@ -743,7 +743,7 @@ const AdminDashboard = () => {
                     <YAxis 
                       tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                       tickLine={false} 
-                      axisLine={false} 
+                      axisLine={{ stroke: 'hsl(var(--foreground))', strokeWidth: 1 }}
                       allowDecimals={false}
                       width={30}
                       domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} 
