@@ -480,7 +480,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6"
+                                className="h-7 w-7"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setPreviewingTemplate(model.templateName);
@@ -488,7 +488,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                                 }}
                                 title="Ver preview"
                               >
-                                <Eye className="h-3.5 w-3.5" />
+                                <Eye className="h-4 w-4" />
                               </Button>
                               {model.isNew && (
                                 <Badge className="text-[10px] h-4 px-1">Novo</Badge>
