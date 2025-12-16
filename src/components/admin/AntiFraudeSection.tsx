@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity } from "lucide-react";
+import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface RateLimitConfig {
   enabled: boolean;
@@ -21,6 +22,19 @@ interface RateLimitStats {
   total_records: number;
 }
 
+interface ChartData {
+  date: string;
+  blocks: number;
+  cooldowns: number;
+}
+
+const periodFilters = [
+  { label: 'Hoje', value: 1 },
+  { label: '7 dias', value: 7 },
+  { label: '14 dias', value: 14 },
+  { label: '30 dias', value: 30 },
+];
+
 export function AntiFraudeSection() {
   const [config, setConfig] = useState<RateLimitConfig>({
     enabled: true,
@@ -29,6 +43,8 @@ export function AntiFraudeSection() {
     cooldownSeconds: 30,
   });
   const [stats, setStats] = useState<RateLimitStats | null>(null);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [chartPeriod, setChartPeriod] = useState(7);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -36,6 +52,10 @@ export function AntiFraudeSection() {
     loadConfig();
     loadStats();
   }, []);
+
+  useEffect(() => {
+    loadChartData();
+  }, [chartPeriod]);
 
   const loadConfig = async () => {
     try {
@@ -69,12 +89,22 @@ export function AntiFraudeSection() {
 
   const loadStats = async () => {
     try {
-      // Use direct query since RPC type may not be updated yet
       const { data, error } = await supabase.rpc('get_rate_limit_stats' as any);
       if (error) throw error;
       setStats(data as unknown as RateLimitStats);
     } catch (err) {
       console.error('Error loading stats:', err);
+    }
+  };
+
+  const loadChartData = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_rate_limit_chart_data' as any, { p_days: chartPeriod });
+      if (error) throw error;
+      setChartData((data as unknown as ChartData[]) || []);
+    } catch (err) {
+      console.error('Error loading chart data:', err);
+      setChartData([]);
     }
   };
 
@@ -155,6 +185,8 @@ export function AntiFraudeSection() {
       </div>
     );
   }
+
+  const totalEvents = chartData.reduce((acc, d) => acc + d.blocks + d.cooldowns, 0);
 
   return (
     <div className="space-y-6">
@@ -340,6 +372,114 @@ export function AntiFraudeSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chart Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Evolução de Bloqueios
+              </CardTitle>
+              <CardDescription>
+                Histórico de bloqueios e cooldowns ao longo do tempo
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              {periodFilters.map((filter) => (
+                <Button
+                  key={filter.value}
+                  variant={chartPeriod === filter.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setChartPeriod(filter.value)}
+                >
+                  {filter.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {chartData.length > 0 ? (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="blocksGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.05} />
+                    </linearGradient>
+                    <linearGradient id="cooldownsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(30, 100%, 50%)" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="hsl(30, 100%, 50%)" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  />
+                  <YAxis 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      padding: '12px',
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="blocks"
+                    name="Bloqueios"
+                    stroke="hsl(var(--destructive))"
+                    fill="url(#blocksGradient)"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={false}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="cooldowns"
+                    name="Cooldowns"
+                    stroke="hsl(30, 100%, 50%)"
+                    fill="url(#cooldownsGradient)"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
+              <Shield className="h-12 w-12 mb-4 opacity-50" />
+              <p>Nenhum evento registrado no período</p>
+              <p className="text-sm">Os dados aparecerão conforme bloqueios ocorrerem</p>
+            </div>
+          )}
+          
+          {/* Legend */}
+          <div className="flex justify-center gap-6 mt-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-destructive" />
+              <span className="text-muted-foreground">Bloqueios ({chartData.reduce((acc, d) => acc + Number(d.blocks), 0)})</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(30, 100%, 50%)' }} />
+              <span className="text-muted-foreground">Cooldowns ({chartData.reduce((acc, d) => acc + Number(d.cooldowns), 0)})</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Info Card */}
       <Card className="border-primary/20 bg-primary/5">
