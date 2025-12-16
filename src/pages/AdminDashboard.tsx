@@ -834,8 +834,8 @@ const AdminDashboard = () => {
                         {/* Imagem da placa */}
                         <div className="flex justify-center">
                           <div className="relative">
-                            {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="relative w-44 h-44 object-contain drop-shadow-xl" /> : <div className="relative w-44 h-44 flex items-center justify-center">
-                                <Trophy className="h-16 w-16 text-primary drop-shadow-xl" />
+                            {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="relative w-56 h-56 object-contain drop-shadow-xl" /> : <div className="relative w-56 h-56 flex items-center justify-center">
+                                <Trophy className="h-20 w-20 text-primary drop-shadow-xl" />
                               </div>}
                           </div>
                         </div>
