@@ -700,7 +700,7 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="flex-1 min-h-[150px] sm:min-h-[180px] w-full">
+            <div className="flex-1 min-h-[300px] sm:min-h-[180px] w-full">
               {isLoadingTransactions ? <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-3">
                     <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
