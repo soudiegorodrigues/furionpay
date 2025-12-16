@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Palette, Save, Image, Loader2, Trash2, Upload, Link } from "lucide-react";
+import { Palette, Save, Image, Loader2, Trash2, Upload, Link, Info, Monitor, Tablet, Smartphone } from "lucide-react";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 interface PersonalizacaoSectionProps {
@@ -182,6 +182,47 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Guia de Tamanho Recomendado */}
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2">
+                <h4 className="font-medium text-foreground">Tamanho Recomendado</h4>
+                <p className="text-sm text-muted-foreground">
+                  Para melhor exibição em todos os dispositivos, use imagens com as seguintes dimensões:
+                </p>
+              </div>
+            </div>
+            
+            {/* Indicador Visual de Dimensões */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+              <div className="bg-background/50 rounded-md p-3 text-center border border-border">
+                <Monitor className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Desktop</p>
+                <p className="text-sm font-semibold text-foreground">1920 × 400px</p>
+              </div>
+              <div className="bg-background/50 rounded-md p-3 text-center border border-border">
+                <Tablet className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Tablet</p>
+                <p className="text-sm font-semibold text-foreground">1024 × 300px</p>
+              </div>
+              <div className="bg-background/50 rounded-md p-3 text-center border border-border">
+                <Smartphone className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Mobile</p>
+                <p className="text-sm font-semibold text-foreground">640 × 200px</p>
+              </div>
+            </div>
+            
+            {/* Dica sobre proporção */}
+            <div className="flex items-center gap-2 pt-2 border-t border-blue-500/20">
+              <div className="w-16 h-4 bg-blue-500/30 rounded-sm flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Proporção ideal: <span className="font-medium">4.8:1</span> (largura × altura). 
+                Centralize o conteúdo principal para evitar cortes nas bordas.
+              </p>
+            </div>
+          </div>
+
           <Tabs defaultValue="upload" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="upload" className="flex items-center gap-2">
@@ -208,7 +249,8 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Formatos aceitos: JPG, PNG, GIF, WebP. Tamanho máximo: 5MB
+                  Formatos aceitos: JPG, PNG, WebP. Tamanho máximo: 10MB. 
+                  A imagem será otimizada automaticamente.
                 </p>
               </div>
               {isUploading && (
@@ -230,7 +272,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
                   onChange={(e) => setBannerUrl(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use uma URL de imagem pública. Tamanho recomendado: 1200x300 pixels
+                  Cole a URL de uma imagem pública. Siga as dimensões recomendadas acima.
                 </p>
               </div>
               <Button onClick={handleSave} disabled={isSaving}>
@@ -251,7 +293,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
                 <img
                   src={bannerUrl}
                   alt="Preview do banner"
-                  className="w-full h-auto object-cover max-h-[200px]"
+                  className="w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px]"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
