@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminHeader } from "@/components/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CheckoutBuilderSimple } from "@/components/checkout/CheckoutBuilderSimple";
 import { 
@@ -31,6 +32,56 @@ interface Product {
   created_at: string;
   updated_at: string;
 }
+
+// Skeleton for main content
+const ContentSkeleton = () => (
+  <div className="space-y-6">
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="w-48 h-48 bg-muted animate-pulse rounded-lg shrink-0" />
+          <div className="flex-1 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-20 bg-muted animate-pulse rounded-lg" />
+              <div className="h-20 bg-muted animate-pulse rounded-lg" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+    <Card>
+      <CardHeader>
+        <div className="h-6 w-40 bg-muted animate-pulse rounded" />
+        <div className="h-4 w-64 bg-muted animate-pulse rounded mt-2" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="h-10 bg-muted animate-pulse rounded" />
+        <div className="h-24 bg-muted animate-pulse rounded" />
+        <div className="h-10 bg-muted animate-pulse rounded" />
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// Header skeleton
+const HeaderSkeleton = () => (
+  <div className="mb-6">
+    <Button variant="ghost" size="sm" className="mb-4 opacity-50" disabled>
+      <ArrowLeft className="h-4 w-4 mr-2" />
+      Voltar para produtos
+    </Button>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+          <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
+        </div>
+        <div className="h-4 w-72 bg-muted animate-pulse rounded mt-2" />
+      </div>
+      <div className="h-10 w-36 bg-muted animate-pulse rounded" />
+    </div>
+  </div>
+);
 
 export default function AdminProductEdit() {
   const { id } = useParams<{ id: string }>();
@@ -60,6 +111,7 @@ export default function AdminProductEdit() {
       return data as Product;
     },
     enabled: !!id,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   useEffect(() => {
@@ -121,33 +173,15 @@ export default function AdminProductEdit() {
     toast.success("Copiado para a área de transferência");
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <AdminHeader title="Carregando..." icon={Package} />
-        <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
-          <div className="animate-pulse text-muted-foreground">Carregando produto...</div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <AdminHeader title="Produto não encontrado" icon={Package} />
-        <main className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center gap-4">
-          <p className="text-muted-foreground">O produto solicitado não foi encontrado.</p>
-          <Button onClick={() => navigate("/admin/products")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para produtos
-          </Button>
-        </main>
-      </div>
-    );
-  }
+  // Render page immediately - no blocking loading state
+  // Navigation is always visible, content shows skeleton if loading
 
   const renderSectionContent = () => {
+    // Show skeleton while loading
+    if (isLoading || !product) {
+      return <ContentSkeleton />;
+    }
+
     switch (activeSection) {
       case "details":
         return <ProductDetailsSection formData={formData} setFormData={setFormData} product={product} copyToClipboard={copyToClipboard} />;
@@ -174,42 +208,62 @@ export default function AdminProductEdit() {
     }
   };
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <AdminHeader title={product.name} icon={Package} />
-      
-      <main className="flex-1 p-4 md:p-6">
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate("/admin/products")}
-            className="mb-4"
-          >
+  // Product not found (after loading completes)
+  if (!isLoading && !product) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <AdminHeader title="Produto não encontrado" icon={Package} />
+        <main className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center gap-4">
+          <p className="text-muted-foreground">O produto solicitado não foi encontrado.</p>
+          <Button onClick={() => navigate("/admin/products")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para produtos
           </Button>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{product.name}</h1>
-                <Badge variant={product.is_active ? "default" : "secondary"} className="gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  {product.is_active ? "Aprovado" : "Inativo"}
-                </Badge>
-              </div>
-              <p className="text-muted-foreground">Gerencie os detalhes e configurações do seu produto</p>
-            </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <AdminHeader title={product?.name || "Carregando..."} icon={Package} />
+      
+      <main className="flex-1 p-4 md:p-6">
+        {isLoading ? (
+          <HeaderSkeleton />
+        ) : (
+          <div className="mb-6">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/admin/products")}
+              className="mb-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para produtos
+            </Button>
             
-            {(activeSection === "details" || activeSection === "checkout") && (
-              <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2 lg:mr-16">
-                <Save className="h-4 w-4" />
-                {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
-              </Button>
-            )}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold">{product?.name}</h1>
+                  <Badge variant={product?.is_active ? "default" : "secondary"} className="gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    {product?.is_active ? "Aprovado" : "Inativo"}
+                  </Badge>
+                </div>
+                <p className="text-muted-foreground">Gerencie os detalhes e configurações do seu produto</p>
+              </div>
+              
+              {(activeSection === "details" || activeSection === "checkout") && (
+                <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2 lg:mr-16">
+                  <Save className="h-4 w-4" />
+                  {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 min-w-0 order-2 lg:order-1">
