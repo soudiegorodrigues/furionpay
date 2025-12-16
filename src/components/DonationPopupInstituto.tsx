@@ -7,6 +7,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
+import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -75,6 +76,7 @@ export const DonationPopupInstituto = ({
   
   const { toast } = useToast();
   const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { getFingerprint } = useDeviceFingerprint();
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
@@ -192,12 +194,15 @@ export const DonationPopupInstituto = ({
     setStep("loading");
 
     try {
+      const fingerprint = await getFingerprint();
+      
       const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
           amount: amount,
           utmParams: utmParams,
           userId: userId,
           popupModel: 'instituto',
+          fingerprint,
         },
       });
 

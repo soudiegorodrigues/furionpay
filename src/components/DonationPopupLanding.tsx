@@ -8,6 +8,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
+import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
@@ -62,6 +63,7 @@ export const DonationPopupLanding = ({
   } | null>(null);
   const { toast } = useToast();
   const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { getFingerprint } = useDeviceFingerprint();
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
@@ -169,12 +171,16 @@ export const DonationPopupLanding = ({
     setStep("loading");
 
     try {
+      // Get device fingerprint for anti-abuse
+      const fingerprint = await getFingerprint();
+      
       const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
           amount: total,
           utmParams: utmParams,
           userId: userId,
           popupModel: 'landing',
+          fingerprint,
         },
       });
 
@@ -184,6 +190,18 @@ export const DonationPopupLanding = ({
           title: "Erro ao gerar PIX",
           description: "Tente novamente em alguns instantes.",
           variant: "destructive",
+        });
+        setStep("select");
+        return;
+      }
+
+      // Check for rate limit error
+      if (data?.error === 'RATE_LIMIT') {
+        toast({
+          title: "Limite atingido",
+          description: data.message || "Você atingiu o limite de PIX. Tente novamente mais tarde.",
+          variant: "destructive",
+          duration: 6000,
         });
         setStep("select");
         return;

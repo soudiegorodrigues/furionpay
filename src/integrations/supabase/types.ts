@@ -643,15 +643,50 @@ export type Database = {
         }
         Relationships: []
       }
+      pix_rate_limits: {
+        Row: {
+          blocked_until: string | null
+          created_at: string | null
+          fingerprint_hash: string
+          id: string
+          ip_address: string | null
+          last_generation_at: string | null
+          unpaid_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          blocked_until?: string | null
+          created_at?: string | null
+          fingerprint_hash: string
+          id?: string
+          ip_address?: string | null
+          last_generation_at?: string | null
+          unpaid_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          blocked_until?: string | null
+          created_at?: string | null
+          fingerprint_hash?: string
+          id?: string
+          ip_address?: string | null
+          last_generation_at?: string | null
+          unpaid_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       pix_transactions: {
         Row: {
           acquirer: string | null
           amount: number
+          client_ip: string | null
           created_at: string | null
           donor_name: string | null
           expired_at: string | null
           fee_fixed: number | null
           fee_percentage: number | null
+          fingerprint_hash: string | null
           id: string
           paid_at: string | null
           pix_code: string | null
@@ -665,11 +700,13 @@ export type Database = {
         Insert: {
           acquirer?: string | null
           amount: number
+          client_ip?: string | null
           created_at?: string | null
           donor_name?: string | null
           expired_at?: string | null
           fee_fixed?: number | null
           fee_percentage?: number | null
+          fingerprint_hash?: string | null
           id?: string
           paid_at?: string | null
           pix_code?: string | null
@@ -683,11 +720,13 @@ export type Database = {
         Update: {
           acquirer?: string | null
           amount?: number
+          client_ip?: string | null
           created_at?: string | null
           donor_name?: string | null
           expired_at?: string | null
           fee_fixed?: number | null
           fee_percentage?: number | null
+          fingerprint_hash?: string | null
           id?: string
           paid_at?: string | null
           pix_code?: string | null
