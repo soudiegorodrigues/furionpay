@@ -361,17 +361,8 @@ const AdminDashboard = () => {
     const now = new Date();
     const todayBrazil = getBrazilDateStr(now);
     if (chartFilter === 'today') {
-      // Hourly data for today - use paid_at for paid transactions (Brazil timezone)
-      // Mobile: show only last 12 hours for better readability
-      // Desktop: show all 24 hours
-      const currentBrazilHour = getBrazilHour(now);
-      const hoursToShow = isMobile ? 12 : 24;
-      const startHour = isMobile ? Math.max(0, currentBrazilHour - 11) : 0;
-      
-      for (let i = 0; i < hoursToShow; i++) {
-        const hour = startHour + i;
-        if (hour > 23) break;
-        
+      // Hourly data for today - always show 00:00 to 23:00
+      for (let hour = 0; hour <= 23; hour++) {
         const hourStr = hour.toString().padStart(2, '0') + ':00';
 
         // Filter transactions created today at this hour (Brazil time)
@@ -701,6 +692,13 @@ const AdminDashboard = () => {
                       </linearGradient>
                     </defs>
                     
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      vertical={false}
+                      stroke="hsl(var(--border))"
+                      opacity={0.5}
+                    />
+                    
                     <XAxis 
                       dataKey="date" 
                       tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
@@ -708,15 +706,16 @@ const AdminDashboard = () => {
                       textAnchor={isTabletOrSmaller ? "end" : "middle"} 
                       tickLine={false} 
                       axisLine={false} 
-                      interval={0} 
+                      interval={chartFilter === 'today' ? 1 : 0}
+                      ticks={chartFilter === 'today' ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'] : undefined}
                       height={isTabletOrSmaller ? 50 : 30} 
                     />
                     <YAxis 
                       tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                       tickLine={false} 
                       axisLine={false} 
-                      allowDecimals={false} 
-                      hide 
+                      allowDecimals={false}
+                      width={30}
                       domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} 
                     />
                     <Tooltip 
