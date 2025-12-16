@@ -43,6 +43,7 @@ import {
   FormInput,
   ExternalLink,
   Eye,
+  Zap,
 } from "lucide-react";
 import {
   Dialog,
@@ -142,6 +143,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     whatsappNumber: "",
     showBackRedirect: false,
     backRedirectUrl: "",
+    deliveryDescription: "Acesso imediato",
   });
 
   // Preview dialog state
@@ -242,6 +244,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         whatsappNumber: config.whatsapp_number || "",
         showBackRedirect: !!(config as any).back_redirect_url,
         backRedirectUrl: (config as any).back_redirect_url || "",
+        deliveryDescription: (config as any).delivery_description || "Acesso imediato",
       });
       
       // Mapear template salvo para o modelo correto
@@ -394,6 +397,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         discount_popup_color: customizations.discountPopupColor || "#16A34A",
         discount_popup_image_url: customizations.discountPopupImageUrl || null,
         back_redirect_url: customizations.showBackRedirect ? (customizations.backRedirectUrl || null) : null,
+        delivery_description: customizations.deliveryDescription || "Acesso imediato",
       } as any;
 
       const { error } = await supabase
@@ -659,6 +663,23 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                         )}
                       </div>
                     )}
+                  </div>
+
+                  {/* Delivery Description */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Zap className="h-4 w-4" />
+                      Descrição de entrega
+                    </Label>
+                    <Input
+                      value={customizations.deliveryDescription}
+                      onChange={(e) => setCustomizations(p => ({ ...p, deliveryDescription: e.target.value }))}
+                      placeholder="Ex: Acesso imediato, Entrega digital"
+                      className="h-9 text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Texto exibido abaixo do nome do produto no resumo
+                    </p>
                   </div>
                 </TabsContent>
 

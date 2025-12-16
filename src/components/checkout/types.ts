@@ -62,6 +62,8 @@ export interface CheckoutConfig {
   video_url?: string | null;
   // Back redirect
   back_redirect_url?: string | null;
+  // Delivery description field
+  delivery_description?: string | null;
 }
 
 export interface FormData {
