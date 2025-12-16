@@ -422,70 +422,80 @@ export default function AdminProducts() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
-            {/* Folder Cards - only show when at root level */}
-            {!selectedFolder && folders.map(folder => (
-              <div 
-                key={`folder-${folder.id}`}
-                className="aspect-[3/4] relative flex flex-col items-center justify-center group cursor-pointer rounded-lg hover:bg-muted/50 transition-colors"
-                style={{ backgroundColor: `${folder.color}10` }}
-                onClick={() => setSelectedFolder(folder.id)}
-              >
-                {/* Delete button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteFolder(folder.id);
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-                
-                {/* Badge */}
-                <Badge 
-                  variant="secondary" 
-                  className="absolute top-2 left-2 text-xs"
-                >
-                  Pasta
-                </Badge>
-                
-                {/* Folder icon */}
-                <Folder 
-                  className="h-16 w-16 sm:h-20 sm:w-20" 
-                  style={{ color: folder.color || 'hsl(var(--muted-foreground))' }} 
-                />
-                
-                {/* Folder name */}
-                <h3 className="text-sm sm:text-base font-semibold mt-4 px-4 text-center truncate max-w-full">
-                  {folder.name}
-                </h3>
-                
-                {/* Product count */}
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  {countProductsInFolder(folder.id)} {countProductsInFolder(folder.id) === 1 ? 'produto' : 'produtos'}
-                </p>
-                
-                {/* Acessar button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedFolder(folder.id);
-                  }}
-                >
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                  Acessar
-                </Button>
+          <div className="space-y-6">
+            {/* SEÇÃO DE PASTAS - só mostra no nível raiz */}
+            {!selectedFolder && folders.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Folder className="h-5 w-5" />
+                  Pastas
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                  {folders.map(folder => (
+                    <div 
+                      key={`folder-${folder.id}`}
+                      className="aspect-square relative flex flex-col items-center justify-center group cursor-pointer rounded-lg hover:bg-muted/50 transition-colors border"
+                      style={{ backgroundColor: `${folder.color}10` }}
+                      onClick={() => setSelectedFolder(folder.id)}
+                    >
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-background/80"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFolder(folder.id);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      
+                      {/* Folder icon */}
+                      <Folder 
+                        className="h-10 w-10 sm:h-12 sm:w-12" 
+                        style={{ color: folder.color || 'hsl(var(--muted-foreground))' }} 
+                      />
+                      
+                      {/* Folder name */}
+                      <h3 className="text-xs sm:text-sm font-semibold mt-2 px-2 text-center truncate max-w-full">
+                        {folder.name}
+                      </h3>
+                      
+                      {/* Product count */}
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        {countProductsInFolder(folder.id)} {countProductsInFolder(folder.id) === 1 ? 'produto' : 'produtos'}
+                      </p>
+                      
+                      {/* Acessar button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 h-7 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFolder(folder.id);
+                        }}
+                      >
+                        <ArrowRight className="h-3 w-3 mr-1" />
+                        Acessar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-            
-            {/* Product Cards */}
-            {filteredProducts.map(product => (
+            )}
+
+            {/* SEÇÃO DE PRODUTOS */}
+            <div>
+              {!selectedFolder && (
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Produtos
+                </h2>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
+                {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
                 className="overflow-hidden group cursor-pointer" 
@@ -584,6 +594,8 @@ export default function AdminProducts() {
                 </CardContent>
               </Card>
             ))}
+              </div>
+            </div>
           </div>
         )}
       </main>
