@@ -17,6 +17,7 @@ import { TestimonialsManager } from "./TestimonialsManager";
 import { Section } from "@/components/product-edit";
 import {
   LayoutTemplate,
+  LayoutGrid,
   Clock,
   Star,
   MessageCircle,
@@ -42,6 +43,34 @@ import {
   FormInput,
   ExternalLink,
 } from "lucide-react";
+
+// Template models data - placeholders for now
+const templateModels = [
+  {
+    id: "modelo-padrao",
+    name: "Padrão",
+    previewImage: "/placeholder.svg",
+    isNew: false,
+  },
+  {
+    id: "modelo-clean",
+    name: "Clean",
+    previewImage: "/placeholder.svg",
+    isNew: true,
+  },
+  {
+    id: "modelo-dark",
+    name: "Dark",
+    previewImage: "/placeholder.svg",
+    isNew: false,
+  },
+  {
+    id: "modelo-minimal",
+    name: "Minimal",
+    previewImage: "/placeholder.svg",
+    isNew: true,
+  },
+];
 
 interface CheckoutBuilderSimpleProps {
   productId: string;
@@ -75,6 +104,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
   // States
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedModelId, setSelectedModelId] = useState<string>("modelo-padrao");
   const [primaryColor, setPrimaryColor] = useState("#16A34A");
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   
@@ -394,11 +424,53 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
                 {/* TAB: Aparência */}
                 <TabsContent value="aparencia" className="space-y-4 mt-0">
+                  {/* Template Models Gallery */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <LayoutGrid className="h-4 w-4" />
+                      Modelos de Template
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {templateModels.map((model) => (
+                        <div
+                          key={model.id}
+                          className={cn(
+                            "relative rounded-lg border-2 cursor-pointer overflow-hidden transition-all",
+                            selectedModelId === model.id 
+                              ? "border-primary ring-2 ring-primary/20" 
+                              : "border-muted hover:border-muted-foreground/50"
+                          )}
+                          onClick={() => setSelectedModelId(model.id)}
+                        >
+                          {/* Preview Image */}
+                          <div className="w-full h-24 bg-muted flex items-center justify-center">
+                            <LayoutTemplate className="h-8 w-8 text-muted-foreground/50" />
+                          </div>
+                          
+                          {/* Label */}
+                          <div className="p-2 bg-background flex items-center justify-between">
+                            <span className="text-xs font-medium">{model.name}</span>
+                            {model.isNew && (
+                              <Badge className="text-[10px] h-4 px-1">Novo</Badge>
+                            )}
+                          </div>
+                          
+                          {/* Selected indicator */}
+                          {selectedModelId === model.id && (
+                            <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                              <Check className="h-3 w-3" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Template Selection */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-2">
                       <LayoutTemplate className="h-4 w-4" />
-                      Template
+                      Template Base
                     </Label>
                     <div className="space-y-2">
                       {templates?.map((template) => (
