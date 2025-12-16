@@ -10,6 +10,7 @@ import {
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { cn } from "@/lib/utils";
+import { AddressFields } from "./AddressFields";
 
 type MultiStep = "info" | "contact" | "payment";
 
@@ -285,15 +286,13 @@ export function CheckoutTemplateMultistep({
                   )}
 
                   {config?.require_address && (
-                    <div className="space-y-2">
-                      <Label className="text-gray-700 font-medium">Endereço completo *</Label>
-                      <Input
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="Rua, número, bairro, cidade - UF"
-                        className="h-14 text-base rounded-xl border-gray-200"
-                      />
-                    </div>
+                    <AddressFields
+                      formData={formData}
+                      setFormData={setFormData}
+                      inputClassName="h-14 text-base rounded-xl border-gray-200"
+                      labelClassName="text-gray-700 font-medium"
+                      variant="light"
+                    />
                   )}
 
                   {!config?.require_phone && !config?.require_cpf && !config?.require_address && (

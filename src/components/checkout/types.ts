@@ -74,6 +74,14 @@ export interface FormData {
   cpf: string;
   birthdate: string;
   address: string;
+  // Structured address fields
+  cep: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
 }
 
 export interface PixData {

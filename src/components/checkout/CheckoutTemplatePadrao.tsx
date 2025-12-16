@@ -11,6 +11,7 @@ import {
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { cn } from "@/lib/utils";
+import { AddressFields } from "./AddressFields";
 
 // Memoized star rating component
 const StarRating = memo(({ rating }: { rating: number }) => (
@@ -258,18 +259,13 @@ export function CheckoutTemplatePadrao({
                   )}
 
                   {config?.require_address && (
-                    <div className="space-y-2">
-                      <Label htmlFor="address" className="text-gray-700 font-medium">
-                        Endereço completo *
-                      </Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="Rua, número, bairro, cidade - UF"
-                        className="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:border-gray-300"
-                      />
-                    </div>
+                    <AddressFields
+                      formData={formData}
+                      setFormData={setFormData}
+                      inputClassName="h-12 border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:border-gray-300"
+                      labelClassName="text-gray-700 font-medium"
+                      variant="light"
+                    />
                   )}
                 </CardContent>
               </Card>
