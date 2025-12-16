@@ -329,14 +329,25 @@ export function CheckoutTemplatePadrao({
                     )}
                   </Button>
 
-                  <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Shield className="h-3 w-3 text-green-500" />
-                      <span>100% Seguro</span>
+                  {/* Trust Badges */}
+                  <div className="flex items-center justify-center gap-6 pt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <ShieldCheck className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Compra</p>
+                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Segura</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Lock className="h-3 w-3 text-green-500" />
-                      <span>Dados Protegidos</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <Lock className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Dados 100%</p>
+                        <p className="text-xs font-bold text-gray-800 uppercase leading-tight">Protegidos</p>
+                      </div>
                     </div>
                   </div>
 
@@ -498,6 +509,50 @@ export function CheckoutTemplatePadrao({
           </div>
         )}
       </main>
+
+      {/* Trust Footer */}
+      <footer className="bg-gray-50 border-t py-6">
+        <div className="container max-w-4xl mx-auto px-4">
+          <div className="flex flex-col items-center gap-4">
+            {/* Security Badges */}
+            <div className="flex items-center justify-center gap-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
+                  <ShieldCheck className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800 uppercase">Compra Segura</p>
+                  <p className="text-xs text-gray-500">Ambiente protegido</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
+                  <Lock className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800 uppercase">Dados Protegidos</p>
+                  <p className="text-xs text-gray-500">Criptografia SSL</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Legal Links */}
+            <div className="text-center text-xs text-gray-500">
+              <p>
+                Ao continuar, você concorda com nossa{' '}
+                <a href="#" className="text-gray-700 hover:underline font-medium">Política de Privacidade</a>
+                {' '}e{' '}
+                <a href="#" className="text-gray-700 hover:underline font-medium">Termos de Uso</a>
+              </p>
+            </div>
+
+            {/* Footer Text */}
+            <p className="text-xs text-gray-400 text-center">
+              {config?.footer_text || "© 2024 - Pagamento processado com segurança"}
+            </p>
+          </div>
+        </div>
+      </footer>
 
       {/* Floating WhatsApp Button */}
       {config?.show_whatsapp_button && config?.whatsapp_number && (
