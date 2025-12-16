@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { RetryConfigSection } from "./RetryConfigSection";
 import { RetryDashboardSection } from "./RetryDashboardSection";
+import { RetryTestModeSection } from "./RetryTestModeSection";
 
 export const MultiAcquirersSection = () => {
   const { user, isAdmin } = useAdminAuth();
@@ -437,7 +438,10 @@ export const MultiAcquirersSection = () => {
       {/* 1. Dashboard de Retentativas - Real-time monitoring */}
       <RetryDashboardSection />
 
-      {/* 2. Configuração de Retentativas */}
+      {/* 2. Modo de Teste de Retry */}
+      <RetryTestModeSection />
+
+      {/* 3. Configuração de Retentativas */}
       <RetryConfigSection />
 
       {/* 3. Adquirentes Ativas */}
