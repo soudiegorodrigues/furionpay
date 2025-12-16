@@ -72,6 +72,8 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
       if (error) throw error;
       return data as AvailableDomain[];
     },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   useEffect(() => {
@@ -237,17 +239,23 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Domínio</Label>
-            <select
-              value={selectedDomain}
-              onChange={(e) => setSelectedDomain(e.target.value)}
-              className="w-full md:w-72 h-10 px-3 rounded-md border border-input bg-background text-sm"
-            >
-              {domains.map((domain) => (
-                <option key={domain.id} value={domain.domain}>
-                  {domain.domain}
-                </option>
-              ))}
-            </select>
+            {domains.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum domínio de checkout configurado. Configure em Admin → Domínios.
+              </p>
+            ) : (
+              <select
+                value={selectedDomain}
+                onChange={(e) => setSelectedDomain(e.target.value)}
+                className="w-full md:w-72 h-10 px-3 rounded-md border border-input bg-background text-sm"
+              >
+                {domains.map((domain) => (
+                  <option key={domain.id} value={domain.domain}>
+                    {domain.domain}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {(isCreating || editingOffer) && (
