@@ -404,19 +404,19 @@ export function CheckoutTemplatePadrao({
 
                   {config?.show_product_image !== false && (
                     <div className="flex gap-3 p-3 bg-gray-50 rounded-xl">
-                      <div className="w-20 h-20 shrink-0">
+                      <div className="w-24 h-24 shrink-0">
                         {product?.image_url ? (
                           <img 
                             src={product.image_url} 
                             alt={product.name || "Produto"} 
-                            className="w-20 h-20 object-cover rounded-lg" 
+                            className="w-24 h-24 object-cover rounded-lg" 
                             loading="lazy" 
                             decoding="async"
-                            width={80}
-                            height={80}
+                            width={96}
+                            height={96}
                           />
                         ) : (
-                          <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
                             <ShoppingCart className="h-6 w-6 text-gray-400" />
                           </div>
                         )}
