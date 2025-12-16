@@ -675,7 +675,7 @@ const AdminDashboard = () => {
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
               <CardTitle className="text-base sm:text-lg font-semibold text-primary">Visão Geral</CardTitle>
-              <div className="flex items-center bg-background border border-border rounded-full p-1 gap-1 mt-1 sm:mt-0">
+              <div className="flex items-center bg-background border border-border rounded-full p-1.5 gap-1 mt-1 sm:mt-0">
                 {[{
                 value: 'today',
                 label: 'Hoje'
@@ -688,7 +688,7 @@ const AdminDashboard = () => {
               }, {
                 value: '30days',
                 label: '30 dias'
-              }].map(option => <button key={option.value} onClick={() => setChartFilter(option.value as ChartFilter)} className={`px-4 sm:px-5 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all ${chartFilter === option.value ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}>
+              }].map(option => <button key={option.value} onClick={() => setChartFilter(option.value as ChartFilter)} className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium rounded-full transition-all ${chartFilter === option.value ? 'bg-primary text-white shadow-md' : 'bg-muted text-muted-foreground hover:text-foreground'}`}>
                     {option.label}
                   </button>)}
               </div>
