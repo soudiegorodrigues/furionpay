@@ -24,6 +24,7 @@ const AdminFinanceiro = lazy(() => import("./pages/AdminFinanceiro"));
 const AdminDocuments = lazy(() => import("./pages/AdminDocuments"));
 const AdminGestaoFinanceira = lazy(() => import("./pages/AdminGestaoFinanceira"));
 const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
+const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -127,6 +128,13 @@ const App = () => (
                   </Suspense>
                 } />
               </Route>
+              
+              {/* API Documentation - public page */}
+              <Route path="/api-docs" element={
+                <Suspense fallback={<PageSkeleton />}>
+                  <ApiDocs />
+                </Suspense>
+              } />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
