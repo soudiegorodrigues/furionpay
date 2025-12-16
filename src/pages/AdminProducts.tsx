@@ -133,7 +133,9 @@ export default function AdminProducts() {
     const matchesTab = activeTab === "all" || 
       (activeTab === "active" && product.is_active) || 
       (activeTab === "inactive" && !product.is_active);
-    const matchesFolder = !selectedFolder || product.folder_id === selectedFolder;
+    const matchesFolder = selectedFolder 
+      ? product.folder_id === selectedFolder 
+      : !product.folder_id;
     return matchesSearch && matchesTab && matchesFolder;
   });
 
@@ -394,7 +396,7 @@ export default function AdminProducts() {
                 onClick={() => setSelectedFolder(null)}
               >
                 Todos
-                <Badge variant="secondary" className="ml-2">{products.length}</Badge>
+                <Badge variant="secondary" className="ml-2">{products.filter(p => !p.folder_id).length}</Badge>
               </Button>
               {folders.map(folder => (
                 <div key={folder.id} className="flex items-center gap-1">
