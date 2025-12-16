@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X, FolderInput } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X, FolderInput, ArrowLeft } from "lucide-react";
 
 interface Product {
   id: string;
@@ -128,6 +128,8 @@ export default function AdminProducts() {
     return products.filter(p => p.folder_id === folderId).length;
   };
 
+  // When inside a folder, show only products from that folder
+  // When at root (selectedFolder === null), show only products without folder
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === "all" || 
@@ -138,6 +140,9 @@ export default function AdminProducts() {
       : !product.folder_id;
     return matchesSearch && matchesTab && matchesFolder;
   });
+
+  // Get the selected folder info
+  const selectedFolderInfo = selectedFolder ? folders.find(f => f.id === selectedFolder) : null;
 
   const handleCreateProduct = async () => {
     if (!newProduct.name.trim()) {
@@ -377,45 +382,22 @@ export default function AdminProducts() {
           </Tabs>
         </div>
 
-        {/* Folders Section */}
-        {folders.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium mb-3">Pastas</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-              <Button
-                variant={selectedFolder === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedFolder(null)}
-                className="w-full justify-between"
-              >
-                <span>Todos</span>
-                <Badge variant="secondary" className="ml-2">{products.filter(p => !p.folder_id).length}</Badge>
-              </Button>
-              {folders.map(folder => (
-                <div key={folder.id} className="flex items-center">
-                  <Button
-                    variant={selectedFolder === folder.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedFolder(selectedFolder === folder.id ? null : folder.id)}
-                    className="flex-1 justify-between gap-1 min-w-0"
-                    style={{ borderColor: selectedFolder !== folder.id ? (folder.color || undefined) : undefined }}
-                  >
-                    <span className="flex items-center gap-1 truncate">
-                      <Folder className="h-4 w-4 shrink-0" style={{ color: selectedFolder === folder.id ? undefined : (folder.color || undefined) }} />
-                      <span className="truncate">{folder.name}</span>
-                    </span>
-                    <Badge variant="secondary" className="ml-1 shrink-0">{countProductsInFolder(folder.id)}</Badge>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteFolder(folder.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+        {/* Back button when inside a folder */}
+        {selectedFolder && selectedFolderInfo && (
+          <div className="mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedFolder(null)}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para todas as pastas
+            </Button>
+            <div className="flex items-center gap-2 mt-2">
+              <Folder className="h-5 w-5" style={{ color: selectedFolderInfo.color || undefined }} />
+              <h3 className="text-lg font-semibold">{selectedFolderInfo.name}</h3>
+              <Badge variant="secondary">{countProductsInFolder(selectedFolder)} produtos</Badge>
             </div>
           </div>
         )}
@@ -427,16 +409,72 @@ export default function AdminProducts() {
               <ProductSkeleton key={i} />
             ))}
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : (filteredProducts.length === 0 && (selectedFolder || folders.length === 0)) ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>
-              <p className="text-muted-foreground">Crie seu primeiro produto para começar.</p>
+              <h3 className="text-lg font-semibold mb-2">
+                {selectedFolder ? "Nenhum produto nesta pasta" : "Nenhum produto encontrado"}
+              </h3>
+              <p className="text-muted-foreground">
+                {selectedFolder ? "Adicione produtos a esta pasta para visualizá-los aqui." : "Crie seu primeiro produto para começar."}
+              </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
+            {/* Folder Cards - only show when at root level */}
+            {!selectedFolder && folders.map(folder => (
+              <Card 
+                key={`folder-${folder.id}`}
+                className="overflow-hidden group cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => setSelectedFolder(folder.id)}
+              >
+                <div 
+                  className="aspect-[3/4] relative flex flex-col items-center justify-center"
+                  style={{ backgroundColor: `${folder.color}15` }}
+                >
+                  {/* Delete button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-background/80"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteFolder(folder.id);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Badge */}
+                  <Badge 
+                    variant="secondary" 
+                    className="absolute top-2 left-2 text-xs"
+                  >
+                    Pasta
+                  </Badge>
+                  
+                  {/* Folder icon */}
+                  <Folder 
+                    className="h-16 w-16 sm:h-20 sm:w-20" 
+                    style={{ color: folder.color || 'hsl(var(--muted-foreground))' }} 
+                  />
+                  
+                  {/* Folder name */}
+                  <h3 className="text-sm sm:text-base font-semibold mt-4 px-4 text-center truncate max-w-full">
+                    {folder.name}
+                  </h3>
+                  
+                  {/* Product count */}
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                    {countProductsInFolder(folder.id)} {countProductsInFolder(folder.id) === 1 ? 'produto' : 'produtos'}
+                  </p>
+                </div>
+              </Card>
+            ))}
+            
+            {/* Product Cards */}
             {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
