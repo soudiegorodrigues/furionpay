@@ -492,7 +492,7 @@ export function CheckoutTemplatePadrao({
         <div className="container max-w-4xl mx-auto px-4">
           <div className="flex flex-col items-center gap-4">
             {/* Security Badges */}
-            <div className="flex items-center justify-center gap-8">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
                   <ShieldCheck className="h-5 w-5 text-white" />
