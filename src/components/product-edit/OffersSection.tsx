@@ -219,6 +219,18 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
     }).format(price);
   };
 
+  const formatCurrencyInput = (value: number): string => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+
+  const parseCurrencyInput = (value: string): number => {
+    const numbers = value.replace(/\D/g, '');
+    return parseInt(numbers || '0') / 100;
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -276,11 +288,10 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
                   <div className="space-y-2">
                     <Label>Preço (R$)</Label>
                     <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                      placeholder="0,00"
+                      type="text"
+                      value={formatCurrencyInput(formData.price)}
+                      onChange={(e) => setFormData({ ...formData, price: parseCurrencyInput(e.target.value) })}
+                      placeholder="R$ 0,00"
                     />
                   </div>
                   <div className="space-y-2">
