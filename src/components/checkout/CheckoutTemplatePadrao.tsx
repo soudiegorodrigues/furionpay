@@ -131,9 +131,9 @@ export function CheckoutTemplatePadrao({
         </div>
       )}
 
-      {/* Compact Header */}
-      <header className="bg-white border-b shadow-sm sticky top-0 z-10">
-        <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      {/* Compact Header - Alinhado com cards */}
+      <div className="container max-w-4xl mx-auto px-4 pt-6">
+        <div className="bg-white rounded-lg border shadow-sm py-3 px-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
               <Lock className="h-4 w-4" style={{ color: primaryColor }} />
@@ -149,7 +149,7 @@ export function CheckoutTemplatePadrao({
             </Badge>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="container max-w-4xl mx-auto px-4 py-6">
         {step === "form" ? (
