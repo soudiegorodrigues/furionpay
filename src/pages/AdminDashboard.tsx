@@ -794,7 +794,7 @@ const AdminDashboard = () => {
         {/* Side Cards */}
         <div className="flex flex-col gap-4">
           {/* Progresso de Recompensas */}
-          <Card className="bg-gradient-to-br from-primary/15 via-red-500/10 to-primary/5 border-2 border-primary/30 shadow-xl">
+          <Card className="shadow-xl">
             <CardContent className="p-5">
               {isLoadingRewards ? (
                 <div className="space-y-4 animate-pulse">
