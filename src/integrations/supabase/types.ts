@@ -1866,6 +1866,7 @@ export type Database = {
           type: string
         }[]
       }
+      get_rate_limit_stats: { Args: never; Returns: Json }
       get_recent_api_events: {
         Args: { p_limit?: number }
         Returns: {

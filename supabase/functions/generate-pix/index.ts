@@ -8,9 +8,9 @@ const corsHeaders = {
 
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
 
-// Rate Limit Configuration
-const RATE_LIMIT_CONFIG = {
-  maxUnpaidPix: 3,           // Máximo 3 PIX não pagos
+// Default Rate Limit Configuration (can be overridden by database settings)
+const DEFAULT_RATE_LIMIT_CONFIG = {
+  maxUnpaidPix: 2,           // Máximo 2 PIX não pagos (default)
   windowHours: 36,           // Janela de 36 horas
   cooldownSeconds: 30,       // 30 segundos entre gerações
 };
@@ -87,14 +87,73 @@ interface RateLimitResult {
   unpaidCount?: number;
 }
 
+interface RateLimitConfig {
+  enabled: boolean;
+  maxUnpaidPix: number;
+  windowHours: number;
+  cooldownSeconds: number;
+}
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
+// Get rate limit config from database or use defaults
+async function getRateLimitConfig(): Promise<RateLimitConfig> {
+  const supabase = getSupabaseClient();
+  
+  try {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('key, value')
+      .is('user_id', null)
+      .in('key', [
+        'rate_limit_enabled',
+        'rate_limit_max_unpaid',
+        'rate_limit_window_hours',
+        'rate_limit_cooldown_seconds'
+      ]);
+
+    if (error || !data || data.length === 0) {
+      console.log('[RATE-LIMIT] Using default config');
+      return {
+        enabled: true,
+        maxUnpaidPix: DEFAULT_RATE_LIMIT_CONFIG.maxUnpaidPix,
+        windowHours: DEFAULT_RATE_LIMIT_CONFIG.windowHours,
+        cooldownSeconds: DEFAULT_RATE_LIMIT_CONFIG.cooldownSeconds,
+      };
+    }
+
+    const config: RateLimitConfig = {
+      enabled: data.find(d => d.key === 'rate_limit_enabled')?.value !== 'false',
+      maxUnpaidPix: parseInt(data.find(d => d.key === 'rate_limit_max_unpaid')?.value || String(DEFAULT_RATE_LIMIT_CONFIG.maxUnpaidPix)),
+      windowHours: parseInt(data.find(d => d.key === 'rate_limit_window_hours')?.value || String(DEFAULT_RATE_LIMIT_CONFIG.windowHours)),
+      cooldownSeconds: parseInt(data.find(d => d.key === 'rate_limit_cooldown_seconds')?.value || String(DEFAULT_RATE_LIMIT_CONFIG.cooldownSeconds)),
+    };
+
+    console.log(`[RATE-LIMIT] Config loaded: enabled=${config.enabled}, maxUnpaid=${config.maxUnpaidPix}, window=${config.windowHours}h, cooldown=${config.cooldownSeconds}s`);
+    return config;
+  } catch (err) {
+    console.error('[RATE-LIMIT] Error loading config:', err);
+    return {
+      enabled: true,
+      maxUnpaidPix: DEFAULT_RATE_LIMIT_CONFIG.maxUnpaidPix,
+      windowHours: DEFAULT_RATE_LIMIT_CONFIG.windowHours,
+      cooldownSeconds: DEFAULT_RATE_LIMIT_CONFIG.cooldownSeconds,
+    };
+  }
+}
+
 // Check rate limit for fingerprint/IP
-async function checkRateLimit(fingerprint: string | undefined, clientIp: string | undefined): Promise<RateLimitResult> {
+async function checkRateLimit(fingerprint: string | undefined, clientIp: string | undefined, config: RateLimitConfig): Promise<RateLimitResult> {
+  // If rate limiting is disabled, allow all
+  if (!config.enabled) {
+    console.log('[RATE-LIMIT] Rate limiting disabled, allowing request');
+    return { allowed: true };
+  }
+
   const supabase = getSupabaseClient();
   
   // If no fingerprint provided, use IP only
@@ -105,7 +164,7 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
   }
 
   const now = new Date();
-  const windowStart = new Date(now.getTime() - (RATE_LIMIT_CONFIG.windowHours * 60 * 60 * 1000));
+  const windowStart = new Date(now.getTime() - (config.windowHours * 60 * 60 * 1000));
 
   try {
     // Get or create rate limit record
@@ -138,13 +197,13 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
       };
     }
 
-    // Check cooldown (30 seconds between generations)
+    // Check cooldown between generations
     if (rateLimitRecord.last_generation_at) {
       const lastGen = new Date(rateLimitRecord.last_generation_at);
       const secondsSinceLastGen = (now.getTime() - lastGen.getTime()) / 1000;
       
-      if (secondsSinceLastGen < RATE_LIMIT_CONFIG.cooldownSeconds) {
-        const retryAfter = Math.ceil(RATE_LIMIT_CONFIG.cooldownSeconds - secondsSinceLastGen);
+      if (secondsSinceLastGen < config.cooldownSeconds) {
+        const retryAfter = Math.ceil(config.cooldownSeconds - secondsSinceLastGen);
         console.log(`[RATE-LIMIT] Cooldown active, retry after ${retryAfter}s`);
         return {
           allowed: false,
@@ -173,17 +232,17 @@ async function checkRateLimit(fingerprint: string | undefined, clientIp: string 
     }
 
     // Check unpaid count limit
-    if (rateLimitRecord.unpaid_count >= RATE_LIMIT_CONFIG.maxUnpaidPix) {
-      // Block for 36 hours
-      const blockedUntil = new Date(now.getTime() + (RATE_LIMIT_CONFIG.windowHours * 60 * 60 * 1000));
+    if (rateLimitRecord.unpaid_count >= config.maxUnpaidPix) {
+      // Block for configured hours
+      const blockedUntil = new Date(now.getTime() + (config.windowHours * 60 * 60 * 1000));
       
       await supabase
         .from('pix_rate_limits')
         .update({ blocked_until: blockedUntil.toISOString() })
         .eq('id', rateLimitRecord.id);
       
-      const retryAfter = RATE_LIMIT_CONFIG.windowHours * 60 * 60;
-      console.log(`[RATE-LIMIT] Max unpaid PIX reached (${rateLimitRecord.unpaid_count}), blocking for ${RATE_LIMIT_CONFIG.windowHours}h`);
+      const retryAfter = config.windowHours * 60 * 60;
+      console.log(`[RATE-LIMIT] Max unpaid PIX reached (${rateLimitRecord.unpaid_count}), blocking for ${config.windowHours}h`);
       
       return {
         allowed: false,
@@ -871,7 +930,9 @@ serve(async (req) => {
     }
 
     // ============= RATE LIMIT CHECK =============
-    const rateLimitResult = await checkRateLimit(fingerprint, clientIp);
+    // Load rate limit config from database
+    const rateLimitConfig = await getRateLimitConfig();
+    const rateLimitResult = await checkRateLimit(fingerprint, clientIp, rateLimitConfig);
     
     if (!rateLimitResult.allowed) {
       console.log(`[RATE-LIMIT] Request blocked. Reason: ${rateLimitResult.reason}, RetryAfter: ${rateLimitResult.retryAfter}s`);
@@ -880,7 +941,7 @@ serve(async (req) => {
       if (rateLimitResult.reason === 'COOLDOWN') {
         errorMessage = `Aguarde ${rateLimitResult.retryAfter} segundos antes de gerar outro PIX.`;
       } else if (rateLimitResult.reason === 'MAX_UNPAID') {
-        errorMessage = `Você atingiu o limite de ${RATE_LIMIT_CONFIG.maxUnpaidPix} PIX não pagos. Pague os PIX pendentes ou aguarde ${RATE_LIMIT_CONFIG.windowHours} horas.`;
+        errorMessage = `Você atingiu o limite de ${rateLimitConfig.maxUnpaidPix} PIX não pagos. Pague os PIX pendentes ou aguarde ${rateLimitConfig.windowHours} horas.`;
       } else if (rateLimitResult.reason === 'BLOCKED') {
         const hoursRemaining = Math.ceil((rateLimitResult.retryAfter || 0) / 3600);
         errorMessage = `Sua conta está temporariamente bloqueada. Tente novamente em ${hoursRemaining} hora(s).`;
