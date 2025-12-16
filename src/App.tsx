@@ -63,10 +63,10 @@ const App = () => (
               <Route path="/login" element={<AdminAuth />} />
               <Route path="/cadastro" element={<AdminAuth />} />
               
-              {/* Public checkout route - simplified URL without /checkout prefix */}
-              <Route path="/:offerCode" element={
+              {/* API Documentation - public page */}
+              <Route path="/api-docs" element={
                 <Suspense fallback={<PageSkeleton />}>
-                  <PublicCheckout />
+                  <ApiDocs />
                 </Suspense>
               } />
               
@@ -129,10 +129,10 @@ const App = () => (
                 } />
               </Route>
               
-              {/* API Documentation - public page */}
-              <Route path="/api-docs" element={
+              {/* Public checkout route - simplified URL without /checkout prefix - MUST be before catch-all */}
+              <Route path="/:offerCode" element={
                 <Suspense fallback={<PageSkeleton />}>
-                  <ApiDocs />
+                  <PublicCheckout />
                 </Suspense>
               } />
               
