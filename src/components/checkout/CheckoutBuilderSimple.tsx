@@ -355,56 +355,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
 
   return (
     <div className="space-y-4">
-      {/* Preview Panel - Top */}
-      <Card>
-        <CardHeader className="pb-2 flex flex-row items-center justify-between py-3 px-4">
-          <CardTitle className="text-sm font-medium">Preview do Checkout</CardTitle>
-          <div className="flex items-center gap-1">
-            <Button
-              variant={previewMode === "desktop" ? "default" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setPreviewMode("desktop")}
-            >
-              <Monitor className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant={previewMode === "mobile" ? "default" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setPreviewMode("mobile")}
-            >
-              <Smartphone className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <div 
-            className={cn(
-              "mx-auto border rounded-lg overflow-hidden transition-all duration-300 bg-muted/30",
-              previewMode === "mobile" ? "max-w-[375px]" : "w-full"
-            )}
-          >
-            <ScrollArea className="h-[400px]">
-              <CheckoutPreviewMini
-                templateName={selectedTemplate?.name || "Padrão"}
-                productName={productName}
-                productPrice={productPrice}
-                primaryColor={primaryColor}
-                showCountdown={customizations.showCountdown}
-                countdownMinutes={customizations.countdownMinutes}
-                showTestimonials={customizations.showTestimonials}
-                showBanner={customizations.showBanner}
-                bannerImageUrl={bannerImageUrl}
-                previewMode={previewMode}
-                testimonials={testimonials}
-              />
-            </ScrollArea>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Config Panel - Below */}
+      {/* Config Panel - Top */}
       <Card>
         <CardContent className="p-4">
           <Tabs value={configTab} onValueChange={setConfigTab}>
@@ -864,6 +815,55 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
               </Tabs>
             </CardContent>
           </Card>
+
+      {/* Preview Panel - Bottom */}
+      <Card>
+        <CardHeader className="pb-2 flex flex-row items-center justify-between py-3 px-4">
+          <CardTitle className="text-sm font-medium">Preview do Checkout</CardTitle>
+          <div className="flex items-center gap-1">
+            <Button
+              variant={previewMode === "desktop" ? "default" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setPreviewMode("desktop")}
+            >
+              <Monitor className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={previewMode === "mobile" ? "default" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setPreviewMode("mobile")}
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-3 pt-0">
+          <div 
+            className={cn(
+              "mx-auto border rounded-lg overflow-hidden transition-all duration-300 bg-muted/30",
+              previewMode === "mobile" ? "max-w-[375px]" : "w-full"
+            )}
+          >
+            <ScrollArea className="h-[400px]">
+              <CheckoutPreviewMini
+                templateName={selectedTemplate?.name || "Padrão"}
+                productName={productName}
+                productPrice={productPrice}
+                primaryColor={primaryColor}
+                showCountdown={customizations.showCountdown}
+                countdownMinutes={customizations.countdownMinutes}
+                showTestimonials={customizations.showTestimonials}
+                showBanner={customizations.showBanner}
+                bannerImageUrl={bannerImageUrl}
+                previewMode={previewMode}
+                testimonials={testimonials}
+              />
+            </ScrollArea>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
