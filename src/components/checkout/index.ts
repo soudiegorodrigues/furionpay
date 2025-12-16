@@ -10,3 +10,4 @@ export { CheckoutPixPayment } from "./CheckoutPixPayment";
 export { CheckoutBuilderSimple } from "./CheckoutBuilderSimple";
 export { CheckoutPreviewMini } from "./CheckoutPreviewMini";
 export { ExitIntentPopup } from "./ExitIntentPopup";
+export { AddressFields } from "./AddressFields";

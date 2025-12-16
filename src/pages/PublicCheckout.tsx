@@ -72,6 +72,13 @@ export default function PublicCheckout() {
     cpf: "",
     birthdate: "",
     address: "",
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
   });
   const [pixData, setPixData] = useState<PixData | null>(null);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
@@ -302,11 +309,32 @@ export default function PublicCheckout() {
       toast.error("Data de nascimento é obrigatória");
       return false;
     }
-    if (config?.require_address && !formData.address.trim()) {
-      toast.error("Endereço é obrigatório");
-      return false;
+    if (config?.require_address) {
+      if (!formData.cep.trim() || formData.cep.replace(/\D/g, '').length !== 8) {
+        toast.error("CEP é obrigatório");
+        return false;
+      }
+      if (!formData.street.trim()) {
+        toast.error("Endereço/Rua é obrigatório");
+        return false;
+      }
+      if (!formData.number.trim()) {
+        toast.error("Número é obrigatório");
+        return false;
+      }
+      if (!formData.neighborhood.trim()) {
+        toast.error("Bairro é obrigatório");
+        return false;
+      }
     }
     return true;
+  };
+
+  // Build full address string from structured fields
+  const buildFullAddress = () => {
+    if (!formData.street) return "";
+    const complement = formData.complement ? `, ${formData.complement}` : "";
+    return `${formData.street}, ${formData.number}${complement} - ${formData.neighborhood}, ${formData.city}/${formData.state} - CEP: ${formData.cep}`;
   };
 
   // Calculate current price (with discount if applied)

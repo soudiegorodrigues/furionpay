@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
+import { AddressFields } from "./AddressFields";
 
 // Template AFILIA - Checkout estilo E-commerce
 // Inspirado em: Mercado Livre, Amazon Brasil, Lojas Americanas
@@ -161,13 +162,13 @@ export function CheckoutTemplateAfilia({
                     )}
 
                     {config?.require_address && (
-                      <div className="sm:col-span-2 space-y-1.5">
-                        <Label className="text-gray-700 font-medium text-sm">Endereço completo *</Label>
-                        <Input
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          placeholder="Rua, número, bairro, cidade - UF"
-                          className="h-12 rounded-lg border-gray-200"
+                      <div className="sm:col-span-2">
+                        <AddressFields
+                          formData={formData}
+                          setFormData={setFormData}
+                          inputClassName="h-12 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                          labelClassName="text-gray-700 font-medium text-sm"
+                          variant="light"
                         />
                       </div>
                     )}

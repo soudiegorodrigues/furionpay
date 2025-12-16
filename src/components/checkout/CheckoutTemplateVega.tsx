@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
+import { AddressFields } from "./AddressFields";
 
 // Template VEGA - Checkout Premium/Dark Mode
 // Inspirado em: Hotmart, alta conversão para infoprodutos de alto ticket
@@ -233,15 +234,11 @@ export function CheckoutTemplateVega({
                     )}
 
                     {config?.require_address && (
-                      <div className="space-y-2">
-                        <Label className="text-gray-300 font-medium">Endereço *</Label>
-                        <Input
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          placeholder="Seu endereço completo"
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
-                        />
-                      </div>
+                      <AddressFields
+                        formData={formData}
+                        setFormData={setFormData}
+                        variant="dark"
+                      />
                     )}
                   </div>
 
