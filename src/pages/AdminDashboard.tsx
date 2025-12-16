@@ -155,14 +155,12 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true, resetTransactions = true) => {
     try {
       // PHASE 1: Load small/fast data FIRST (non-blocking for UI)
-      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult] = await Promise.all([
-        supabase.rpc('get_user_settings'), 
-        supabase.rpc('get_user_dashboard'),
-        supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', { ascending: true }), 
-        supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), 
-        supabase.rpc('get_user_available_balance'),
-        user?.id ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null })
-      ]);
+      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard'), supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
+        ascending: true
+      }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance'), user?.id ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle() : Promise.resolve({
+        data: null,
+        error: null
+      })]);
 
       // Set available balance immediately
       if (!availableBalanceResult.error && availableBalanceResult.data !== null) {
@@ -186,7 +184,10 @@ const AdminDashboard = () => {
       // Process settings and fee config
       let feeData = defaultFeeResult.data;
       if (userSettingsResult.data) {
-        const settings = userSettingsResult.data as { key: string; value: string; }[];
+        const settings = userSettingsResult.data as {
+          key: string;
+          value: string;
+        }[];
         const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
         const userFeeConfigId = feeConfigSetting?.value || null;
 
@@ -196,7 +197,9 @@ const AdminDashboard = () => {
 
         // Load user-specific fee config if exists
         if (userFeeConfigId) {
-          supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('id', userFeeConfigId).maybeSingle().then(({ data }) => {
+          supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('id', userFeeConfigId).maybeSingle().then(({
+            data
+          }) => {
             if (data) setFeeConfig(data as FeeConfig);
           });
         }
@@ -209,7 +212,12 @@ const AdminDashboard = () => {
       if (resetTransactions) {
         setIsLoadingTransactions(true);
       }
-      supabase.rpc('get_user_transactions', { p_limit: 0 }).then(({ data, error }) => {
+      supabase.rpc('get_user_transactions', {
+        p_limit: 0
+      }).then(({
+        data,
+        error
+      }) => {
         if (!error && data) {
           const newTx = data as unknown as Transaction[] || [];
           if (resetTransactions) {
@@ -395,11 +403,10 @@ const AdminDashboard = () => {
     const [todayYear, todayMonth, todayDay] = todayBrazil.split('-').map(Number);
     const startDate = new Date(todayYear, todayMonth - 1, todayDay - days + 1);
     const startDateStr = getBrazilDateStr(startDate);
-
     for (const tx of transactions) {
       const txDate = new Date(tx.created_at);
       const txDateStr = getBrazilDateStr(txDate);
-      
+
       // Skip transactions outside our date range
       if (txDateStr < startDateStr) continue;
 
@@ -417,11 +424,8 @@ const AdminDashboard = () => {
       if (tx.status === 'paid' && tx.paid_at) {
         const paidDate = new Date(tx.paid_at);
         const paidDateStr = getBrazilDateStr(paidDate);
-        
         if (paidDateStr < startDateStr) continue;
-        
         const netAmount = calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed);
-        
         if (chartFilter === 'today') {
           if (paidDateStr === todayBrazil) {
             const hourKey = getBrazilHour(paidDate).toString();
@@ -452,7 +456,6 @@ const AdminDashboard = () => {
         const tempDate = new Date(todayYear, todayMonth - 1, todayDay - i, 12, 0, 0);
         const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
         const [, m, d] = dateStr.split('-');
-        
         data.push({
           date: `${d}/${m}`,
           gerados: geradosByKey.get(dateStr) || 0,
@@ -461,7 +464,6 @@ const AdminDashboard = () => {
         });
       }
     }
-
     return data;
   }, [transactions, chartFilter, feeConfig]);
   const filteredStats = useMemo(() => {
@@ -553,7 +555,7 @@ const AdminDashboard = () => {
               <span>Bem Vindo de volta{userName ? `, ${userName}` : ''}!</span>
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm">
-              Acompanhe as transações    
+              Acompanhe o resumo que fizemos pra você.    
             </p>
           </div>
           <div className="flex items-center gap-2 self-end lg:self-auto">
@@ -571,12 +573,7 @@ const AdminDashboard = () => {
                 <SelectItem value="year">Este ano</SelectItem>
               </SelectContent>
             </Select>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setHideData(!hideData)}
-              title={hideData ? "Mostrar dados" : "Ocultar dados"}
-            >
+            <Button variant="outline" size="sm" onClick={() => setHideData(!hideData)} title={hideData ? "Mostrar dados" : "Ocultar dados"}>
               {hideData ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
             <Button variant="outline" size="sm" onClick={() => loadData(false)}>
@@ -705,24 +702,18 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <div className="flex-1 min-h-[150px] sm:min-h-[180px] w-full">
-              {isLoadingTransactions ? (
-                <div className="flex items-center justify-center h-full">
+              {isLoadingTransactions ? <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-3">
                     <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
                     <span className="text-sm text-muted-foreground">Carregando gráfico...</span>
                   </div>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart 
-                    data={chartData} 
-                    margin={{
-                      top: 20,
-                      right: 10,
-                      left: 10,
-                      bottom: isTabletOrSmaller ? 40 : 5
-                    }}
-                  >
+                </div> : <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{
+                top: 20,
+                right: 10,
+                left: 10,
+                bottom: isTabletOrSmaller ? 40 : 5
+              }}>
                     <defs>
                       <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
@@ -730,65 +721,40 @@ const AdminDashboard = () => {
                       </linearGradient>
                     </defs>
                     
-                    <CartesianGrid 
-                      strokeDasharray="3 3" 
-                      vertical={false}
-                      stroke="hsl(var(--border))"
-                      opacity={0.5}
-                    />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
                     
-                            <XAxis 
-                              dataKey="date" 
-                              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                              angle={isTabletOrSmaller ? -90 : 0} 
-                              textAnchor={isTabletOrSmaller ? "end" : "middle"} 
-                              tickLine={false} 
-                              axisLine={{ stroke: 'hsl(var(--foreground))', strokeWidth: 1 }}
-                      interval={0}
-                      ticks={chartFilter === 'today' ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'] : undefined}
-                      height={isTabletOrSmaller ? 50 : 30} 
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                      tickLine={false} 
-                      axisLine={{ stroke: 'hsl(var(--foreground))', strokeWidth: 1 }}
-                      allowDecimals={false}
-                      width={30}
-                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} 
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        padding: '12px 16px',
-                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
-                      }} 
-                      labelStyle={{
-                        color: 'hsl(var(--foreground))',
-                        fontWeight: 600,
-                        marginBottom: '6px'
-                      }} 
-                      formatter={(value: number, name: string) => {
-                        if (name === 'pagos') return [value, '🔴 Pagos'];
-                        return [value, name];
-                      }} 
-                    />
-                    <Area 
-                      type="monotone"
-                      dataKey="pagos" 
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      fill="url(#areaGradientPaid)"
-                      animationDuration={800}
-                      animationEasing="ease-out"
-                      dot={false}
-                      activeDot={false}
-                    />
+                            <XAxis dataKey="date" tick={{
+                  fontSize: 10,
+                  fill: 'hsl(var(--muted-foreground))'
+                }} angle={isTabletOrSmaller ? -90 : 0} textAnchor={isTabletOrSmaller ? "end" : "middle"} tickLine={false} axisLine={{
+                  stroke: 'hsl(var(--foreground))',
+                  strokeWidth: 1
+                }} interval={0} ticks={chartFilter === 'today' ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'] : undefined} height={isTabletOrSmaller ? 50 : 30} />
+                    <YAxis tick={{
+                  fontSize: 10,
+                  fill: 'hsl(var(--muted-foreground))'
+                }} tickLine={false} axisLine={{
+                  stroke: 'hsl(var(--foreground))',
+                  strokeWidth: 1
+                }} allowDecimals={false} width={30} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} />
+                    <Tooltip contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  padding: '12px 16px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
+                }} labelStyle={{
+                  color: 'hsl(var(--foreground))',
+                  fontWeight: 600,
+                  marginBottom: '6px'
+                }} formatter={(value: number, name: string) => {
+                  if (name === 'pagos') return [value, '🔴 Pagos'];
+                  return [value, name];
+                }} />
+                    <Area type="monotone" dataKey="pagos" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#areaGradientPaid)" animationDuration={800} animationEasing="ease-out" dot={false} activeDot={false} />
                   </AreaChart>
-                </ResponsiveContainer>
-              )}
+                </ResponsiveContainer>}
             </div>
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="flex items-center gap-2">
@@ -804,8 +770,7 @@ const AdminDashboard = () => {
           {/* Progresso de Recompensas */}
           <Card className="shadow-xl">
             <CardContent className="p-5">
-              {isLoadingRewards ? (
-                <div className="space-y-4 animate-pulse">
+              {isLoadingRewards ? <div className="space-y-4 animate-pulse">
                   <div className="flex justify-center">
                     <div className="w-64 h-64 bg-muted/50 rounded-xl" />
                   </div>
@@ -816,8 +781,7 @@ const AdminDashboard = () => {
                   <div className="space-y-1">
                     <div className="h-2.5 bg-muted/50 rounded-full" />
                   </div>
-                </div>
-              ) : rewards.length > 0 ? <div className="space-y-4">
+                </div> : rewards.length > 0 ? <div className="space-y-4">
                   {rewards.map(reward => {
                 const progress = Math.min(totalBalance / reward.threshold_amount * 100, 100);
                 const achieved = totalBalance >= reward.threshold_amount;
