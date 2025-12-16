@@ -7,14 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, Fingerprint, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
 interface RateLimitConfig {
   enabled: boolean;
   maxUnpaidPix: number;
   windowHours: number;
   cooldownSeconds: number;
 }
-
 interface RateLimitStats {
   total_blocked_devices: number;
   blocks_last_24h: number;
@@ -28,44 +26,33 @@ interface RateLimitStats {
   ip_blocks_24h: number;
   ip_total: number;
 }
-
 export function AntiFraudeSection() {
   const [config, setConfig] = useState<RateLimitConfig>({
     enabled: true,
     maxUnpaidPix: 2,
     windowHours: 36,
-    cooldownSeconds: 30,
+    cooldownSeconds: 30
   });
   const [stats, setStats] = useState<RateLimitStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   useEffect(() => {
     loadConfig();
     loadStats();
   }, []);
-
   const loadConfig = async () => {
     try {
-      const { data, error } = await supabase
-        .from('admin_settings')
-        .select('key, value')
-        .is('user_id', null)
-        .in('key', [
-          'rate_limit_enabled',
-          'rate_limit_max_unpaid',
-          'rate_limit_window_hours',
-          'rate_limit_cooldown_seconds'
-        ]);
-
+      const {
+        data,
+        error
+      } = await supabase.from('admin_settings').select('key, value').is('user_id', null).in('key', ['rate_limit_enabled', 'rate_limit_max_unpaid', 'rate_limit_window_hours', 'rate_limit_cooldown_seconds']);
       if (error) throw error;
-
       if (data && data.length > 0) {
         setConfig({
           enabled: data.find(d => d.key === 'rate_limit_enabled')?.value !== 'false',
           maxUnpaidPix: parseInt(data.find(d => d.key === 'rate_limit_max_unpaid')?.value || '2'),
           windowHours: parseInt(data.find(d => d.key === 'rate_limit_window_hours')?.value || '36'),
-          cooldownSeconds: parseInt(data.find(d => d.key === 'rate_limit_cooldown_seconds')?.value || '30'),
+          cooldownSeconds: parseInt(data.find(d => d.key === 'rate_limit_cooldown_seconds')?.value || '30')
         });
       }
     } catch (err) {
@@ -74,76 +61,78 @@ export function AntiFraudeSection() {
       setLoading(false);
     }
   };
-
   const loadStats = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_rate_limit_stats' as any);
+      const {
+        data,
+        error
+      } = await supabase.rpc('get_rate_limit_stats' as any);
       if (error) throw error;
       setStats(data as unknown as RateLimitStats);
     } catch (err) {
       console.error('Error loading stats:', err);
     }
   };
-
-
   const saveConfig = async () => {
     setSaving(true);
     try {
-      const settings = [
-        { key: 'rate_limit_enabled', value: config.enabled.toString() },
-        { key: 'rate_limit_max_unpaid', value: config.maxUnpaidPix.toString() },
-        { key: 'rate_limit_window_hours', value: config.windowHours.toString() },
-        { key: 'rate_limit_cooldown_seconds', value: config.cooldownSeconds.toString() },
-      ];
-
+      const settings = [{
+        key: 'rate_limit_enabled',
+        value: config.enabled.toString()
+      }, {
+        key: 'rate_limit_max_unpaid',
+        value: config.maxUnpaidPix.toString()
+      }, {
+        key: 'rate_limit_window_hours',
+        value: config.windowHours.toString()
+      }, {
+        key: 'rate_limit_cooldown_seconds',
+        value: config.cooldownSeconds.toString()
+      }];
       for (const setting of settings) {
-        const { data: existing } = await supabase
-          .from('admin_settings')
-          .select('id')
-          .is('user_id', null)
-          .eq('key', setting.key)
-          .maybeSingle();
-
+        const {
+          data: existing
+        } = await supabase.from('admin_settings').select('id').is('user_id', null).eq('key', setting.key).maybeSingle();
         if (existing) {
-          await supabase
-            .from('admin_settings')
-            .update({ value: setting.value, updated_at: new Date().toISOString() })
-            .eq('id', existing.id);
+          await supabase.from('admin_settings').update({
+            value: setting.value,
+            updated_at: new Date().toISOString()
+          }).eq('id', existing.id);
         } else {
-          await supabase
-            .from('admin_settings')
-            .insert({ key: setting.key, value: setting.value, user_id: null });
+          await supabase.from('admin_settings').insert({
+            key: setting.key,
+            value: setting.value,
+            user_id: null
+          });
         }
       }
-
       toast({
         title: "Configurações salvas",
-        description: "As configurações de anti-fraude foram atualizadas.",
+        description: "As configurações de anti-fraude foram atualizadas."
       });
     } catch (err) {
       console.error('Error saving config:', err);
       toast({
         title: "Erro ao salvar",
         description: "Não foi possível salvar as configurações.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setSaving(false);
     }
   };
-
   const clearBlockedDevices = async () => {
     try {
-      const { error } = await supabase
-        .from('pix_rate_limits')
-        .update({ blocked_until: null, unpaid_count: 0 })
-        .not('blocked_until', 'is', null);
-
+      const {
+        error
+      } = await supabase.from('pix_rate_limits').update({
+        blocked_until: null,
+        unpaid_count: 0
+      }).not('blocked_until', 'is', null);
       if (error) throw error;
-
       toast({
         title: "Dispositivos desbloqueados",
-        description: "Todos os dispositivos bloqueados foram liberados.",
+        description: "Todos os dispositivos bloqueados foram liberados."
       });
       loadStats();
     } catch (err) {
@@ -151,23 +140,16 @@ export function AntiFraudeSection() {
       toast({
         title: "Erro",
         description: "Não foi possível desbloquear os dispositivos.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
+    return <div className="flex items-center justify-center p-8">
         <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+      </div>;
   }
-
-  
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
+  return <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
@@ -176,7 +158,7 @@ export function AntiFraudeSection() {
         <div>
           <h2 className="text-xl font-semibold">Sistema Anti-Fraude</h2>
           <p className="text-sm text-muted-foreground">
-            Proteja sua plataforma contra abusos e gerações excessivas de PIX
+            Proteja sua plataforma contra abusos 
           </p>
         </div>
       </div>
@@ -202,10 +184,10 @@ export function AntiFraudeSection() {
                   Ativa a proteção contra gerações excessivas
                 </p>
               </div>
-              <Switch
-                checked={config.enabled}
-                onCheckedChange={(checked) => setConfig({ ...config, enabled: checked })}
-              />
+              <Switch checked={config.enabled} onCheckedChange={checked => setConfig({
+              ...config,
+              enabled: checked
+            })} />
             </div>
 
             {/* Max Unpaid PIX */}
@@ -214,14 +196,10 @@ export function AntiFraudeSection() {
                 <Hash className="h-4 w-4" />
                 Máximo de PIX não pagos
               </Label>
-              <Input
-                type="number"
-                min={1}
-                max={10}
-                value={config.maxUnpaidPix}
-                onChange={(e) => setConfig({ ...config, maxUnpaidPix: parseInt(e.target.value) || 2 })}
-                disabled={!config.enabled}
-              />
+              <Input type="number" min={1} max={10} value={config.maxUnpaidPix} onChange={e => setConfig({
+              ...config,
+              maxUnpaidPix: parseInt(e.target.value) || 2
+            })} disabled={!config.enabled} />
               <p className="text-xs text-muted-foreground">
                 Quantidade máxima de PIX pendentes antes de bloquear
               </p>
@@ -233,14 +211,10 @@ export function AntiFraudeSection() {
                 <Clock className="h-4 w-4" />
                 Janela de tempo (horas)
               </Label>
-              <Input
-                type="number"
-                min={1}
-                max={168}
-                value={config.windowHours}
-                onChange={(e) => setConfig({ ...config, windowHours: parseInt(e.target.value) || 36 })}
-                disabled={!config.enabled}
-              />
+              <Input type="number" min={1} max={168} value={config.windowHours} onChange={e => setConfig({
+              ...config,
+              windowHours: parseInt(e.target.value) || 36
+            })} disabled={!config.enabled} />
               <p className="text-xs text-muted-foreground">
                 Período para contar PIX não pagos e duração do bloqueio
               </p>
@@ -252,25 +226,17 @@ export function AntiFraudeSection() {
                 <RefreshCw className="h-4 w-4" />
                 Cooldown entre gerações (segundos)
               </Label>
-              <Input
-                type="number"
-                min={5}
-                max={300}
-                value={config.cooldownSeconds}
-                onChange={(e) => setConfig({ ...config, cooldownSeconds: parseInt(e.target.value) || 30 })}
-                disabled={!config.enabled}
-              />
+              <Input type="number" min={5} max={300} value={config.cooldownSeconds} onChange={e => setConfig({
+              ...config,
+              cooldownSeconds: parseInt(e.target.value) || 30
+            })} disabled={!config.enabled} />
               <p className="text-xs text-muted-foreground">
                 Tempo mínimo entre gerações de PIX do mesmo dispositivo
               </p>
             </div>
 
             <Button onClick={saveConfig} disabled={saving} className="w-full">
-              {saving ? (
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
+              {saving ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Salvar Configurações
             </Button>
           </CardContent>
@@ -288,8 +254,7 @@ export function AntiFraudeSection() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {stats ? (
-              <>
+            {stats ? <>
                 {/* Totais Gerais */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
@@ -378,23 +343,14 @@ export function AntiFraudeSection() {
                     Atualizar
                   </Button>
                   
-                  {stats.total_blocked_devices > 0 && (
-                    <Button 
-                      variant="destructive" 
-                      onClick={clearBlockedDevices}
-                      className="flex-1"
-                    >
+                  {stats.total_blocked_devices > 0 && <Button variant="destructive" onClick={clearBlockedDevices} className="flex-1">
                       <Ban className="h-4 w-4 mr-2" />
                       Desbloquear ({stats.total_blocked_devices})
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center p-8">
+              </> : <div className="flex items-center justify-center p-8">
                 <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </div>
@@ -418,6 +374,5 @@ export function AntiFraudeSection() {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
