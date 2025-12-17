@@ -240,8 +240,8 @@ export function TemplatesListSection() {
                     disabled={togglePublishMutation.isPending}
                   >
                     {template.is_published 
-                      ? <ToggleRight className="h-6 w-6 text-primary" /> 
-                      : <ToggleLeft className="h-6 w-6 text-muted-foreground" />
+                      ? <ToggleRight className="h-7 w-7 text-primary" /> 
+                      : <ToggleLeft className="h-7 w-7 text-muted-foreground" />
                     }
                   </Button>
                   {!template.is_default && (
