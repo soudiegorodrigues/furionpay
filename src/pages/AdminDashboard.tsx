@@ -793,8 +793,8 @@ const AdminDashboard = () => {
                   </div>
                 </div> : rewards.length > 0 ? <div className="space-y-4">
                   {rewards.map(reward => {
-                const progress = Math.min(totalBalance / reward.threshold_amount * 100, 100);
-                const achieved = totalBalance >= reward.threshold_amount;
+                const progress = Math.min(stats.total_amount_paid / reward.threshold_amount * 100, 100);
+                const achieved = stats.total_amount_paid >= reward.threshold_amount;
                 return <div key={reward.id} className="space-y-4">
                         {/* Nome do usuário e status */}
                         <div className="text-center">
@@ -826,7 +826,7 @@ const AdminDashboard = () => {
                       }} />
                           </div>
                           <div className="flex justify-between text-[10px] text-muted-foreground">
-                            <span>{maskValue(totalBalance)}</span>
+                            <span>{maskValue(stats.total_amount_paid)}</span>
                             <span>Meta: {maskValue(reward.threshold_amount)}</span>
                           </div>
                         </div>
