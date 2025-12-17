@@ -2586,6 +2586,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_full_backup: { Args: { p_backup_data: Json }; Returns: Json }
       increment_login_attempt: { Args: { p_email: string }; Returns: Json }
       is_admin_authenticated: { Args: never; Returns: boolean }
       is_user_authenticated: { Args: never; Returns: boolean }
