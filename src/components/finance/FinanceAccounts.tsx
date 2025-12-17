@@ -62,6 +62,7 @@ const BRAZILIAN_BANKS = [
   { value: 'neon', label: 'Neon', color: '#00E5FF', logo: 'https://www.google.com/s2/favicons?domain=neon.com.br&sz=64' },
   { value: 'next', label: 'Next', color: '#00FF87', logo: 'https://www.google.com/s2/favicons?domain=next.me&sz=64' },
   { value: 'pagbank', label: 'PagBank', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=pagbank.com.br&sz=64' },
+  { value: 'contasimples', label: 'Conta Simples', color: '#00C853', logo: 'https://www.google.com/s2/favicons?domain=contasimples.com.br&sz=64' },
   { value: 'outro', label: 'Outro', color: '#6b7280', logo: null }
 ];
 
