@@ -366,6 +366,66 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborator_permissions: {
+        Row: {
+          accepted_at: string | null
+          can_manage_checkout: boolean | null
+          can_manage_financeiro: boolean | null
+          can_manage_integrations: boolean | null
+          can_manage_products: boolean | null
+          can_manage_settings: boolean | null
+          can_view_dashboard: boolean | null
+          can_view_financeiro: boolean | null
+          can_view_transactions: boolean | null
+          created_at: string | null
+          id: string
+          invited_at: string | null
+          is_active: boolean | null
+          notes: string | null
+          owner_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          can_manage_checkout?: boolean | null
+          can_manage_financeiro?: boolean | null
+          can_manage_integrations?: boolean | null
+          can_manage_products?: boolean | null
+          can_manage_settings?: boolean | null
+          can_view_dashboard?: boolean | null
+          can_view_financeiro?: boolean | null
+          can_view_transactions?: boolean | null
+          created_at?: string | null
+          id?: string
+          invited_at?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          owner_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          can_manage_checkout?: boolean | null
+          can_manage_financeiro?: boolean | null
+          can_manage_integrations?: boolean | null
+          can_manage_products?: boolean | null
+          can_manage_settings?: boolean | null
+          can_view_dashboard?: boolean | null
+          can_view_financeiro?: boolean | null
+          can_view_transactions?: boolean | null
+          created_at?: string | null
+          id?: string
+          invited_at?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          owner_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_global_stats: {
         Row: {
           created_at: string | null
@@ -1954,6 +2014,10 @@ export type Database = {
       }
     }
     Functions: {
+      add_collaborator: {
+        Args: { _collaborator_email: string; _permissions: Json }
+        Returns: string
+      }
       approve_document_verification: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -2085,6 +2149,7 @@ export type Database = {
         }[]
       }
       get_db_performance_summary: { Args: never; Returns: Json }
+      get_effective_owner_id: { Args: { _user_id: string }; Returns: string }
       get_global_dashboard_v2: { Args: never; Returns: Json }
       get_global_notification_settings: {
         Args: never
@@ -2113,6 +2178,46 @@ export type Database = {
           txid: string
           user_email: string
           utm_data: Json
+        }[]
+      }
+      get_my_collaborators: {
+        Args: never
+        Returns: {
+          accepted_at: string
+          can_manage_checkout: boolean
+          can_manage_financeiro: boolean
+          can_manage_integrations: boolean
+          can_manage_products: boolean
+          can_manage_settings: boolean
+          can_view_dashboard: boolean
+          can_view_financeiro: boolean
+          can_view_transactions: boolean
+          id: string
+          invited_at: string
+          is_active: boolean
+          notes: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }[]
+      }
+      get_my_permissions: {
+        Args: never
+        Returns: {
+          can_manage_checkout: boolean
+          can_manage_financeiro: boolean
+          can_manage_integrations: boolean
+          can_manage_products: boolean
+          can_manage_settings: boolean
+          can_view_dashboard: boolean
+          can_view_financeiro: boolean
+          can_view_transactions: boolean
+          id: string
+          is_active: boolean
+          is_collaborator: boolean
+          owner_email: string
+          owner_id: string
+          owner_name: string
         }[]
       }
       get_my_verification_status: {
@@ -2416,6 +2521,14 @@ export type Database = {
         Returns: number
       }
       get_user_balance_details: { Args: never; Returns: Json }
+      get_user_by_email: {
+        Args: { _email: string }
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+        }[]
+      }
       get_user_chart_data_by_day: {
         Args: { p_days?: number }
         Returns: {
@@ -2566,6 +2679,10 @@ export type Database = {
       get_utmify_summary: { Args: never; Returns: Json }
       get_webhook_secret: { Args: { p_client_id: string }; Returns: string }
       grant_admin_role: { Args: { target_user_id: string }; Returns: boolean }
+      has_collaborator_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2674,6 +2791,10 @@ export type Database = {
         Args: { p_reason: string; p_user_id: string }
         Returns: boolean
       }
+      remove_collaborator: {
+        Args: { _collaborator_id: string }
+        Returns: boolean
+      }
       request_withdrawal: {
         Args: {
           p_amount: number
@@ -2728,6 +2849,10 @@ export type Database = {
           p_name?: string
           p_webhook_url?: string
         }
+        Returns: boolean
+      }
+      update_collaborator_permissions: {
+        Args: { _collaborator_id: string; _permissions: Json }
         Returns: boolean
       }
       update_daily_global_stats: {
