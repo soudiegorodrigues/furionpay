@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark } from "lucide-react";
+import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark, Users } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -17,18 +17,21 @@ const menuItems = [
   { title: "Meta Pixels", url: "/admin/settings", icon: Settings, adminOnly: false },
   { title: "Painel Financeiro", url: "/admin/financeiro", icon: Wallet, adminOnly: false },
   { title: "Gestão Financeira", url: "/admin/gestao-financeira", icon: Landmark, adminOnly: false },
+  { title: "Colaboradores", url: "/admin/colaboradores", icon: Users, adminOnly: false, ownerOnly: true },
 ];
 interface AdminSidebarProps {
   userEmail?: string;
   userName?: string;
   onLogout: () => void;
   isAdmin?: boolean;
+  isOwner?: boolean;
 }
 export function AdminSidebar({
   userEmail,
   userName,
   onLogout,
-  isAdmin = false
+  isAdmin = false,
+  isOwner = true
 }: AdminSidebarProps) {
   const {
     theme
@@ -40,7 +43,13 @@ export function AdminSidebar({
     closeInstallDialog,
     isIOS
   } = usePWAInstall();
-  const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
+  const visibleMenuItems = menuItems.filter(item => {
+    // Admin only items
+    if (item.adminOnly && !isAdmin) return false;
+    // Owner only items (like Colaboradores)
+    if ((item as any).ownerOnly && !isOwner) return false;
+    return true;
+  });
   const logoSrc = theme === "dark" ? furionPayLogoDark : furionPayLogoLight;
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-background dark:bg-black">

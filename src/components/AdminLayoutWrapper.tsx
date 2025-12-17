@@ -3,6 +3,7 @@ import { useNavigate, Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import BlockedUserAlert from "@/components/BlockedUserAlert";
 import { BillingProgressBadge } from "@/components/BillingProgressBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 export function AdminLayoutWrapper() {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin, isApproved } = useAdminAuth();
+  const { isOwner } = usePermissions();
   const [userName, setUserName] = useState<string | null>(null);
   const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
@@ -138,7 +140,8 @@ export function AdminLayoutWrapper() {
           userEmail={user?.email} 
           userName={userName || undefined} 
           onLogout={handleLogout} 
-          isAdmin={isAdmin} 
+          isAdmin={isAdmin}
+          isOwner={isOwner}
         />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Desktop header with billing progress */}
