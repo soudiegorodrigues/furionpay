@@ -14,9 +14,14 @@ interface GlobalStats {
   total_expired: number;
   total_amount_generated: number;
   total_amount_paid: number;
+  total_fees: number;
   today_generated: number;
   today_paid: number;
   today_amount_paid: number;
+  today_fees: number;
+  month_paid: number;
+  month_amount_paid: number;
+  month_fees: number;
 }
 
 interface ChartData {
@@ -131,7 +136,8 @@ export const FaturamentoSection = () => {
 
   const loadGlobalStats = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_pix_dashboard_auth');
+      // Usar RPC otimizada V2 com tabela agregada
+      const { data, error } = await supabase.rpc('get_global_dashboard_v2');
       if (error) throw error;
       setGlobalStats(data as unknown as GlobalStats);
     } catch (error) {

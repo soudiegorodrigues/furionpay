@@ -366,6 +366,45 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_global_stats: {
+        Row: {
+          created_at: string | null
+          expired_count: number | null
+          generated_amount: number | null
+          generated_count: number | null
+          id: string
+          paid_amount: number | null
+          paid_count: number | null
+          stat_date: string
+          total_fees: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expired_count?: number | null
+          generated_amount?: number | null
+          generated_count?: number | null
+          id?: string
+          paid_amount?: number | null
+          paid_count?: number | null
+          stat_date: string
+          total_fees?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expired_count?: number | null
+          generated_amount?: number | null
+          generated_count?: number | null
+          id?: string
+          paid_amount?: number | null
+          paid_count?: number | null
+          stat_date?: string
+          total_fees?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       daily_user_stats: {
         Row: {
           created_at: string | null
@@ -1922,8 +1961,10 @@ export type Database = {
       check_login_blocked: { Args: { p_email: string }; Returns: Json }
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
+      cleanup_api_monitoring_events: { Args: never; Returns: undefined }
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
       cleanup_old_rate_limit_events: { Args: never; Returns: undefined }
+      cleanup_rate_limit_events: { Args: never; Returns: undefined }
       collect_db_performance_metrics: { Args: never; Returns: undefined }
       compare_dashboard_functions: { Args: never; Returns: Json }
       create_api_client: {
@@ -2038,6 +2079,7 @@ export type Database = {
         }[]
       }
       get_db_performance_summary: { Args: never; Returns: Json }
+      get_global_dashboard_v2: { Args: never; Returns: Json }
       get_global_notification_settings: {
         Args: never
         Returns: {
@@ -2565,6 +2607,7 @@ export type Database = {
         Args: { p_request_id: string; p_tracking_code?: string }
         Returns: boolean
       }
+      populate_daily_global_stats: { Args: never; Returns: undefined }
       process_withdrawal: {
         Args: {
           p_rejection_reason?: string
@@ -2636,6 +2679,18 @@ export type Database = {
           p_webhook_url?: string
         }
         Returns: boolean
+      }
+      update_daily_global_stats: {
+        Args: {
+          p_date: string
+          p_expired_count?: number
+          p_fees?: number
+          p_generated_amount?: number
+          p_generated_count?: number
+          p_paid_amount?: number
+          p_paid_count?: number
+        }
+        Returns: undefined
       }
       update_daily_user_stats: {
         Args: {
