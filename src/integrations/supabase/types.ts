@@ -867,6 +867,7 @@ export type Database = {
           amount: number
           client_ip: string | null
           created_at: string | null
+          created_date_brazil: string | null
           donor_name: string | null
           expired_at: string | null
           fee_fixed: number | null
@@ -874,6 +875,7 @@ export type Database = {
           fingerprint_hash: string | null
           id: string
           paid_at: string | null
+          paid_date_brazil: string | null
           pix_code: string | null
           popup_model: string | null
           product_name: string | null
@@ -887,6 +889,7 @@ export type Database = {
           amount: number
           client_ip?: string | null
           created_at?: string | null
+          created_date_brazil?: string | null
           donor_name?: string | null
           expired_at?: string | null
           fee_fixed?: number | null
@@ -894,6 +897,7 @@ export type Database = {
           fingerprint_hash?: string | null
           id?: string
           paid_at?: string | null
+          paid_date_brazil?: string | null
           pix_code?: string | null
           popup_model?: string | null
           product_name?: string | null
@@ -907,6 +911,7 @@ export type Database = {
           amount?: number
           client_ip?: string | null
           created_at?: string | null
+          created_date_brazil?: string | null
           donor_name?: string | null
           expired_at?: string | null
           fee_fixed?: number | null
@@ -914,6 +919,7 @@ export type Database = {
           fingerprint_hash?: string | null
           id?: string
           paid_at?: string | null
+          paid_date_brazil?: string | null
           pix_code?: string | null
           popup_model?: string | null
           product_name?: string | null
