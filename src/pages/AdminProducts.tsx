@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Pencil, Settings, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Settings, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -566,19 +566,7 @@ export default function AdminProducts() {
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="flex-1 h-8 text-xs"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate(`/admin/products/${product.id}`);
-                      }}
-                    >
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Editar
-                    </Button>
-                    <Button 
+                    <Button
                       size="sm" 
                       variant="outline" 
                       className="flex-1 h-8 text-xs"
