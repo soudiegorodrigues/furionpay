@@ -738,7 +738,7 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Vendas Hoje</p>
               <TrendingUp className="h-3 w-3 md:h-3.5 md:w-3.5 text-green-500" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(todayStats.amountPaid)}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(stats.today_amount_paid)}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm hover:shadow-md transition-shadow">
