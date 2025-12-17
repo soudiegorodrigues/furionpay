@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck } from "lucide-react";
+import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,6 +27,7 @@ export function BackupsSection() {
   const [backups, setBackups] = useState<SystemBackup[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<SystemBackup | null>(null);
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
 
@@ -59,6 +60,37 @@ export function BackupsSection() {
       toast.error('Erro ao criar backup');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleExportBackup = async () => {
+    setExportLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('export_full_backup');
+      if (error) throw error;
+      
+      // Create timestamp for filename
+      const now = new Date();
+      const timestamp = now.toISOString().slice(0, 19).replace(/[T:]/g, '-');
+      const filename = `furionpay-backup-${timestamp}.json`;
+      
+      // Create blob and download
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Backup exportado com sucesso!');
+    } catch (error: any) {
+      console.error('Error exporting backup:', error);
+      toast.error('Erro ao exportar backup');
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -176,7 +208,7 @@ export function BackupsSection() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -187,12 +219,21 @@ export function BackupsSection() {
                 Atualizar
               </Button>
               <Button 
+                variant="outline"
+                size="sm" 
+                onClick={handleExportBackup}
+                disabled={exportLoading}
+              >
+                <Download className={`h-4 w-4 mr-2 ${exportLoading ? 'animate-pulse' : ''}`} />
+                {exportLoading ? 'Exportando...' : 'Exportar Backup'}
+              </Button>
+              <Button 
                 size="sm" 
                 onClick={handleCreateBackup}
                 disabled={actionLoading}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {actionLoading ? 'Criando...' : 'Criar Backup Completo'}
+                {actionLoading ? 'Criando...' : 'Criar Backup'}
               </Button>
             </div>
           </div>
