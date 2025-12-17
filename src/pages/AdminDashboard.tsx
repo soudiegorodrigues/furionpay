@@ -215,18 +215,43 @@ const AdminDashboard = () => {
         const days = filter === '7days' ? 7 : filter === '14days' ? 14 : 30;
         const { data, error } = await supabase.rpc('get_user_chart_data_by_day', { p_days: days });
         if (error) throw error;
+        
+        // Create lookup map by date
+        const dataByDate = new Map<string, { gerados: number; pagos: number; valor_pago: number }>();
         if (data) {
-          const formattedData: ChartData[] = data.map((row: { date_brazil: string; gerados: number; pagos: number; valor_pago: number }) => {
-            const [, m, d] = row.date_brazil.split('-');
-            return {
-              date: `${d}/${m}`,
+          data.forEach((row: { date_brazil: string; gerados: number; pagos: number; valor_pago: number }) => {
+            dataByDate.set(row.date_brazil, {
               gerados: Number(row.gerados) || 0,
               pagos: Number(row.pagos) || 0,
-              valorPago: Number(row.valor_pago) || 0
-            };
+              valor_pago: Number(row.valor_pago) || 0
+            });
           });
-          setChartData(formattedData);
         }
+        
+        // Generate all days in the period (from X days ago until today)
+        const formattedData: ChartData[] = [];
+        const today = new Date();
+        
+        for (let i = days - 1; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - i);
+          
+          // Format YYYY-MM-DD for lookup
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const dateKey = `${year}-${month}-${day}`;
+          
+          const dayData = dataByDate.get(dateKey);
+          formattedData.push({
+            date: `${day}/${month}`,
+            gerados: dayData?.gerados || 0,
+            pagos: dayData?.pagos || 0,
+            valorPago: dayData?.valor_pago || 0
+          });
+        }
+        
+        setChartData(formattedData);
       }
     } catch (error) {
       console.error('Error loading chart data:', error);
