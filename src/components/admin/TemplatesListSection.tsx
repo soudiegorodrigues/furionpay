@@ -231,7 +231,7 @@ export function TemplatesListSection() {
                     checked={template.is_published}
                     onCheckedChange={(checked) => togglePublishMutation.mutate({ id: template.id, is_published: checked })}
                     disabled={togglePublishMutation.isPending}
-                    className="scale-90"
+                    className="scale-75"
                   />
                   {!template.is_default && (
                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => setDefaultMutation.mutate(template.id)} disabled={setDefaultMutation.isPending}>
