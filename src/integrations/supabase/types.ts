@@ -2366,6 +2366,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_storage_files_for_backup: {
+        Args: never
+        Returns: {
+          bucket_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          mimetype: string
+          public_url: string
+          size_bytes: number
+        }[]
+      }
+      get_storage_stats_for_backup: { Args: never; Returns: Json }
       get_system_backups: {
         Args: never
         Returns: {

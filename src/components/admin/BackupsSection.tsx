@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download, Upload } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download, Upload, HardDrive, FileArchive, Image, Music, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useRef } from "react";
+import JSZip from "jszip";
 
 interface SystemBackup {
   id: string;
@@ -24,12 +25,35 @@ interface SystemBackup {
   profiles_count: number;
 }
 
+interface StorageFile {
+  bucket_id: string;
+  file_name: string;
+  file_path: string;
+  size_bytes: number;
+  mimetype: string;
+  created_at: string;
+  public_url: string;
+}
+
+interface StorageStats {
+  total_files: number;
+  total_size_bytes: number;
+  buckets: Array<{
+    bucket_id: string;
+    file_count: number;
+    size_bytes: number;
+  }>;
+}
+
 export function BackupsSection() {
   const [backups, setBackups] = useState<SystemBackup[]>([]);
+  const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [importProgress, setImportProgress] = useState(0);
   const [selectedBackup, setSelectedBackup] = useState<SystemBackup | null>(null);
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,8 +71,19 @@ export function BackupsSection() {
     }
   };
 
+  const loadStorageStats = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_storage_stats_for_backup');
+      if (error) throw error;
+      setStorageStats(data as unknown as StorageStats);
+    } catch (error: any) {
+      console.error('Error loading storage stats:', error);
+    }
+  };
+
   useEffect(() => {
     loadBackups();
+    loadStorageStats();
   }, []);
 
   const handleCreateBackup = async () => {
@@ -68,18 +103,70 @@ export function BackupsSection() {
 
   const handleExportBackup = async () => {
     setExportLoading(true);
+    setExportProgress(0);
+    
     try {
-      const { data, error } = await supabase.rpc('export_full_backup');
-      if (error) throw error;
+      // Step 1: Export database (20%)
+      setExportProgress(5);
+      const { data: dbData, error: dbError } = await supabase.rpc('export_full_backup');
+      if (dbError) throw dbError;
+      setExportProgress(20);
+
+      // Step 2: Get storage files list (30%)
+      const { data: storageFiles, error: storageError } = await supabase.rpc('get_storage_files_for_backup');
+      if (storageError) throw storageError;
+      setExportProgress(30);
+
+      // Create ZIP file
+      const zip = new JSZip();
       
+      // Add database backup to ZIP
+      zip.file('backup-data.json', JSON.stringify(dbData, null, 2));
+
+      // Step 3: Download and add storage files (30-90%)
+      const files = (storageFiles || []) as StorageFile[];
+      const totalFiles = files.length;
+      
+      if (totalFiles > 0) {
+        const storageFolder = zip.folder('storage');
+        
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          try {
+            // Download file
+            const response = await fetch(file.public_url);
+            if (response.ok) {
+              const blob = await response.blob();
+              // Add to ZIP with folder structure
+              const bucketFolder = storageFolder?.folder(file.bucket_id);
+              bucketFolder?.file(file.file_name, blob);
+            }
+          } catch (fileError) {
+            console.warn(`Failed to download ${file.file_path}:`, fileError);
+          }
+          
+          // Update progress
+          const fileProgress = Math.round(30 + (60 * (i + 1) / totalFiles));
+          setExportProgress(fileProgress);
+        }
+      }
+
+      // Step 4: Generate ZIP (90-100%)
+      setExportProgress(92);
+      const zipBlob = await zip.generateAsync({ 
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+      setExportProgress(98);
+
       // Create timestamp for filename
       const now = new Date();
       const timestamp = now.toISOString().slice(0, 19).replace(/[T:]/g, '-');
-      const filename = `furionpay-backup-${timestamp}.json`;
+      const filename = `furionpay-backup-completo-${timestamp}.zip`;
       
-      // Create blob and download
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+      // Download ZIP
+      const url = URL.createObjectURL(zipBlob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
@@ -88,12 +175,16 @@ export function BackupsSection() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success('Backup exportado com sucesso!');
+      setExportProgress(100);
+      
+      const sizeInMB = (zipBlob.size / (1024 * 1024)).toFixed(2);
+      toast.success(`Backup completo exportado! (${sizeInMB} MB, ${totalFiles} arquivos)`);
     } catch (error: any) {
       console.error('Error exporting backup:', error);
       toast.error('Erro ao exportar backup');
     } finally {
       setExportLoading(false);
+      setTimeout(() => setExportProgress(0), 1000);
     }
   };
 
@@ -102,28 +193,106 @@ export function BackupsSection() {
     if (!file) return;
 
     setImportLoading(true);
-    try {
-      const text = await file.text();
-      const backupData = JSON.parse(text);
-      
-      // Validate structure
-      if (!backupData.tables || !backupData.version) {
-        throw new Error('Arquivo de backup inválido');
-      }
+    setImportProgress(0);
 
-      const { data, error } = await supabase.rpc('import_full_backup', {
-        p_backup_data: backupData
-      });
+    try {
+      const isZip = file.name.endsWith('.zip');
       
-      if (error) throw error;
+      if (isZip) {
+        // Handle ZIP backup (complete with storage)
+        setImportProgress(5);
+        const zip = await JSZip.loadAsync(file);
+        setImportProgress(15);
+        
+        // Extract database JSON
+        const jsonFile = zip.file('backup-data.json');
+        if (!jsonFile) {
+          throw new Error('Arquivo de backup inválido: backup-data.json não encontrado');
+        }
+        
+        const jsonText = await jsonFile.async('string');
+        const backupData = JSON.parse(jsonText);
+        setImportProgress(25);
+        
+        // Validate structure
+        if (!backupData.tables || !backupData.version) {
+          throw new Error('Arquivo de backup inválido');
+        }
+
+        // Import database
+        const { error: dbError } = await supabase.rpc('import_full_backup', {
+          p_backup_data: backupData
+        });
+        if (dbError) throw dbError;
+        setImportProgress(40);
+
+        // Upload storage files
+        const storageFolder = zip.folder('storage');
+        if (storageFolder) {
+          const storageFiles: { path: string; file: JSZip.JSZipObject }[] = [];
+          
+          storageFolder.forEach((relativePath, zipEntry) => {
+            if (!zipEntry.dir) {
+              storageFiles.push({ path: relativePath, file: zipEntry });
+            }
+          });
+
+          const totalFiles = storageFiles.length;
+          
+          for (let i = 0; i < storageFiles.length; i++) {
+            const { path, file: zipFile } = storageFiles[i];
+            try {
+              const blob = await zipFile.async('blob');
+              const pathParts = path.split('/');
+              const bucketId = pathParts[0];
+              const fileName = pathParts.slice(1).join('/');
+              
+              // Upload to storage
+              await supabase.storage
+                .from(bucketId)
+                .upload(fileName, blob, { upsert: true });
+            } catch (uploadError) {
+              console.warn(`Failed to upload ${path}:`, uploadError);
+            }
+            
+            // Update progress (40% to 95%)
+            const fileProgress = Math.round(40 + (55 * (i + 1) / totalFiles));
+            setImportProgress(fileProgress);
+          }
+        }
+        
+        setImportProgress(100);
+        toast.success('Backup completo importado com sucesso! (Banco + Storage)');
+      } else {
+        // Handle JSON backup (database only - legacy)
+        setImportProgress(10);
+        const text = await file.text();
+        const backupData = JSON.parse(text);
+        setImportProgress(30);
+        
+        // Validate structure
+        if (!backupData.tables || !backupData.version) {
+          throw new Error('Arquivo de backup inválido');
+        }
+
+        const { error } = await supabase.rpc('import_full_backup', {
+          p_backup_data: backupData
+        });
+        
+        if (error) throw error;
+        
+        setImportProgress(100);
+        toast.success('Backup importado com sucesso! (apenas banco de dados)');
+      }
       
-      toast.success('Backup importado com sucesso!');
       loadBackups();
+      loadStorageStats();
     } catch (error: any) {
       console.error('Error importing backup:', error);
       toast.error(error.message || 'Erro ao importar backup');
     } finally {
       setImportLoading(false);
+      setTimeout(() => setImportProgress(0), 1000);
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -181,6 +350,29 @@ export function BackupsSection() {
     });
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getBucketIcon = (bucketId: string) => {
+    switch (bucketId) {
+      case 'banners':
+      case 'product-images':
+      case 'rewards':
+        return <Image className="h-3 w-3" />;
+      case 'notification-sounds':
+        return <Music className="h-3 w-3" />;
+      case 'user-documents':
+        return <FileText className="h-3 w-3" />;
+      default:
+        return <HardDrive className="h-3 w-3" />;
+    }
+  };
+
   const totalRecords = backups.reduce((acc, b) => acc + b.total_records, 0);
   const automaticCount = backups.filter(b => b.backup_type === 'automatic').length;
   const manualCount = backups.filter(b => b.backup_type === 'manual').length;
@@ -188,7 +380,7 @@ export function BackupsSection() {
   return (
     <div className="space-y-6">
       {/* Header with stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -230,65 +422,132 @@ export function BackupsSection() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <HardDrive className="h-5 w-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Storage</p>
+                <p className="text-2xl font-bold">
+                  {storageStats?.total_files || 0} <span className="text-sm font-normal text-muted-foreground">arquivos</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(storageStats?.total_size_bytes || 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Storage buckets detail */}
+      {storageStats && storageStats.buckets && storageStats.buckets.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <HardDrive className="h-4 w-4" />
+              Buckets de Storage incluídos no backup
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {storageStats.buckets.map((bucket) => (
+                <Badge key={bucket.bucket_id} variant="outline" className="text-xs gap-1.5 py-1">
+                  {getBucketIcon(bucket.bucket_id)}
+                  <span className="font-medium">{bucket.bucket_id}</span>
+                  <span className="text-muted-foreground">
+                    ({bucket.file_count} arquivos, {formatFileSize(bucket.size_bytes)})
+                  </span>
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create backup */}
       <Card>
         <CardContent className="py-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <Database className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Backup Completo do Sistema</p>
-                <p className="text-sm text-muted-foreground">
-                  Inclui: transações, saques, taxas, produtos, configurações e mais
-                </p>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <FileArchive className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Backup Completo do Sistema</p>
+                  <p className="text-sm text-muted-foreground">
+                    Inclui: banco de dados (30 tabelas) + Storage ({storageStats?.total_files || 0} arquivos)
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => { loadBackups(); loadStorageStats(); }}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+                <Button 
+                  variant="outline"
+                  size="sm" 
+                  onClick={handleExportBackup}
+                  disabled={exportLoading}
+                >
+                  <Download className={`h-4 w-4 mr-2 ${exportLoading ? 'animate-pulse' : ''}`} />
+                  {exportLoading ? 'Exportando...' : 'Exportar ZIP'}
+                </Button>
+                <Button 
+                  variant="outline"
+                  size="sm" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={importLoading}
+                >
+                  <Upload className={`h-4 w-4 mr-2 ${importLoading ? 'animate-pulse' : ''}`} />
+                  {importLoading ? 'Importando...' : 'Importar'}
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImportBackup}
+                  accept=".json,.zip"
+                  className="hidden"
+                />
+                <Button 
+                  size="sm" 
+                  onClick={handleCreateBackup}
+                  disabled={actionLoading}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {actionLoading ? 'Criando...' : 'Criar Backup'}
+                </Button>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={loadBackups}
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm" 
-                onClick={handleExportBackup}
-                disabled={exportLoading}
-              >
-                <Download className={`h-4 w-4 mr-2 ${exportLoading ? 'animate-pulse' : ''}`} />
-                {exportLoading ? 'Exportando...' : 'Exportar'}
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm" 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={importLoading}
-              >
-                <Upload className={`h-4 w-4 mr-2 ${importLoading ? 'animate-pulse' : ''}`} />
-                {importLoading ? 'Importando...' : 'Importar'}
-              </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImportBackup}
-                accept=".json"
-                className="hidden"
-              />
-              <Button 
-                size="sm" 
-                onClick={handleCreateBackup}
-                disabled={actionLoading}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {actionLoading ? 'Criando...' : 'Criar Backup'}
-              </Button>
-            </div>
+
+            {/* Progress bars */}
+            {exportProgress > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Exportando backup completo...</span>
+                  <span>{exportProgress}%</span>
+                </div>
+                <Progress value={exportProgress} className="h-2" />
+              </div>
+            )}
+
+            {importProgress > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Importando backup...</span>
+                  <span>{importProgress}%</span>
+                </div>
+                <Progress value={importProgress} className="h-2" />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -450,7 +709,7 @@ export function BackupsSection() {
                 <p>Tem certeza que deseja deletar este backup? Esta ação não pode ser desfeita.</p>
                 
                 {selectedBackup && (
-                  <div className="bg-muted p-3 rounded-lg space-y-1 text-sm">
+                  <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
                     <p><strong>Backup:</strong> {selectedBackup.backup_name}</p>
                     <p><strong>Data:</strong> {formatDate(selectedBackup.backed_up_at)}</p>
                     <p><strong>Total:</strong> {selectedBackup.total_records.toLocaleString('pt-BR')} registros</p>
@@ -466,7 +725,7 @@ export function BackupsSection() {
               disabled={actionLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {actionLoading ? 'Deletando...' : 'Deletar'}
+              {actionLoading ? 'Deletando...' : 'Deletar Backup'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
