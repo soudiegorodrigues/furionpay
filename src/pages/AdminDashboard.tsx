@@ -21,6 +21,8 @@ interface DashboardStats {
   today_generated: number;
   today_paid: number;
   today_amount_paid: number;
+  month_paid: number;
+  month_amount_paid: number;
 }
 interface UTMData {
   utm_source?: string;
@@ -81,7 +83,9 @@ const AdminDashboard = () => {
     total_amount_paid: 0,
     today_generated: 0,
     today_paid: 0,
-    today_amount_paid: 0
+    today_amount_paid: 0,
+    month_paid: 0,
+    month_amount_paid: 0
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
@@ -655,7 +659,7 @@ const AdminDashboard = () => {
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Vendas Este Mês</p>
               <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5 text-blue-500" />
             </div>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(monthStats.amountPaid)}</p>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{maskValue(stats.month_amount_paid)}</p>
           </CardContent>
         </Card>
         {/* Row 3: Vendas Hoje | Saldo Disponível */}
