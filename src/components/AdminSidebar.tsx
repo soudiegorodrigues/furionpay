@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark, LayoutTemplate } from "lucide-react";
+import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -13,7 +13,6 @@ const menuItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: BarChart3, adminOnly: false },
   { title: "Checkout", url: "/admin/checkout", icon: CreditCard, adminOnly: false },
   { title: "Produtos", url: "/admin/products", icon: Package, adminOnly: false },
-  { title: "Templates", url: "/admin/templates", icon: LayoutTemplate, adminOnly: true },
   { title: "Integrações", url: "/admin/integrations", icon: Puzzle, adminOnly: false },
   { title: "Meta Pixels", url: "/admin/settings", icon: Settings, adminOnly: false },
   { title: "Painel Financeiro", url: "/admin/financeiro", icon: Wallet, adminOnly: false },

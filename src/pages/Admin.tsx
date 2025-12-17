@@ -22,6 +22,7 @@ import { ReceitaPlataformaSection } from "@/components/admin/ReceitaPlataformaSe
 import { NotificacoesSection } from "@/components/admin/NotificacoesSection";
 import { BackupsSection } from "@/components/admin/BackupsSection";
 import { AntiFraudeSection } from "@/components/admin/AntiFraudeSection";
+import { TemplatesListSection } from "@/components/admin/TemplatesListSection";
 
 
 const Admin = () => {
@@ -69,6 +70,7 @@ const Admin = () => {
       {activeSection === "premiacoes" && <PremiacoesSection />}
       {activeSection === "api-monitoring" && <ApiMonitoringSection />}
       {activeSection === "backups" && <BackupsSection />}
+      {activeSection === "templates" && <TemplatesListSection />}
     </div>
   );
 };
