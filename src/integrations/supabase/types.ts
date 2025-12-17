@@ -366,6 +366,48 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_user_stats: {
+        Row: {
+          created_at: string | null
+          expired_count: number | null
+          generated_amount: number | null
+          generated_count: number | null
+          id: string
+          paid_amount: number | null
+          paid_count: number | null
+          stat_date: string
+          total_fees: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expired_count?: number | null
+          generated_amount?: number | null
+          generated_count?: number | null
+          id?: string
+          paid_amount?: number | null
+          paid_count?: number | null
+          stat_date: string
+          total_fees?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expired_count?: number | null
+          generated_amount?: number | null
+          generated_count?: number | null
+          id?: string
+          paid_amount?: number | null
+          paid_count?: number | null
+          stat_date?: string
+          total_fees?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       db_performance_metrics: {
         Row: {
           collected_at: string
@@ -1883,6 +1925,7 @@ export type Database = {
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
       cleanup_old_rate_limit_events: { Args: never; Returns: undefined }
       collect_db_performance_metrics: { Args: never; Returns: undefined }
+      compare_dashboard_functions: { Args: never; Returns: Json }
       create_api_client: {
         Args: { p_name: string; p_webhook_url?: string }
         Returns: {
@@ -2272,6 +2315,7 @@ export type Database = {
         }[]
       }
       get_user_dashboard: { Args: never; Returns: Json }
+      get_user_dashboard_v2: { Args: never; Returns: Json }
       get_user_documents_admin: {
         Args: { p_user_id: string }
         Returns: {
@@ -2552,6 +2596,19 @@ export type Database = {
           p_webhook_url?: string
         }
         Returns: boolean
+      }
+      update_daily_user_stats: {
+        Args: {
+          p_date: string
+          p_expired_count?: number
+          p_fees?: number
+          p_generated_amount?: number
+          p_generated_count?: number
+          p_paid_amount?: number
+          p_paid_count?: number
+          p_user_id: string
+        }
+        Returns: undefined
       }
       update_global_notification_setting: {
         Args: { setting_key: string; setting_value: string }
