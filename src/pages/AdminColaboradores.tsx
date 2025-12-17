@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { usePermissions } from '@/hooks/usePermissions';
-import { AdminSidebar, AdminHeader } from '@/components/AdminSidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { AccessDenied } from '@/components/AccessDenied';
+import { AdminHeader } from '@/components/AdminSidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -511,20 +511,10 @@ export default function AdminColaboradores() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar 
-          userEmail={user?.email || ''} 
-          userName={user?.user_metadata?.full_name || 'Usuário'}
-          onLogout={signOut}
-          isAdmin={isAdmin}
-          isOwner={isOwner}
-        />
-        <SidebarInset className="flex-1">
-          <AdminHeader title="Colaboradores" />
-          
-          <main className="flex-1 p-4 md:p-6 lg:p-8">
-            <div className="max-w-4xl space-y-6">
+    <>
+      <AdminHeader title="Colaboradores" />
+      
+      <div className="space-y-6">
               {/* Header */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -606,9 +596,6 @@ export default function AdminColaboradores() {
                   ))}
                 </div>
               )}
-            </div>
-          </main>
-        </SidebarInset>
       </div>
 
       {/* Add Collaborator Dialog */}
@@ -740,6 +727,6 @@ export default function AdminColaboradores() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SidebarProvider>
+    </>
   );
 }
