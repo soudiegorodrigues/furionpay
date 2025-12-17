@@ -2191,6 +2191,7 @@ export type Database = {
       }
       get_pix_dashboard: { Args: { input_token: string }; Returns: Json }
       get_pix_dashboard_auth: { Args: never; Returns: Json }
+      get_pix_dashboard_auth_v2: { Args: never; Returns: Json }
       get_pix_transactions: {
         Args: { input_token: string; p_limit?: number }
         Returns: {
