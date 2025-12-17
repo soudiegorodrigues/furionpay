@@ -185,15 +185,32 @@ const AdminDashboard = () => {
       if (filter === 'today') {
         const { data, error } = await supabase.rpc('get_user_chart_data_by_hour');
         if (error) throw error;
+        
+        // Create lookup map for existing data
+        const dataByHour = new Map<number, { gerados: number; pagos: number; valor_pago: number }>();
         if (data) {
-          const formattedData: ChartData[] = data.map((row: { hour_brazil: number; gerados: number; pagos: number; valor_pago: number }) => ({
-            date: String(row.hour_brazil).padStart(2, '0') + ':00',
-            gerados: Number(row.gerados) || 0,
-            pagos: Number(row.pagos) || 0,
-            valorPago: Number(row.valor_pago) || 0
-          }));
-          setChartData(formattedData);
+          data.forEach((row: { hour_brazil: number; gerados: number; pagos: number; valor_pago: number }) => {
+            dataByHour.set(row.hour_brazil, {
+              gerados: Number(row.gerados) || 0,
+              pagos: Number(row.pagos) || 0,
+              valor_pago: Number(row.valor_pago) || 0
+            });
+          });
         }
+        
+        // Generate all 24 hours (0-23), filling with 0 where no data exists
+        const formattedData: ChartData[] = [];
+        for (let hour = 0; hour < 24; hour++) {
+          const hourData = dataByHour.get(hour);
+          formattedData.push({
+            date: String(hour).padStart(2, '0') + ':00',
+            gerados: hourData?.gerados || 0,
+            pagos: hourData?.pagos || 0,
+            valorPago: hourData?.valor_pago || 0
+          });
+        }
+        
+        setChartData(formattedData);
       } else {
         const days = filter === '7days' ? 7 : filter === '14days' ? 14 : 30;
         const { data, error } = await supabase.rpc('get_user_chart_data_by_day', { p_days: days });
