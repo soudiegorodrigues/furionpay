@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -10,17 +11,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const RESET_KEYWORD = "MELCHIADES";
+const DANGER_ZONE_AUTH_KEY = 'danger_zone_authenticated';
 
 export const ZonaDePerigo = () => {
-  const [isResettingGlobal, setIsResettingGlobal] = useState(false);
-  const [showKeywordDialog, setShowKeywordDialog] = useState(false);
+  // Security states - check sessionStorage on init
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem(DANGER_ZONE_AUTH_KEY) === 'true';
+  });
+  const [showKeywordDialog, setShowKeywordDialog] = useState(() => {
+    return sessionStorage.getItem(DANGER_ZONE_AUTH_KEY) !== 'true';
+  });
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ email: string } | null>(null);
+
+  // Action states
+  const [isResettingGlobal, setIsResettingGlobal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // Get current user on mount
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setCurrentUser({ email: user.email });
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   const handleKeywordSubmit = () => {
     if (keyword.toUpperCase() !== RESET_KEYWORD) {
@@ -47,31 +69,46 @@ export const ZonaDePerigo = () => {
       return;
     }
 
+    // Verify email matches current user
+    if (currentUser?.email && email.toLowerCase() !== currentUser.email.toLowerCase()) {
+      toast({
+        title: "Erro",
+        description: "Use o email da sua conta atual",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsAuthenticating(true);
     try {
+      // Verify user is admin first
+      const { data: isAdmin } = await supabase.rpc('is_admin_authenticated');
+      if (!isAdmin) {
+        toast({
+          title: "Acesso negado",
+          description: "Apenas administradores podem acessar esta área",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Verify password
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         toast({
           title: "Erro de autenticação",
-          description: "Email ou senha incorretos",
+          description: "Senha incorreta",
           variant: "destructive"
         });
         return;
       }
 
-      const { data: isAdmin } = await supabase.rpc('is_admin_authenticated');
-      if (!isAdmin) {
-        toast({
-          title: "Acesso negado",
-          description: "Apenas administradores podem executar esta ação",
-          variant: "destructive"
-        });
-        return;
-      }
+      // Save to sessionStorage
+      sessionStorage.setItem(DANGER_ZONE_AUTH_KEY, 'true');
 
       setShowAuthDialog(false);
-      setShowConfirmDialog(true);
+      setIsAuthenticated(true);
       setEmail("");
       setPassword("");
     } catch (error) {
@@ -110,70 +147,21 @@ export const ZonaDePerigo = () => {
 
   return (
     <>
-      <div className="space-y-6 max-w-2xl">
-        {/* Reset Card */}
-        <Card className="border-destructive/30 bg-gradient-to-br from-destructive/5 to-destructive/10 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/10 rounded-full -translate-y-16 translate-x-16" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-destructive/5 rounded-full translate-y-12 -translate-x-12" />
-          
-          <CardHeader className="relative">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-destructive/15 border border-destructive/20">
-                <AlertTriangle className="w-6 h-6 text-destructive" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-destructive font-bold">
-                  Zona de Perigo
-                </CardTitle>
-                <CardDescription className="text-muted-foreground/80">
-                  Ações irreversíveis que afetam permanentemente os dados
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="relative space-y-6">
-            <div className="p-4 rounded-xl bg-background/60 border border-destructive/20 backdrop-blur-sm">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-destructive/10">
-                    <Trash2 className="w-5 h-5 text-destructive" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-1">Resetar Faturamento Global</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Cria um backup automático e remove todas as transações. Você poderá restaurar depois.
-                    </p>
-                  </div>
-                </div>
-                
-                <Button 
-                  variant="destructive" 
-                  disabled={isResettingGlobal}
-                  onClick={() => setShowKeywordDialog(true)}
-                  className="w-full sm:w-auto shadow-lg shadow-destructive/25 hover:shadow-destructive/40 transition-all duration-300"
-                >
-                  <Lock className="w-4 h-4 mr-2" />
-                  Executar Reset Global
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Keyword Dialog - Step 1 */}
-      <Dialog open={showKeywordDialog} onOpenChange={setShowKeywordDialog}>
+      <Dialog open={showKeywordDialog} onOpenChange={(open) => !isAuthenticated && setShowKeywordDialog(open)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 rounded-lg bg-destructive/15">
-                <Key className="w-5 h-5 text-destructive" />
+                <AlertTriangle className="w-5 h-5 text-destructive" />
               </div>
-              <DialogTitle>Palavra-chave de Segurança</DialogTitle>
+              <div>
+                <Badge variant="outline" className="mb-1 border-destructive/30 text-destructive">Zona de Perigo</Badge>
+                <DialogTitle>Acesso à Área Restrita</DialogTitle>
+              </div>
             </div>
             <DialogDescription>
-              Digite a palavra-chave secreta para continuar com esta ação crítica.
+              Esta área contém ações críticas e irreversíveis. Digite a palavra-chave de segurança para continuar.
             </DialogDescription>
           </DialogHeader>
           
@@ -193,9 +181,6 @@ export const ZonaDePerigo = () => {
           </div>
           
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => { setShowKeywordDialog(false); setKeyword(""); }}>
-              Cancelar
-            </Button>
             <Button 
               variant="destructive" 
               onClick={handleKeywordSubmit}
@@ -207,17 +192,20 @@ export const ZonaDePerigo = () => {
       </Dialog>
 
       {/* Auth Dialog - Step 2 */}
-      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+      <Dialog open={showAuthDialog} onOpenChange={(open) => !isAuthenticated && setShowAuthDialog(open)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 rounded-lg bg-destructive/15">
                 <Lock className="w-5 h-5 text-destructive" />
               </div>
-              <DialogTitle>Autenticação do Administrador</DialogTitle>
+              <div>
+                <Badge variant="outline" className="mb-1 border-destructive/30 text-destructive">Zona de Perigo</Badge>
+                <DialogTitle>Autenticação do Administrador</DialogTitle>
+              </div>
             </div>
             <DialogDescription>
-              Confirme suas credenciais de administrador para prosseguir.
+              Confirme suas credenciais de administrador para acessar a Zona de Perigo.
             </DialogDescription>
           </DialogHeader>
           
@@ -257,9 +245,6 @@ export const ZonaDePerigo = () => {
           </div>
           
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => { setShowAuthDialog(false); setEmail(""); setPassword(""); }}>
-              Cancelar
-            </Button>
             <Button 
               variant="destructive" 
               onClick={handleAuthenticate}
@@ -277,6 +262,61 @@ export const ZonaDePerigo = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Main Content - Only show after authentication */}
+      {isAuthenticated && (
+        <div className="space-y-6 max-w-2xl">
+          {/* Reset Card */}
+          <Card className="border-destructive/30 bg-gradient-to-br from-destructive/5 to-destructive/10 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/10 rounded-full -translate-y-16 translate-x-16" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-destructive/5 rounded-full translate-y-12 -translate-x-12" />
+            
+            <CardHeader className="relative">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-destructive/15 border border-destructive/20">
+                  <AlertTriangle className="w-6 h-6 text-destructive" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-destructive font-bold">
+                    Zona de Perigo
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground/80">
+                    Ações irreversíveis que afetam permanentemente os dados
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="relative space-y-6">
+              <div className="p-4 rounded-xl bg-background/60 border border-destructive/20 backdrop-blur-sm">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-destructive/10">
+                      <Trash2 className="w-5 h-5 text-destructive" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">Resetar Faturamento Global</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Cria um backup automático e remove todas as transações. Você poderá restaurar depois.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    variant="destructive" 
+                    disabled={isResettingGlobal}
+                    onClick={() => setShowConfirmDialog(true)}
+                    className="w-full sm:w-auto shadow-lg shadow-destructive/25 hover:shadow-destructive/40 transition-all duration-300"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Executar Reset Global
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Confirm Dialog - Step 3 */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
