@@ -111,6 +111,8 @@ const AdminDashboard = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
   const [isLoadingPeriodStats, setIsLoadingPeriodStats] = useState(true);
+  const [isLoadingChart, setIsLoadingChart] = useState(true);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
   const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
   const [transactionOffset, setTransactionOffset] = useState(0);
   const TRANSACTIONS_PER_LOAD = 100;
@@ -175,6 +177,53 @@ const AdminDashboard = () => {
       loadPeriodStats(dateFilter);
     }
   }, [dateFilter, isAuthenticated]);
+
+  // Load chart data from RPC (aggregated directly in database)
+  const loadChartData = async (filter: ChartFilter) => {
+    setIsLoadingChart(true);
+    try {
+      if (filter === 'today') {
+        const { data, error } = await supabase.rpc('get_user_chart_data_by_hour');
+        if (error) throw error;
+        if (data) {
+          const formattedData: ChartData[] = data.map((row: { hour_brazil: number; gerados: number; pagos: number; valor_pago: number }) => ({
+            date: String(row.hour_brazil).padStart(2, '0') + ':00',
+            gerados: Number(row.gerados) || 0,
+            pagos: Number(row.pagos) || 0,
+            valorPago: Number(row.valor_pago) || 0
+          }));
+          setChartData(formattedData);
+        }
+      } else {
+        const days = filter === '7days' ? 7 : filter === '14days' ? 14 : 30;
+        const { data, error } = await supabase.rpc('get_user_chart_data_by_day', { p_days: days });
+        if (error) throw error;
+        if (data) {
+          const formattedData: ChartData[] = data.map((row: { date_brazil: string; gerados: number; pagos: number; valor_pago: number }) => {
+            const [, m, d] = row.date_brazil.split('-');
+            return {
+              date: `${d}/${m}`,
+              gerados: Number(row.gerados) || 0,
+              pagos: Number(row.pagos) || 0,
+              valorPago: Number(row.valor_pago) || 0
+            };
+          });
+          setChartData(formattedData);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading chart data:', error);
+    } finally {
+      setIsLoadingChart(false);
+    }
+  };
+
+  // Load chart data when chartFilter changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadChartData(chartFilter);
+    }
+  }, [chartFilter, isAuthenticated]);
 
   // Calculate net amount after fee deduction - uses stored fee from transaction or fallback to current config
   const calculateNetAmount = (grossAmount: number, storedFeePercentage?: number | null, storedFeeFixed?: number | null): number => {
@@ -442,84 +491,7 @@ const AdminDashboard = () => {
       hour12: false
     }));
   };
-  const chartData = useMemo((): ChartData[] => {
-    const data: ChartData[] = [];
-    const now = new Date();
-    const todayBrazil = getBrazilDateStr(now);
-    const days = getChartDays(chartFilter);
-
-    // STEP 1: Pre-process transactions into indexed Maps (O(n) - single pass)
-    const geradosByKey = new Map<string, number>();
-    const pagosByKey = new Map<string, number>();
-    const valorByKey = new Map<string, number>();
-
-    // Calculate date range for filtering (avoid processing old transactions)
-    const [todayYear, todayMonth, todayDay] = todayBrazil.split('-').map(Number);
-    const startDate = new Date(todayYear, todayMonth - 1, todayDay - days + 1);
-    const startDateStr = getBrazilDateStr(startDate);
-    for (const tx of transactions) {
-      const txDate = new Date(tx.created_at);
-      const txDateStr = getBrazilDateStr(txDate);
-
-      // Skip transactions outside our date range
-      if (txDateStr < startDateStr) continue;
-
-      // Index generated transactions
-      if (chartFilter === 'today') {
-        if (txDateStr === todayBrazil) {
-          const hourKey = getBrazilHour(txDate).toString();
-          geradosByKey.set(hourKey, (geradosByKey.get(hourKey) || 0) + 1);
-        }
-      } else {
-        geradosByKey.set(txDateStr, (geradosByKey.get(txDateStr) || 0) + 1);
-      }
-
-      // Index paid transactions (by paid_at date)
-      if (tx.status === 'paid' && tx.paid_at) {
-        const paidDate = new Date(tx.paid_at);
-        const paidDateStr = getBrazilDateStr(paidDate);
-        if (paidDateStr < startDateStr) continue;
-        const netAmount = calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed);
-        if (chartFilter === 'today') {
-          if (paidDateStr === todayBrazil) {
-            const hourKey = getBrazilHour(paidDate).toString();
-            pagosByKey.set(hourKey, (pagosByKey.get(hourKey) || 0) + 1);
-            valorByKey.set(hourKey, (valorByKey.get(hourKey) || 0) + netAmount);
-          }
-        } else {
-          pagosByKey.set(paidDateStr, (pagosByKey.get(paidDateStr) || 0) + 1);
-          valorByKey.set(paidDateStr, (valorByKey.get(paidDateStr) || 0) + netAmount);
-        }
-      }
-    }
-
-    // STEP 2: Generate chart data from indexed Maps (O(points) - constant per point)
-    if (chartFilter === 'today') {
-      for (let hour = 0; hour <= 23; hour++) {
-        const hourKey = hour.toString();
-        data.push({
-          date: hour.toString().padStart(2, '0') + ':00',
-          gerados: geradosByKey.get(hourKey) || 0,
-          pagos: pagosByKey.get(hourKey) || 0,
-          valorPago: valorByKey.get(hourKey) || 0
-        });
-      }
-    } else {
-      // Generate dates from oldest to newest
-      for (let i = days - 1; i >= 0; i--) {
-        const tempDate = new Date(todayYear, todayMonth - 1, todayDay - i, 12, 0, 0);
-        const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
-        const [, m, d] = dateStr.split('-');
-        data.push({
-          date: `${d}/${m}`,
-          gerados: geradosByKey.get(dateStr) || 0,
-          pagos: pagosByKey.get(dateStr) || 0,
-          valorPago: valorByKey.get(dateStr) || 0
-        });
-      }
-    }
-    return data;
-  }, [transactions, chartFilter, feeConfig]);
+  // Chart data is now loaded from RPC via loadChartData function
   // Use periodStats from RPC for accurate counts (bypasses Supabase row limit)
   const filteredStats = useMemo(() => {
     const generated = periodStats.total_generated;
@@ -756,7 +728,7 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <div className="flex-1 min-h-[300px] sm:min-h-[180px] w-full">
-              {isLoadingTransactions ? <div className="flex items-center justify-center h-full">
+              {isLoadingChart ? <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-3">
                     <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
                     <span className="text-sm text-muted-foreground">Carregando gráfico...</span>

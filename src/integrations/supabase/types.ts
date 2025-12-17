@@ -2240,6 +2240,24 @@ export type Database = {
         Returns: number
       }
       get_user_balance_details: { Args: never; Returns: Json }
+      get_user_chart_data_by_day: {
+        Args: { p_days?: number }
+        Returns: {
+          date_brazil: string
+          gerados: number
+          pagos: number
+          valor_pago: number
+        }[]
+      }
+      get_user_chart_data_by_hour: {
+        Args: never
+        Returns: {
+          gerados: number
+          hour_brazil: number
+          pagos: number
+          valor_pago: number
+        }[]
+      }
       get_user_dashboard: { Args: never; Returns: Json }
       get_user_documents_admin: {
         Args: { p_user_id: string }
