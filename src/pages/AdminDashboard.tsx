@@ -50,7 +50,7 @@ interface ChartData {
   valorPago: number;
 }
 const ITEMS_PER_PAGE = 10;
-type DateFilter = 'today' | '7days' | '15days' | 'month' | 'year' | 'all';
+type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
 type StatusFilter = 'all' | 'paid' | 'generated';
 interface FeeConfig {
@@ -308,6 +308,8 @@ const AdminDashboard = () => {
     switch (filter) {
       case 'today':
         return 1;
+      case 'yesterday':
+        return 1;
       case '7days':
         return 7;
       case '15days':
@@ -346,6 +348,10 @@ const AdminDashboard = () => {
         switch (dateFilter) {
           case 'today':
             return txDate >= startOfDay;
+          case 'yesterday':
+            const yesterday = new Date(startOfDay);
+            yesterday.setDate(yesterday.getDate() - 1);
+            return txDate >= yesterday && txDate < startOfDay;
           case '7days':
             const sevenDaysAgo = new Date(startOfDay);
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -566,6 +572,7 @@ const AdminDashboard = () => {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="yesterday">Ontem</SelectItem>
                 <SelectItem value="7days">7 dias</SelectItem>
                 <SelectItem value="15days">15 dias</SelectItem>
                 <SelectItem value="month">Este mês</SelectItem>
