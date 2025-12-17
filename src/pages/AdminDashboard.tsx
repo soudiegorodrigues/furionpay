@@ -252,7 +252,7 @@ const AdminDashboard = () => {
   const loadData = async (showLoading = true, resetTransactions = true) => {
     try {
       // PHASE 1: Load small/fast data FIRST (non-blocking for UI)
-      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard'), supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
+      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard_v2'), supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
         ascending: true
       }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance'), user?.id ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle() : Promise.resolve({
         data: null,
@@ -310,7 +310,7 @@ const AdminDashboard = () => {
         setIsLoadingTransactions(true);
       }
       supabase.rpc('get_user_transactions', {
-        p_limit: 0
+        p_limit: 50
       }).then(({
         data,
         error
@@ -319,8 +319,9 @@ const AdminDashboard = () => {
           const newTx = data as unknown as Transaction[] || [];
           if (resetTransactions) {
             setTransactions(newTx);
-            setTransactionOffset(TRANSACTIONS_PER_LOAD);
-            setHasMoreTransactions(false);
+            setTransactionOffset(50);
+            // If we got exactly 50, there might be more
+            setHasMoreTransactions(newTx.length === 50);
           }
         }
         setIsLoadingTransactions(false);
@@ -345,18 +346,18 @@ const AdminDashboard = () => {
     if (isLoadingMore || !hasMoreTransactions) return;
     setIsLoadingMore(true);
     try {
-      // We need to fetch all and slice since RPC doesn't support offset
+      // Load all transactions when user clicks "Ver mais"
       const {
         data,
         error
       } = await supabase.rpc('get_user_transactions', {
-        p_limit: transactionOffset + TRANSACTIONS_PER_LOAD
+        p_limit: 0
       });
       if (error) throw error;
       const allTx = data as unknown as Transaction[] || [];
       setTransactions(allTx);
-      setTransactionOffset(transactionOffset + TRANSACTIONS_PER_LOAD);
-      setHasMoreTransactions(allTx.length === transactionOffset + TRANSACTIONS_PER_LOAD);
+      setTransactionOffset(allTx.length);
+      setHasMoreTransactions(false);
     } catch (error) {
       console.error('Error loading more transactions:', error);
       toast({
@@ -939,7 +940,9 @@ const AdminDashboard = () => {
               <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {periodStats.total_generated} transações no período
+                    {hasMoreTransactions 
+                      ? `Mostrando ${transactions.length} de ${periodStats.total_generated} transações`
+                      : `${periodStats.total_generated} transações no período`}
                   </span>
                   {totalPages > 1 && <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
@@ -954,7 +957,7 @@ const AdminDashboard = () => {
                     </div>}
                 </div>
                 {hasMoreTransactions && <Button variant="outline" className="w-full" onClick={loadMoreTransactions} disabled={isLoadingMore}>
-                    {isLoadingMore ? 'Carregando...' : 'Carregar mais transações'}
+                    {isLoadingMore ? 'Carregando todas as transações...' : `Ver mais transações (${periodStats.total_generated - transactions.length} restantes)`}
                   </Button>}
               </div>
             </>}
