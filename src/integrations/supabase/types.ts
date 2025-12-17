@@ -2093,28 +2093,51 @@ export type Database = {
           value: string
         }[]
       }
-      get_global_transactions_v2: {
-        Args: {
-          p_date_filter?: string
-          p_email_search?: string
-          p_limit?: number
-          p_offset?: number
-          p_status?: string
-        }
-        Returns: {
-          amount: number
-          created_at: string
-          donor_name: string
-          id: string
-          paid_at: string
-          product_name: string
-          status: Database["public"]["Enums"]["pix_status"]
-          total_count: number
-          txid: string
-          user_email: string
-          utm_data: Json
-        }[]
-      }
+      get_global_transactions_v2:
+        | {
+            Args: {
+              p_date_filter?: string
+              p_email_search?: string
+              p_limit?: number
+              p_offset?: number
+              p_status?: string
+            }
+            Returns: {
+              amount: number
+              created_at: string
+              donor_name: string
+              id: string
+              paid_at: string
+              product_name: string
+              status: Database["public"]["Enums"]["pix_status"]
+              total_count: number
+              txid: string
+              user_email: string
+              utm_data: Json
+            }[]
+          }
+        | {
+            Args: {
+              p_date_filter?: string
+              p_email_search?: string
+              p_limit?: number
+              p_offset?: number
+              p_status?: string
+            }
+            Returns: {
+              amount: number
+              created_at: string
+              donor_name: string
+              id: string
+              paid_at: string
+              product_name: string
+              status: Database["public"]["Enums"]["pix_status"]
+              total_count: number
+              txid: string
+              user_email: string
+              utm_data: Json
+            }[]
+          }
       get_my_verification_status: {
         Args: never
         Returns: {
@@ -2199,19 +2222,38 @@ export type Database = {
         }[]
       }
       get_pix_transactions_count: { Args: never; Returns: number }
-      get_platform_revenue_chart: {
-        Args: { p_filter?: string; p_user_email?: string }
-        Returns: {
-          acquirer_cost: number
-          gross_revenue: number
-          net_profit: number
-          period_key: string
-        }[]
-      }
-      get_platform_revenue_stats: {
-        Args: { p_user_email?: string }
-        Returns: Json
-      }
+      get_platform_revenue_chart:
+        | {
+            Args: { p_filter?: string; p_user_email?: string }
+            Returns: {
+              acquirer_cost: number
+              gross_revenue: number
+              net_profit: number
+              period_key: string
+            }[]
+          }
+        | {
+            Args: { p_period?: string }
+            Returns: {
+              cost: number
+              date_label: string
+              profit: number
+              revenue: number
+              transaction_count: number
+            }[]
+          }
+      get_platform_revenue_stats:
+        | {
+            Args: never
+            Returns: {
+              net_profit: number
+              period: string
+              total_cost: number
+              total_revenue: number
+              total_transactions: number
+            }[]
+          }
+        | { Args: { p_user_email?: string }; Returns: Json }
       get_platform_unique_users: { Args: never; Returns: Json }
       get_platform_user_profit_ranking: {
         Args: { p_filter?: string; p_limit?: number }
@@ -2393,15 +2435,25 @@ export type Database = {
           valor_pago: number
         }[]
       }
-      get_user_chart_data_by_hour: {
-        Args: never
-        Returns: {
-          gerados: number
-          hour_brazil: number
-          pagos: number
-          valor_pago: number
-        }[]
-      }
+      get_user_chart_data_by_hour:
+        | {
+            Args: never
+            Returns: {
+              gerados: number
+              hour_brazil: number
+              pagos: number
+              valor_pago: number
+            }[]
+          }
+        | {
+            Args: { p_date?: string }
+            Returns: {
+              gerados: number
+              hour_brazil: number
+              pagos: number
+              valor_pago: number
+            }[]
+          }
       get_user_dashboard: { Args: never; Returns: Json }
       get_user_dashboard_v2: { Args: never; Returns: Json }
       get_user_documents_admin: {
