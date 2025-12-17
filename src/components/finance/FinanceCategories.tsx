@@ -48,8 +48,8 @@ const CATEGORY_COLORS = [
   '#ec4899', '#3b82f6', '#22c55e', '#eab308', '#64748b'
 ];
 
-export const FinanceCategories = () => {
-  const { user } = useAdminAuth();
+export const FinanceCategories = ({ userId }: { userId?: string }) => {
+  const { user } = useAdminAuth(); const effectiveUserId = userId ?? user?.id;
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,10 +67,10 @@ export const FinanceCategories = () => {
   const isValidHex = (hex: string) => /^#[0-9A-Fa-f]{6}$/.test(hex);
 
   useEffect(() => {
-    if (user?.id) {
+    if (effectiveUserId) {
       fetchCategories();
     }
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const fetchCategories = async () => {
     setIsLoading(true);
@@ -78,7 +78,7 @@ export const FinanceCategories = () => {
       const { data, error } = await supabase
         .from('finance_categories')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', effectiveUserId!)
         .order('type', { ascending: true })
         .order('name', { ascending: true });
 
@@ -147,7 +147,7 @@ export const FinanceCategories = () => {
         const { error } = await supabase
           .from('finance_categories')
           .insert({
-            user_id: user!.id,
+            user_id: effectiveUserId!,
             name: formData.name,
             type: formData.type,
             color: formData.color,

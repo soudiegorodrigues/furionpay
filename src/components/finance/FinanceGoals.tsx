@@ -54,8 +54,8 @@ const GOAL_TYPES = [
   { value: 'emergency', label: 'Reserva de Emergência', icon: Shield, color: 'text-green-600' },
 ];
 
-export const FinanceGoals = () => {
-  const { user } = useAdminAuth();
+export const FinanceGoals = ({ userId }: { userId?: string }) => {
+  const { user } = useAdminAuth(); const effectiveUserId = userId ?? user?.id;
   const { toast } = useToast();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,10 +75,10 @@ export const FinanceGoals = () => {
   });
 
   useEffect(() => {
-    if (user?.id) {
+    if (effectiveUserId) {
       fetchGoals();
     }
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const fetchGoals = async () => {
     setIsLoading(true);
@@ -86,7 +86,7 @@ export const FinanceGoals = () => {
       const { data, error } = await supabase
         .from('finance_goals')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', effectiveUserId!)
         .order('is_completed', { ascending: true })
         .order('deadline', { ascending: true, nullsFirst: false });
 
@@ -190,7 +190,7 @@ export const FinanceGoals = () => {
       const isCompleted = currentAmount >= targetAmount;
 
       const payload = {
-        user_id: user!.id,
+        user_id: effectiveUserId!,
         name: formData.name,
         type: formData.type,
         target_amount: targetAmount,

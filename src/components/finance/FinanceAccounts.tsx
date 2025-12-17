@@ -73,8 +73,8 @@ const ACCOUNT_TYPES = [
   { value: 'wallet', label: 'Carteira Digital', icon: Wallet }
 ];
 
-export const FinanceAccounts = () => {
-  const { user } = useAdminAuth();
+export const FinanceAccounts = ({ userId }: { userId?: string }) => {
+  const { user } = useAdminAuth(); const effectiveUserId = userId ?? user?.id;
   const { toast } = useToast();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,10 +92,10 @@ export const FinanceAccounts = () => {
   });
 
   useEffect(() => {
-    if (user?.id) {
+    if (effectiveUserId) {
       fetchAccounts();
     }
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const fetchAccounts = async () => {
     setIsLoading(true);
@@ -103,7 +103,7 @@ export const FinanceAccounts = () => {
       const { data, error } = await supabase
         .from('finance_accounts')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', effectiveUserId!)
         .order('name');
 
       if (error) throw error;
@@ -166,7 +166,7 @@ export const FinanceAccounts = () => {
       const bank = BRAZILIAN_BANKS.find(b => b.value === formData.bank_name);
       
       const payload = {
-        user_id: user!.id,
+        user_id: effectiveUserId!,
         name: formData.name.trim(),
         type: formData.type,
         bank_name: bank?.label || formData.bank_name || null,

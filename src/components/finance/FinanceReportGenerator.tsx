@@ -43,8 +43,8 @@ interface Category {
 
 type ReportType = 'income' | 'expense' | 'both';
 
-export const FinanceReportGenerator = () => {
-  const { user } = useAdminAuth();
+export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
+  const { user } = useAdminAuth(); const effectiveUserId = userId ?? user?.id;
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -70,7 +70,7 @@ export const FinanceReportGenerator = () => {
   };
 
   const generatePDF = async () => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
     
     setIsGenerating(true);
     try {
@@ -78,7 +78,7 @@ export const FinanceReportGenerator = () => {
       let query = supabase
         .from('finance_transactions')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId!)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: false });
@@ -96,7 +96,7 @@ export const FinanceReportGenerator = () => {
       const { data: categories, error: catError } = await supabase
         .from('finance_categories')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', effectiveUserId!);
       if (catError) throw catError;
 
       const categoryMap = new Map(categories?.map(c => [c.id, c]) || []);

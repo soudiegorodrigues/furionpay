@@ -19,7 +19,7 @@ import { FinanceReportGenerator } from "@/components/finance/FinanceReportGenera
 
 const AdminGestaoFinanceira = () => {
   const { user } = useAdminAuth();
-  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
+  const { permissions, isOwner, hasPermission, loading: permissionsLoading } = usePermissions(); const effectiveUserId = permissions?.owner_id ?? user?.id;
   const [activeTab, setActiveTab] = useState("dashboard");
 
   // Permission check
@@ -36,7 +36,7 @@ const AdminGestaoFinanceira = () => {
             Controle suas receitas, despesas, investimentos e metas financeiras
           </p>
         </div>
-        <FinanceReportGenerator />
+        <FinanceReportGenerator userId={effectiveUserId} />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -64,23 +64,23 @@ const AdminGestaoFinanceira = () => {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <FinanceDashboard />
+          <FinanceDashboard userId={effectiveUserId} />
         </TabsContent>
 
         <TabsContent value="accounts" className="space-y-6">
-          <FinanceAccounts />
+          <FinanceAccounts userId={effectiveUserId} />
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-6">
-          <FinanceTransactions />
+          <FinanceTransactions userId={effectiveUserId} />
         </TabsContent>
 
         <TabsContent value="categories" className="space-y-6">
-          <FinanceCategories />
+          <FinanceCategories userId={effectiveUserId} />
         </TabsContent>
 
         <TabsContent value="goals" className="space-y-6">
-          <FinanceGoals />
+          <FinanceGoals userId={effectiveUserId} />
         </TabsContent>
       </Tabs>
     </div>
