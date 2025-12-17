@@ -523,7 +523,7 @@ export function ApiMonitoringSection() {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="max-w-5xl mx-auto space-y-3 sm:space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
