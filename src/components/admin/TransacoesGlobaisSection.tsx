@@ -25,7 +25,7 @@ interface Transaction {
 type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
 type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 10;
 
 export const TransacoesGlobaisSection = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
