@@ -156,7 +156,7 @@ const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: Acqu
   // Card compacto para sem atividade
   if (!hasActivity) {
     return (
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden w-full sm:w-auto sm:max-w-[200px]">
         <CardHeader className="p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -177,7 +177,7 @@ const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: Acqu
 
   // Card completo para com atividade
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden w-full sm:w-auto sm:max-w-[280px]">
       <CardHeader className="p-3 sm:p-4 pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-xs sm:text-sm font-medium truncate">{name}</CardTitle>
@@ -549,7 +549,7 @@ export function ApiMonitoringSection() {
       </div>
 
       {/* Acquirer Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         <AcquirerCard 
           name="SpedPay" 
           health={healthData?.spedpay ?? null} 
