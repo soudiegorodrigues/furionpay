@@ -602,7 +602,17 @@ const AdminDashboard = () => {
             <Button variant="outline" size="sm" onClick={() => setHideData(!hideData)} title={hideData ? "Mostrar dados" : "Ocultar dados"}>
               {hideData ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => loadData(false)}>
+            <Button variant="outline" size="sm" onClick={async () => {
+              await Promise.all([
+                loadData(false),
+                loadPeriodStats(dateFilter),
+                loadChartData(chartFilter)
+              ]);
+              toast({
+                title: "Atualizado",
+                description: "Todos os dados foram atualizados"
+              });
+            }}>
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
