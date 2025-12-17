@@ -8,6 +8,8 @@ import {
   Building2
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import { FinanceDashboard } from "@/components/finance/FinanceDashboard";
 import { FinanceCategories } from "@/components/finance/FinanceCategories";
 import { FinanceTransactions } from "@/components/finance/FinanceTransactions";
@@ -17,7 +19,13 @@ import { FinanceReportGenerator } from "@/components/finance/FinanceReportGenera
 
 const AdminGestaoFinanceira = () => {
   const { user } = useAdminAuth();
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_financeiro')) {
+    return <AccessDenied message="Você não tem permissão para acessar a Gestão Financeira." />;
+  }
 
   return (
     <div className="p-4 md:p-8 lg:p-10 space-y-6 animate-fade-in max-w-4xl mx-auto">

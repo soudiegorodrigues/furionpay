@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminHeader } from "@/components/AdminSidebar";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,6 +58,7 @@ const ProductSkeleton = () => (
 
 export default function AdminProducts() {
   const navigate = useNavigate();
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
@@ -72,6 +75,11 @@ export default function AdminProducts() {
     name: "",
     color: "#dc2626"
   });
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_products')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar Produtos." />;
+  }
 
   // Combined query: check admin and fetch products together
   const {

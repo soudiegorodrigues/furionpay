@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +57,7 @@ interface FeeConfig {
 
 const AdminFinanceiro = () => {
   const { user, isAdmin } = useAdminAuth();
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState<WithdrawalHistory[]>([]);
   const [availableBalance, setAvailableBalance] = useState<number>(0);
@@ -82,6 +85,11 @@ const AdminFinanceiro = () => {
   const [withdrawalPage, setWithdrawalPage] = useState(1);
   const WITHDRAWALS_PER_PAGE = 10;
   const { toast } = useToast();
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_view_financeiro')) {
+    return <AccessDenied message="Você não tem permissão para acessar o Painel Financeiro." />;
+  }
 
   const banks = [
     { code: '001', name: 'Banco do Brasil S.A.' },

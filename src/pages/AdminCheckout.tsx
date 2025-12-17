@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +86,7 @@ const popupModels = [{
 }];
 
 const AdminCheckout = () => {
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
@@ -94,6 +97,11 @@ const AdminCheckout = () => {
   const [offers, setOffers] = useState<CheckoutOffer[]>([]);
   
   const { isAuthenticated, user } = useAdminAuth();
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_checkout')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar o Checkout." />;
+  }
 
   useEffect(() => {
     if (isAuthenticated) {

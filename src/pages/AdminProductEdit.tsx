@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminHeader } from "@/components/AdminSidebar";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -87,6 +89,7 @@ export default function AdminProductEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [activeSection, setActiveSection] = useState<Section>("details");
   const [formData, setFormData] = useState({
     name: "",
@@ -95,6 +98,11 @@ export default function AdminProductEdit() {
     image_url: "",
     website_url: "",
   });
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_products')) {
+    return <AccessDenied message="Você não tem permissão para editar Produtos." />;
+  }
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", id],

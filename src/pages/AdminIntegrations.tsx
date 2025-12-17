@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { UtmifySection, UtmifyInitialData } from "@/components/admin/UtmifySection";
 import { ApiKeysSection } from "@/components/admin/ApiKeysSection";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import utmifyLogo from "@/assets/utmify-logo.png";
 import apiLogo from "@/assets/api-logo.webp";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminIntegrations = () => {
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [utmifyDialogOpen, setUtmifyDialogOpen] = useState(false);
   const [utmifyConfigured, setUtmifyConfigured] = useState(false);
   const [utmifyEnabled, setUtmifyEnabled] = useState(false);
@@ -20,6 +23,11 @@ const AdminIntegrations = () => {
   const [apiDialogOpen, setApiDialogOpen] = useState(false);
   const [apiKeysCount, setApiKeysCount] = useState(0);
   const [loadingApiKeys, setLoadingApiKeys] = useState(false);
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_integrations')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar Integrações." />;
+  }
 
   useEffect(() => {
     loadUtmifyStatus();

@@ -18,7 +18,7 @@ import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 export function AdminLayoutWrapper() {
   const navigate = useNavigate();
   const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin, isApproved } = useAdminAuth();
-  const { isOwner } = usePermissions();
+  const { isOwner, hasPermission } = usePermissions();
   const [userName, setUserName] = useState<string | null>(null);
   const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
@@ -142,6 +142,7 @@ export function AdminLayoutWrapper() {
           onLogout={handleLogout} 
           isAdmin={isAdmin}
           isOwner={isOwner}
+          hasPermission={hasPermission}
         />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Desktop header with billing progress */}

@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -76,8 +78,15 @@ interface PeriodStats {
 }
 
 const AdminDashboard = () => {
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const isMobile = useIsMobile();
   const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_view_dashboard')) {
+    return <AccessDenied message="Você não tem permissão para visualizar o Dashboard." />;
+  }
+
   useEffect(() => {
     const checkSize = () => setIsTabletOrSmaller(window.innerWidth < 1024);
     checkSize();
