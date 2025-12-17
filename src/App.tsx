@@ -23,6 +23,7 @@ const AdminProductEdit = lazy(() => import("./pages/AdminProductEdit"));
 const AdminFinanceiro = lazy(() => import("./pages/AdminFinanceiro"));
 const AdminDocuments = lazy(() => import("./pages/AdminDocuments"));
 const AdminGestaoFinanceira = lazy(() => import("./pages/AdminGestaoFinanceira"));
+const AdminTemplates = lazy(() => import("./pages/AdminTemplates"));
 const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 
@@ -127,6 +128,11 @@ const App = () => (
                 <Route path="gestao-financeira" element={
                   <Suspense fallback={<PageSkeleton />}>
                     <AdminGestaoFinanceira />
+                  </Suspense>
+                } />
+                <Route path="templates" element={
+                  <Suspense fallback={<PageSkeleton />}>
+                    <AdminTemplates />
                   </Suspense>
                 } />
               </Route>

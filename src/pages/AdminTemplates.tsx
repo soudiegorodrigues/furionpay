@@ -55,7 +55,7 @@ interface Template {
 }
 
 export default function AdminTemplates() {
-  const { isAdmin, isLoading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
@@ -120,15 +120,15 @@ export default function AdminTemplates() {
   // Duplicate mutation
   const duplicateMutation = useMutation({
     mutationFn: async (template: Template) => {
-      const { error } = await supabase.from("checkout_templates").insert({
+      const { error } = await supabase.from("checkout_templates").insert([{
         name: `${template.name} (Cópia)`,
         description: template.description,
         template_code: template.template_code,
-        layout_config: template.layout_config,
+        layout_config: template.layout_config as unknown as Record<string, never>,
         is_published: false,
         is_default: false,
         preview_image_url: template.preview_image_url,
-      });
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
