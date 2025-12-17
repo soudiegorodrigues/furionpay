@@ -237,6 +237,74 @@ export function ApiMonitoringSection() {
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }, []);
 
+  // Custom tooltip component for the chart
+  const CustomChartTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    
+    const dataPoint = payload[0]?.payload;
+    const spedpay = dataPoint?.spedpay ?? 0;
+    const inter = dataPoint?.inter ?? 0;
+    const ativus = dataPoint?.ativus ?? 0;
+    const total = spedpay + inter + ativus;
+
+    // Format the date/time label based on period
+    const formatTooltipLabel = () => {
+      if (chartPeriod === '24h') {
+        return `Hoje às ${label}`;
+      }
+      // For 7d/30d, parse the date from dd/mm format
+      const [day, month] = label.split('/');
+      const year = new Date().getFullYear();
+      const date = new Date(year, parseInt(month, 10) - 1, parseInt(day, 10));
+      return date.toLocaleDateString('pt-BR', { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long',
+        year: 'numeric'
+      });
+    };
+
+    return (
+      <div className="bg-card border border-border rounded-lg shadow-lg p-3 text-sm min-w-[180px]">
+        {/* Header with date/time */}
+        <div className="font-semibold text-foreground mb-2 pb-2 border-b border-border capitalize">
+          {formatTooltipLabel()}
+        </div>
+        
+        {/* Calls per acquirer */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
+              <span className="text-muted-foreground">SpedPay</span>
+            </div>
+            <span className="font-semibold">{spedpay}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />
+              <span className="text-muted-foreground">Banco Inter</span>
+            </div>
+            <span className="font-semibold">{inter}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+              <span className="text-muted-foreground">Ativus Hub</span>
+            </div>
+            <span className="font-semibold">{ativus}</span>
+          </div>
+        </div>
+        
+        {/* Total */}
+        <div className="mt-2 pt-2 border-t border-border flex items-center justify-between">
+          <span className="text-muted-foreground font-medium">Total</span>
+          <span className="font-bold text-foreground">{total} chamadas</span>
+        </div>
+      </div>
+    );
+  };
+
   const AcquirerCard = ({ name, health }: { name: string; health: AcquirerHealth | null }) => (
     <Card>
       <CardHeader className="p-3 sm:p-4 pb-2">
@@ -402,16 +470,7 @@ export function ApiMonitoringSection() {
                   className="text-muted-foreground"
                   width={30}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    padding: '6px 10px'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                />
+                <Tooltip content={<CustomChartTooltip />} />
                 <Legend 
                   wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }}
                   iconSize={8}
