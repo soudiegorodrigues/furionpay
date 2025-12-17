@@ -220,24 +220,24 @@ export function TemplatesListSection() {
                 {template.template_code && (
                   <Badge variant="outline" className="mt-2 text-xs">{template.template_code}</Badge>
                 )}
-                <div className="flex items-center gap-1 mt-4 pt-4 border-t">
-                  <Button variant="ghost" size="sm" onClick={() => setEditingTemplate(template)} className="flex-1 h-8 text-xs">
-                    <Edit className="h-3 w-3 mr-1" />
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                  <Button variant="outline" size="sm" onClick={() => setEditingTemplate(template)} className="flex-1 h-9 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground">
+                    <Edit className="h-4 w-4 mr-1.5" />
                     Editar
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => duplicateMutation.mutate(template)} disabled={duplicateMutation.isPending}>
-                    <Copy className="h-3 w-3" />
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => duplicateMutation.mutate(template)} disabled={duplicateMutation.isPending}>
+                    <Copy className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => togglePublishMutation.mutate({ id: template.id, is_published: !template.is_published })} disabled={togglePublishMutation.isPending}>
-                    {template.is_published ? <ToggleRight className="h-4 w-4 text-primary" /> : <ToggleLeft className="h-4 w-4" />}
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => togglePublishMutation.mutate({ id: template.id, is_published: !template.is_published })} disabled={togglePublishMutation.isPending}>
+                    {template.is_published ? <ToggleRight className="h-5 w-5 text-primary" /> : <ToggleLeft className="h-5 w-5" />}
                   </Button>
                   {!template.is_default && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDefaultMutation.mutate(template.id)} disabled={setDefaultMutation.isPending}>
-                      <Star className="h-3 w-3" />
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => setDefaultMutation.mutate(template.id)} disabled={setDefaultMutation.isPending}>
+                      <Star className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirmId(template.id)} disabled={template.is_default}>
-                    <Trash2 className="h-3 w-3" />
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setDeleteConfirmId(template.id)} disabled={template.is_default}>
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
