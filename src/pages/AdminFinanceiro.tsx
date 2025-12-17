@@ -511,17 +511,11 @@ const AdminFinanceiro = () => {
 
   const loadWithdrawalHistory = async () => {
     try {
-      if (isAdmin) {
-        // Admin sees all withdrawals with user emails
-        const { data, error } = await supabase.rpc('get_all_withdrawals_admin', { p_limit: 100 });
-        if (error) throw error;
-        setWithdrawalHistory(data || []);
-      } else {
-        // Regular user sees only their own withdrawals
-        const { data, error } = await supabase.rpc('get_user_withdrawals', { p_limit: 50 });
-        if (error) throw error;
-        setWithdrawalHistory(data || []);
-      }
+      // Always show only the logged-in user's own withdrawals
+      // Admin global view is available in "Saque Global" section
+      const { data, error } = await supabase.rpc('get_user_withdrawals', { p_limit: 50 });
+      if (error) throw error;
+      setWithdrawalHistory(data || []);
     } catch (error) {
       console.error('Error loading withdrawal history:', error);
     }
@@ -594,12 +588,12 @@ const AdminFinanceiro = () => {
     return () => clearInterval(interval);
   }, [user?.id]);
 
-  // Load withdrawal history separately when isAdmin is determined
+  // Load withdrawal history for the logged-in user
   useEffect(() => {
     if (user?.id) {
       loadWithdrawalHistory();
     }
-  }, [user?.id, isAdmin]);
+  }, [user?.id]);
 
   const stats = useMemo(() => {
     const paid = transactions.filter(tx => tx.status === 'paid');
@@ -1329,7 +1323,6 @@ const AdminFinanceiro = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {isAdmin && <TableHead>Email</TableHead>}
                         <TableHead>Valor</TableHead>
                         <TableHead className="hidden sm:table-cell">Banco/PIX</TableHead>
                         <TableHead>Status</TableHead>
@@ -1342,13 +1335,6 @@ const AdminFinanceiro = () => {
                         .slice((withdrawalPage - 1) * WITHDRAWALS_PER_PAGE, withdrawalPage * WITHDRAWALS_PER_PAGE)
                         .map((withdrawal) => (
                           <TableRow key={withdrawal.id}>
-                            {isAdmin && (
-                              <TableCell className="text-sm">
-                                <span className="block truncate max-w-[180px]" title={withdrawal.user_email}>
-                                  {withdrawal.user_email || '—'}
-                                </span>
-                              </TableCell>
-                            )}
                             <TableCell className="font-medium">
                               {formatCurrency(withdrawal.amount)}
                             </TableCell>
