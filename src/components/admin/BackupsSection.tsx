@@ -50,16 +50,23 @@ interface StorageStats {
   }>;
 }
 
+const BACKUPS_AUTH_KEY = 'backups_authenticated';
+
 export function BackupsSection() {
-  // Security states
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showKeywordDialog, setShowKeywordDialog] = useState(true);
+  // Security states - check sessionStorage on init
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem(BACKUPS_AUTH_KEY) === 'true';
+  });
+  const [showKeywordDialog, setShowKeywordDialog] = useState(() => {
+    return sessionStorage.getItem(BACKUPS_AUTH_KEY) !== 'true';
+  });
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ email: string } | null>(null);
 
   // Backup states
   const [backups, setBackups] = useState<SystemBackup[]>([]);
@@ -73,6 +80,17 @@ export function BackupsSection() {
   const [selectedBackup, setSelectedBackup] = useState<SystemBackup | null>(null);
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Get current user on mount
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setCurrentUser({ email: user.email });
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   // Security handlers
   const handleKeywordSubmit = () => {
@@ -91,21 +109,32 @@ export function BackupsSection() {
       return;
     }
 
+    // Verify email matches current user
+    if (currentUser?.email && email.toLowerCase() !== currentUser.email.toLowerCase()) {
+      toast.error("Use o email da sua conta atual");
+      return;
+    }
+
     setIsAuthenticating(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        toast.error("Email ou senha incorretos");
-        return;
-      }
-
+      // Verify user is admin (they're already logged in)
       const { data: isAdmin } = await supabase.rpc('is_admin_authenticated');
       if (!isAdmin) {
         toast.error("Apenas administradores podem acessar esta área");
         return;
       }
 
+      // Verify password by attempting sign in (won't change auth state if same user)
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        toast.error("Senha incorreta");
+        return;
+      }
+
+      // Save to sessionStorage to persist across re-renders
+      sessionStorage.setItem(BACKUPS_AUTH_KEY, 'true');
+      
       setShowAuthDialog(false);
       setIsAuthenticated(true);
       setEmail("");
