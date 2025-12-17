@@ -185,7 +185,7 @@ export const ReceitaPlataformaSection = () => {
           fortnight?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
           month?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
           year?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
-          all_time?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
+          all_time?: { net_profit: number; gross_revenue: number; acquirer_cost: number; transaction_count: number };
         };
         
         // Process JSON object structure from RPC
@@ -193,7 +193,6 @@ export const ReceitaPlataformaSection = () => {
           stats.today = Number(rpcData.today.net_profit) || 0;
           stats.gross.today = Number(rpcData.today.gross_revenue) || 0;
           stats.acquirerCosts.today = Number(rpcData.today.acquirer_cost) || 0;
-          stats.transactionCount = Number(rpcData.today.transaction_count) || 0;
         }
         if (rpcData.week) {
           stats.sevenDays = Number(rpcData.week.net_profit) || 0;
@@ -219,6 +218,7 @@ export const ReceitaPlataformaSection = () => {
           stats.total = Number(rpcData.all_time.net_profit) || 0;
           stats.gross.total = Number(rpcData.all_time.gross_revenue) || 0;
           stats.acquirerCosts.total = Number(rpcData.all_time.acquirer_cost) || 0;
+          stats.transactionCount = Number(rpcData.all_time.transaction_count) || 0;
         }
         
         // Calculate derived stats
