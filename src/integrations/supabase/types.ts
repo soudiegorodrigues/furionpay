@@ -2000,6 +2000,7 @@ export type Database = {
         Returns: boolean
       }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
+      export_full_backup: { Args: never; Returns: Json }
       generate_api_key: {
         Args: never
         Returns: {
