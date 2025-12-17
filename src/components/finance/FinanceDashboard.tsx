@@ -51,6 +51,15 @@ interface Category {
   spending_limit: number | null;
 }
 
+interface Account {
+  id: string;
+  name: string;
+  bank_name: string | null;
+  icon: string | null;
+  color: string | null;
+  current_balance: number;
+}
+
 interface MonthlyData {
   month: string;
   income: number;
@@ -80,6 +89,7 @@ export const FinanceDashboard = () => {
   const { user } = useAdminAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
 
@@ -92,7 +102,7 @@ export const FinanceDashboard = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [transactionsRes, categoriesRes] = await Promise.all([
+      const [transactionsRes, categoriesRes, accountsRes] = await Promise.all([
         supabase
           .from('finance_transactions')
           .select('*')
@@ -101,11 +111,18 @@ export const FinanceDashboard = () => {
         supabase
           .from('finance_categories')
           .select('*')
+          .eq('user_id', user!.id),
+        supabase
+          .from('finance_accounts')
+          .select('id, name, bank_name, icon, color, current_balance')
           .eq('user_id', user!.id)
+          .eq('is_active', true)
+          .order('name')
       ]);
 
       if (transactionsRes.data) setTransactions(transactionsRes.data);
       if (categoriesRes.data) setCategories(categoriesRes.data);
+      if (accountsRes.data) setAccounts(accountsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -513,6 +530,66 @@ export const FinanceDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Account Balances Card */}
+      {accounts.length > 0 && (
+        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '175ms' }}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wallet className="h-4 w-4 text-primary" />
+              Saldo por Conta
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {accounts.map(account => {
+                const totalAccounts = accounts.reduce((sum, a) => sum + Math.max(0, a.current_balance), 0);
+                const percentage = totalAccounts > 0 ? (Math.max(0, account.current_balance) / totalAccounts) * 100 : 0;
+                
+                return (
+                  <div key={account.id} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{account.icon || '🏦'}</span>
+                        <div>
+                          <span className="text-sm font-medium">{account.name}</span>
+                          {account.bank_name && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({account.bank_name})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`text-sm font-semibold ${account.current_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {formatCurrency(account.current_balance)}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${percentage}%`,
+                          backgroundColor: account.color || '#6b7280'
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Total */}
+              <div className="pt-3 border-t mt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Total em Contas</span>
+                  <span className={`text-base font-bold ${accounts.reduce((sum, a) => sum + a.current_balance, 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {formatCurrency(accounts.reduce((sum, a) => sum + a.current_balance, 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-3">

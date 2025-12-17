@@ -56,6 +56,7 @@ interface Transaction {
   description: string | null;
   date: string;
   category_id: string | null;
+  account_id: string | null;
   is_recurring: boolean;
   recurring_frequency: string | null;
   recurring_end_date: string | null;
@@ -66,6 +67,14 @@ interface Category {
   name: string;
   type: string;
   color: string;
+}
+
+interface Account {
+  id: string;
+  name: string;
+  bank_name: string | null;
+  icon: string | null;
+  color: string | null;
 }
 
 const RECURRING_OPTIONS = [
@@ -83,6 +92,7 @@ export const FinanceTransactions = () => {
   const { toast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -97,6 +107,7 @@ export const FinanceTransactions = () => {
     description: '',
     date: new Date().toISOString().split('T')[0],
     category_id: '',
+    account_id: '',
     is_recurring: false,
     recurring_frequency: '',
     recurring_end_date: ''
@@ -113,7 +124,7 @@ export const FinanceTransactions = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [transactionsRes, categoriesRes] = await Promise.all([
+      const [transactionsRes, categoriesRes, accountsRes] = await Promise.all([
         supabase
           .from('finance_transactions')
           .select('*')
@@ -122,11 +133,17 @@ export const FinanceTransactions = () => {
         supabase
           .from('finance_categories')
           .select('*')
+          .eq('user_id', user!.id),
+        supabase
+          .from('finance_accounts')
+          .select('id, name, bank_name, icon, color')
           .eq('user_id', user!.id)
+          .eq('is_active', true)
       ]);
 
       if (transactionsRes.data) setTransactions(transactionsRes.data);
       if (categoriesRes.data) setCategories(categoriesRes.data);
+      if (accountsRes.data) setAccounts(accountsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -162,6 +179,7 @@ export const FinanceTransactions = () => {
         description: transaction.description || '',
         date: transaction.date,
         category_id: transaction.category_id || '',
+        account_id: transaction.account_id || '',
         is_recurring: transaction.is_recurring,
         recurring_frequency: transaction.recurring_frequency || '',
         recurring_end_date: transaction.recurring_end_date || ''
@@ -174,6 +192,7 @@ export const FinanceTransactions = () => {
         description: '',
         date: new Date().toISOString().split('T')[0],
         category_id: '',
+        account_id: '',
         is_recurring: false,
         recurring_frequency: '',
         recurring_end_date: ''
@@ -201,6 +220,7 @@ export const FinanceTransactions = () => {
         description: formData.description || null,
         date: formData.date,
         category_id: formData.category_id || null,
+        account_id: formData.account_id || null,
         is_recurring: formData.is_recurring,
         recurring_frequency: formData.is_recurring ? formData.recurring_frequency : null,
         recurring_end_date: formData.is_recurring && formData.recurring_end_date ? formData.recurring_end_date : null
@@ -476,6 +496,9 @@ export const FinanceTransactions = () => {
     return categories.find(c => c.id === id);
   };
 
+  const getAccountById = (id: string | null) => {
+    return accounts.find(a => a.id === id);
+  };
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -587,6 +610,7 @@ export const FinanceTransactions = () => {
                 <TableRow>
                   <TableHead>Data</TableHead>
                   <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                  <TableHead className="hidden lg:table-cell">Conta</TableHead>
                   <TableHead className="hidden md:table-cell">Categoria</TableHead>
                   <TableHead className="hidden sm:table-cell">Descrição</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
@@ -596,13 +620,14 @@ export const FinanceTransactions = () => {
               <TableBody>
                 {paginatedTransactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Nenhuma transação encontrada
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginatedTransactions.map(transaction => {
                     const category = getCategoryById(transaction.category_id);
+                    const account = getAccountById(transaction.account_id);
                     return (
                       <TableRow key={transaction.id}>
                         <TableCell className="whitespace-nowrap">
@@ -633,6 +658,16 @@ export const FinanceTransactions = () => {
                           <div className="flex items-center gap-2">
                             {getTypeIcon(transaction.type)}
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {account ? (
+                            <div className="flex items-center gap-2">
+                              <span>{account.icon || '🏦'}</span>
+                              <span className="text-sm">{account.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {category ? (
@@ -805,6 +840,28 @@ export const FinanceTransactions = () => {
                           style={{ backgroundColor: category.color }}
                         />
                         {category.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Conta</Label>
+              <Select
+                value={formData.account_id}
+                onValueChange={(value) => setFormData({ ...formData, account_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma conta (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map(account => (
+                    <SelectItem key={account.id} value={account.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{account.icon || '🏦'}</span>
+                        {account.name}
                       </div>
                     </SelectItem>
                   ))}
