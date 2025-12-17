@@ -48,21 +48,21 @@ interface Account {
 }
 
 const BRAZILIAN_BANKS = [
-  { value: 'nubank', label: 'Nubank', color: '#820AD1', icon: '💜' },
-  { value: 'itau', label: 'Itaú', color: '#EC7000', icon: '🧡' },
-  { value: 'bradesco', label: 'Bradesco', color: '#CC092F', icon: '❤️' },
-  { value: 'caixa', label: 'Caixa Econômica', color: '#005CA9', icon: '💙' },
-  { value: 'bb', label: 'Banco do Brasil', color: '#FEDF00', icon: '💛' },
-  { value: 'inter', label: 'Banco Inter', color: '#FF7A00', icon: '🟠' },
-  { value: 'santander', label: 'Santander', color: '#EC0000', icon: '🔴' },
-  { value: 'picpay', label: 'PicPay', color: '#21C25E', icon: '💚' },
-  { value: 'mercadopago', label: 'Mercado Pago', color: '#00B1EA', icon: '🔵' },
-  { value: 'c6', label: 'C6 Bank', color: '#242424', icon: '⬛' },
-  { value: 'original', label: 'Banco Original', color: '#00A86B', icon: '🟢' },
-  { value: 'neon', label: 'Neon', color: '#00E5FF', icon: '🩵' },
-  { value: 'next', label: 'Next', color: '#00FF87', icon: '💚' },
-  { value: 'pagbank', label: 'PagBank', color: '#00A86B', icon: '🟢' },
-  { value: 'outro', label: 'Outro', color: '#6b7280', icon: '🏦' }
+  { value: 'nubank', label: 'Nubank', color: '#820AD1', logo: 'https://www.google.com/s2/favicons?domain=nubank.com.br&sz=64' },
+  { value: 'itau', label: 'Itaú', color: '#EC7000', logo: 'https://www.google.com/s2/favicons?domain=itau.com.br&sz=64' },
+  { value: 'bradesco', label: 'Bradesco', color: '#CC092F', logo: 'https://www.google.com/s2/favicons?domain=bradesco.com.br&sz=64' },
+  { value: 'caixa', label: 'Caixa Econômica', color: '#005CA9', logo: 'https://www.google.com/s2/favicons?domain=caixa.gov.br&sz=64' },
+  { value: 'bb', label: 'Banco do Brasil', color: '#FEDF00', logo: 'https://www.google.com/s2/favicons?domain=bb.com.br&sz=64' },
+  { value: 'inter', label: 'Banco Inter', color: '#FF7A00', logo: 'https://www.google.com/s2/favicons?domain=bancointer.com.br&sz=64' },
+  { value: 'santander', label: 'Santander', color: '#EC0000', logo: 'https://www.google.com/s2/favicons?domain=santander.com.br&sz=64' },
+  { value: 'picpay', label: 'PicPay', color: '#21C25E', logo: 'https://www.google.com/s2/favicons?domain=picpay.com&sz=64' },
+  { value: 'mercadopago', label: 'Mercado Pago', color: '#00B1EA', logo: 'https://www.google.com/s2/favicons?domain=mercadopago.com.br&sz=64' },
+  { value: 'c6', label: 'C6 Bank', color: '#242424', logo: 'https://www.google.com/s2/favicons?domain=c6bank.com.br&sz=64' },
+  { value: 'original', label: 'Banco Original', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=original.com.br&sz=64' },
+  { value: 'neon', label: 'Neon', color: '#00E5FF', logo: 'https://www.google.com/s2/favicons?domain=neon.com.br&sz=64' },
+  { value: 'next', label: 'Next', color: '#00FF87', logo: 'https://www.google.com/s2/favicons?domain=next.me&sz=64' },
+  { value: 'pagbank', label: 'PagBank', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=pagbank.com.br&sz=64' },
+  { value: 'outro', label: 'Outro', color: '#6b7280', logo: null }
 ];
 
 const ACCOUNT_TYPES = [
@@ -169,7 +169,7 @@ export const FinanceAccounts = () => {
         name: formData.name.trim(),
         type: formData.type,
         bank_name: bank?.label || formData.bank_name || null,
-        icon: bank?.icon || '🏦',
+        icon: bank?.logo || null,
         color: formData.color,
         initial_balance: initialBalance,
         current_balance: editingAccount ? editingAccount.current_balance : initialBalance,
@@ -315,8 +315,19 @@ export const FinanceAccounts = () => {
               
               <CardHeader className="pb-2 pt-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{account.icon || '🏦'}</span>
+                  <div className="flex items-center gap-3">
+                    {account.icon ? (
+                      <img 
+                        src={account.icon} 
+                        alt={account.bank_name || 'Banco'} 
+                        className="h-10 w-10 rounded-full object-contain bg-white p-1 border"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <span className={`text-2xl ${account.icon ? 'hidden' : ''}`}>🏦</span>
                     <div>
                       <CardTitle className="text-base">{account.name}</CardTitle>
                       <p className="text-xs text-muted-foreground">
@@ -411,7 +422,11 @@ export const FinanceAccounts = () => {
                   {BRAZILIAN_BANKS.map(bank => (
                     <SelectItem key={bank.value} value={bank.value}>
                       <span className="flex items-center gap-2">
-                        <span>{bank.icon}</span>
+                        {bank.logo ? (
+                          <img src={bank.logo} alt={bank.label} className="h-5 w-5 rounded" />
+                        ) : (
+                          <span>🏦</span>
+                        )}
                         <span>{bank.label}</span>
                       </span>
                     </SelectItem>
