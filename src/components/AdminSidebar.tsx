@@ -8,34 +8,49 @@ import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { InstallAppDialog } from "@/components/InstallAppDialog";
-const menuItems = [
+import { Permissions } from "@/hooks/usePermissions";
+
+type PermissionKey = keyof Omit<Permissions, 'id' | 'owner_id' | 'owner_email' | 'owner_name' | 'is_active' | 'is_collaborator'>;
+
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  adminOnly?: boolean;
+  ownerOnly?: boolean;
+  permission?: PermissionKey;
+}
+
+const menuItems: MenuItem[] = [
   { title: "Admin", url: "/admin", icon: Shield, adminOnly: true },
-  { title: "Dashboard", url: "/admin/dashboard", icon: BarChart3, adminOnly: false },
-  { title: "Checkout", url: "/admin/checkout", icon: CreditCard, adminOnly: false },
-  { title: "Produtos", url: "/admin/products", icon: Package, adminOnly: false },
-  { title: "Integrações", url: "/admin/integrations", icon: Puzzle, adminOnly: false },
-  { title: "Meta Pixels", url: "/admin/settings", icon: Settings, adminOnly: false },
-  { title: "Painel Financeiro", url: "/admin/financeiro", icon: Wallet, adminOnly: false },
-  { title: "Gestão Financeira", url: "/admin/gestao-financeira", icon: Landmark, adminOnly: false },
-  { title: "Colaboradores", url: "/admin/colaboradores", icon: Users, adminOnly: false, ownerOnly: true },
+  { title: "Dashboard", url: "/admin/dashboard", icon: BarChart3, permission: "can_view_dashboard" },
+  { title: "Checkout", url: "/admin/checkout", icon: CreditCard, permission: "can_manage_checkout" },
+  { title: "Produtos", url: "/admin/products", icon: Package, permission: "can_manage_products" },
+  { title: "Integrações", url: "/admin/integrations", icon: Puzzle, permission: "can_manage_integrations" },
+  { title: "Meta Pixels", url: "/admin/settings", icon: Settings, permission: "can_manage_settings" },
+  { title: "Painel Financeiro", url: "/admin/financeiro", icon: Wallet, permission: "can_view_financeiro" },
+  { title: "Gestão Financeira", url: "/admin/gestao-financeira", icon: Landmark, permission: "can_manage_financeiro" },
+  { title: "Colaboradores", url: "/admin/colaboradores", icon: Users, ownerOnly: true },
 ];
+
 interface AdminSidebarProps {
   userEmail?: string;
   userName?: string;
   onLogout: () => void;
   isAdmin?: boolean;
   isOwner?: boolean;
+  hasPermission?: (permission: PermissionKey) => boolean;
 }
+
 export function AdminSidebar({
   userEmail,
   userName,
   onLogout,
   isAdmin = false,
-  isOwner = true
+  isOwner = true,
+  hasPermission
 }: AdminSidebarProps) {
-  const {
-    theme
-  } = useTheme();
+  const { theme } = useTheme();
   const {
     promptInstall,
     showInstallDialog,
@@ -43,14 +58,19 @@ export function AdminSidebar({
     closeInstallDialog,
     isIOS
   } = usePWAInstall();
+
   const visibleMenuItems = menuItems.filter(item => {
     // Admin only items
     if (item.adminOnly && !isAdmin) return false;
     // Owner only items (like Colaboradores)
-    if ((item as any).ownerOnly && !isOwner) return false;
+    if (item.ownerOnly && !isOwner) return false;
+    // Permission-based items - owners always have access
+    if (item.permission && !isOwner && hasPermission && !hasPermission(item.permission)) return false;
     return true;
   });
+
   const logoSrc = theme === "dark" ? furionPayLogoDark : furionPayLogoLight;
+
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-background dark:bg-black">
       {/* Header compacto */}
@@ -152,10 +172,12 @@ export function AdminSidebar({
     </Sidebar>
   );
 }
+
 interface AdminHeaderProps {
   title?: string;
   icon?: LucideIcon;
 }
+
 export function AdminHeader({
   title,
   icon: Icon

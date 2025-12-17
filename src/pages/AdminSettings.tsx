@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDenied } from "@/components/AccessDenied";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +25,7 @@ interface AdminSettingsData {
   meta_pixels: string;
 }
 const AdminSettings = () => {
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [settings, setSettings] = useState<AdminSettingsData>({
     meta_pixels: "[]"
   });
@@ -42,6 +45,11 @@ const AdminSettings = () => {
     user,
     isBlocked
   } = useAdminAuth();
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_settings')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar Configurações." />;
+  }
   // Load settings when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
     if (isAuthenticated && !loading) {
