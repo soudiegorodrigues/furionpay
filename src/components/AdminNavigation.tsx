@@ -14,10 +14,10 @@ const adminSections = {
   financeiros: {
     label: "Financeiros",
     items: [
+      { id: "saques", title: "Saque Global", icon: Wallet },
       { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
       { id: "transacoes", title: "Transações Globais", icon: Receipt },
       { id: "receita-plataforma", title: "Revenue (MRR)", icon: TrendingUp },
-      { id: "saques", title: "Saque Global", icon: Wallet },
       { id: "ranking", title: "Ranking", icon: Trophy },
     ]
   },
