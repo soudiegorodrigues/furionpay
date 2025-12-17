@@ -85,8 +85,8 @@ const PERIOD_OPTIONS = [
   { value: 'all', label: 'Todo Período' }
 ];
 
-export const FinanceDashboard = () => {
-  const { user } = useAdminAuth();
+export const FinanceDashboard = ({ userId }: { userId?: string }) => {
+  const { user } = useAdminAuth(); const effectiveUserId = userId ?? user?.id;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -94,10 +94,10 @@ export const FinanceDashboard = () => {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
 
   useEffect(() => {
-    if (user?.id) {
+    if (effectiveUserId) {
       fetchData();
     }
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -106,16 +106,16 @@ export const FinanceDashboard = () => {
         supabase
           .from('finance_transactions')
           .select('*')
-          .eq('user_id', user!.id)
+          .eq('user_id', effectiveUserId!)
           .order('date', { ascending: false }),
         supabase
           .from('finance_categories')
           .select('*')
-          .eq('user_id', user!.id),
+          .eq('user_id', effectiveUserId!),
         supabase
           .from('finance_accounts')
           .select('id, name, bank_name, icon, color, current_balance')
-          .eq('user_id', user!.id)
+          .eq('user_id', effectiveUserId!)
           .eq('is_active', true)
           .order('name')
       ]);

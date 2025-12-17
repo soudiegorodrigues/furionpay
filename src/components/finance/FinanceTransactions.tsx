@@ -87,9 +87,9 @@ const RECURRING_OPTIONS = [
 
 const ITEMS_PER_PAGE = 10;
 
-export const FinanceTransactions = () => {
+export const FinanceTransactions = ({ userId }: { userId?: string }) => {
   const { user } = useAdminAuth();
-  const { toast } = useToast();
+  const { toast } = useToast(); const effectiveUserId = userId ?? user?.id;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -116,10 +116,10 @@ export const FinanceTransactions = () => {
   const [isSyncingWithdrawals, setIsSyncingWithdrawals] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
+    if (effectiveUserId) {
       fetchData();
     }
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -128,16 +128,16 @@ export const FinanceTransactions = () => {
         supabase
           .from('finance_transactions')
           .select('*')
-          .eq('user_id', user!.id)
+          .eq('user_id', effectiveUserId!)
           .order('date', { ascending: false }),
         supabase
           .from('finance_categories')
           .select('*')
-          .eq('user_id', user!.id),
+          .eq('user_id', effectiveUserId!),
         supabase
           .from('finance_accounts')
           .select('id, name, bank_name, icon, color')
-          .eq('user_id', user!.id)
+          .eq('user_id', effectiveUserId!)
           .eq('is_active', true)
       ]);
 
@@ -211,10 +211,10 @@ export const FinanceTransactions = () => {
       return;
     }
 
-    setIsSubmitting(true);
+    if (!effectiveUserId) return; setIsSubmitting(true);
     try {
       const payload = {
-        user_id: user!.id,
+        user_id: effectiveUserId!,
         type: formData.type,
         amount: parseFloat(formData.amount),
         description: formData.description || null,
@@ -277,7 +277,7 @@ export const FinanceTransactions = () => {
 
   // Generate recurring transactions
   const generateRecurringTransactions = useCallback(async () => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
     
     setIsGeneratingRecurring(true);
     try {
@@ -285,7 +285,7 @@ export const FinanceTransactions = () => {
       const { data: recurringTxs, error } = await supabase
         .from('finance_transactions')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId!)
         .eq('is_recurring', true);
 
       if (error) throw error;
@@ -343,7 +343,7 @@ export const FinanceTransactions = () => {
         const { data: existingTxs } = await supabase
           .from('finance_transactions')
           .select('date')
-          .eq('user_id', user.id)
+          .eq('user_id', effectiveUserId!)
           .eq('type', tx.type)
           .eq('amount', tx.amount)
           .eq('category_id', tx.category_id)
@@ -355,7 +355,7 @@ export const FinanceTransactions = () => {
         for (const date of generatedDates) {
           if (!existingDates.has(date)) {
             transactionsToCreate.push({
-              user_id: user.id,
+              user_id: effectiveUserId!,
               type: tx.type,
               amount: tx.amount,
               description: tx.description ? `${tx.description} (recorrente)` : 'Transação recorrente',
@@ -393,11 +393,11 @@ export const FinanceTransactions = () => {
     } finally {
       setIsGeneratingRecurring(false);
     }
-  }, [user?.id, toast]);
+  }, [effectiveUserId, toast]);
 
   // Sync approved withdrawals as income
   const syncWithdrawals = useCallback(async () => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
     
     setIsSyncingWithdrawals(true);
     try {
@@ -405,7 +405,7 @@ export const FinanceTransactions = () => {
       const { data: withdrawals, error: wError } = await supabase
         .from('withdrawal_requests')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId!)
         .eq('status', 'approved');
 
       if (wError) throw wError;
@@ -422,7 +422,7 @@ export const FinanceTransactions = () => {
         const { data: newCategory, error: catError } = await supabase
           .from('finance_categories')
           .insert({
-            user_id: user.id,
+            user_id: effectiveUserId!,
             name: 'Saques',
             type: 'income',
             color: '#10b981',
@@ -440,7 +440,7 @@ export const FinanceTransactions = () => {
       const { data: existingTxs } = await supabase
         .from('finance_transactions')
         .select('description')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId!)
         .eq('type', 'income')
         .eq('category_id', saquesCategory.id);
 
@@ -455,7 +455,7 @@ export const FinanceTransactions = () => {
       const transactionsToCreate = withdrawals
         .filter(w => !existingWithdrawalIds.has(w.id))
         .map(w => ({
-          user_id: user.id,
+          user_id: effectiveUserId!,
           type: 'income',
           amount: w.amount,
           description: `Saque aprovado - ${w.bank_name} [ID: ${w.id}]`,
@@ -490,7 +490,7 @@ export const FinanceTransactions = () => {
     } finally {
       setIsSyncingWithdrawals(false);
     }
-  }, [user?.id, categories, toast]);
+  }, [effectiveUserId, categories, toast]);
 
   const getCategoryById = (id: string | null) => {
     return categories.find(c => c.id === id);
