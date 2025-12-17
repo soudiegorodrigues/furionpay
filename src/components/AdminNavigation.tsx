@@ -3,7 +3,7 @@ import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, A
 
 const adminSections = {
   analises: {
-    label: "Análises",
+    label: "Análise de Dados",
     items: [
       { id: "checkout-global", title: "Checkout Global", icon: PieChart },
       { id: "ranking", title: "Ranking", icon: Trophy },
