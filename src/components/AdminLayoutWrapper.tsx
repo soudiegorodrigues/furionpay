@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import BlockedUserAlert from "@/components/BlockedUserAlert";
+import { BillingProgressBadge } from "@/components/BillingProgressBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -140,6 +141,10 @@ export function AdminLayoutWrapper() {
           isAdmin={isAdmin} 
         />
         <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop header with billing progress */}
+          <header className="hidden md:flex sticky top-0 z-20 h-14 border-b border-border bg-background items-center justify-end px-6">
+            <BillingProgressBadge userId={user?.id} />
+          </header>
           {/* Mobile header with sidebar trigger */}
           <header className="md:hidden sticky top-0 z-20 h-14 border-b border-border bg-background flex items-center justify-center px-4 relative">
             <SidebarTrigger className="absolute left-4">
