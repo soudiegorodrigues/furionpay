@@ -177,7 +177,7 @@ const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: Acqu
 
   // Card completo para com atividade
   return (
-      <Card className="overflow-hidden w-full sm:max-w-[220px] shrink-0">
+    <Card className="overflow-hidden w-full sm:w-[200px] sm:max-w-[200px] shrink-0">
       <CardHeader className="p-2 sm:p-3 pb-1">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-xs sm:text-sm font-medium truncate">{name}</CardTitle>
@@ -189,46 +189,46 @@ const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: Acqu
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="p-3 sm:p-4 pt-0 space-y-2 sm:space-y-3">
-        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[10px] sm:text-sm">
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
+      <CardContent className="p-2 sm:p-3 pt-0 space-y-1.5 sm:space-y-2 min-w-0">
+        <div className="grid grid-cols-2 gap-1 sm:gap-1.5 text-[9px] sm:text-xs">
+          <div className="flex items-center gap-0.5 sm:gap-1 min-w-0">
+            <Zap className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">24h:</span>
-            <span className="font-medium">{health.total_calls_24h}</span>
+            <span className="font-medium truncate">{health.total_calls_24h}</span>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <CheckCircle className="h-3 w-3 text-green-500 shrink-0" />
+          <div className="flex items-center gap-0.5 sm:gap-1 min-w-0">
+            <CheckCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-500 shrink-0" />
             <span className="text-muted-foreground">OK:</span>
-            <span className="font-medium text-green-600">{health.success_count}</span>
+            <span className="font-medium text-green-600 truncate">{health.success_count}</span>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <XCircle className="h-3 w-3 text-destructive shrink-0" />
+          <div className="flex items-center gap-0.5 sm:gap-1 min-w-0">
+            <XCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive shrink-0" />
             <span className="text-muted-foreground">Falhas:</span>
-            <span className="font-medium text-destructive">{health.failure_count}</span>
+            <span className="font-medium text-destructive truncate">{health.failure_count}</span>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <RefreshCw className="h-3 w-3 text-yellow-500 shrink-0" />
+          <div className="flex items-center gap-0.5 sm:gap-1 min-w-0">
+            <RefreshCw className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-yellow-500 shrink-0" />
             <span className="text-muted-foreground">Retry:</span>
-            <span className="font-medium text-yellow-600">{health.retry_count}</span>
+            <span className="font-medium text-yellow-600 truncate">{health.retry_count}</span>
           </div>
         </div>
         
-        <div className="flex items-center justify-between pt-2 border-t gap-2">
-          <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-sm min-w-0">
-            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+        <div className="flex items-center justify-between pt-1.5 border-t gap-1 min-w-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-xs min-w-0">
+            <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Média:</span>
-            <span className="font-medium">{health.avg_response_time ?? '-'}ms</span>
+            <span className="font-medium truncate">{health.avg_response_time ?? '-'}ms</span>
           </div>
           {health.circuit_opens > 0 && (
-            <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0 h-5 px-1.5">
-              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+            <Badge variant="outline" className="text-[8px] sm:text-[9px] shrink-0 h-4 px-1">
+              <AlertTriangle className="h-2 w-2 mr-0.5" />
               {health.circuit_opens}
             </Badge>
           )}
         </div>
 
         {health.last_failure && (
-          <div className="text-[9px] sm:text-xs text-muted-foreground pt-1 truncate">
+          <div className="text-[8px] sm:text-[10px] text-muted-foreground pt-0.5 truncate">
             Última falha: {new Date(health.last_failure).toLocaleString('pt-BR')}
           </div>
         )}
