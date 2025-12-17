@@ -791,7 +791,7 @@ const AdminDashboard = () => {
                 top: 20,
                 right: 10,
                 left: 10,
-                bottom: isTabletOrSmaller ? 40 : 5
+                bottom: isTabletOrSmaller || chartFilter === '30days' ? 40 : 5
               }}>
                     <defs>
                       <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
@@ -802,13 +802,23 @@ const AdminDashboard = () => {
                     
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
                     
-                            <XAxis dataKey="date" tick={{
-                  fontSize: 10,
-                  fill: 'hsl(var(--muted-foreground))'
-                }} angle={isTabletOrSmaller ? -90 : 0} textAnchor={isTabletOrSmaller ? "end" : "middle"} tickLine={false} axisLine={{
-                  stroke: 'hsl(var(--foreground))',
-                  strokeWidth: 1
-                }} interval={0} ticks={chartFilter === 'today' ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'] : undefined} height={isTabletOrSmaller ? 50 : 30} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{
+                        fontSize: 10,
+                        fill: 'hsl(var(--muted-foreground))'
+                      }} 
+                      angle={isTabletOrSmaller ? -90 : (chartFilter === '30days' ? -45 : 0)} 
+                      textAnchor={isTabletOrSmaller || chartFilter === '30days' ? "end" : "middle"} 
+                      tickLine={false} 
+                      axisLine={{
+                        stroke: 'hsl(var(--foreground))',
+                        strokeWidth: 1
+                      }} 
+                      interval={0} 
+                      ticks={chartFilter === 'today' ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'] : undefined} 
+                      height={isTabletOrSmaller ? 50 : (chartFilter === '30days' ? 60 : 30)} 
+                    />
                     <YAxis tick={{
                   fontSize: 10,
                   fill: 'hsl(var(--muted-foreground))'
