@@ -35,13 +35,11 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
     
     const loadData = async () => {
       try {
-        // Load dashboard stats for current amount
+        // Load dashboard stats for current amount (net amount after fees)
         const { data: dashboardData } = await supabase.rpc('get_user_dashboard');
         if (dashboardData) {
-          // Use gross amount (before fees) for billing progress
           const totalPaid = (dashboardData as any).total_amount_paid || 0;
-          const totalFees = (dashboardData as any).total_fees || 0;
-          setCurrentAmount(totalPaid + totalFees);
+          setCurrentAmount(totalPaid);
         }
 
         // Load billing goal from settings
@@ -107,7 +105,7 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-xs">
             <p className="text-sm">
-              Progresso até sua meta de faturamento bruto.
+              Progresso até sua meta de faturamento líquido.
               <br />
               <span className="text-muted-foreground">
                 {progressPercentage.toFixed(1)}% concluído
