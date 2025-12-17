@@ -2435,25 +2435,15 @@ export type Database = {
           valor_pago: number
         }[]
       }
-      get_user_chart_data_by_hour:
-        | {
-            Args: never
-            Returns: {
-              gerados: number
-              hour_brazil: number
-              pagos: number
-              valor_pago: number
-            }[]
-          }
-        | {
-            Args: { p_date?: string }
-            Returns: {
-              gerados: number
-              hour_brazil: number
-              pagos: number
-              valor_pago: number
-            }[]
-          }
+      get_user_chart_data_by_hour: {
+        Args: { p_date?: string }
+        Returns: {
+          gerados: number
+          hour_brazil: number
+          pagos: number
+          valor_pago: number
+        }[]
+      }
       get_user_dashboard: { Args: never; Returns: Json }
       get_user_dashboard_v2: { Args: never; Returns: Json }
       get_user_documents_admin: {
