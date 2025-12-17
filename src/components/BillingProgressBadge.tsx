@@ -35,8 +35,8 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
     
     const loadData = async () => {
       try {
-        // Load dashboard stats for current amount (net amount after fees)
-        const { data: dashboardData } = await supabase.rpc('get_user_dashboard');
+        // Load dashboard stats for current amount (net amount after fees) - using V2 optimized function
+        const { data: dashboardData } = await supabase.rpc('get_user_dashboard_v2');
         if (dashboardData) {
           const totalPaid = (dashboardData as any).total_amount_paid || 0;
           setCurrentAmount(totalPaid);
