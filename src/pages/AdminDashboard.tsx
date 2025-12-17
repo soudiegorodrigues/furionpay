@@ -310,7 +310,7 @@ const AdminDashboard = () => {
         setIsLoadingTransactions(true);
       }
       supabase.rpc('get_user_transactions', {
-        p_limit: 50
+        p_limit: 10
       }).then(({
         data,
         error
@@ -319,9 +319,9 @@ const AdminDashboard = () => {
           const newTx = data as unknown as Transaction[] || [];
           if (resetTransactions) {
             setTransactions(newTx);
-            setTransactionOffset(50);
-            // If we got exactly 50, there might be more
-            setHasMoreTransactions(newTx.length === 50);
+            setTransactionOffset(10);
+            // If we got exactly 10, there might be more
+            setHasMoreTransactions(newTx.length === 10);
           }
         }
         setIsLoadingTransactions(false);
