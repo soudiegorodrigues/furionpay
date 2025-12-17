@@ -8,6 +8,7 @@ const adminSections = {
       { id: "usuarios", title: "Usuários", icon: Users },
       { id: "documentos", title: "Documentos", icon: FileCheck },
       { id: "taxas", title: "Taxas", icon: Percent },
+      { id: "premiacoes", title: "Premiações", icon: Award },
     ]
   },
   financeiros: {
@@ -24,7 +25,6 @@ const adminSections = {
     label: "Gerenciamento",
     items: [
       { id: "checkout-global", title: "Checkout Global", icon: PieChart },
-      { id: "premiacoes", title: "Premiações", icon: Award },
       { id: "dominios", title: "Domínios", icon: Globe },
       { id: "multi", title: "Multi-adquirência", icon: CreditCard },
     ]
