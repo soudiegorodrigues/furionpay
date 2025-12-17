@@ -81,9 +81,30 @@ export function BackupsSection() {
     }
   };
 
+  const [lastStorageUpdate, setLastStorageUpdate] = useState<Date | null>(null);
+
+  const loadStorageStatsWithTimestamp = async () => {
+    await loadStorageStats();
+    setLastStorageUpdate(new Date());
+  };
+
   useEffect(() => {
     loadBackups();
-    loadStorageStats();
+    loadStorageStatsWithTimestamp();
+    
+    // Polling every 30 seconds
+    const interval = setInterval(() => {
+      loadStorageStatsWithTimestamp();
+    }, 30000);
+    
+    // Update on tab focus
+    const handleFocus = () => loadStorageStatsWithTimestamp();
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const handleCreateBackup = async () => {
@@ -447,10 +468,17 @@ export function BackupsSection() {
       {storageStats && storageStats.buckets && storageStats.buckets.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <HardDrive className="h-4 w-4" />
-              Buckets de Storage incluídos no backup
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <HardDrive className="h-4 w-4" />
+                Buckets de Storage incluídos no backup
+              </CardTitle>
+              {lastStorageUpdate && (
+                <span className="text-xs text-muted-foreground">
+                  Atualizado: {lastStorageUpdate.toLocaleTimeString('pt-BR')}
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -486,7 +514,7 @@ export function BackupsSection() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => { loadBackups(); loadStorageStats(); }}
+                  onClick={() => { loadBackups(); loadStorageStatsWithTimestamp(); }}
                   disabled={loading}
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
