@@ -231,7 +231,13 @@ export const ReceitaPlataformaSection = () => {
         p_user_email: selectedUser === 'all' ? null : selectedUser
       });
       if (error) throw error;
-      setChartData((data as unknown as ChartData[]) || []);
+      // Transform RPC response: period_key -> date, net_profit -> lucro
+      const rawData = data as unknown as Array<{ period_key: string; net_profit: number }> | null;
+      const transformed: ChartData[] = rawData?.map(row => ({
+        date: row.period_key,
+        lucro: Number(row.net_profit) || 0
+      })) || [];
+      setChartData(transformed);
     } catch (error) {
       console.error('Error loading chart:', error);
     } finally {
@@ -247,7 +253,21 @@ export const ReceitaPlataformaSection = () => {
         p_limit: 10
       });
       if (error) throw error;
-      setUserProfitRanking((data as unknown as UserProfitRanking[]) || []);
+      // Transform RPC response: user_email -> email, calculate average_profit
+      const rawData = data as unknown as Array<{ 
+        user_email: string; 
+        total_profit: number; 
+        transaction_count: number 
+      }> | null;
+      const transformed: UserProfitRanking[] = rawData?.map(row => ({
+        email: row.user_email,
+        total_profit: Number(row.total_profit) || 0,
+        transaction_count: Number(row.transaction_count) || 0,
+        average_profit: row.transaction_count > 0 
+          ? Number(row.total_profit) / Number(row.transaction_count) 
+          : 0
+      })) || [];
+      setUserProfitRanking(transformed);
     } catch (error) {
       console.error('Error loading ranking:', error);
     } finally {
