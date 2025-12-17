@@ -43,6 +43,7 @@ export const MultiAcquirersSection = () => {
     privateKey: '',
     pixKey: ''
   });
+  const [retryConfigKey, setRetryConfigKey] = useState(0);
 
   useEffect(() => {
     loadAcquirerStates();
@@ -166,6 +167,8 @@ export const MultiAcquirersSection = () => {
 
   const setAsDefaultAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus') => {
     try {
+      console.log('[setAsDefaultAcquirer] Iniciando para:', acquirer);
+      
       // 1. Atualizar default_acquirer na admin_settings
       const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'default_acquirer',
@@ -173,37 +176,65 @@ export const MultiAcquirersSection = () => {
       });
       
       if (error) throw error;
+      console.log('[setAsDefaultAcquirer] default_acquirer atualizado');
       
       // 2. Sincronizar com retry_flow_steps - colocar o adquirente selecionado em 1º lugar
-      const { data: steps } = await supabase
+      const { data: steps, error: stepsError } = await supabase
         .from('retry_flow_steps')
         .select('*')
         .eq('payment_method', 'pix')
         .order('step_order');
+      
+      if (stepsError) {
+        console.error('[setAsDefaultAcquirer] Erro ao buscar steps:', stepsError);
+        throw stepsError;
+      }
+      
+      console.log('[setAsDefaultAcquirer] Steps encontrados:', steps);
       
       if (steps && steps.length > 0) {
         // Reorganizar: selecionado primeiro, outros mantêm ordem relativa
         const otherSteps = steps.filter(s => s.acquirer !== acquirer);
         const selectedStep = steps.find(s => s.acquirer === acquirer);
         
+        console.log('[setAsDefaultAcquirer] Step selecionado:', selectedStep);
+        console.log('[setAsDefaultAcquirer] Outros steps:', otherSteps);
+        
         // Atualizar ordem: selecionado = 1, outros = 2, 3, ...
         if (selectedStep) {
-          await supabase
+          const { error: updateSelectedError } = await supabase
             .from('retry_flow_steps')
             .update({ step_order: 1 })
             .eq('id', selectedStep.id);
+          
+          if (updateSelectedError) {
+            console.error('[setAsDefaultAcquirer] Erro ao atualizar step selecionado:', updateSelectedError);
+            throw updateSelectedError;
+          }
+          console.log('[setAsDefaultAcquirer] Step selecionado atualizado para order=1');
         }
         
         let order = 2;
         for (const step of otherSteps) {
-          await supabase
+          const { error: updateOtherError } = await supabase
             .from('retry_flow_steps')
-            .update({ step_order: order++ })
+            .update({ step_order: order })
             .eq('id', step.id);
+          
+          if (updateOtherError) {
+            console.error('[setAsDefaultAcquirer] Erro ao atualizar step:', step.acquirer, updateOtherError);
+            throw updateOtherError;
+          }
+          console.log(`[setAsDefaultAcquirer] Step ${step.acquirer} atualizado para order=${order}`);
+          order++;
         }
       }
       
       setDefaultAcquirer(acquirer);
+      
+      // Forçar refresh do RetryConfigSection
+      setRetryConfigKey(prev => prev + 1);
+      console.log('[setAsDefaultAcquirer] Refresh do RetryConfigSection disparado');
       
       const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
       
@@ -472,7 +503,7 @@ export const MultiAcquirersSection = () => {
       <RetryTestModeSection />
 
       {/* 3. Configuração de Retentativas */}
-      <RetryConfigSection />
+      <RetryConfigSection key={retryConfigKey} />
 
       {/* 3. Adquirentes Ativas */}
       <div className="flex items-center justify-between">
