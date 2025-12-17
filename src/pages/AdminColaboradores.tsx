@@ -7,11 +7,13 @@ import { AdminSidebar, AdminHeader } from '@/components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -42,7 +44,9 @@ import {
   CheckCircle2,
   XCircle,
   Shield,
-  Loader2
+  Loader2,
+  CheckCheck,
+  X
 } from 'lucide-react';
 
 interface Collaborator {
@@ -86,6 +90,17 @@ const defaultPermissions: PermissionsForm = {
   can_manage_settings: false,
 };
 
+const allPermissionsTrue: PermissionsForm = {
+  can_view_dashboard: true,
+  can_manage_checkout: true,
+  can_manage_products: true,
+  can_view_financeiro: true,
+  can_manage_financeiro: true,
+  can_view_transactions: true,
+  can_manage_integrations: true,
+  can_manage_settings: true,
+};
+
 const permissionLabels: Record<keyof PermissionsForm, { label: string; description: string }> = {
   can_view_dashboard: { label: 'Dashboard', description: 'Visualizar estatísticas e gráficos' },
   can_manage_checkout: { label: 'Checkout', description: 'Criar e editar ofertas' },
@@ -95,6 +110,236 @@ const permissionLabels: Record<keyof PermissionsForm, { label: string; descripti
   can_view_transactions: { label: 'Transações', description: 'Ver histórico de vendas' },
   can_manage_integrations: { label: 'Integrações', description: 'Configurar SpedPay, Banco Inter, etc' },
   can_manage_settings: { label: 'Configurações', description: 'Pixels, notificações, etc' },
+};
+
+// Skeleton component for loading state
+const CollaboratorSkeleton = () => (
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-start gap-3">
+        <Skeleton className="h-10 w-10 md:h-12 md:w-12 rounded-full flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-36" />
+          <div className="flex gap-1.5 mt-2">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-8 md:w-20" />
+          <Skeleton className="h-8 w-8 md:w-24" />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// Permissions Grid component for dialogs
+const PermissionsGrid = ({ 
+  permissions, 
+  setPermissions,
+  idPrefix = ''
+}: { 
+  permissions: PermissionsForm; 
+  setPermissions: React.Dispatch<React.SetStateAction<PermissionsForm>>;
+  idPrefix?: string;
+}) => {
+  const activeCount = Object.values(permissions).filter(Boolean).length;
+  const totalCount = Object.keys(permissions).length;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <Label className="flex items-center gap-2">
+          <Shield className="h-4 w-4" />
+          Permissões
+          <Badge variant="secondary" className="ml-1">
+            {activeCount}/{totalCount}
+          </Badge>
+        </Label>
+        <div className="flex gap-2">
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm"
+            onClick={() => setPermissions(allPermissionsTrue)}
+            className="text-xs h-7"
+          >
+            <CheckCheck className="h-3 w-3 mr-1" />
+            Todas
+          </Button>
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm"
+            onClick={() => setPermissions(defaultPermissions)}
+            className="text-xs h-7"
+          >
+            <X className="h-3 w-3 mr-1" />
+            Limpar
+          </Button>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 md:p-4 border rounded-lg bg-muted/30">
+        {Object.entries(permissionLabels).map(([key, { label, description }]) => (
+          <div key={key} className="flex items-start space-x-3">
+            <Checkbox
+              id={`${idPrefix}${key}`}
+              checked={permissions[key as keyof PermissionsForm]}
+              onCheckedChange={(checked) => 
+                setPermissions(prev => ({ ...prev, [key]: checked === true }))
+              }
+            />
+            <div className="grid gap-0.5 leading-none">
+              <Label htmlFor={`${idPrefix}${key}`} className="cursor-pointer font-medium text-sm">
+                {label}
+              </Label>
+              <p className="text-xs text-muted-foreground hidden sm:block">{description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Collaborator Card component
+const CollaboratorCard = ({
+  collaborator,
+  onEdit,
+  onDelete
+}: {
+  collaborator: Collaborator;
+  onEdit: () => void;
+  onDelete: () => void;
+}) => {
+  const activePermissions = [
+    collaborator.can_view_dashboard,
+    collaborator.can_manage_checkout,
+    collaborator.can_manage_products,
+    collaborator.can_view_financeiro,
+    collaborator.can_manage_financeiro,
+    collaborator.can_view_transactions,
+    collaborator.can_manage_integrations,
+    collaborator.can_manage_settings,
+  ].filter(Boolean).length;
+
+  return (
+    <Card className="overflow-hidden transition-shadow hover:shadow-md">
+      <CardContent className="p-3 md:p-4">
+        <div className="flex items-start justify-between gap-3">
+          {/* Avatar + Info */}
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-base md:text-lg font-semibold text-primary">
+                {(collaborator.user_name || collaborator.user_email)[0].toUpperCase()}
+              </span>
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-sm md:text-base truncate">
+                  {collaborator.user_name || 'Sem nome'}
+                </h3>
+                {collaborator.is_active ? (
+                  <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
+                    Ativo
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">Inativo</Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-1 text-xs md:text-sm text-muted-foreground mt-0.5">
+                <Mail className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{collaborator.user_email}</span>
+              </div>
+              
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                <Calendar className="h-3 w-3 flex-shrink-0" />
+                <span>{new Date(collaborator.invited_at).toLocaleDateString('pt-BR')}</span>
+              </div>
+
+              {/* Mobile: Permission count badge */}
+              <div className="flex md:hidden mt-2">
+                <Badge variant="outline" className="text-xs">
+                  <Shield className="h-3 w-3 mr-1" />
+                  {activePermissions}/8 permissões
+                </Badge>
+              </div>
+
+              {/* Desktop: Full permission badges */}
+              <div className="hidden md:flex flex-wrap gap-1 mt-2">
+                {Object.entries(permissionLabels).map(([key, { label }]) => {
+                  const hasPermission = collaborator[key as keyof PermissionsForm];
+                  return (
+                    <Badge 
+                      key={key} 
+                      variant={hasPermission ? "default" : "outline"}
+                      className={hasPermission 
+                        ? "bg-primary/10 text-primary border-primary/20 text-xs" 
+                        : "text-muted-foreground text-xs opacity-50"
+                      }
+                    >
+                      {hasPermission ? (
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                      ) : (
+                        <XCircle className="h-3 w-3 mr-1" />
+                      )}
+                      {label}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={onEdit}
+                    className="h-8 w-8 p-0 md:w-auto md:px-3"
+                  >
+                    <Pencil className="h-4 w-4 md:mr-1" />
+                    <span className="hidden md:inline">Editar</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="md:hidden">Editar</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="h-8 w-8 p-0 md:w-auto md:px-3 text-destructive hover:text-destructive"
+                    onClick={onDelete}
+                  >
+                    <Trash2 className="h-4 w-4 md:mr-1" />
+                    <span className="hidden md:inline">Remover</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="md:hidden">Remover</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default function AdminColaboradores() {
@@ -255,18 +500,7 @@ export default function AdminColaboradores() {
     (c.user_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const countActivePermissions = (c: Collaborator) => {
-    return [
-      c.can_view_dashboard,
-      c.can_manage_checkout,
-      c.can_manage_products,
-      c.can_view_financeiro,
-      c.can_manage_financeiro,
-      c.can_view_transactions,
-      c.can_manage_integrations,
-      c.can_manage_settings,
-    ].filter(Boolean).length;
-  };
+  const activeCollaboratorsCount = collaborators.filter(c => c.is_active).length;
 
   if (permissionsLoading) {
     return (
@@ -289,58 +523,70 @@ export default function AdminColaboradores() {
         <SidebarInset className="flex-1">
           <AdminHeader title="Colaboradores" />
           
-          <main className="flex-1 p-4 md:p-6 space-y-6">
+          <main className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Users className="h-6 w-6 text-primary" />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-start sm:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Users className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-xl md:text-2xl font-bold">Colaboradores</h1>
+                      <Badge variant="secondary" className="text-xs">
+                        {activeCollaboratorsCount} ativo{activeCollaboratorsCount !== 1 ? 's' : ''}
+                      </Badge>
+                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      Gerencie sua equipe e permissões
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold">Colaboradores</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Gerencie sua equipe e permissões de acesso
-                  </p>
-                </div>
+                
+                <Button 
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Colaborador
+                </Button>
               </div>
-              
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Colaborador
-              </Button>
-            </div>
 
-            {/* Search */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              {/* Search */}
+              <div className="relative w-full md:max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
 
             {/* Collaborators List */}
             {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="grid gap-3 md:gap-4">
+                {[1, 2, 3].map((i) => (
+                  <CollaboratorSkeleton key={i} />
+                ))}
               </div>
             ) : filteredCollaborators.length === 0 ? (
               <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">
+                <CardContent className="flex flex-col items-center justify-center py-8 md:py-12">
+                  <Users className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground/50 mb-3 md:mb-4" />
+                  <h3 className="text-base md:text-lg font-medium mb-1 md:mb-2 text-center">
                     {searchTerm ? 'Nenhum colaborador encontrado' : 'Nenhum colaborador ainda'}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 text-center px-4">
                     {searchTerm 
                       ? 'Tente buscar por outro termo' 
                       : 'Adicione colaboradores para gerenciar sua equipe'
                     }
                   </p>
                   {!searchTerm && (
-                    <Button onClick={() => setIsAddDialogOpen(true)}>
+                    <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar Colaborador
                     </Button>
@@ -348,92 +594,14 @@ export default function AdminColaboradores() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4">
+              <div className="grid gap-3 md:gap-4">
                 {filteredCollaborators.map((collaborator) => (
-                  <Card key={collaborator.id} className="overflow-hidden">
-                    <CardContent className="p-4 md:p-6">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <span className="text-lg font-semibold text-primary">
-                              {(collaborator.user_name || collaborator.user_email)[0].toUpperCase()}
-                            </span>
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold truncate">
-                                {collaborator.user_name || 'Sem nome'}
-                              </h3>
-                              {collaborator.is_active ? (
-                                <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/20">
-                                  Ativo
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary">Inativo</Badge>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                              <Mail className="h-3.5 w-3.5" />
-                              <span className="truncate">{collaborator.user_email}</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                              <Calendar className="h-3 w-3" />
-                              <span>
-                                Adicionado em {new Date(collaborator.invited_at).toLocaleDateString('pt-BR')}
-                              </span>
-                            </div>
-
-                            {/* Permissions Summary */}
-                            <div className="flex flex-wrap gap-1.5 mt-3">
-                              {Object.entries(permissionLabels).map(([key, { label }]) => {
-                                const hasPermission = collaborator[key as keyof PermissionsForm];
-                                return (
-                                  <Badge 
-                                    key={key} 
-                                    variant={hasPermission ? "default" : "outline"}
-                                    className={hasPermission 
-                                      ? "bg-primary/10 text-primary border-primary/20 text-xs" 
-                                      : "text-muted-foreground text-xs opacity-50"
-                                    }
-                                  >
-                                    {hasPermission ? (
-                                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                                    ) : (
-                                      <XCircle className="h-3 w-3 mr-1" />
-                                    )}
-                                    {label}
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 self-end md:self-center">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => openEditDialog(collaborator)}
-                          >
-                            <Pencil className="h-4 w-4 mr-1" />
-                            Editar
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => openDeleteDialog(collaborator)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Remover
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <CollaboratorCard
+                    key={collaborator.id}
+                    collaborator={collaborator}
+                    onEdit={() => openEditDialog(collaborator)}
+                    onDelete={() => openDeleteDialog(collaborator)}
+                  />
                 ))}
               </div>
             )}
@@ -443,20 +611,20 @@ export default function AdminColaboradores() {
 
       {/* Add Collaborator Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-base md:text-lg">
               <Plus className="h-5 w-5" />
               Adicionar Colaborador
             </DialogTitle>
-            <DialogDescription>
-              O usuário precisa ter uma conta no sistema para ser adicionado como colaborador.
+            <DialogDescription className="text-xs md:text-sm">
+              O usuário precisa ter uma conta no sistema.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2 md:py-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email do colaborador</Label>
+              <Label htmlFor="email" className="text-sm">Email do colaborador</Label>
               <Input
                 id="email"
                 type="email"
@@ -466,34 +634,14 @@ export default function AdminColaboradores() {
               />
             </div>
 
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Permissões
-              </Label>
-              <div className="grid gap-3 p-4 border rounded-lg bg-muted/30">
-                {Object.entries(permissionLabels).map(([key, { label, description }]) => (
-                  <div key={key} className="flex items-start space-x-3">
-                    <Checkbox
-                      id={key}
-                      checked={permissions[key as keyof PermissionsForm]}
-                      onCheckedChange={(checked) => 
-                        setPermissions(prev => ({ ...prev, [key]: checked === true }))
-                      }
-                    />
-                    <div className="grid gap-0.5 leading-none">
-                      <Label htmlFor={key} className="cursor-pointer font-medium">
-                        {label}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">{description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <PermissionsGrid 
+              permissions={permissions} 
+              setPermissions={setPermissions}
+              idPrefix="add-"
+            />
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Observações (opcional)</Label>
+              <Label htmlFor="notes" className="text-sm">Observações (opcional)</Label>
               <Textarea
                 id="notes"
                 placeholder="Ex: Responsável pelo setor de vendas"
@@ -504,13 +652,21 @@ export default function AdminColaboradores() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsAddDialogOpen(false); resetForm(); }}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleAddCollaborator} disabled={isSubmitting}>
+            <Button 
+              onClick={handleAddCollaborator} 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Adicionar Colaborador
+              Adicionar
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -518,52 +674,40 @@ export default function AdminColaboradores() {
 
       {/* Edit Collaborator Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-base md:text-lg">
               <Pencil className="h-5 w-5" />
               Editar Permissões
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs md:text-sm truncate">
               {selectedCollaborator?.user_name || selectedCollaborator?.user_email}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Permissões
-              </Label>
-              <div className="grid gap-3 p-4 border rounded-lg bg-muted/30">
-                {Object.entries(permissionLabels).map(([key, { label, description }]) => (
-                  <div key={key} className="flex items-start space-x-3">
-                    <Checkbox
-                      id={`edit-${key}`}
-                      checked={permissions[key as keyof PermissionsForm]}
-                      onCheckedChange={(checked) => 
-                        setPermissions(prev => ({ ...prev, [key]: checked === true }))
-                      }
-                    />
-                    <div className="grid gap-0.5 leading-none">
-                      <Label htmlFor={`edit-${key}`} className="cursor-pointer font-medium">
-                        {label}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">{description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="space-y-4 py-2 md:py-4">
+            <PermissionsGrid 
+              permissions={permissions} 
+              setPermissions={setPermissions}
+              idPrefix="edit-"
+            />
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); resetForm(); }}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsEditDialogOpen(false); resetForm(); }}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleEditCollaborator} disabled={isSubmitting}>
+            <Button 
+              onClick={handleEditCollaborator} 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Salvar Alterações
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -571,19 +715,19 @@ export default function AdminColaboradores() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="mx-4 sm:mx-auto max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover Colaborador</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja remover <strong>{selectedCollaborator?.user_name || selectedCollaborator?.user_email}</strong> da sua equipe? 
+            <AlertDialogTitle className="text-base md:text-lg">Remover Colaborador</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs md:text-sm">
+              Tem certeza que deseja remover <strong>{selectedCollaborator?.user_name || selectedCollaborator?.user_email}</strong>? 
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteCollaborator}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
