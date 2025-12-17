@@ -46,10 +46,6 @@ const AdminSettings = () => {
     isBlocked
   } = useAdminAuth();
 
-  // Permission check
-  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_settings')) {
-    return <AccessDenied message="Você não tem permissão para gerenciar Configurações." />;
-  }
   // Load settings when authenticated - AdminLayout handles auth redirects
   useEffect(() => {
     if (isAuthenticated && !loading) {
@@ -184,6 +180,12 @@ const AdminSettings = () => {
       setIsResetting(false);
     }
   };
+
+  // Permission check - AFTER all hooks
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_settings')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar Configurações." />;
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}

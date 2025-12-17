@@ -86,11 +86,6 @@ const AdminFinanceiro = () => {
   const WITHDRAWALS_PER_PAGE = 10;
   const { toast } = useToast();
 
-  // Permission check
-  if (!permissionsLoading && !isOwner && !hasPermission('can_view_financeiro')) {
-    return <AccessDenied message="Você não tem permissão para acessar o Painel Financeiro." />;
-  }
-
   const banks = [
     { code: '001', name: 'Banco do Brasil S.A.' },
     { code: '003', name: 'Banco da Amazônia S.A.' },
@@ -803,6 +798,11 @@ const AdminFinanceiro = () => {
       });
     }
   };
+
+  // Permission check - AFTER all hooks
+  if (!permissionsLoading && !isOwner && !hasPermission('can_view_financeiro')) {
+    return <AccessDenied message="Você não tem permissão para acessar o Painel Financeiro." />;
+  }
 
   return (
     <div className="space-y-6">
