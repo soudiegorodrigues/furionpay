@@ -523,7 +523,7 @@ export default function AdminColaboradores() {
         <SidebarInset className="flex-1">
           <AdminHeader title="Colaboradores" />
           
-          <main className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6">
+          <main className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6 max-w-4xl mx-auto w-full">
             {/* Header */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-start sm:items-center">
