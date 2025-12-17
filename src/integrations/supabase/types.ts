@@ -2151,6 +2151,19 @@ export type Database = {
         }[]
       }
       get_pix_transactions_count: { Args: never; Returns: number }
+      get_platform_revenue_chart: {
+        Args: { p_filter?: string; p_user_email?: string }
+        Returns: Json
+      }
+      get_platform_revenue_stats: {
+        Args: { p_user_email?: string }
+        Returns: Json
+      }
+      get_platform_unique_users: { Args: never; Returns: Json }
+      get_platform_user_profit_ranking: {
+        Args: { p_filter?: string; p_limit?: number }
+        Returns: Json
+      }
       get_popup_model_stats: {
         Args: never
         Returns: {
