@@ -571,7 +571,7 @@ export function ApiMonitoringSection() {
       </div>
 
       {/* Timeline Chart + Recent Events - Side by side on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
         {/* Timeline Chart */}
         <Card className="h-fit">
         <CardHeader className="p-2.5 sm:p-4 pb-2">
