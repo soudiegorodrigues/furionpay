@@ -1972,7 +1972,6 @@ export type Database = {
       cleanup_old_rate_limit_events: { Args: never; Returns: undefined }
       cleanup_rate_limit_events: { Args: never; Returns: undefined }
       collect_db_performance_metrics: { Args: never; Returns: undefined }
-      compare_dashboard_functions: { Args: never; Returns: Json }
       create_api_client: {
         Args: { p_name: string; p_webhook_url?: string }
         Returns: {
@@ -2167,7 +2166,6 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_pix_dashboard: { Args: { input_token: string }; Returns: Json }
       get_pix_dashboard_auth: { Args: never; Returns: Json }
       get_pix_dashboard_auth_v2: { Args: never; Returns: Json }
       get_pix_transactions: {
@@ -2436,7 +2434,6 @@ export type Database = {
           valor_pago: number
         }[]
       }
-      get_user_dashboard: { Args: never; Returns: Json }
       get_user_dashboard_v2: { Args: never; Returns: Json }
       get_user_documents_admin: {
         Args: { p_user_id: string }
