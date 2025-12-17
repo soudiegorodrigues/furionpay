@@ -2153,7 +2153,12 @@ export type Database = {
       get_pix_transactions_count: { Args: never; Returns: number }
       get_platform_revenue_chart: {
         Args: { p_filter?: string; p_user_email?: string }
-        Returns: Json
+        Returns: {
+          acquirer_cost: number
+          gross_revenue: number
+          net_profit: number
+          period_key: string
+        }[]
       }
       get_platform_revenue_stats: {
         Args: { p_user_email?: string }
