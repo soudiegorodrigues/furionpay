@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, Receipt, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp, Bell, Database, Shield } from "lucide-react";
+import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, Receipt, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp, Bell, Database, Shield, LayoutTemplate } from "lucide-react";
 
 const adminSections = {
   analises: {
@@ -28,6 +28,7 @@ const adminSections = {
       { id: "dominios", title: "Domínios", icon: Globe },
       { id: "multi", title: "Multi-adquirência", icon: CreditCard },
       { id: "api-monitoring", title: "API Status", icon: Activity },
+      { id: "templates", title: "Templates", icon: LayoutTemplate },
     ]
   },
   configuracoes: {
