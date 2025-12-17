@@ -41,7 +41,7 @@ export const TransacoesGlobaisSection = () => {
   const loadTransactions = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_pix_transactions_auth', { p_limit: 500 });
+      const { data, error } = await supabase.rpc('get_pix_transactions_auth', { p_limit: 0 });
       if (error) throw error;
       setTransactions(data as unknown as Transaction[] || []);
     } catch (error) {
