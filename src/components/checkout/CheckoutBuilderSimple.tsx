@@ -343,8 +343,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      // Use template from database or fallback
-      const allTemplates = templates?.length ? templates : fallbackTemplateModels;
+      // Use template from database only
+      const allTemplates = templates || [];
       const selectedTemplate = allTemplates.find(t => t.id === selectedModelId);
       let templateString = selectedTemplate?.template_code || "padrao";
       // Normalizar para o formato do banco de dados
@@ -443,8 +443,15 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       <LayoutGrid className="h-4 w-4" />
                       Modelos de Template
                     </Label>
+                  {(!templates || templates.length === 0) ? (
+                    <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                      <LayoutGrid className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Nenhum template disponível</p>
+                      <p className="text-xs">Ative templates no painel Admin</p>
+                    </div>
+                  ) : (
                     <div className="grid grid-cols-2 gap-3">
-                      {(templates?.length ? templates : fallbackTemplateModels).map((model) => (
+                      {templates.map((model) => (
                         <div
                           key={model.id}
                           className={cn(
@@ -503,6 +510,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                         </div>
                       ))}
                     </div>
+                  )}
                   </div>
 
                   {/* Template Base Selection */}
