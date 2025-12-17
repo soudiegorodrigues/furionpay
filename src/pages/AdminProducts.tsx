@@ -498,7 +498,7 @@ export default function AdminProducts() {
                 {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
-                className="overflow-hidden group cursor-pointer" 
+                className="overflow-hidden group cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]" 
                 onClick={() => navigate(`/admin/products/${product.id}`)}
               >
                 <div className="aspect-[3/4] bg-muted relative">
