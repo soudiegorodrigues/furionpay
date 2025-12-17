@@ -512,8 +512,6 @@ export default function AdminColaboradores() {
 
   return (
     <>
-      <AdminHeader title="Colaboradores" />
-      
       <div className="p-4 md:p-6 lg:p-8 max-w-4xl space-y-6">
               {/* Header */}
               <div className="flex flex-col gap-4">
