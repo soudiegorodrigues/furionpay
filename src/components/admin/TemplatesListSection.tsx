@@ -78,6 +78,7 @@ export function TemplatesListSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-checkout-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["checkout-templates-published"] });
       toast.success("Status atualizado!");
     },
     onError: () => toast.error("Erro ao atualizar status"),
@@ -94,6 +95,7 @@ export function TemplatesListSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-checkout-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["checkout-templates-published"] });
       toast.success("Template padrão atualizado!");
     },
     onError: () => toast.error("Erro ao definir padrão"),
@@ -114,6 +116,7 @@ export function TemplatesListSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-checkout-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["checkout-templates-published"] });
       toast.success("Template duplicado!");
     },
     onError: () => toast.error("Erro ao duplicar template"),
@@ -126,6 +129,7 @@ export function TemplatesListSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-checkout-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["checkout-templates-published"] });
       toast.success("Template excluído!");
       setDeleteConfirmId(null);
     },
@@ -256,7 +260,7 @@ export function TemplatesListSection() {
           </DialogHeader>
           <TemplatesSection
             template={editingTemplate}
-            onSave={() => { setEditingTemplate(null); setIsCreating(false); queryClient.invalidateQueries({ queryKey: ["admin-checkout-templates"] }); }}
+            onSave={() => { setEditingTemplate(null); setIsCreating(false); queryClient.invalidateQueries({ queryKey: ["admin-checkout-templates"] }); queryClient.invalidateQueries({ queryKey: ["checkout-templates-published"] }); }}
             onCancel={() => { setEditingTemplate(null); setIsCreating(false); }}
           />
         </DialogContent>
