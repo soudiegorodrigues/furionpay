@@ -15,8 +15,8 @@ const adminSections = {
     label: "Financeiros",
     items: [
       { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
-      { id: "receita-plataforma", title: "Revenue (MRR)", icon: TrendingUp },
       { id: "transacoes", title: "Transações Globais", icon: Receipt },
+      { id: "receita-plataforma", title: "Revenue (MRR)", icon: TrendingUp },
       { id: "saques", title: "Saque Global", icon: Wallet },
       { id: "ranking", title: "Ranking", icon: Trophy },
     ]
