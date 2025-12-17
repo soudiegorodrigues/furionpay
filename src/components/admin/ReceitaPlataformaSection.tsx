@@ -174,8 +174,49 @@ export const ReceitaPlataformaSection = () => {
         p_user_email: selectedUser === 'all' ? null : selectedUser
       });
       if (error) throw error;
-      if (data) {
-        setProfitStats(data as unknown as ProfitStats);
+      if (data && Array.isArray(data)) {
+        // Transform the RPC response array into the expected ProfitStats structure
+        const stats: ProfitStats = { ...defaultProfitStats };
+        
+        data.forEach((row: { period_label: string; gross_revenue: number; net_profit: number; transaction_count: number }) => {
+          const gross = Number(row.gross_revenue) || 0;
+          const net = Number(row.net_profit) || 0;
+          const count = Number(row.transaction_count) || 0;
+          
+          switch (row.period_label) {
+            case 'today':
+              stats.today = net;
+              stats.gross.today = gross;
+              stats.transactionCount = count;
+              break;
+            case '7days':
+              stats.sevenDays = net;
+              stats.gross.sevenDays = gross;
+              break;
+            case '15days':
+              stats.fifteenDays = net;
+              stats.gross.fifteenDays = gross;
+              break;
+            case 'month':
+              stats.thisMonth = net;
+              stats.gross.thisMonth = gross;
+              break;
+            case 'year':
+              stats.thisYear = net;
+              stats.gross.thisYear = gross;
+              stats.total = net;
+              stats.gross.total = gross;
+              break;
+          }
+        });
+        
+        // Calculate derived stats
+        stats.averageProfit = stats.transactionCount > 0 ? stats.total / stats.transactionCount : 0;
+        stats.daysWithData = stats.sevenDays > 0 ? 7 : 0;
+        stats.averageDailyProfit = stats.daysWithData > 0 ? stats.sevenDays / 7 : 0;
+        stats.monthlyProjection = stats.averageDailyProfit * 30;
+        
+        setProfitStats(stats);
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -218,7 +259,10 @@ export const ReceitaPlataformaSection = () => {
     try {
       const { data, error } = await supabase.rpc('get_platform_unique_users');
       if (error) throw error;
-      setUniqueUsers((data as unknown as string[]) || []);
+      // RPC returns [{user_email: "..."}], extract email strings
+      const rawData = data as unknown as Array<{ user_email: string }> | null;
+      const emails = rawData?.map((row) => row.user_email).filter(Boolean) || [];
+      setUniqueUsers(emails);
     } catch (error) {
       console.error('Error loading users:', error);
     }
