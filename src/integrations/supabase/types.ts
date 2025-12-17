@@ -1963,6 +1963,18 @@ export type Database = {
         }[]
       }
       get_api_client_stats: { Args: { p_client_id: string }; Returns: Json }
+      get_api_events_by_period: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          acquirer: string
+          created_at: string
+          error_message: string
+          event_type: string
+          id: string
+          response_time_ms: number
+          retry_attempt: number
+        }[]
+      }
       get_api_health_summary: { Args: never; Returns: Json }
       get_chart_data_by_day: {
         Args: { p_days?: number }
