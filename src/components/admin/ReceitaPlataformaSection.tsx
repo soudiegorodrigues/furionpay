@@ -174,41 +174,52 @@ export const ReceitaPlataformaSection = () => {
         p_user_email: selectedUser === 'all' ? null : selectedUser
       });
       if (error) throw error;
-      if (data && Array.isArray(data)) {
-        // Transform the RPC response array into the expected ProfitStats structure
+      
+      if (data) {
         const stats: ProfitStats = { ...defaultProfitStats };
         
-        data.forEach((row: { period_label: string; gross_revenue: number; net_profit: number; transaction_count: number }) => {
-          const gross = Number(row.gross_revenue) || 0;
-          const net = Number(row.net_profit) || 0;
-          const count = Number(row.transaction_count) || 0;
-          
-          switch (row.period_label) {
-            case 'today':
-              stats.today = net;
-              stats.gross.today = gross;
-              stats.transactionCount = count;
-              break;
-            case '7days':
-              stats.sevenDays = net;
-              stats.gross.sevenDays = gross;
-              break;
-            case '15days':
-              stats.fifteenDays = net;
-              stats.gross.fifteenDays = gross;
-              break;
-            case 'month':
-              stats.thisMonth = net;
-              stats.gross.thisMonth = gross;
-              break;
-            case 'year':
-              stats.thisYear = net;
-              stats.gross.thisYear = gross;
-              stats.total = net;
-              stats.gross.total = gross;
-              break;
-          }
-        });
+        // Cast to expected structure
+        const rpcData = data as {
+          today?: { net_profit: number; gross_revenue: number; acquirer_cost: number; transaction_count: number };
+          week?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
+          fortnight?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
+          month?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
+          year?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
+          all_time?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
+        };
+        
+        // Process JSON object structure from RPC
+        if (rpcData.today) {
+          stats.today = Number(rpcData.today.net_profit) || 0;
+          stats.gross.today = Number(rpcData.today.gross_revenue) || 0;
+          stats.acquirerCosts.today = Number(rpcData.today.acquirer_cost) || 0;
+          stats.transactionCount = Number(rpcData.today.transaction_count) || 0;
+        }
+        if (rpcData.week) {
+          stats.sevenDays = Number(rpcData.week.net_profit) || 0;
+          stats.gross.sevenDays = Number(rpcData.week.gross_revenue) || 0;
+          stats.acquirerCosts.sevenDays = Number(rpcData.week.acquirer_cost) || 0;
+        }
+        if (rpcData.fortnight) {
+          stats.fifteenDays = Number(rpcData.fortnight.net_profit) || 0;
+          stats.gross.fifteenDays = Number(rpcData.fortnight.gross_revenue) || 0;
+          stats.acquirerCosts.fifteenDays = Number(rpcData.fortnight.acquirer_cost) || 0;
+        }
+        if (rpcData.month) {
+          stats.thisMonth = Number(rpcData.month.net_profit) || 0;
+          stats.gross.thisMonth = Number(rpcData.month.gross_revenue) || 0;
+          stats.acquirerCosts.thisMonth = Number(rpcData.month.acquirer_cost) || 0;
+        }
+        if (rpcData.year) {
+          stats.thisYear = Number(rpcData.year.net_profit) || 0;
+          stats.gross.thisYear = Number(rpcData.year.gross_revenue) || 0;
+          stats.acquirerCosts.thisYear = Number(rpcData.year.acquirer_cost) || 0;
+        }
+        if (rpcData.all_time) {
+          stats.total = Number(rpcData.all_time.net_profit) || 0;
+          stats.gross.total = Number(rpcData.all_time.gross_revenue) || 0;
+          stats.acquirerCosts.total = Number(rpcData.all_time.acquirer_cost) || 0;
+        }
         
         // Calculate derived stats
         stats.averageProfit = stats.transactionCount > 0 ? stats.total / stats.transactionCount : 0;
