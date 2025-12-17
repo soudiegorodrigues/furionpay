@@ -115,7 +115,7 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
         </Tooltip>
       </TooltipProvider>
       
-      <span className="text-sm font-medium text-foreground whitespace-nowrap">
+      <span className="text-sm font-medium text-foreground">
         {formatCurrency(currentAmount)} / {formatCurrency(goalAmount)}
       </span>
 
