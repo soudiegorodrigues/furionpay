@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,18 +16,6 @@ interface GlobalStats {
   today_generated: number;
   today_paid: number;
   today_amount_paid: number;
-}
-
-interface Transaction {
-  id: string;
-  amount: number;
-  status: 'generated' | 'paid' | 'expired';
-  txid: string;
-  donor_name: string;
-  product_name: string | null;
-  created_at: string;
-  paid_at: string | null;
-  user_email: string | null;
 }
 
 interface ChartData {
@@ -48,15 +36,19 @@ const chartFilterOptions: { value: ChartFilter; label: string }[] = [
 
 export const FaturamentoSection = () => {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChartLoading, setIsChartLoading] = useState(false);
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
 
   useEffect(() => {
     loadGlobalStats();
-    loadTransactions();
   }, []);
+
+  useEffect(() => {
+    loadChartData();
+  }, [chartFilter]);
 
   const loadGlobalStats = async () => {
     setIsLoading(true);
@@ -71,13 +63,39 @@ export const FaturamentoSection = () => {
     }
   };
 
-  const loadTransactions = async () => {
+  const loadChartData = async () => {
+    setIsChartLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_pix_transactions_auth', { p_limit: 0 });
-      if (error) throw error;
-      setTransactions(data as unknown as Transaction[] || []);
+      if (chartFilter === 'today') {
+        // Get today's date in Brazil timezone
+        const todayBrazil = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+        const { data, error } = await supabase.rpc('get_chart_data_by_hour', { p_date: todayBrazil });
+        if (error) throw error;
+        
+        const formattedData = (data || []).map((row: { hour_brazil: number; gerados: number; pagos: number; valor_pago: number }) => ({
+          date: `${row.hour_brazil.toString().padStart(2, '0')}:00`,
+          gerados: Number(row.gerados),
+          pagos: Number(row.pagos),
+          valorPago: Number(row.valor_pago)
+        }));
+        setChartData(formattedData);
+      } else {
+        const days = chartFilter === '7days' ? 7 : chartFilter === '14days' ? 14 : 30;
+        const { data, error } = await supabase.rpc('get_chart_data_by_day', { p_days: days });
+        if (error) throw error;
+        
+        const formattedData = (data || []).map((row: { date_brazil: string; gerados: number; pagos: number; valor_pago: number }) => ({
+          date: new Date(row.date_brazil).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          gerados: Number(row.gerados),
+          pagos: Number(row.pagos),
+          valorPago: Number(row.valor_pago)
+        }));
+        setChartData(formattedData);
+      }
     } catch (error) {
-      console.error('Error loading transactions:', error);
+      console.error('Error loading chart data:', error);
+    } finally {
+      setIsChartLoading(false);
     }
   };
 
@@ -91,7 +109,7 @@ export const FaturamentoSection = () => {
         description: `${data?.checked || 0} verificadas, ${data?.updated || 0} atualizadas`
       });
       loadGlobalStats();
-      loadTransactions();
+      loadChartData();
     } catch (error) {
       console.error('Batch check error:', error);
       toast({
@@ -115,94 +133,7 @@ export const FaturamentoSection = () => {
     ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1) 
     : '0';
 
-  const getChartDays = (filter: ChartFilter): number => {
-    switch (filter) {
-      case 'today': return 1;
-      case '7days': return 7;
-      case '14days': return 14;
-      case '30days': return 30;
-      default: return 30;
-    }
-  };
-
-  // Helper para obter data/hora no timezone de São Paulo
-  const getBrazilDateStr = (date: Date): string => {
-    return date.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-  };
-
-  const getBrazilHour = (date: Date): number => {
-    return parseInt(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false }));
-  };
-
-  const globalChartData = useMemo((): ChartData[] => {
-    const data: ChartData[] = [];
-    const now = new Date();
-    
-    // If "today" is selected, show hourly data (00:00 to 23:00)
-    if (chartFilter === 'today') {
-      const todayStr = getBrazilDateStr(now);
-      
-      for (let hour = 0; hour < 24; hour++) {
-        const displayHour = `${hour.toString().padStart(2, '0')}:00`;
-        
-        // Filtrar gerados por created_at
-        const generatedTransactions = transactions.filter(tx => {
-          const txDate = new Date(tx.created_at);
-          const txDateStr = getBrazilDateStr(txDate);
-          const txHour = getBrazilHour(txDate);
-          return txDateStr === todayStr && txHour === hour;
-        });
-        
-        // Filtrar pagos por paid_at (quando efetivamente foi pago)
-        const paidTransactions = transactions.filter(tx => {
-          if (tx.status !== 'paid' || !tx.paid_at) return false;
-          const txDate = new Date(tx.paid_at);
-          const txDateStr = getBrazilDateStr(txDate);
-          const txHour = getBrazilHour(txDate);
-          return txDateStr === todayStr && txHour === hour;
-        });
-        
-        const gerados = generatedTransactions.length;
-        const pagos = paidTransactions.length;
-        const valorPago = paidTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-        
-        data.push({ date: displayHour, gerados, pagos, valorPago });
-      }
-      
-      return data;
-    }
-    
-    // For other filters, show daily data
-    const days = getChartDays(chartFilter);
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      
-      // Filtrar gerados por created_at
-      const generatedTransactions = transactions.filter(tx => {
-        const txDate = new Date(tx.created_at).toISOString().split('T')[0];
-        return txDate === dateStr;
-      });
-      
-      // Filtrar pagos por paid_at
-      const paidTransactions = transactions.filter(tx => {
-        if (tx.status !== 'paid' || !tx.paid_at) return false;
-        const txDate = new Date(tx.paid_at).toISOString().split('T')[0];
-        return txDate === dateStr;
-      });
-      
-      const gerados = generatedTransactions.length;
-      const pagos = paidTransactions.length;
-      const valorPago = paidTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-      
-      data.push({ date: displayDate, gerados, pagos, valorPago });
-    }
-    
-    return data;
-  }, [transactions, chartFilter]);
+  // Note: Chart data is now loaded directly from the database via RPCs
 
   return (
     <>
@@ -228,7 +159,7 @@ export const FaturamentoSection = () => {
               )}
               <span className="ml-2 hidden sm:inline">Verificar</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => { loadGlobalStats(); loadTransactions(); }} disabled={isLoading} className="flex-1 sm:flex-none">
+            <Button variant="outline" size="sm" onClick={() => { loadGlobalStats(); loadChartData(); }} disabled={isLoading} className="flex-1 sm:flex-none">
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span className="ml-2 hidden sm:inline">Atualizar</span>
             </Button>
@@ -328,65 +259,73 @@ export const FaturamentoSection = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[280px] sm:h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart 
-                data={globalChartData} 
-                margin={{ top: 20, right: 10, left: 10, bottom: 20 }}
-              >
-                <defs>
-                  <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="date" 
-                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                  tickLine={false}
-                  axisLine={false}
-                  interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
-                />
-                <YAxis 
-                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-                  tickLine={false}
-                  axisLine={false}
-                  allowDecimals={false}
-                  width={30}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                    fontSize: '12px'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
-                  formatter={(value: number, name: string) => {
-                    if (name === 'pagos') return [value, 'Pagos'];
-                    return [value, name];
-                  }}
-                />
-                <Area 
-                  type="monotone"
-                  dataKey="pagos" 
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fill="url(#areaGradientPaid)"
-                  animationDuration={800}
-                  animationEasing="ease-out"
-                  dot={false}
-                  activeDot={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <span className="w-3 h-3 rounded-full bg-primary"></span>
-            <span className="text-xs text-muted-foreground font-medium">Pagos</span>
-          </div>
+          {isChartLoading ? (
+            <div className="h-[280px] sm:h-[320px] w-full flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              <div className="h-[280px] sm:h-[320px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart 
+                    data={chartData} 
+                    margin={{ top: 20, right: 10, left: 10, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="date" 
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                      tickLine={false}
+                      axisLine={false}
+                      interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                      width={30}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                        fontSize: '12px'
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
+                      formatter={(value: number, name: string) => {
+                        if (name === 'pagos') return [value, 'Pagos'];
+                        return [value, name];
+                      }}
+                    />
+                    <Area 
+                      type="monotone"
+                      dataKey="pagos" 
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#areaGradientPaid)"
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                      dot={false}
+                      activeDot={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <span className="w-3 h-3 rounded-full bg-primary"></span>
+                <span className="text-xs text-muted-foreground font-medium">Pagos</span>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </>

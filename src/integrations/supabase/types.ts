@@ -1964,6 +1964,24 @@ export type Database = {
       }
       get_api_client_stats: { Args: { p_client_id: string }; Returns: Json }
       get_api_health_summary: { Args: never; Returns: Json }
+      get_chart_data_by_day: {
+        Args: { p_days?: number }
+        Returns: {
+          date_brazil: string
+          gerados: number
+          pagos: number
+          valor_pago: number
+        }[]
+      }
+      get_chart_data_by_hour: {
+        Args: { p_date?: string }
+        Returns: {
+          gerados: number
+          hour_brazil: number
+          pagos: number
+          valor_pago: number
+        }[]
+      }
       get_db_performance_summary: { Args: never; Returns: Json }
       get_global_notification_settings: {
         Args: never
