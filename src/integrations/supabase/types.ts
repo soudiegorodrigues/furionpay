@@ -2261,7 +2261,7 @@ export type Database = {
           paid_at: string
           popup_model: string
           product_name: string
-          status: Database["public"]["Enums"]["pix_status"]
+          status: string
           txid: string
           utm_data: Json
         }[]
