@@ -93,7 +93,7 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5 border border-border/50">
+    <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5 border border-border/50 min-w-fit">
       <Badge variant="outline" className="text-xs font-medium px-2 py-0.5 bg-background">
         Faturamento
       </Badge>
@@ -115,7 +115,7 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
         </Tooltip>
       </TooltipProvider>
       
-      <span className="text-sm font-medium text-foreground">
+      <span className="text-sm font-medium text-foreground whitespace-nowrap">
         {formatCurrency(currentAmount)} / {formatCurrency(goalAmount)}
       </span>
 
