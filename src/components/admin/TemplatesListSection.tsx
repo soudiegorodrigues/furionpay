@@ -13,11 +13,10 @@ import {
   Edit,
   Copy,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   Star,
   Loader2,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -228,22 +227,11 @@ export function TemplatesListSection() {
                   <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => duplicateMutation.mutate(template)} disabled={duplicateMutation.isPending}>
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={`h-10 w-10 rounded-lg transition-colors ${
-                      template.is_published 
-                        ? 'hover:bg-primary/10' 
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => togglePublishMutation.mutate({ id: template.id, is_published: !template.is_published })} 
+                  <Switch
+                    checked={template.is_published}
+                    onCheckedChange={(checked) => togglePublishMutation.mutate({ id: template.id, is_published: checked })}
                     disabled={togglePublishMutation.isPending}
-                  >
-                    {template.is_published 
-                      ? <ToggleRight className="h-7 w-7 text-primary" /> 
-                      : <ToggleLeft className="h-7 w-7 text-muted-foreground" />
-                    }
-                  </Button>
+                  />
                   {!template.is_default && (
                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => setDefaultMutation.mutate(template.id)} disabled={setDefaultMutation.isPending}>
                       <Star className="h-4 w-4" />
