@@ -957,7 +957,7 @@ const AdminDashboard = () => {
               <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {filteredTransactions.length} transações carregadas
+                    {periodStats.total_generated} transações no período
                   </span>
                   {totalPages > 1 && <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
