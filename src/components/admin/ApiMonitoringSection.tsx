@@ -570,8 +570,10 @@ export function ApiMonitoringSection() {
         />
       </div>
 
-      {/* Timeline Chart */}
-      <Card>
+      {/* Timeline Chart + Recent Events - Side by side on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        {/* Timeline Chart */}
+        <Card className="h-fit">
         <CardHeader className="p-2.5 sm:p-4 pb-2">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-xs sm:text-sm font-medium">
@@ -655,8 +657,8 @@ export function ApiMonitoringSection() {
         </CardContent>
       </Card>
 
-      {/* Recent Events */}
-      <Card>
+        {/* Recent Events */}
+        <Card className="h-fit">
         <CardHeader className="p-2.5 sm:p-4 pb-2">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-xs sm:text-sm font-medium">Eventos Recentes</CardTitle>
@@ -728,7 +730,8 @@ export function ApiMonitoringSection() {
             </p>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
