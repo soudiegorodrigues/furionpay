@@ -265,18 +265,18 @@ export const FaturamentoSection = () => {
                 value={globalStats.total_generated} 
                 label="PIX Gerados" 
                 subLabel={formatCurrency(globalStats.total_amount_generated)}
-                colorClass="text-blue-500"
+                colorClass="text-foreground"
               />
               <StatCard 
                 value={globalStats.total_paid} 
                 label="PIX Pagos" 
                 subLabel={formatCurrency(globalStats.total_amount_paid)}
-                colorClass="text-green-500"
+                colorClass="text-foreground"
               />
               <StatCard 
                 value={`${conversionRate}%`} 
                 label="Conversão" 
-                colorClass="text-yellow-500"
+                colorClass="text-foreground"
               />
 
               {/* Today Stats */}
@@ -286,19 +286,19 @@ export const FaturamentoSection = () => {
                   <StatCard 
                     value={globalStats.today_generated} 
                     label="Gerados" 
-                    colorClass="text-blue-500"
+                    colorClass="text-foreground"
                     size="small"
                   />
                   <StatCard 
                     value={globalStats.today_paid} 
                     label="Pagos" 
-                    colorClass="text-green-500"
+                    colorClass="text-foreground"
                     size="small"
                   />
                   <StatCard 
                     value={formatCurrency(globalStats.today_amount_paid)} 
                     label="Recebido" 
-                    colorClass="text-primary truncate"
+                    colorClass="text-foreground truncate"
                     size="small"
                   />
                 </div>
