@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download, Upload, HardDrive, FileArchive, Image, Music, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download, Upload, HardDrive, FileArchive, Image, Music, FileText, Lock, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import JSZip from "jszip";
+
+const SECURITY_KEYWORD = "MELCHIADES";
 
 interface SystemBackup {
   id: string;
@@ -46,6 +51,17 @@ interface StorageStats {
 }
 
 export function BackupsSection() {
+  // Security states
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showKeywordDialog, setShowKeywordDialog] = useState(true);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // Backup states
   const [backups, setBackups] = useState<SystemBackup[]>([]);
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +73,53 @@ export function BackupsSection() {
   const [selectedBackup, setSelectedBackup] = useState<SystemBackup | null>(null);
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Security handlers
+  const handleKeywordSubmit = () => {
+    if (keyword.toUpperCase() !== SECURITY_KEYWORD) {
+      toast.error("Palavra-chave incorreta");
+      return;
+    }
+    setShowKeywordDialog(false);
+    setKeyword("");
+    setShowAuthDialog(true);
+  };
+
+  const handleAuthenticate = async () => {
+    if (!email || !password) {
+      toast.error("Preencha email e senha");
+      return;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        toast.error("Email ou senha incorretos");
+        return;
+      }
+
+      const { data: isAdmin } = await supabase.rpc('is_admin_authenticated');
+      if (!isAdmin) {
+        toast.error("Apenas administradores podem acessar esta área");
+        return;
+      }
+
+      setShowAuthDialog(false);
+      setIsAuthenticated(true);
+      setEmail("");
+      setPassword("");
+      
+      // Load data after authentication
+      loadBackups();
+      loadStorageStatsWithTimestamp();
+    } catch (error) {
+      toast.error("Falha na autenticação");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   const loadBackups = async () => {
     try {
@@ -89,6 +152,8 @@ export function BackupsSection() {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     loadBackups();
     loadStorageStatsWithTimestamp();
     
@@ -105,7 +170,7 @@ export function BackupsSection() {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const handleCreateBackup = async () => {
     setActionLoading(true);
@@ -399,7 +464,145 @@ export function BackupsSection() {
   const manualCount = backups.filter(b => b.backup_type === 'manual').length;
 
   return (
-    <div className="space-y-6">
+    <>
+      {/* Keyword Dialog - Step 1 */}
+      <Dialog open={showKeywordDialog} onOpenChange={(open) => !isAuthenticated && setShowKeywordDialog(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/15">
+                <Key className="w-5 h-5 text-primary" />
+              </div>
+              <DialogTitle>Acesso Restrito</DialogTitle>
+            </div>
+            <DialogDescription>
+              Esta área contém dados sensíveis. Digite a palavra-chave de segurança para continuar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="keyword">Palavra-chave</Label>
+              <Input
+                id="keyword"
+                type="text"
+                placeholder="Digite a palavra-chave"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleKeywordSubmit()}
+                className="uppercase"
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-2 justify-end">
+            <Button 
+              variant="default" 
+              onClick={handleKeywordSubmit}
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Continuar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Auth Dialog - Step 2 */}
+      <Dialog open={showAuthDialog} onOpenChange={(open) => !isAuthenticated && setShowAuthDialog(open)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary/15">
+                <Lock className="w-5 h-5 text-primary" />
+              </div>
+              <DialogTitle>Autenticação do Administrador</DialogTitle>
+            </div>
+            <DialogDescription>
+              Confirme suas credenciais de administrador para acessar os backups.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAuthenticate()}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 justify-end">
+            <Button 
+              variant="default" 
+              onClick={handleAuthenticate}
+              disabled={isAuthenticating}
+            >
+              {isAuthenticating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Acessar Backups
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Locked state */}
+      {!isAuthenticated && !showKeywordDialog && !showAuthDialog && (
+        <Card className="max-w-md mx-auto mt-20">
+          <CardHeader className="text-center">
+            <div className="mx-auto p-4 rounded-full bg-muted w-fit mb-4">
+              <Lock className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <CardTitle>Área Restrita</CardTitle>
+            <CardDescription>
+              Esta área requer autenticação adicional para acesso.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Button onClick={() => setShowKeywordDialog(true)}>
+              <Key className="w-4 h-4 mr-2" />
+              Desbloquear Acesso
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main content - only visible when authenticated */}
+      {isAuthenticated && (
+      <div className="space-y-6">
       {/* Header with stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -759,5 +962,7 @@ export function BackupsSection() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+      )}
+    </>
   );
 }
