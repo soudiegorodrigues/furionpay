@@ -93,7 +93,7 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5 border border-border/50 min-w-fit">
+    <div className="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5 border border-primary/20 min-w-fit">
       <Badge variant="outline" className="text-xs font-medium px-2 py-0.5 bg-background">
         Faturamento
       </Badge>
