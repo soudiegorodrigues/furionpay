@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -34,40 +35,114 @@ const chartFilterOptions: { value: ChartFilter; label: string }[] = [
   { value: '30days', label: '30 dias' },
 ];
 
+// Memoized StatCard component
+interface StatCardProps {
+  value: string | number;
+  label: string;
+  subLabel?: string;
+  colorClass?: string;
+  size?: 'normal' | 'small';
+}
+
+const StatCard = memo(({ value, label, subLabel, colorClass = "text-foreground", size = 'normal' }: StatCardProps) => (
+  <div className={cn(
+    "text-center rounded-lg transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02]",
+    size === 'small' ? "p-2 sm:p-4 bg-primary/10" : "p-3 sm:p-4 bg-muted/30"
+  )}>
+    <div className={cn(
+      "font-bold",
+      size === 'small' ? "text-lg sm:text-2xl" : "text-xl sm:text-3xl",
+      colorClass
+    )}>
+      {value}
+    </div>
+    <p className={cn(
+      "text-muted-foreground",
+      size === 'small' ? "text-[10px] sm:text-sm" : "text-xs sm:text-sm"
+    )}>
+      {label}
+    </p>
+    {subLabel && (
+      <p className="text-[10px] sm:text-xs text-muted-foreground">{subLabel}</p>
+    )}
+  </div>
+));
+
+StatCard.displayName = 'StatCard';
+
+// Stats skeleton component
+const StatsSkeleton = memo(() => (
+  <div className="grid grid-cols-3 gap-2 sm:gap-4">
+    {[1, 2, 3].map(i => (
+      <Skeleton key={i} className="h-20 sm:h-24 rounded-lg" />
+    ))}
+    <div className="col-span-3 mt-3 sm:mt-4">
+      <Skeleton className="h-5 w-16 mb-2 sm:mb-3" />
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-16 sm:h-20 rounded-lg" />
+        ))}
+      </div>
+    </div>
+  </div>
+));
+
+StatsSkeleton.displayName = 'StatsSkeleton';
+
+// Chart skeleton component
+const ChartSkeleton = memo(() => (
+  <div className="h-[280px] sm:h-[320px] w-full flex flex-col gap-4">
+    <div className="flex-1 flex items-end gap-1 px-8">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <Skeleton 
+          key={i} 
+          className="flex-1 rounded-t-sm" 
+          style={{ height: `${30 + Math.random() * 60}%` }} 
+        />
+      ))}
+    </div>
+    <Skeleton className="h-4 w-full" />
+  </div>
+));
+
+ChartSkeleton.displayName = 'ChartSkeleton';
+
 export const FaturamentoSection = () => {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
 
-  useEffect(() => {
-    loadGlobalStats();
+  // Memoized currency formatter
+  const formatCurrency = useCallback((value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   }, []);
 
-  useEffect(() => {
-    loadChartData();
-  }, [chartFilter]);
+  // Memoized conversion rate calculation
+  const conversionRate = useMemo(() => {
+    if (!globalStats || globalStats.total_generated === 0) return '0';
+    return ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1);
+  }, [globalStats]);
 
-  const loadGlobalStats = async () => {
-    setIsLoading(true);
+  const loadGlobalStats = useCallback(async () => {
     try {
       const { data, error } = await supabase.rpc('get_pix_dashboard_auth');
       if (error) throw error;
       setGlobalStats(data as unknown as GlobalStats);
     } catch (error) {
       console.error('Error loading global stats:', error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const loadChartData = async () => {
+  const loadChartData = useCallback(async (filter: ChartFilter = chartFilter) => {
     setIsChartLoading(true);
     try {
-      if (chartFilter === 'today') {
-        // Get today's date in Brazil timezone
+      if (filter === 'today') {
         const todayBrazil = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
         const { data, error } = await supabase.rpc('get_chart_data_by_hour', { p_date: todayBrazil });
         if (error) throw error;
@@ -80,7 +155,7 @@ export const FaturamentoSection = () => {
         }));
         setChartData(formattedData);
       } else {
-        const days = chartFilter === '7days' ? 7 : chartFilter === '14days' ? 14 : 30;
+        const days = filter === '7days' ? 7 : filter === '14days' ? 14 : 30;
         const { data, error } = await supabase.rpc('get_chart_data_by_day', { p_days: days });
         if (error) throw error;
         
@@ -97,9 +172,26 @@ export const FaturamentoSection = () => {
     } finally {
       setIsChartLoading(false);
     }
-  };
+  }, [chartFilter]);
 
-  const handleBatchCheck = async () => {
+  // Initial parallel load
+  useEffect(() => {
+    const loadAll = async () => {
+      setIsLoading(true);
+      await Promise.all([loadGlobalStats(), loadChartData('today')]);
+      setIsLoading(false);
+    };
+    loadAll();
+  }, []);
+
+  // Load chart data when filter changes (after initial load)
+  useEffect(() => {
+    if (!isLoading) {
+      loadChartData(chartFilter);
+    }
+  }, [chartFilter]);
+
+  const handleBatchCheck = useCallback(async () => {
     setIsCheckingBatch(true);
     try {
       const { data, error } = await supabase.functions.invoke('batch-check-pix-status');
@@ -108,8 +200,8 @@ export const FaturamentoSection = () => {
         title: "Verificação concluída",
         description: `${data?.checked || 0} verificadas, ${data?.updated || 0} atualizadas`
       });
-      loadGlobalStats();
-      loadChartData();
+      // Refresh both in parallel
+      await Promise.all([loadGlobalStats(), loadChartData()]);
     } catch (error) {
       console.error('Batch check error:', error);
       toast({
@@ -120,20 +212,13 @@ export const FaturamentoSection = () => {
     } finally {
       setIsCheckingBatch(false);
     }
-  };
+  }, [loadGlobalStats, loadChartData]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
-  const conversionRate = globalStats && globalStats.total_generated > 0 
-    ? ((globalStats.total_paid / globalStats.total_generated) * 100).toFixed(1) 
-    : '0';
-
-  // Note: Chart data is now loaded directly from the database via RPCs
+  const handleRefresh = useCallback(async () => {
+    setIsLoading(true);
+    await Promise.all([loadGlobalStats(), loadChartData()]);
+    setIsLoading(false);
+  }, [loadGlobalStats, loadChartData]);
 
   return (
     <>
@@ -159,66 +244,63 @@ export const FaturamentoSection = () => {
               )}
               <span className="ml-2 hidden sm:inline">Verificar</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => { loadGlobalStats(); loadChartData(); }} disabled={isLoading} className="flex-1 sm:flex-none">
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh} 
+              disabled={isLoading} 
+              className="flex-1 sm:flex-none"
+            >
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
               <span className="ml-2 hidden sm:inline">Atualizar</span>
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <StatsSkeleton />
           ) : globalStats ? (
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                <div className="text-xl sm:text-3xl font-bold text-blue-500">
-                  {globalStats.total_generated}
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">PIX Gerados</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  {formatCurrency(globalStats.total_amount_generated)}
-                </p>
-              </div>
-              <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                <div className="text-xl sm:text-3xl font-bold text-green-500">
-                  {globalStats.total_paid}
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">PIX Pagos</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  {formatCurrency(globalStats.total_amount_paid)}
-                </p>
-              </div>
-              <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
-                <div className="text-xl sm:text-3xl font-bold text-yellow-500">
-                  {conversionRate}%
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Conversão</p>
-              </div>
+              <StatCard 
+                value={globalStats.total_generated} 
+                label="PIX Gerados" 
+                subLabel={formatCurrency(globalStats.total_amount_generated)}
+                colorClass="text-blue-500"
+              />
+              <StatCard 
+                value={globalStats.total_paid} 
+                label="PIX Pagos" 
+                subLabel={formatCurrency(globalStats.total_amount_paid)}
+                colorClass="text-green-500"
+              />
+              <StatCard 
+                value={`${conversionRate}%`} 
+                label="Conversão" 
+                colorClass="text-yellow-500"
+              />
 
               {/* Today Stats */}
               <div className="col-span-3 mt-3 sm:mt-4">
                 <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Hoje</h3>
                 <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                  <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
-                    <div className="text-lg sm:text-2xl font-bold text-blue-500">
-                      {globalStats.today_generated}
-                    </div>
-                    <p className="text-[10px] sm:text-sm text-muted-foreground">Gerados</p>
-                  </div>
-                  <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
-                    <div className="text-lg sm:text-2xl font-bold text-green-500">
-                      {globalStats.today_paid}
-                    </div>
-                    <p className="text-[10px] sm:text-sm text-muted-foreground">Pagos</p>
-                  </div>
-                  <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
-                    <div className="text-sm sm:text-2xl font-bold text-primary truncate">
-                      {formatCurrency(globalStats.today_amount_paid)}
-                    </div>
-                    <p className="text-[10px] sm:text-sm text-muted-foreground">Recebido</p>
-                  </div>
+                  <StatCard 
+                    value={globalStats.today_generated} 
+                    label="Gerados" 
+                    colorClass="text-blue-500"
+                    size="small"
+                  />
+                  <StatCard 
+                    value={globalStats.today_paid} 
+                    label="Pagos" 
+                    colorClass="text-green-500"
+                    size="small"
+                  />
+                  <StatCard 
+                    value={formatCurrency(globalStats.today_amount_paid)} 
+                    label="Recebido" 
+                    colorClass="text-primary truncate"
+                    size="small"
+                  />
                 </div>
               </div>
             </div>
@@ -259,13 +341,14 @@ export const FaturamentoSection = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {isChartLoading ? (
-            <div className="h-[280px] sm:h-[320px] w-full flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+          {isLoading ? (
+            <ChartSkeleton />
           ) : (
             <>
-              <div className="h-[280px] sm:h-[320px] w-full">
+              <div className={cn(
+                "h-[280px] sm:h-[320px] w-full transition-opacity duration-300",
+                isChartLoading && "opacity-50"
+              )}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart 
                     data={chartData} 
