@@ -11,9 +11,11 @@ import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 export function EmailSection() {
   const [resendApiKey, setResendApiKey] = useState("");
+  const [realApiKey, setRealApiKey] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [emailLogoUrl, setEmailLogoUrl] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [isLoadingKey, setIsLoadingKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingSender, setIsSavingSender] = useState(false);
   const [isSavingLogo, setIsSavingLogo] = useState(false);
@@ -85,6 +87,7 @@ export function EmailSection() {
 
       if (error) throw error;
 
+      setRealApiKey(resendApiKey);
       setHasExistingKey(true);
       setResendApiKey('re_••••••••••••••••••••••••');
       setShowApiKey(false);
@@ -298,6 +301,46 @@ export function EmailSection() {
     }
   };
 
+  const handleToggleShowApiKey = async () => {
+    if (showApiKey) {
+      // Hide: show masked value
+      setShowApiKey(false);
+      if (hasExistingKey && realApiKey) {
+        setResendApiKey('re_••••••••••••••••••••••••');
+      }
+    } else {
+      // Show: fetch real value from database
+      if (hasExistingKey && !realApiKey) {
+        setIsLoadingKey(true);
+        try {
+          const { data, error } = await supabase.rpc('get_admin_settings_auth');
+          if (error) throw error;
+          
+          if (data) {
+            const settings = data as { key: string; value: string }[];
+            const apiKey = settings.find(s => s.key === 'resend_api_key');
+            if (apiKey?.value) {
+              setRealApiKey(apiKey.value);
+              setResendApiKey(apiKey.value);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching API key:', error);
+          toast({
+            title: "Erro",
+            description: "Erro ao buscar API Key",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoadingKey(false);
+        }
+      } else if (realApiKey) {
+        setResendApiKey(realApiKey);
+      }
+      setShowApiKey(true);
+    }
+  };
+
   return (
     <div className="max-w-2xl space-y-6">
       <div>
@@ -353,9 +396,12 @@ export function EmailSection() {
                 variant="ghost"
                 size="icon"
                 className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                onClick={() => setShowApiKey(!showApiKey)}
+                onClick={handleToggleShowApiKey}
+                disabled={isLoadingKey}
               >
-                {showApiKey ? (
+                {isLoadingKey ? (
+                  <div className="h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+                ) : showApiKey ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
                 ) : (
                   <Eye className="h-4 w-4 text-muted-foreground" />
