@@ -52,32 +52,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Template models data with template names for preview
-const templateModels = [
-  {
-    id: "modelo-padrao",
-    name: "Padrão",
-    templateName: "padrão",
-    isNew: false,
-  },
-  {
-    id: "modelo-clean",
-    name: "Clean",
-    templateName: "afilia",
-    isNew: true,
-  },
-  {
-    id: "modelo-dark",
-    name: "Dark",
-    templateName: "vega",
-    isNew: false,
-  },
-  {
-    id: "modelo-minimal",
-    name: "Minimal",
-    templateName: "multistep",
-    isNew: true,
-  },
+// Fallback template models if database is empty
+const fallbackTemplateModels = [
+  { id: "fallback-padrao", name: "Padrão", template_code: "padrao", is_default: true },
+  { id: "fallback-clean", name: "Clean", template_code: "afilia", is_default: false },
+  { id: "fallback-dark", name: "Dark", template_code: "vega", is_default: false },
+  { id: "fallback-minimal", name: "Minimal", template_code: "multistep", is_default: false },
 ];
 
 interface CheckoutBuilderSimpleProps {
@@ -363,9 +343,10 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      // Use o modelo selecionado do array estático templateModels
-      const selectedModel = templateModels.find(m => m.id === selectedModelId);
-      let templateString = selectedModel?.templateName || "padrão";
+      // Use template from database or fallback
+      const allTemplates = templates?.length ? templates : fallbackTemplateModels;
+      const selectedTemplate = allTemplates.find(t => t.id === selectedModelId);
+      let templateString = selectedTemplate?.template_code || "padrao";
       // Normalizar para o formato do banco de dados
       if (templateString === "padrão") templateString = "padrao";
 
@@ -463,7 +444,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       Modelos de Template
                     </Label>
                     <div className="grid grid-cols-2 gap-3">
-                      {templateModels.map((model) => (
+                      {(templates?.length ? templates : fallbackTemplateModels).map((model) => (
                         <div
                           key={model.id}
                           className={cn(
@@ -481,7 +462,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                               style={{ transform: 'scale(0.12)', width: '833%', height: '833%' }}
                             >
                               <CheckoutPreviewMini
-                                templateName={model.templateName}
+                                templateName={model.template_code || "padrao"}
                                 productName="Produto"
                                 productPrice={97}
                                 primaryColor={primaryColor}
@@ -500,15 +481,15 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                                 className="h-7 w-7"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setPreviewingTemplate(model.templateName);
+                                  setPreviewingTemplate(model.template_code || "padrao");
                                   setPreviewDialogOpen(true);
                                 }}
                                 title="Ver preview"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              {model.isNew && (
-                                <Badge className="text-[10px] h-4 px-1">Novo</Badge>
+                              {model.is_default && (
+                                <Badge className="text-[10px] h-4 px-1">Padrão</Badge>
                               )}
                             </div>
                           </div>
@@ -1055,7 +1036,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
           <DialogHeader className="p-4 pb-0">
             <DialogTitle>
-              Preview: {templateModels.find(m => m.templateName === previewingTemplate)?.name}
+              Preview: {(templates?.length ? templates : fallbackTemplateModels).find(m => m.template_code === previewingTemplate)?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
