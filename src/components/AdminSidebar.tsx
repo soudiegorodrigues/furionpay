@@ -30,7 +30,7 @@ const menuItems: MenuItem[] = [
   { title: "Meta Pixels", url: "/admin/settings", icon: Settings, permission: "can_manage_settings" },
   { title: "Painel Financeiro", url: "/admin/financeiro", icon: Wallet, permission: "can_view_financeiro" },
   { title: "Gestão Financeira", url: "/admin/gestao-financeira", icon: Landmark, permission: "can_manage_financeiro" },
-  { title: "Colaboradores", url: "/admin/colaboradores", icon: Users, ownerOnly: true },
+  { title: "Equipe", url: "/admin/colaboradores", icon: Users, ownerOnly: true },
 ];
 
 interface AdminSidebarProps {
@@ -62,7 +62,7 @@ export function AdminSidebar({
   const visibleMenuItems = menuItems.filter(item => {
     // Admin only items
     if (item.adminOnly && !isAdmin) return false;
-    // Owner only items (like Colaboradores)
+    // Owner only items (like Equipe)
     if (item.ownerOnly && !isOwner) return false;
     // Permission-based items - owners always have access
     if (item.permission && !isOwner && hasPermission && !hasPermission(item.permission)) return false;
