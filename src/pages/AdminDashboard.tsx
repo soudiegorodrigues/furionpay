@@ -913,10 +913,12 @@ const AdminDashboard = () => {
               })}
                   
                   {/* Botão Resgatar */}
-                  <Button className="w-fit mx-auto bg-primary hover:bg-primary/90 text-white font-semibold py-2 text-xs shadow-lg">
-                    <Gift className="h-3.5 w-3.5 mr-1.5" />
-                    Resgatar Recompensa
-                  </Button>
+                  <div className="flex justify-center">
+                    <Button className="bg-primary hover:bg-primary/90 text-white font-semibold py-2 text-xs shadow-lg">
+                      <Gift className="h-3.5 w-3.5 mr-1.5" />
+                      Resgatar Recompensa
+                    </Button>
+                  </div>
                 </div> : <div className="text-center py-4">
                   <div className="p-2 bg-primary/10 rounded-full w-fit mx-auto mb-2">
                     <Trophy className="h-8 w-8 text-primary/50" />
