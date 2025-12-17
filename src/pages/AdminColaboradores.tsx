@@ -523,88 +523,90 @@ export default function AdminColaboradores() {
         <SidebarInset className="flex-1">
           <AdminHeader title="Colaboradores" />
           
-          <main className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6 max-w-4xl mx-auto w-full">
-            {/* Header */}
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-start sm:items-center">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Users className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-xl md:text-2xl font-bold">Colaboradores</h1>
-                      <Badge variant="secondary" className="text-xs">
-                        {activeCollaboratorsCount} ativo{activeCollaboratorsCount !== 1 ? 's' : ''}
-                      </Badge>
+          <main className="flex-1 p-4 md:p-8">
+            <div className="max-w-3xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-primary/10">
+                      <Users className="h-6 w-6 text-primary" />
                     </div>
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      Gerencie sua equipe e permissões
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold">Colaboradores</h1>
+                        <Badge variant="secondary" className="text-xs font-medium">
+                          {activeCollaboratorsCount} ativo{activeCollaboratorsCount !== 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Gerencie sua equipe e permissões
+                      </p>
+                    </div>
                   </div>
+                  
+                  <Button 
+                    onClick={() => setIsAddDialogOpen(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Colaborador
+                  </Button>
                 </div>
-                
-                <Button 
-                  onClick={() => setIsAddDialogOpen(true)}
-                  className="w-full sm:w-auto"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Colaborador
-                </Button>
-              </div>
 
-              {/* Search */}
-              <div className="relative w-full md:max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Collaborators List */}
-            {loading ? (
-              <div className="grid gap-3 md:gap-4">
-                {[1, 2, 3].map((i) => (
-                  <CollaboratorSkeleton key={i} />
-                ))}
-              </div>
-            ) : filteredCollaborators.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8 md:py-12">
-                  <Users className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground/50 mb-3 md:mb-4" />
-                  <h3 className="text-base md:text-lg font-medium mb-1 md:mb-2 text-center">
-                    {searchTerm ? 'Nenhum colaborador encontrado' : 'Nenhum colaborador ainda'}
-                  </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 text-center px-4">
-                    {searchTerm 
-                      ? 'Tente buscar por outro termo' 
-                      : 'Adicione colaboradores para gerenciar sua equipe'
-                    }
-                  </p>
-                  {!searchTerm && (
-                    <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Colaborador
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-3 md:gap-4">
-                {filteredCollaborators.map((collaborator) => (
-                  <CollaboratorCard
-                    key={collaborator.id}
-                    collaborator={collaborator}
-                    onEdit={() => openEditDialog(collaborator)}
-                    onDelete={() => openDeleteDialog(collaborator)}
+                {/* Search */}
+                <div className="relative w-full max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome ou email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
                   />
-                ))}
+                </div>
               </div>
-            )}
+
+              {/* Collaborators List */}
+              {loading ? (
+                <div className="grid gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <CollaboratorSkeleton key={i} />
+                  ))}
+                </div>
+              ) : filteredCollaborators.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <h3 className="text-lg font-medium mb-2 text-center">
+                      {searchTerm ? 'Nenhum colaborador encontrado' : 'Nenhum colaborador ainda'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4 text-center px-4">
+                      {searchTerm 
+                        ? 'Tente buscar por outro termo' 
+                        : 'Adicione colaboradores para gerenciar sua equipe'
+                      }
+                    </p>
+                    {!searchTerm && (
+                      <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adicionar Colaborador
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {filteredCollaborators.map((collaborator) => (
+                    <CollaboratorCard
+                      key={collaborator.id}
+                      collaborator={collaborator}
+                      onEdit={() => openEditDialog(collaborator)}
+                      onDelete={() => openDeleteDialog(collaborator)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </main>
         </SidebarInset>
       </div>
