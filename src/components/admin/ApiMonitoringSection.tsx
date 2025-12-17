@@ -150,73 +150,92 @@ interface AcquirerCardProps {
   getStatusIcon: (health: AcquirerHealth | null) => React.ReactNode;
 }
 
-const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: AcquirerCardProps) => (
-  <Card className="overflow-hidden">
-    <CardHeader className="p-3 sm:p-4 pb-2">
-      <div className="flex items-center justify-between gap-2">
-        <CardTitle className="text-xs sm:text-sm font-medium truncate">{name}</CardTitle>
-        <Badge className={`${getStatusColor(health)} text-[10px] sm:text-xs shrink-0`}>
-          {getStatusIcon(health)}
-          <span className="ml-1">
-            {health?.is_circuit_open ? 'Open' : 
-             !health || health.total_calls_24h === 0 ? 'N/A' : 
-             `${health.success_rate ?? 0}%`}
-          </span>
-        </Badge>
-      </div>
-    </CardHeader>
-    <CardContent className="p-3 sm:p-4 pt-0 space-y-2 sm:space-y-3">
-      {health && health.total_calls_24h > 0 ? (
-        <>
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[10px] sm:text-sm">
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground">24h:</span>
-              <span className="font-medium">{health.total_calls_24h}</span>
+const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: AcquirerCardProps) => {
+  const hasActivity = health && health.total_calls_24h > 0;
+  
+  // Card compacto para sem atividade
+  if (!hasActivity) {
+    return (
+      <Card className="overflow-hidden">
+        <CardHeader className="p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Server className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">{name}</CardTitle>
             </div>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <CheckCircle className="h-3 w-3 text-green-500 shrink-0" />
-              <span className="text-muted-foreground">OK:</span>
-              <span className="font-medium text-green-600">{health.success_count}</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <XCircle className="h-3 w-3 text-destructive shrink-0" />
-              <span className="text-muted-foreground">Falhas:</span>
-              <span className="font-medium text-destructive">{health.failure_count}</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <RefreshCw className="h-3 w-3 text-yellow-500 shrink-0" />
-              <span className="text-muted-foreground">Retry:</span>
-              <span className="font-medium text-yellow-600">{health.retry_count}</span>
-            </div>
+            <Badge variant="secondary" className="text-[10px] shrink-0">
+              N/A
+            </Badge>
           </div>
-          
-          <div className="flex items-center justify-between pt-2 border-t gap-2">
-            <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-sm min-w-0">
-              <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground">Média:</span>
-              <span className="font-medium">{health.avg_response_time ?? '-'}ms</span>
-            </div>
-            {health.circuit_opens > 0 && (
-              <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0 h-5 px-1.5">
-                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                {health.circuit_opens}
-              </Badge>
-            )}
-          </div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+            Sem atividade (24h)
+          </p>
+        </CardHeader>
+      </Card>
+    );
+  }
 
-          {health.last_failure && (
-            <div className="text-[9px] sm:text-xs text-muted-foreground pt-1 truncate">
-              Última falha: {new Date(health.last_failure).toLocaleString('pt-BR')}
-            </div>
+  // Card completo para com atividade
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="p-3 sm:p-4 pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-xs sm:text-sm font-medium truncate">{name}</CardTitle>
+          <Badge className={`${getStatusColor(health)} text-[10px] sm:text-xs shrink-0`}>
+            {getStatusIcon(health)}
+            <span className="ml-1">
+              {health?.is_circuit_open ? 'Open' : `${health.success_rate ?? 0}%`}
+            </span>
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-3 sm:p-4 pt-0 space-y-2 sm:space-y-3">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[10px] sm:text-sm">
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground">24h:</span>
+            <span className="font-medium">{health.total_calls_24h}</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <CheckCircle className="h-3 w-3 text-green-500 shrink-0" />
+            <span className="text-muted-foreground">OK:</span>
+            <span className="font-medium text-green-600">{health.success_count}</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <XCircle className="h-3 w-3 text-destructive shrink-0" />
+            <span className="text-muted-foreground">Falhas:</span>
+            <span className="font-medium text-destructive">{health.failure_count}</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <RefreshCw className="h-3 w-3 text-yellow-500 shrink-0" />
+            <span className="text-muted-foreground">Retry:</span>
+            <span className="font-medium text-yellow-600">{health.retry_count}</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between pt-2 border-t gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-sm min-w-0">
+            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground">Média:</span>
+            <span className="font-medium">{health.avg_response_time ?? '-'}ms</span>
+          </div>
+          {health.circuit_opens > 0 && (
+            <Badge variant="outline" className="text-[9px] sm:text-[10px] shrink-0 h-5 px-1.5">
+              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+              {health.circuit_opens}
+            </Badge>
           )}
-        </>
-      ) : (
-        <p className="text-[11px] sm:text-sm text-muted-foreground">Sem atividade (24h)</p>
-      )}
-    </CardContent>
-  </Card>
-));
+        </div>
+
+        {health.last_failure && (
+          <div className="text-[9px] sm:text-xs text-muted-foreground pt-1 truncate">
+            Última falha: {new Date(health.last_failure).toLocaleString('pt-BR')}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
 
 AcquirerCard.displayName = 'AcquirerCard';
 
