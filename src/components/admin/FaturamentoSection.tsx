@@ -221,7 +221,7 @@ export const FaturamentoSection = () => {
   }, [loadGlobalStats, loadChartData]);
 
   return (
-    <>
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Stats Card */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -411,6 +411,6 @@ export const FaturamentoSection = () => {
           )}
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };
