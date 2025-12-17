@@ -158,9 +158,7 @@ export function AdminLayoutWrapper() {
           </header>
           <BlockedUserAlert isBlocked={isBlocked} />
           <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-auto">
-            <div className="w-full max-w-5xl mx-auto">
-              <Outlet />
-            </div>
+            <Outlet />
           </main>
         </div>
       </div>
