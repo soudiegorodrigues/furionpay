@@ -76,11 +76,6 @@ export default function AdminProducts() {
     color: "#dc2626"
   });
 
-  // Permission check
-  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_products')) {
-    return <AccessDenied message="Você não tem permissão para gerenciar Produtos." />;
-  }
-
   // Combined query: check admin and fetch products together
   const {
     data: productsData,
@@ -238,6 +233,11 @@ export default function AdminProducts() {
     toast.success(folderId ? "Produto movido para pasta" : "Produto removido da pasta");
     refetchProducts();
   };
+
+  // Permission check - AFTER all hooks
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_products')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar Produtos." />;
+  }
 
   // Non-admin users see the "Página em Produção" notice (after loading completes)
   if (isAdmin === false) {

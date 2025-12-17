@@ -98,11 +98,6 @@ const AdminCheckout = () => {
   
   const { isAuthenticated, user } = useAdminAuth();
 
-  // Permission check
-  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_checkout')) {
-    return <AccessDenied message="Você não tem permissão para gerenciar o Checkout." />;
-  }
-
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
@@ -309,6 +304,11 @@ const AdminCheckout = () => {
   const getStatsForModel = (modelId: string) => {
     return popupStats.find(s => s.popup_model === modelId);
   };
+
+  // Permission check - AFTER all hooks
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_checkout')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar o Checkout." />;
+  }
 
   return (
     <>

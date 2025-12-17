@@ -82,11 +82,6 @@ const AdminDashboard = () => {
   const isMobile = useIsMobile();
   const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
 
-  // Permission check
-  if (!permissionsLoading && !isOwner && !hasPermission('can_view_dashboard')) {
-    return <AccessDenied message="Você não tem permissão para visualizar o Dashboard." />;
-  }
-
   useEffect(() => {
     const checkSize = () => setIsTabletOrSmaller(window.innerWidth < 1024);
     checkSize();
@@ -623,6 +618,12 @@ const AdminDashboard = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFilter]);
+
+  // Permission check - AFTER all hooks
+  if (!permissionsLoading && !isOwner && !hasPermission('can_view_dashboard')) {
+    return <AccessDenied message="Você não tem permissão para visualizar o Dashboard." />;
+  }
+
   return <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">

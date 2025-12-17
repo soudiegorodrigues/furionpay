@@ -24,11 +24,6 @@ const AdminIntegrations = () => {
   const [apiKeysCount, setApiKeysCount] = useState(0);
   const [loadingApiKeys, setLoadingApiKeys] = useState(false);
 
-  // Permission check
-  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_integrations')) {
-    return <AccessDenied message="Você não tem permissão para gerenciar Integrações." />;
-  }
-
   useEffect(() => {
     loadUtmifyStatus();
     loadApiKeysStatus();
@@ -117,6 +112,11 @@ const AdminIntegrations = () => {
     setApiDialogOpen(false);
     loadApiKeysStatus();
   };
+
+  // Permission check - AFTER all hooks
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_integrations')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar Integrações." />;
+  }
 
   return (
     <>
