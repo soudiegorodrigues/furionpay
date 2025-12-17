@@ -365,7 +365,7 @@ export default function AdminColaboradores() {
 
   useEffect(() => {
     if (!permissionsLoading && !isOwner) {
-      toast.error('Apenas o proprietário pode gerenciar colaboradores');
+      toast.error('Apenas o proprietário pode gerenciar a equipe');
       navigate('/admin/dashboard');
     }
   }, [permissionsLoading, isOwner, navigate]);
@@ -378,8 +378,8 @@ export default function AdminColaboradores() {
       if (error) throw error;
       setCollaborators((data as Collaborator[]) || []);
     } catch (error: any) {
-      console.error('Error loading collaborators:', error);
-      toast.error('Erro ao carregar colaboradores');
+      console.error('Error loading team members:', error);
+      toast.error('Erro ao carregar equipe');
     } finally {
       setLoading(false);
     }
@@ -522,7 +522,7 @@ export default function AdminColaboradores() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h1 className="text-2xl font-bold">Colaboradores</h1>
+                        <h1 className="text-2xl font-bold">Equipe</h1>
                         <Badge variant="secondary" className="text-xs font-medium">
                           {activeCollaboratorsCount} ativo{activeCollaboratorsCount !== 1 ? 's' : ''}
                         </Badge>
@@ -566,18 +566,18 @@ export default function AdminColaboradores() {
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
                     <h3 className="text-lg font-medium mb-2 text-center">
-                      {searchTerm ? 'Nenhum colaborador encontrado' : 'Nenhum colaborador ainda'}
+                      {searchTerm ? 'Nenhum membro encontrado' : 'Nenhum membro ainda'}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4 text-center px-4">
                       {searchTerm 
                         ? 'Tente buscar por outro termo' 
-                        : 'Adicione colaboradores para gerenciar sua equipe'
+                        : 'Adicione membros para gerenciar sua equipe'
                       }
                     </p>
                     {!searchTerm && (
                       <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
                         <Plus className="h-4 w-4 mr-2" />
-                        Adicionar Colaborador
+                        Adicionar Membro
                       </Button>
                     )}
                   </CardContent>
