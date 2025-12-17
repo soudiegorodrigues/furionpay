@@ -5,17 +5,23 @@ const adminSections = {
   analises: {
     label: "Análises",
     items: [
+      { id: "checkout-global", title: "Checkout Global", icon: PieChart },
+      { id: "ranking", title: "Ranking", icon: Trophy },
+    ]
+  },
+  financeiros: {
+    label: "Financeiros",
+    items: [
       { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
       { id: "receita-plataforma", title: "Receita da Plataforma", icon: TrendingUp },
       { id: "transacoes", title: "Transações Globais", icon: Receipt },
-      { id: "checkout-global", title: "Checkout Global", icon: PieChart },
-      { id: "ranking", title: "Ranking", icon: Trophy },
+      { id: "saques", title: "Saque Global", icon: Wallet },
+      { id: "taxas", title: "Taxas", icon: Percent },
     ]
   },
   gerenciamento: {
     label: "Gerenciamento",
     items: [
-      { id: "saques", title: "Saque Global", icon: Wallet },
       { id: "documentos", title: "Documentos", icon: FileCheck },
       { id: "premiacoes", title: "Premiações", icon: Award },
       { id: "dominios", title: "Domínios", icon: Globe },
@@ -26,7 +32,6 @@ const adminSections = {
   configuracoes: {
     label: "Configurações",
     items: [
-      { id: "taxas", title: "Taxas", icon: Percent },
       { id: "anti-fraude", title: "Anti-Fraude", icon: Shield },
       { id: "notificacoes", title: "Notificações", icon: Bell },
       { id: "personalizacao", title: "Personalização", icon: Palette },
