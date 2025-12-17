@@ -129,16 +129,16 @@ const Admin = () => {
         >
           <div className="flex flex-col items-center space-y-6 py-4">
             {/* Logo */}
-            <img
-              src={furionLogoDark}
-              alt="FurionPay"
-              className="h-8 dark:hidden"
-            />
-            <img
-              src={furionLogoWhite}
-              alt="FurionPay"
-              className="h-8 hidden dark:block"
-            />
+              <img 
+                src={furionLogoDark} 
+                alt="FurionPay" 
+                className="h-12 dark:hidden"
+              />
+              <img 
+                src={furionLogoWhite} 
+                alt="FurionPay" 
+                className="h-12 hidden dark:block"
+              />
 
             {/* Shield Icon */}
             <div className="p-3 rounded-full bg-primary/10">
