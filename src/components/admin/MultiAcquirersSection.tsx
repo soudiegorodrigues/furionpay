@@ -166,6 +166,7 @@ export const MultiAcquirersSection = () => {
 
   const setAsDefaultAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus') => {
     try {
+      // 1. Atualizar default_acquirer na admin_settings
       const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'default_acquirer',
         setting_value: acquirer
@@ -173,13 +174,42 @@ export const MultiAcquirersSection = () => {
       
       if (error) throw error;
       
+      // 2. Sincronizar com retry_flow_steps - colocar o adquirente selecionado em 1º lugar
+      const { data: steps } = await supabase
+        .from('retry_flow_steps')
+        .select('*')
+        .eq('payment_method', 'pix')
+        .order('step_order');
+      
+      if (steps && steps.length > 0) {
+        // Reorganizar: selecionado primeiro, outros mantêm ordem relativa
+        const otherSteps = steps.filter(s => s.acquirer !== acquirer);
+        const selectedStep = steps.find(s => s.acquirer === acquirer);
+        
+        // Atualizar ordem: selecionado = 1, outros = 2, 3, ...
+        if (selectedStep) {
+          await supabase
+            .from('retry_flow_steps')
+            .update({ step_order: 1 })
+            .eq('id', selectedStep.id);
+        }
+        
+        let order = 2;
+        for (const step of otherSteps) {
+          await supabase
+            .from('retry_flow_steps')
+            .update({ step_order: order++ })
+            .eq('id', step.id);
+        }
+      }
+      
       setDefaultAcquirer(acquirer);
       
       const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
       
       toast({
         title: "Adquirente Principal Definida",
-        description: `${acquirerNames[acquirer]} agora é a adquirente padrão do sistema.`
+        description: `${acquirerNames[acquirer]} agora é a adquirente padrão e está em 1º lugar no retry.`
       });
     } catch (error) {
       console.error('Error setting default acquirer:', error);
