@@ -73,7 +73,7 @@ export const FaturamentoSection = () => {
 
   const loadTransactions = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_pix_transactions_auth', { p_limit: 500 });
+      const { data, error } = await supabase.rpc('get_pix_transactions_auth', { p_limit: 0 });
       if (error) throw error;
       setTransactions(data as unknown as Transaction[] || []);
     } catch (error) {
@@ -145,16 +145,26 @@ export const FaturamentoSection = () => {
       for (let hour = 0; hour < 24; hour++) {
         const displayHour = `${hour.toString().padStart(2, '0')}:00`;
         
-        const hourTransactions = transactions.filter(tx => {
+        // Filtrar gerados por created_at
+        const generatedTransactions = transactions.filter(tx => {
           const txDate = new Date(tx.created_at);
           const txDateStr = getBrazilDateStr(txDate);
           const txHour = getBrazilHour(txDate);
           return txDateStr === todayStr && txHour === hour;
         });
         
-        const gerados = hourTransactions.length;
-        const pagos = hourTransactions.filter(tx => tx.status === 'paid').length;
-        const valorPago = hourTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+        // Filtrar pagos por paid_at (quando efetivamente foi pago)
+        const paidTransactions = transactions.filter(tx => {
+          if (tx.status !== 'paid' || !tx.paid_at) return false;
+          const txDate = new Date(tx.paid_at);
+          const txDateStr = getBrazilDateStr(txDate);
+          const txHour = getBrazilHour(txDate);
+          return txDateStr === todayStr && txHour === hour;
+        });
+        
+        const gerados = generatedTransactions.length;
+        const pagos = paidTransactions.length;
+        const valorPago = paidTransactions.reduce((sum, tx) => sum + tx.amount, 0);
         
         data.push({ date: displayHour, gerados, pagos, valorPago });
       }
@@ -171,14 +181,22 @@ export const FaturamentoSection = () => {
       const dateStr = date.toISOString().split('T')[0];
       const displayDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       
-      const dayTransactions = transactions.filter(tx => {
+      // Filtrar gerados por created_at
+      const generatedTransactions = transactions.filter(tx => {
         const txDate = new Date(tx.created_at).toISOString().split('T')[0];
         return txDate === dateStr;
       });
       
-      const gerados = dayTransactions.length;
-      const pagos = dayTransactions.filter(tx => tx.status === 'paid').length;
-      const valorPago = dayTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + tx.amount, 0);
+      // Filtrar pagos por paid_at
+      const paidTransactions = transactions.filter(tx => {
+        if (tx.status !== 'paid' || !tx.paid_at) return false;
+        const txDate = new Date(tx.paid_at).toISOString().split('T')[0];
+        return txDate === dateStr;
+      });
+      
+      const gerados = generatedTransactions.length;
+      const pagos = paidTransactions.length;
+      const valorPago = paidTransactions.reduce((sum, tx) => sum + tx.amount, 0);
       
       data.push({ date: displayDate, gerados, pagos, valorPago });
     }
