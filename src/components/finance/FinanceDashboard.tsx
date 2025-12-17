@@ -502,8 +502,8 @@ export const FinanceDashboard = () => {
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-sm text-muted-foreground mb-2">Saldo</p>
               <GaugeChart 
-                value={Math.max(0, stats.balance)}
-                min={0}
+                value={stats.balance}
+                min={Math.min(0, stats.balance) * 1.2}
                 max={Math.max(stats.totalIncome, Math.abs(stats.balance), 1) * 1.2}
                 label={formatCurrency(stats.balance)}
                 colorScheme="blue"
