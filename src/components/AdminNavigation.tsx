@@ -27,6 +27,7 @@ const adminSections = {
       { id: "checkout-global", title: "Checkout Global", icon: PieChart },
       { id: "dominios", title: "Domínios", icon: Globe },
       { id: "multi", title: "Multi-adquirência", icon: CreditCard },
+      { id: "api-monitoring", title: "API Status", icon: Activity },
     ]
   },
   configuracoes: {
@@ -38,7 +39,6 @@ const adminSections = {
       { id: "email", title: "Email", icon: Mail },
       { id: "backups", title: "Backups", icon: Database },
       { id: "utm-debug", title: "UTM Debug", icon: Bug },
-      { id: "api-monitoring", title: "API Status", icon: Activity },
       { id: "zona-perigo", title: "Zona de Perigo", icon: AlertTriangle },
     ]
   }
