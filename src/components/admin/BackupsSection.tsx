@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download } from "lucide-react";
+import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useRef } from "react";
 
 interface SystemBackup {
   id: string;
@@ -28,8 +29,10 @@ export function BackupsSection() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<SystemBackup | null>(null);
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadBackups = async () => {
     try {
@@ -91,6 +94,40 @@ export function BackupsSection() {
       toast.error('Erro ao exportar backup');
     } finally {
       setExportLoading(false);
+    }
+  };
+
+  const handleImportBackup = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    try {
+      const text = await file.text();
+      const backupData = JSON.parse(text);
+      
+      // Validate structure
+      if (!backupData.tables || !backupData.version) {
+        throw new Error('Arquivo de backup inválido');
+      }
+
+      const { data, error } = await supabase.rpc('import_full_backup', {
+        p_backup_data: backupData
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Backup importado com sucesso!');
+      loadBackups();
+    } catch (error: any) {
+      console.error('Error importing backup:', error);
+      toast.error(error.message || 'Erro ao importar backup');
+    } finally {
+      setImportLoading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -225,8 +262,24 @@ export function BackupsSection() {
                 disabled={exportLoading}
               >
                 <Download className={`h-4 w-4 mr-2 ${exportLoading ? 'animate-pulse' : ''}`} />
-                {exportLoading ? 'Exportando...' : 'Exportar Backup'}
+                {exportLoading ? 'Exportando...' : 'Exportar'}
               </Button>
+              <Button 
+                variant="outline"
+                size="sm" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importLoading}
+              >
+                <Upload className={`h-4 w-4 mr-2 ${importLoading ? 'animate-pulse' : ''}`} />
+                {importLoading ? 'Importando...' : 'Importar'}
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImportBackup}
+                accept=".json"
+                className="hidden"
+              />
               <Button 
                 size="sm" 
                 onClick={handleCreateBackup}
