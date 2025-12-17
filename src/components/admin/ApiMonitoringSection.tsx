@@ -60,26 +60,44 @@ const acquirerOptions = [
   { value: 'ativus', label: 'Ativus Hub', short: 'AH' }
 ];
 
+type ChartPeriod = '24h' | '7d' | '30d';
+
+const periodOptions = [
+  { value: '24h' as ChartPeriod, label: '24h', days: 1, limit: 500 },
+  { value: '7d' as ChartPeriod, label: '7 dias', days: 7, limit: 2000 },
+  { value: '30d' as ChartPeriod, label: '30 dias', days: 30, limit: 5000 }
+];
+
 export function ApiMonitoringSection() {
   const [healthData, setHealthData] = useState<HealthSummary | null>(null);
   const [recentEvents, setRecentEvents] = useState<ApiEvent[]>([]);
+  const [chartEvents, setChartEvents] = useState<ApiEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [acquirerFilter, setAcquirerFilter] = useState<string>('all');
+  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('24h');
 
   const fetchData = useCallback(async () => {
     try {
-      const [healthResult, eventsResult] = await Promise.all([
+      const periodConfig = periodOptions.find(p => p.value === chartPeriod) || periodOptions[0];
+      
+      const [healthResult, eventsResult, chartEventsResult] = await Promise.all([
         supabase.rpc('get_api_health_summary'),
-        supabase.rpc('get_recent_api_events', { p_limit: 100 })
+        supabase.rpc('get_recent_api_events', { p_limit: 100 }),
+        supabase.rpc('get_api_events_by_period', { 
+          p_days: periodConfig.days, 
+          p_limit: periodConfig.limit 
+        })
       ]);
 
       if (healthResult.error) throw healthResult.error;
       if (eventsResult.error) throw eventsResult.error;
+      if (chartEventsResult.error) throw chartEventsResult.error;
 
       setHealthData(healthResult.data as unknown as HealthSummary);
       setRecentEvents(eventsResult.data as unknown as ApiEvent[]);
+      setChartEvents(chartEventsResult.data as unknown as ApiEvent[]);
     } catch (error) {
       console.error('Error fetching API monitoring data:', error);
       toast.error('Erro ao carregar dados de monitoramento');
@@ -87,7 +105,7 @@ export function ApiMonitoringSection() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [chartPeriod]);
 
   useEffect(() => {
     fetchData();
@@ -121,41 +139,72 @@ export function ApiMonitoringSection() {
 
   const timelineData = useMemo(() => {
     const now = new Date();
-    const hours: { [key: string]: { time: string; hour: number; spedpay: number; inter: number; ativus: number } } = {};
+    
+    const getBrazilDate = (date: Date): string => {
+      return date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+    };
     
     const getBrazilHour = (date: Date): number => {
       const brazilTime = date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false });
       return parseInt(brazilTime, 10);
     };
-    
-    for (let i = 23; i >= 0; i--) {
-      const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000);
-      const brazilHour = getBrazilHour(hourDate);
-      const key = `${brazilHour.toString().padStart(2, '0')}h`;
-      if (!hours[key]) {
-        hours[key] = { time: key, hour: brazilHour, spedpay: 0, inter: 0, ativus: 0 };
+
+    // For 24h: aggregate by hour
+    if (chartPeriod === '24h') {
+      const hours: { [key: string]: { time: string; hour: number; spedpay: number; inter: number; ativus: number } } = {};
+      
+      for (let i = 23; i >= 0; i--) {
+        const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000);
+        const brazilHour = getBrazilHour(hourDate);
+        const key = `${brazilHour.toString().padStart(2, '0')}h`;
+        if (!hours[key]) {
+          hours[key] = { time: key, hour: brazilHour, spedpay: 0, inter: 0, ativus: 0 };
+        }
       }
+      
+      chartEvents.forEach(event => {
+        const eventDate = new Date(event.created_at);
+        const eventHour = getBrazilHour(eventDate);
+        const key = `${eventHour.toString().padStart(2, '0')}h`;
+        
+        if (hours[key]) {
+          if (event.acquirer === 'spedpay') hours[key].spedpay++;
+          else if (event.acquirer === 'inter') hours[key].inter++;
+          else if (event.acquirer === 'ativus') hours[key].ativus++;
+        }
+      });
+      
+      const nowHour = getBrazilHour(now);
+      return Object.values(hours).sort((a, b) => {
+        const aOffset = (a.hour - nowHour + 48) % 24;
+        const bOffset = (b.hour - nowHour + 48) % 24;
+        return aOffset - bOffset;
+      });
     }
     
-    recentEvents.forEach(event => {
+    // For 7d/30d: aggregate by day
+    const days = chartPeriod === '7d' ? 7 : 30;
+    const dayData: { [key: string]: { time: string; date: Date; spedpay: number; inter: number; ativus: number } } = {};
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const dayDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const key = getBrazilDate(dayDate);
+      dayData[key] = { time: key, date: dayDate, spedpay: 0, inter: 0, ativus: 0 };
+    }
+    
+    chartEvents.forEach(event => {
       const eventDate = new Date(event.created_at);
-      const eventHour = getBrazilHour(eventDate);
-      const key = `${eventHour.toString().padStart(2, '0')}h`;
+      const key = getBrazilDate(eventDate);
       
-      if (hours[key]) {
-        if (event.acquirer === 'spedpay') hours[key].spedpay++;
-        else if (event.acquirer === 'inter') hours[key].inter++;
-        else if (event.acquirer === 'ativus') hours[key].ativus++;
+      if (dayData[key]) {
+        if (event.acquirer === 'spedpay') dayData[key].spedpay++;
+        else if (event.acquirer === 'inter') dayData[key].inter++;
+        else if (event.acquirer === 'ativus') dayData[key].ativus++;
       }
     });
     
-    const nowHour = getBrazilHour(now);
-    return Object.values(hours).sort((a, b) => {
-      const aOffset = (a.hour - nowHour + 48) % 24;
-      const bOffset = (b.hour - nowHour + 48) % 24;
-      return aOffset - bOffset;
-    });
-  }, [recentEvents]);
+    return Object.values(dayData).sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [chartEvents, chartPeriod]);
 
   const getStatusColor = useCallback((health: AcquirerHealth | null) => {
     if (!health || health.total_calls_24h === 0) return "bg-muted text-muted-foreground";
@@ -311,7 +360,24 @@ export function ApiMonitoringSection() {
       {/* Timeline Chart */}
       <Card>
         <CardHeader className="p-3 sm:p-4 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Timeline (24h)</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">
+              Timeline ({chartPeriod === '24h' ? '24h' : chartPeriod === '7d' ? '7 dias' : '30 dias'})
+            </CardTitle>
+            <div className="flex gap-1">
+              {periodOptions.map(option => (
+                <Button
+                  key={option.value}
+                  variant={chartPeriod === option.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setChartPeriod(option.value)}
+                  className="h-6 sm:h-7 text-[10px] sm:text-xs px-2 whitespace-nowrap"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-2 sm:p-4 pt-0">
           <div className="h-[180px] sm:h-[220px] w-full">
@@ -321,7 +387,13 @@ export function ApiMonitoringSection() {
                 <XAxis 
                   dataKey="time" 
                   tick={{ fontSize: 9 }} 
-                  interval={window.innerWidth < 640 ? 5 : 2}
+                  interval={
+                    chartPeriod === '24h' 
+                      ? (typeof window !== 'undefined' && window.innerWidth < 640 ? 5 : 2)
+                      : chartPeriod === '7d' 
+                        ? 0 
+                        : (typeof window !== 'undefined' && window.innerWidth < 640 ? 6 : 4)
+                  }
                   className="text-muted-foreground"
                 />
                 <YAxis 
