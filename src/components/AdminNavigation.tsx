@@ -9,7 +9,6 @@ const adminSections = {
       { id: "documentos", title: "Documentos", icon: FileCheck },
       { id: "taxas", title: "Taxas", icon: Percent },
       { id: "checkout-global", title: "Checkout Global", icon: PieChart },
-      { id: "ranking", title: "Ranking", icon: Trophy },
     ]
   },
   financeiros: {
@@ -19,6 +18,7 @@ const adminSections = {
       { id: "receita-plataforma", title: "Revenue (MRR)", icon: TrendingUp },
       { id: "transacoes", title: "Transações Globais", icon: Receipt },
       { id: "saques", title: "Saque Global", icon: Wallet },
+      { id: "ranking", title: "Ranking", icon: Trophy },
     ]
   },
   gerenciamento: {
