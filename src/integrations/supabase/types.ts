@@ -2056,7 +2056,7 @@ export type Database = {
         }[]
       }
       get_pix_transactions_auth: {
-        Args: { p_limit?: number }
+        Args: { p_limit?: number; p_offset?: number }
         Returns: {
           acquirer: string
           amount: number
@@ -2073,6 +2073,7 @@ export type Database = {
           utm_data: Json
         }[]
       }
+      get_pix_transactions_count: { Args: never; Returns: number }
       get_popup_model_stats: {
         Args: never
         Returns: {

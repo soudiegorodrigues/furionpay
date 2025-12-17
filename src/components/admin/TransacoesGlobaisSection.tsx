@@ -41,9 +41,32 @@ export const TransacoesGlobaisSection = () => {
   const loadTransactions = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_pix_transactions_auth', { p_limit: 0 });
-      if (error) throw error;
-      setTransactions(data as unknown as Transaction[] || []);
+      // Fetch all transactions in batches of 1000 to bypass PostgREST limit
+      const BATCH_SIZE = 1000;
+      let allTransactions: Transaction[] = [];
+      let offset = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const { data, error } = await supabase.rpc('get_pix_transactions_auth', { 
+          p_limit: BATCH_SIZE, 
+          p_offset: offset 
+        });
+        
+        if (error) throw error;
+        
+        const batch = (data as unknown as Transaction[]) || [];
+        allTransactions = [...allTransactions, ...batch];
+        
+        // If we got fewer than BATCH_SIZE, we've reached the end
+        if (batch.length < BATCH_SIZE) {
+          hasMore = false;
+        } else {
+          offset += BATCH_SIZE;
+        }
+      }
+      
+      setTransactions(allTransactions);
     } catch (error) {
       console.error('Error loading transactions:', error);
     } finally {
