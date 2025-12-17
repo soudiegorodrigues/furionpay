@@ -228,8 +228,21 @@ export function TemplatesListSection() {
                   <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => duplicateMutation.mutate(template)} disabled={duplicateMutation.isPending}>
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => togglePublishMutation.mutate({ id: template.id, is_published: !template.is_published })} disabled={togglePublishMutation.isPending}>
-                    {template.is_published ? <ToggleRight className="h-5 w-5 text-primary" /> : <ToggleLeft className="h-5 w-5" />}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={`h-10 w-10 rounded-lg transition-colors ${
+                      template.is_published 
+                        ? 'hover:bg-primary/10' 
+                        : 'hover:bg-muted/50'
+                    }`}
+                    onClick={() => togglePublishMutation.mutate({ id: template.id, is_published: !template.is_published })} 
+                    disabled={togglePublishMutation.isPending}
+                  >
+                    {template.is_published 
+                      ? <ToggleRight className="h-6 w-6 text-primary" /> 
+                      : <ToggleLeft className="h-6 w-6 text-muted-foreground" />
+                    }
                   </Button>
                   {!template.is_default && (
                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => setDefaultMutation.mutate(template.id)} disabled={setDefaultMutation.isPending}>
