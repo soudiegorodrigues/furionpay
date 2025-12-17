@@ -1,54 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2, Trash2, Lock, Eye, EyeOff, Key, RotateCcw, Archive, Clock } from "lucide-react";
+import { AlertTriangle, Loader2, Trash2, Lock, Eye, EyeOff, Key } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const RESET_KEYWORD = "MELCHIADES";
-
-interface Backup {
-  backup_id: string;
-  backed_up_at: string;
-  transaction_count: number;
-}
 
 export const ZonaDePerigo = () => {
   const [isResettingGlobal, setIsResettingGlobal] = useState(false);
   const [showKeywordDialog, setShowKeywordDialog] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [backups, setBackups] = useState<Backup[]>([]);
-  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
-  const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
-
-  const loadBackups = async () => {
-    setIsLoadingBackups(true);
-    try {
-      const { data, error } = await supabase.rpc('get_transaction_backups');
-      if (error) throw error;
-      setBackups(data || []);
-    } catch (error) {
-      console.error('Error loading backups:', error);
-    } finally {
-      setIsLoadingBackups(false);
-    }
-  };
-
-  useEffect(() => {
-    loadBackups();
-  }, []);
 
   const handleKeywordSubmit = () => {
     if (keyword.toUpperCase() !== RESET_KEYWORD) {
@@ -123,8 +95,6 @@ export const ZonaDePerigo = () => {
         title: "Sucesso",
         description: "Backup criado e transações resetadas! ID do backup: " + backupId?.slice(0, 8)
       });
-      
-      loadBackups();
     } catch (error) {
       console.error('Error resetting global transactions:', error);
       toast({
@@ -136,62 +106,6 @@ export const ZonaDePerigo = () => {
       setIsResettingGlobal(false);
       setShowConfirmDialog(false);
     }
-  };
-
-  const handleRestore = async (backupId: string) => {
-    setIsRestoring(true);
-    try {
-      const { error } = await supabase.rpc('restore_transactions_from_backup', { p_backup_id: backupId });
-      if (error) throw error;
-      
-      toast({
-        title: "Sucesso",
-        description: "Transações restauradas com sucesso!"
-      });
-      
-      setShowRestoreDialog(false);
-      setSelectedBackupId(null);
-    } catch (error) {
-      console.error('Error restoring transactions:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao restaurar transações",
-        variant: "destructive"
-      });
-    } finally {
-      setIsRestoring(false);
-    }
-  };
-
-  const handleDeleteBackup = async (backupId: string) => {
-    try {
-      const { error } = await supabase.rpc('delete_transaction_backup', { p_backup_id: backupId });
-      if (error) throw error;
-      
-      toast({
-        title: "Sucesso",
-        description: "Backup deletado!"
-      });
-      
-      loadBackups();
-    } catch (error) {
-      console.error('Error deleting backup:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao deletar backup",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   return (
@@ -244,80 +158,6 @@ export const ZonaDePerigo = () => {
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Backups Card */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                <Archive className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-bold">
-                  Backups Disponíveis
-                </CardTitle>
-                <CardDescription>
-                  Restaure transações de backups anteriores
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          
-          <CardContent>
-            {isLoadingBackups ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : backups.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Archive className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>Nenhum backup disponível</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {backups.map((backup) => (
-                  <div 
-                    key={backup.backup_id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Clock className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium text-sm">
-                          {formatDate(backup.backed_up_at)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {backup.transaction_count} transações
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedBackupId(backup.backup_id);
-                          setShowRestoreDialog(true);
-                        }}
-                      >
-                        <RotateCcw className="w-4 h-4 mr-1" />
-                        Restaurar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteBackup(backup.backup_id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
@@ -472,42 +312,6 @@ export const ZonaDePerigo = () => {
                 </>
               ) : (
                 "Criar Backup e Resetar"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Restore Dialog */}
-      <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-primary/15">
-                <RotateCcw className="w-6 h-6 text-primary" />
-              </div>
-              <AlertDialogTitle>Restaurar Backup</AlertDialogTitle>
-            </div>
-            <AlertDialogDescription className="text-base leading-relaxed">
-              Deseja restaurar as transações deste backup? 
-              <br /><br />
-              <span className="text-amber-600 font-medium">Atenção:</span> Isso irá adicionar as transações do backup às transações atuais.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:gap-0">
-            <AlertDialogCancel onClick={() => setSelectedBackupId(null)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => selectedBackupId && handleRestore(selectedBackupId)} 
-              disabled={isRestoring}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {isRestoring ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Restaurando...
-                </>
-              ) : (
-                "Restaurar"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
