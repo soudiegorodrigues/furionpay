@@ -2249,6 +2249,7 @@ export type Database = {
           value: string
         }[]
       }
+      get_user_stats_by_period: { Args: { p_period?: string }; Returns: Json }
       get_user_transactions: {
         Args: { p_limit?: number }
         Returns: {
