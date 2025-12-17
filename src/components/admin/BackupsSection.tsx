@@ -471,9 +471,12 @@ export function BackupsSection() {
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 rounded-lg bg-primary/15">
-                <Key className="w-5 h-5 text-primary" />
+                <Database className="w-5 h-5 text-primary" />
               </div>
-              <DialogTitle>Acesso Restrito</DialogTitle>
+              <div>
+                <Badge variant="outline" className="mb-1">Backups</Badge>
+                <DialogTitle>Acesso à Área de Backups</DialogTitle>
+              </div>
             </div>
             <DialogDescription>
               Esta área contém dados sensíveis. Digite a palavra-chave de segurança para continuar.
@@ -515,7 +518,10 @@ export function BackupsSection() {
               <div className="p-2 rounded-lg bg-primary/15">
                 <Lock className="w-5 h-5 text-primary" />
               </div>
-              <DialogTitle>Autenticação do Administrador</DialogTitle>
+              <div>
+                <Badge variant="outline" className="mb-1">Backups</Badge>
+                <DialogTitle>Autenticação do Administrador</DialogTitle>
+              </div>
             </div>
             <DialogDescription>
               Confirme suas credenciais de administrador para acessar os backups.
@@ -578,27 +584,6 @@ export function BackupsSection() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Locked state */}
-      {!isAuthenticated && !showKeywordDialog && !showAuthDialog && (
-        <Card className="max-w-md mx-auto mt-20">
-          <CardHeader className="text-center">
-            <div className="mx-auto p-4 rounded-full bg-muted w-fit mb-4">
-              <Lock className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <CardTitle>Área Restrita</CardTitle>
-            <CardDescription>
-              Esta área requer autenticação adicional para acesso.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button onClick={() => setShowKeywordDialog(true)}>
-              <Key className="w-4 h-4 mr-2" />
-              Desbloquear Acesso
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Main content - only visible when authenticated */}
       {isAuthenticated && (
