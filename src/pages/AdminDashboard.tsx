@@ -65,6 +65,16 @@ interface Reward {
   threshold_amount: number;
   image_url: string | null;
 }
+// Stats from period RPC (accurate counts without row limit)
+interface PeriodStats {
+  total_generated: number;
+  total_paid: number;
+  total_expired: number;
+  total_amount_generated: number;
+  total_amount_paid: number;
+  total_fees: number;
+}
+
 const AdminDashboard = () => {
   const isMobile = useIsMobile();
   const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
@@ -87,11 +97,20 @@ const AdminDashboard = () => {
     month_paid: 0,
     month_amount_paid: 0
   });
+  const [periodStats, setPeriodStats] = useState<PeriodStats>({
+    total_generated: 0,
+    total_paid: 0,
+    total_expired: 0,
+    total_amount_generated: 0,
+    total_amount_paid: 0,
+    total_fees: 0
+  });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
+  const [isLoadingPeriodStats, setIsLoadingPeriodStats] = useState(true);
   const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
   const [transactionOffset, setTransactionOffset] = useState(0);
   const TRANSACTIONS_PER_LOAD = 100;
@@ -131,6 +150,31 @@ const AdminDashboard = () => {
     user,
     signOut
   } = useAdminAuth();
+
+  // Load period stats when dateFilter changes
+  const loadPeriodStats = async (period: DateFilter) => {
+    setIsLoadingPeriodStats(true);
+    try {
+      const { data, error } = await supabase.rpc('get_user_stats_by_period', {
+        p_period: period
+      });
+      if (error) throw error;
+      if (data) {
+        setPeriodStats(data as unknown as PeriodStats);
+      }
+    } catch (error) {
+      console.error('Error loading period stats:', error);
+    } finally {
+      setIsLoadingPeriodStats(false);
+    }
+  };
+
+  // Load period stats when dateFilter changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadPeriodStats(dateFilter);
+    }
+  }, [dateFilter, isAuthenticated]);
 
   // Calculate net amount after fee deduction - uses stored fee from transaction or fallback to current config
   const calculateNetAmount = (grossAmount: number, storedFeePercentage?: number | null, storedFeeFixed?: number | null): number => {
@@ -476,13 +520,13 @@ const AdminDashboard = () => {
     }
     return data;
   }, [transactions, chartFilter, feeConfig]);
+  // Use periodStats from RPC for accurate counts (bypasses Supabase row limit)
   const filteredStats = useMemo(() => {
-    const generated = filteredTransactions.length;
-    const paid = filteredTransactions.filter(tx => tx.status === 'paid').length;
-    // Calculate net amount (after fee deduction) for ALL transactions (estimated)
-    const amountGenerated = filteredTransactions.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
-    // Calculate net amount (after fee deduction) for paid transactions
-    const amountPaid = filteredTransactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
+    const generated = periodStats.total_generated;
+    const paid = periodStats.total_paid;
+    // Net amounts already calculated in RPC (total_amount_paid - total_fees)
+    const amountPaid = periodStats.total_amount_paid - periodStats.total_fees;
+    const amountGenerated = periodStats.total_amount_generated;
     const ticketMedio = paid > 0 ? amountPaid / paid : 0;
     return {
       generated,
@@ -492,7 +536,7 @@ const AdminDashboard = () => {
       conversionRate: generated > 0 ? (paid / generated * 100).toFixed(1) : '0',
       ticketMedio
     };
-  }, [filteredTransactions, feeConfig]);
+  }, [periodStats]);
 
   // Today's stats (using paid_at for paid stats, Brazil timezone)
   const todayStats = useMemo(() => {
