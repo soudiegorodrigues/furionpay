@@ -5,6 +5,9 @@ const adminSections = {
   analises: {
     label: "Análise de Dados",
     items: [
+      { id: "usuarios", title: "Usuários", icon: Users },
+      { id: "documentos", title: "Documentos", icon: FileCheck },
+      { id: "taxas", title: "Taxas", icon: Percent },
       { id: "checkout-global", title: "Checkout Global", icon: PieChart },
       { id: "ranking", title: "Ranking", icon: Trophy },
     ]
@@ -16,16 +19,13 @@ const adminSections = {
       { id: "receita-plataforma", title: "Revenue (MRR)", icon: TrendingUp },
       { id: "transacoes", title: "Transações Globais", icon: Receipt },
       { id: "saques", title: "Saque Global", icon: Wallet },
-      { id: "taxas", title: "Taxas", icon: Percent },
     ]
   },
   gerenciamento: {
     label: "Gerenciamento",
     items: [
-      { id: "documentos", title: "Documentos", icon: FileCheck },
       { id: "premiacoes", title: "Premiações", icon: Award },
       { id: "dominios", title: "Domínios", icon: Globe },
-      { id: "usuarios", title: "Usuários", icon: Users },
       { id: "multi", title: "Multi-adquirência", icon: CreditCard },
     ]
   },
