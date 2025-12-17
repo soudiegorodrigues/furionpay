@@ -29,7 +29,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Shield, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import furionLogoWhite from "@/assets/furionpay-logo-white-text.png";
 import furionLogoDark from "@/assets/furionpay-logo-dark-text.png";
 
@@ -140,10 +140,6 @@ const Admin = () => {
                 className="h-12 hidden dark:block"
               />
 
-            {/* Shield Icon */}
-            <div className="p-3 rounded-full bg-primary/10">
-              <Shield className="h-8 w-8 text-primary" />
-            </div>
 
             {/* Title */}
             <div className="text-center space-y-2">
