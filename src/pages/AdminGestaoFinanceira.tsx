@@ -4,13 +4,15 @@ import {
   TrendingUp, 
   Target, 
   PieChart,
-  Wallet
+  Wallet,
+  Building2
 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { FinanceDashboard } from "@/components/finance/FinanceDashboard";
 import { FinanceCategories } from "@/components/finance/FinanceCategories";
 import { FinanceTransactions } from "@/components/finance/FinanceTransactions";
 import { FinanceGoals } from "@/components/finance/FinanceGoals";
+import { FinanceAccounts } from "@/components/finance/FinanceAccounts";
 import { FinanceReportGenerator } from "@/components/finance/FinanceReportGenerator";
 
 const AdminGestaoFinanceira = () => {
@@ -30,10 +32,14 @@ const AdminGestaoFinanceira = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto">
           <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <PieChart className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger value="accounts" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Contas</span>
           </TabsTrigger>
           <TabsTrigger value="transactions" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Wallet className="h-4 w-4" />
@@ -51,6 +57,10 @@ const AdminGestaoFinanceira = () => {
 
         <TabsContent value="dashboard" className="space-y-6">
           <FinanceDashboard />
+        </TabsContent>
+
+        <TabsContent value="accounts" className="space-y-6">
+          <FinanceAccounts />
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-6">
