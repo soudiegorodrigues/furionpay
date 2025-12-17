@@ -50,10 +50,30 @@ interface StorageStats {
   }>;
 }
 
+const BACKUPS_AUTH_KEY = 'backups_section_authenticated';
+const BACKUPS_AUTH_EXPIRY_KEY = 'backups_section_expiry';
+const AUTH_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+
+// Check if previously authenticated and not expired
+const getStoredAuth = (): boolean => {
+  try {
+    const expiry = sessionStorage.getItem(BACKUPS_AUTH_EXPIRY_KEY);
+    if (expiry && Date.now() < parseInt(expiry, 10)) {
+      return sessionStorage.getItem(BACKUPS_AUTH_KEY) === 'true';
+    }
+    // Clear expired auth
+    sessionStorage.removeItem(BACKUPS_AUTH_KEY);
+    sessionStorage.removeItem(BACKUPS_AUTH_EXPIRY_KEY);
+  } catch (e) {
+    console.error('Error reading sessionStorage:', e);
+  }
+  return false;
+};
+
 export function BackupsSection() {
-  // Security states
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showKeywordDialog, setShowKeywordDialog] = useState(true);
+  // Security states - check sessionStorage for persisted auth
+  const [isAuthenticated, setIsAuthenticated] = useState(getStoredAuth);
+  const [showKeywordDialog, setShowKeywordDialog] = useState(!getStoredAuth());
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [email, setEmail] = useState("");
@@ -73,6 +93,22 @@ export function BackupsSection() {
   const [selectedBackup, setSelectedBackup] = useState<SystemBackup | null>(null);
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Persist authentication to sessionStorage
+  const setAuthenticatedWithPersist = (value: boolean) => {
+    setIsAuthenticated(value);
+    try {
+      if (value) {
+        sessionStorage.setItem(BACKUPS_AUTH_KEY, 'true');
+        sessionStorage.setItem(BACKUPS_AUTH_EXPIRY_KEY, String(Date.now() + AUTH_DURATION_MS));
+      } else {
+        sessionStorage.removeItem(BACKUPS_AUTH_KEY);
+        sessionStorage.removeItem(BACKUPS_AUTH_EXPIRY_KEY);
+      }
+    } catch (e) {
+      console.error('Error writing to sessionStorage:', e);
+    }
+  };
 
   // Security handlers
   const handleKeywordSubmit = () => {
@@ -107,7 +143,7 @@ export function BackupsSection() {
       }
 
       setShowAuthDialog(false);
-      setIsAuthenticated(true);
+      setAuthenticatedWithPersist(true);
       setEmail("");
       setPassword("");
       
