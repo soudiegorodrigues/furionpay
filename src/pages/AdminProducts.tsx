@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Pencil, Trash2, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Pencil, Settings, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -580,15 +580,15 @@ export default function AdminProducts() {
                     </Button>
                     <Button 
                       size="sm" 
-                      variant="destructive" 
+                      variant="outline" 
                       className="flex-1 h-8 text-xs"
                       onClick={e => {
                         e.stopPropagation();
-                        handleDeleteProduct(product.id);
+                        navigate(`/admin/products/${product.id}`);
                       }}
                     >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Excluir
+                      <Settings className="h-3 w-3 mr-1" />
+                      Configurar
                     </Button>
                   </div>
                 </CardContent>
