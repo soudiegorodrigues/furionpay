@@ -35,17 +35,16 @@ export const RankingSection = () => {
   const loadRanking = async () => {
     setIsLoading(true);
     try {
-      const { data: rankingData } = await supabase.rpc('get_users_revenue_ranking', {
+      // Use optimized V2 RPC that queries daily_user_stats instead of full table scan
+      const { data: rankingData } = await supabase.rpc('get_users_revenue_ranking_v2', {
         p_limit: RANKING_PER_PAGE,
         p_offset: (rankingPage - 1) * RANKING_PER_PAGE,
         p_date_filter: rankingDateFilter
       });
       if (rankingData) {
         setRankingUsers(rankingData as unknown as RankingUser[]);
-      }
-      const { data: countData } = await supabase.rpc('get_users_count');
-      if (countData !== null) {
-        setTotalUsers(countData as number);
+        // Estimate total from returned data (if less than limit, we have all)
+        setTotalUsers(rankingData.length < RANKING_PER_PAGE ? rankingData.length : rankingData.length + RANKING_PER_PAGE);
       }
     } catch (error) {
       console.error('Error loading ranking:', error);
@@ -64,12 +63,15 @@ export const RankingSection = () => {
     setRankingPage(1);
     setIsLoading(true);
     try {
-      const { data } = await supabase.rpc('get_users_revenue_ranking', {
+      const { data } = await supabase.rpc('get_users_revenue_ranking_v2', {
         p_limit: RANKING_PER_PAGE,
         p_offset: 0,
         p_date_filter: value
       });
-      if (data) setRankingUsers(data as unknown as RankingUser[]);
+      if (data) {
+        setRankingUsers(data as unknown as RankingUser[]);
+        setTotalUsers(data.length < RANKING_PER_PAGE ? data.length : data.length + RANKING_PER_PAGE);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -79,12 +81,18 @@ export const RankingSection = () => {
     setRankingPage(newPage);
     setIsLoading(true);
     try {
-      const { data } = await supabase.rpc('get_users_revenue_ranking', {
+      const { data } = await supabase.rpc('get_users_revenue_ranking_v2', {
         p_limit: RANKING_PER_PAGE,
         p_offset: (newPage - 1) * RANKING_PER_PAGE,
         p_date_filter: rankingDateFilter
       });
-      if (data) setRankingUsers(data as unknown as RankingUser[]);
+      if (data) {
+        setRankingUsers(data as unknown as RankingUser[]);
+        // Update total based on whether we got full page
+        if (data.length < RANKING_PER_PAGE) {
+          setTotalUsers((newPage - 1) * RANKING_PER_PAGE + data.length);
+        }
+      }
     } finally {
       setIsLoading(false);
     }

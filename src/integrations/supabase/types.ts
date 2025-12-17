@@ -2551,6 +2551,18 @@ export type Database = {
               user_id: string
             }[]
           }
+      get_users_revenue_ranking_v2: {
+        Args: { p_date_filter?: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          conversion_rate: number
+          total_amount_generated: number
+          total_amount_paid: number
+          total_generated: number
+          total_paid: number
+          user_email: string
+          user_id: string
+        }[]
+      }
       get_utmify_events: {
         Args: { p_limit?: number; p_offset?: number; p_period?: string }
         Returns: {
