@@ -1,22 +1,17 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   TrendingUp, 
-  TrendingDown, 
   Target, 
   PieChart,
-  Wallet,
-  ArrowUpRight,
-  ArrowDownRight,
-  Plus
+  Wallet
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { FinanceDashboard } from "@/components/finance/FinanceDashboard";
 import { FinanceCategories } from "@/components/finance/FinanceCategories";
 import { FinanceTransactions } from "@/components/finance/FinanceTransactions";
 import { FinanceGoals } from "@/components/finance/FinanceGoals";
+import { FinanceReportGenerator } from "@/components/finance/FinanceReportGenerator";
 
 const AdminGestaoFinanceira = () => {
   const { user } = useAdminAuth();
@@ -31,6 +26,7 @@ const AdminGestaoFinanceira = () => {
             Controle suas receitas, despesas, investimentos e metas financeiras
           </p>
         </div>
+        <FinanceReportGenerator />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
