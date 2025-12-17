@@ -153,12 +153,27 @@ export const FaturamentoSection = () => {
         const { data, error } = await supabase.rpc('get_chart_data_by_hour', { p_date: todayBrazil });
         if (error) throw error;
         
-        const formattedData = (data || []).map((row: { hour_brazil: number; gerados: number; pagos: number; valor_pago: number }) => ({
-          date: `${row.hour_brazil.toString().padStart(2, '0')}:00`,
-          gerados: Number(row.gerados),
-          pagos: Number(row.pagos),
-          valorPago: Number(row.valor_pago)
-        }));
+        // Criar mapa de dados existentes
+        const dataMap = new Map<number, { gerados: number; pagos: number; valor_pago: number }>();
+        (data || []).forEach((row: { hour_brazil: number; gerados: number; pagos: number; valor_pago: number }) => {
+          dataMap.set(row.hour_brazil, {
+            gerados: Number(row.gerados),
+            pagos: Number(row.pagos),
+            valor_pago: Number(row.valor_pago)
+          });
+        });
+        
+        // Gerar todas as 24 horas (00:00 a 23:00)
+        const formattedData: ChartData[] = [];
+        for (let hour = 0; hour < 24; hour++) {
+          const hourData = dataMap.get(hour);
+          formattedData.push({
+            date: `${hour.toString().padStart(2, '0')}:00`,
+            gerados: hourData?.gerados || 0,
+            pagos: hourData?.pagos || 0,
+            valorPago: hourData?.valor_pago || 0
+          });
+        }
         setChartData(formattedData);
       } else {
         const days = filter === '7days' ? 7 : filter === '14days' ? 14 : 30;
@@ -371,7 +386,7 @@ export const FaturamentoSection = () => {
                       tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                       tickLine={false}
                       axisLine={false}
-                      interval={chartFilter === 'today' ? 2 : 'preserveStartEnd'}
+                      interval={chartFilter === 'today' ? 1 : 'preserveStartEnd'}
                     />
                     <YAxis 
                       tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
