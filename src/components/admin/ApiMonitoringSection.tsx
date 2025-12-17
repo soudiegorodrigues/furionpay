@@ -156,8 +156,8 @@ const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: Acqu
   // Card compacto para sem atividade
   if (!hasActivity) {
     return (
-      <Card className="overflow-hidden w-full sm:w-auto sm:max-w-[200px]">
-        <CardHeader className="p-3">
+      <Card className="overflow-hidden w-full sm:max-w-[150px] shrink-0">
+        <CardHeader className="p-2 sm:p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <Server className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -177,8 +177,8 @@ const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: Acqu
 
   // Card completo para com atividade
   return (
-    <Card className="overflow-hidden w-full sm:w-auto sm:max-w-[280px]">
-      <CardHeader className="p-3 sm:p-4 pb-2">
+      <Card className="overflow-hidden w-full sm:max-w-[220px] shrink-0">
+      <CardHeader className="p-2 sm:p-3 pb-1">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-xs sm:text-sm font-medium truncate">{name}</CardTitle>
           <Badge className={`${getStatusColor(health)} text-[10px] sm:text-xs shrink-0`}>
