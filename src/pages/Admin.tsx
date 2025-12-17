@@ -51,7 +51,6 @@ const Admin = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(() => 
     sessionStorage.getItem(ADMIN_PANEL_AUTH_KEY) !== 'true'
   );
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -64,8 +63,13 @@ const Admin = () => {
   }, [loading, isAdmin, navigate]);
 
   const handleAuthenticate = async () => {
-    if (!email || !password) {
-      toast.error("Preencha email e senha");
+    if (!password) {
+      toast.error("Preencha a senha");
+      return;
+    }
+
+    if (!user?.email) {
+      toast.error("Usuário não identificado");
       return;
     }
 
@@ -74,7 +78,7 @@ const Admin = () => {
     try {
       // Verify credentials with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: user.email,
         password,
       });
 
@@ -156,11 +160,9 @@ const Admin = () => {
                 <Input
                   id="admin-email"
                   type="email"
-                  placeholder="admin@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={isAuthenticating}
+                  value={user?.email || ""}
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                 />
               </div>
 
@@ -196,7 +198,7 @@ const Admin = () => {
 
               <Button
                 onClick={handleAuthenticate}
-                disabled={isAuthenticating || !email || !password}
+                disabled={isAuthenticating || !password}
                 className="w-full"
               >
                 {isAuthenticating ? (
