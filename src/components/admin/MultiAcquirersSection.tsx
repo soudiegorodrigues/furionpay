@@ -200,7 +200,16 @@ export const MultiAcquirersSection = () => {
         console.log('[setAsDefaultAcquirer] Step selecionado:', selectedStep);
         console.log('[setAsDefaultAcquirer] Outros steps:', otherSteps);
         
-        // Atualizar ordem: selecionado = 1, outros = 2, 3, ...
+        // Primeiro, mover todos para step_order temporários (+ 100) para evitar constraint de unique
+        for (const step of steps) {
+          await supabase
+            .from('retry_flow_steps')
+            .update({ step_order: step.step_order + 100 })
+            .eq('id', step.id);
+        }
+        console.log('[setAsDefaultAcquirer] Steps movidos para valores temporários');
+        
+        // Agora reorganizar com valores finais: selecionado = 1, outros = 2, 3, ...
         if (selectedStep) {
           const { error: updateSelectedError } = await supabase
             .from('retry_flow_steps')
