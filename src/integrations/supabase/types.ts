@@ -1255,13 +1255,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_checkout_configs_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: true
-            referencedRelation: "public_products"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "product_checkout_configs_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -1345,13 +1338,6 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "product_offers_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "public_products"
-            referencedColumns: ["id"]
-          },
         ]
       }
       product_testimonials: {
@@ -1400,13 +1386,6 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_testimonials_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "public_products"
             referencedColumns: ["id"]
           },
         ]
@@ -1962,56 +1941,7 @@ export type Database = {
       }
     }
     Views: {
-      public_products: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          folder_id: string | null
-          id: string | null
-          image_url: string | null
-          is_active: boolean | null
-          name: string | null
-          price: number | null
-          product_code: string | null
-          updated_at: string | null
-          website_url: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          folder_id?: string | null
-          id?: string | null
-          image_url?: string | null
-          is_active?: boolean | null
-          name?: string | null
-          price?: number | null
-          product_code?: string | null
-          updated_at?: string | null
-          website_url?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          folder_id?: string | null
-          id?: string | null
-          image_url?: string | null
-          is_active?: boolean | null
-          name?: string | null
-          price?: number | null
-          product_code?: string | null
-          updated_at?: string | null
-          website_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "products_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "product_folders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       add_collaborator: {
@@ -2401,6 +2331,32 @@ export type Database = {
           product_name: string
           product_price: number
           type: string
+        }[]
+      }
+      get_public_product_by_code: {
+        Args: { p_product_code: string }
+        Returns: {
+          description: string
+          id: string
+          image_url: string
+          is_active: boolean
+          name: string
+          price: number
+          product_code: string
+          website_url: string
+        }[]
+      }
+      get_public_product_by_id: {
+        Args: { p_product_id: string }
+        Returns: {
+          description: string
+          id: string
+          image_url: string
+          is_active: boolean
+          name: string
+          price: number
+          product_code: string
+          website_url: string
         }[]
       }
       get_rate_limit_chart_data: {
