@@ -25,43 +25,71 @@ const popupModels = [
     id: "boost",
     name: "Boost",
     description: "Modelo com animações e destaque visual",
-    hasDynamicAmount: false
+    hasDynamicAmount: false,
+    hasPreview: true
   },
   {
     id: "simple",
     name: "Simples",
     description: "Modelo minimalista e direto",
-    hasDynamicAmount: false
+    hasDynamicAmount: false,
+    hasPreview: true
   },
   {
     id: "clean",
     name: "Clean",
     description: "Design limpo e moderno",
-    hasDynamicAmount: false
+    hasDynamicAmount: false,
+    hasPreview: true
   },
   {
     id: "direct",
     name: "Direto",
     description: "Foco no pagamento rápido",
-    hasDynamicAmount: true
+    hasDynamicAmount: true,
+    hasPreview: true
   },
   {
     id: "hot",
     name: "Hot",
     description: "Design com urgência e destaque",
-    hasDynamicAmount: true
+    hasDynamicAmount: true,
+    hasPreview: true
   },
   {
     id: "landing",
     name: "Modelo Vakinha",
     description: "Estilo página de vendas",
-    hasDynamicAmount: false
+    hasDynamicAmount: false,
+    hasPreview: true
   },
   {
     id: "instituto",
     name: "Instituto",
     description: "Modelo institucional",
-    hasDynamicAmount: false
+    hasDynamicAmount: false,
+    hasPreview: true
+  },
+  {
+    id: "api",
+    name: "API",
+    description: "Transações geradas via API",
+    hasDynamicAmount: false,
+    hasPreview: false
+  },
+  {
+    id: "checkout",
+    name: "Checkout",
+    description: "Checkout principal do produto",
+    hasDynamicAmount: false,
+    hasPreview: false
+  },
+  {
+    id: "unknown",
+    name: "Desconhecido",
+    description: "Transações sem modelo definido",
+    hasDynamicAmount: false,
+    hasPreview: false
   }
 ];
 
@@ -175,15 +203,17 @@ export const CheckoutGlobalSection = () => {
                     </div>
                   )}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setPreviewModel(model.id)}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Visualizar
-                  </Button>
+                  {model.hasPreview && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setPreviewModel(model.id)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Visualizar
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             );
