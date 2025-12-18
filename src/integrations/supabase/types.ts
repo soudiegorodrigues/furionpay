@@ -2336,7 +2336,7 @@ export type Database = {
               total_transactions: number
             }[]
           }
-        | { Args: { p_user_email?: string }; Returns: Json }
+        | { Args: { p_acquirer_cost_filter?: string }; Returns: Json }
       get_platform_unique_users: { Args: never; Returns: Json }
       get_platform_user_profit_ranking: {
         Args: { p_filter?: string; p_limit?: number }
