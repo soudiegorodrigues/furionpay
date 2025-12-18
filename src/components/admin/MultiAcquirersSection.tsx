@@ -181,8 +181,8 @@ export const MultiAcquirersSection = () => {
     }
   };
 
-  const setAsDefaultAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus') => {
-    const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
+  const setAsDefaultAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus' | 'valorion') => {
+    const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub', valorion: 'Valorion' };
     
     // 1. Pre-validation - check if acquirer is configured BEFORE making any DB calls
     if (acquirer === 'spedpay' && !spedpayApiKey) {
@@ -198,6 +198,15 @@ export const MultiAcquirersSection = () => {
       toast({
         title: "Configuração Incompleta",
         description: "Configure a API Key do Ativus Hub antes de definir como principal.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (acquirer === 'valorion' && !valorionApiKey) {
+      toast({
+        title: "Configuração Incompleta",
+        description: "Configure a API Key da Valorion antes de definir como principal.",
         variant: "destructive"
       });
       return;
@@ -268,7 +277,7 @@ export const MultiAcquirersSection = () => {
     }
   };
 
-  const saveFeeSettings = async (acquirer: 'inter' | 'spedpay' | 'ativus', feeRate: string, fixedFee: string) => {
+  const saveFeeSettings = async (acquirer: 'inter' | 'spedpay' | 'ativus' | 'valorion', feeRate: string, fixedFee: string) => {
     try {
       const updates = [
         { key: `${acquirer}_fee_rate`, value: feeRate },
@@ -283,7 +292,7 @@ export const MultiAcquirersSection = () => {
         if (error) throw error;
       }
       
-      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
+      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub', valorion: 'Valorion' };
       
       toast({
         title: "Taxas Atualizadas",
@@ -296,6 +305,64 @@ export const MultiAcquirersSection = () => {
         description: "Falha ao salvar taxas",
         variant: "destructive"
       });
+    }
+  };
+
+  const saveValorionApiKey = async () => {
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'valorion_api_key',
+        setting_value: valorionApiKey
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Chave API da Valorion atualizada!"
+      });
+      setShowValorionConfigDialog(false);
+    } catch (error) {
+      console.error('Error saving Valorion API key:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar chave API",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const testValorionConnection = async () => {
+    setIsTestingValorion(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pix-valorion', {
+        body: {
+          amount: 0.50,
+          donorName: 'Teste Conexão',
+          productName: 'Teste Valorion',
+          userId: user?.id
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: "Conexão OK",
+          description: "Valorion está funcionando corretamente!"
+        });
+      } else {
+        throw new Error(data?.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error('Erro ao testar Valorion:', error);
+      toast({
+        title: "Erro na conexão",
+        description: error.message || "Falha ao conectar com Valorion",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTestingValorion(false);
     }
   };
 
@@ -525,7 +592,7 @@ export const MultiAcquirersSection = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
-          <Badge variant="secondary" className="text-xs">3</Badge>
+          <Badge variant="secondary" className="text-xs">4</Badge>
         </div>
         <Button variant="outline" disabled>
           <Plus className="w-4 h-4 mr-2" />
@@ -1109,6 +1176,187 @@ export const MultiAcquirersSection = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={saveAtivusApiKey}>
+                Salvar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* VALORION Card */}
+        <Card className={`border-primary/50 transition-opacity ${valorionEnabled === false ? 'opacity-60' : ''}`}>
+          <CardHeader className="p-3 pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-bold text-primary">VALORION</CardTitle>
+                <CardDescription className="text-xs">
+                  Gateway PIX via Valorion
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                {isLoadingStates ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                ) : (
+                  <Switch
+                    checked={valorionEnabled ?? true}
+                    onCheckedChange={(checked) => toggleAcquirer('valorion', checked)}
+                    className="scale-75"
+                  />
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 space-y-2">
+            <div className="flex items-center justify-between py-1.5 px-2 bg-muted/50 rounded">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
+                  <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                  </svg>
+                </div>
+                <span className="text-xs font-medium">PIX</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{valorionEnabled !== false ? 'Ativo' : 'Inativo'}</span>
+            </div>
+            
+            {/* Fee Configuration */}
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Taxa (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={valorionFeeRate}
+                    onChange={(e) => setValorionFeeRate(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={valorionEnabled === false}
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px]">Valor Fixo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={valorionFixedFee}
+                    onChange={(e) => setValorionFixedFee(e.target.value)}
+                    className="h-7 text-xs"
+                    disabled={valorionEnabled === false}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveFeeSettings('valorion', valorionFeeRate, valorionFixedFee)}
+                className="w-full h-6 text-[10px]"
+                disabled={valorionEnabled === false}
+              >
+                Salvar Taxas
+              </Button>
+            </div>
+
+            {/* Set as Default */}
+            {valorionEnabled !== false && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
+                {isSettingDefault === 'valorion' ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                ) : (
+                  <Switch
+                    checked={defaultAcquirer === 'valorion'}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setAsDefaultAcquirer('valorion');
+                      } else if (defaultAcquirer === 'valorion') {
+                        toast({
+                          title: "Já é a Adquirente Principal",
+                          description: "Valorion já está definida como adquirente padrão. Para mudar, ative outra adquirente como principal.",
+                        });
+                      }
+                    }}
+                    disabled={isSettingDefault !== null}
+                    className="scale-75"
+                  />
+                )}
+              </div>
+            )}
+            
+            <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
+              <Badge 
+                variant="outline" 
+                className={valorionEnabled !== false
+                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
+                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
+                }
+              >
+                {valorionEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
+                {valorionEnabled !== false ? 'Integrado' : 'Desativado'}
+              </Badge>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowValorionConfigDialog(true)}
+                  className="h-5 text-[10px] px-1.5"
+                  disabled={valorionEnabled === false}
+                >
+                  <Settings className="w-2.5 h-2.5 mr-0.5" />
+                  Config
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={testValorionConnection}
+                  disabled={isTestingValorion || valorionEnabled === false}
+                  className="h-5 text-[10px] px-1.5"
+                >
+                  {isTestingValorion ? (
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                  ) : (
+                    "Testar"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dialog de Configuração da Valorion */}
+        <AlertDialog open={showValorionConfigDialog} onOpenChange={setShowValorionConfigDialog}>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Configurar Valorion
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Configure sua chave API da Valorion para usar a integração.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="valorion-api-key">Chave API (x-api-key)</Label>
+                <Input
+                  id="valorion-api-key"
+                  type="password"
+                  placeholder="Digite sua chave API da Valorion"
+                  value={valorionApiKey}
+                  onChange={(e) => setValorionApiKey(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Obtenha sua chave API no painel da Valorion
+                </p>
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={saveValorionApiKey}>
                 Salvar
               </AlertDialogAction>
             </AlertDialogFooter>
