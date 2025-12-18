@@ -202,7 +202,7 @@ export function SaquesGlobaisSection() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-  return <div className="space-y-6">
+  return <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div>
         
