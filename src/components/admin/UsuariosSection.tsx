@@ -532,7 +532,8 @@ export const UsuariosSection = () => {
 
   return (
     <>
-      <Card>
+      <div className="max-w-5xl mx-auto">
+        <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -709,7 +710,8 @@ export const UsuariosSection = () => {
             </>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
 
       {/* Delete User Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
