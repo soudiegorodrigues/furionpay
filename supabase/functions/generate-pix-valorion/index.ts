@@ -431,8 +431,15 @@ serve(async (req) => {
                       data.pix?.qrcode_url ||
                       data.paymentCodeBase64 ||
                       null;
-                      
-    const transactionId = data.id_transaction || data.idTransaction || data.id || data.transaction_id || txid;
+    
+    // IMPORTANTE: Usar o id_transaction da Valorion como txid principal
+    // O txid local é enviado como metadata e pode ser usado como fallback
+    const valorionTransactionId = data.id_transaction || data.idTransaction || data.id || data.transaction_id;
+    const transactionId = valorionTransactionId || txid;
+    
+    console.log('Valorion id_transaction:', valorionTransactionId);
+    console.log('Local txid (metadata):', txid);
+    console.log('Using transactionId for storage:', transactionId);
 
     if (!pixCode) {
       console.error('PIX code not found in response:', JSON.stringify(data));
