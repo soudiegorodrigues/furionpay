@@ -826,6 +826,36 @@ async function callAcquirer(
       }
     }
     
+    if (acquirer === 'valorion') {
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-valorion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ 
+          amount: params.amount, 
+          donorName: params.customerName, 
+          utmData: params.utmParams, 
+          userId: params.userId, 
+          popupModel: params.popupModel,
+          fingerprint: params.fingerprint,
+          clientIp: params.clientIp,
+        }),
+      });
+      
+      const data = await response.json();
+      const responseTime = Date.now() - startTime;
+      
+      if (data.success) {
+        await logApiEvent('valorion', 'success', responseTime);
+        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
+      } else {
+        await logApiEvent('valorion', 'failure', responseTime, data.error);
+        return { success: false, error: data.error };
+      }
+    }
+    
     if (acquirer === 'spedpay') {
       // Get SpedPay API key
       let apiKey = await getApiKeyFromDatabase(params.userId);
