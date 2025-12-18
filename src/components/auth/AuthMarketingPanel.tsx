@@ -69,11 +69,11 @@ export function AuthMarketingPanel() {
       <div className="relative z-10 mt-20 lg:mt-28">
         {/* Logo */}
         <div className="mb-6">
-          <img 
-            src={furionLogo} 
-            alt="FurionPay" 
-            className="h-10 drop-shadow-[0_0_30px_rgba(239,68,68,0.3)]" 
-          />
+        <img 
+          src={furionLogo} 
+          alt="FurionPay" 
+          className="h-16 drop-shadow-[0_0_30px_rgba(239,68,68,0.3)]" 
+        />
         </div>
 
         {/* Main headline */}
