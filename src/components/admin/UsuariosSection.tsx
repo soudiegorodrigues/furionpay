@@ -405,12 +405,23 @@ export const UsuariosSection = () => {
   };
 
   const filteredUsers = useMemo(() => {
-    if (!userSearch.trim()) return users;
-    const search = userSearch.toLowerCase().trim();
-    return users.filter(u => 
-      u.email.toLowerCase().includes(search) || 
-      (u.full_name && u.full_name.toLowerCase().includes(search))
-    );
+    let result = users;
+    
+    // Filtrar por busca se houver
+    if (userSearch.trim()) {
+      const search = userSearch.toLowerCase().trim();
+      result = result.filter(u => 
+        u.email.toLowerCase().includes(search) || 
+        (u.full_name && u.full_name.toLowerCase().includes(search))
+      );
+    }
+    
+    // Ordenar: admins primeiro, depois por data de cadastro (mais recente)
+    return [...result].sort((a, b) => {
+      if (a.is_admin && !b.is_admin) return -1;
+      if (!a.is_admin && b.is_admin) return 1;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
   }, [users, userSearch]);
 
   const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
