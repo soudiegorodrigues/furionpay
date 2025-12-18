@@ -446,13 +446,18 @@ export const UsuariosSection = () => {
       );
     }
     
-    // Ordenar: admins primeiro, depois por data de cadastro (mais recente)
+    // Ordenar: usuário atual primeiro, depois admins, depois por data de cadastro (mais recente)
     return [...result].sort((a, b) => {
+      // Usuário atual sempre em primeiro
+      if (currentUser?.id === a.id) return -1;
+      if (currentUser?.id === b.id) return 1;
+      // Depois admins
       if (a.is_admin && !b.is_admin) return -1;
       if (!a.is_admin && b.is_admin) return 1;
+      // Por fim, por data de cadastro (mais recente primeiro)
       return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
     });
-  }, [users, userSearch]);
+  }, [users, userSearch, currentUser?.id]);
 
   const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE);
