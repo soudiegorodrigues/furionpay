@@ -148,16 +148,16 @@ export const RankingSection = () => {
                       <TableCell className="truncate max-w-[120px] sm:max-w-[200px] text-sm">
                         {rankUser.user_email}
                       </TableCell>
-                      <TableCell className="text-center text-blue-400 text-sm hidden sm:table-cell">
+                      <TableCell className="text-center text-foreground text-sm hidden sm:table-cell">
                         {rankUser.total_generated}
                       </TableCell>
-                      <TableCell className="text-center text-green-400 text-sm">
+                      <TableCell className="text-center text-foreground text-sm">
                         {rankUser.total_paid}
                       </TableCell>
-                      <TableCell className="text-center text-yellow-400 text-sm hidden sm:table-cell">
+                      <TableCell className="text-center text-foreground text-sm hidden sm:table-cell">
                         {rankUser.conversion_rate}%
                       </TableCell>
-                      <TableCell className="text-right font-semibold text-primary text-sm whitespace-nowrap">
+                      <TableCell className="text-right font-semibold text-foreground text-sm whitespace-nowrap">
                         {formatCurrency(rankUser.total_amount_paid)}
                       </TableCell>
                     </TableRow>)}
