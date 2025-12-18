@@ -547,7 +547,7 @@ export const UsuariosSection = () => {
             Atualizar
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-[400px]">
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -569,7 +569,7 @@ export const UsuariosSection = () => {
           ) : (
             <>
               <div className="rounded-md border overflow-x-auto -mx-4 sm:mx-0">
-                <Table>
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs">Email</TableHead>
