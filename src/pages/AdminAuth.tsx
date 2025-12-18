@@ -440,12 +440,9 @@ const AdminAuth = () => {
           <AuthBackground />
 
           <div className="w-full max-w-[420px] animate-fade-in relative z-10">
-            {/* Card with glassmorphism */}
+            {/* Card */}
             <div className="relative">
-              {/* Card glow */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-primary/15 via-primary/8 to-primary/15 rounded-2xl blur-xl opacity-50" />
-              
-              <div className="relative bg-zinc-950/70 backdrop-blur-xl rounded-2xl border border-white/[0.08] p-6 sm:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+              <div className="relative bg-transparent p-6 sm:p-8">
                 {/* Logo inside card */}
                 <div className="flex justify-center mb-6">
                   <div className="relative">
