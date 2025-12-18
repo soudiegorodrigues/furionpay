@@ -66,9 +66,9 @@ export function AuthMarketingPanel() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 mt-12 lg:mt-16">
+      <div className="relative z-10 mt-20 lg:mt-28">
         {/* Logo */}
-        <div className="mb-12">
+        <div className="mb-6">
           <img 
             src={furionLogo} 
             alt="FurionPay" 
@@ -77,7 +77,7 @@ export function AuthMarketingPanel() {
         </div>
 
         {/* Main headline */}
-        <div className="space-y-4 mb-12">
+        <div className="space-y-3 mb-6">
           <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
             Infraestrutura de pagamentos de{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-red-400">
@@ -90,11 +90,11 @@ export function AuthMarketingPanel() {
         </div>
 
         {/* Feature cards */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="group flex items-start gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300"
+              className="group flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300"
             >
               <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${feature.iconBg} flex items-center justify-center`}>
                 <feature.icon className={`h-5 w-5 ${feature.iconColor}`} />
