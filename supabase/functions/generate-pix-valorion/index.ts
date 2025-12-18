@@ -357,13 +357,17 @@ serve(async (req) => {
     // Convert amount to cents for Valorion API
     const amountInCents = Math.round(amount * 100);
 
+    // Generate random phone number for Valorion
+    const randomPhone = `119${Math.floor(10000000 + Math.random() * 90000000)}`;
+
     // Build request payload according to Valorion API spec
     const payload = {
       amount: amountInCents,
       customer: {
         name: finalDonorName,
         email: customerEmail,
-        cpf: customerCPF
+        cpf: customerCPF,
+        phone: randomPhone
       },
       items: [{
         title: finalProductName,
@@ -373,6 +377,8 @@ serve(async (req) => {
       }],
       postbackUrl: `${supabaseUrl}/functions/v1/valorion-webhook`,
       ip: "177.38.123.45",
+      metadata: txid,
+      traceable: true
     };
 
     console.log('Criando cobrança PIX Valorion:', JSON.stringify(payload));
