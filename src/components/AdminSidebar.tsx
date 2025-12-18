@@ -156,12 +156,12 @@ export function AdminSidebar({
           <div className="flex items-center justify-center gap-4 mt-2 px-2">
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon" 
               onClick={onLogout} 
-              className="text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10 px-2 h-8 text-xs"
+              className="h-9 w-9 rounded-lg bg-muted/50 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
-              <LogOut className="h-3.5 w-3.5 mr-1.5" />
-              Sair
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Sair</span>
             </Button>
             <ThemeToggle />
           </div>
