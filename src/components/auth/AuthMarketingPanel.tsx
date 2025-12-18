@@ -21,7 +21,7 @@ const features = [
     iconColor: 'text-primary',
     iconBg: 'bg-primary/10',
     title: 'Dashboard completo',
-    description: 'Acompanhe métricas e relatórios detalhados em tempo real'
+    description: 'Métricas e relatórios em tempo real'
   }
 ];
 
