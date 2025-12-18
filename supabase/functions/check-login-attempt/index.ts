@@ -123,62 +123,82 @@ const handler = async (req: Request): Promise<Response> => {
           if (insertError) {
             console.error("Error storing unlock code:", insertError);
           } else {
-            // Get sender email from settings or use default
+            // Get sender email from settings (global) or use a safe default
             const { data: senderData } = await supabase
               .from("admin_settings")
               .select("value")
               .eq("key", "resend_sender_email")
+              .is("user_id", null)
               .limit(1)
               .maybeSingle();
-            
-            const senderEmail = senderData?.value || "noreply@resend.dev";
 
-            // Get logo URL from settings
+            const senderEmail = senderData?.value || "onboarding@resend.dev";
+
+            // Get logo URL from settings (global)
             const { data: logoData } = await supabase
               .from("admin_settings")
               .select("value")
               .eq("key", "email_logo_url")
+              .is("user_id", null)
               .limit(1)
               .maybeSingle();
-            
+
             const logoUrl = logoData?.value;
 
             // Build logo HTML
-            const logoHtml = logoUrl 
+            const logoHtml = logoUrl
               ? `<img src="${logoUrl}" alt="Logo" style="max-height: 60px; width: auto; display: block; margin: 0 auto 16px;" />`
               : `<h1 style="color: #ef4444; text-align: center; margin-bottom: 16px;">FurionPay</h1>`;
-            
+
             // Send email with unlock code
             try {
-              await resend.emails.send({
-                from: `FurionPay <${senderEmail}>`,
-                to: [email],
-                subject: "Código de Desbloqueio - FurionPay",
-                html: `
-                  <!DOCTYPE html>
-                  <html>
-                  <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  </head>
-                  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 20px;">
-                    <div style="max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                      <div style="text-align: center; margin-bottom: 24px;">
-                        ${logoHtml}
+              const sendEmail = async (from: string) => {
+                const res = await resend.emails.send({
+                  from,
+                  to: [email],
+                  subject: "Código de Desbloqueio - FurionPay",
+                  html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <meta charset="utf-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 20px;">
+                      <div style="max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        <div style="text-align: center; margin-bottom: 24px;">
+                          ${logoHtml}
+                        </div>
+                        <h2 style="color: #1e293b; text-align: center; font-size: 20px; margin-bottom: 16px;">Sua conta foi bloqueada temporariamente</h2>
+                        <p style="color: #64748b; text-align: center; margin-bottom: 24px;">Detectamos múltiplas tentativas de login incorretas na sua conta. Para desbloquear, use o código abaixo:</p>
+                        <div style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #ef4444; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+                          <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Seu código de desbloqueio:</p>
+                          <p style="color: #dc2626; font-size: 36px; font-weight: 700; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">${unlockCode}</p>
+                        </div>
+                        <p style="color: #94a3b8; font-size: 14px; text-align: center; margin-bottom: 8px;">Este código expira em 15 minutos.</p>
+                        <p style="color: #94a3b8; font-size: 14px; text-align: center;">Se você não tentou fazer login, recomendamos alterar sua senha imediatamente.</p>
                       </div>
-                      <h2 style="color: #1e293b; text-align: center; font-size: 20px; margin-bottom: 16px;">Sua conta foi bloqueada temporariamente</h2>
-                      <p style="color: #64748b; text-align: center; margin-bottom: 24px;">Detectamos múltiplas tentativas de login incorretas na sua conta. Para desbloquear, use o código abaixo:</p>
-                      <div style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #ef4444; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-                        <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Seu código de desbloqueio:</p>
-                        <p style="color: #dc2626; font-size: 36px; font-weight: 700; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">${unlockCode}</p>
-                      </div>
-                      <p style="color: #94a3b8; font-size: 14px; text-align: center; margin-bottom: 8px;">Este código expira em 15 minutos.</p>
-                      <p style="color: #94a3b8; font-size: 14px; text-align: center;">Se você não tentou fazer login, recomendamos alterar sua senha imediatamente.</p>
-                    </div>
-                  </body>
-                  </html>
-                `,
-              });
+                    </body>
+                    </html>
+                  `,
+                });
+                return res as any;
+              };
+
+              const primaryFrom = `FurionPay <${senderEmail}>`;
+              const fallbackFrom = "FurionPay <onboarding@resend.dev>";
+
+              let sendRes = await sendEmail(primaryFrom);
+              if (sendRes?.error) {
+                console.error("Error sending unlock email (primary sender):", sendRes.error);
+                sendRes = await sendEmail(fallbackFrom);
+              }
+
+              if (sendRes?.error) {
+                console.error("Error sending unlock email (fallback sender):", sendRes.error);
+                throw new Error("Falha ao enviar email de desbloqueio");
+              }
+
               console.log("Unlock email sent to", email);
             } catch (emailError) {
               console.error("Error sending unlock email:", emailError);

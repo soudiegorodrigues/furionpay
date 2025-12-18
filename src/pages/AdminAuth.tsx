@@ -74,14 +74,27 @@ const AdminAuth = () => {
 
   const handleResendCode = async () => {
     setIsSubmitting(true);
-    await supabase.functions.invoke('send-password-reset', {
-      body: { email: resetEmail }
-    });
-    setIsSubmitting(false);
-    toast({
-      title: "Código reenviado!",
-      description: "Verifique sua caixa de entrada"
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email: resetEmail }
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível reenviar o código."
+        });
+        return;
+      }
+
+      toast({
+        title: "Código reenviado!",
+        description: data?.message || "Verifique sua caixa de entrada"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,18 +116,19 @@ const AdminAuth = () => {
         const { data, error } = await supabase.functions.invoke('send-password-reset', {
           body: { email }
         });
+
         if (error) {
           toast({
             variant: "destructive",
             title: "Erro",
-            description: "Não foi possível enviar o código. Tente novamente."
+            description: "Não foi possível enviar o código. Verifique as configurações de email e tente novamente."
           });
         } else {
           setResetEmail(email);
           setMode('reset-code');
           toast({
-            title: "Código enviado!",
-            description: "Verifique sua caixa de entrada e copie o código de 6 dígitos"
+            title: "Solicitação recebida!",
+            description: data?.message || "Se o email existir, você receberá um código de 6 dígitos"
           });
         }
       } finally {
