@@ -66,9 +66,9 @@ export function AuthMarketingPanel() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center">
+      <div className="relative z-10">
         {/* Logo */}
-        <div className="mb-12 flex justify-center">
+        <div className="mb-12">
           <img 
             src={furionLogo} 
             alt="FurionPay" 
@@ -84,13 +84,13 @@ export function AuthMarketingPanel() {
               alta performance
             </span>
           </h1>
-          <p className="text-base lg:text-lg text-white/60 max-w-md leading-relaxed mx-auto">
+          <p className="text-base lg:text-lg text-white/60 max-w-md leading-relaxed">
             Gerencie suas transações com segurança e controle. Uma plataforma moderna para pagamentos digitais.
           </p>
         </div>
 
         {/* Feature cards */}
-        <div className="space-y-4 w-full max-w-md">
+        <div className="space-y-4">
           {features.map((feature, index) => (
             <div 
               key={index}
@@ -114,7 +114,7 @@ export function AuthMarketingPanel() {
 
       {/* Bottom decoration */}
       <div className="relative z-10 mt-8">
-        <div className="flex items-center justify-center gap-2 text-white/30 text-xs">
+        <div className="flex items-center gap-2 text-white/30 text-xs">
           <div className="w-8 h-px bg-gradient-to-r from-primary/50 to-transparent" />
           <span>Tecnologia de ponta para seu negócio</span>
         </div>
