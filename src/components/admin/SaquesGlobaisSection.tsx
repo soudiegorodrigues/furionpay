@@ -230,7 +230,7 @@ export function SaquesGlobaisSection() {
                   <p className="text-lg font-bold">{stats.totalPending}</p>
                   <p className="text-[10px] text-muted-foreground">{formatCurrency(stats.pendingValue)}</p>
                 </div>
-                <FileText className="h-4 w-4 text-yellow-500" />
+                <FileText className="h-4 w-4 text-[#ef4343]" />
               </div>
             </div>
             <div className="p-3 rounded-lg border bg-card">
@@ -240,7 +240,7 @@ export function SaquesGlobaisSection() {
                   <p className="text-lg font-bold">{formatCurrency(stats.approvedValue)}</p>
                   <p className="text-[10px] text-muted-foreground">{stats.totalApproved} saques processados</p>
                 </div>
-                <DollarSign className="h-4 w-4 text-green-500" />
+                <DollarSign className="h-4 w-4 text-[#ef4343]" />
               </div>
             </div>
           </div>
