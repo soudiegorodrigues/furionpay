@@ -819,9 +819,15 @@ serve(async (req) => {
       );
     }
 
-    // Detect acquirer - first by txid format, then by user settings
-    let acquirer = detectAcquirerByTxid(txid);
+    // Detect acquirer - FIRST use stored acquirer from transaction, then txid format, then user settings
+    let acquirer = transaction.acquirer || null;
     
+    // Only fall back to txid detection if no acquirer stored in transaction
+    if (!acquirer) {
+      acquirer = detectAcquirerByTxid(txid);
+    }
+    
+    // Fall back to user settings if still not detected
     if (!acquirer && transaction.user_id) {
       acquirer = await getUserAcquirer(supabase, transaction.user_id);
     }
@@ -831,7 +837,7 @@ serve(async (req) => {
       acquirer = 'spedpay';
     }
 
-    console.log('Using acquirer:', acquirer, '(detected by txid:', detectAcquirerByTxid(txid) !== null, ')');
+    console.log('Using acquirer:', acquirer, '(from transaction:', !!transaction.acquirer, ', detected by txid:', detectAcquirerByTxid(txid) !== null, ')');
 
     let result: { isPaid: boolean; status: string; paidAt?: string };
 
