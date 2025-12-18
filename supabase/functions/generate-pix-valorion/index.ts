@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Valorion create charge URL (can be overridden via admin_settings: valorion_api_url)
-const DEFAULT_VALORION_CREATE_URL = 'https://app.valorion.com.br/api/v1/pix/charge';
+// Valorion create charge URL (from documentation)
+const DEFAULT_VALORION_CREATE_URL = 'https://api-fila-cash-in-out.onrender.com/v2/pix/charge';
 
 // Random names for anonymous donations
 const RANDOM_NAMES = [
@@ -368,10 +368,11 @@ serve(async (req) => {
       items: [{
         title: finalProductName,
         quantity: 1,
-        unit_price: amountInCents
+        unitPrice: amountInCents,
+        tangible: false
       }],
       postbackUrl: `${supabaseUrl}/functions/v1/valorion-webhook`,
-      ip: "177.38.123.45", // Client IP placeholder
+      ip: "177.38.123.45",
     };
 
     console.log('Criando cobrança PIX Valorion:', JSON.stringify(payload));
