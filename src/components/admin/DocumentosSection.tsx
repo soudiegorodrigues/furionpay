@@ -283,20 +283,17 @@ export function DocumentosSection() {
             <TabsList className="w-full sm:w-auto inline-flex min-w-max">
               <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
                 <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">Pendentes</span>
-                <span className="xs:hidden">Pend.</span>
+                <span>Pendentes</span>
                 <span className="ml-0.5">({pendingCount})</span>
               </TabsTrigger>
               <TabsTrigger value="approved" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
                 <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">Aprovados</span>
-                <span className="xs:hidden">Aprov.</span>
+                <span>Aprovados</span>
                 <span className="ml-0.5">({approvedCount})</span>
               </TabsTrigger>
               <TabsTrigger value="rejected" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
                 <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">Rejeitados</span>
-                <span className="xs:hidden">Rej.</span>
+                <span>Rejeitados</span>
                 <span className="ml-0.5">({rejectedCount})</span>
               </TabsTrigger>
             </TabsList>
