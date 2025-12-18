@@ -6,9 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Valorion API URL from documentation
-// Note: If this URL doesn't work, check Valorion documentation for correct endpoint
-const VALORION_API_URL = 'https://app.valorion.com.br/api/v1/pix/charge';
+// Valorion create charge URL (can be overridden via admin_settings: valorion_api_url)
+const DEFAULT_VALORION_CREATE_URL = 'https://app.valorion.com.br/api/v1/pix/charge';
 
 // Random names for anonymous donations
 const RANDOM_NAMES = [
@@ -66,7 +65,7 @@ function generateRandomCPF(): string {
 // Generate random email
 function generateRandomEmail(name: string): string {
   const cleanName = name.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .normalize('NFD').replace(/[^\p{L}\s]/gu, '')
     .replace(/\s+/g, '.')
     .replace(/[^a-z.]/g, '');
   const randomNum = Math.floor(Math.random() * 1000);
@@ -173,6 +172,53 @@ async function getValorionApiKey(supabase: any, userId?: string): Promise<string
   }
   
   throw new Error('Chave API da Valorion não configurada');
+}
+
+// Get Valorion create endpoint URL (admin_settings: valorion_api_url) or default
+async function getValorionApiUrl(supabase: any, userId?: string): Promise<string> {
+  const normalize = (v?: string | null) => (v ?? '').trim();
+
+  if (userId) {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('user_id', userId)
+      .eq('key', 'valorion_api_url')
+      .maybeSingle();
+
+    const url = normalize(!error ? data?.value : null);
+    if (url) {
+      if (!/^https?:\/\//i.test(url)) {
+        throw new Error('URL da API Valorion inválida (use URL completa com https://)');
+      }
+      console.log('Using Valorion API URL from admin_settings for user:', userId);
+      return url;
+    }
+  }
+
+  const { data: globalData, error: globalError } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .is('user_id', null)
+    .eq('key', 'valorion_api_url')
+    .maybeSingle();
+
+  const globalUrl = normalize(!globalError ? globalData?.value : null);
+  if (globalUrl) {
+    if (!/^https?:\/\//i.test(globalUrl)) {
+      throw new Error('URL da API Valorion inválida (use URL completa com https://)');
+    }
+    console.log('Using Valorion API URL from global admin_settings');
+    return globalUrl;
+  }
+
+  const envUrl = normalize(Deno.env.get('VALORION_API_URL'));
+  if (envUrl) {
+    console.log('Using Valorion API URL from environment variable');
+    return envUrl;
+  }
+
+  return DEFAULT_VALORION_CREATE_URL;
 }
 
 async function logPixGenerated(
@@ -284,6 +330,10 @@ serve(async (req) => {
     // Get Valorion API key
     const apiKey = await getValorionApiKey(supabase, userId);
 
+    // Get Valorion create endpoint URL
+    const apiUrl = await getValorionApiUrl(supabase, userId);
+    console.log('Valorion create URL:', apiUrl);
+
     // Gerar txid único
     const txid = generateTxId();
 
@@ -326,7 +376,7 @@ serve(async (req) => {
 
     console.log('Criando cobrança PIX Valorion:', JSON.stringify(payload));
 
-    const response = await fetch(VALORION_API_URL, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -339,8 +389,14 @@ serve(async (req) => {
     console.log('Resposta Valorion (raw):', responseText);
 
     if (!response.ok) {
-      console.error('Erro ao criar cobrança Valorion:', response.status, responseText);
-      throw new Error(`Erro ao criar cobrança: ${response.status} - ${responseText}`);
+      const preview = (responseText || '').slice(0, 600);
+      const isHtml = /<!doctype|<html/i.test(preview);
+      const hint = (response.status === 404 && isHtml)
+        ? ' Endpoint não encontrado (provável URL incorreta). Configure a URL do endpoint de criação no painel (Valorion → Config).'
+        : '';
+
+      console.error('Erro ao criar cobrança Valorion:', response.status, preview);
+      throw new Error(`Erro ao criar cobrança (Valorion): ${response.status}. URL: ${apiUrl}.${hint}`);
     }
 
     let data;
