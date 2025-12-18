@@ -2167,6 +2167,7 @@ export type Database = {
           p_status?: string
         }
         Returns: {
+          acquirer: string
           amount: number
           created_at: string
           donor_name: string
