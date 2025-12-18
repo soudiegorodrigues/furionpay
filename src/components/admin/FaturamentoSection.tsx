@@ -57,7 +57,7 @@ const StatCard = memo(({ value, label, subLabel, colorClass = "text-foreground",
   )}>
     <div className={cn(
       "font-bold",
-      size === 'small' ? "text-lg sm:text-2xl" : "text-xl sm:text-3xl",
+      size === 'small' ? "text-base sm:text-xl" : "text-lg sm:text-2xl",
       colorClass
     )}>
       {value}
