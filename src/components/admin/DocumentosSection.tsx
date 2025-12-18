@@ -274,7 +274,7 @@ export function DocumentosSection() {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          Verificação de Documentos
+          Documentos KYC
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6">
