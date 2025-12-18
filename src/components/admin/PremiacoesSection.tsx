@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -270,56 +270,74 @@ export function PremiacoesSection() {
 
         {/* Tab: Premiações */}
         <TabsContent value="premiacoes" className="mt-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold">Gerenciar Premiações</h2>
-            <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar premiação
-            </Button>
-          </div>
-
-          {loading ? <div className="text-center py-8 text-muted-foreground">Carregando...</div> : rewards.length === 0 ? <Card className="p-8 text-center">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhuma premiação cadastrada</p>
-              <Button onClick={openCreateDialog} variant="outline" className="mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Gerenciar Premiações</CardTitle>
+                <CardDescription>Configure as premiações disponíveis para os usuários</CardDescription>
+              </div>
+              <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90">
                 <Plus className="h-4 w-4 mr-2" />
-                Criar primeira premiação
+                Adicionar premiação
               </Button>
-            </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rewards.map(reward => <Card key={reward.id} className="overflow-hidden max-w-xs">
-                  <div className="h-64 bg-muted flex items-center justify-center p-4">
-                    {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="max-w-full max-h-full object-contain" /> : <Package className="h-16 w-16 text-muted-foreground" />}
-                  </div>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-black text-sm">{reward.name}</CardTitle>
-                      <Badge variant={reward.is_active ? "default" : "secondary"} className={reward.is_active ? "bg-emerald-500" : ""}>
-                        {reward.is_active ? "Disponível" : "Inativo"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2 pb-2">
-                    {reward.description && <p className="text-sm text-muted-foreground line-clamp-2">{reward.description}</p>}
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">Meta:</span>
-                      <span className="text-primary font-bold">{formatCurrency(reward.threshold_amount)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{reward.delivery_method === "address" ? "Entrega por endereço" : "Entrega digital"}</span>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-2 gap-2">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(reward)}>
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Editar
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(reward.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </CardFooter>
-                </Card>)}
-            </div>}
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+              ) : rewards.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Nenhuma premiação cadastrada</p>
+                  <Button onClick={openCreateDialog} variant="outline" className="mt-4">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar primeira premiação
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {rewards.map(reward => (
+                    <Card key={reward.id} className="overflow-hidden max-w-xs">
+                      <div className="h-64 bg-muted flex items-center justify-center p-4">
+                        {reward.image_url ? (
+                          <img src={reward.image_url} alt={reward.name} className="max-w-full max-h-full object-contain" />
+                        ) : (
+                          <Package className="h-16 w-16 text-muted-foreground" />
+                        )}
+                      </div>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-black text-sm">{reward.name}</CardTitle>
+                          <Badge variant={reward.is_active ? "default" : "secondary"} className={reward.is_active ? "bg-emerald-500" : ""}>
+                            {reward.is_active ? "Disponível" : "Inativo"}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-2 pb-2">
+                        {reward.description && <p className="text-sm text-muted-foreground line-clamp-2">{reward.description}</p>}
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium">Meta:</span>
+                          <span className="text-primary font-bold">{formatCurrency(reward.threshold_amount)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          <span>{reward.delivery_method === "address" ? "Entrega por endereço" : "Entrega digital"}</span>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="pt-2 gap-2">
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(reward)}>
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Editar
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(reward.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Tab: Envio Pendente */}
