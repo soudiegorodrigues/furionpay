@@ -153,7 +153,7 @@ export function AdminSidebar({
             </div>
           </NavLink>
           
-          <div className="flex items-center justify-center gap-4 mt-2 px-2 py-2 bg-muted/30 rounded-lg">
+          <div className="flex items-center justify-center gap-3 mt-2 px-1.5 py-1.5 bg-muted/30 rounded-md">
             <Button 
               variant="ghost" 
               size="icon" 
