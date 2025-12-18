@@ -46,6 +46,7 @@ interface Transaction {
   fee_fixed: number | null;
   utm_data: UTMData | null;
   popup_model: string | null;
+  acquirer?: string;
 }
 interface ChartData {
   date: string;
