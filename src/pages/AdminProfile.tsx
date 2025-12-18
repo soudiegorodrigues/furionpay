@@ -234,7 +234,7 @@ export default function AdminProfile() {
     <div className="flex flex-col flex-1">
       <AdminHeader title="Meu Perfil" icon={User} />
         
-        <div className="flex-1 p-6 space-y-6">
+        <div className="flex-1 p-6 space-y-6 max-w-2xl mx-auto w-full">
           {/* Informações do Usuário */}
           <Card>
             <CardHeader>
