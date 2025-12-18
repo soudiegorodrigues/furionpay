@@ -114,9 +114,9 @@ export function AuthMarketingPanel() {
 
       {/* Bottom decoration */}
       <div className="relative z-10 mt-8">
-        <div className="flex items-center gap-2 text-white/30 text-xs">
+        <div className="flex items-center gap-2 text-white/30 text-sm">
           <div className="w-8 h-px bg-gradient-to-r from-primary/50 to-transparent" />
-          <span>Tecnologia de ponta para seu negócio</span>
+          <span>© 2025 FurionPay · Pagamentos Digitais</span>
         </div>
       </div>
     </div>
