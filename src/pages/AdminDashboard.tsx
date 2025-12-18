@@ -885,12 +885,19 @@ const AdminDashboard = () => {
                   {rewards.map(reward => {
                 const progress = Math.min(stats.total_amount_paid / reward.threshold_amount * 100, 100);
                 const achieved = stats.total_amount_paid >= reward.threshold_amount;
-                return <div key={reward.id} className="space-y-4">
+                return <div 
+                  key={reward.id} 
+                  className={`space-y-4 p-4 rounded-xl transition-all duration-500 ${
+                    achieved 
+                      ? 'bg-gradient-to-br from-green-500/15 via-emerald-500/10 to-transparent border-2 border-green-500/50 shadow-lg shadow-green-500/20' 
+                      : ''
+                  }`}
+                >
                         {/* Nome do usuário e status */}
                         <div className="text-center">
                           {userName && <p className="text-sm text-muted-foreground mb-1">{userName}</p>}
                           <h3 className="text-base font-bold">{reward.name}</h3>
-                          {achieved && <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs">
+                          {achieved && <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs animate-pulse">
                               🎉 Conquistado!
                             </Badge>}
                         </div>
@@ -898,8 +905,22 @@ const AdminDashboard = () => {
                         {/* Imagem da placa */}
                         <div className="flex justify-center">
                           <div className="relative">
-                            {reward.image_url ? <img src={reward.image_url} alt={reward.name} className="relative w-56 h-56 object-contain drop-shadow-xl" /> : <div className="relative w-56 h-56 flex items-center justify-center">
-                                <Trophy className="h-20 w-20 text-primary drop-shadow-xl" />
+                            {reward.image_url ? <img 
+                              src={reward.image_url} 
+                              alt={reward.name} 
+                              className={`relative w-56 h-56 object-contain transition-all duration-500 ${
+                                achieved 
+                                  ? 'scale-105 drop-shadow-[0_0_25px_rgba(34,197,94,0.4)]' 
+                                  : 'drop-shadow-xl'
+                              }`} 
+                            /> : <div className={`relative w-56 h-56 flex items-center justify-center transition-all duration-500 ${
+                                achieved ? 'scale-105' : ''
+                              }`}>
+                                <Trophy className={`h-20 w-20 transition-all duration-500 ${
+                                  achieved 
+                                    ? 'text-yellow-500 drop-shadow-[0_0_25px_rgba(234,179,8,0.5)]' 
+                                    : 'text-primary drop-shadow-xl'
+                                }`} />
                               </div>}
                           </div>
                         </div>
@@ -908,7 +929,7 @@ const AdminDashboard = () => {
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs font-medium">
                             <span>Progresso</span>
-                            <span className="text-primary font-bold">{progress.toFixed(0)}%</span>
+                            <span className={`font-bold ${achieved ? 'text-green-500' : 'text-primary'}`}>{progress.toFixed(0)}%</span>
                           </div>
                           <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
                             <div className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-primary via-red-400 to-red-500'} shadow-lg`} style={{
@@ -925,10 +946,17 @@ const AdminDashboard = () => {
                   
                   {/* Botão Resgatar */}
                   <div className="flex justify-center">
-                    <Button className="bg-red-400/80 hover:bg-red-400 dark:bg-sidebar-accent dark:hover:bg-[hsl(0,0%,18%)] text-white font-medium py-1 px-3 text-[10px] shadow-sm dark:shadow-none dark:border dark:border-sidebar-border">
-                      <Gift className="h-3 w-3 mr-1" />
-                      Resgatar Recompensa
-                    </Button>
+                    {rewards.some(r => stats.total_amount_paid >= r.threshold_amount) ? (
+                      <Button className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 animate-pulse">
+                        <Gift className="h-3 w-3 mr-1" />
+                        Resgatar Recompensa
+                      </Button>
+                    ) : (
+                      <Button disabled className="bg-muted text-muted-foreground font-medium py-1 px-3 text-[10px] cursor-not-allowed opacity-60">
+                        <Gift className="h-3 w-3 mr-1" />
+                        Resgatar Recompensa
+                      </Button>
+                    )}
                   </div>
                 </div> : <div className="text-center py-4">
                   <div className="p-2 bg-primary/10 rounded-full w-fit mx-auto mb-2">
