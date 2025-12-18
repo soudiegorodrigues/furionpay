@@ -6,10 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import furionLogoDark from '@/assets/furionpay-logo-dark-text.png';
-import furionLogoWhite from '@/assets/furionpay-logo-white-text.png';
+import furionLogo from '@/assets/furionpay-logo-white-text.png';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import { 
+  AuthBackground, 
   AuthLoadingScreen, 
   AuthFormFields, 
   BlockedUserDialog,
@@ -369,123 +369,133 @@ const AdminAuth = () => {
   return (
     <>
       <PWAInstallPrompt />
-      <div className="min-h-screen flex">
+      <div className="min-h-screen flex bg-black relative overflow-hidden">
         {/* Left side - Marketing Panel (hidden on mobile) */}
-        <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-black">
+        <div className="hidden lg:flex lg:w-1/2 xl:w-[55%]">
           <AuthMarketingPanel />
         </div>
 
-        {/* Right side - Auth Form (Light Theme) */}
-        <div className="w-full lg:w-1/2 xl:w-[45%] flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-gray-50">
-          <div className="w-full max-w-[420px] animate-fade-in">
-            {/* Card */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xl shadow-gray-200/50">
-              {/* Logo inside card */}
-              <div className="flex justify-center mb-6">
-                <img 
-                  src={furionLogoDark} 
-                  alt="FurionPay" 
-                  className="h-10 sm:h-12" 
-                />
-              </div>
+        {/* Right side - Auth Form */}
+        <div className="w-full lg:w-1/2 xl:w-[45%] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative">
+          <AuthBackground />
 
-              {/* Header */}
-              <div className="text-center mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mb-1.5">
-                  {getTitle()}
-                </h1>
-                <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-                  {getDescription()}
-                </p>
-              </div>
+          <div className="w-full max-w-[420px] animate-fade-in relative z-10">
+            {/* Card with glassmorphism */}
+            <div className="relative">
+              {/* Card glow */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/15 via-primary/8 to-primary/15 rounded-2xl blur-xl opacity-50" />
+              
+              <div className="relative bg-zinc-950/70 backdrop-blur-xl rounded-2xl border border-white/[0.08] p-6 sm:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                {/* Logo inside card */}
+                <div className="flex justify-center mb-6">
+                  <div className="relative">
+                    <div 
+                      className="absolute inset-0 blur-2xl opacity-50" 
+                      style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 70%)' }} 
+                    />
+                    <img 
+                      src={furionLogo} 
+                      alt="FurionPay" 
+                      className="h-10 sm:h-12 relative z-10 drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" 
+                    />
+                  </div>
+                </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <AuthFormFields
-                  mode={mode}
-                  name={name}
-                  email={email}
-                  password={password}
-                  confirmPassword={confirmPassword}
-                  otpCode={otpCode}
-                  showPassword={showPassword}
-                  showConfirmPassword={showConfirmPassword}
-                  rememberMe={rememberMe}
-                  resetEmail={resetEmail}
-                  isSubmitting={isSubmitting}
-                  onNameChange={setName}
-                  onEmailChange={setEmail}
-                  onPasswordChange={setPassword}
-                  onConfirmPasswordChange={setConfirmPassword}
-                  onOtpCodeChange={setOtpCode}
-                  onShowPasswordChange={setShowPassword}
-                  onShowConfirmPasswordChange={setShowConfirmPassword}
-                  onRememberMeChange={setRememberMe}
-                  onForgotPassword={() => switchMode('reset-email')}
-                  onResendCode={handleResendCode}
-                />
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1.5">
+                    {getTitle()}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed">
+                    {getDescription()}
+                  </p>
+                </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-11 sm:h-12 text-sm sm:text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-500/90 text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 transition-all duration-300 active:scale-[0.98] border-0" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      {getButtonText()}
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <AuthFormFields
+                    mode={mode}
+                    name={name}
+                    email={email}
+                    password={password}
+                    confirmPassword={confirmPassword}
+                    otpCode={otpCode}
+                    showPassword={showPassword}
+                    showConfirmPassword={showConfirmPassword}
+                    rememberMe={rememberMe}
+                    resetEmail={resetEmail}
+                    isSubmitting={isSubmitting}
+                    onNameChange={setName}
+                    onEmailChange={setEmail}
+                    onPasswordChange={setPassword}
+                    onConfirmPasswordChange={setConfirmPassword}
+                    onOtpCodeChange={setOtpCode}
+                    onShowPasswordChange={setShowPassword}
+                    onShowConfirmPasswordChange={setShowConfirmPassword}
+                    onRememberMeChange={setRememberMe}
+                    onForgotPassword={() => switchMode('reset-email')}
+                    onResendCode={handleResendCode}
+                  />
 
-              {/* Footer Links */}
-              <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-                {mode.startsWith('reset') || mode === 'unlock-code' ? (
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setIsAccountBlocked(false);
-                      setOtpCode('');
-                      switchMode('login');
-                    }} 
-                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors inline-flex items-center gap-1"
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11 sm:h-12 text-sm sm:text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-500/90 text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 transition-all duration-300 active:scale-[0.98] border-0" 
+                    disabled={isSubmitting}
                   >
-                    <ArrowRight className="h-3 w-3 rotate-180" />
-                    Voltar ao login
-                  </button>
-                ) : mode === 'login' ? (
-                  <p className="text-sm text-gray-500">
-                    Não tem uma conta?{' '}
-                    <Link to="/cadastro" className="text-primary hover:text-primary/80 font-semibold transition-colors">
-                      Criar conta
-                    </Link>
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Já tem uma conta?{' '}
-                    <Link to="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
-                      Fazer login
-                    </Link>
-                  </p>
-                )}
+                    {isSubmitting ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        {getButtonText()}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                {/* Footer Links */}
+                <div className="mt-6 pt-5 border-t border-white/[0.06] text-center">
+                  {mode.startsWith('reset') || mode === 'unlock-code' ? (
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsAccountBlocked(false);
+                        setOtpCode('');
+                        switchMode('login');
+                      }} 
+                      className="text-sm text-white/50 hover:text-white/70 transition-colors inline-flex items-center gap-1"
+                    >
+                      <ArrowRight className="h-3 w-3 rotate-180" />
+                      Voltar ao login
+                    </button>
+                  ) : mode === 'login' ? (
+                    <p className="text-sm text-white/50">
+                      Não tem uma conta?{' '}
+                      <Link to="/cadastro" className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                        Criar conta
+                      </Link>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-white/50">
+                      Já tem uma conta?{' '}
+                      <Link to="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                        Fazer login
+                      </Link>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Footer text */}
-            <p className="text-center text-xs text-gray-400 mt-6">
-              © FurionPay · Tecnologia em Pagamentos
+            <p className="text-center text-white/35 text-[10px] sm:text-xs mt-6">
+              © 2025 FurionPay · Pagamentos Digitais
             </p>
           </div>
         </div>
       </div>
 
-      <BlockedUserDialog 
-        open={showBlockedDialog} 
-        onOpenChange={setShowBlockedDialog} 
-      />
+      <BlockedUserDialog open={showBlockedDialog} onOpenChange={setShowBlockedDialog} />
     </>
   );
 };
