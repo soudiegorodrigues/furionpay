@@ -597,7 +597,7 @@ export const UsuariosSection = () => {
                               <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
                                 {(() => {
                                   const acq = userAcquirers[u.id] || defaultAcquirer;
-                                  return acq === 'inter' ? 'Banco Inter' : acq === 'ativus' ? 'Ativus Hub' : 'SpedPay';
+                                  return acq === 'inter' ? 'Banco Inter' : acq === 'ativus' ? 'Ativus Hub' : acq === 'valorion' ? 'Valorion' : 'SpedPay';
                                 })()}
                               </Badge>
                               {userManualAcquirers[u.id] && (
