@@ -22,11 +22,14 @@ export const MultiAcquirersSection = () => {
   const [showInterConfigDialog, setShowInterConfigDialog] = useState(false);
   const [showAtivusConfigDialog, setShowAtivusConfigDialog] = useState(false);
   const [showSpedpayConfigDialog, setShowSpedpayConfigDialog] = useState(false);
+  const [showValorionConfigDialog, setShowValorionConfigDialog] = useState(false);
   const [isLoadingInterConfig, setIsLoadingInterConfig] = useState(false);
   const [isLoadingStates, setIsLoadingStates] = useState(true);
   const [interEnabled, setInterEnabled] = useState<boolean | null>(null);
   const [spedpayEnabled, setSpedpayEnabled] = useState<boolean | null>(null);
   const [ativusEnabled, setAtivusEnabled] = useState<boolean | null>(null);
+  const [valorionEnabled, setValorionEnabled] = useState<boolean | null>(null);
+  const [isTestingValorion, setIsTestingValorion] = useState(false);
   const [interFeeRate, setInterFeeRate] = useState('');
   const [interFixedFee, setInterFixedFee] = useState('');
   const [spedpayFeeRate, setSpedpayFeeRate] = useState('');
@@ -35,6 +38,9 @@ export const MultiAcquirersSection = () => {
   const [ativusFeeRate, setAtivusFeeRate] = useState('');
   const [ativusFixedFee, setAtivusFixedFee] = useState('');
   const [ativusApiKey, setAtivusApiKey] = useState('');
+  const [valorionFeeRate, setValorionFeeRate] = useState('');
+  const [valorionFixedFee, setValorionFixedFee] = useState('');
+  const [valorionApiKey, setValorionApiKey] = useState('');
   const [defaultAcquirer, setDefaultAcquirer] = useState<string>('spedpay');
   const [isSettingDefault, setIsSettingDefault] = useState<string | null>(null);
   const [interConfig, setInterConfig] = useState({
@@ -94,6 +100,7 @@ export const MultiAcquirersSection = () => {
         const interState = settings.find(s => s.key === 'inter_enabled');
         const spedpayState = settings.find(s => s.key === 'spedpay_enabled');
         const ativusState = settings.find(s => s.key === 'ativus_enabled');
+        const valorionState = settings.find(s => s.key === 'valorion_enabled');
         const interFee = settings.find(s => s.key === 'inter_fee_rate');
         const interFixed = settings.find(s => s.key === 'inter_fixed_fee');
         const spedpayFee = settings.find(s => s.key === 'spedpay_fee_rate');
@@ -102,12 +109,15 @@ export const MultiAcquirersSection = () => {
         const ativusFee = settings.find(s => s.key === 'ativus_fee_rate');
         const ativusFixed = settings.find(s => s.key === 'ativus_fixed_fee');
         const ativusKey = settings.find(s => s.key === 'ativus_api_key');
+        const valorionFee = settings.find(s => s.key === 'valorion_fee_rate');
+        const valorionFixed = settings.find(s => s.key === 'valorion_fixed_fee');
+        const valorionKey = settings.find(s => s.key === 'valorion_api_key');
         const defaultAcq = settings.find(s => s.key === 'default_acquirer');
         
-        // Default to true if not set, false only if explicitly set to 'false'
         setInterEnabled(interState?.value !== 'false');
         setSpedpayEnabled(spedpayState?.value !== 'false');
         setAtivusEnabled(ativusState?.value !== 'false');
+        setValorionEnabled(valorionState?.value !== 'false');
         setInterFeeRate(interFee?.value || '');
         setInterFixedFee(interFixed?.value || '');
         setSpedpayFeeRate(spedpayFee?.value || '');
@@ -116,24 +126,27 @@ export const MultiAcquirersSection = () => {
         setAtivusFeeRate(ativusFee?.value || '');
         setAtivusFixedFee(ativusFixed?.value || '');
         setAtivusApiKey(ativusKey?.value || '');
+        setValorionFeeRate(valorionFee?.value || '');
+        setValorionFixedFee(valorionFixed?.value || '');
+        setValorionApiKey(valorionKey?.value || '');
         setDefaultAcquirer(defaultAcq?.value || 'spedpay');
       } else {
-        // No data, default to enabled
         setInterEnabled(true);
         setSpedpayEnabled(true);
         setAtivusEnabled(true);
+        setValorionEnabled(true);
       }
     } catch (error) {
-      console.error('Error loading acquirer states:', error);
       setInterEnabled(true);
       setSpedpayEnabled(true);
       setAtivusEnabled(true);
+      setValorionEnabled(true);
     } finally {
       setIsLoadingStates(false);
     }
   };
 
-  const toggleAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus', enabled: boolean) => {
+  const toggleAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus' | 'valorion', enabled: boolean) => {
     try {
       const { error } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: `${acquirer}_enabled`,
@@ -146,11 +159,13 @@ export const MultiAcquirersSection = () => {
         setInterEnabled(enabled);
       } else if (acquirer === 'spedpay') {
         setSpedpayEnabled(enabled);
+      } else if (acquirer === 'valorion') {
+        setValorionEnabled(enabled);
       } else {
         setAtivusEnabled(enabled);
       }
       
-      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
+      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub', valorion: 'Valorion' };
       
       toast({
         title: enabled ? "Adquirente Ativada" : "Adquirente Desativada",

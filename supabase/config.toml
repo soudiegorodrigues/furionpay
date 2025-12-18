@@ -12,6 +12,24 @@ verify_jwt = false
 [functions.generate-pix-inter]
 verify_jwt = false
 
+[functions.generate-pix-ativus]
+verify_jwt = false
+
+[functions.generate-pix-valorion]
+verify_jwt = false
+
+[functions.check-pix-status-ativus]
+verify_jwt = false
+
+[functions.check-pix-status-valorion]
+verify_jwt = false
+
+[functions.valorion-webhook]
+verify_jwt = false
+
+[functions.ativus-webhook]
+verify_jwt = false
+
 [functions.get-popup-model]
 verify_jwt = false
 
@@ -36,12 +54,6 @@ verify_jwt = false
 [functions.send-approval-notification]
 verify_jwt = false
 
-[functions.generate-pix-ativus]
-verify_jwt = false
-
-[functions.check-pix-status-ativus]
-verify_jwt = false
-
 [functions.send-withdrawal-notification]
 verify_jwt = false
 
@@ -49,9 +61,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-document-verification-notification]
-verify_jwt = false
-
-[functions.ativus-webhook]
 verify_jwt = false
 
 [functions.utmify-sync]

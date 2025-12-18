@@ -65,18 +65,21 @@ const ACQUIRERS = [
   { value: 'ativus', label: 'Ativus Hub', color: 'bg-purple-500' },
   { value: 'spedpay', label: 'SpedPay', color: 'bg-blue-500' },
   { value: 'inter', label: 'Banco Inter', color: 'bg-orange-500' },
+  { value: 'valorion', label: 'Valorion', color: 'bg-green-500' },
 ];
 
 const ACQUIRER_LABELS: Record<string, string> = {
   ativus: 'ATIVUS HUB',
   spedpay: 'SPEDPAY',
   inter: 'BANCO INTER',
+  valorion: 'VALORION',
 };
 
 const ACQUIRER_COLORS: Record<string, string> = {
   ativus: 'bg-purple-500',
   spedpay: 'bg-blue-500',
   inter: 'bg-orange-500',
+  valorion: 'bg-green-500',
 };
 
 interface AcquirerStats {
@@ -264,7 +267,7 @@ export const RetryConfigSection = () => {
 
       if (error) throw error;
 
-      const acquirers = ['spedpay', 'inter', 'ativus'];
+      const acquirers = ['spedpay', 'inter', 'ativus', 'valorion'];
       const processedStats: Record<string, AcquirerStats> = {};
       
       acquirers.forEach(acquirer => {
