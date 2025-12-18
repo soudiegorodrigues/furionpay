@@ -94,13 +94,13 @@ export function AuthMarketingPanel() {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="group flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300"
+              className="group flex items-center gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300"
             >
-              <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${feature.iconBg} flex items-center justify-center`}>
-                <feature.icon className={`h-5 w-5 ${feature.iconColor}`} />
+              <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${feature.iconBg} flex items-center justify-center`}>
+                <feature.icon className={`h-4 w-4 ${feature.iconColor}`} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white mb-1">
+                <h3 className="text-sm font-semibold text-white">
                   {feature.title}
                 </h3>
                 <p className="text-xs text-white/50 leading-relaxed">
