@@ -595,7 +595,10 @@ export const UsuariosSection = () => {
                           <TableCell className="text-xs hidden lg:table-cell">
                             <div className="flex items-center gap-1">
                               <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
-                                {userAcquirers[u.id] === 'inter' ? 'Banco Inter' : userAcquirers[u.id] === 'ativus' ? 'Ativus Hub' : 'SpedPay'}
+                                {(() => {
+                                  const acq = userAcquirers[u.id] || defaultAcquirer;
+                                  return acq === 'inter' ? 'Banco Inter' : acq === 'ativus' ? 'Ativus Hub' : 'SpedPay';
+                                })()}
                               </Badge>
                               {userManualAcquirers[u.id] && (
                                 <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[10px] px-1">
