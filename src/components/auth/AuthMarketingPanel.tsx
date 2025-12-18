@@ -90,7 +90,7 @@ export function AuthMarketingPanel() {
         </div>
 
         {/* Feature cards */}
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-md">
           {features.map((feature, index) => (
             <div 
               key={index}
