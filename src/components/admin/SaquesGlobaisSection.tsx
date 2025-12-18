@@ -236,7 +236,7 @@ export function SaquesGlobaisSection() {
             <div className="p-3 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-green-600 font-medium">Saques Aprovados</p>
+                  <p className="font-medium text-sm text-black">Saques Aprovados</p>
                   <p className="text-lg font-bold">{formatCurrency(stats.approvedValue)}</p>
                   <p className="text-[10px] text-muted-foreground">{stats.totalApproved} saques processados</p>
                 </div>
