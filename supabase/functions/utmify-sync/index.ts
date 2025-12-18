@@ -295,18 +295,8 @@ serve(async (req) => {
     console.log('[UTMIFY-SYNC] Response status:', response.status);
     console.log('[UTMIFY-SYNC] Response:', responseText);
 
-    // Log to monitoring
-    try {
-      await supabase.from('api_monitoring_events').insert({
-        acquirer: 'utmify',
-        event_type: response.ok ? 'success' : 'failure',
-        error_message: response.ok 
-          ? `Order ${txid} - Status: ${utmifyStatus}` 
-          : `HTTP ${response.status}: ${responseText.slice(0, 200)}`,
-      });
-    } catch (logError) {
-      console.error('[UTMIFY-SYNC] Failed to log event:', logError);
-    }
+    // Note: Utmify events are not logged to api_monitoring_events
+    // because Utmify is a tracking/attribution service, not a payment acquirer
 
     if (!response.ok) {
       console.error('[UTMIFY-SYNC] API error:', responseText);
