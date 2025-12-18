@@ -102,7 +102,8 @@ export const RankingSection = () => {
     }).format(value);
   };
   const totalPages = Math.ceil(totalUsers / RANKING_PER_PAGE);
-  return <Card>
+  return <div className="max-w-5xl mx-auto">
+    <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
@@ -179,5 +180,6 @@ export const RankingSection = () => {
               </div>}
           </>}
       </CardContent>
-    </Card>;
+    </Card>
+  </div>;
 };
