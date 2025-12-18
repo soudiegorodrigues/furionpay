@@ -36,6 +36,7 @@ export const MultiAcquirersSection = () => {
   const [ativusFixedFee, setAtivusFixedFee] = useState('');
   const [ativusApiKey, setAtivusApiKey] = useState('');
   const [defaultAcquirer, setDefaultAcquirer] = useState<string>('spedpay');
+  const [isSettingDefault, setIsSettingDefault] = useState<string | null>(null);
   const [interConfig, setInterConfig] = useState({
     clientId: '',
     clientSecret: '',
@@ -166,98 +167,81 @@ export const MultiAcquirersSection = () => {
   };
 
   const setAsDefaultAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus') => {
+    const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
+    
+    // 1. Pre-validation - check if acquirer is configured BEFORE making any DB calls
+    if (acquirer === 'spedpay' && !spedpayApiKey) {
+      toast({
+        title: "Configuração Incompleta",
+        description: "Configure a API Key do SpedPay antes de definir como principal.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (acquirer === 'ativus' && !ativusApiKey) {
+      toast({
+        title: "Configuração Incompleta",
+        description: "Configure a API Key do Ativus Hub antes de definir como principal.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // For Inter, we need to check if credentials are configured
+    if (acquirer === 'inter') {
+      // Quick check via edge function
+      try {
+        const { data } = await supabase.functions.invoke('get-inter-credentials');
+        if (!data?.isFullyConfigured) {
+          toast({
+            title: "Configuração Incompleta",
+            description: "Configure todas as credenciais do Banco Inter antes de definir como principal.",
+            variant: "destructive"
+          });
+          return;
+        }
+      } catch {
+        toast({
+          title: "Erro",
+          description: "Não foi possível verificar as credenciais do Banco Inter.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // 2. Optimistic UI update
+    const previousDefault = defaultAcquirer;
+    setDefaultAcquirer(acquirer);
+    setIsSettingDefault(acquirer);
+
     try {
-      console.log('[setAsDefaultAcquirer] Iniciando para:', acquirer);
-      
-      // 1. Atualizar default_acquirer na admin_settings
-      const { error } = await supabase.rpc('update_admin_setting_auth', {
-        setting_key: 'default_acquirer',
-        setting_value: acquirer
+      // 3. Single atomic RPC call
+      const { data, error } = await supabase.rpc('set_default_acquirer_with_retry_order', {
+        p_acquirer: acquirer
       });
       
       if (error) throw error;
-      console.log('[setAsDefaultAcquirer] default_acquirer atualizado');
       
-      // 2. Sincronizar com retry_flow_steps - colocar o adquirente selecionado em 1º lugar
-      const { data: steps, error: stepsError } = await supabase
-        .from('retry_flow_steps')
-        .select('*')
-        .eq('payment_method', 'pix')
-        .order('step_order');
-      
-      if (stepsError) {
-        console.error('[setAsDefaultAcquirer] Erro ao buscar steps:', stepsError);
-        throw stepsError;
-      }
-      
-      console.log('[setAsDefaultAcquirer] Steps encontrados:', steps);
-      
-      if (steps && steps.length > 0) {
-        // Reorganizar: selecionado primeiro, outros mantêm ordem relativa
-        const otherSteps = steps.filter(s => s.acquirer !== acquirer);
-        const selectedStep = steps.find(s => s.acquirer === acquirer);
-        
-        console.log('[setAsDefaultAcquirer] Step selecionado:', selectedStep);
-        console.log('[setAsDefaultAcquirer] Outros steps:', otherSteps);
-        
-        // Primeiro, mover todos para step_order temporários (+ 100) para evitar constraint de unique
-        for (const step of steps) {
-          await supabase
-            .from('retry_flow_steps')
-            .update({ step_order: step.step_order + 100 })
-            .eq('id', step.id);
-        }
-        console.log('[setAsDefaultAcquirer] Steps movidos para valores temporários');
-        
-        // Agora reorganizar com valores finais: selecionado = 1, outros = 2, 3, ...
-        if (selectedStep) {
-          const { error: updateSelectedError } = await supabase
-            .from('retry_flow_steps')
-            .update({ step_order: 1 })
-            .eq('id', selectedStep.id);
-          
-          if (updateSelectedError) {
-            console.error('[setAsDefaultAcquirer] Erro ao atualizar step selecionado:', updateSelectedError);
-            throw updateSelectedError;
-          }
-          console.log('[setAsDefaultAcquirer] Step selecionado atualizado para order=1');
-        }
-        
-        let order = 2;
-        for (const step of otherSteps) {
-          const { error: updateOtherError } = await supabase
-            .from('retry_flow_steps')
-            .update({ step_order: order })
-            .eq('id', step.id);
-          
-          if (updateOtherError) {
-            console.error('[setAsDefaultAcquirer] Erro ao atualizar step:', step.acquirer, updateOtherError);
-            throw updateOtherError;
-          }
-          console.log(`[setAsDefaultAcquirer] Step ${step.acquirer} atualizado para order=${order}`);
-          order++;
-        }
-      }
-      
-      setDefaultAcquirer(acquirer);
-      
-      // Forçar refresh do RetryConfigSection
+      // Refresh retry config
       setRetryConfigKey(prev => prev + 1);
-      console.log('[setAsDefaultAcquirer] Refresh do RetryConfigSection disparado');
-      
-      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub' };
       
       toast({
         title: "Adquirente Principal Definida",
         description: `${acquirerNames[acquirer]} agora é a adquirente padrão e está em 1º lugar no retry.`
       });
     } catch (error) {
+      // 4. Rollback on error
       console.error('Error setting default acquirer:', error);
+      setDefaultAcquirer(previousDefault);
       toast({
         title: "Erro",
-        description: "Falha ao definir adquirente padrão",
+        description: "Falha ao definir adquirente padrão. Tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setIsSettingDefault(null);
     }
   };
 
@@ -610,13 +594,18 @@ export const MultiAcquirersSection = () => {
             {interEnabled !== false && (
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
-                <Switch
-                  checked={defaultAcquirer === 'inter'}
-                  onCheckedChange={(checked) => {
-                    if (checked) setAsDefaultAcquirer('inter');
-                  }}
-                  className="scale-75"
-                />
+                {isSettingDefault === 'inter' ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                ) : (
+                  <Switch
+                    checked={defaultAcquirer === 'inter'}
+                    onCheckedChange={(checked) => {
+                      if (checked) setAsDefaultAcquirer('inter');
+                    }}
+                    disabled={isSettingDefault !== null}
+                    className="scale-75"
+                  />
+                )}
               </div>
             )}
             
@@ -817,13 +806,18 @@ export const MultiAcquirersSection = () => {
             {spedpayEnabled !== false && (
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
-                <Switch
-                  checked={defaultAcquirer === 'spedpay'}
-                  onCheckedChange={(checked) => {
-                    if (checked) setAsDefaultAcquirer('spedpay');
-                  }}
-                  className="scale-75"
-                />
+                {isSettingDefault === 'spedpay' ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                ) : (
+                  <Switch
+                    checked={defaultAcquirer === 'spedpay'}
+                    onCheckedChange={(checked) => {
+                      if (checked) setAsDefaultAcquirer('spedpay');
+                    }}
+                    disabled={isSettingDefault !== null}
+                    className="scale-75"
+                  />
+                )}
               </div>
             )}
             
@@ -986,13 +980,18 @@ export const MultiAcquirersSection = () => {
             {ativusEnabled !== false && (
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
-                <Switch
-                  checked={defaultAcquirer === 'ativus'}
-                  onCheckedChange={(checked) => {
-                    if (checked) setAsDefaultAcquirer('ativus');
-                  }}
-                  className="scale-75"
-                />
+                {isSettingDefault === 'ativus' ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                ) : (
+                  <Switch
+                    checked={defaultAcquirer === 'ativus'}
+                    onCheckedChange={(checked) => {
+                      if (checked) setAsDefaultAcquirer('ativus');
+                    }}
+                    disabled={isSettingDefault !== null}
+                    className="scale-75"
+                  />
+                )}
               </div>
             )}
             

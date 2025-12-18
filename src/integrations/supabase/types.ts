@@ -2829,6 +2829,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      set_default_acquirer_with_retry_order: {
+        Args: { p_acquirer: string }
+        Returns: Json
+      }
       unblock_user: { Args: { target_user_id: string }; Returns: boolean }
       update_admin_setting: {
         Args: {
