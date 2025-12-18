@@ -618,108 +618,128 @@ export const ReceitaPlataformaSection = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Resumo e Gráfico de Pizza */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              {/* Gráfico de Pizza */}
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: 'SpedPay', value: spedpayData.cost, count: spedpayData.count, color: '#3B82F6' },
-                        { name: 'Banco Inter', value: interData.cost, count: interData.count, color: '#F97316' },
-                        { name: 'Ativus Hub', value: ativusData.cost, count: ativusData.count, color: '#10B981' },
-                        { name: 'Valorion', value: valorionData.cost, count: valorionData.count, color: '#8B5CF6' }
-                      ].filter(d => d.count > 0)}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      labelLine={false}
-                    >
-                      {[
-                        { name: 'SpedPay', value: spedpayData.cost, count: spedpayData.count, color: '#3B82F6' },
-                        { name: 'Banco Inter', value: interData.cost, count: interData.count, color: '#F97316' },
-                        { name: 'Ativus Hub', value: ativusData.cost, count: ativusData.count, color: '#10B981' },
-                        { name: 'Valorion', value: valorionData.cost, count: valorionData.count, color: '#8B5CF6' }
-                      ].filter(d => d.count > 0).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+            {/* Layout SpedPay Style - Cards + Barras Horizontais */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Lado Esquerdo - Cards em Grid */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Visão geral por adquirente
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { name: 'SPEDPAY', data: spedpayData, color: '#3B82F6', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30' },
+                    { name: 'BANCO INTER', data: interData, color: '#F97316', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/30' },
+                    { name: 'ATIVUS HUB', data: ativusData, color: '#10B981', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
+                    { name: 'VALORION', data: valorionData, color: '#8B5CF6', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30' }
+                  ]
+                    .filter(a => a.data.count > 0)
+                    .sort((a, b) => b.data.volume - a.data.volume)
+                    .map((acq, index) => {
+                      const totalVolume = spedpayData.volume + interData.volume + ativusData.volume + valorionData.volume;
+                      const percentage = totalVolume > 0 ? ((acq.data.volume / totalVolume) * 100).toFixed(1) : '0';
+                      const netRevenue = acq.data.volume - acq.data.cost;
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className={`border rounded-lg p-3 ${acq.bgColor} ${acq.borderColor} transition-all hover:shadow-md`}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-xs text-foreground">{acq.name}</span>
+                            <span 
+                              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: `${acq.color}20`, color: acq.color }}
+                            >
+                              {percentage}%
+                            </span>
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Faturamento</span>
+                              <span className="text-xs font-medium text-foreground">{formatCurrency(acq.data.volume)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Receita líquida</span>
+                              <span className="text-xs font-medium text-green-600">{formatCurrency(netRevenue)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Transações</span>
+                              <span className="text-xs font-medium text-foreground">{acq.data.count}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+                
+                {/* Resumo Total */}
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-sm font-bold text-foreground">{formatCurrency(totalCost)}</div>
+                    <p className="text-[10px] text-muted-foreground">Custo Total</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-sm font-bold text-foreground">{totalCount}</div>
+                    <p className="text-[10px] text-muted-foreground">Transações</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-sm font-bold text-foreground">{formatCurrency(avgCost)}</div>
+                    <p className="text-[10px] text-muted-foreground">Custo Médio</p>
+                  </div>
+                </div>
               </div>
               
-              {/* Cards de Resumo */}
-              <div className="grid grid-cols-2 gap-2 content-start">
-                <div className="text-center p-3 bg-muted/30 rounded-lg">
-                  <div className="text-lg font-bold text-foreground">
-                    {formatCurrency(totalCost)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Custo Total</p>
-                </div>
-                <div className="text-center p-3 bg-muted/30 rounded-lg">
-                  <div className="text-lg font-bold text-foreground">
-                    {totalCount}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Transações</p>
-                </div>
-                <div className="col-span-2 text-center p-3 bg-muted/30 rounded-lg">
-                  <div className="text-lg font-bold text-foreground">
-                    {formatCurrency(avgCost)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Custo Médio por Transação</p>
+              {/* Lado Direito - Barras Horizontais */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Distribuição percentual do faturamento
+                </p>
+                <div className="space-y-4">
+                  {(() => {
+                    const totalVolume = spedpayData.volume + interData.volume + ativusData.volume + valorionData.volume;
+                    const acquirers = [
+                      { name: 'SpedPay', data: spedpayData, color: '#3B82F6' },
+                      { name: 'Banco Inter', data: interData, color: '#F97316' },
+                      { name: 'Ativus Hub', data: ativusData, color: '#10B981' },
+                      { name: 'Valorion', data: valorionData, color: '#8B5CF6' }
+                    ]
+                      .filter(a => a.data.count > 0)
+                      .sort((a, b) => b.data.volume - a.data.volume);
+                    
+                    return acquirers.map((acq, index) => {
+                      const percentage = totalVolume > 0 ? (acq.data.volume / totalVolume) * 100 : 0;
+                      
+                      return (
+                        <div key={index} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-sm" 
+                                style={{ backgroundColor: acq.color }}
+                              />
+                              <span className="text-sm font-medium text-foreground">{acq.name}</span>
+                            </div>
+                            <span className="text-sm font-bold text-foreground">{percentage.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ 
+                                width: `${percentage}%`, 
+                                backgroundColor: acq.color 
+                              }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>{formatCurrency(acq.data.volume)}</span>
+                            <span>{acq.data.count} transações</span>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
-            </div>
-            
-            {/* Tabela detalhada */}
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Adquirente</TableHead>
-                    <TableHead className="text-xs text-right">Transações</TableHead>
-                    <TableHead className="text-xs text-right">Volume</TableHead>
-                    <TableHead className="text-xs text-right">Custo Total</TableHead>
-                    <TableHead className="text-xs text-right">% do Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[
-                    { name: 'SpedPay', data: spedpayData, color: 'bg-blue-500' },
-                    { name: 'Banco Inter', data: interData, color: 'bg-orange-500' },
-                    { name: 'Ativus Hub', data: ativusData, color: 'bg-green-500' },
-                    { name: 'Valorion', data: valorionData, color: 'bg-purple-500' }
-                  ].filter(a => a.data.count > 0).map((acq, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="text-xs">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${acq.color}`}></div>
-                          {acq.name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-right">{acq.data.count}</TableCell>
-                      <TableCell className="text-xs text-right">{formatCurrency(acq.data.volume)}</TableCell>
-                      <TableCell className="text-xs text-right font-medium">{formatCurrency(acq.data.cost)}</TableCell>
-                      <TableCell className="text-xs text-right">
-                        {totalCost > 0 ? ((acq.data.cost / totalCost) * 100).toFixed(1) : 0}%
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             </div>
           </CardContent>
         </Card>
