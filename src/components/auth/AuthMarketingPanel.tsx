@@ -66,7 +66,7 @@ export function AuthMarketingPanel() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 mt-8 lg:mt-12">
         {/* Logo */}
         <div className="mb-12">
           <img 
