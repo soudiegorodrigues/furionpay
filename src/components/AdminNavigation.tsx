@@ -61,7 +61,8 @@ export function AdminNavigation({
   };
 
   return (
-    <Card className="w-full">
+    <div className="max-w-5xl mx-auto">
+      <Card className="w-full">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl sm:text-2xl font-bold">Painel Administrativo</CardTitle>
       </CardHeader>
@@ -89,6 +90,7 @@ export function AdminNavigation({
           </div>
         ))}
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
