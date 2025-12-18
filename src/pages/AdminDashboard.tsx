@@ -835,7 +835,7 @@ const AdminDashboard = () => {
                 }} tickLine={false} axisLine={{
                   stroke: 'hsl(var(--foreground))',
                   strokeWidth: 1
-                }} allowDecimals={false} width={30} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]} />
+                }} allowDecimals={false} width={30} domain={[0, (dataMax: number) => Math.max(5, Math.ceil(dataMax * 1.18))]} />
                     <Tooltip contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
