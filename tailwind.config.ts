@@ -126,6 +126,11 @@ export default {
           from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "orbit": {
+          "0%": { transform: "rotate(0deg) translateX(30px) rotate(0deg)", opacity: "0.3" },
+          "50%": { opacity: "0.8" },
+          "100%": { transform: "rotate(360deg) translateX(30px) rotate(-360deg)", opacity: "0.3" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -137,6 +142,7 @@ export default {
         "drift": "drift 12s ease-in-out infinite",
         "shimmer": "shimmer 3s linear infinite",
         "fade-in": "fade-in 0.3s ease-out",
+        "orbit": "orbit 8s linear infinite",
       },
     },
   },
