@@ -270,7 +270,7 @@ export const TaxasSection = () => {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       <Card>
         <CardHeader className="pb-3 sm:pb-4">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
