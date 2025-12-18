@@ -71,6 +71,15 @@ interface ProfitStats {
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
 type RankingFilter = 'all' | 'today' | '7days' | '30days' | 'thisMonth';
 type AcquirerCostFilter = 'today' | '7days' | 'thisMonth';
+type BreakdownFilter = 'today' | '7days' | '15days' | 'thisMonth' | 'thisYear';
+
+const breakdownFilterOptions: { value: BreakdownFilter; label: string }[] = [
+  { value: 'today', label: 'Hoje' },
+  { value: '7days', label: '7 Dias' },
+  { value: '15days', label: '15 Dias' },
+  { value: 'thisMonth', label: 'Este Mês' },
+  { value: 'thisYear', label: 'Este Ano' },
+];
 
 const acquirerCostFilterOptions: { value: AcquirerCostFilter; label: string }[] = [
   { value: 'today', label: 'Hoje' },
@@ -127,6 +136,7 @@ export const ReceitaPlataformaSection = () => {
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [rankingFilter, setRankingFilter] = useState<RankingFilter>('all');
   const [acquirerCostFilter, setAcquirerCostFilter] = useState<AcquirerCostFilter>('thisMonth');
+  const [breakdownFilter, setBreakdownFilter] = useState<BreakdownFilter>('thisMonth');
   const [monthlyGoal, setMonthlyGoal] = useState<number>(0);
   const [goalInput, setGoalInput] = useState<string>('');
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
@@ -520,30 +530,67 @@ export const ReceitaPlataformaSection = () => {
       {/* Breakdown: Receita Bruta vs Custo Adquirentes vs Lucro Líquido */}
       <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Calculator className="h-4 w-4 text-amber-500" />
-            Breakdown: Receita vs Custos (Este Mês)
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Calculator className="h-4 w-4 text-amber-500" />
+              Breakdown: Receita vs Custos
+            </CardTitle>
+            
+            <div className="flex items-center bg-muted rounded-full p-1">
+              {breakdownFilterOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setBreakdownFilter(option.value)}
+                  className={cn(
+                    "px-2 sm:px-3 py-1 text-xs rounded-full transition-all",
+                    breakdownFilter === option.value
+                      ? "bg-amber-500 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div className="text-center p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
               <div className="text-sm sm:text-base font-semibold text-blue-500">
-                {formatCurrency(profitStats.gross.thisMonth)}
+                {formatCurrency(
+                  breakdownFilter === 'today' ? profitStats.gross.today :
+                  breakdownFilter === '7days' ? profitStats.gross.sevenDays :
+                  breakdownFilter === '15days' ? profitStats.gross.fifteenDays :
+                  breakdownFilter === 'thisMonth' ? profitStats.gross.thisMonth :
+                  profitStats.gross.thisYear
+                )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Receita Bruta</p>
-              <p className="text-[10px] text-muted-foreground">(Taxas cobradas dos usuários)</p>
+              <p className="text-[10px] text-muted-foreground">(Volume Total)</p>
             </div>
             <div className="text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
               <div className="text-sm sm:text-base font-semibold text-red-500">
-                -{formatCurrency(profitStats.acquirerCosts.thisMonth)}
+                -{formatCurrency(
+                  breakdownFilter === 'today' ? profitStats.acquirerCosts.today :
+                  breakdownFilter === '7days' ? profitStats.acquirerCosts.sevenDays :
+                  breakdownFilter === '15days' ? profitStats.acquirerCosts.fifteenDays :
+                  breakdownFilter === 'thisMonth' ? profitStats.acquirerCosts.thisMonth :
+                  profitStats.acquirerCosts.thisYear
+                )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Custo Adquirentes</p>
               <p className="text-[10px] text-muted-foreground">(SpedPay, Inter, Ativus)</p>
             </div>
             <div className="text-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
               <div className="text-sm sm:text-base font-semibold text-green-500">
-                {formatCurrency(profitStats.thisMonth)}
+                {formatCurrency(
+                  breakdownFilter === 'today' ? profitStats.today :
+                  breakdownFilter === '7days' ? profitStats.sevenDays :
+                  breakdownFilter === '15days' ? profitStats.fifteenDays :
+                  breakdownFilter === 'thisMonth' ? profitStats.thisMonth :
+                  profitStats.thisYear
+                )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Lucro Líquido</p>
               <p className="text-[10px] text-muted-foreground">(Receita - Custos)</p>
@@ -551,15 +598,28 @@ export const ReceitaPlataformaSection = () => {
           </div>
           
           {/* Taxa de margem */}
-          {profitStats.gross.thisMonth > 0 && (
-            <div className="text-center">
-              <span className="text-xs text-muted-foreground">
-                Margem: <span className="font-semibold text-foreground">
-                  {((profitStats.thisMonth / profitStats.gross.thisMonth) * 100).toFixed(1)}%
+          {(() => {
+            const grossValue = breakdownFilter === 'today' ? profitStats.gross.today :
+              breakdownFilter === '7days' ? profitStats.gross.sevenDays :
+              breakdownFilter === '15days' ? profitStats.gross.fifteenDays :
+              breakdownFilter === 'thisMonth' ? profitStats.gross.thisMonth :
+              profitStats.gross.thisYear;
+            const netValue = breakdownFilter === 'today' ? profitStats.today :
+              breakdownFilter === '7days' ? profitStats.sevenDays :
+              breakdownFilter === '15days' ? profitStats.fifteenDays :
+              breakdownFilter === 'thisMonth' ? profitStats.thisMonth :
+              profitStats.thisYear;
+            
+            return grossValue > 0 ? (
+              <div className="text-center">
+                <span className="text-xs text-muted-foreground">
+                  Margem: <span className="font-semibold text-foreground">
+                    {((netValue / grossValue) * 100).toFixed(1)}%
+                  </span>
                 </span>
-              </span>
-            </div>
-          )}
+              </div>
+            ) : null;
+          })()}
         </CardContent>
       </Card>
 
