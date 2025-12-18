@@ -41,6 +41,7 @@ export const MultiAcquirersSection = () => {
   const [valorionFeeRate, setValorionFeeRate] = useState('');
   const [valorionFixedFee, setValorionFixedFee] = useState('');
   const [valorionApiKey, setValorionApiKey] = useState('');
+  const [valorionApiUrl, setValorionApiUrl] = useState('');
   const [defaultAcquirer, setDefaultAcquirer] = useState<string>('spedpay');
   const [isSettingDefault, setIsSettingDefault] = useState<string | null>(null);
   const [interConfig, setInterConfig] = useState({
@@ -112,6 +113,7 @@ export const MultiAcquirersSection = () => {
         const valorionFee = settings.find(s => s.key === 'valorion_fee_rate');
         const valorionFixed = settings.find(s => s.key === 'valorion_fixed_fee');
         const valorionKey = settings.find(s => s.key === 'valorion_api_key');
+        const valorionUrl = settings.find(s => s.key === 'valorion_api_url');
         const defaultAcq = settings.find(s => s.key === 'default_acquirer');
         
         setInterEnabled(interState?.value !== 'false');
@@ -129,6 +131,7 @@ export const MultiAcquirersSection = () => {
         setValorionFeeRate(valorionFee?.value || '');
         setValorionFixedFee(valorionFixed?.value || '');
         setValorionApiKey(valorionKey?.value || '');
+        setValorionApiUrl(valorionUrl?.value || '');
         setDefaultAcquirer(defaultAcq?.value || 'spedpay');
       } else {
         setInterEnabled(true);
@@ -310,23 +313,30 @@ export const MultiAcquirersSection = () => {
 
   const saveValorionApiKey = async () => {
     try {
-      const { error } = await supabase.rpc('update_admin_setting_auth', {
-        setting_key: 'valorion_api_key',
-        setting_value: valorionApiKey
-      });
-      
-      if (error) throw error;
+      const updates = [
+        { key: 'valorion_api_key', value: valorionApiKey },
+        { key: 'valorion_api_url', value: valorionApiUrl },
+      ];
+
+      for (const { key, value } of updates) {
+        const { error } = await supabase.rpc('update_admin_setting_auth', {
+          setting_key: key,
+          setting_value: value
+        });
+
+        if (error) throw error;
+      }
       
       toast({
         title: "Sucesso",
-        description: "Chave API da Valorion atualizada!"
+        description: "Configurações da Valorion atualizadas!"
       });
       setShowValorionConfigDialog(false);
     } catch (error) {
-      console.error('Error saving Valorion API key:', error);
+      console.error('Error saving Valorion settings:', error);
       toast({
         title: "Erro",
-        description: "Falha ao salvar chave API",
+        description: "Falha ao salvar configurações da Valorion",
         variant: "destructive"
       });
     }
@@ -1336,7 +1346,7 @@ export const MultiAcquirersSection = () => {
                 Configurar Valorion
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Configure sua chave API da Valorion para usar a integração.
+                Configure sua chave API e o endpoint de criação de cobrança PIX da Valorion.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4 py-4">
@@ -1351,6 +1361,21 @@ export const MultiAcquirersSection = () => {
                 />
                 <p className="text-xs text-muted-foreground">
                   Obtenha sua chave API no painel da Valorion
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="valorion-api-url">Endpoint de criação (URL)</Label>
+                <Input
+                  id="valorion-api-url"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://..."
+                  value={valorionApiUrl}
+                  onChange={(e) => setValorionApiUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Cole a URL exata do endpoint de criação PIX (se vazio, usa o padrão do sistema).
                 </p>
               </div>
             </div>
