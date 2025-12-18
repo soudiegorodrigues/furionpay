@@ -139,6 +139,18 @@ export function PremiacoesSection() {
       return null;
     }
   };
+  const formatCurrencyInput = (value: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const parseCurrencyInput = (formatted: string): number => {
+    const numbers = formatted.replace(/[R$\s.]/g, '').replace(',', '.');
+    return parseFloat(numbers) || 0;
+  };
+
   const openCreateDialog = () => {
     setEditingReward(null);
     setFormData({
@@ -157,7 +169,7 @@ export function PremiacoesSection() {
     setFormData({
       name: reward.name,
       description: reward.description || "",
-      threshold_amount: reward.threshold_amount.toString(),
+      threshold_amount: formatCurrencyInput(reward.threshold_amount),
       delivery_method: reward.delivery_method,
       is_active: reward.is_active
     });
@@ -179,11 +191,13 @@ export function PremiacoesSection() {
           imageUrl = uploadedUrl;
         }
       }
+      const thresholdValue = parseCurrencyInput(formData.threshold_amount);
+      
       const rewardData = {
         name: formData.name,
         description: formData.description || null,
         image_url: imageUrl,
-        threshold_amount: parseFloat(formData.threshold_amount),
+        threshold_amount: thresholdValue,
         delivery_method: formData.delivery_method,
         is_active: formData.is_active
       };
@@ -452,10 +466,24 @@ export function PremiacoesSection() {
 
             <div>
               <Label htmlFor="threshold">Valor de faturamento necessário (R$) *</Label>
-              <Input id="threshold" type="number" value={formData.threshold_amount} onChange={e => setFormData({
-              ...formData,
-              threshold_amount: e.target.value
-            })} placeholder="10000" />
+              <Input 
+                id="threshold" 
+                type="text" 
+                value={formData.threshold_amount} 
+                onChange={e => {
+                  const raw = e.target.value.replace(/\D/g, '');
+                  const cents = parseInt(raw) || 0;
+                  const formatted = new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                  }).format(cents / 100);
+                  setFormData({
+                    ...formData,
+                    threshold_amount: formatted
+                  });
+                }} 
+                placeholder="R$ 0,00" 
+              />
             </div>
 
             <div>
