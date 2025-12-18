@@ -626,11 +626,11 @@ export const ReceitaPlataformaSection = () => {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
-                        { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
-                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' },
-                        { name: 'Valorion', value: valorionData.cost, color: '#8B5CF6' }
-                      ].filter(d => d.value > 0)}
+                        { name: 'SpedPay', value: spedpayData.cost, count: spedpayData.count, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: interData.cost, count: interData.count, color: '#F97316' },
+                        { name: 'Ativus Hub', value: ativusData.cost, count: ativusData.count, color: '#10B981' },
+                        { name: 'Valorion', value: valorionData.cost, count: valorionData.count, color: '#8B5CF6' }
+                      ].filter(d => d.count > 0)}
                       cx="50%"
                       cy="50%"
                       innerRadius={40}
@@ -641,11 +641,11 @@ export const ReceitaPlataformaSection = () => {
                       labelLine={false}
                     >
                       {[
-                        { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
-                        { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
-                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' },
-                        { name: 'Valorion', value: valorionData.cost, color: '#8B5CF6' }
-                      ].filter(d => d.value > 0).map((entry, index) => (
+                        { name: 'SpedPay', value: spedpayData.cost, count: spedpayData.count, color: '#3B82F6' },
+                        { name: 'Banco Inter', value: interData.cost, count: interData.count, color: '#F97316' },
+                        { name: 'Ativus Hub', value: ativusData.cost, count: ativusData.count, color: '#10B981' },
+                        { name: 'Valorion', value: valorionData.cost, count: valorionData.count, color: '#8B5CF6' }
+                      ].filter(d => d.count > 0).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
