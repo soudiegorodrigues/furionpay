@@ -158,6 +158,41 @@ export const MultiAcquirersSection = () => {
       
       if (error) throw error;
       
+      // Se desativando, remover do fluxo de retentativas
+      if (!enabled) {
+        // 1. Remover a etapa do adquirente
+        const { error: deleteError } = await supabase
+          .from('retry_flow_steps')
+          .delete()
+          .eq('acquirer', acquirer)
+          .eq('payment_method', 'pix');
+        
+        if (deleteError) {
+          console.error('Erro ao remover do fluxo:', deleteError);
+        } else {
+          // 2. Buscar etapas restantes e reordenar
+          const { data: remainingSteps } = await supabase
+            .from('retry_flow_steps')
+            .select('id')
+            .eq('payment_method', 'pix')
+            .order('step_order', { ascending: true });
+          
+          if (remainingSteps && remainingSteps.length > 0) {
+            // 3. Atualizar ordem sequencial
+            const updatePromises = remainingSteps.map((step, index) => 
+              supabase
+                .from('retry_flow_steps')
+                .update({ step_order: index + 1, updated_at: new Date().toISOString() })
+                .eq('id', step.id)
+            );
+            await Promise.all(updatePromises);
+          }
+          
+          // 4. Forçar re-render do RetryConfigSection
+          setRetryConfigKey(prev => prev + 1);
+        }
+      }
+      
       if (acquirer === 'inter') {
         setInterEnabled(enabled);
       } else if (acquirer === 'spedpay') {
@@ -172,7 +207,7 @@ export const MultiAcquirersSection = () => {
       
       toast({
         title: enabled ? "Adquirente Ativada" : "Adquirente Desativada",
-        description: `${acquirerNames[acquirer]} foi ${enabled ? 'ativada' : 'desativada'} com sucesso.`
+        description: `${acquirerNames[acquirer]} foi ${enabled ? 'ativada' : 'desativada'} com sucesso.${!enabled ? ' Removida do fluxo de retentativas.' : ''}`
       });
     } catch (error) {
       console.error('Error toggling acquirer:', error);
