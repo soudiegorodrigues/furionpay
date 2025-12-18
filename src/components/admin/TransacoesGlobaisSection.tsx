@@ -19,6 +19,7 @@ interface Transaction {
   paid_at: string | null;
   user_email: string | null;
   utm_data: { utm_term?: string; utm_source?: string } | null;
+  acquirer: string | null;
   total_count: number;
 }
 
@@ -107,6 +108,19 @@ export const TransacoesGlobaisSection = () => {
     }
   };
 
+  const getAcquirerBadge = (acquirer: string | null) => {
+    switch (acquirer?.toLowerCase()) {
+      case 'inter':
+        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Inter</Badge>;
+      case 'spedpay':
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">SpedPay</Badge>;
+      case 'ativus':
+        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Ativus</Badge>;
+      default:
+        return <Badge variant="outline" className="text-muted-foreground">-</Badge>;
+    }
+  };
+
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -179,6 +193,7 @@ export const TransacoesGlobaisSection = () => {
                     <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                     <TableHead className="text-xs">Valor</TableHead>
                     <TableHead className="text-xs hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="text-xs hidden sm:table-cell">Adquirente</TableHead>
                     <TableHead className="text-xs hidden md:table-cell">Posicionamento</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -202,6 +217,9 @@ export const TransacoesGlobaisSection = () => {
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {getStatusBadge(tx.status)}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {getAcquirerBadge(tx.acquirer)}
                       </TableCell>
                       <TableCell className="text-xs hidden md:table-cell max-w-[100px] truncate">
                         {tx.utm_data?.utm_term || '-'}
