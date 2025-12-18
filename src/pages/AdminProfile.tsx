@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/AdminSidebar";
-import { User, Save, AlertTriangle, Trash2 } from "lucide-react";
+import { User, Save, AlertTriangle, Trash2, Shield, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function AdminProfile() {
-  const { user } = useAdminAuth();
+  const { user, updatePassword } = useAdminAuth();
   const { toast } = useToast();
   
   const [displayName, setDisplayName] = useState("");
@@ -33,6 +33,12 @@ export default function AdminProfile() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
   // Load profile name from database
@@ -90,6 +96,75 @@ export default function AdminProfile() {
       });
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A nova senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      // Verify current password
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+
+      if (authError) {
+        toast({
+          title: "Erro",
+          description: "Senha atual incorreta",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update password
+      const { error } = await updatePassword(newPassword);
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Senha alterada com sucesso",
+      });
+
+      // Clear fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao alterar senha",
+        variant: "destructive",
+      });
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -203,6 +278,65 @@ export default function AdminProfile() {
               >
                 <Save className="h-4 w-4 mr-2" />
                 {savingName ? "Salvando..." : "Salvar Nome"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Segurança */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Segurança
+              </CardTitle>
+              <CardDescription>
+                Gerencie a segurança da sua conta
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Senha Atual</Label>
+                <Input 
+                  id="currentPassword" 
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Digite sua senha atual"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nova Senha</Label>
+                <Input 
+                  id="newPassword" 
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Digite a nova senha"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mínimo de 6 caracteres
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmNewPassword">Confirmar Nova Senha</Label>
+                <Input 
+                  id="confirmNewPassword" 
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="Confirme a nova senha"
+                />
+              </div>
+
+              <Button 
+                onClick={handleChangePassword} 
+                disabled={changingPassword}
+                className="w-full sm:w-auto"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                {changingPassword ? "Alterando..." : "Alterar Senha"}
               </Button>
             </CardContent>
           </Card>
