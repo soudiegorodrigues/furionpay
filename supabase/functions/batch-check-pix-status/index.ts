@@ -9,6 +9,7 @@ const corsHeaders = {
 const SPEDPAY_API_URL = 'https://api.spedpay.space';
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/getTransactionStatus.php';
+const VALORION_STATUS_URL = 'https://app.valorion.com.br/api/s1/getTransaction/api/getTransactionStatus.php';
 
 // Retry with exponential backoff configuration
 const RETRY_CONFIG = {
@@ -37,6 +38,7 @@ const circuitBreakers: Record<string, CircuitBreakerState> = {
   spedpay: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   inter: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   ativus: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
+  valorion: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
 };
 
 // Circuit Breaker functions
@@ -270,6 +272,36 @@ async function getAtivusApiKey(supabase: any, userId?: string): Promise<string |
     .select('value')
     .is('user_id', null)
     .eq('key', 'ativus_api_key')
+    .maybeSingle();
+  
+  if (!globalError && globalData?.value) {
+    return globalData.value;
+  }
+  
+  return null;
+}
+
+async function getValorionApiKey(supabase: any, userId?: string): Promise<string | null> {
+  // Try user-specific setting first
+  if (userId) {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('user_id', userId)
+      .eq('key', 'valorion_api_key')
+      .maybeSingle();
+    
+    if (!error && data?.value) {
+      return data.value;
+    }
+  }
+  
+  // Try global setting
+  const { data: globalData, error: globalError } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .is('user_id', null)
+    .eq('key', 'valorion_api_key')
     .maybeSingle();
   
   if (!globalError && globalData?.value) {
@@ -554,6 +586,76 @@ async function checkAtivusStatus(
   }
 }
 
+async function checkValorionStatus(
+  idTransaction: string,
+  apiKey: string
+): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
+  // Check circuit breaker
+  if (isCircuitOpen('valorion')) {
+    return { isPaid: false, status: 'circuit_open' };
+  }
+
+  // Build auth header
+  const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
+  const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
+
+  const statusUrl = `${VALORION_STATUS_URL}?id_transaction=${idTransaction}`;
+  
+  console.log(`Checking Valorion status for id_transaction: ${idTransaction}`);
+
+  try {
+    const response = await fetchWithRetry(
+      statusUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json',
+        },
+      },
+      `Batch Valorion status check for ${idTransaction}`
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Valorion API error for ${idTransaction}:`, response.status, errorText);
+      recordFailure('valorion');
+      return { isPaid: false, status: 'error' };
+    }
+
+    const data = await response.json();
+    
+    console.log(`Valorion FULL response for ${idTransaction}:`, JSON.stringify(data));
+
+    // Success - reset circuit breaker
+    recordSuccess('valorion');
+
+    // Check multiple possible status fields
+    const situacao = (data.situacao || data.status || data.data?.status || '').toString().toUpperCase();
+    const paidAt = data.data_transacao || data.paidAt || data.data?.paidAt || null;
+    
+    console.log(`Valorion parsed status for ${idTransaction}: situacao="${situacao}", paidAt="${paidAt}"`);
+    
+    // Check for all possible paid status values
+    const paidStatuses = ['PAID_OUT', 'CONCLUIDO', 'CONCLUÍDA', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'];
+    const isPaid = paidStatuses.includes(situacao);
+
+    if (isPaid) {
+      console.log(`*** VALORION TRANSACTION ${idTransaction} IS PAID! Status: ${situacao} ***`);
+    }
+
+    return {
+      isPaid,
+      status: situacao,
+      paidAt: paidAt || undefined,
+    };
+  } catch (err) {
+    console.error(`Valorion status check failed after retries for ${idTransaction}:`, err);
+    recordFailure('valorion');
+    return { isPaid: false, status: 'retry_failed' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -592,6 +694,7 @@ serve(async (req) => {
     const userAcquirers: Record<string, string> = {};
     const userApiKeys: Record<string, string | null> = {};
     const userAtivusKeys: Record<string, string | null> = {};
+    const userValorionKeys: Record<string, string | null> = {};
     const defaultApiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
 
     // Setup Inter client once if needed
@@ -705,6 +808,46 @@ serve(async (req) => {
             }
           } else {
             results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', inter_status: interResult.status, acquirer: 'inter' });
+          }
+        } else if (acquirer === 'valorion') {
+          // Check with Valorion
+          let valorionApiKey: string | null = null;
+          
+          if (transaction.user_id) {
+            if (!(transaction.user_id in userValorionKeys)) {
+              userValorionKeys[transaction.user_id] = await getValorionApiKey(supabase, transaction.user_id);
+            }
+            valorionApiKey = userValorionKeys[transaction.user_id];
+          }
+          
+          if (!valorionApiKey) {
+            valorionApiKey = await getValorionApiKey(supabase);
+          }
+          
+          if (!valorionApiKey) {
+            console.log(`Skipping Valorion transaction ${transaction.id} - no API key available`);
+            results.push({ id: transaction.id, txid: transaction.txid, status: 'skipped', reason: 'no_valorion_key', acquirer: 'valorion' });
+            continue;
+          }
+
+          const valorionResult = await checkValorionStatus(transaction.txid, valorionApiKey);
+          
+          if (valorionResult.isPaid) {
+            console.log(`Marking transaction ${transaction.txid} as paid (Valorion)`);
+            
+            const { error: updateError } = await supabase.rpc('mark_pix_paid', {
+              p_txid: transaction.txid
+            });
+
+            if (updateError) {
+              console.error(`Error updating transaction ${transaction.txid}:`, updateError);
+              results.push({ id: transaction.id, txid: transaction.txid, status: 'update_error', reason: updateError.message });
+            } else {
+              updatedCount++;
+              results.push({ id: transaction.id, txid: transaction.txid, status: 'updated_to_paid', amount: transaction.amount, acquirer: 'valorion' });
+            }
+          } else {
+            results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', valorion_status: valorionResult.status, acquirer: 'valorion' });
           }
         } else {
           // Check with SpedPay
