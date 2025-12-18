@@ -338,6 +338,31 @@ export default function AdminProfile() {
                 <Lock className="h-4 w-4 mr-2" />
                 {changingPassword ? "Alterando..." : "Alterar Senha"}
               </Button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!user?.email) return;
+                  const { error } = await supabase.functions.invoke('send-password-reset', {
+                    body: { email: user.email }
+                  });
+                  if (error) {
+                    toast({
+                      title: "Erro",
+                      description: "Erro ao enviar email de recuperação",
+                      variant: "destructive",
+                    });
+                  } else {
+                    toast({
+                      title: "Email enviado",
+                      description: "Verifique sua caixa de entrada para redefinir a senha",
+                    });
+                  }
+                }}
+                className="text-sm text-primary hover:underline"
+              >
+                Esqueceu a senha?
+              </button>
             </CardContent>
           </Card>
 
