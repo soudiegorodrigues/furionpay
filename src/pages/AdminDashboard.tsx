@@ -924,7 +924,7 @@ const AdminDashboard = () => {
                   
                   {/* Botão Resgatar */}
                   <div className="flex justify-center">
-                    <Button className="bg-red-400/80 hover:bg-red-400 text-white font-medium py-1 px-3 text-[10px] shadow-sm">
+                    <Button className="bg-red-400/80 hover:bg-red-400 dark:bg-sidebar-accent dark:hover:bg-[hsl(0,0%,18%)] text-white font-medium py-1 px-3 text-[10px] shadow-sm dark:shadow-none dark:border dark:border-sidebar-border">
                       <Gift className="h-3 w-3 mr-1" />
                       Resgatar Recompensa
                     </Button>
