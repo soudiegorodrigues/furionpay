@@ -47,7 +47,7 @@ export const useConfetti = () => {
       particleCount: 80,
       spread: 60,
       origin: { y: 0.5, x: 0.5 },
-      colors: ['#22c55e', '#10b981', '#34d399', '#fbbf24', '#f59e0b'],
+      colors: ['#ef4444', '#dc2626', '#ffffff', '#fecaca', '#b91c1c'],
     });
 
     // Canhões laterais
@@ -57,14 +57,14 @@ export const useConfetti = () => {
         angle: 60,
         spread: 50,
         origin: { x: 0.1, y: 0.6 },
-        colors: ['#22c55e', '#10b981', '#fbbf24'],
+        colors: ['#ef4444', '#ffffff', '#dc2626'],
       });
       myConfetti({
         particleCount: 40,
         angle: 120,
         spread: 50,
         origin: { x: 0.9, y: 0.6 },
-        colors: ['#22c55e', '#10b981', '#fbbf24'],
+        colors: ['#ef4444', '#ffffff', '#dc2626'],
       });
     }, 100);
 
@@ -74,7 +74,7 @@ export const useConfetti = () => {
         particleCount: 50,
         spread: 80,
         origin: { y: 0.4, x: 0.5 },
-        colors: ['#22c55e', '#34d399', '#fbbf24', '#fff'],
+        colors: ['#ef4444', '#ffffff', '#fecaca', '#b91c1c'],
       });
     }, 200);
   };
