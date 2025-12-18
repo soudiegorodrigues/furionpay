@@ -93,17 +93,20 @@ export const CheckoutGlobalSection = () => {
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">Conversão Global Checkout</h2>
-            <p className="text-sm text-muted-foreground">Performance de todos os modelos de checkout</p>
-          </div>
-        </div>
+      <div className="max-w-5xl mx-auto">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Conversão Global Checkout</CardTitle>
+                <CardDescription>Performance de todos os modelos de checkout</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
 
         {/* Global Stats Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -186,6 +189,8 @@ export const CheckoutGlobalSection = () => {
             );
           })}
         </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Popup Previews */}
