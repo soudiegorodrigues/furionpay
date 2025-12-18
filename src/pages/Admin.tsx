@@ -23,6 +23,7 @@ import { NotificacoesSection } from "@/components/admin/NotificacoesSection";
 import { BackupsSection } from "@/components/admin/BackupsSection";
 import { AntiFraudeSection } from "@/components/admin/AntiFraudeSection";
 import { TemplatesListSection } from "@/components/admin/TemplatesListSection";
+import { AnimatedSection } from "@/components/admin/AnimatedSection";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -221,27 +222,29 @@ const Admin = () => {
     <div className="space-y-4 sm:space-y-6">
       <AdminNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
 
-      {activeSection === "faturamento" && <FaturamentoSection />}
-      {activeSection === "receita-plataforma" && <ReceitaPlataformaSection />}
-      {activeSection === "transacoes" && <TransacoesGlobaisSection />}
-      {activeSection === "ranking" && <RankingSection />}
-      {activeSection === "dominios" && <DominiosSection />}
-      {activeSection === "multi" && <MultiAcquirersSection />}
-      {activeSection === "usuarios" && <UsuariosSection />}
-      {activeSection === "zona-perigo" && <ZonaDePerigo />}
-      {activeSection === "checkout-global" && <CheckoutGlobalSection />}
-      {activeSection === "saques" && <SaquesGlobaisSection />}
-      {activeSection === "documentos" && <DocumentosSection />}
-      {activeSection === "personalizacao" && <PersonalizacaoSection userId={user?.id} />}
-      {activeSection === "email" && <EmailSection />}
-      {activeSection === "taxas" && <TaxasSection />}
-      {activeSection === "anti-fraude" && <AntiFraudeSection />}
-      {activeSection === "notificacoes" && <NotificacoesSection />}
-      {activeSection === "utm-debug" && <UTMDebugSection />}
-      {activeSection === "premiacoes" && <PremiacoesSection />}
-      {activeSection === "api-monitoring" && <ApiMonitoringSection />}
-      {activeSection === "backups" && <BackupsSection />}
-      {activeSection === "templates" && <TemplatesListSection />}
+      <AnimatedSection sectionKey={activeSection}>
+        {activeSection === "faturamento" && <FaturamentoSection />}
+        {activeSection === "receita-plataforma" && <ReceitaPlataformaSection />}
+        {activeSection === "transacoes" && <TransacoesGlobaisSection />}
+        {activeSection === "ranking" && <RankingSection />}
+        {activeSection === "dominios" && <DominiosSection />}
+        {activeSection === "multi" && <MultiAcquirersSection />}
+        {activeSection === "usuarios" && <UsuariosSection />}
+        {activeSection === "zona-perigo" && <ZonaDePerigo />}
+        {activeSection === "checkout-global" && <CheckoutGlobalSection />}
+        {activeSection === "saques" && <SaquesGlobaisSection />}
+        {activeSection === "documentos" && <DocumentosSection />}
+        {activeSection === "personalizacao" && <PersonalizacaoSection userId={user?.id} />}
+        {activeSection === "email" && <EmailSection />}
+        {activeSection === "taxas" && <TaxasSection />}
+        {activeSection === "anti-fraude" && <AntiFraudeSection />}
+        {activeSection === "notificacoes" && <NotificacoesSection />}
+        {activeSection === "utm-debug" && <UTMDebugSection />}
+        {activeSection === "premiacoes" && <PremiacoesSection />}
+        {activeSection === "api-monitoring" && <ApiMonitoringSection />}
+        {activeSection === "backups" && <BackupsSection />}
+        {activeSection === "templates" && <TemplatesListSection />}
+      </AnimatedSection>
     </div>
   );
 };
