@@ -359,7 +359,7 @@ export default function AdminProfile() {
                     });
                   }
                 }}
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-primary hover:underline mt-2 block"
               >
                 Esqueceu a senha?
               </button>
