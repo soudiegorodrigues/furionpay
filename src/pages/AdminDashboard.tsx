@@ -920,6 +920,14 @@ const AdminDashboard = () => {
                     <div className="h-2.5 bg-muted/50 rounded-full" />
                   </div>
                 </div> : rewardData ? (() => {
+                  // BOTÃO TEMPORÁRIO PARA TESTAR CONFETE - REMOVER DEPOIS
+                  const handleTestConfetti = () => {
+                    triggerConfetti();
+                    toast({
+                      title: "🎉 Teste de Confete!",
+                      description: "Animação disparada com sucesso!",
+                    });
+                  };
                   const { nextReward, progress, achieved } = rewardData;
                   
                   return <div className="space-y-4">
@@ -982,7 +990,7 @@ const AdminDashboard = () => {
                       </div>
                   
                       {/* Botão Resgatar */}
-                      <div className="flex justify-center">
+                      <div className="flex flex-col gap-2 items-center">
                         {achieved ? (
                           <Button className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 animate-pulse">
                             <Gift className="h-3 w-3 mr-1" />
@@ -994,6 +1002,16 @@ const AdminDashboard = () => {
                             Resgatar Recompensa
                           </Button>
                         )}
+                        
+                        {/* BOTÃO TEMPORÁRIO - REMOVER DEPOIS */}
+                        <Button 
+                          onClick={handleTestConfetti}
+                          variant="outline"
+                          size="sm"
+                          className="text-[10px] border-dashed border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                        >
+                          🎊 Testar Confete
+                        </Button>
                       </div>
                     </div>;
                 })() : <div className="text-center py-4">
