@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Verification {
@@ -303,15 +304,13 @@ export function DocumentosSection() {
 
           <TabsContent value={activeTab} className="mt-4 sm:mt-6">
             {loading ? (
-              <div className="space-y-3 sm:space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="p-4 sm:p-6 border rounded-lg">
-                    <div className="animate-pulse space-y-2 sm:space-y-3">
-                      <div className="h-4 bg-muted rounded w-1/3"></div>
-                      <div className="h-4 bg-muted rounded w-1/2"></div>
-                    </div>
-                  </div>
-                ))}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="animate-pulse">
+                  <div className="h-12 bg-muted/50"></div>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-16 border-t bg-muted/20"></div>
+                  ))}
+                </div>
               </div>
             ) : filteredVerifications.length === 0 ? (
               <div className="p-8 sm:p-12 text-center border rounded-lg">
@@ -321,76 +320,75 @@ export function DocumentosSection() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3 sm:space-y-4">
-                {filteredVerifications.map(verification => (
-                  <div key={verification.id} className="p-4 sm:p-6 border rounded-lg">
-                    <div className="flex flex-col gap-3 sm:gap-4">
-                      {/* User info */}
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          {verification.person_type === "pf" ? (
-                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                          ) : (
-                            <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm sm:text-base truncate">{verification.user_email}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {verification.person_type === "pf" ? "Pessoa Física" : "Pessoa Jurídica"} • {documentTypeLabels[verification.document_type_selected] || verification.document_type_selected}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(verification.created_at).toLocaleString("pt-BR")}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Actions */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        {getStatusBadge(verification.status)}
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-                          onClick={() => handleViewDocuments(verification)}
-                        >
-                          <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                          Ver
-                        </Button>
-                        {verification.status === "pending" && (
-                          <>
-                            <Button 
-                              size="sm"
-                              className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-                              onClick={() => handleApprove(verification)}
-                              disabled={isProcessing(verification.id)}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="text-xs font-semibold">Nome</TableHead>
+                        <TableHead className="text-xs font-semibold hidden sm:table-cell">Email</TableHead>
+                        <TableHead className="text-xs font-semibold text-center">Tipo</TableHead>
+                        <TableHead className="text-xs font-semibold text-center">Status</TableHead>
+                        <TableHead className="text-xs font-semibold text-center">Documentos</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredVerifications.map(verification => (
+                        <TableRow key={verification.id} className="hover:bg-muted/30">
+                          <TableCell className="py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                {verification.person_type === "pf" ? (
+                                  <User className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Building2 className="h-4 w-4 text-primary" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm truncate max-w-[150px] sm:max-w-[200px]">
+                                  {verification.user_email.split('@')[0]}
+                                </p>
+                                <p className="text-xs text-muted-foreground sm:hidden truncate max-w-[150px]">
+                                  {verification.user_email}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
+                              {verification.user_email}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge 
+                              variant="outline" 
+                              className={verification.person_type === "pf" 
+                                ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs" 
+                                : "bg-purple-500/10 text-purple-600 border-purple-500/30 text-xs"
+                              }
                             >
-                              {isProcessing(verification.id) ? (
-                                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-                              ) : (
-                                <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                              )}
-                              {isProcessing(verification.id) ? "..." : "Aprovar"}
-                            </Button>
+                              {verification.person_type === "pf" ? "PF" : "PJ"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {getStatusBadge(verification.status)}
+                          </TableCell>
+                          <TableCell className="text-center">
                             <Button 
-                              variant="destructive" 
+                              variant="outline" 
                               size="sm"
-                              className="text-xs sm:text-sm h-8 px-2 sm:px-3"
-                              onClick={() => {
-                                setSelectedVerification(verification);
-                                setRejectDialogOpen(true);
-                              }}
-                              disabled={isProcessing(verification.id)}
+                              className="text-xs h-8 px-3"
+                              onClick={() => handleViewDocuments(verification)}
                             >
-                              <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                              Rejeitar
+                              <Eye className="h-3.5 w-3.5 mr-1.5" />
+                              Ver
                             </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             )}
           </TabsContent>
