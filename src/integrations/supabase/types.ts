@@ -2260,7 +2260,7 @@ export type Database = {
             }[]
           }
       get_platform_revenue_stats: {
-        Args: { p_acquirer_cost_filter?: string; p_user_email?: string }
+        Args: { p_filter?: string; p_user_email?: string }
         Returns: Json
       }
       get_platform_unique_users: { Args: never; Returns: Json }
