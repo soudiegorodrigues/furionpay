@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Percent, Plus, Edit2, Trash2, Clock, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -226,63 +227,90 @@ export const TaxasSection = () => {
     repassePercentage?: number;
     repasseDays?: number;
   }) => (
-    <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-      <span className="font-medium text-xs">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{formatPercentage(percentage)}</span>
-        <span className="text-xs font-medium">{formatCurrency(fixed)}</span>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 py-2.5 border-b border-border/50 last:border-0">
+      <span className="font-medium text-sm">{label}</span>
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <span className="text-xs sm:text-sm bg-muted px-2 py-0.5 rounded font-medium">{formatPercentage(percentage)}</span>
+        <span className="text-xs sm:text-sm font-semibold">{formatCurrency(fixed)}</span>
         {repassePercentage !== undefined && repasseDays !== undefined && (
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
-            <Clock className="h-2.5 w-2.5" />
-            {repassePercentage}% | D+{repasseDays}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
+            <Clock className="h-3 w-3" />
+            <span>{repassePercentage}% | D+{repasseDays}</span>
           </div>
         )}
       </div>
     </div>
   );
 
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="border-l-4 border-l-muted">
+          <CardHeader className="pb-2 px-3 sm:px-4 pt-3">
+            <Skeleton className="h-5 w-24" />
+          </CardHeader>
+          <CardContent className="space-y-3 px-3 sm:px-4 pb-3">
+            {[1, 2, 3, 4].map((j) => (
+              <div key={j} className="flex justify-between items-center py-2">
+                <Skeleton className="h-4 w-16" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-5 w-16" />
+                  <Skeleton className="h-5 w-20" />
+                </div>
+              </div>
+            ))}
+            <div className="flex gap-2 pt-2">
+              <Skeleton className="h-9 flex-1" />
+              <Skeleton className="h-9 w-9" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Percent className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Percent className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Taxas
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Configurar taxas de transação</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Configurar taxas de transação</p>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <h3 className="text-xl font-bold">Controle de Taxas</h3>
-            <Button onClick={handleCreateNew} className="gap-2 w-full sm:w-auto">
+        <CardContent className="px-3 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <h3 className="text-lg sm:text-xl font-bold">Controle de Taxas</h3>
+            <Button onClick={handleCreateNew} className="gap-2 w-full sm:w-auto h-9 sm:h-10">
               <Plus className="h-4 w-4" />
-              Criar nova taxa
+              <span className="text-sm">Criar nova taxa</span>
             </Button>
           </div>
 
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Carregando...
-            </div>
+            <LoadingSkeleton />
           ) : feeConfigs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhuma taxa configurada. Clique em "Criar nova taxa" para começar.
+            <div className="text-center py-8 sm:py-12 text-muted-foreground">
+              <Percent className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">Nenhuma taxa configurada.</p>
+              <p className="text-xs mt-1">Clique em "Criar nova taxa" para começar.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {feeConfigs.map((config) => (
-                <Card key={config.id} className="border-l-4 border-l-primary">
-                  <CardHeader className="pb-1 px-4 pt-3">
-                    <CardTitle className="text-sm text-primary">
-                      {config.name}
+                <Card key={config.id} className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-1 px-3 sm:px-4 pt-3">
+                    <CardTitle className="text-sm sm:text-base text-primary flex items-center gap-2 flex-wrap">
+                      <span className="truncate">{config.name}</span>
                       {config.is_default && (
-                        <span className="ml-2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] sm:text-xs bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
                           Padrão
                         </span>
                       )}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-0 px-4 pb-3">
+                  <CardContent className="space-y-0 px-3 sm:px-4 pb-3">
                     <FeeRow
                       label="PIX"
                       percentage={config.pix_percentage}
@@ -304,11 +332,11 @@ export const TaxasSection = () => {
                       repassePercentage={config.cartao_repasse_percentage}
                       repasseDays={config.cartao_repasse_days}
                     />
-                    <div className="flex items-center justify-between py-2">
-                      <span className="font-medium text-xs">SAQUE</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{formatPercentage(config.saque_percentage)}</span>
-                        <span className="text-xs font-medium">{formatCurrency(config.saque_fixed)}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 py-2.5">
+                      <span className="font-medium text-sm">SAQUE</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="text-xs sm:text-sm bg-muted px-2 py-0.5 rounded font-medium">{formatPercentage(config.saque_percentage)}</span>
+                        <span className="text-xs sm:text-sm font-semibold">{formatCurrency(config.saque_fixed)}</span>
                       </div>
                     </div>
 
@@ -316,20 +344,20 @@ export const TaxasSection = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 gap-1 text-xs h-8"
+                        className="flex-1 gap-1.5 text-xs sm:text-sm h-9"
                         onClick={() => handleEdit(config)}
                       >
-                        <Edit2 className="h-3 w-3" />
+                        <Edit2 className="h-3.5 w-3.5" />
                         Editar
                       </Button>
                       {!config.is_default && (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1 text-destructive hover:text-destructive h-8 px-2"
+                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 p-0"
                           onClick={() => handleDelete(config)}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
@@ -343,28 +371,29 @@ export const TaxasSection = () => {
 
       {/* Edit/Create Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               {selectedConfig ? 'Editar Taxa' : 'Criar Nova Taxa'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
             <div>
-              <Label htmlFor="name">Nome da Taxa</Label>
+              <Label htmlFor="name" className="text-sm">Nome da Taxa</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ex: Produtor, Sociedade, etc."
+                className="mt-1.5"
               />
             </div>
 
             {/* PIX */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm text-primary">PIX</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                 <div>
                   <Label className="text-xs">Taxa (%)</Label>
                   <Input
@@ -372,15 +401,17 @@ export const TaxasSection = () => {
                     step="0.01"
                     value={formData.pix_percentage}
                     onChange={(e) => setFormData({ ...formData, pix_percentage: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                  <Label className="text-xs">Fixo (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.pix_fixed}
                     onChange={(e) => setFormData({ ...formData, pix_fixed: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -390,6 +421,7 @@ export const TaxasSection = () => {
                     step="1"
                     value={formData.pix_repasse_percentage}
                     onChange={(e) => setFormData({ ...formData, pix_repasse_percentage: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -399,6 +431,7 @@ export const TaxasSection = () => {
                     step="1"
                     value={formData.pix_repasse_days}
                     onChange={(e) => setFormData({ ...formData, pix_repasse_days: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
               </div>
@@ -407,7 +440,7 @@ export const TaxasSection = () => {
             {/* BOLETO */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm text-primary">BOLETO</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                 <div>
                   <Label className="text-xs">Taxa (%)</Label>
                   <Input
@@ -415,15 +448,17 @@ export const TaxasSection = () => {
                     step="0.01"
                     value={formData.boleto_percentage}
                     onChange={(e) => setFormData({ ...formData, boleto_percentage: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                  <Label className="text-xs">Fixo (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.boleto_fixed}
                     onChange={(e) => setFormData({ ...formData, boleto_fixed: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -433,6 +468,7 @@ export const TaxasSection = () => {
                     step="1"
                     value={formData.boleto_repasse_percentage}
                     onChange={(e) => setFormData({ ...formData, boleto_repasse_percentage: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -442,6 +478,7 @@ export const TaxasSection = () => {
                     step="1"
                     value={formData.boleto_repasse_days}
                     onChange={(e) => setFormData({ ...formData, boleto_repasse_days: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
               </div>
@@ -450,7 +487,7 @@ export const TaxasSection = () => {
             {/* CARTÃO */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm text-primary">CARTÃO</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                 <div>
                   <Label className="text-xs">Taxa (%)</Label>
                   <Input
@@ -458,15 +495,17 @@ export const TaxasSection = () => {
                     step="0.01"
                     value={formData.cartao_percentage}
                     onChange={(e) => setFormData({ ...formData, cartao_percentage: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                  <Label className="text-xs">Fixo (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.cartao_fixed}
                     onChange={(e) => setFormData({ ...formData, cartao_fixed: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -476,6 +515,7 @@ export const TaxasSection = () => {
                     step="1"
                     value={formData.cartao_repasse_percentage}
                     onChange={(e) => setFormData({ ...formData, cartao_repasse_percentage: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -485,6 +525,7 @@ export const TaxasSection = () => {
                     step="1"
                     value={formData.cartao_repasse_days}
                     onChange={(e) => setFormData({ ...formData, cartao_repasse_days: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
               </div>
@@ -493,7 +534,7 @@ export const TaxasSection = () => {
             {/* SAQUE */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm text-primary">TAXA DE SAQUE</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <div>
                   <Label className="text-xs">Taxa (%)</Label>
                   <Input
@@ -501,26 +542,37 @@ export const TaxasSection = () => {
                     step="0.01"
                     value={formData.saque_percentage}
                     onChange={(e) => setFormData({ ...formData, saque_percentage: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Valor Fixo (R$)</Label>
+                  <Label className="text-xs">Fixo (R$)</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.saque_fixed}
                     onChange={(e) => setFormData({ ...formData, saque_fixed: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)} disabled={isSaving}>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setEditDialogOpen(false)} 
+                disabled={isSaving}
+                className="w-full sm:w-auto h-10"
+              >
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={isSaving}>
+              <Button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                className="w-full sm:w-auto h-10"
+              >
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? 'Salvando...' : 'Salvar'}
               </Button>
@@ -531,16 +583,19 @@ export const TaxasSection = () => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[95vw] max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Taxa</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir a taxa "{selectedConfig?.name}"? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
