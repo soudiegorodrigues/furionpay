@@ -134,10 +134,27 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
     }
   };
 
-  const handleClear = async () => {
-    setBannerUrl("");
+  const handleRemoveBanner = async () => {
     setIsSaving(true);
     try {
+      // Delete file from Storage if it's a Supabase Storage URL
+      if (bannerUrl && bannerUrl.includes('/banners/')) {
+        const urlParts = bannerUrl.split('/banners/');
+        if (urlParts[1]) {
+          const filePath = urlParts[1].split('?')[0]; // Remove query params
+          if (filePath) {
+            const { error: deleteError } = await supabase.storage
+              .from('banners')
+              .remove([filePath]);
+            
+            if (deleteError) {
+              console.error('Error deleting file from storage:', deleteError);
+            }
+          }
+        }
+      }
+
+      // Clear URL from database
       const { error } = await supabase.rpc('update_user_setting', {
         setting_key: 'dashboard_banner_url',
         setting_value: ''
@@ -145,12 +162,14 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
       
       if (error) throw error;
       
+      setBannerUrl("");
+      
       toast({
         title: "Sucesso",
         description: "Banner removido com sucesso!"
       });
     } catch (error: any) {
-      console.error('Error clearing banner:', error);
+      console.error('Error removing banner:', error);
       toast({
         title: "Erro",
         description: "Erro ao remover banner",
@@ -182,6 +201,38 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Banner Atual - Mostrar primeiro se existir */}
+          {bannerUrl && (
+            <div className="space-y-3 pb-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Banner Atual</Label>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={handleRemoveBanner} 
+                  disabled={isSaving || isUploading}
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  Remover Banner
+                </Button>
+              </div>
+              <div className="rounded-lg overflow-hidden border border-border">
+                <img
+                  src={bannerUrl}
+                  alt="Preview do banner"
+                  className="w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px]"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Guia de Tamanho Recomendado */}
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
@@ -227,7 +278,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="upload" className="flex items-center gap-2">
                 <Upload className="h-4 w-4" />
-                Enviar Imagem
+                {bannerUrl ? 'Trocar Imagem' : 'Enviar Imagem'}
               </TabsTrigger>
               <TabsTrigger value="url" className="flex items-center gap-2">
                 <Link className="h-4 w-4" />
@@ -285,26 +336,6 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
               </Button>
             </TabsContent>
           </Tabs>
-
-          {bannerUrl && (
-            <div className="space-y-2 pt-4 border-t border-border">
-              <Label>Pré-visualização</Label>
-              <div className="rounded-lg overflow-hidden border border-border">
-                <img
-                  src={bannerUrl}
-                  alt="Preview do banner"
-                  className="w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px]"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </div>
-              <Button variant="outline" onClick={handleClear} disabled={isSaving || isUploading}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Remover Banner
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
