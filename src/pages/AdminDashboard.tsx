@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useConfetti } from "@/hooks/useConfetti";
 import { AccessDenied } from "@/components/AccessDenied";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -149,6 +150,8 @@ const AdminDashboard = () => {
   const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [userName, setUserName] = useState<string>("");
   const navigate = useNavigate();
+  const { triggerConfetti } = useConfetti();
+  const previousAchievedRef = useRef<string | null>(null);
   const {
     toast
   } = useToast();
@@ -157,6 +160,41 @@ const AdminDashboard = () => {
     user,
     signOut
   } = useAdminAuth();
+
+  // Calcular próxima meta fora do JSX para poder usar em useEffect
+  const rewardData = useMemo(() => {
+    if (rewards.length === 0) return null;
+    
+    const sortedRewards = [...rewards].sort((a, b) => a.threshold_amount - b.threshold_amount);
+    const nextReward = sortedRewards.find(r => stats.total_amount_paid < r.threshold_amount) 
+      || sortedRewards[sortedRewards.length - 1];
+    
+    const progress = Math.min(stats.total_amount_paid / nextReward.threshold_amount * 100, 100);
+    const achieved = stats.total_amount_paid >= nextReward.threshold_amount;
+    
+    return { nextReward, progress, achieved };
+  }, [rewards, stats.total_amount_paid]);
+
+  // Disparar confete quando meta for conquistada
+  useEffect(() => {
+    if (!rewardData || !rewardData.achieved) return;
+    
+    const rewardId = rewardData.nextReward.id;
+    const celebratedKey = `celebrated_reward_${rewardId}`;
+    const wasCelebrated = localStorage.getItem(celebratedKey);
+    
+    // Só dispara se ainda não foi celebrado e não é a mesma meta
+    if (!wasCelebrated && previousAchievedRef.current !== rewardId) {
+      triggerConfetti();
+      localStorage.setItem(celebratedKey, 'true');
+      previousAchievedRef.current = rewardId;
+      
+      toast({
+        title: "🎉 Parabéns!",
+        description: `Você conquistou: ${rewardData.nextReward.name}!`,
+      });
+    }
+  }, [rewardData, triggerConfetti, toast]);
 
   // Load period stats when dateFilter changes
   const loadPeriodStats = async (period: DateFilter) => {
@@ -881,14 +919,8 @@ const AdminDashboard = () => {
                   <div className="space-y-1">
                     <div className="h-2.5 bg-muted/50 rounded-full" />
                   </div>
-                </div> : rewards.length > 0 ? (() => {
-                  // Ordenar por threshold_amount (menor primeiro) e encontrar próxima meta
-                  const sortedRewards = [...rewards].sort((a, b) => a.threshold_amount - b.threshold_amount);
-                  const nextReward = sortedRewards.find(r => stats.total_amount_paid < r.threshold_amount) 
-                    || sortedRewards[sortedRewards.length - 1];
-                  
-                  const progress = Math.min(stats.total_amount_paid / nextReward.threshold_amount * 100, 100);
-                  const achieved = stats.total_amount_paid >= nextReward.threshold_amount;
+                </div> : rewardData ? (() => {
+                  const { nextReward, progress, achieved } = rewardData;
                   
                   return <div className="space-y-4">
                     <div 
