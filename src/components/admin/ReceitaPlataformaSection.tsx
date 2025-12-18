@@ -184,8 +184,17 @@ export const ReceitaPlataformaSection = () => {
           week?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
           fortnight?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
           month?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
+          last_month?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
           year?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
           all_time?: { net_profit: number; gross_revenue: number; acquirer_cost: number; transaction_count: number };
+          acquirer_breakdown?: {
+            [key: string]: {
+              today: { count: number; cost: number; volume: number };
+              sevenDays: { count: number; cost: number; volume: number };
+              thisMonth: { count: number; cost: number; volume: number };
+              total: { count: number; cost: number; volume: number };
+            };
+          };
         };
         
         // Process JSON object structure from RPC
@@ -209,6 +218,11 @@ export const ReceitaPlataformaSection = () => {
           stats.gross.thisMonth = Number(rpcData.month.gross_revenue) || 0;
           stats.acquirerCosts.thisMonth = Number(rpcData.month.acquirer_cost) || 0;
         }
+        if (rpcData.last_month) {
+          stats.lastMonth = Number(rpcData.last_month.net_profit) || 0;
+          stats.gross.lastMonth = Number(rpcData.last_month.gross_revenue) || 0;
+          stats.acquirerCosts.lastMonth = Number(rpcData.last_month.acquirer_cost) || 0;
+        }
         if (rpcData.year) {
           stats.thisYear = Number(rpcData.year.net_profit) || 0;
           stats.gross.thisYear = Number(rpcData.year.gross_revenue) || 0;
@@ -221,11 +235,21 @@ export const ReceitaPlataformaSection = () => {
           stats.transactionCount = Number(rpcData.all_time.transaction_count) || 0;
         }
         
+        // Process acquirer breakdown
+        if (rpcData.acquirer_breakdown) {
+          stats.acquirerBreakdown = rpcData.acquirer_breakdown;
+        }
+        
         // Calculate derived stats
         stats.averageProfit = stats.transactionCount > 0 ? stats.total / stats.transactionCount : 0;
         stats.daysWithData = stats.sevenDays > 0 ? 7 : 0;
         stats.averageDailyProfit = stats.daysWithData > 0 ? stats.sevenDays / 7 : 0;
         stats.monthlyProjection = stats.averageDailyProfit * 30;
+        
+        // Calculate month over month change
+        if (stats.lastMonth > 0) {
+          stats.monthOverMonthChange = ((stats.thisMonth - stats.lastMonth) / stats.lastMonth) * 100;
+        }
         
         setProfitStats(stats);
       }
