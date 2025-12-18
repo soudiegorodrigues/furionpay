@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 // Valorion API URL from documentation
-const VALORION_API_URL = 'https://app.valorion.com.br/v2/pix/charge';
+// Note: If this URL doesn't work, check Valorion documentation for correct endpoint
+const VALORION_API_URL = 'https://app.valorion.com.br/api/v1/pix/charge';
 
 // Random names for anonymous donations
 const RANDOM_NAMES = [
