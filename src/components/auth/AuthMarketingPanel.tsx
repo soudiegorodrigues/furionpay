@@ -79,8 +79,9 @@ export function AuthMarketingPanel() {
         {/* Main headline */}
         <div className="space-y-3 mb-6">
           <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
-            Infraestrutura de pagamentos de
+            Infraestrutura de pagamentos
             <br />
+            <span className="text-white">de </span>
             <span className="text-primary">
               alta performance
             </span>
