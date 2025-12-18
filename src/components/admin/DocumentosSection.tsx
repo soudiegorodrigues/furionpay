@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileCheck, Eye, Check, X, User, Building2, Clock, CheckCircle, XCircle, FileText, Download } from "lucide-react";
+import { FileCheck, Eye, Check, X, User, Building2, Clock, CheckCircle, XCircle, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +41,7 @@ export function DocumentosSection() {
   const [userDocuments, setUserDocuments] = useState<UserDocument[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [processing, setProcessing] = useState(false);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const documentTypeLabels: Record<string, string> = {
     rg: "RG",
@@ -134,27 +134,43 @@ export function DocumentosSection() {
   };
 
   const handleApprove = async (verification: Verification) => {
-    setProcessing(true);
+    setProcessingId(verification.id);
+    
+    // Show immediate feedback
+    const loadingToast = toast({
+      title: "Processando...",
+      description: "Aprovando documentos e enviando notificação",
+    });
+
     try {
+      // Execute RPC call
       const { error } = await supabase.rpc('approve_document_verification', { 
         p_user_id: verification.user_id 
       });
       if (error) throw error;
 
-      await supabase.functions.invoke('send-document-verification-notification', {
+      // Optimistic update - remove from list immediately
+      setVerifications(prev => 
+        prev.map(v => v.id === verification.id ? { ...v, status: 'approved' } : v)
+      );
+
+      // Fire and forget - don't await email notification
+      supabase.functions.invoke('send-document-verification-notification', {
         body: {
           userId: verification.user_id,
           userEmail: verification.user_email,
           status: 'approved'
         }
-      });
+      }).catch(err => console.error("Email notification error:", err));
 
       toast({
-        title: "Sucesso",
+        title: "✅ Aprovado!",
         description: "Verificação aprovada com sucesso!"
       });
 
       setViewDialogOpen(false);
+      
+      // Reload in background
       loadVerifications();
     } catch (error: any) {
       console.error("Error approving:", error);
@@ -163,8 +179,10 @@ export function DocumentosSection() {
         description: error.message || "Erro ao aprovar verificação",
         variant: "destructive"
       });
+      // Revert optimistic update
+      loadVerifications();
     } finally {
-      setProcessing(false);
+      setProcessingId(null);
     }
   };
 
@@ -178,7 +196,13 @@ export function DocumentosSection() {
       return;
     }
 
-    setProcessing(true);
+    setProcessingId(selectedVerification.id);
+    
+    toast({
+      title: "Processando...",
+      description: "Rejeitando documentos e enviando notificação",
+    });
+
     try {
       const { error } = await supabase.rpc('reject_document_verification', { 
         p_user_id: selectedVerification.user_id,
@@ -186,17 +210,23 @@ export function DocumentosSection() {
       });
       if (error) throw error;
 
-      await supabase.functions.invoke('send-document-verification-notification', {
+      // Optimistic update
+      setVerifications(prev => 
+        prev.map(v => v.id === selectedVerification.id ? { ...v, status: 'rejected' } : v)
+      );
+
+      // Fire and forget
+      supabase.functions.invoke('send-document-verification-notification', {
         body: {
           userId: selectedVerification.user_id,
           userEmail: selectedVerification.user_email,
           status: 'rejected',
           reason: rejectionReason.trim()
         }
-      });
+      }).catch(err => console.error("Email notification error:", err));
 
       toast({
-        title: "Sucesso",
+        title: "Rejeitado",
         description: "Verificação rejeitada"
       });
 
@@ -211,8 +241,9 @@ export function DocumentosSection() {
         description: error.message || "Erro ao rejeitar verificação",
         variant: "destructive"
       });
+      loadVerifications();
     } finally {
-      setProcessing(false);
+      setProcessingId(null);
     }
   };
 
@@ -221,11 +252,11 @@ export function DocumentosSection() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">Pendente</Badge>;
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs">Pendente</Badge>;
       case "approved":
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">Aprovado</Badge>;
+        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30 text-xs">Aprovado</Badge>;
       case "rejected":
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30">Rejeitado</Badge>;
+        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30 text-xs">Rejeitado</Badge>;
       default:
         return null;
     }
@@ -235,37 +266,47 @@ export function DocumentosSection() {
   const approvedCount = verifications.filter(v => v.status === "approved").length;
   const rejectedCount = verifications.filter(v => v.status === "rejected").length;
 
+  const isProcessing = (id: string) => processingId === id;
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileCheck className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Verificação de Documentos
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="pending" className="gap-2">
-              <Clock className="h-4 w-4" />
-              Pendentes ({pendingCount})
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Aprovados ({approvedCount})
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="gap-2">
-              <XCircle className="h-4 w-4" />
-              Rejeitados ({rejectedCount})
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="w-full sm:w-auto inline-flex min-w-max">
+              <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Pendentes</span>
+                <span className="xs:hidden">Pend.</span>
+                <span className="ml-0.5">({pendingCount})</span>
+              </TabsTrigger>
+              <TabsTrigger value="approved" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Aprovados</span>
+                <span className="xs:hidden">Aprov.</span>
+                <span className="ml-0.5">({approvedCount})</span>
+              </TabsTrigger>
+              <TabsTrigger value="rejected" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
+                <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Rejeitados</span>
+                <span className="xs:hidden">Rej.</span>
+                <span className="ml-0.5">({rejectedCount})</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value={activeTab} className="mt-6">
+          <TabsContent value={activeTab} className="mt-4 sm:mt-6">
             {loading ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="p-6 border rounded-lg">
-                    <div className="animate-pulse space-y-3">
+                  <div key={i} className="p-4 sm:p-6 border rounded-lg">
+                    <div className="animate-pulse space-y-2 sm:space-y-3">
                       <div className="h-4 bg-muted rounded w-1/3"></div>
                       <div className="h-4 bg-muted rounded w-1/2"></div>
                     </div>
@@ -273,66 +314,75 @@ export function DocumentosSection() {
                 ))}
               </div>
             ) : filteredVerifications.length === 0 ? (
-              <div className="p-12 text-center border rounded-lg">
-                <FileCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
+              <div className="p-8 sm:p-12 text-center border rounded-lg">
+                <FileCheck className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Nenhuma verificação {activeTab === "pending" ? "pendente" : activeTab === "approved" ? "aprovada" : "rejeitada"}
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {filteredVerifications.map(verification => (
-                  <div key={verification.id} className="p-6 border rounded-lg">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <div key={verification.id} className="p-4 sm:p-6 border rounded-lg">
+                    <div className="flex flex-col gap-3 sm:gap-4">
+                      {/* User info */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           {verification.person_type === "pf" ? (
-                            <User className="h-5 w-5 text-primary" />
+                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                           ) : (
-                            <Building2 className="h-5 w-5 text-primary" />
+                            <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                           )}
                         </div>
-                        <div>
-                          <p className="font-medium">{verification.user_email}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Tipo: {verification.person_type === "pf" ? "Pessoa Física" : "Pessoa Jurídica"} | 
-                            Documento: {documentTypeLabels[verification.document_type_selected] || verification.document_type_selected}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm sm:text-base truncate">{verification.user_email}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            {verification.person_type === "pf" ? "Pessoa Física" : "Pessoa Jurídica"} • {documentTypeLabels[verification.document_type_selected] || verification.document_type_selected}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Enviado: {new Date(verification.created_at).toLocaleString("pt-BR")}
+                            {new Date(verification.created_at).toLocaleString("pt-BR")}
                           </p>
                         </div>
                       </div>
+                      
+                      {/* Actions */}
                       <div className="flex flex-wrap items-center gap-2">
                         {getStatusBadge(verification.status)}
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="text-xs sm:text-sm h-8 px-2 sm:px-3"
                           onClick={() => handleViewDocuments(verification)}
                         >
-                          <Eye className="h-4 w-4 mr-2" />
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                           Ver
                         </Button>
                         {verification.status === "pending" && (
                           <>
                             <Button 
                               size="sm"
+                              className="text-xs sm:text-sm h-8 px-2 sm:px-3"
                               onClick={() => handleApprove(verification)}
-                              disabled={processing}
+                              disabled={isProcessing(verification.id)}
                             >
-                              <Check className="h-4 w-4 mr-2" />
-                              Aprovar
+                              {isProcessing(verification.id) ? (
+                                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                              ) : (
+                                <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                              )}
+                              {isProcessing(verification.id) ? "..." : "Aprovar"}
                             </Button>
                             <Button 
                               variant="destructive" 
                               size="sm"
+                              className="text-xs sm:text-sm h-8 px-2 sm:px-3"
                               onClick={() => {
                                 setSelectedVerification(verification);
                                 setRejectDialogOpen(true);
                               }}
-                              disabled={processing}
+                              disabled={isProcessing(verification.id)}
                             >
-                              <X className="h-4 w-4 mr-2" />
+                              <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                               Rejeitar
                             </Button>
                           </>
@@ -349,28 +399,29 @@ export function DocumentosSection() {
 
       {/* View Documents Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Documentos de {selectedVerification?.user_email}</DialogTitle>
-            <DialogDescription>
-              Tipo: {selectedVerification?.person_type === "pf" ? "Pessoa Física" : "Pessoa Jurídica"} | 
-              Documento: {selectedVerification ? documentTypeLabels[selectedVerification.document_type_selected] || selectedVerification.document_type_selected : ""}
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="text-sm sm:text-base truncate pr-8">
+              Documentos de {selectedVerification?.user_email}
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              {selectedVerification?.person_type === "pf" ? "Pessoa Física" : "Pessoa Jurídica"} • {selectedVerification ? documentTypeLabels[selectedVerification.document_type_selected] || selectedVerification.document_type_selected : ""}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
+          <div className="flex-1 overflow-y-auto py-4">
             {loadingDocs ? (
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map(i => (
                   <div key={i} className="aspect-[4/3] bg-muted animate-pulse rounded-lg"></div>
                 ))}
               </div>
             ) : userDocuments.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-muted-foreground py-8 text-sm">
                 Nenhum documento encontrado
               </p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {userDocuments.map(doc => (
                   <DocumentViewer key={doc.id} document={doc} getSignedUrl={getSignedUrl} getDownloadUrl={getDownloadUrl} documentSideLabels={documentSideLabels} />
                 ))}
@@ -379,27 +430,34 @@ export function DocumentosSection() {
           </div>
 
           {selectedVerification?.status === "pending" && (
-            <DialogFooter>
+            <DialogFooter className="shrink-0 flex-col sm:flex-row gap-2 sm:gap-0">
               <Button 
                 variant="outline" 
                 onClick={() => setViewDialogOpen(false)}
+                className="w-full sm:w-auto text-xs sm:text-sm"
               >
                 Fechar
               </Button>
               <Button 
                 variant="destructive"
                 onClick={() => setRejectDialogOpen(true)}
-                disabled={processing}
+                disabled={processingId === selectedVerification.id}
+                className="w-full sm:w-auto text-xs sm:text-sm"
               >
-                <X className="h-4 w-4 mr-2" />
+                <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Rejeitar
               </Button>
               <Button 
                 onClick={() => selectedVerification && handleApprove(selectedVerification)}
-                disabled={processing}
+                disabled={processingId === selectedVerification.id}
+                className="w-full sm:w-auto text-xs sm:text-sm"
               >
-                <Check className="h-4 w-4 mr-2" />
-                Aprovar
+                {processingId === selectedVerification.id ? (
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                ) : (
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                )}
+                {processingId === selectedVerification.id ? "Aprovando..." : "Aprovar"}
               </Button>
             </DialogFooter>
           )}
@@ -408,43 +466,53 @@ export function DocumentosSection() {
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rejeitar Verificação</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-sm sm:text-base">Rejeitar Verificação</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Informe o motivo da rejeição. O usuário receberá essa informação por email.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="reason">Motivo da Rejeição</Label>
+              <Label htmlFor="reason" className="text-xs sm:text-sm">Motivo da Rejeição</Label>
               <Textarea
                 id="reason"
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Ex: Documento ilegível, por favor envie novamente em melhor qualidade."
                 rows={4}
+                className="text-sm"
               />
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => {
                 setRejectDialogOpen(false);
                 setRejectionReason("");
               }}
+              className="w-full sm:w-auto text-xs sm:text-sm"
             >
               Cancelar
             </Button>
             <Button 
               variant="destructive"
               onClick={handleReject}
-              disabled={processing || !rejectionReason.trim()}
+              disabled={!!processingId || !rejectionReason.trim()}
+              className="w-full sm:w-auto text-xs sm:text-sm"
             >
-              {processing ? "Processando..." : "Confirmar Rejeição"}
+              {processingId ? (
+                <>
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                "Confirmar Rejeição"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -489,63 +557,66 @@ function DocumentViewer({
     try {
       const downloadUrl = await getDownloadUrl(document.file_url);
       if (downloadUrl) {
-        // Create invisible anchor element for direct download
-        const link = window.document.createElement('a');
-        link.href = downloadUrl;
-        
-        // Extract filename from path
-        const fileName = document.file_url.split('/').pop() || 'documento';
-        link.download = fileName;
-        
-        // Add to DOM, click, and remove
-        window.document.body.appendChild(link);
-        link.click();
-        window.document.body.removeChild(link);
+        window.open(downloadUrl, '_blank');
       }
+    } catch (error) {
+      console.error("Error downloading:", error);
     } finally {
       setDownloading(false);
     }
   };
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm text-muted-foreground">{label}</Label>
-      <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden relative group">
+    <div className="border rounded-lg overflow-hidden">
+      <div className="aspect-[4/3] bg-muted relative">
         {loading ? (
-          <div className="w-full h-full animate-pulse bg-muted"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-muted-foreground" />
+          </div>
         ) : fileUrl ? (
-          <>
-            {isPdf ? (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
-                <FileText className="h-12 w-12 text-primary" />
-                <span className="text-sm text-center text-muted-foreground truncate max-w-full px-2">
-                  {label}.pdf
-                </span>
-              </div>
-            ) : (
-              <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                <img 
-                  src={fileUrl} 
-                  alt={label}
-                  className="w-full h-full object-contain hover:scale-105 transition-transform cursor-zoom-in"
-                />
-              </a>
-            )}
-            <Button 
-              variant="default" 
-              size="icon"
-              className="absolute top-2 right-2 h-7 w-7"
-              onClick={handleDownload}
-              disabled={downloading}
-            >
-              <Download className="h-3.5 w-3.5" />
-            </Button>
-          </>
+          isPdf ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted p-4">
+              <FileCheck className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-2" />
+              <p className="text-xs sm:text-sm text-muted-foreground text-center">Documento PDF</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2 text-xs"
+                onClick={() => window.open(fileUrl, '_blank')}
+              >
+                Visualizar PDF
+              </Button>
+            </div>
+          ) : (
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="block h-full">
+              <img 
+                src={fileUrl} 
+                alt={label}
+                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+              />
+            </a>
+          )
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            Erro ao carregar
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-xs sm:text-sm text-muted-foreground">Erro ao carregar</p>
           </div>
         )}
+      </div>
+      <div className="p-2 sm:p-3 bg-background flex items-center justify-between">
+        <span className="text-xs sm:text-sm font-medium">{label}</span>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={handleDownload}
+          disabled={downloading || !fileUrl}
+          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+        >
+          {downloading ? (
+            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+          ) : (
+            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+          )}
+        </Button>
       </div>
     </div>
   );
