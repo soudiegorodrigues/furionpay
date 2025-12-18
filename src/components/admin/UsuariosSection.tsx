@@ -51,6 +51,7 @@ export const UsuariosSection = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [userAcquirers, setUserAcquirers] = useState<Record<string, string>>({});
   const [userManualAcquirers, setUserManualAcquirers] = useState<Record<string, boolean>>({});
+  const [defaultAcquirer, setDefaultAcquirer] = useState<string>('ativus');
   const [userFeeConfigs, setUserFeeConfigs] = useState<Record<string, string>>({});
   const [feeConfigs, setFeeConfigs] = useState<FeeConfig[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -170,6 +171,18 @@ export const UsuariosSection = () => {
           }
         });
         setUserFeeConfigs(feeConfigsMap);
+      }
+
+      // Load default acquirer
+      const { data: defaultAcqData } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('key', 'default_acquirer')
+        .is('user_id', null)
+        .maybeSingle();
+
+      if (defaultAcqData?.value) {
+        setDefaultAcquirer(defaultAcqData.value);
       }
     } catch (error: any) {
       toast({
@@ -365,27 +378,45 @@ export const UsuariosSection = () => {
     if (!selectedUser) return;
     setIsSavingUserSettings(true);
     try {
-      // Save acquirer
-      const { error: acquirerError } = await supabase
-        .from('admin_settings')
-        .upsert({
-          user_id: selectedUser.id,
-          key: 'user_acquirer',
-          value: selectedUserAcquirer,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,user_id' });
-      if (acquirerError) throw acquirerError;
+      // Check if selected acquirer matches platform default
+      const isMatchingDefault = selectedUserAcquirer === defaultAcquirer;
 
-      // Mark as manual override - this user won't be affected by "Adquirente principal" changes
-      const { error: manualError } = await supabase
-        .from('admin_settings')
-        .upsert({
-          user_id: selectedUser.id,
-          key: 'user_acquirer_is_manual',
-          value: 'true',
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,user_id' });
-      if (manualError) throw manualError;
+      if (isMatchingDefault) {
+        // Remove manual flag and user_acquirer - user is using platform default
+        await supabase
+          .from('admin_settings')
+          .delete()
+          .eq('user_id', selectedUser.id)
+          .eq('key', 'user_acquirer_is_manual');
+        
+        await supabase
+          .from('admin_settings')
+          .delete()
+          .eq('user_id', selectedUser.id)
+          .eq('key', 'user_acquirer');
+      } else {
+        // Save acquirer
+        const { error: acquirerError } = await supabase
+          .from('admin_settings')
+          .upsert({
+            user_id: selectedUser.id,
+            key: 'user_acquirer',
+            value: selectedUserAcquirer,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'key,user_id' });
+        if (acquirerError) throw acquirerError;
+
+        // Mark as manual override - this user won't be affected by "Adquirente principal" changes
+        const { error: manualError } = await supabase
+          .from('admin_settings')
+          .upsert({
+            user_id: selectedUser.id,
+            key: 'user_acquirer_is_manual',
+            value: 'true',
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'key,user_id' });
+        if (manualError) throw manualError;
+      }
 
       // Save fee config
       if (selectedUserFeeConfig) {
@@ -407,9 +438,23 @@ export const UsuariosSection = () => {
           .eq('key', 'user_fee_config');
       }
 
-      // Update local state
-      setUserAcquirers(prev => ({ ...prev, [selectedUser.id]: selectedUserAcquirer }));
-      setUserManualAcquirers(prev => ({ ...prev, [selectedUser.id]: true }));
+      // Update local state based on whether it's manual or default
+      if (isMatchingDefault) {
+        setUserAcquirers(prev => {
+          const newState = { ...prev };
+          delete newState[selectedUser.id];
+          return newState;
+        });
+        setUserManualAcquirers(prev => {
+          const newState = { ...prev };
+          delete newState[selectedUser.id];
+          return newState;
+        });
+      } else {
+        setUserAcquirers(prev => ({ ...prev, [selectedUser.id]: selectedUserAcquirer }));
+        setUserManualAcquirers(prev => ({ ...prev, [selectedUser.id]: true }));
+      }
+      
       setUserFeeConfigs(prev => {
         const newState = { ...prev };
         if (selectedUserFeeConfig) {
@@ -420,7 +465,10 @@ export const UsuariosSection = () => {
         return newState;
       });
 
-      toast({ title: 'Sucesso', description: 'Configurações do usuário atualizadas (override manual ativado)' });
+      const successMessage = isMatchingDefault 
+        ? 'Configurações atualizadas (usando padrão da plataforma)' 
+        : 'Configurações atualizadas (override manual ativado)';
+      toast({ title: 'Sucesso', description: successMessage });
       setUserDetailsOpen(false);
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao salvar', variant: 'destructive' });
