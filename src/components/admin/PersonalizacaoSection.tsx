@@ -208,8 +208,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
                 <Label className="text-base font-medium">Banner Atual</Label>
                 <Button 
                   variant="destructive" 
-                  size="sm"
-                  onClick={handleRemoveBanner} 
+                  onClick={handleRemoveBanner}
                   disabled={isSaving || isUploading}
                 >
                   {isSaving ? (
