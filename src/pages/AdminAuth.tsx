@@ -8,25 +8,21 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import furionLogo from '@/assets/furionpay-logo-white-text.png';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { 
-  AuthBackground, 
-  AuthLoadingScreen, 
-  AuthFormFields, 
-  BlockedUserDialog,
-  AuthMarketingPanel
-} from '@/components/auth';
-
+import { AuthBackground, AuthLoadingScreen, AuthFormFields, BlockedUserDialog, AuthMarketingPanel } from '@/components/auth';
 const authSchema = z.object({
-  email: z.string().trim().email({ message: "Email inválido" }),
-  password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" })
+  email: z.string().trim().email({
+    message: "Email inválido"
+  }),
+  password: z.string().min(6, {
+    message: "Senha deve ter no mínimo 6 caracteres"
+  })
 });
-
 const signUpSchema = authSchema.extend({
-  name: z.string().min(2, { message: "Nome deve ter no mínimo 2 caracteres" })
+  name: z.string().min(2, {
+    message: "Nome deve ter no mínimo 2 caracteres"
+  })
 });
-
 type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password' | 'unlock-code';
-
 const AdminAuth = () => {
   const location = useLocation();
   const [name, setName] = useState('');
@@ -43,10 +39,16 @@ const AdminAuth = () => {
   const [remainingAttempts, setRemainingAttempts] = useState(3);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
-  
-  const { signIn, signUp, isAuthenticated, loading } = useAdminAuth();
+  const {
+    signIn,
+    signUp,
+    isAuthenticated,
+    loading
+  } = useAdminAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Sync mode with URL path changes
   useEffect(() => {
@@ -56,13 +58,11 @@ const AdminAuth = () => {
       setMode('login');
     }
   }, [location.pathname]);
-
   useEffect(() => {
     if (isAuthenticated && !loading && mode !== 'reset-password') {
       navigate('/admin/dashboard');
     }
   }, [isAuthenticated, loading, navigate, mode]);
-
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setPassword('');
@@ -72,14 +72,17 @@ const AdminAuth = () => {
       setResetEmail('');
     }
   };
-
   const handleResendCode = async () => {
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-password-reset', {
-        body: { email: resetEmail }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('send-password-reset', {
+        body: {
+          email: resetEmail
+        }
       });
-
       if (error) {
         toast({
           variant: "destructive",
@@ -88,7 +91,6 @@ const AdminAuth = () => {
         });
         return;
       }
-
       toast({
         title: "Código reenviado!",
         description: data?.message || "Verifique sua caixa de entrada"
@@ -97,13 +99,14 @@ const AdminAuth = () => {
       setIsSubmitting(false);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Handle sending OTP code via edge function
     if (mode === 'reset-email') {
-      const emailValidation = z.string().trim().email({ message: "Email inválido" }).safeParse(email);
+      const emailValidation = z.string().trim().email({
+        message: "Email inválido"
+      }).safeParse(email);
       if (!emailValidation.success) {
         toast({
           variant: "destructive",
@@ -114,10 +117,14 @@ const AdminAuth = () => {
       }
       setIsSubmitting(true);
       try {
-        const { data, error } = await supabase.functions.invoke('send-password-reset', {
-          body: { email }
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('send-password-reset', {
+          body: {
+            email
+          }
         });
-
         if (error) {
           toast({
             variant: "destructive",
@@ -155,13 +162,17 @@ const AdminAuth = () => {
     // Handle new password creation with code verification
     if (mode === 'reset-password') {
       const passwordValidation = z.object({
-        password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
+        password: z.string().min(6, {
+          message: "Senha deve ter no mínimo 6 caracteres"
+        }),
         confirmPassword: z.string()
       }).refine(data => data.password === data.confirmPassword, {
         message: "As senhas não coincidem",
         path: ["confirmPassword"]
-      }).safeParse({ password, confirmPassword });
-
+      }).safeParse({
+        password,
+        confirmPassword
+      });
       if (!passwordValidation.success) {
         toast({
           variant: "destructive",
@@ -172,8 +183,15 @@ const AdminAuth = () => {
       }
       setIsSubmitting(true);
       try {
-        const { data, error } = await supabase.functions.invoke('verify-reset-code', {
-          body: { email: resetEmail, code: otpCode, newPassword: password }
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('verify-reset-code', {
+          body: {
+            email: resetEmail,
+            code: otpCode,
+            newPassword: password
+          }
         });
         if (error || data?.error) {
           toast({
@@ -200,7 +218,11 @@ const AdminAuth = () => {
 
     // Validate form data
     if (mode === 'signup') {
-      const validation = signUpSchema.safeParse({ email, password, name });
+      const validation = signUpSchema.safeParse({
+        email,
+        password,
+        name
+      });
       if (!validation.success) {
         toast({
           variant: "destructive",
@@ -210,7 +232,10 @@ const AdminAuth = () => {
         return;
       }
     } else if (mode === 'login') {
-      const validation = authSchema.safeParse({ email, password });
+      const validation = authSchema.safeParse({
+        email,
+        password
+      });
       if (!validation.success) {
         toast({
           variant: "destructive",
@@ -220,13 +245,17 @@ const AdminAuth = () => {
         return;
       }
     }
-
     setIsSubmitting(true);
     try {
       if (mode === 'login') {
         // Check if account is blocked before attempting login
-        const { data: blockCheck } = await supabase.functions.invoke('check-login-attempt', {
-          body: { email, loginFailed: false }
+        const {
+          data: blockCheck
+        } = await supabase.functions.invoke('check-login-attempt', {
+          body: {
+            email,
+            loginFailed: false
+          }
         });
         if (blockCheck?.isBlocked) {
           setIsAccountBlocked(true);
@@ -239,15 +268,21 @@ const AdminAuth = () => {
           setIsSubmitting(false);
           return;
         }
-
-        const { error } = await signIn(email, password);
+        const {
+          error
+        } = await signIn(email, password);
         if (error) {
           if (error.message === "User is banned" || error.message?.includes("banned")) {
             setShowBlockedDialog(true);
           } else {
             // Track failed login attempt
-            const { data: attemptData } = await supabase.functions.invoke('check-login-attempt', {
-              body: { email, loginFailed: true }
+            const {
+              data: attemptData
+            } = await supabase.functions.invoke('check-login-attempt', {
+              body: {
+                email,
+                loginFailed: true
+              }
             });
             if (attemptData?.isBlocked) {
               setIsAccountBlocked(true);
@@ -269,10 +304,15 @@ const AdminAuth = () => {
         } else {
           // Reset login attempts on successful login
           await supabase.functions.invoke('check-login-attempt', {
-            body: { email, loginFailed: false }
+            body: {
+              email,
+              loginFailed: false
+            }
           });
           try {
-            await supabase.rpc('reset_login_attempts' as any, { p_email: email });
+            await supabase.rpc('reset_login_attempts' as any, {
+              p_email: email
+            });
           } catch {}
           toast({
             title: "Bem-vindo!",
@@ -290,8 +330,14 @@ const AdminAuth = () => {
           setIsSubmitting(false);
           return;
         }
-        const { data, error } = await supabase.functions.invoke('verify-unlock-code', {
-          body: { email, code: otpCode }
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('verify-unlock-code', {
+          body: {
+            email,
+            code: otpCode
+          }
         });
         if (error || !data?.success) {
           toast({
@@ -310,7 +356,9 @@ const AdminAuth = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password, name);
+        const {
+          error
+        } = await signUp(email, password, name);
         if (error) {
           toast({
             variant: "destructive",
@@ -328,46 +376,58 @@ const AdminAuth = () => {
       setIsSubmitting(false);
     }
   };
-
   const getTitle = () => {
     switch (mode) {
-      case 'reset-email': return 'Recuperar Senha';
-      case 'reset-code': return 'Verificar Código';
-      case 'reset-password': return 'Nova Senha';
-      case 'signup': return 'Criar Conta';
-      case 'unlock-code': return 'Conta Bloqueada';
-      default: return 'Bem-vindo de volta';
+      case 'reset-email':
+        return 'Recuperar Senha';
+      case 'reset-code':
+        return 'Verificar Código';
+      case 'reset-password':
+        return 'Nova Senha';
+      case 'signup':
+        return 'Criar Conta';
+      case 'unlock-code':
+        return 'Conta Bloqueada';
+      default:
+        return 'Bem-vindo de volta';
     }
   };
-
   const getDescription = () => {
     switch (mode) {
-      case 'reset-email': return 'Digite seu email para receber o código de recuperação';
-      case 'reset-code': return `Enviamos um código de 6 dígitos para ${resetEmail}`;
-      case 'reset-password': return 'Crie sua nova senha de acesso';
-      case 'signup': return 'Preencha os dados para criar sua conta';
-      case 'unlock-code': return `Digite o código de 6 dígitos enviado para ${email}`;
-      default: return 'Entre com suas credenciais para continuar';
+      case 'reset-email':
+        return 'Digite seu email para receber o código de recuperação';
+      case 'reset-code':
+        return `Enviamos um código de 6 dígitos para ${resetEmail}`;
+      case 'reset-password':
+        return 'Crie sua nova senha de acesso';
+      case 'signup':
+        return 'Preencha os dados para criar sua conta';
+      case 'unlock-code':
+        return `Digite o código de 6 dígitos enviado para ${email}`;
+      default:
+        return 'Entre com suas credenciais para continuar';
     }
   };
-
   const getButtonText = () => {
     switch (mode) {
-      case 'reset-email': return 'Enviar Código';
-      case 'reset-code': return 'Verificar';
-      case 'reset-password': return 'Salvar Senha';
-      case 'signup': return 'Criar Conta';
-      case 'unlock-code': return 'Desbloquear Conta';
-      default: return 'Entrar';
+      case 'reset-email':
+        return 'Enviar Código';
+      case 'reset-code':
+        return 'Verificar';
+      case 'reset-password':
+        return 'Salvar Senha';
+      case 'signup':
+        return 'Criar Conta';
+      case 'unlock-code':
+        return 'Desbloquear Conta';
+      default:
+        return 'Entrar';
     }
   };
-
   if (loading) {
     return <AuthLoadingScreen />;
   }
-
-  return (
-    <>
+  return <>
       <PWAInstallPrompt />
       <div className="min-h-screen flex bg-black relative overflow-hidden">
         {/* Left side - Marketing Panel (hidden on mobile) */}
@@ -389,15 +449,10 @@ const AdminAuth = () => {
                 {/* Logo inside card */}
                 <div className="flex justify-center mb-6">
                   <div className="relative">
-                    <div 
-                      className="absolute inset-0 blur-2xl opacity-50" 
-                      style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 70%)' }} 
-                    />
-                    <img 
-                      src={furionLogo} 
-                      alt="FurionPay" 
-                      className="h-10 sm:h-12 relative z-10 drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" 
-                    />
+                    <div className="absolute inset-0 blur-2xl opacity-50" style={{
+                    background: 'radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 70%)'
+                  }} />
+                    
                   </div>
                 </div>
 
@@ -413,76 +468,36 @@ const AdminAuth = () => {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <AuthFormFields
-                    mode={mode}
-                    name={name}
-                    email={email}
-                    password={password}
-                    confirmPassword={confirmPassword}
-                    otpCode={otpCode}
-                    showPassword={showPassword}
-                    showConfirmPassword={showConfirmPassword}
-                    rememberMe={rememberMe}
-                    resetEmail={resetEmail}
-                    isSubmitting={isSubmitting}
-                    onNameChange={setName}
-                    onEmailChange={setEmail}
-                    onPasswordChange={setPassword}
-                    onConfirmPasswordChange={setConfirmPassword}
-                    onOtpCodeChange={setOtpCode}
-                    onShowPasswordChange={setShowPassword}
-                    onShowConfirmPasswordChange={setShowConfirmPassword}
-                    onRememberMeChange={setRememberMe}
-                    onForgotPassword={() => switchMode('reset-email')}
-                    onResendCode={handleResendCode}
-                  />
+                  <AuthFormFields mode={mode} name={name} email={email} password={password} confirmPassword={confirmPassword} otpCode={otpCode} showPassword={showPassword} showConfirmPassword={showConfirmPassword} rememberMe={rememberMe} resetEmail={resetEmail} isSubmitting={isSubmitting} onNameChange={setName} onEmailChange={setEmail} onPasswordChange={setPassword} onConfirmPasswordChange={setConfirmPassword} onOtpCodeChange={setOtpCode} onShowPasswordChange={setShowPassword} onShowConfirmPasswordChange={setShowConfirmPassword} onRememberMeChange={setRememberMe} onForgotPassword={() => switchMode('reset-email')} onResendCode={handleResendCode} />
 
-                  <Button 
-                    type="submit" 
-                    className="w-full h-11 sm:h-12 text-sm sm:text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-500/90 text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 transition-all duration-300 active:scale-[0.98] border-0" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <>
+                  <Button type="submit" className="w-full h-11 sm:h-12 text-sm sm:text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-500/90 text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 transition-all duration-300 active:scale-[0.98] border-0" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <>
                         {getButtonText()}
                         <ArrowRight className="h-4 w-4 ml-2" />
-                      </>
-                    )}
+                      </>}
                   </Button>
                 </form>
 
                 {/* Footer Links */}
                 <div className="mt-6 pt-5 border-t border-white/[0.06] text-center">
-                  {mode.startsWith('reset') || mode === 'unlock-code' ? (
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setIsAccountBlocked(false);
-                        setOtpCode('');
-                        switchMode('login');
-                      }} 
-                      className="text-sm text-white/50 hover:text-white/70 transition-colors inline-flex items-center gap-1"
-                    >
+                  {mode.startsWith('reset') || mode === 'unlock-code' ? <button type="button" onClick={() => {
+                  setIsAccountBlocked(false);
+                  setOtpCode('');
+                  switchMode('login');
+                }} className="text-sm text-white/50 hover:text-white/70 transition-colors inline-flex items-center gap-1">
                       <ArrowRight className="h-3 w-3 rotate-180" />
                       Voltar ao login
-                    </button>
-                  ) : mode === 'login' ? (
-                    <p className="text-sm text-white/50">
+                    </button> : mode === 'login' ? <p className="text-sm text-white/50">
                       Não tem uma conta?{' '}
                       <Link to="/cadastro" className="text-primary hover:text-primary/80 font-semibold transition-colors">
                         Criar conta
                       </Link>
-                    </p>
-                  ) : (
-                    <p className="text-sm text-white/50">
+                    </p> : <p className="text-sm text-white/50">
                       Já tem uma conta?{' '}
                       <Link to="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
                         Fazer login
                       </Link>
-                    </p>
-                  )}
+                    </p>}
                 </div>
               </div>
             </div>
@@ -496,8 +511,6 @@ const AdminAuth = () => {
       </div>
 
       <BlockedUserDialog open={showBlockedDialog} onOpenChange={setShowBlockedDialog} />
-    </>
-  );
+    </>;
 };
-
 export default AdminAuth;
