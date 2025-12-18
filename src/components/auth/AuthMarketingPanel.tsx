@@ -81,9 +81,8 @@ export function AuthMarketingPanel() {
           <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
             Infraestrutura de pagamentos
             <br />
-            <span className="text-white">de </span>
             <span className="text-primary">
-              alta performance
+              de alta performance
             </span>
           </h1>
           <p className="text-base lg:text-lg text-white/60 max-w-md leading-relaxed">
