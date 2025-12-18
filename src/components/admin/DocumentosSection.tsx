@@ -270,127 +270,131 @@ export function DocumentosSection() {
   const isProcessing = (id: string) => processingId === id;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-          <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          Documentos KYC
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="w-full sm:w-auto inline-flex min-w-max">
-              <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
-                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Pendentes</span>
-                <span className="ml-0.5">({pendingCount})</span>
-              </TabsTrigger>
-              <TabsTrigger value="approved" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
-                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Aprovados</span>
-                <span className="ml-0.5">({approvedCount})</span>
-              </TabsTrigger>
-              <TabsTrigger value="rejected" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
-                <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Rejeitados</span>
-                <span className="ml-0.5">({rejectedCount})</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+    <>
+      <div className="max-w-5xl mx-auto">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Documentos KYC
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="min-h-[400px] space-y-4 sm:space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                <TabsList className="w-full sm:w-auto inline-flex min-w-max">
+                  <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>Pendentes</span>
+                    <span className="ml-0.5">({pendingCount})</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="approved" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
+                    <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>Aprovados</span>
+                    <span className="ml-0.5">({approvedCount})</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="rejected" className="gap-1.5 text-xs sm:text-sm px-2 sm:px-3">
+                    <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>Rejeitados</span>
+                    <span className="ml-0.5">({rejectedCount})</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-          <TabsContent value={activeTab} className="mt-4 sm:mt-6">
-            {loading ? (
-              <div className="border rounded-lg overflow-hidden">
-                <div className="animate-pulse">
-                  <div className="h-12 bg-muted/50"></div>
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-16 border-t bg-muted/20"></div>
-                  ))}
-                </div>
-              </div>
-            ) : filteredVerifications.length === 0 ? (
-              <div className="p-8 sm:p-12 text-center border rounded-lg">
-                <FileCheck className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base text-muted-foreground">
-                  Nenhuma verificação {activeTab === "pending" ? "pendente" : activeTab === "approved" ? "aprovada" : "rejeitada"}
-                </p>
-              </div>
-            ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead className="text-xs font-semibold">Nome</TableHead>
-                        <TableHead className="text-xs font-semibold hidden sm:table-cell">Email</TableHead>
-                        <TableHead className="text-xs font-semibold text-center">Tipo</TableHead>
-                        <TableHead className="text-xs font-semibold text-center">Status</TableHead>
-                        <TableHead className="text-xs font-semibold text-center">Documentos</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredVerifications.map(verification => (
-                        <TableRow key={verification.id} className="hover:bg-muted/30">
-                          <TableCell className="py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                {verification.person_type === "pf" ? (
-                                  <User className="h-4 w-4 text-primary" />
-                                ) : (
-                                  <Building2 className="h-4 w-4 text-primary" />
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="font-medium text-sm truncate max-w-[150px] sm:max-w-[200px]">
-                                  {verification.user_email.split('@')[0]}
-                                </p>
-                                <p className="text-xs text-muted-foreground sm:hidden truncate max-w-[150px]">
-                                  {verification.user_email}
-                                </p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
-                              {verification.user_email}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge 
-                              variant="outline" 
-                              className={verification.person_type === "pf" 
-                                ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs" 
-                                : "bg-purple-500/10 text-purple-600 border-purple-500/30 text-xs"
-                              }
-                            >
-                              {verification.person_type === "pf" ? "PF" : "PJ"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {getStatusBadge(verification.status)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="text-xs h-8 px-3"
-                              onClick={() => handleViewDocuments(verification)}
-                            >
-                              <Eye className="h-3.5 w-3.5 mr-1.5" />
-                              Ver
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+              <TabsContent value={activeTab} className="mt-4 sm:mt-6">
+                {loading ? (
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="animate-pulse">
+                      <div className="h-12 bg-muted/50"></div>
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-16 border-t bg-muted/20"></div>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
+                    </div>
+                  </div>
+                ) : filteredVerifications.length === 0 ? (
+                  <div className="p-8 sm:p-12 text-center border rounded-lg">
+                    <FileCheck className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                    <p className="text-sm sm:text-base text-muted-foreground">
+                      Nenhuma verificação {activeTab === "pending" ? "pendente" : activeTab === "approved" ? "aprovada" : "rejeitada"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <Table className="w-full">
+                        <TableHeader>
+                          <TableRow className="bg-muted/50">
+                            <TableHead className="text-xs font-semibold">Nome</TableHead>
+                            <TableHead className="text-xs font-semibold hidden sm:table-cell">Email</TableHead>
+                            <TableHead className="text-xs font-semibold text-center">Tipo</TableHead>
+                            <TableHead className="text-xs font-semibold text-center">Status</TableHead>
+                            <TableHead className="text-xs font-semibold text-center">Documentos</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredVerifications.map(verification => (
+                            <TableRow key={verification.id} className="hover:bg-muted/30">
+                              <TableCell className="py-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    {verification.person_type === "pf" ? (
+                                      <User className="h-4 w-4 text-primary" />
+                                    ) : (
+                                      <Building2 className="h-4 w-4 text-primary" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm truncate max-w-[150px] sm:max-w-[200px]">
+                                      {verification.user_email.split('@')[0]}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground sm:hidden truncate max-w-[150px]">
+                                      {verification.user_email}
+                                    </p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden sm:table-cell">
+                                <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
+                                  {verification.user_email}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge 
+                                  variant="outline" 
+                                  className={verification.person_type === "pf" 
+                                    ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs" 
+                                    : "bg-purple-500/10 text-purple-600 border-purple-500/30 text-xs"
+                                  }
+                                >
+                                  {verification.person_type === "pf" ? "PF" : "PJ"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {getStatusBadge(verification.status)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="text-xs h-8 px-3"
+                                  onClick={() => handleViewDocuments(verification)}
+                                >
+                                  <Eye className="h-3.5 w-3.5 mr-1.5" />
+                                  Ver
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* View Documents Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
@@ -512,7 +516,7 @@ export function DocumentosSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </>
   );
 }
 
