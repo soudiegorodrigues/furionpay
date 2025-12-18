@@ -14,7 +14,7 @@ export function AuthMarketingPanel() {
         <img 
           src={loginHero} 
           alt="FurionPay Security" 
-          className="max-h-[70vh] w-auto object-contain drop-shadow-[0_0_60px_rgba(239,68,68,0.3)]"
+          className="max-h-[70vh] w-auto object-contain drop-shadow-[0_0_60px_rgba(239,68,68,0.3)] mix-blend-lighten"
         />
       </div>
     </div>
