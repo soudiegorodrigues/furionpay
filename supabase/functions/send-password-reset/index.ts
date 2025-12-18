@@ -115,69 +115,96 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get sender email from settings or use default
+    // Get sender email from settings (global) or use a safe default
     const { data: senderData } = await supabase
       .from("admin_settings")
       .select("value")
       .eq("key", "resend_sender_email")
+      .is("user_id", null)
       .limit(1)
       .maybeSingle();
-    
-    const senderEmail = senderData?.value || "noreply@resend.dev";
 
-    // Get logo URL from settings
+    const senderEmail = senderData?.value || "onboarding@resend.dev";
+
+    // Get logo URL from settings (global)
     const { data: logoData } = await supabase
       .from("admin_settings")
       .select("value")
       .eq("key", "email_logo_url")
+      .is("user_id", null)
       .limit(1)
       .maybeSingle();
-    
+
     const logoUrl = logoData?.value;
 
     // Build logo HTML
-    const logoHtml = logoUrl 
+    const logoHtml = logoUrl
       ? `<img src="${logoUrl}" alt="Logo" style="max-height: 60px; width: auto; margin: 0 auto 16px;" />`
       : `<div style="width: 64px; height: 64px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
           <span style="font-size: 28px;">🔐</span>
         </div>`;
-    
-    // Send email with code
-    const emailResponse = await resend.emails.send({
-      from: `Recuperação de Senha <${senderEmail}>`,
-      to: [email],
-      subject: "Seu código de recuperação de senha",
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 20px;">
-          <div style="max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <div style="text-align: center; margin-bottom: 32px;">
-              ${logoHtml}
-              <h1 style="color: #1e293b; font-size: 24px; font-weight: 700; margin: 0;">Recuperação de Senha</h1>
+
+    const sendEmail = async (from: string) => {
+      const res = await resend.emails.send({
+        from,
+        to: [email],
+        subject: "Seu código de recuperação de senha",
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 20px;">
+            <div style="max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+              <div style="text-align: center; margin-bottom: 32px;">
+                ${logoHtml}
+                <h1 style="color: #1e293b; font-size: 24px; font-weight: 700; margin: 0;">Recuperação de Senha</h1>
+              </div>
+
+              <p style="color: #64748b; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 32px;">
+                Use o código abaixo para recuperar sua senha. Este código expira em 15 minutos.
+              </p>
+
+              <div style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #ef4444; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 32px;">
+                <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Seu código de verificação:</p>
+                <p style="color: #dc2626; font-size: 36px; font-weight: 700; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">${code}</p>
+              </div>
+
+              <p style="color: #94a3b8; font-size: 14px; text-align: center; margin: 0;">
+                Se você não solicitou a recuperação de senha, ignore este email.
+              </p>
             </div>
-            
-            <p style="color: #64748b; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 32px;">
-              Use o código abaixo para recuperar sua senha. Este código expira em 15 minutos.
-            </p>
-            
-            <div style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #ef4444; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 32px;">
-              <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Seu código de verificação:</p>
-              <p style="color: #dc2626; font-size: 36px; font-weight: 700; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">${code}</p>
-            </div>
-            
-            <p style="color: #94a3b8; font-size: 14px; text-align: center; margin: 0;">
-              Se você não solicitou a recuperação de senha, ignore este email.
-            </p>
-          </div>
-        </body>
-        </html>
-      `,
-    });
+          </body>
+          </html>
+        `,
+      });
+
+      return res as any;
+    };
+
+    // Send email (fallback to a known-good sender if the custom sender is not verified)
+    const primaryFrom = `Recuperação de Senha <${senderEmail}>`;
+    const fallbackFrom = "FurionPay <onboarding@resend.dev>";
+
+    let emailResponse = await sendEmail(primaryFrom);
+
+    if (emailResponse?.error) {
+      console.error("Error sending password reset email (primary sender):", emailResponse.error);
+      emailResponse = await sendEmail(fallbackFrom);
+    }
+
+    if (emailResponse?.error) {
+      console.error("Error sending password reset email (fallback sender):", emailResponse.error);
+      return new Response(
+        JSON.stringify({
+          error:
+            "Falha ao enviar o email. Verifique o remetente configurado (domínio verificado) no painel de Email.",
+        }),
+        { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     console.log("Email sent successfully:", emailResponse);
 
