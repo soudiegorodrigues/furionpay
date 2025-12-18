@@ -150,8 +150,9 @@ const AdminDashboard = () => {
   const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [userName, setUserName] = useState<string>("");
   const navigate = useNavigate();
-  const { triggerConfetti } = useConfetti();
+  const { triggerConfettiInElement } = useConfetti();
   const previousAchievedRef = useRef<string | null>(null);
+  const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const {
     toast
   } = useToast();
@@ -185,7 +186,7 @@ const AdminDashboard = () => {
     
     // Só dispara se ainda não foi celebrado e não é a mesma meta
     if (!wasCelebrated && previousAchievedRef.current !== rewardId) {
-      triggerConfetti();
+      triggerConfettiInElement(confettiCanvasRef.current);
       localStorage.setItem(celebratedKey, 'true');
       previousAchievedRef.current = rewardId;
       
@@ -194,7 +195,7 @@ const AdminDashboard = () => {
         description: `Você conquistou: ${rewardData.nextReward.name}!`,
       });
     }
-  }, [rewardData, triggerConfetti, toast]);
+  }, [rewardData, triggerConfettiInElement, toast]);
 
   // Load period stats when dateFilter changes
   const loadPeriodStats = async (period: DateFilter) => {
@@ -922,7 +923,7 @@ const AdminDashboard = () => {
                 </div> : rewardData ? (() => {
                   // BOTÃO TEMPORÁRIO PARA TESTAR CONFETE - REMOVER DEPOIS
                   const handleTestConfetti = () => {
-                    triggerConfetti();
+                    triggerConfettiInElement(confettiCanvasRef.current);
                     toast({
                       title: "🎉 Teste de Confete!",
                       description: "Animação disparada com sucesso!",
@@ -930,8 +931,13 @@ const AdminDashboard = () => {
                   };
                   const { nextReward, progress, achieved } = rewardData;
                   
-                  return <div className="space-y-4">
-                    <div 
+                  return <div className="space-y-4 relative">
+                    {/* Canvas para confete dentro do card */}
+                    <canvas 
+                      ref={confettiCanvasRef}
+                      className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                    />
+                    <div
                       key={nextReward.id} 
                       className={`space-y-4 p-4 rounded-xl transition-all duration-500 ${
                         achieved 
