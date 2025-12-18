@@ -217,19 +217,27 @@ export const MultiAcquirersSection = () => {
     setIsSettingDefault(acquirer);
 
     try {
-      // 3. Single atomic RPC call
-      const { data, error } = await supabase.rpc('set_default_acquirer_with_retry_order', {
+      // 3. Apply to all users (except manual overrides) AND set as default
+      const { data: applyResult, error: applyError } = await supabase.rpc('apply_default_acquirer_to_all', {
         p_acquirer: acquirer
       });
       
-      if (error) throw error;
+      if (applyError) throw applyError;
+      
+      // Also update retry order
+      const { error: retryError } = await supabase.rpc('set_default_acquirer_with_retry_order', {
+        p_acquirer: acquirer
+      });
+      
+      if (retryError) throw retryError;
       
       // Refresh retry config
       setRetryConfigKey(prev => prev + 1);
       
+      const usersReset = (applyResult as { users_reset?: number })?.users_reset || 0;
       toast({
         title: "Adquirente Principal Definida",
-        description: `${acquirerNames[acquirer]} agora é a adquirente padrão e está em 1º lugar no retry.`
+        description: `${acquirerNames[acquirer]} aplicado a ${usersReset} usuário(s). Usuários com configuração manual não foram alterados.`
       });
     } catch (error) {
       // 4. Rollback on error

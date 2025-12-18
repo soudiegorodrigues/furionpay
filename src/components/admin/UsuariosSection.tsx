@@ -26,6 +26,7 @@ interface User {
   full_name: string | null;
   is_approved: boolean;
   available_balance?: number;
+  is_manual_acquirer?: boolean;
 }
 
 interface FeeConfig {
@@ -49,6 +50,7 @@ export const UsuariosSection = () => {
   const { user: currentUser } = useAdminAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [userAcquirers, setUserAcquirers] = useState<Record<string, string>>({});
+  const [userManualAcquirers, setUserManualAcquirers] = useState<Record<string, boolean>>({});
   const [userFeeConfigs, setUserFeeConfigs] = useState<Record<string, string>>({});
   const [feeConfigs, setFeeConfigs] = useState<FeeConfig[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -136,6 +138,22 @@ export const UsuariosSection = () => {
           }
         });
         setUserAcquirers(acquirersMap);
+      }
+
+      // Load manual acquirer flags
+      const { data: manualData } = await supabase
+        .from('admin_settings')
+        .select('user_id, value')
+        .eq('key', 'user_acquirer_is_manual');
+      
+      if (manualData) {
+        const manualMap: Record<string, boolean> = {};
+        manualData.forEach(item => {
+          if (item.user_id) {
+            manualMap[item.user_id] = item.value === 'true';
+          }
+        });
+        setUserManualAcquirers(manualMap);
       }
 
       // Load user fee configs
@@ -358,6 +376,17 @@ export const UsuariosSection = () => {
         }, { onConflict: 'key,user_id' });
       if (acquirerError) throw acquirerError;
 
+      // Mark as manual override - this user won't be affected by "Adquirente principal" changes
+      const { error: manualError } = await supabase
+        .from('admin_settings')
+        .upsert({
+          user_id: selectedUser.id,
+          key: 'user_acquirer_is_manual',
+          value: 'true',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,user_id' });
+      if (manualError) throw manualError;
+
       // Save fee config
       if (selectedUserFeeConfig) {
         const { error: feeError } = await supabase
@@ -380,6 +409,7 @@ export const UsuariosSection = () => {
 
       // Update local state
       setUserAcquirers(prev => ({ ...prev, [selectedUser.id]: selectedUserAcquirer }));
+      setUserManualAcquirers(prev => ({ ...prev, [selectedUser.id]: true }));
       setUserFeeConfigs(prev => {
         const newState = { ...prev };
         if (selectedUserFeeConfig) {
@@ -390,7 +420,7 @@ export const UsuariosSection = () => {
         return newState;
       });
 
-      toast({ title: 'Sucesso', description: 'Configurações do usuário atualizadas' });
+      toast({ title: 'Sucesso', description: 'Configurações do usuário atualizadas (override manual ativado)' });
       setUserDetailsOpen(false);
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao salvar', variant: 'destructive' });
@@ -490,9 +520,16 @@ export const UsuariosSection = () => {
                           <TableCell className="text-xs max-w-[180px] truncate">{u.email}</TableCell>
                           <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">{formatDate(u.created_at)}</TableCell>
                           <TableCell className="text-xs hidden lg:table-cell">
-                            <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
-                              {userAcquirers[u.id] === 'inter' ? 'Banco Inter' : userAcquirers[u.id] === 'ativus' ? 'Ativus Hub' : 'SpedPay'}
-                            </Badge>
+                            <div className="flex items-center gap-1">
+                              <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
+                                {userAcquirers[u.id] === 'inter' ? 'Banco Inter' : userAcquirers[u.id] === 'ativus' ? 'Ativus Hub' : 'SpedPay'}
+                              </Badge>
+                              {userManualAcquirers[u.id] && (
+                                <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[10px] px-1">
+                                  Manual
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-xs hidden xl:table-cell">
                             <Badge variant="outline" className="text-[10px] px-1.5">

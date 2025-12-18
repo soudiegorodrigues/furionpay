@@ -1948,6 +1948,10 @@ export type Database = {
         Args: { _collaborator_email: string; _permissions: Json }
         Returns: string
       }
+      apply_default_acquirer_to_all: {
+        Args: { p_acquirer: string }
+        Returns: Json
+      }
       approve_document_verification: {
         Args: { p_user_id: string }
         Returns: boolean
