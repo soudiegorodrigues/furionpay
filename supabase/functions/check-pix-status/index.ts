@@ -36,6 +36,7 @@ const circuitBreakers: Record<string, CircuitBreakerState> = {
   spedpay: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   inter: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   ativus: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
+  valorion: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
 };
 
 // Circuit Breaker functions
@@ -282,6 +283,33 @@ async function getAtivusApiKey(supabase: any, userId: string): Promise<string | 
   return data.value;
 }
 
+async function getValorionApiKey(supabase: any, userId?: string): Promise<string | null> {
+  // Try user-specific setting first
+  if (userId) {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'valorion_api_key')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (!error && data?.value) return data.value;
+  }
+  
+  // Try global setting
+  const { data: globalData } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'valorion_api_key')
+    .is('user_id', null)
+    .maybeSingle();
+  
+  if (globalData?.value) return globalData.value;
+  
+  // Fall back to env var
+  return Deno.env.get('VALORION_API_KEY') || null;
+}
+
 // Detect acquirer by txid format
 // Ativus: 26+ alphanumeric chars without hyphens (e.g., "409b79aefec44a99baf6700f95")
 // SpedPay/Inter: UUID format with hyphens (e.g., "8172e8d2-8b97-4725-b735-2f4a20938b89")
@@ -298,6 +326,13 @@ function detectAcquirerByTxid(txid: string): string | null {
   const ativusPattern = /^[a-zA-Z0-9]{20,}$/;
   if (ativusPattern.test(txid) && !txid.includes('-')) {
     return 'ativus';
+  }
+  
+  // Valorion format: numeric-only long IDs or specific prefix patterns
+  // Valorion txids typically are long numeric strings or have specific format
+  const valorionPattern = /^\d{10,}$/;
+  if (valorionPattern.test(txid)) {
+    return 'valorion';
   }
   
   return null;
@@ -752,6 +787,105 @@ async function checkAtivusStatus(idTransaction: string, apiKey: string, supabase
   }
 }
 
+const VALORION_STATUS_URL = 'https://app.valorion.com.br/api/s1/getTransactionStatus.php';
+
+async function checkValorionStatus(
+  idTransaction: string,
+  apiKey: string,
+  supabase: any
+): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
+  console.log('Checking Valorion status for:', idTransaction);
+  const startTime = Date.now();
+
+  // Check circuit breaker
+  if (isCircuitOpen('valorion')) {
+    await logMonitoringEvent(supabase, 'valorion', 'circuit_open', undefined, 'Request blocked by circuit breaker');
+    return { isPaid: false, status: 'circuit_open' };
+  }
+
+  // Check if API key is already Base64 encoded
+  const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
+  const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
+
+  const statusUrl = `${VALORION_STATUS_URL}?id_transaction=${encodeURIComponent(idTransaction)}`;
+  console.log('Valorion status URL:', statusUrl);
+
+  try {
+    const response = await fetchWithRetry(
+      statusUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json',
+        },
+      },
+      `Valorion status check for ${idTransaction}`
+    );
+
+    const responseTime = Date.now() - startTime;
+    const responseText = await response.text();
+    console.log('Valorion status response:', response.status, responseText);
+
+    if (!response.ok) {
+      console.error('Valorion status check failed:', response.status, responseText);
+      recordFailure('valorion', supabase, `HTTP ${response.status}: ${responseText}`);
+      return { isPaid: false, status: 'pending' };
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('Failed to parse Valorion response');
+      recordFailure('valorion', supabase, 'Failed to parse JSON response');
+      return { isPaid: false, status: 'pending' };
+    }
+
+    // Success - reset circuit breaker and log
+    recordSuccess('valorion', supabase, responseTime);
+
+    // Valorion response format similar to Ativus
+    const situacao = (data.situacao || data.status || '').toString().toUpperCase();
+    
+    console.log('Valorion transaction situacao:', situacao);
+    
+    // Check for paid statuses
+    const paidStatuses = ['PAID_OUT', 'CONCLUIDO', 'CONCLUÍDA', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'];
+    const isPaid = paidStatuses.includes(situacao);
+
+    if (isPaid) {
+      console.log('Transaction is PAID! Marking as paid in database');
+      const { error } = await supabase.rpc('mark_pix_paid', { p_txid: idTransaction });
+      if (error) {
+        console.error('Erro ao marcar PIX como pago:', error);
+      } else {
+        console.log('PIX marcado como pago com sucesso');
+      }
+    }
+
+    // Map Valorion status to our status
+    let mappedStatus = 'pending';
+    if (isPaid) {
+      mappedStatus = 'paid';
+    } else if (situacao === 'AGUARDANDO_PAGAMENTO' || situacao === 'WAITING' || situacao === 'PENDING') {
+      mappedStatus = 'generated';
+    } else if (situacao === 'EXPIRADO' || situacao === 'EXPIRED' || situacao === 'CANCELADO' || situacao === 'CANCELED') {
+      mappedStatus = 'expired';
+    }
+
+    return {
+      isPaid,
+      status: mappedStatus,
+      paidAt: data.data_transacao || data.paid_at || undefined,
+    };
+  } catch (error) {
+    console.error(`Valorion status check failed after retries for ${idTransaction}:`, error);
+    recordFailure('valorion', supabase, error instanceof Error ? error.message : 'Unknown error');
+    return { isPaid: false, status: 'retry_failed' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -855,7 +989,23 @@ serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      result = await checkAtivusStatus(txid, apiKey, supabase);
+    result = await checkAtivusStatus(txid, apiKey, supabase);
+    } else if (acquirer === 'valorion') {
+      let apiKey: string | null = null;
+      if (transaction.user_id) {
+        apiKey = await getValorionApiKey(supabase, transaction.user_id);
+      }
+      if (!apiKey) {
+        apiKey = await getValorionApiKey(supabase);
+      }
+      if (!apiKey) {
+        console.error('No Valorion API key available');
+        return new Response(
+          JSON.stringify({ error: 'Valorion API key not configured' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      result = await checkValorionStatus(txid, apiKey, supabase);
     } else {
       let apiKey: string | null = null;
       if (transaction.user_id) {
