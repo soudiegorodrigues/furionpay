@@ -271,14 +271,14 @@ export function PremiacoesSection() {
         {/* Tab: Premiações */}
         <TabsContent value="premiacoes" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <CardTitle>Gerenciar Premiações</CardTitle>
                 <CardDescription>Configure as premiações disponíveis para os usuários</CardDescription>
               </div>
-              <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar premiação
+              <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="sm:inline">Adicionar premiação</span>
               </Button>
             </CardHeader>
             <CardContent>
@@ -296,8 +296,8 @@ export function PremiacoesSection() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {rewards.map(reward => (
-                    <Card key={reward.id} className="overflow-hidden max-w-xs">
-                      <div className="h-64 bg-muted flex items-center justify-center p-4">
+                    <Card key={reward.id} className="overflow-hidden w-full">
+                      <div className="h-48 sm:h-64 bg-muted flex items-center justify-center p-4">
                         {reward.image_url ? (
                           <img src={reward.image_url} alt={reward.name} className="max-w-full max-h-full object-contain" />
                         ) : (
@@ -348,35 +348,37 @@ export function PremiacoesSection() {
               <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">Nenhuma solicitação pendente</p>
             </Card> : <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Premiação</TableHead>
-                    <TableHead>Endereço</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingRequests.map(request => <TableRow key={request.id}>
-                      <TableCell className="font-medium">{request.user_email}</TableCell>
-                      <TableCell>{request.reward_name}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{request.delivery_address || "-"}</TableCell>
-                      <TableCell>{formatDate(request.requested_at)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" onClick={() => {
-                    setSelectedRequest(request);
-                    setTrackingCode("");
-                    setSendDialogOpen(true);
-                  }}>
-                          <Send className="h-3 w-3 mr-1" />
-                          Marcar enviado
-                        </Button>
-                      </TableCell>
-                    </TableRow>)}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Premiação</TableHead>
+                      <TableHead className="hidden sm:table-cell">Endereço</TableHead>
+                      <TableHead className="hidden md:table-cell">Data</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingRequests.map(request => <TableRow key={request.id}>
+                        <TableCell className="font-medium text-xs sm:text-sm">{request.user_email}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">{request.reward_name}</TableCell>
+                        <TableCell className="hidden sm:table-cell max-w-[200px] truncate">{request.delivery_address || "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell">{formatDate(request.requested_at)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" onClick={() => {
+                      setSelectedRequest(request);
+                      setTrackingCode("");
+                      setSendDialogOpen(true);
+                    }}>
+                            <Send className="h-3 w-3 sm:mr-1" />
+                            <span className="hidden sm:inline">Marcar enviado</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>)}
+                  </TableBody>
+                </Table>
+              </div>
             </Card>}
         </TabsContent>
 
@@ -388,24 +390,26 @@ export function PremiacoesSection() {
               <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">Nenhum envio realizado</p>
             </Card> : <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Premiação</TableHead>
-                    <TableHead>Código de Rastreio</TableHead>
-                    <TableHead>Enviado em</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sentRequests.map(request => <TableRow key={request.id}>
-                      <TableCell className="font-medium">{request.user_email}</TableCell>
-                      <TableCell>{request.reward_name}</TableCell>
-                      <TableCell>{request.tracking_code || "-"}</TableCell>
-                      <TableCell>{request.sent_at ? formatDate(request.sent_at) : "-"}</TableCell>
-                    </TableRow>)}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Premiação</TableHead>
+                      <TableHead className="hidden sm:table-cell">Código de Rastreio</TableHead>
+                      <TableHead className="hidden md:table-cell">Enviado em</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sentRequests.map(request => <TableRow key={request.id}>
+                        <TableCell className="font-medium text-xs sm:text-sm">{request.user_email}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">{request.reward_name}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{request.tracking_code || "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell">{request.sent_at ? formatDate(request.sent_at) : "-"}</TableCell>
+                      </TableRow>)}
+                  </TableBody>
+                </Table>
+              </div>
             </Card>}
         </TabsContent>
       </Tabs>
