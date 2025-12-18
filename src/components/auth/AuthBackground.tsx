@@ -1,9 +1,6 @@
 export function AuthBackground() {
   return (
     <>
-      {/* Base gradient - darker and more intense */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-red-950/40" />
-      
       {/* Hexagonal grid pattern */}
       <div className="absolute inset-0 opacity-[0.03]">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
