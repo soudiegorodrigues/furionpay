@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -481,7 +482,7 @@ export function EmailTemplatesSection() {
           </DialogHeader>
           <div className="border rounded-lg overflow-hidden bg-white">
             <div 
-              dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getPreviewHtml()) }}
               className="min-h-[400px]"
             />
           </div>
