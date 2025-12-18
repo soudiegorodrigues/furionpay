@@ -193,7 +193,7 @@ export const MultiAcquirersSection = () => {
       // Quick check via edge function
       try {
         const { data } = await supabase.functions.invoke('get-inter-credentials');
-        if (!data?.isFullyConfigured) {
+        if (!data?.credentials?.isFullyConfigured) {
           toast({
             title: "Configuração Incompleta",
             description: "Configure todas as credenciais do Banco Inter antes de definir como principal.",
