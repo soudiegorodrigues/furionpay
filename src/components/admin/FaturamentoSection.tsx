@@ -7,6 +7,7 @@ import { DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle } from "lucide-
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { TransacoesGlobaisSection } from "./TransacoesGlobaisSection";
 
 interface GlobalStats {
   total_generated: number;
@@ -432,6 +433,9 @@ export const FaturamentoSection = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Transações Globais */}
+      <TransacoesGlobaisSection />
     </div>
   );
 };
