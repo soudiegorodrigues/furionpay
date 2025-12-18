@@ -58,7 +58,7 @@ export function AuthBackground() {
         {/* Geometric accents */}
         <div className="absolute top-[18%] left-[6%] w-20 h-20 border border-primary/10 rounded-full animate-spin-slow" />
         <div className="absolute bottom-[12%] right-[6%] w-28 h-28 border border-primary/5 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse' }} />
-        <div className="absolute top-[45%] right-[3%] w-14 h-14 border border-primary/8 rotate-45 animate-float-slow" />
+        
       </div>
     </>
   );
