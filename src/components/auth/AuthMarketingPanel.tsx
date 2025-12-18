@@ -14,7 +14,7 @@ const features = [
     iconColor: 'text-primary',
     iconBg: 'bg-primary/10',
     title: 'Máxima segurança',
-    description: 'Autenticação de dois fatores, criptografia avançada e total conformidade'
+    description: 'Criptografia avançada e total conformidade'
   },
   {
     icon: BarChart3,
