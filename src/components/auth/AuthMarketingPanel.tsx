@@ -21,51 +21,6 @@ const features = [{
 }];
 export function AuthMarketingPanel() {
   return <div className="relative h-full flex flex-col justify-between p-8 lg:p-12 overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-red-950/50" />
-      
-      {/* Animated gradient orbs */}
-      <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full animate-pulse" style={{
-      background: 'radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)',
-      filter: 'blur(80px)'
-    }} />
-      <div className="absolute -bottom-48 -right-48 w-[400px] h-[400px] rounded-full animate-pulse" style={{
-      background: 'radial-gradient(circle, hsl(var(--primary) / 0.25) 0%, transparent 70%)',
-      filter: 'blur(100px)',
-      animationDelay: '1s'
-    }} />
-
-      {/* Floating particles */}
-      <div className="absolute top-[15%] left-[20%] w-2 h-2 bg-primary/50 rounded-full animate-float" />
-      <div className="absolute top-[35%] right-[15%] w-1.5 h-1.5 bg-primary/40 rounded-full animate-float-slow" style={{
-      animationDelay: '0.5s'
-    }} />
-      <div className="absolute bottom-[30%] left-[10%] w-1 h-1 bg-primary/60 rounded-full animate-drift" style={{
-      animationDelay: '1s'
-    }} />
-      <div className="absolute top-[60%] right-[25%] w-2 h-2 bg-yellow-400/40 rounded-full animate-float" style={{
-      animationDelay: '1.5s'
-    }} />
-      <div className="absolute bottom-[20%] right-[10%] w-1.5 h-1.5 bg-primary/30 rounded-full animate-float-slow" style={{
-      animationDelay: '2s'
-    }} />
-      <div className="absolute top-[80%] left-[30%] w-1 h-1 bg-primary/50 rounded-full animate-drift" style={{
-      animationDelay: '0.8s'
-    }} />
-
-      {/* Geometric circles */}
-      <div className="absolute top-[25%] right-[5%] w-24 h-24 border border-primary/10 rounded-full animate-spin-slow" />
-      <div className="absolute bottom-[10%] left-[5%] w-32 h-32 border border-primary/5 rounded-full animate-spin-slow" style={{
-      animationDirection: 'reverse'
-    }} />
-
-      {/* Grid lines */}
-      <div className="absolute inset-0 opacity-[0.03]">
-        <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-primary to-transparent" />
-        <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
-        <div className="absolute top-0 left-3/4 w-px h-full bg-gradient-to-b from-transparent via-primary to-transparent" />
-      </div>
-
       {/* Content */}
       <div className="relative z-10 mt-20 lg:mt-28">
         {/* Logo */}
