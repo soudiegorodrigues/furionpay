@@ -282,7 +282,7 @@ export const TaxasSection = () => {
         <CardContent className="px-3 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-bold">Controle de Taxas</h3>
-            <Button onClick={handleCreateNew} className="gap-2 w-full sm:w-auto h-9 sm:h-10">
+            <Button onClick={handleCreateNew} className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               <span className="text-sm">Criar nova taxa</span>
             </Button>
