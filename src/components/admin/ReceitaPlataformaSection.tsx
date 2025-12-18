@@ -632,7 +632,6 @@ export const ReceitaPlataformaSection = () => {
                     { name: 'ATIVUS HUB', data: ativusData, color: '#10B981', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
                     { name: 'VALORION', data: valorionData, color: '#8B5CF6', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30' }
                   ]
-                    .filter(a => a.data.count > 0)
                     .sort((a, b) => b.data.volume - a.data.volume)
                     .map((acq, index) => {
                       const totalVolume = spedpayData.volume + interData.volume + ativusData.volume + valorionData.volume;
@@ -703,7 +702,6 @@ export const ReceitaPlataformaSection = () => {
                       { name: 'Ativus Hub', data: ativusData, color: '#10B981' },
                       { name: 'Valorion', data: valorionData, color: '#8B5CF6' }
                     ]
-                      .filter(a => a.data.count > 0)
                       .sort((a, b) => b.data.volume - a.data.volume);
                     
                     return acquirers.map((acq, index) => {
