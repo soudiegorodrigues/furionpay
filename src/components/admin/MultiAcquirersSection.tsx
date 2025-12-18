@@ -600,7 +600,14 @@ export const MultiAcquirersSection = () => {
                   <Switch
                     checked={defaultAcquirer === 'inter'}
                     onCheckedChange={(checked) => {
-                      if (checked) setAsDefaultAcquirer('inter');
+                      if (checked) {
+                        setAsDefaultAcquirer('inter');
+                      } else if (defaultAcquirer === 'inter') {
+                        toast({
+                          title: "Já é a Adquirente Principal",
+                          description: "Banco Inter já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal.",
+                        });
+                      }
                     }}
                     disabled={isSettingDefault !== null}
                     className="scale-75"
@@ -812,7 +819,14 @@ export const MultiAcquirersSection = () => {
                   <Switch
                     checked={defaultAcquirer === 'spedpay'}
                     onCheckedChange={(checked) => {
-                      if (checked) setAsDefaultAcquirer('spedpay');
+                      if (checked) {
+                        setAsDefaultAcquirer('spedpay');
+                      } else if (defaultAcquirer === 'spedpay') {
+                        toast({
+                          title: "Já é a Adquirente Principal",
+                          description: "SpedPay já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal.",
+                        });
+                      }
                     }}
                     disabled={isSettingDefault !== null}
                     className="scale-75"
@@ -986,7 +1000,14 @@ export const MultiAcquirersSection = () => {
                   <Switch
                     checked={defaultAcquirer === 'ativus'}
                     onCheckedChange={(checked) => {
-                      if (checked) setAsDefaultAcquirer('ativus');
+                      if (checked) {
+                        setAsDefaultAcquirer('ativus');
+                      } else if (defaultAcquirer === 'ativus') {
+                        toast({
+                          title: "Já é a Adquirente Principal",
+                          description: "Ativus Hub já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal.",
+                        });
+                      }
                     }}
                     disabled={isSettingDefault !== null}
                     className="scale-75"
