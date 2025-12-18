@@ -380,27 +380,27 @@ const AdminAuth = () => {
           <AuthBackground />
 
           <div className="w-full max-w-[420px] animate-fade-in relative z-10">
-            {/* Logo (visible on mobile and desktop) */}
-            <div className="flex justify-center mb-6 lg:mb-8">
-              <div className="relative">
-                <div 
-                  className="absolute inset-0 blur-2xl opacity-50" 
-                  style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 70%)' }} 
-                />
-                <img 
-                  src={furionLogo} 
-                  alt="FurionPay" 
-                  className="h-12 sm:h-14 lg:h-12 relative z-10 drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" 
-                />
-              </div>
-            </div>
-
             {/* Card with glassmorphism */}
             <div className="relative">
               {/* Card glow */}
               <div className="absolute -inset-1 bg-gradient-to-r from-primary/15 via-primary/8 to-primary/15 rounded-2xl blur-xl opacity-50" />
               
               <div className="relative bg-zinc-950/70 backdrop-blur-xl rounded-2xl border border-white/[0.08] p-6 sm:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                {/* Logo inside card */}
+                <div className="flex justify-center mb-6">
+                  <div className="relative">
+                    <div 
+                      className="absolute inset-0 blur-2xl opacity-50" 
+                      style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 70%)' }} 
+                    />
+                    <img 
+                      src={furionLogo} 
+                      alt="FurionPay" 
+                      className="h-10 sm:h-12 relative z-10 drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" 
+                    />
+                  </div>
+                </div>
+
                 {/* Header */}
                 <div className="text-center mb-6">
                   <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1.5">
