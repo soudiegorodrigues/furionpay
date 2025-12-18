@@ -186,12 +186,64 @@ function createMtlsClient(credentials: InterCredentials): Deno.HttpClient {
   });
 }
 
-async function getAccessToken(client: Deno.HttpClient, credentials: InterCredentials): Promise<string> {
+// Get cached Inter token from database
+async function getCachedInterToken(supabase: any): Promise<{ token: string; expiresAt: number } | null> {
+  try {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'inter_token_cache')
+      .is('user_id', null)
+      .maybeSingle();
+    
+    if (error || !data?.value) {
+      return null;
+    }
+    
+    const cached = JSON.parse(data.value);
+    return cached;
+  } catch (err) {
+    console.log('Error reading token cache:', err);
+    return null;
+  }
+}
+
+// Save Inter token to database cache
+async function saveInterTokenCache(supabase: any, token: string, expiresInSeconds: number): Promise<void> {
+  try {
+    const expiresAt = Date.now() + (expiresInSeconds * 1000);
+    const cacheValue = JSON.stringify({ token, expiresAt });
+    
+    await supabase
+      .from('admin_settings')
+      .upsert({
+        key: 'inter_token_cache',
+        value: cacheValue,
+        user_id: null,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'key,user_id'
+      });
+    
+    console.log('Token cached successfully, expires at:', new Date(expiresAt).toISOString());
+  } catch (err) {
+    console.log('Error saving token cache:', err);
+  }
+}
+
+async function getAccessToken(supabase: any, client: Deno.HttpClient, credentials: InterCredentials): Promise<string> {
   if (!credentials.clientId || !credentials.clientSecret) {
     throw new Error('Credenciais do Banco Inter não configuradas');
   }
 
-  console.log('Obtendo token de acesso do Banco Inter...');
+  // Check for cached token first (with 5 minute buffer before expiry)
+  const cached = await getCachedInterToken(supabase);
+  if (cached && cached.token && cached.expiresAt > (Date.now() + 5 * 60 * 1000)) {
+    console.log('Using cached Inter token, expires at:', new Date(cached.expiresAt).toISOString());
+    return cached.token;
+  }
+
+  console.log('Obtendo novo token de acesso do Banco Inter...');
 
   const tokenUrl = `${INTER_API_URL}/oauth/v2/token`;
   
@@ -218,7 +270,12 @@ async function getAccessToken(client: Deno.HttpClient, credentials: InterCredent
   }
 
   const data = await response.json();
-  console.log('Token obtido com sucesso');
+  console.log('Novo token obtido com sucesso');
+  
+  // Cache the new token (Inter tokens typically last 3600 seconds)
+  const expiresIn = data.expires_in || 3600;
+  await saveInterTokenCache(supabase, data.access_token, expiresIn);
+  
   return data.access_token;
 }
 
@@ -383,8 +440,8 @@ serve(async (req) => {
     // Criar cliente mTLS
     const mtlsClient = createMtlsClient(credentials);
 
-    // Obter token de acesso
-    const accessToken = await getAccessToken(mtlsClient, credentials);
+    // Obter token de acesso (com cache)
+    const accessToken = await getAccessToken(supabase, mtlsClient, credentials);
 
     // Gerar txid único
     const txid = generateTxId();
