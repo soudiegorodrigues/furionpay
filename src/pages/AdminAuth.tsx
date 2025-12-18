@@ -489,7 +489,7 @@ const AdminAuth = () => {
 
             {/* Footer text */}
             <p className="text-center text-white/35 text-[10px] sm:text-xs mt-6">
-              © 2025 FurionPay. Todos os direitos reservados.
+              © 2025 FurionPay · Pagamentos Digitais
             </p>
           </div>
         </div>
