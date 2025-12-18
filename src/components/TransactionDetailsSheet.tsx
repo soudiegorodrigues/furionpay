@@ -1,7 +1,7 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Calendar, User, Package, TrendingUp, Check } from "lucide-react";
+import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard } from "lucide-react";
 import { useState } from "react";
 interface UTMData {
   utm_source?: string;
@@ -23,6 +23,7 @@ interface Transaction {
   fee_fixed: number | null;
   utm_data: UTMData | null;
   popup_model: string | null;
+  acquirer?: string;
 }
 interface TransactionDetailsSheetProps {
   transaction: Transaction | null;
@@ -67,6 +68,21 @@ const TransactionDetailsSheet = ({
           bg: 'bg-red-500/70',
           text: 'text-white'
         };
+    }
+  };
+
+  const getAcquirerBadge = (acquirer?: string) => {
+    switch (acquirer) {
+      case 'inter':
+        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-[10px]">Banco Inter</Badge>;
+      case 'spedpay':
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px]">SpedPay</Badge>;
+      case 'ativus':
+        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[10px]">Ativus</Badge>;
+      case 'valorion':
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">Valorion</Badge>;
+      default:
+        return <Badge variant="outline" className="text-muted-foreground text-[10px]">-</Badge>;
     }
   };
   const copyToClipboard = async (text: string, id: string) => {
@@ -117,13 +133,22 @@ const TransactionDetailsSheet = ({
               <p className="text-xs font-medium truncate">{transaction.donor_name || '-'}</p>
             </div>
 
+            {/* Adquirente */}
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <CreditCard className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Adquirente</span>
+              </div>
+              {getAcquirerBadge(transaction.acquirer)}
+            </div>
+
             {/* Produto */}
-            <div className="bg-muted/30 rounded-lg p-3 col-span-2">
+            <div className="bg-muted/30 rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <Package className="h-3 w-3 text-muted-foreground" />
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Produto</span>
               </div>
-              <p className="text-xs font-medium">{transaction.product_name || '-'}</p>
+              <p className="text-xs font-medium truncate">{transaction.product_name || '-'}</p>
               {transaction.popup_model && <Badge variant="outline" className="mt-1.5 text-[10px] h-5">
                   {transaction.popup_model}
                 </Badge>}
