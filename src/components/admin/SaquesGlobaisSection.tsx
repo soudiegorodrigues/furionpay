@@ -202,11 +202,11 @@ export function SaquesGlobaisSection() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-  return <div className="max-w-5xl mx-auto space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold">Saques</h2>
-        <p className="text-muted-foreground">Solicitações de saque</p>
+        
+        
       </div>
 
       {/* Main Card */}
