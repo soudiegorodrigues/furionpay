@@ -354,15 +354,13 @@ serve(async (req) => {
     console.log('Generated CPF:', customerCPF);
     const customerEmail = generateRandomEmail(finalDonorName);
 
-    // Convert amount to cents for Valorion API
-    const amountInCents = Math.round(amount * 100);
-
     // Generate random phone number for Valorion
     const randomPhone = `119${Math.floor(10000000 + Math.random() * 90000000)}`;
 
     // Build request payload according to Valorion API spec
+    // Valorion expects amount in Reais (not cents), e.g., R$ 90 = 90
     const payload = {
-      amount: amountInCents,
+      amount: amount,
       customer: {
         name: finalDonorName,
         email: customerEmail,
@@ -372,7 +370,7 @@ serve(async (req) => {
       items: [{
         title: finalProductName,
         quantity: 1,
-        unitPrice: amountInCents,
+        unitPrice: amount,
         tangible: false
       }],
       postbackUrl: `${supabaseUrl}/functions/v1/valorion-webhook`,
