@@ -108,13 +108,13 @@ export const UsuariosSection = () => {
     try {
       const { data, error } = await supabase.rpc('get_all_users_auth');
       if (error) throw error;
-      
+
       // Load balances for all users
       const usersWithBalances = await Promise.all(
         (data || []).map(async (user: User) => {
           try {
-            const { data: balanceData } = await supabase.rpc('get_user_available_balance_admin', { 
-              p_user_id: user.id 
+            const { data: balanceData } = await supabase.rpc('get_user_available_balance_admin', {
+              p_user_id: user.id,
             });
             return { ...user, available_balance: balanceData || 0 };
           } catch {
@@ -122,73 +122,89 @@ export const UsuariosSection = () => {
           }
         })
       );
-      
+
       setUsers(usersWithBalances);
-      
-      // Load user acquirers
-      const { data: acquirerData } = await supabase
-        .from('admin_settings')
-        .select('user_id, value')
-        .eq('key', 'user_acquirer');
-      
-      if (acquirerData) {
-        const acquirersMap: Record<string, string> = {};
-        acquirerData.forEach(item => {
-          if (item.user_id) {
-            acquirersMap[item.user_id] = item.value || 'spedpay';
+
+      const [
+        { data: acquirerData, error: acquirerError },
+        { data: manualData, error: manualError },
+        { data: feeConfigData, error: feeError },
+        { data: defaultAcqData, error: defaultError },
+      ] = await Promise.all([
+        supabase.from('admin_settings').select('user_id, value').eq('key', 'user_acquirer'),
+        supabase.from('admin_settings').select('user_id, value').eq('key', 'user_acquirer_is_manual'),
+        supabase.from('admin_settings').select('user_id, value').eq('key', 'user_fee_config'),
+        supabase
+          .from('admin_settings')
+          .select('value')
+          .eq('key', 'default_acquirer')
+          .is('user_id', null)
+          .maybeSingle(),
+      ]);
+
+      if (acquirerError) throw acquirerError;
+      if (manualError) throw manualError;
+      if (feeError) throw feeError;
+      if (defaultError) throw defaultError;
+
+      const platformDefaultAcquirer = defaultAcqData?.value || 'ativus';
+      setDefaultAcquirer(platformDefaultAcquirer);
+
+      const acquirersMap: Record<string, string> = {};
+      (acquirerData || []).forEach((item) => {
+        if (item.user_id) {
+          acquirersMap[item.user_id] = item.value || 'spedpay';
+        }
+      });
+
+      const manualMap: Record<string, boolean> = {};
+      (manualData || []).forEach((item) => {
+        if (item.user_id) {
+          manualMap[item.user_id] = item.value === 'true';
+        }
+      });
+
+      const feeConfigsMap: Record<string, string> = {};
+      (feeConfigData || []).forEach((item) => {
+        if (item.user_id) {
+          feeConfigsMap[item.user_id] = item.value || '';
+        }
+      });
+
+      // Auto-cleanup: remove obsolete manual flags when user is on the platform default acquirer
+      const usersToCleanup = Object.keys(manualMap).filter((userId) => {
+        if (!manualMap[userId]) return false;
+        const userAcquirer = acquirersMap[userId] || platformDefaultAcquirer;
+        return userAcquirer === platformDefaultAcquirer;
+      });
+
+      if (usersToCleanup.length > 0) {
+        await Promise.all(
+          usersToCleanup.map((userId) =>
+            supabase
+              .from('admin_settings')
+              .delete()
+              .eq('user_id', userId)
+              .in('key', ['user_acquirer_is_manual', 'user_acquirer'])
+          )
+        );
+
+        usersToCleanup.forEach((userId) => {
+          delete manualMap[userId];
+          if (acquirersMap[userId] === platformDefaultAcquirer) {
+            delete acquirersMap[userId];
           }
         });
-        setUserAcquirers(acquirersMap);
       }
 
-      // Load manual acquirer flags
-      const { data: manualData } = await supabase
-        .from('admin_settings')
-        .select('user_id, value')
-        .eq('key', 'user_acquirer_is_manual');
-      
-      if (manualData) {
-        const manualMap: Record<string, boolean> = {};
-        manualData.forEach(item => {
-          if (item.user_id) {
-            manualMap[item.user_id] = item.value === 'true';
-          }
-        });
-        setUserManualAcquirers(manualMap);
-      }
-
-      // Load user fee configs
-      const { data: feeConfigData } = await supabase
-        .from('admin_settings')
-        .select('user_id, value')
-        .eq('key', 'user_fee_config');
-      
-      if (feeConfigData) {
-        const feeConfigsMap: Record<string, string> = {};
-        feeConfigData.forEach(item => {
-          if (item.user_id) {
-            feeConfigsMap[item.user_id] = item.value || '';
-          }
-        });
-        setUserFeeConfigs(feeConfigsMap);
-      }
-
-      // Load default acquirer
-      const { data: defaultAcqData } = await supabase
-        .from('admin_settings')
-        .select('value')
-        .eq('key', 'default_acquirer')
-        .is('user_id', null)
-        .maybeSingle();
-
-      if (defaultAcqData?.value) {
-        setDefaultAcquirer(defaultAcqData.value);
-      }
+      setUserAcquirers(acquirersMap);
+      setUserManualAcquirers(manualMap);
+      setUserFeeConfigs(feeConfigsMap);
     } catch (error: any) {
       toast({
         title: 'Erro',
         description: error.message || 'Erro ao carregar usuários',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -341,20 +357,24 @@ export const UsuariosSection = () => {
     setUserDetailsOpen(true);
     setUserTotalPaid(0);
     try {
-      const { data: acquirerData } = await supabase
+      const { data: acquirerData, error: acquirerError } = await supabase
         .from('admin_settings')
         .select('value')
         .eq('user_id', u.id)
         .eq('key', 'user_acquirer')
-        .single();
-      setSelectedUserAcquirer(acquirerData?.value || 'spedpay');
+        .maybeSingle();
+      if (acquirerError) throw acquirerError;
 
-      const { data: feeData } = await supabase
+      setSelectedUserAcquirer(acquirerData?.value || defaultAcquirer);
+
+      const { data: feeData, error: feeError } = await supabase
         .from('admin_settings')
         .select('value')
         .eq('user_id', u.id)
         .eq('key', 'user_fee_config')
-        .single();
+        .maybeSingle();
+      if (feeError) throw feeError;
+
       setSelectedUserFeeConfig(feeData?.value || '');
 
       // Fetch user total paid amount
@@ -363,13 +383,13 @@ export const UsuariosSection = () => {
         .select('amount')
         .eq('user_id', u.id)
         .eq('status', 'paid');
-      
+
       if (transactionData) {
         const total = transactionData.reduce((sum, t) => sum + (t.amount || 0), 0);
         setUserTotalPaid(total);
       }
     } catch {
-      setSelectedUserAcquirer('spedpay');
+      setSelectedUserAcquirer(defaultAcquirer);
       setSelectedUserFeeConfig('');
     }
   };
