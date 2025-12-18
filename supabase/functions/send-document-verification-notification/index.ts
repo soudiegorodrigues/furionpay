@@ -20,10 +20,12 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
     const { userId, userEmail, status, reason }: VerificationNotificationRequest = await req.json();
     
-    console.log(`Sending document verification notification to ${userEmail}, status: ${status}`);
+    console.log(`[START] Sending document verification notification to ${userEmail}, status: ${status}`);
 
     if (!userId || !userEmail || !status) {
       throw new Error("Missing required fields: userId, userEmail, or status");
@@ -34,50 +36,43 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get Resend API key from admin_settings
-    let resendApiKey: string | null = null;
-    const { data: apiKeyData } = await supabase
-      .from("admin_settings")
-      .select("value")
-      .eq("key", "resend_api_key")
-      .is("user_id", null)
-      .single();
+    // Fetch all settings in parallel for better performance
+    console.log(`[${Date.now() - startTime}ms] Fetching settings in parallel...`);
     
-    if (apiKeyData?.value) {
-      resendApiKey = apiKeyData.value;
-    } else {
-      resendApiKey = Deno.env.get("RESEND_API_KEY") || null;
-    }
+    const [apiKeyResult, senderResult, logoResult] = await Promise.all([
+      supabase
+        .from("admin_settings")
+        .select("value")
+        .eq("key", "resend_api_key")
+        .is("user_id", null)
+        .single(),
+      supabase
+        .from("admin_settings")
+        .select("value")
+        .eq("key", "resend_sender_email")
+        .is("user_id", null)
+        .single(),
+      supabase
+        .from("admin_settings")
+        .select("value")
+        .eq("key", "email_logo_url")
+        .is("user_id", null)
+        .single()
+    ]);
 
+    console.log(`[${Date.now() - startTime}ms] Settings fetched`);
+
+    // Get Resend API key
+    let resendApiKey = apiKeyResult.data?.value || Deno.env.get("RESEND_API_KEY") || null;
     if (!resendApiKey) {
       throw new Error("Resend API key not configured");
     }
 
-    // Get sender email from admin_settings
-    let senderEmail = "noreply@resend.dev";
-    const { data: senderData } = await supabase
-      .from("admin_settings")
-      .select("value")
-      .eq("key", "resend_sender_email")
-      .is("user_id", null)
-      .single();
+    // Get sender email
+    const senderEmail = senderResult.data?.value || "noreply@resend.dev";
 
-    if (senderData?.value) {
-      senderEmail = senderData.value;
-    }
-
-    // Get email logo from admin_settings
-    let logoUrl = "";
-    const { data: logoData } = await supabase
-      .from("admin_settings")
-      .select("value")
-      .eq("key", "email_logo_url")
-      .is("user_id", null)
-      .single();
-
-    if (logoData?.value) {
-      logoUrl = logoData.value;
-    }
+    // Get logo URL
+    const logoUrl = logoResult.data?.value || "";
 
     const resend = new Resend(resendApiKey);
 
@@ -193,6 +188,8 @@ const handler = async (req: Request): Promise<Response> => {
         </html>
       `;
 
+    console.log(`[${Date.now() - startTime}ms] Sending email...`);
+
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: `FurionPay <${senderEmail}>`,
       to: [userEmail],
@@ -201,23 +198,23 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (emailError) {
-      console.error("Error sending email:", emailError);
+      console.error(`[${Date.now() - startTime}ms] Error sending email:`, emailError);
       throw emailError;
     }
 
-    console.log("Email sent successfully:", emailData);
+    console.log(`[${Date.now() - startTime}ms] Email sent successfully:`, emailData);
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailData?.id }),
+      JSON.stringify({ success: true, emailId: emailData?.id, duration: Date.now() - startTime }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   } catch (error: any) {
-    console.error("Error in send-document-verification-notification:", error);
+    console.error(`[${Date.now() - startTime}ms] Error in send-document-verification-notification:`, error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message, duration: Date.now() - startTime }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
