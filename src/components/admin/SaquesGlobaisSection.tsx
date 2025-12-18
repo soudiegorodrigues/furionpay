@@ -226,7 +226,7 @@ export function SaquesGlobaisSection() {
             <div className="p-3 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-yellow-600 font-medium">Saques Pendentes</p>
+                  <p className="text-xs font-medium text-black">Saques Pendentes</p>
                   <p className="text-lg font-bold">{stats.totalPending}</p>
                   <p className="text-[10px] text-muted-foreground">{formatCurrency(stats.pendingValue)}</p>
                 </div>
