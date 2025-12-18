@@ -974,14 +974,29 @@ async function generatePixWithRetry(
     clientIp?: string;
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; acquirerUsed?: string }> {
-  const acquirers = retryConfig.acquirer_order;
+  // Get user's preferred acquirer
+  const userAcquirer = params.userId ? await getUserAcquirer(params.userId) : null;
+  
+  // Build acquirer order: user's preference first, then retry flow
+  let acquirers = [...retryConfig.acquirer_order];
+  if (userAcquirer && acquirers.includes(userAcquirer)) {
+    // Move user's acquirer to first position
+    acquirers = acquirers.filter(a => a !== userAcquirer);
+    acquirers.unshift(userAcquirer);
+    console.log(`[RETRY] Prioritizing user acquirer: ${userAcquirer}`);
+  } else if (userAcquirer) {
+    // User acquirer not in retry list, add it first
+    acquirers.unshift(userAcquirer);
+    console.log(`[RETRY] Adding user acquirer as first: ${userAcquirer}`);
+  }
+  
   const maxRetries = retryConfig.max_retries;
   const delayMs = retryConfig.delay_between_retries_ms;
   
   let lastError: string = '';
   let attemptNumber = 0;
   
-  console.log(`[RETRY] Starting with config: max_retries=${maxRetries}, acquirers=${acquirers.join(',')}, delay=${delayMs}ms`);
+  console.log(`[RETRY] Starting with config: max_retries=${maxRetries}, acquirers=${acquirers.join(' -> ')}, delay=${delayMs}ms, userAcquirer=${userAcquirer || 'none'}`);
   
   for (const acquirer of acquirers) {
     // Check if acquirer is enabled
