@@ -776,7 +776,7 @@ async function callAcquirer(
         body: JSON.stringify({ 
           amount: params.amount, 
           donorName: params.customerName, 
-          utmParams: params.utmParams, 
+          utmData: params.utmParams, 
           userId: params.userId, 
           popupModel: params.popupModel,
           fingerprint: params.fingerprint,
