@@ -384,13 +384,15 @@ export const ReceitaPlataformaSection = () => {
   const spedpayData = breakdown.spedpay?.[periodKey] || { count: 0, cost: 0, volume: 0 };
   const interData = breakdown.inter?.[periodKey] || { count: 0, cost: 0, volume: 0 };
   const ativusData = breakdown.ativus?.[periodKey] || { count: 0, cost: 0, volume: 0 };
-  const totalCost = spedpayData.cost + interData.cost + ativusData.cost;
-  const totalCount = spedpayData.count + interData.count + ativusData.count;
+  const valorionData = breakdown.valorion?.[periodKey] || { count: 0, cost: 0, volume: 0 };
+  const totalCost = spedpayData.cost + interData.cost + ativusData.cost + valorionData.cost;
+  const totalCount = spedpayData.count + interData.count + ativusData.count + valorionData.count;
   const avgCost = totalCount > 0 ? totalCost / totalCount : 0;
 
   const hasAcquirerData = (breakdown.spedpay?.total?.count || 0) > 0 || 
     (breakdown.inter?.total?.count || 0) > 0 || 
-    (breakdown.ativus?.total?.count || 0) > 0;
+    (breakdown.ativus?.total?.count || 0) > 0 ||
+    (breakdown.valorion?.total?.count || 0) > 0;
 
   return (
     <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
@@ -563,7 +565,7 @@ export const ReceitaPlataformaSection = () => {
                 -{formatCurrency(profitStats.acquirerCosts.thisMonth)}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Custo Adquirentes</p>
-              <p className="text-[10px] text-muted-foreground">(SpedPay, Inter, Ativus)</p>
+              <p className="text-[10px] text-muted-foreground">(SpedPay, Inter, Ativus, Valorion)</p>
             </div>
             <div className="text-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
               <div className="text-sm sm:text-base font-semibold text-green-500">
@@ -626,7 +628,8 @@ export const ReceitaPlataformaSection = () => {
                       data={[
                         { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
                         { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
-                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' }
+                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' },
+                        { name: 'Valorion', value: valorionData.cost, color: '#8B5CF6' }
                       ].filter(d => d.value > 0)}
                       cx="50%"
                       cy="50%"
@@ -640,7 +643,8 @@ export const ReceitaPlataformaSection = () => {
                       {[
                         { name: 'SpedPay', value: spedpayData.cost, color: '#3B82F6' },
                         { name: 'Banco Inter', value: interData.cost, color: '#F97316' },
-                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' }
+                        { name: 'Ativus Hub', value: ativusData.cost, color: '#10B981' },
+                        { name: 'Valorion', value: valorionData.cost, color: '#8B5CF6' }
                       ].filter(d => d.value > 0).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -696,7 +700,8 @@ export const ReceitaPlataformaSection = () => {
                   {[
                     { name: 'SpedPay', data: spedpayData, color: 'bg-blue-500' },
                     { name: 'Banco Inter', data: interData, color: 'bg-orange-500' },
-                    { name: 'Ativus Hub', data: ativusData, color: 'bg-green-500' }
+                    { name: 'Ativus Hub', data: ativusData, color: 'bg-green-500' },
+                    { name: 'Valorion', data: valorionData, color: 'bg-purple-500' }
                   ].filter(a => a.data.count > 0).map((acq, index) => (
                     <TableRow key={index}>
                       <TableCell className="text-xs">
