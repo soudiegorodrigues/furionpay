@@ -6,7 +6,6 @@ import { PersonalizacaoSection } from "@/components/admin/PersonalizacaoSection"
 import { EmailSection } from "@/components/admin/EmailSection";
 import { CheckoutGlobalSection } from "@/components/admin/CheckoutGlobalSection";
 import { FaturamentoSection } from "@/components/admin/FaturamentoSection";
-import { TransacoesGlobaisSection } from "@/components/admin/TransacoesGlobaisSection";
 import { RankingSection } from "@/components/admin/RankingSection";
 import { DominiosSection } from "@/components/admin/DominiosSection";
 import { UsuariosSection } from "@/components/admin/UsuariosSection";
@@ -225,7 +224,6 @@ const Admin = () => {
       <AnimatedSection sectionKey={activeSection}>
         {activeSection === "faturamento" && <FaturamentoSection />}
         {activeSection === "receita-plataforma" && <ReceitaPlataformaSection />}
-        {activeSection === "transacoes" && <TransacoesGlobaisSection />}
         {activeSection === "ranking" && <RankingSection />}
         {activeSection === "dominios" && <DominiosSection />}
         {activeSection === "multi" && <MultiAcquirersSection />}
