@@ -269,7 +269,7 @@ export function PremiacoesSection() {
       minute: "2-digit"
     });
   };
-  return <div className="space-y-6">
+  return <div className="max-w-5xl mx-auto space-y-6">
       <Tabs defaultValue="premiacoes" className="w-full">
         <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="premiacoes">Premiações</TabsTrigger>
