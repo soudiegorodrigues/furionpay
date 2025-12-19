@@ -585,16 +585,16 @@ export default function AdminProducts() {
                       Preço máximo: R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t">
+                  <div className="flex flex-wrap gap-1.5 mt-1.5 pt-1.5 border-t">
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="flex-1 h-8 text-xs"
+                          className="flex-1 h-6 text-[10px] px-2"
                           onClick={e => e.stopPropagation()}
                         >
-                          <FolderInput className="h-3 w-3 mr-1" />
+                          <FolderInput className="h-2.5 w-2.5 mr-0.5" />
                           Pasta
                         </Button>
                       </PopoverTrigger>
@@ -626,13 +626,13 @@ export default function AdminProducts() {
                     <Button
                       size="sm" 
                       variant="outline" 
-                      className="flex-1 h-8 text-xs"
+                      className="flex-1 h-6 text-[10px] px-2"
                       onClick={e => {
                         e.stopPropagation();
                         navigate(`/admin/products/${product.id}`);
                       }}
                     >
-                      <Settings className="h-3 w-3 mr-1" />
+                      <Settings className="h-2.5 w-2.5 mr-0.5" />
                       Configurar
                     </Button>
                   </div>
