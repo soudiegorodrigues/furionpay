@@ -463,18 +463,20 @@ export default function PublicCheckout() {
   // If PIX is generated, show the payment page
   if (step === "payment" && pixData) {
     return (
-      <CheckoutPixPayment
-        amount={getCurrentPrice()}
-        pixCode={pixData.pixCode}
-        qrCodeUrl={pixData.qrCode}
-        transactionId={pixData.transactionId}
-        primaryColor={config?.primary_color || "#16A34A"}
-        customerEmail={formData.email}
-        customerName={formData.name}
-        productName={offer?.name || product?.name}
-        pixelId={pixelConfig?.pixelId}
-        accessToken={pixelConfig?.accessToken}
-      />
+      <Suspense fallback={<CheckoutSkeleton />}>
+        <CheckoutPixPayment
+          amount={getCurrentPrice()}
+          pixCode={pixData.pixCode}
+          qrCodeUrl={pixData.qrCode}
+          transactionId={pixData.transactionId}
+          primaryColor={config?.primary_color || "#16A34A"}
+          customerEmail={formData.email}
+          customerName={formData.name}
+          productName={offer?.name || product?.name}
+          pixelId={pixelConfig?.pixelId}
+          accessToken={pixelConfig?.accessToken}
+        />
+      </Suspense>
     );
   }
 
