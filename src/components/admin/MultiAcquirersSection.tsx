@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Loader2, Check, Settings, Power, Star } from "lucide-react";
+import { Plus, Loader2, Check, Settings, Power, Star, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -650,18 +650,27 @@ export const MultiAcquirersSection = () => {
       {/* 2. Configuração de Retentativas */}
       <RetryConfigSection />
       {/* 3. Adquirentes Ativas */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
-          <Badge variant="secondary" className="text-xs">4</Badge>
-        </div>
-        <Button variant="outline" disabled>
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Adquirente
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Adquirentes Ativas
+                <Badge variant="secondary" className="text-xs">4</Badge>
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Gerencie os gateways de pagamento PIX integrados à plataforma.
+              </CardDescription>
+            </div>
+            <Button variant="outline" disabled>
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Adquirente
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* BANCO INTER Card */}
         <Card className={`border-primary/50 transition-opacity ${interEnabled === false ? 'opacity-60' : ''}`}>
           <CardHeader className="p-3 pb-2">
@@ -1159,7 +1168,9 @@ export const MultiAcquirersSection = () => {
             <p className="text-[10px] text-muted-foreground">Em breve</p>
           </CardContent>
         </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="bg-muted/30">
         <CardContent className="py-4">
