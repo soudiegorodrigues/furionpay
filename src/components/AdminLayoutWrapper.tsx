@@ -135,7 +135,7 @@ export function AdminLayoutWrapper() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="h-[100dvh] flex w-full bg-background overflow-hidden">
         <AdminSidebar 
           userEmail={user?.email} 
           userName={userName || undefined} 
@@ -144,7 +144,7 @@ export function AdminLayoutWrapper() {
           isOwner={isOwner}
           hasPermission={hasPermission}
         />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
           {/* Desktop header with billing progress */}
           <header className="hidden md:flex sticky top-0 z-20 h-14 border-b border-border bg-background items-center justify-end px-6">
             <BillingProgressBadge userId={user?.id} />
@@ -161,7 +161,7 @@ export function AdminLayoutWrapper() {
             />
           </header>
           <BlockedUserAlert isBlocked={isBlocked} />
-          <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-scroll">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden overflow-y-scroll scrollbar-gutter-stable">
             <Outlet />
           </main>
         </div>

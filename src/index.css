@@ -109,6 +109,11 @@
     @apply border-border;
   }
 
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
@@ -116,6 +121,10 @@
 }
 
 @layer utilities {
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.3s ease-out forwards;
   }
