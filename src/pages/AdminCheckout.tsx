@@ -18,27 +18,23 @@ import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { CheckoutOfferCard } from "@/components/CheckoutOfferCard";
-
 interface PopupModelStats {
   popup_model: string;
   total_generated: number;
   total_paid: number;
   conversion_rate: number;
 }
-
 interface AvailableDomain {
   id: string;
   domain: string;
   name: string | null;
 }
-
 interface MetaPixel {
   id: string;
   name: string;
   pixelId: string;
   accessToken: string;
 }
-
 interface CheckoutOffer {
   id: string;
   name: string;
@@ -47,7 +43,6 @@ interface CheckoutOffer {
   product_name: string;
   meta_pixel_ids: string[];
 }
-
 const popupModels = [{
   id: "boost",
   name: "Boost",
@@ -84,9 +79,12 @@ const popupModels = [{
   description: "Modelo institucional",
   hasDynamicAmount: false
 }];
-
 const AdminCheckout = () => {
-  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
+  const {
+    isOwner,
+    hasPermission,
+    loading: permissionsLoading
+  } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
@@ -95,38 +93,31 @@ const AdminCheckout = () => {
   const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
   const [metaPixels, setMetaPixels] = useState<MetaPixel[]>([]);
   const [offers, setOffers] = useState<CheckoutOffer[]>([]);
-  
-  const { isAuthenticated, user } = useAdminAuth();
-
+  const {
+    isAuthenticated,
+    user
+  } = useAdminAuth();
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
     }
   }, [isAuthenticated]);
-
   const loadData = async () => {
     setIsLoading(false); // Remove loading state immediately
-    
+
     try {
       // Load all data in parallel for faster loading
-      const [offersResult, statsResult, domainsResult, settingsResult] = await Promise.all([
-        supabase
-          .from('checkout_offers')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        supabase.rpc('get_user_popup_model_stats'),
-        supabase
-          .from('available_domains')
-          .select('id, domain, name')
-          .eq('is_active', true)
-          .order('domain'),
-        supabase.rpc('get_user_settings'),
-      ]);
+      const [offersResult, statsResult, domainsResult, settingsResult] = await Promise.all([supabase.from('checkout_offers').select('*').order('created_at', {
+        ascending: false
+      }), supabase.rpc('get_user_popup_model_stats'), supabase.from('available_domains').select('id, domain, name').eq('is_active', true).order('domain'), supabase.rpc('get_user_settings')]);
 
       // Parse meta pixels first
       let parsedPixels: MetaPixel[] = [];
       if (settingsResult.data) {
-        const settings = settingsResult.data as { key: string; value: string; }[];
+        const settings = settingsResult.data as {
+          key: string;
+          value: string;
+        }[];
         const pixelsSetting = settings.find(s => s.key === 'meta_pixels');
         if (pixelsSetting?.value) {
           try {
@@ -145,39 +136,40 @@ const AdminCheckout = () => {
       // Process offers and clean invalid pixel IDs
       if (!offersResult.error && offersResult.data) {
         const processedOffers: CheckoutOffer[] = [];
-        const offersToUpdate: { id: string; validIds: string[] }[] = [];
-
+        const offersToUpdate: {
+          id: string;
+          validIds: string[];
+        }[] = [];
         for (const o of offersResult.data) {
           const currentPixelIds = o.meta_pixel_ids || [];
           const validIds = currentPixelIds.filter((id: string) => validPixelIds.has(id));
-          
+
           // Check if any invalid pixels were removed
           if (validIds.length !== currentPixelIds.length && !o.id.startsWith('temp-')) {
-            offersToUpdate.push({ id: o.id, validIds });
+            offersToUpdate.push({
+              id: o.id,
+              validIds
+            });
           }
-
           processedOffers.push({
             id: o.id,
             name: o.name,
             domain: o.domain || '',
             popup_model: o.popup_model || 'landing',
             product_name: o.product_name || '',
-            meta_pixel_ids: validIds,
+            meta_pixel_ids: validIds
           });
         }
-
         setOffers(processedOffers);
 
         // Update offers with invalid pixels in background
         if (offersToUpdate.length > 0) {
-          Promise.all(
-            offersToUpdate.map(({ id, validIds }) =>
-              supabase
-                .from('checkout_offers')
-                .update({ meta_pixel_ids: validIds })
-                .eq('id', id)
-            )
-          ).then(() => {
+          Promise.all(offersToUpdate.map(({
+            id,
+            validIds
+          }) => supabase.from('checkout_offers').update({
+            meta_pixel_ids: validIds
+          }).eq('id', id))).then(() => {
             console.log('Cleaned invalid pixel IDs from offers');
           });
         }
@@ -192,7 +184,6 @@ const AdminCheckout = () => {
       setHasLoaded(true);
     }
   };
-
   const handleCreateOffer = () => {
     const newOffer: CheckoutOffer = {
       id: `temp-${Date.now()}`,
@@ -200,56 +191,46 @@ const AdminCheckout = () => {
       domain: availableDomains[0]?.domain || '',
       popup_model: 'landing',
       product_name: '',
-      meta_pixel_ids: [],
+      meta_pixel_ids: []
     };
     setOffers([newOffer, ...offers]);
   };
-
   const handleSaveOffer = async (offer: CheckoutOffer) => {
     const isNew = offer.id.startsWith('temp-');
-    
     try {
       if (isNew) {
-        const { data, error } = await supabase
-          .from('checkout_offers')
-          .insert({
-            user_id: user?.id,
-            name: offer.name,
-            domain: offer.domain || null,
-            popup_model: offer.popup_model,
-            product_name: offer.product_name || null,
-            meta_pixel_ids: offer.meta_pixel_ids || [],
-          })
-          .select()
-          .single();
-
+        const {
+          data,
+          error
+        } = await supabase.from('checkout_offers').insert({
+          user_id: user?.id,
+          name: offer.name,
+          domain: offer.domain || null,
+          popup_model: offer.popup_model,
+          product_name: offer.product_name || null,
+          meta_pixel_ids: offer.meta_pixel_ids || []
+        }).select().single();
         if (error) throw error;
-
         setOffers(offers.map(o => o.id === offer.id ? {
           ...offer,
-          id: data.id,
+          id: data.id
         } : o));
-
         toast({
           title: "Oferta criada!",
           description: "Sua nova oferta foi salva com sucesso."
         });
       } else {
-        const { error } = await supabase
-          .from('checkout_offers')
-          .update({
-            name: offer.name,
-            domain: offer.domain || null,
-            popup_model: offer.popup_model,
-            product_name: offer.product_name || null,
-            meta_pixel_ids: offer.meta_pixel_ids || [],
-          })
-          .eq('id', offer.id);
-
+        const {
+          error
+        } = await supabase.from('checkout_offers').update({
+          name: offer.name,
+          domain: offer.domain || null,
+          popup_model: offer.popup_model,
+          product_name: offer.product_name || null,
+          meta_pixel_ids: offer.meta_pixel_ids || []
+        }).eq('id', offer.id);
         if (error) throw error;
-
         setOffers(offers.map(o => o.id === offer.id ? offer : o));
-
         toast({
           title: "Oferta atualizada!",
           description: "As alterações foram salvas com sucesso."
@@ -265,23 +246,17 @@ const AdminCheckout = () => {
       throw error;
     }
   };
-
   const handleDeleteOffer = async (offerId: string) => {
     const isNew = offerId.startsWith('temp-');
-    
     if (isNew) {
       setOffers(offers.filter(o => o.id !== offerId));
       return;
     }
-
     try {
-      const { error } = await supabase
-        .from('checkout_offers')
-        .delete()
-        .eq('id', offerId);
-
+      const {
+        error
+      } = await supabase.from('checkout_offers').delete().eq('id', offerId);
       if (error) throw error;
-
       setOffers(offers.filter(o => o.id !== offerId));
       toast({
         title: "Oferta excluída",
@@ -296,11 +271,9 @@ const AdminCheckout = () => {
       });
     }
   };
-
   const handleSelectModel = (modelId: string) => {
     setSelectedModel(modelId);
   };
-
   const getStatsForModel = (modelId: string) => {
     return popupStats.find(s => s.popup_model === modelId);
   };
@@ -309,9 +282,7 @@ const AdminCheckout = () => {
   if (!permissionsLoading && !isOwner && !hasPermission('can_manage_checkout')) {
     return <AccessDenied message="Você não tem permissão para gerenciar o Checkout." />;
   }
-
-  return (
-    <>
+  return <>
       <div className="max-w-6xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -319,7 +290,7 @@ const AdminCheckout = () => {
             <CreditCard className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Modelos de Checkout</h1>
+            <h1 className="text-2xl font-bold">Checkout Popup </h1>
             <p className="text-sm text-muted-foreground">Selecione e personalize seu modelo de checkout</p>
           </div>
         </div>
@@ -345,8 +316,7 @@ const AdminCheckout = () => {
               </Button>
             </div>
 
-            {offers.length === 0 && hasLoaded && (
-              <Card className="border-dashed">
+            {offers.length === 0 && hasLoaded && <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
                     <CreditCard className="w-6 h-6 text-muted-foreground" />
@@ -360,23 +330,10 @@ const AdminCheckout = () => {
                     Criar Primeira Oferta
                   </Button>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
 
             <div className="space-y-4">
-              {offers.map((offer) => (
-                <CheckoutOfferCard
-                  key={offer.id}
-                  offer={offer}
-                  userId={user?.id || ''}
-                  availableDomains={availableDomains}
-                  metaPixels={metaPixels}
-                  popupModels={popupModels}
-                  onSave={handleSaveOffer}
-                  onDelete={handleDeleteOffer}
-                  isNew={offer.id.startsWith('temp-')}
-                />
-              ))}
+              {offers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} metaPixels={metaPixels} popupModels={popupModels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
             </div>
           </TabsContent>
 
@@ -384,25 +341,18 @@ const AdminCheckout = () => {
           <TabsContent value="models" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {popupModels.map(model => {
-                const stats = getStatsForModel(model.id);
-                const isSelected = selectedModel === model.id;
-                return (
-                  <Card 
-                    key={model.id} 
-                    className={`transition-all cursor-pointer ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`} 
-                    onClick={() => handleSelectModel(model.id)}
-                  >
+              const stats = getStatsForModel(model.id);
+              const isSelected = selectedModel === model.id;
+              return <Card key={model.id} className={`transition-all cursor-pointer ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'hover:border-primary/50'}`} onClick={() => handleSelectModel(model.id)}>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-base">{model.name}</CardTitle>
                         </div>
-                        {stats && stats.total_paid > 0 && (
-                          <Badge variant="secondary" className="text-xs">
+                        {stats && stats.total_paid > 0 && <Badge variant="secondary" className="text-xs">
                             <TrendingUp className="w-3 h-3 mr-1" />
                             {stats.conversion_rate}%
-                          </Badge>
-                        )}
+                          </Badge>}
                       </div>
                       <CardDescription className="text-xs">{model.description}</CardDescription>
                     </CardHeader>
@@ -422,33 +372,25 @@ const AdminCheckout = () => {
                         </div>
                       </div>
                       
-                      {model.hasDynamicAmount && (
-                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
+                      {model.hasDynamicAmount && <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
                           <div className="flex items-start gap-2">
                             <span className="text-amber-500 text-sm">💡</span>
                             <div className="text-xs text-amber-600 dark:text-amber-400">
                               <strong>Valores dinâmicos:</strong> <code className="bg-muted px-1 rounded">&amount=VALOR</code>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        </div>}
                       
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full" 
-                        onClick={e => {
-                          e.stopPropagation();
-                          setPreviewModel(model.id);
-                        }}
-                      >
+                      <Button variant="outline" size="sm" className="w-full" onClick={e => {
+                    e.stopPropagation();
+                    setPreviewModel(model.id);
+                  }}>
                         <Eye className="w-4 h-4 mr-2" />
                         Visualizar
                       </Button>
                     </CardContent>
-                  </Card>
-                );
-              })}
+                  </Card>;
+            })}
             </div>
           </TabsContent>
         </Tabs>
@@ -477,8 +419,6 @@ const AdminCheckout = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 };
-
 export default AdminCheckout;
