@@ -122,6 +122,10 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "fade-opacity": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
         "fade-in": {
           from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
@@ -140,6 +144,7 @@ export default {
         "spin-slow": "spin-slow 20s linear infinite",
         "drift": "drift 12s ease-in-out infinite",
         "shimmer": "shimmer 3s linear infinite",
+        "fade-opacity": "fade-opacity 0.15s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
         "section-enter": "section-enter 0.2s ease-out",
       },

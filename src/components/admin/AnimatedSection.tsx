@@ -5,10 +5,7 @@ interface AnimatedSectionProps {
 
 export function AnimatedSection({ children, sectionKey }: AnimatedSectionProps) {
   return (
-    <div 
-      key={sectionKey} 
-      className="animate-fade-in"
-    >
+    <div key={sectionKey} className="animate-fade-opacity">
       {children}
     </div>
   );

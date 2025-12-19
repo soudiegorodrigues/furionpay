@@ -21,7 +21,7 @@ type DomainType = "popup" | "checkout";
 
 export const DominiosSection = () => {
   const [domains, setDomains] = useState<Domain[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Popup domain form
   const [newPopupDomain, setNewPopupDomain] = useState("");
