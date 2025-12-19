@@ -660,7 +660,7 @@ export const MultiAcquirersSection = () => {
                 <Badge variant="secondary" className="text-xs">4</Badge>
               </CardTitle>
               <CardDescription className="mt-1">
-                Gerencie os gateways de pagamento PIX integrados à plataforma.
+                Gerencie os gateways de pagamento integrado. 
               </CardDescription>
             </div>
           </div>
@@ -720,15 +720,15 @@ export const MultiAcquirersSection = () => {
             {interEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
                 {isSettingDefault === 'inter' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'inter'} onCheckedChange={checked => {
-              if (checked) {
-                setAsDefaultAcquirer('inter');
-              } else if (defaultAcquirer === 'inter') {
-                toast({
-                  title: "Já é a Adquirente Principal",
-                  description: "Banco Inter já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
-                });
-              }
-            }} disabled={isSettingDefault !== null} className="scale-75" />}
+                  if (checked) {
+                    setAsDefaultAcquirer('inter');
+                  } else if (defaultAcquirer === 'inter') {
+                    toast({
+                      title: "Já é a Adquirente Principal",
+                      description: "Banco Inter já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                    });
+                  }
+                }} disabled={isSettingDefault !== null} className="scale-75" />}
               </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
@@ -765,37 +765,37 @@ export const MultiAcquirersSection = () => {
               <div className="space-y-2">
                 <Label htmlFor="inter-client-id">Client ID</Label>
                 <Input id="inter-client-id" placeholder="Digite o Client ID" value={interConfig.clientId} onChange={e => setInterConfig(prev => ({
-                ...prev,
-                clientId: e.target.value
-              }))} />
+                    ...prev,
+                    clientId: e.target.value
+                  }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-client-secret">Client Secret</Label>
                 <Input id="inter-client-secret" type="password" placeholder="Digite o Client Secret" value={interConfig.clientSecret} onChange={e => setInterConfig(prev => ({
-                ...prev,
-                clientSecret: e.target.value
-              }))} />
+                    ...prev,
+                    clientSecret: e.target.value
+                  }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-certificate">Certificado (.crt)</Label>
                 <textarea id="inter-certificate" className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo do certificado" value={interConfig.certificate} onChange={e => setInterConfig(prev => ({
-                ...prev,
-                certificate: e.target.value
-              }))} />
+                    ...prev,
+                    certificate: e.target.value
+                  }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-private-key">Chave Privada (.key)</Label>
                 <textarea id="inter-private-key" className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo da chave privada" value={interConfig.privateKey} onChange={e => setInterConfig(prev => ({
-                ...prev,
-                privateKey: e.target.value
-              }))} />
+                    ...prev,
+                    privateKey: e.target.value
+                  }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-pix-key">Chave PIX (CNPJ/CPF/Email/Telefone)</Label>
                 <Input id="inter-pix-key" placeholder="Ex: 52027770000121" value={interConfig.pixKey} onChange={e => setInterConfig(prev => ({
-                ...prev,
-                pixKey: e.target.value
-              }))} />
+                    ...prev,
+                    pixKey: e.target.value
+                  }))} />
                 <p className="text-xs text-muted-foreground">
                   Para CNPJ/CPF, digite apenas números (sem pontos, traços ou barras)
                 </p>
@@ -863,15 +863,15 @@ export const MultiAcquirersSection = () => {
             {spedpayEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
                 {isSettingDefault === 'spedpay' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'spedpay'} onCheckedChange={checked => {
-              if (checked) {
-                setAsDefaultAcquirer('spedpay');
-              } else if (defaultAcquirer === 'spedpay') {
-                toast({
-                  title: "Já é a Adquirente Principal",
-                  description: "SpedPay já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
-                });
-              }
-            }} disabled={isSettingDefault !== null} className="scale-75" />}
+                  if (checked) {
+                    setAsDefaultAcquirer('spedpay');
+                  } else if (defaultAcquirer === 'spedpay') {
+                    toast({
+                      title: "Já é a Adquirente Principal",
+                      description: "SpedPay já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                    });
+                  }
+                }} disabled={isSettingDefault !== null} className="scale-75" />}
               </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
@@ -975,15 +975,15 @@ export const MultiAcquirersSection = () => {
             {ativusEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
                 {isSettingDefault === 'ativus' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'ativus'} onCheckedChange={checked => {
-              if (checked) {
-                setAsDefaultAcquirer('ativus');
-              } else if (defaultAcquirer === 'ativus') {
-                toast({
-                  title: "Já é a Adquirente Principal",
-                  description: "Ativus Hub já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
-                });
-              }
-            }} disabled={isSettingDefault !== null} className="scale-75" />}
+                  if (checked) {
+                    setAsDefaultAcquirer('ativus');
+                  } else if (defaultAcquirer === 'ativus') {
+                    toast({
+                      title: "Já é a Adquirente Principal",
+                      description: "Ativus Hub já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                    });
+                  }
+                }} disabled={isSettingDefault !== null} className="scale-75" />}
               </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
@@ -1087,15 +1087,15 @@ export const MultiAcquirersSection = () => {
             {valorionEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
                 {isSettingDefault === 'valorion' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'valorion'} onCheckedChange={checked => {
-              if (checked) {
-                setAsDefaultAcquirer('valorion');
-              } else if (defaultAcquirer === 'valorion') {
-                toast({
-                  title: "Já é a Adquirente Principal",
-                  description: "Valorion já está definida como adquirente padrão. Para mudar, ative outra adquirente como principal."
-                });
-              }
-            }} disabled={isSettingDefault !== null} className="scale-75" />}
+                  if (checked) {
+                    setAsDefaultAcquirer('valorion');
+                  } else if (defaultAcquirer === 'valorion') {
+                    toast({
+                      title: "Já é a Adquirente Principal",
+                      description: "Valorion já está definida como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                    });
+                  }
+                }} disabled={isSettingDefault !== null} className="scale-75" />}
               </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
