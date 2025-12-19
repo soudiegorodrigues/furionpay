@@ -1,4 +1,3 @@
-// Banner Preview Component for FurionPay Dashboard
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,9 +5,10 @@ import { Check, Download, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-import placa100k from '@/assets/placa-100k.webp';
-import placa500k from '@/assets/placa-500k.webp';
-import placa1m from '@/assets/placa-1m.webp';
+const placa100k = '/placas/placa-100k.webp';
+const placa500k = '/placas/placa-500k.webp';
+const placa1m = '/placas/placa-1m.webp';
+
 
 interface BannerPreviewProps {
   userId: string;
