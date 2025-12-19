@@ -86,6 +86,7 @@ interface GeneratePixRequest {
   utmData?: Record<string, string>;
   productName?: string;
   popupModel?: string;
+  healthCheck?: boolean;
 }
 
 interface FeeConfig {
@@ -360,10 +361,10 @@ serve(async (req) => {
   const requestStartTime = Date.now();
 
   try {
-    const { amount, donorName, userId, utmData, productName, popupModel } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck } = await req.json() as GeneratePixRequest;
 
     console.log('=== VALORION PIX GENERATION START ===');
-    console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}`);
+    console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}, HealthCheck: ${healthCheck}`);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -516,21 +517,25 @@ serve(async (req) => {
       throw new Error('Código PIX não encontrado na resposta. Campos retornados: ' + Object.keys(data).join(', '));
     }
 
-    // Registrar transação
-    await logPixGenerated(
-      supabase,
-      amount,
-      transactionId,
-      pixCode,
-      finalDonorName,
-      utmData,
-      finalProductName,
-      userId,
-      popupModel,
-      feeConfig?.pix_percentage,
-      feeConfig?.pix_fixed,
-      'valorion'
-    );
+    // Registrar transação (skip for health checks)
+    if (!healthCheck) {
+      await logPixGenerated(
+        supabase,
+        amount,
+        transactionId,
+        pixCode,
+        finalDonorName,
+        utmData,
+        finalProductName,
+        userId,
+        popupModel,
+        feeConfig?.pix_percentage,
+        feeConfig?.pix_fixed,
+        'valorion'
+      );
+    } else {
+      console.log('[VALORION] Health check mode - skipping transaction log');
+    }
 
     const totalTime = Date.now() - requestStartTime;
 

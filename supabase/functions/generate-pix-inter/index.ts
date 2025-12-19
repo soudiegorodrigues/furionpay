@@ -31,6 +31,7 @@ interface GeneratePixRequest {
   utmData?: Record<string, string>;
   productName?: string;
   popupModel?: string;
+  healthCheck?: boolean;
 }
 
 interface InterCredentials {
@@ -414,9 +415,9 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, donorName, userId, utmData, productName, popupModel } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck } = await req.json() as GeneratePixRequest;
 
-    console.log('Gerando PIX Inter - Valor:', amount, 'Usuário:', userId);
+    console.log('Gerando PIX Inter - Valor:', amount, 'Usuário:', userId, 'HealthCheck:', healthCheck);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -455,24 +456,28 @@ serve(async (req) => {
     // Get product name from checkout_offers if not provided
     const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
 
-    // Registrar transação - usa nome aleatório se não fornecido
+    // Registrar transação - usa nome aleatório se não fornecido (skip for health checks)
     const finalDonorName = donorName || getRandomName();
     console.log('Using donor name:', finalDonorName);
     
-    await logPixGenerated(
-      supabase,
-      amount,
-      txid,
-      pixCode,
-      finalDonorName,
-      utmData,
-      finalProductName,
-      userId,
-      popupModel,
-      feeConfig?.pix_percentage,
-      feeConfig?.pix_fixed,
-      'inter'
-    );
+    if (!healthCheck) {
+      await logPixGenerated(
+        supabase,
+        amount,
+        txid,
+        pixCode,
+        finalDonorName,
+        utmData,
+        finalProductName,
+        userId,
+        popupModel,
+        feeConfig?.pix_percentage,
+        feeConfig?.pix_fixed,
+        'inter'
+      );
+    } else {
+      console.log('Health check mode - skipping transaction log');
+    }
 
     // Utmify integration handled by database trigger (utmify-sync)
     return new Response(
