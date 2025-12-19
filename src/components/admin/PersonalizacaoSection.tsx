@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Palette, Save, Image, Loader2, Trash2, Upload, Link, Info, Monitor, Tablet, Smartphone } from "lucide-react";
+import { Palette, Save, Image, Loader2, Trash2, Upload, Link, Info, Monitor, Tablet, Smartphone, Sparkles } from "lucide-react";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
+import { BannerPreview } from "./BannerPreview";
 
 interface PersonalizacaoSectionProps {
   userId?: string;
@@ -278,8 +279,12 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
             </div>
           </div>
 
-          <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue="premium" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="premium" className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Banner Premium
+              </TabsTrigger>
               <TabsTrigger value="upload" className="flex items-center gap-2">
                 <Upload className="h-4 w-4" />
                 {bannerUrl ? 'Trocar Imagem' : 'Enviar Imagem'}
@@ -289,6 +294,15 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
                 URL da Imagem
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="premium" className="mt-4">
+              {userId && (
+                <BannerPreview 
+                  userId={userId} 
+                  onSave={(newUrl) => setBannerUrl(newUrl)} 
+                />
+              )}
+            </TabsContent>
 
             <TabsContent value="upload" className="space-y-4 mt-4">
               <div className="space-y-2">
