@@ -4,46 +4,44 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Settings, Loader2, Check, AlertCircle, Zap } from "lucide-react";
+import { Settings, Loader2, Check, Power, CreditCard, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
-interface GatewayConfig {
-  apiKey: string;
-  apiUrl?: string;
-  feeRate: string;
-  fixedFee: string;
-  isConfigured: boolean;
-}
-
 export const GatewayConfigSection = () => {
   const { user } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState("ativus");
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState<string | null>(null);
 
-  // Gateway configs
-  const [ativusConfig, setAtivusConfig] = useState<GatewayConfig>({
-    apiKey: '', feeRate: '', fixedFee: '', isConfigured: false
-  });
-  const [spedpayConfig, setSpedpayConfig] = useState<GatewayConfig>({
-    apiKey: '', feeRate: '', fixedFee: '', isConfigured: false
-  });
-  const [valorionConfig, setValorionConfig] = useState<GatewayConfig>({
-    apiKey: '', apiUrl: '', feeRate: '', fixedFee: '', isConfigured: false
-  });
+  // Gateway states
+  const [ativusApiKey, setAtivusApiKey] = useState('');
+  const [ativusFeeRate, setAtivusFeeRate] = useState('');
+  const [ativusFixedFee, setAtivusFixedFee] = useState('');
+
+  const [spedpayApiKey, setSpedpayApiKey] = useState('');
+  const [spedpayFeeRate, setSpedpayFeeRate] = useState('');
+  const [spedpayFixedFee, setSpedpayFixedFee] = useState('');
+
+  const [valorionApiKey, setValorionApiKey] = useState('');
+  const [valorionApiUrl, setValorionApiUrl] = useState('');
+  const [valorionFeeRate, setValorionFeeRate] = useState('');
+  const [valorionFixedFee, setValorionFixedFee] = useState('');
+
+  const [interFeeRate, setInterFeeRate] = useState('');
+  const [interFixedFee, setInterFixedFee] = useState('');
   const [interConfig, setInterConfig] = useState({
-    clientId: '', clientSecret: '', certificate: '', privateKey: '', pixKey: '',
-    feeRate: '', fixedFee: '', isConfigured: false
+    clientId: '', clientSecret: '', certificate: '', privateKey: '', pixKey: ''
   });
 
-  // Inter config dialog
+  // Dialog states
+  const [showAtivusDialog, setShowAtivusDialog] = useState(false);
+  const [showSpedpayDialog, setShowSpedpayDialog] = useState(false);
+  const [showValorionDialog, setShowValorionDialog] = useState(false);
   const [showInterDialog, setShowInterDialog] = useState(false);
   const [isLoadingInter, setIsLoadingInter] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadConfigs();
@@ -58,37 +56,21 @@ export const GatewayConfigSection = () => {
       if (data) {
         const settings = data as { key: string; value: string }[];
         
-        // Ativus
-        setAtivusConfig({
-          apiKey: settings.find(s => s.key === 'ativus_api_key')?.value || '',
-          feeRate: settings.find(s => s.key === 'ativus_fee_rate')?.value || '',
-          fixedFee: settings.find(s => s.key === 'ativus_fixed_fee')?.value || '',
-          isConfigured: !!settings.find(s => s.key === 'ativus_api_key')?.value
-        });
+        setAtivusApiKey(settings.find(s => s.key === 'ativus_api_key')?.value || '');
+        setAtivusFeeRate(settings.find(s => s.key === 'ativus_fee_rate')?.value || '');
+        setAtivusFixedFee(settings.find(s => s.key === 'ativus_fixed_fee')?.value || '');
 
-        // SpedPay
-        setSpedpayConfig({
-          apiKey: settings.find(s => s.key === 'spedpay_api_key')?.value || '',
-          feeRate: settings.find(s => s.key === 'spedpay_fee_rate')?.value || '',
-          fixedFee: settings.find(s => s.key === 'spedpay_fixed_fee')?.value || '',
-          isConfigured: !!settings.find(s => s.key === 'spedpay_api_key')?.value
-        });
+        setSpedpayApiKey(settings.find(s => s.key === 'spedpay_api_key')?.value || '');
+        setSpedpayFeeRate(settings.find(s => s.key === 'spedpay_fee_rate')?.value || '');
+        setSpedpayFixedFee(settings.find(s => s.key === 'spedpay_fixed_fee')?.value || '');
 
-        // Valorion
-        setValorionConfig({
-          apiKey: settings.find(s => s.key === 'valorion_api_key')?.value || '',
-          apiUrl: settings.find(s => s.key === 'valorion_api_url')?.value || '',
-          feeRate: settings.find(s => s.key === 'valorion_fee_rate')?.value || '',
-          fixedFee: settings.find(s => s.key === 'valorion_fixed_fee')?.value || '',
-          isConfigured: !!settings.find(s => s.key === 'valorion_api_key')?.value
-        });
+        setValorionApiKey(settings.find(s => s.key === 'valorion_api_key')?.value || '');
+        setValorionApiUrl(settings.find(s => s.key === 'valorion_api_url')?.value || '');
+        setValorionFeeRate(settings.find(s => s.key === 'valorion_fee_rate')?.value || '');
+        setValorionFixedFee(settings.find(s => s.key === 'valorion_fixed_fee')?.value || '');
 
-        // Inter
-        setInterConfig(prev => ({
-          ...prev,
-          feeRate: settings.find(s => s.key === 'inter_fee_rate')?.value || '',
-          fixedFee: settings.find(s => s.key === 'inter_fixed_fee')?.value || '',
-        }));
+        setInterFeeRate(settings.find(s => s.key === 'inter_fee_rate')?.value || '');
+        setInterFixedFee(settings.find(s => s.key === 'inter_fixed_fee')?.value || '');
       }
     } catch (error) {
       console.error('Error loading configs:', error);
@@ -103,15 +85,13 @@ export const GatewayConfigSection = () => {
       const { data, error } = await supabase.functions.invoke('get-inter-credentials');
       if (error) throw error;
       if (data?.success && data?.credentials) {
-        setInterConfig(prev => ({
-          ...prev,
+        setInterConfig({
           clientId: data.credentials.clientId || '',
           clientSecret: data.credentials.clientSecret || '',
           certificate: data.credentials.certificate || '',
           privateKey: data.credentials.privateKey || '',
-          pixKey: data.credentials.pixKey || '',
-          isConfigured: data.credentials.isFullyConfigured || false
-        }));
+          pixKey: data.credentials.pixKey || ''
+        });
       }
     } catch (error) {
       console.error('Error loading Inter credentials:', error);
@@ -120,20 +100,51 @@ export const GatewayConfigSection = () => {
     }
   };
 
-  const saveConfig = async (gateway: string, config: Record<string, string>) => {
-    setIsSaving(true);
+  const saveFeeSettings = async (gateway: string, feeRate: string, fixedFee: string) => {
     try {
-      for (const [key, value] of Object.entries(config)) {
+      const updates = [
+        { key: `${gateway}_fee_rate`, value: feeRate },
+        { key: `${gateway}_fixed_fee`, value: fixedFee }
+      ];
+      
+      for (const { key, value } of updates) {
         const { error } = await supabase.rpc('update_admin_setting_auth', {
-          setting_key: `${gateway}_${key}`,
+          setting_key: key,
           setting_value: value
         });
         if (error) throw error;
       }
-      toast({ title: "Configurações Salvas", description: `Configurações do gateway atualizadas.` });
+      
+      toast({ title: "Taxas Atualizadas", description: "Taxas salvas com sucesso." });
+    } catch (error) {
+      console.error('Error saving fees:', error);
+      toast({ title: "Erro", description: "Falha ao salvar taxas", variant: "destructive" });
+    }
+  };
+
+  const saveApiKey = async (gateway: string, apiKey: string, extraFields?: Record<string, string>) => {
+    setIsSaving(true);
+    try {
+      const updates = [{ key: `${gateway}_api_key`, value: apiKey }];
+      
+      if (extraFields) {
+        Object.entries(extraFields).forEach(([key, value]) => {
+          updates.push({ key: `${gateway}_${key}`, value });
+        });
+      }
+      
+      for (const { key, value } of updates) {
+        const { error } = await supabase.rpc('update_admin_setting_auth', {
+          setting_key: key,
+          setting_value: value
+        });
+        if (error) throw error;
+      }
+      
+      toast({ title: "Sucesso", description: "Configurações atualizadas!" });
       loadConfigs();
     } catch (error) {
-      console.error('Error saving config:', error);
+      console.error('Error saving API key:', error);
       toast({ title: "Erro", description: "Falha ao salvar configurações", variant: "destructive" });
     } finally {
       setIsSaving(false);
@@ -208,113 +219,6 @@ export const GatewayConfigSection = () => {
     }
   };
 
-  const renderGatewayTab = (
-    gateway: string,
-    title: string,
-    config: GatewayConfig,
-    setConfig: React.Dispatch<React.SetStateAction<GatewayConfig>>,
-    showApiUrl?: boolean
-  ) => (
-    <TabsContent value={gateway} className="space-y-4 mt-4">
-      <div className="grid gap-4">
-        {/* API Key */}
-        <div className="space-y-2">
-          <Label>Chave API</Label>
-          <Input
-            type="password"
-            placeholder={`Digite a chave API do ${title}`}
-            value={config.apiKey}
-            onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-          />
-        </div>
-
-        {/* API URL (for Valorion) */}
-        {showApiUrl && (
-          <div className="space-y-2">
-            <Label>Endpoint URL</Label>
-            <Input
-              type="url"
-              placeholder="https://..."
-              value={config.apiUrl || ''}
-              onChange={(e) => setConfig(prev => ({ ...prev, apiUrl: e.target.value }))}
-            />
-            <p className="text-xs text-muted-foreground">URL do endpoint de criação PIX (opcional)</p>
-          </div>
-        )}
-
-        {/* Fee Configuration */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Taxa (%)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={config.feeRate}
-              onChange={(e) => setConfig(prev => ({ ...prev, feeRate: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Valor Fixo (R$)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={config.fixedFee}
-              onChange={(e) => setConfig(prev => ({ ...prev, fixedFee: e.target.value }))}
-            />
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 pt-2">
-          <Button
-            onClick={() => saveConfig(gateway, {
-              api_key: config.apiKey,
-              ...(config.apiUrl ? { api_url: config.apiUrl } : {}),
-              fee_rate: config.feeRate,
-              fixed_fee: config.fixedFee
-            })}
-            disabled={isSaving}
-            className="flex-1"
-          >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Salvar Configurações
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => testConnection(gateway)}
-            disabled={isTesting === gateway || !config.apiKey}
-          >
-            {isTesting === gateway ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Zap className="w-4 h-4 mr-1" />
-                Testar
-              </>
-            )}
-          </Button>
-        </div>
-
-        {/* Status */}
-        <div className="flex items-center gap-2 text-sm">
-          {config.isConfigured ? (
-            <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-600/30">
-              <Check className="w-3 h-3 mr-1" />
-              Configurado
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-muted-foreground">
-              <AlertCircle className="w-3 h-3 mr-1" />
-              Não configurado
-            </Badge>
-          )}
-        </div>
-      </div>
-    </TabsContent>
-  );
-
   if (isLoading) {
     return (
       <Card>
@@ -329,138 +233,267 @@ export const GatewayConfigSection = () => {
     <>
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base">Configurações de Gateways</CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Configurações de Gateways
+                <Badge variant="secondary" className="text-xs">4</Badge>
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Configure as credenciais e taxas de cada gateway de pagamento.
+              </CardDescription>
+            </div>
           </div>
-          <CardDescription className="text-sm">
-            Configure as credenciais e taxas de cada gateway de pagamento.
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="ativus" className="text-xs">
-                Ativus Hub
-                {ativusConfig.isConfigured && <Check className="w-3 h-3 ml-1 text-emerald-500" />}
-              </TabsTrigger>
-              <TabsTrigger value="spedpay" className="text-xs">
-                SpedPay
-                {spedpayConfig.isConfigured && <Check className="w-3 h-3 ml-1 text-emerald-500" />}
-              </TabsTrigger>
-              <TabsTrigger value="valorion" className="text-xs">
-                Valorion
-                {valorionConfig.isConfigured && <Check className="w-3 h-3 ml-1 text-emerald-500" />}
-              </TabsTrigger>
-              <TabsTrigger value="inter" className="text-xs">
-                Banco Inter
-                {interConfig.isConfigured && <Check className="w-3 h-3 ml-1 text-emerald-500" />}
-              </TabsTrigger>
-            </TabsList>
-
-            {renderGatewayTab('ativus', 'Ativus Hub', ativusConfig, setAtivusConfig)}
-            {renderGatewayTab('spedpay', 'SpedPay', spedpayConfig, setSpedpayConfig)}
-            {renderGatewayTab('valorion', 'Valorion', valorionConfig, setValorionConfig, true)}
-
-            {/* Inter Tab - Special because of multiple credentials */}
-            <TabsContent value="inter" className="space-y-4 mt-4">
-              <div className="grid gap-4">
-                {/* Fee Configuration */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Taxa (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={interConfig.feeRate}
-                      onChange={(e) => setInterConfig(prev => ({ ...prev, feeRate: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Valor Fixo (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={interConfig.fixedFee}
-                      onChange={(e) => setInterConfig(prev => ({ ...prev, fixedFee: e.target.value }))}
-                    />
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+            
+            {/* ATIVUS HUB Card */}
+            <Card className="border-primary/30">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-bold text-primary">ATIVUS HUB</CardTitle>
+                  <Badge variant="outline" className={ativusApiKey ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {ativusApiKey ? <><Check className="w-3 h-3 mr-1" />Configurado</> : <><Power className="w-3 h-3 mr-1" />Não configurado</>}
+                  </Badge>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 pt-2">
-                  <Button
-                    onClick={() => saveConfig('inter', {
-                      fee_rate: interConfig.feeRate,
-                      fixed_fee: interConfig.fixedFee
-                    })}
-                    disabled={isSaving}
-                    variant="outline"
-                  >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                <CardDescription className="text-xs">Gateway PIX via Ativus Hub</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-2 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Taxa (%)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={ativusFeeRate} onChange={e => setAtivusFeeRate(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor Fixo (R$)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={ativusFixedFee} onChange={e => setAtivusFixedFee(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => saveFeeSettings('ativus', ativusFeeRate, ativusFixedFee)} className="w-full h-7 text-xs">
                     Salvar Taxas
                   </Button>
-                  <Button
-                    onClick={() => {
-                      loadInterCredentials();
-                      setShowInterDialog(true);
-                    }}
-                    variant="outline"
-                  >
-                    <Settings className="w-4 h-4 mr-1" />
+                </div>
+                
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Button variant="outline" size="sm" onClick={() => setShowAtivusDialog(true)} className="flex-1 h-7 text-xs">
+                    <Settings className="w-3 h-3 mr-1" />
+                    Configurar API
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => testConnection('ativus')} disabled={isTesting === 'ativus' || !ativusApiKey} className="h-7 text-xs">
+                    {isTesting === 'ativus' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* SPEDPAY Card */}
+            <Card className="border-primary/30">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
+                  <Badge variant="outline" className={spedpayApiKey ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {spedpayApiKey ? <><Check className="w-3 h-3 mr-1" />Configurado</> : <><Power className="w-3 h-3 mr-1" />Não configurado</>}
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs">Adquirente integrada ao sistema</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-2 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Taxa (%)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={spedpayFeeRate} onChange={e => setSpedpayFeeRate(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor Fixo (R$)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={spedpayFixedFee} onChange={e => setSpedpayFixedFee(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => saveFeeSettings('spedpay', spedpayFeeRate, spedpayFixedFee)} className="w-full h-7 text-xs">
+                    Salvar Taxas
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Button variant="outline" size="sm" onClick={() => setShowSpedpayDialog(true)} className="flex-1 h-7 text-xs">
+                    <Settings className="w-3 h-3 mr-1" />
+                    Configurar API
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => testConnection('spedpay')} disabled={isTesting === 'spedpay' || !spedpayApiKey} className="h-7 text-xs">
+                    {isTesting === 'spedpay' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* VALORION Card */}
+            <Card className="border-primary/30">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-bold text-primary">VALORION</CardTitle>
+                  <Badge variant="outline" className={valorionApiKey ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {valorionApiKey ? <><Check className="w-3 h-3 mr-1" />Configurado</> : <><Power className="w-3 h-3 mr-1" />Não configurado</>}
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs">Gateway PIX via Valorion</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-2 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Taxa (%)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={valorionFeeRate} onChange={e => setValorionFeeRate(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor Fixo (R$)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={valorionFixedFee} onChange={e => setValorionFixedFee(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => saveFeeSettings('valorion', valorionFeeRate, valorionFixedFee)} className="w-full h-7 text-xs">
+                    Salvar Taxas
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Button variant="outline" size="sm" onClick={() => setShowValorionDialog(true)} className="flex-1 h-7 text-xs">
+                    <Settings className="w-3 h-3 mr-1" />
+                    Configurar API
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => testConnection('valorion')} disabled={isTesting === 'valorion' || !valorionApiKey} className="h-7 text-xs">
+                    {isTesting === 'valorion' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* BANCO INTER Card */}
+            <Card className="border-primary/30">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-bold text-primary">BANCO INTER</CardTitle>
+                  <Badge variant="outline" className="text-muted-foreground text-xs">
+                    <Power className="w-3 h-3 mr-1" />Verificar
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs">Gateway PIX via Banco Inter</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-2 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Taxa (%)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={interFeeRate} onChange={e => setInterFeeRate(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor Fixo (R$)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={interFixedFee} onChange={e => setInterFixedFee(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => saveFeeSettings('inter', interFeeRate, interFixedFee)} className="w-full h-7 text-xs">
+                    Salvar Taxas
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Button variant="outline" size="sm" onClick={() => { loadInterCredentials(); setShowInterDialog(true); }} className="flex-1 h-7 text-xs">
+                    <Settings className="w-3 h-3 mr-1" />
                     Configurar Credenciais
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => testConnection('inter')}
-                    disabled={isTesting === 'inter'}
-                  >
-                    {isTesting === 'inter' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 mr-1" />
-                        Testar
-                      </>
-                    )}
+                  <Button variant="outline" size="sm" onClick={() => testConnection('inter')} disabled={isTesting === 'inter'} className="h-7 text-xs">
+                    {isTesting === 'inter' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
                   </Button>
                 </div>
-
-                {/* Status */}
-                <div className="flex items-center gap-2 text-sm">
-                  {interConfig.isConfigured ? (
-                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-600/30">
-                      <Check className="w-3 h-3 mr-1" />
-                      Configurado
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      Não configurado
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              </CardContent>
+            </Card>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Inter Credentials Dialog */}
+      {/* Ativus Dialog */}
+      <AlertDialog open={showAtivusDialog} onOpenChange={setShowAtivusDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Configurar Ativus Hub</AlertDialogTitle>
+            <AlertDialogDescription>Configure sua chave API do Ativus Hub.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Chave API</Label>
+              <Input type="password" placeholder="Digite sua chave API" value={ativusApiKey} onChange={e => setAtivusApiKey(e.target.value)} />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { saveApiKey('ativus', ativusApiKey); setShowAtivusDialog(false); }} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* SpedPay Dialog */}
+      <AlertDialog open={showSpedpayDialog} onOpenChange={setShowSpedpayDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Configurar SpedPay</AlertDialogTitle>
+            <AlertDialogDescription>Configure a chave API global do SpedPay.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Chave API</Label>
+              <Input type="password" placeholder="Digite a chave API do SpedPay" value={spedpayApiKey} onChange={e => setSpedpayApiKey(e.target.value)} />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { saveApiKey('spedpay', spedpayApiKey); setShowSpedpayDialog(false); }} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Valorion Dialog */}
+      <AlertDialog open={showValorionDialog} onOpenChange={setShowValorionDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Configurar Valorion</AlertDialogTitle>
+            <AlertDialogDescription>Configure sua chave API e endpoint da Valorion.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Chave API (x-api-key)</Label>
+              <Input type="password" placeholder="Digite sua chave API" value={valorionApiKey} onChange={e => setValorionApiKey(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Endpoint URL (opcional)</Label>
+              <Input type="url" placeholder="https://..." value={valorionApiUrl} onChange={e => setValorionApiUrl(e.target.value)} />
+              <p className="text-xs text-muted-foreground">URL do endpoint de criação PIX</p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { saveApiKey('valorion', valorionApiKey, { api_url: valorionApiUrl }); setShowValorionDialog(false); }} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Inter Dialog */}
       <AlertDialog open={showInterDialog} onOpenChange={setShowInterDialog}>
         <AlertDialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Configurar Banco Inter
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Configure as credenciais do Banco Inter para integração PIX.
-            </AlertDialogDescription>
+            <AlertDialogTitle>Configurar Banco Inter</AlertDialogTitle>
+            <AlertDialogDescription>Configure as credenciais do Banco Inter.</AlertDialogDescription>
           </AlertDialogHeader>
-          
           {isLoadingInter ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -469,58 +502,30 @@ export const GatewayConfigSection = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Client ID</Label>
-                <Input
-                  placeholder="Digite o Client ID"
-                  value={interConfig.clientId}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, clientId: e.target.value }))}
-                />
+                <Input placeholder="Digite o Client ID" value={interConfig.clientId} onChange={e => setInterConfig(prev => ({ ...prev, clientId: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label>Client Secret</Label>
-                <Input
-                  type="password"
-                  placeholder="Digite o Client Secret"
-                  value={interConfig.clientSecret}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, clientSecret: e.target.value }))}
-                />
+                <Input type="password" placeholder="Digite o Client Secret" value={interConfig.clientSecret} onChange={e => setInterConfig(prev => ({ ...prev, clientSecret: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label>Certificado (.crt)</Label>
-                <textarea
-                  className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none"
-                  placeholder="Cole o conteúdo do certificado"
-                  value={interConfig.certificate}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, certificate: e.target.value }))}
-                />
+                <textarea className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo do certificado" value={interConfig.certificate} onChange={e => setInterConfig(prev => ({ ...prev, certificate: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label>Chave Privada (.key)</Label>
-                <textarea
-                  className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none"
-                  placeholder="Cole o conteúdo da chave privada"
-                  value={interConfig.privateKey}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, privateKey: e.target.value }))}
-                />
+                <textarea className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo da chave privada" value={interConfig.privateKey} onChange={e => setInterConfig(prev => ({ ...prev, privateKey: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label>Chave PIX</Label>
-                <Input
-                  placeholder="Ex: 52027770000121"
-                  value={interConfig.pixKey}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, pixKey: e.target.value }))}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Para CNPJ/CPF, digite apenas números
-                </p>
+                <Input placeholder="Ex: 52027770000121" value={interConfig.pixKey} onChange={e => setInterConfig(prev => ({ ...prev, pixKey: e.target.value }))} />
               </div>
             </div>
           )}
-          
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={saveInterCredentials} disabled={isSaving}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Salvar
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
