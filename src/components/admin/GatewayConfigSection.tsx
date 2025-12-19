@@ -310,6 +310,7 @@ export const GatewayConfigSection = () => {
                     checked={ativusEnabled} 
                     onCheckedChange={(checked) => toggleGatewayEnabled('ativus', checked)}
                     disabled={isTogglingEnabled === 'ativus'}
+                    className="h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-4"
                   />
                   <CardTitle className="text-sm font-bold text-primary">ATIVUS HUB</CardTitle>
                   <Badge variant="outline" className={ativusEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
@@ -356,6 +357,7 @@ export const GatewayConfigSection = () => {
                     checked={spedpayEnabled} 
                     onCheckedChange={(checked) => toggleGatewayEnabled('spedpay', checked)}
                     disabled={isTogglingEnabled === 'spedpay'}
+                    className="h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-4"
                   />
                   <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
                   <Badge variant="outline" className={spedpayEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
@@ -402,6 +404,7 @@ export const GatewayConfigSection = () => {
                     checked={valorionEnabled} 
                     onCheckedChange={(checked) => toggleGatewayEnabled('valorion', checked)}
                     disabled={isTogglingEnabled === 'valorion'}
+                    className="h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-4"
                   />
                   <CardTitle className="text-sm font-bold text-primary">VALORION</CardTitle>
                   <Badge variant="outline" className={valorionEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
@@ -448,6 +451,7 @@ export const GatewayConfigSection = () => {
                     checked={interEnabled} 
                     onCheckedChange={(checked) => toggleGatewayEnabled('inter', checked)}
                     disabled={isTogglingEnabled === 'inter'}
+                    className="h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-4"
                   />
                   <CardTitle className="text-sm font-bold text-primary">BANCO INTER</CardTitle>
                   <Badge variant="outline" className={interEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
