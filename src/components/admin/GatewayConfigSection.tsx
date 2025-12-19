@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Settings, Loader2, Check, Power, CreditCard, Zap, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,13 @@ export const GatewayConfigSection = () => {
   const [interConfig, setInterConfig] = useState({
     clientId: '', clientSecret: '', certificate: '', privateKey: '', pixKey: ''
   });
+
+  // Enabled states for each gateway
+  const [ativusEnabled, setAtivusEnabled] = useState(false);
+  const [spedpayEnabled, setSpedpayEnabled] = useState(false);
+  const [valorionEnabled, setValorionEnabled] = useState(false);
+  const [interEnabled, setInterEnabled] = useState(false);
+  const [isTogglingEnabled, setIsTogglingEnabled] = useState<string | null>(null);
 
   // Dialog states
   const [showAtivusDialog, setShowAtivusDialog] = useState(false);
@@ -81,11 +89,46 @@ export const GatewayConfigSection = () => {
 
         setInterFeeRate(settings.find(s => s.key === 'inter_fee_rate')?.value || '');
         setInterFixedFee(settings.find(s => s.key === 'inter_fixed_fee')?.value || '');
+
+        // Load enabled states
+        setAtivusEnabled(settings.find(s => s.key === 'ativus_enabled')?.value === 'true');
+        setSpedpayEnabled(settings.find(s => s.key === 'spedpay_enabled')?.value === 'true');
+        setValorionEnabled(settings.find(s => s.key === 'valorion_enabled')?.value === 'true');
+        setInterEnabled(settings.find(s => s.key === 'inter_enabled')?.value === 'true');
       }
     } catch (error) {
       console.error('Error loading configs:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const toggleGatewayEnabled = async (gateway: string, enabled: boolean) => {
+    setIsTogglingEnabled(gateway);
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: `${gateway}_enabled`,
+        setting_value: enabled ? 'true' : 'false'
+      });
+      if (error) throw error;
+
+      // Update local state
+      switch (gateway) {
+        case 'ativus': setAtivusEnabled(enabled); break;
+        case 'spedpay': setSpedpayEnabled(enabled); break;
+        case 'valorion': setValorionEnabled(enabled); break;
+        case 'inter': setInterEnabled(enabled); break;
+      }
+
+      toast({ 
+        title: enabled ? "Gateway Ativado" : "Gateway Desativado", 
+        description: `${gateway.toUpperCase()} foi ${enabled ? 'ativado' : 'desativado'} com sucesso.` 
+      });
+    } catch (error) {
+      console.error('Error toggling gateway:', error);
+      toast({ title: "Erro", description: "Falha ao alterar status do gateway", variant: "destructive" });
+    } finally {
+      setIsTogglingEnabled(null);
     }
   };
 
@@ -260,12 +303,19 @@ export const GatewayConfigSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
             
             {/* ATIVUS HUB Card */}
-            <Card className="border-primary/30">
+            <Card className={`border-primary/30 ${!ativusEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-bold text-primary">ATIVUS HUB</CardTitle>
-                  <Badge variant="outline" className={ativusApiKey ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {ativusApiKey ? <><Check className="w-3 h-3 mr-1" />Configurado</> : <><Power className="w-3 h-3 mr-1" />Não configurado</>}
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-bold text-primary">ATIVUS HUB</CardTitle>
+                    <Switch 
+                      checked={ativusEnabled} 
+                      onCheckedChange={(checked) => toggleGatewayEnabled('ativus', checked)}
+                      disabled={isTogglingEnabled === 'ativus'}
+                    />
+                  </div>
+                  <Badge variant="outline" className={ativusEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {ativusEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
                   </Badge>
                 </div>
                 <CardDescription className="text-xs">Gateway PIX via Ativus Hub</CardDescription>
@@ -301,12 +351,19 @@ export const GatewayConfigSection = () => {
             </Card>
 
             {/* SPEDPAY Card */}
-            <Card className="border-primary/30">
+            <Card className={`border-primary/30 ${!spedpayEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
-                  <Badge variant="outline" className={spedpayApiKey ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {spedpayApiKey ? <><Check className="w-3 h-3 mr-1" />Configurado</> : <><Power className="w-3 h-3 mr-1" />Não configurado</>}
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
+                    <Switch 
+                      checked={spedpayEnabled} 
+                      onCheckedChange={(checked) => toggleGatewayEnabled('spedpay', checked)}
+                      disabled={isTogglingEnabled === 'spedpay'}
+                    />
+                  </div>
+                  <Badge variant="outline" className={spedpayEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {spedpayEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
                   </Badge>
                 </div>
                 <CardDescription className="text-xs">Adquirente integrada ao sistema</CardDescription>
@@ -342,12 +399,19 @@ export const GatewayConfigSection = () => {
             </Card>
 
             {/* VALORION Card */}
-            <Card className="border-primary/30">
+            <Card className={`border-primary/30 ${!valorionEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-bold text-primary">VALORION</CardTitle>
-                  <Badge variant="outline" className={valorionApiKey ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {valorionApiKey ? <><Check className="w-3 h-3 mr-1" />Configurado</> : <><Power className="w-3 h-3 mr-1" />Não configurado</>}
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-bold text-primary">VALORION</CardTitle>
+                    <Switch 
+                      checked={valorionEnabled} 
+                      onCheckedChange={(checked) => toggleGatewayEnabled('valorion', checked)}
+                      disabled={isTogglingEnabled === 'valorion'}
+                    />
+                  </div>
+                  <Badge variant="outline" className={valorionEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {valorionEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
                   </Badge>
                 </div>
                 <CardDescription className="text-xs">Gateway PIX via Valorion</CardDescription>
@@ -383,12 +447,19 @@ export const GatewayConfigSection = () => {
             </Card>
 
             {/* BANCO INTER Card */}
-            <Card className="border-primary/30">
+            <Card className={`border-primary/30 ${!interEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-bold text-primary">BANCO INTER</CardTitle>
-                  <Badge variant="outline" className="text-muted-foreground text-xs">
-                    <Power className="w-3 h-3 mr-1" />Verificar
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-bold text-primary">BANCO INTER</CardTitle>
+                    <Switch 
+                      checked={interEnabled} 
+                      onCheckedChange={(checked) => toggleGatewayEnabled('inter', checked)}
+                      disabled={isTogglingEnabled === 'inter'}
+                    />
+                  </div>
+                  <Badge variant="outline" className={interEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {interEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
                   </Badge>
                 </div>
                 <CardDescription className="text-xs">Gateway PIX via Banco Inter</CardDescription>
