@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.api-webhook-dispatch]
 verify_jwt = false
+
+[functions.health-check-acquirers]
+verify_jwt = false

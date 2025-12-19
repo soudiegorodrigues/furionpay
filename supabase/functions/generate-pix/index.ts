@@ -94,6 +94,12 @@ interface RateLimitConfig {
   cooldownSeconds: number;
 }
 
+interface AcquirerHealthStatus {
+  acquirer: string;
+  is_healthy: boolean;
+  avg_response_time_ms: number;
+}
+
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -491,6 +497,65 @@ async function getRetryConfig(): Promise<RetryConfig | null> {
   console.log(`[RETRY] Config loaded from retry_flow_steps: acquirers=${acquirerOrder.join(' -> ')}, max_retries=${config.max_retries}`);
   return config;
 }
+
+// ============= HEALTH CHECK PROATIVO =============
+// Get healthy acquirers from cache (consulta instantânea)
+async function getHealthyAcquirers(): Promise<AcquirerHealthStatus[]> {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('acquirer_health_status')
+    .select('acquirer, is_healthy, avg_response_time_ms')
+    .eq('is_healthy', true)
+    .order('avg_response_time_ms', { ascending: true });
+  
+  if (error) {
+    console.log('[HEALTH] Error fetching healthy acquirers:', error);
+    return [];
+  }
+  
+  console.log(`[HEALTH] ${data?.length || 0} healthy acquirers found`);
+  return (data as AcquirerHealthStatus[]) || [];
+}
+
+// Check if specific acquirer is healthy
+async function isAcquirerHealthy(acquirer: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('acquirer_health_status')
+    .select('is_healthy')
+    .eq('acquirer', acquirer)
+    .maybeSingle();
+  
+  if (error || !data) {
+    console.log(`[HEALTH] Could not check health for ${acquirer}, assuming healthy`);
+    return true; // Default to healthy if can't check
+  }
+  
+  return data.is_healthy;
+}
+
+// Get primary acquirer from pix_acquirer setting
+async function getPrimaryAcquirer(): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'pix_acquirer')
+    .is('user_id', null)
+    .maybeSingle();
+  
+  if (error || !data?.value) {
+    console.log('[HEALTH] No primary acquirer configured');
+    return null;
+  }
+  
+  console.log(`[HEALTH] Primary acquirer: ${data.value}`);
+  return data.value;
+}
+// ================================================
 
 async function isAcquirerEnabled(acquirer: string): Promise<boolean> {
   const supabase = getSupabaseClient();
@@ -989,7 +1054,7 @@ async function callAcquirer(
   }
 }
 
-// Generate PIX with retry logic
+// Generate PIX with SMART retry logic using Health Check cache
 async function generatePixWithRetry(
   retryConfig: RetryConfig,
   params: {
@@ -1004,46 +1069,75 @@ async function generatePixWithRetry(
     clientIp?: string;
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; acquirerUsed?: string }> {
-  // Get user's preferred acquirer
-  const userAcquirer = params.userId ? await getUserAcquirer(params.userId) : null;
   
-  // Build acquirer order: user's preference first, then retry flow
-  let acquirers = [...retryConfig.acquirer_order];
-  if (userAcquirer && acquirers.includes(userAcquirer)) {
-    // Move user's acquirer to first position
-    acquirers = acquirers.filter(a => a !== userAcquirer);
-    acquirers.unshift(userAcquirer);
-    console.log(`[RETRY] Prioritizing user acquirer: ${userAcquirer}`);
-  } else if (userAcquirer) {
-    // User acquirer not in retry list, add it first
-    acquirers.unshift(userAcquirer);
-    console.log(`[RETRY] Adding user acquirer as first: ${userAcquirer}`);
+  // ============= HEALTH CHECK PROATIVO =============
+  // 1. Buscar adquirente primária configurada
+  const primaryAcquirer = await getPrimaryAcquirer();
+  
+  // 2. Buscar status de saúde de todos os adquirentes (consulta instantânea ao cache)
+  const healthyAcquirers = await getHealthyAcquirers();
+  const healthyAcquirerNames = healthyAcquirers.map(h => h.acquirer);
+  
+  console.log(`[SMART] Primary acquirer: ${primaryAcquirer || 'none'}`);
+  console.log(`[SMART] Healthy acquirers: ${healthyAcquirerNames.join(', ') || 'none'}`);
+  
+  // 3. Verificar se a primária está saudável
+  const primaryIsHealthy = primaryAcquirer && healthyAcquirerNames.includes(primaryAcquirer);
+  
+  if (primaryAcquirer && primaryIsHealthy) {
+    // Primária está saudável - tenta diretamente (ZERO DELAY)
+    console.log(`[SMART] ✅ Primary ${primaryAcquirer} is HEALTHY - calling directly`);
+    
+    const isEnabled = await isAcquirerEnabled(primaryAcquirer);
+    if (isEnabled) {
+      const result = await callAcquirer(primaryAcquirer, params);
+      if (result.success) {
+        console.log(`[SMART] Success with primary ${primaryAcquirer}`);
+        return { ...result, acquirerUsed: primaryAcquirer };
+      }
+      console.log(`[SMART] Primary ${primaryAcquirer} failed despite being healthy: ${result.error}`);
+    }
+  } else if (primaryAcquirer) {
+    console.log(`[SMART] ⚠️ Primary ${primaryAcquirer} is UNHEALTHY - skipping directly to retry flow`);
   }
   
-  const maxRetries = retryConfig.max_retries;
+  // 4. Usar retry flow, mas APENAS com adquirentes saudáveis
+  // Filtrar a primária (já tentamos) e manter apenas saudáveis
+  let retryAcquirers = retryConfig.acquirer_order
+    .filter(a => a !== primaryAcquirer) // Remove primária (já tentamos ou está com problema)
+    .filter(a => healthyAcquirerNames.includes(a)); // Apenas saudáveis
+  
+  console.log(`[SMART] Retry flow with healthy acquirers: ${retryAcquirers.join(' -> ') || 'none'}`);
+  
+  // Se não há adquirentes saudáveis no retry, tentar todos do retry mesmo assim (fallback)
+  if (retryAcquirers.length === 0) {
+    console.log(`[SMART] No healthy acquirers in retry flow, using all enabled acquirers as fallback`);
+    retryAcquirers = retryConfig.acquirer_order.filter(a => a !== primaryAcquirer);
+  }
+  // ================================================
+  
+  const maxRetries = Math.min(retryConfig.max_retries, retryAcquirers.length * 2);
   const delayMs = retryConfig.delay_between_retries_ms;
   
   let lastError: string = '';
   let attemptNumber = 0;
   
-  console.log(`[RETRY] Starting with config: max_retries=${maxRetries}, acquirers=${acquirers.join(' -> ')}, delay=${delayMs}ms, userAcquirer=${userAcquirer || 'none'}`);
-  
-  for (const acquirer of acquirers) {
+  for (const acquirer of retryAcquirers) {
     // Check if acquirer is enabled
     const isEnabled = await isAcquirerEnabled(acquirer);
     if (!isEnabled) {
-      console.log(`[RETRY] Acquirer ${acquirer} is disabled, skipping`);
+      console.log(`[SMART] Acquirer ${acquirer} is disabled, skipping`);
       continue;
     }
     
-    // Calculate attempts per acquirer (distribute retries across acquirers)
-    const attemptsPerAcquirer = Math.ceil(maxRetries / acquirers.length);
+    // Calculate attempts per acquirer
+    const attemptsPerAcquirer = Math.ceil(maxRetries / retryAcquirers.length);
     
     for (let i = 0; i < attemptsPerAcquirer; i++) {
       attemptNumber++;
       if (attemptNumber > maxRetries) break;
       
-      console.log(`[RETRY] Attempt ${attemptNumber}/${maxRetries} with ${acquirer}`);
+      console.log(`[SMART] Attempt ${attemptNumber}/${maxRetries} with ${acquirer}`);
       
       // Log retry attempt
       if (attemptNumber > 1) {
@@ -1053,16 +1147,16 @@ async function generatePixWithRetry(
       const result = await callAcquirer(acquirer, params);
       
       if (result.success) {
-        console.log(`[RETRY] Success with ${acquirer} on attempt ${attemptNumber}`);
+        console.log(`[SMART] ✅ Success with ${acquirer} on attempt ${attemptNumber}`);
         return { ...result, acquirerUsed: acquirer };
       }
       
       lastError = result.error || 'Unknown error';
-      console.log(`[RETRY] Failed with ${acquirer}: ${lastError}`);
+      console.log(`[SMART] ❌ Failed with ${acquirer}: ${lastError}`);
       
       // Wait before next attempt
       if (attemptNumber < maxRetries) {
-        console.log(`[RETRY] Waiting ${delayMs}ms before next attempt`);
+        console.log(`[SMART] Waiting ${delayMs}ms before next attempt`);
         await delay(delayMs);
       }
     }
@@ -1070,7 +1164,7 @@ async function generatePixWithRetry(
     if (attemptNumber >= maxRetries) break;
   }
   
-  console.log(`[RETRY] All ${attemptNumber} attempts failed. Last error: ${lastError}`);
+  console.log(`[SMART] All ${attemptNumber} attempts failed. Last error: ${lastError}`);
   return { success: false, error: `Falha após ${attemptNumber} tentativas: ${lastError}` };
 }
 

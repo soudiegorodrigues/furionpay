@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      acquirer_health_status: {
+        Row: {
+          acquirer: string
+          avg_response_time_ms: number | null
+          consecutive_failures: number | null
+          consecutive_successes: number | null
+          created_at: string | null
+          id: string
+          is_healthy: boolean | null
+          last_check_at: string | null
+          last_error_message: string | null
+          last_failure_at: string | null
+          last_success_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          acquirer: string
+          avg_response_time_ms?: number | null
+          consecutive_failures?: number | null
+          consecutive_successes?: number | null
+          created_at?: string | null
+          id?: string
+          is_healthy?: boolean | null
+          last_check_at?: string | null
+          last_error_message?: string | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          acquirer?: string
+          avg_response_time_ms?: number | null
+          consecutive_failures?: number | null
+          consecutive_successes?: number | null
+          created_at?: string | null
+          id?: string
+          is_healthy?: boolean | null
+          last_check_at?: string | null
+          last_error_message?: string | null
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       admin_settings: {
         Row: {
           created_at: string | null
@@ -2115,6 +2160,13 @@ export type Database = {
           utm_data: Json
         }[]
       }
+      get_healthy_acquirers: {
+        Args: never
+        Returns: {
+          acquirer: string
+          avg_response_time_ms: number
+        }[]
+      }
       get_my_collaborators: {
         Args: never
         Returns: {
@@ -2778,6 +2830,15 @@ export type Database = {
         Returns: Json
       }
       unblock_user: { Args: { target_user_id: string }; Returns: boolean }
+      update_acquirer_health: {
+        Args: {
+          p_acquirer: string
+          p_error_message?: string
+          p_is_healthy: boolean
+          p_response_time_ms?: number
+        }
+        Returns: undefined
+      }
       update_admin_setting: {
         Args: {
           input_token: string
