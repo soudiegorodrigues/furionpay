@@ -2,6 +2,7 @@ import { AcquirerConfigSection } from "./AcquirerConfigSection";
 import { RetryConfigSection } from "./RetryConfigSection";
 import { RetryDashboardSection } from "./RetryDashboardSection";
 import { GatewayConfigSection } from "./GatewayConfigSection";
+import { AcquirerHealthDashboard } from "./AcquirerHealthDashboard";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 export const MultiAcquirersSection = () => {
@@ -9,6 +10,9 @@ export const MultiAcquirersSection = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
+      {/* 0. Dashboard de Saúde em Tempo Real */}
+      <AcquirerHealthDashboard />
+
       {/* 1. Configuração de Adquirente Principal por Método de Pagamento */}
       <AcquirerConfigSection isAdmin={isAdmin} />
 
