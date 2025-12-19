@@ -591,7 +591,7 @@ export default function AdminProducts() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="flex-1 h-6 text-[10px] px-2"
+                          className="flex-1 h-6 text-[10px] px-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
                           onClick={e => e.stopPropagation()}
                         >
                           <FolderInput className="h-2.5 w-2.5 mr-0.5" />
@@ -626,7 +626,7 @@ export default function AdminProducts() {
                     <Button
                       size="sm" 
                       variant="outline" 
-                      className="flex-1 h-6 text-[10px] px-2"
+                      className="flex-1 h-6 text-[10px] px-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
                       onClick={e => {
                         e.stopPropagation();
                         navigate(`/admin/products/${product.id}`);
