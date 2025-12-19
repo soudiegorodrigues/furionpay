@@ -24,7 +24,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { title: "Admin", url: "/admin", icon: Shield, adminOnly: true },
   { title: "Dashboard", url: "/admin/dashboard", icon: BarChart3, permission: "can_view_dashboard" },
-  { title: "Checkout", url: "/admin/checkout", icon: CreditCard, permission: "can_manage_checkout" },
+  { title: "Checkout API", url: "/admin/checkout", icon: CreditCard, permission: "can_manage_checkout" },
   { title: "Produtos", url: "/admin/products", icon: Package, permission: "can_manage_products" },
   { title: "Integrações", url: "/admin/integrations", icon: Puzzle, permission: "can_manage_integrations" },
   { title: "Meta Pixels", url: "/admin/settings", icon: Settings, permission: "can_manage_settings" },
