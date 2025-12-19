@@ -332,6 +332,107 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
               2: { cellWidth: 35, halign: 'right' }
             }
           });
+
+          // Pie Chart after category table
+          yPosition = (doc as any).lastAutoTable.finalY + 15;
+
+          // Check if need new page for chart
+          if (yPosition > 180) {
+            doc.addPage();
+            yPosition = 20;
+          }
+
+          // Pie chart title
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Distribuição por Categoria', 14, yPosition);
+          yPosition += 8;
+
+          // Colors for pie slices
+          const pieColors: [number, number, number][] = [
+            [22, 163, 74],   // Green
+            [220, 38, 38],   // Red
+            [59, 130, 246],  // Blue
+            [245, 158, 11],  // Orange
+            [139, 92, 246],  // Purple
+            [236, 72, 153],  // Pink
+            [20, 184, 166],  // Teal
+            [100, 116, 139], // Gray
+          ];
+
+          // Prepare chart data (max 8 categories)
+          const chartData = Array.from(categoryTotals.values())
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 8)
+            .map((c, index) => ({
+              name: c.name,
+              value: c.total,
+              color: pieColors[index % pieColors.length]
+            }));
+
+          const total = chartData.reduce((sum, item) => sum + item.value, 0);
+          
+          // Chart dimensions
+          const chartCenterX = 55;
+          const chartCenterY = yPosition + 35;
+          const chartRadius = 28;
+
+          // Draw pie chart using arc segments
+          let startAngle = -Math.PI / 2; // Start from top
+          
+          chartData.forEach(item => {
+            const sliceAngle = (item.value / total) * 2 * Math.PI;
+            const endAngle = startAngle + sliceAngle;
+            
+            doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(0.8);
+            
+            // Draw pie slice using small triangles approximation
+            const steps = Math.max(20, Math.floor(sliceAngle * 30));
+            for (let i = 0; i < steps; i++) {
+              const angle1 = startAngle + (sliceAngle * i / steps);
+              const angle2 = startAngle + (sliceAngle * (i + 1) / steps);
+              
+              doc.triangle(
+                chartCenterX, chartCenterY,
+                chartCenterX + chartRadius * Math.cos(angle1), chartCenterY + chartRadius * Math.sin(angle1),
+                chartCenterX + chartRadius * Math.cos(angle2), chartCenterY + chartRadius * Math.sin(angle2),
+                'F'
+              );
+            }
+            
+            startAngle = endAngle;
+          });
+
+          // Draw white circle border around pie
+          doc.setDrawColor(255, 255, 255);
+          doc.setLineWidth(1);
+          doc.circle(chartCenterX, chartCenterY, chartRadius, 'S');
+
+          // Draw legend next to pie chart
+          let legendY = yPosition + 5;
+          const legendX = 100;
+          
+          chartData.forEach((item) => {
+            // Colored square
+            doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+            doc.rect(legendX, legendY - 3, 4, 4, 'F');
+            
+            // Category name and value
+            doc.setTextColor(60, 60, 60);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            
+            const percentage = ((item.value / total) * 100).toFixed(1);
+            const legendText = `${item.name.substring(0, 18)}: ${formatCurrency(item.value)} (${percentage}%)`;
+            doc.text(legendText, legendX + 7, legendY);
+            
+            legendY += 8;
+          });
+
+          yPosition = chartCenterY + chartRadius + 15;
         }
       }
 
