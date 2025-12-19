@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { RetryConfigSection } from "./RetryConfigSection";
 import { RetryDashboardSection } from "./RetryDashboardSection";
-import { RetryTestModeSection } from "./RetryTestModeSection";
+
 
 export const MultiAcquirersSection = () => {
   const { user, isAdmin } = useAdminAuth();
@@ -635,16 +635,6 @@ export const MultiAcquirersSection = () => {
               Dashboard de Retentativas
             </h3>
             <RetryDashboardSection />
-          </div>
-
-          <div className="border-t" />
-
-          {/* 2. Modo de Teste de Retry */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Modo de Teste de Retry
-            </h3>
-            <RetryTestModeSection />
           </div>
 
           <div className="border-t" />
