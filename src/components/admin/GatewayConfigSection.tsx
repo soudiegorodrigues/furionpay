@@ -306,19 +306,17 @@ export const GatewayConfigSection = () => {
             <Card className={`border-primary/30 ${!ativusEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-bold text-primary">ATIVUS HUB</CardTitle>
-                    <Switch 
-                      checked={ativusEnabled} 
-                      onCheckedChange={(checked) => toggleGatewayEnabled('ativus', checked)}
-                      disabled={isTogglingEnabled === 'ativus'}
-                    />
-                  </div>
+                  <Switch 
+                    checked={ativusEnabled} 
+                    onCheckedChange={(checked) => toggleGatewayEnabled('ativus', checked)}
+                    disabled={isTogglingEnabled === 'ativus'}
+                  />
+                  <CardTitle className="text-sm font-bold text-primary">ATIVUS HUB</CardTitle>
                   <Badge variant="outline" className={ativusEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {ativusEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
+                    {ativusEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Off</>}
                   </Badge>
                 </div>
-                <CardDescription className="text-xs">Gateway PIX via Ativus Hub</CardDescription>
+                <CardDescription className="text-xs text-center">Gateway PIX via Ativus Hub</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-2 space-y-3">
                 <div className="space-y-2">
@@ -354,19 +352,17 @@ export const GatewayConfigSection = () => {
             <Card className={`border-primary/30 ${!spedpayEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
-                    <Switch 
-                      checked={spedpayEnabled} 
-                      onCheckedChange={(checked) => toggleGatewayEnabled('spedpay', checked)}
-                      disabled={isTogglingEnabled === 'spedpay'}
-                    />
-                  </div>
+                  <Switch 
+                    checked={spedpayEnabled} 
+                    onCheckedChange={(checked) => toggleGatewayEnabled('spedpay', checked)}
+                    disabled={isTogglingEnabled === 'spedpay'}
+                  />
+                  <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
                   <Badge variant="outline" className={spedpayEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {spedpayEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
+                    {spedpayEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Off</>}
                   </Badge>
                 </div>
-                <CardDescription className="text-xs">Adquirente integrada ao sistema</CardDescription>
+                <CardDescription className="text-xs text-center">Adquirente integrada ao sistema</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-2 space-y-3">
                 <div className="space-y-2">
@@ -402,19 +398,17 @@ export const GatewayConfigSection = () => {
             <Card className={`border-primary/30 ${!valorionEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-bold text-primary">VALORION</CardTitle>
-                    <Switch 
-                      checked={valorionEnabled} 
-                      onCheckedChange={(checked) => toggleGatewayEnabled('valorion', checked)}
-                      disabled={isTogglingEnabled === 'valorion'}
-                    />
-                  </div>
+                  <Switch 
+                    checked={valorionEnabled} 
+                    onCheckedChange={(checked) => toggleGatewayEnabled('valorion', checked)}
+                    disabled={isTogglingEnabled === 'valorion'}
+                  />
+                  <CardTitle className="text-sm font-bold text-primary">VALORION</CardTitle>
                   <Badge variant="outline" className={valorionEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {valorionEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
+                    {valorionEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Off</>}
                   </Badge>
                 </div>
-                <CardDescription className="text-xs">Gateway PIX via Valorion</CardDescription>
+                <CardDescription className="text-xs text-center">Gateway PIX via Valorion</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-2 space-y-3">
                 <div className="space-y-2">
@@ -450,19 +444,17 @@ export const GatewayConfigSection = () => {
             <Card className={`border-primary/30 ${!interEnabled ? 'opacity-60' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-bold text-primary">BANCO INTER</CardTitle>
-                    <Switch 
-                      checked={interEnabled} 
-                      onCheckedChange={(checked) => toggleGatewayEnabled('inter', checked)}
-                      disabled={isTogglingEnabled === 'inter'}
-                    />
-                  </div>
+                  <Switch 
+                    checked={interEnabled} 
+                    onCheckedChange={(checked) => toggleGatewayEnabled('inter', checked)}
+                    disabled={isTogglingEnabled === 'inter'}
+                  />
+                  <CardTitle className="text-sm font-bold text-primary">BANCO INTER</CardTitle>
                   <Badge variant="outline" className={interEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {interEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Desativado</>}
+                    {interEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Off</>}
                   </Badge>
                 </div>
-                <CardDescription className="text-xs">Gateway PIX via Banco Inter</CardDescription>
+                <CardDescription className="text-xs text-center">Gateway PIX via Banco Inter</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-2 space-y-3">
                 <div className="space-y-2">
