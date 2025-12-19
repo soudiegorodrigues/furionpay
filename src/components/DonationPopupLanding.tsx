@@ -289,11 +289,11 @@ export const DonationPopupLanding = ({
               </div>
 
               {/* Amount Grid */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 items-end">
                 {DONATION_AMOUNTS.map((item) => (
                   <div key={item.amount} className="flex flex-col">
                     {item.badge && (
-                      <span className="text-[10px] text-green-600 text-center mb-0.5">{item.badge}</span>
+                      <span className="text-xs text-green-600 text-center mb-0.5">{item.badge}</span>
                     )}
                     <button
                       onClick={() => handleSelectAmount(item.amount)}
