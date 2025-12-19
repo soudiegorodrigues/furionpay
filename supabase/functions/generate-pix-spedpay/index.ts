@@ -397,15 +397,27 @@ serve(async (req) => {
 
     console.log('Resposta SpedPay (parsed):', JSON.stringify(data));
 
+    // Log pix object structure for debugging
+    console.log('SpedPay pix object:', JSON.stringify(data.pix));
+
     // Extract PIX code from response - SpedPay uses various field names
     const pixCode = data.pix_copia_e_cola || 
                     data.pixCopiaECola || 
                     data.qrcode || 
                     data.qr_code ||
                     data.brcode ||
+                    data.emv ||
+                    data.code ||
                     data.pix?.brcode ||
                     data.pix?.qrcode ||
                     data.pix?.copia_e_cola ||
+                    data.pix?.copiaECola ||
+                    data.pix?.copy_paste ||
+                    data.pix?.emv ||
+                    data.pix?.code ||
+                    data.pix?.qr_code ||
+                    data.pix?.pix_code ||
+                    data.pix?.pixCode ||
                     data.paymentCode ||
                     data.transaction?.pix_copia_e_cola ||
                     data.transaction?.brcode;
@@ -414,6 +426,10 @@ serve(async (req) => {
                       data.qrcodeUrl || 
                       data.qr_code_url ||
                       data.pix?.qrcode_url ||
+                      data.pix?.qrcodeUrl ||
+                      data.pix?.qr_code_base64 ||
+                      data.pix?.qrcodeBase64 ||
+                      data.pix?.image ||
                       data.paymentCodeBase64 ||
                       null;
     
