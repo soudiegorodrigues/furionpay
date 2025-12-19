@@ -290,7 +290,7 @@ const AdminCheckout = () => {
             <CreditCard className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Checkout Popup </h1>
+            <h1 className="text-2xl font-bold">​Modelos de Checkout API          </h1>
             <p className="text-sm text-muted-foreground">Modelos de popup com API     </p>
           </div>
         </div>
