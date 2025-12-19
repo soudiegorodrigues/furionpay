@@ -35,6 +35,48 @@ interface ProductFolder {
   color: string | null;
 }
 
+// Lista de palavras bloqueadas para nomes de produtos
+const BLOCKED_PRODUCT_KEYWORDS = [
+  // Conteúdo Adulto
+  'adult', 'porn', 'xxx', 'sex', 'sexy', 'erotic',
+  // Armas/Drogas
+  'arma', 'weapon', 'gun', 'droga', 'drug', 'cocaina', 'maconha', 'cannabis', 
+  'weed', 'narcotic', 'trafico', 'traficante', 'fuzil', 'pistola', 'rifle', 
+  'munição', 'ammunition',
+  // Doações
+  'donate', 'donation', 'doação', 'doacao', 'doações', 'doacoes', 'vakinha', 
+  'vaquinha', 'crowdfunding', 'arrecadação', 'arrecadacao', 'ajuda financeira', 
+  'contribuição', 'contribuicao', 'caridade', 'charity', 'fundraising', 
+  'campanha solidária', 'campanha solidaria', 'pix solidário', 'pix solidario', 
+  'rifinha', 'rifa', 'sorteio beneficente',
+  // Financeiro/Cripto
+  'cripto', 'crypto', 'bitcoin', 'forex', 'trade', 'trading', 'investimento', 
+  'investir', 'renda fixa', 'day trade', 'mmn', 'marketing multinivel', 
+  'multinível', 'pirâmide', 'esquema', 'empréstimo', 'financiamento', 'crédito'
+];
+
+// Função para normalizar texto (remover acentos e converter para minúsculo)
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+};
+
+// Verifica se o texto contém alguma palavra bloqueada
+const containsBlockedKeyword = (text: string): string | null => {
+  const normalizedText = normalizeText(text);
+  
+  for (const keyword of BLOCKED_PRODUCT_KEYWORDS) {
+    const normalizedKeyword = normalizeText(keyword);
+    if (normalizedText.includes(normalizedKeyword)) {
+      return keyword;
+    }
+  }
+  
+  return null;
+};
+
 // Skeleton Card Component
 const ProductSkeleton = () => (
   <Card className="overflow-hidden">
@@ -150,6 +192,13 @@ export default function AdminProducts() {
   const handleCreateProduct = async () => {
     if (!newProduct.name.trim()) {
       toast.error("Nome do produto é obrigatório");
+      return;
+    }
+
+    // Validação de palavras bloqueadas
+    const blockedWord = containsBlockedKeyword(newProduct.name);
+    if (blockedWord) {
+      toast.error(`Nome do produto contém termos não permitidos ("${blockedWord}")`);
       return;
     }
     const { data: { user } } = await supabase.auth.getUser();
