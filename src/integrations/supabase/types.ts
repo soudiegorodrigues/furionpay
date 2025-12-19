@@ -2248,9 +2248,10 @@ export type Database = {
           period_key: string
         }[]
       }
-      get_platform_revenue_stats:
-        | { Args: never; Returns: Json }
-        | { Args: { p_user_email?: string }; Returns: Json }
+      get_platform_revenue_stats: {
+        Args: { p_user_email?: string }
+        Returns: Json
+      }
       get_platform_unique_users: { Args: never; Returns: Json }
       get_platform_user_profit_ranking: {
         Args: { p_filter?: string; p_limit?: number }
