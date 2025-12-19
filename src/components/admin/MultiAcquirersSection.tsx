@@ -623,27 +623,54 @@ export const MultiAcquirersSection = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-6xl">
-      {/* 1. Dashboard de Retentativas - Real-time monitoring */}
-      <RetryDashboardSection />
+    <div className="max-w-5xl mx-auto">
+      <Card className="w-full">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl sm:text-2xl font-bold">Multi-Adquirência</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* 1. Dashboard de Retentativas */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Dashboard de Retentativas
+            </h3>
+            <RetryDashboardSection />
+          </div>
 
-      {/* 2. Modo de Teste de Retry */}
-      <RetryTestModeSection />
+          <div className="border-t" />
 
-      {/* 3. Configuração de Retentativas */}
-      <RetryConfigSection key={retryConfigKey} />
+          {/* 2. Modo de Teste de Retry */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Modo de Teste de Retry
+            </h3>
+            <RetryTestModeSection />
+          </div>
 
-      {/* 3. Adquirentes Ativas */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
-          <Badge variant="secondary" className="text-xs">4</Badge>
-        </div>
-        <Button variant="outline" disabled>
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Adquirente
-        </Button>
-      </div>
+          <div className="border-t" />
+
+          {/* 3. Configuração de Retentativas */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Configuração de Retentativas
+            </h3>
+            <RetryConfigSection key={retryConfigKey} />
+          </div>
+
+          <div className="border-t" />
+
+          {/* 4. Adquirentes Ativas */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                Adquirentes Ativas
+                <Badge variant="secondary" className="text-xs">4</Badge>
+              </h3>
+              <Button variant="outline" size="sm" disabled>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Adquirente
+              </Button>
+            </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* BANCO INTER Card */}
@@ -1434,15 +1461,16 @@ export const MultiAcquirersSection = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
 
-      <Card className="bg-muted/30">
-        <CardContent className="py-4">
-          <p className="text-sm text-muted-foreground">
-            💡 <strong>Dica:</strong> Novas adquirentes serão disponibilizadas em futuras atualizações.
-          </p>
+          {/* Dica */}
+          <div className="p-4 bg-muted/30 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              💡 <strong>Dica:</strong> Novas adquirentes serão disponibilizadas em futuras atualizações.
+            </p>
+          </div>
         </CardContent>
       </Card>
-
     </div>
   );
 };
