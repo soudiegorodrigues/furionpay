@@ -292,18 +292,7 @@ export const DominiosSection = () => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
-  return <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header Principal */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Globe className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Gerenciamento de Domínios</h2>
-          <p className="text-muted-foreground text-sm">Configure domínios para popups e checkouts</p>
-        </div>
-      </div>
-
+  return <div className="space-y-6 sm:space-y-8">
       {/* POPUP DOMAINS SECTION */}
       <div className="space-y-3 sm:space-y-4">
         <Card>
