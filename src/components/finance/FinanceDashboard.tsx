@@ -594,7 +594,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-3">
         {/* Income vs Expense Comparison - Minimalist Progress Bars */}
-        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '200ms' }}>
+        <Card className="border border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-4 w-4 text-primary" />
