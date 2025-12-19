@@ -270,6 +270,30 @@ export const DonationPopupLanding = ({
               <img src={vakinhaLogo} alt="Vakinha" className="h-10 sm:h-14" />
             </div>
 
+            {/* Social Proof - Supporters */}
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {[
+                  "https://randomuser.me/api/portraits/women/1.jpg",
+                  "https://randomuser.me/api/portraits/men/2.jpg",
+                  "https://randomuser.me/api/portraits/women/3.jpg",
+                  "https://randomuser.me/api/portraits/men/4.jpg",
+                  "https://randomuser.me/api/portraits/women/5.jpg",
+                  "https://randomuser.me/api/portraits/men/6.jpg",
+                ].map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    alt=""
+                    className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-gray-600">
+                <span className="font-semibold text-gray-900">+1.542</span> apoiadores
+              </span>
+            </div>
+
             {/* Contribution Value Section */}
             <div>
               <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3">Valor da contribuição</h2>
