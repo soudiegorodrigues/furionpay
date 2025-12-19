@@ -7,7 +7,7 @@ export function AnimatedSection({ children, sectionKey }: AnimatedSectionProps) 
   return (
     <div 
       key={sectionKey} 
-      className="animate-section-enter"
+      className="animate-fade-in"
     >
       {children}
     </div>

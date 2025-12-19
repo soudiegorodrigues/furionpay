@@ -308,7 +308,7 @@ export function PremiacoesSection() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[300px]">
                   {rewards.map(reward => (
                     <Card key={reward.id} className="overflow-hidden w-full">
                       <div className="h-48 sm:h-64 bg-muted flex items-center justify-center p-4">
