@@ -289,7 +289,7 @@ export const DonationPopupLanding = ({
               </div>
 
               {/* Amount Grid */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {DONATION_AMOUNTS.map((item) => (
                   <button
                     key={item.amount}
