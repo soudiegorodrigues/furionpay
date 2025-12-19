@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,24 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FileText, Globe, Copy, Upload, X } from "lucide-react";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
+
+// Formata número para Real brasileiro (ex: 19.90 → "19,90" ou 1990.00 → "1.990,00")
+const formatCurrency = (value: number): string => {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+// Parseia string formatada para número (ex: "19,90" → 19.90 ou "1.990,00" → 1990.00)
+const parseCurrency = (value: string): number => {
+  // Remove tudo exceto números e vírgula
+  const cleaned = value.replace(/[^\d,]/g, '');
+  // Substitui vírgula por ponto para conversão
+  const normalized = cleaned.replace(',', '.');
+  return parseFloat(normalized) || 0;
+};
+
 interface Product {
   id: string;
   user_id: string;
@@ -47,6 +65,37 @@ export function ProductDetailsSection({
 }: ProductDetailsSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [priceDisplay, setPriceDisplay] = useState(() => formatCurrency(formData.price));
+
+  // Sincroniza o display quando o preço do formData muda externamente
+  useEffect(() => {
+    setPriceDisplay(formatCurrency(formData.price));
+  }, [formData.price]);
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // Permite apenas números e vírgula
+    const cleaned = inputValue.replace(/[^\d,]/g, '');
+    
+    // Limita a uma vírgula
+    const parts = cleaned.split(',');
+    let formatted = parts[0];
+    if (parts.length > 1) {
+      formatted += ',' + parts[1].slice(0, 2); // Máximo 2 decimais
+    }
+    
+    setPriceDisplay(formatted);
+    
+    // Atualiza o formData com o valor numérico
+    const numericValue = parseCurrency(formatted);
+    setFormData({ ...formData, price: numericValue });
+  };
+
+  const handlePriceBlur = () => {
+    // Formata corretamente ao sair do campo
+    setPriceDisplay(formatCurrency(formData.price));
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -246,14 +295,21 @@ export function ProductDetailsSection({
 
           <div className="space-y-2">
             <Label htmlFor="price">Preço (R$)</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-              placeholder="0,00"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                R$
+              </span>
+              <Input
+                id="price"
+                type="text"
+                inputMode="decimal"
+                value={priceDisplay}
+                onChange={handlePriceChange}
+                onBlur={handlePriceBlur}
+                placeholder="0,00"
+                className="pl-10"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
