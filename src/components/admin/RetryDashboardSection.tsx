@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -199,20 +199,26 @@ export function RetryDashboardSection() {
   }
 
   return (
-    <div className="space-y-4 max-w-6xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Dashboard de Retentativas</h2>
-          <Badge variant="outline" className="text-xs">
-            Tempo Real
-          </Badge>
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Dashboard de Retentativas
+              <Badge variant="outline" className="text-xs">Tempo Real</Badge>
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Monitore em tempo real as tentativas de pagamento, retentativas e taxas de sucesso.
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
-      </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -382,7 +388,8 @@ export function RetryDashboardSection() {
             </div>
           </CardContent>
         </Card>
-    </div>
-    </div>
+      </div>
+      </CardContent>
+    </Card>
   );
 }
