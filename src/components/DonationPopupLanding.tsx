@@ -28,7 +28,7 @@ const DONATION_AMOUNTS = [
   { amount: 30 },
   { amount: 50 },
   { amount: 75 },
-  { amount: 100 },
+  { amount: 100, badge: "Doe com Amor 💚" },
   { amount: 200 },
   { amount: 500 },
   { amount: 750 },
@@ -295,13 +295,16 @@ export const DonationPopupLanding = ({
                     key={item.amount}
                     onClick={() => handleSelectAmount(item.amount)}
                     className={cn(
-                      "py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
+                      "py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base flex flex-col items-center justify-center",
                       selectedAmount === item.amount
                         ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
                         : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
                     )}
                   >
                     {formatCurrency(item.amount)}
+                    {item.badge && (
+                      <span className="text-[10px] text-green-600 mt-0.5">{item.badge}</span>
+                    )}
                   </button>
                 ))}
               </div>
