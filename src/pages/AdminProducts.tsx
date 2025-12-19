@@ -558,7 +558,7 @@ export default function AdminProducts() {
                 className="overflow-hidden group cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]" 
                 onClick={() => navigate(`/admin/products/${product.id}`)}
               >
-                <div className="aspect-[3/4] bg-muted relative">
+                <div className="aspect-square bg-muted relative">
                   {product.image_url ? (
                     <img 
                       src={product.image_url} 
@@ -572,20 +572,20 @@ export default function AdminProducts() {
                     </div>
                   )}
                 </div>
-                <CardContent className="p-2 sm:p-4">
+                <CardContent className="p-2 sm:p-3">
                   <div>
                     <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
                   </div>
-                  <div className="mt-2 sm:mt-3">
+                  <div className="mt-1 sm:mt-2">
                     <p className="text-xs sm:text-sm text-muted-foreground">Receba até</p>
-                    <p className="text-base sm:text-lg font-bold text-primary">
+                    <p className="text-sm sm:text-base font-bold text-primary">
                       R$ {(product.price * 0.55).toFixed(2).replace(".", ",")}
                     </p>
                     <p className="text-[10px] sm:text-xs text-muted-foreground">
                       Preço máximo: R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+                  <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t">
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
