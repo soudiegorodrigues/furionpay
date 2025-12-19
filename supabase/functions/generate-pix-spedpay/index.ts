@@ -314,43 +314,55 @@ serve(async (req) => {
     const customerEmail = generateRandomEmail(finalDonorName);
     const customerPhone = generateRandomPhone();
 
-    // Build request payload according to SpedPay API spec
-    // SpedPay expects amount in cents (R$ 1.00 = 100)
-    const amountInCents = Math.round(amount * 100);
+    // Build request payload according to SpedPay API spec (mesmo schema usado em generate-pix)
+    const externalId = txid;
+    const webhookUrl = `${supabaseUrl}/functions/v1/api-webhook-dispatch`;
 
-    const payload = {
-      amount: amountInCents,
-      paymentMethod: 'pix',
-      customer: {
-        name: finalDonorName,
-        email: customerEmail,
-        document: customerCPF,
-        phone: customerPhone.replace(/\D/g, ''),
-      },
-      items: [{
-        title: finalProductName,
-        quantity: 1,
-        unitPrice: amountInCents,
-        tangible: false
-      }],
-      postbackUrl: `${supabaseUrl}/functions/v1/spedpay-webhook`,
-      externalReference: txid,
-      metadata: {
-        popup_model: popupModel || '',
-        user_id: userId || '',
-        product_name: finalProductName
-      }
+    const customerData: Record<string, any> = {
+      name: finalDonorName,
+      email: customerEmail,
+      phone: customerPhone.replace(/\D/g, ''),
+      document_type: 'CPF',
+      document: customerCPF,
     };
 
-    console.log('Criando cobrança PIX SpedPay:', JSON.stringify(payload));
+    // Mapear UTM para o payload no padrão aceito pela SpedPay
+    if (utmData) {
+      if (utmData.utm_source) customerData.utm_source = utmData.utm_source;
+      if (utmData.utm_medium) customerData.utm_medium = utmData.utm_medium;
+      if (utmData.utm_campaign) customerData.utm_campaign = utmData.utm_campaign;
+      if (utmData.utm_content) customerData.utm_content = utmData.utm_content;
+      if (utmData.utm_term) customerData.utm_term = utmData.utm_term;
+    }
+
+    const transactionData = {
+      external_id: externalId,
+      total_amount: amount,
+      payment_method: 'PIX',
+      webhook_url: webhookUrl,
+      customer: customerData,
+      items: [
+        {
+          id: `item_${externalId}`,
+          title: finalProductName,
+          description: finalProductName,
+          price: amount,
+          quantity: 1,
+          is_physical: false,
+        },
+      ],
+      ip: '127.0.0.1',
+    };
+
+    console.log('Criando cobrança PIX SpedPay:', JSON.stringify(transactionData));
 
     const response = await fetch(SPEDPAY_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-secret': apiKey,
+        'api-secret': apiKey.trim(),
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(transactionData),
     });
 
     const responseText = await response.text();
