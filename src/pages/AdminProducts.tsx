@@ -564,7 +564,7 @@ export default function AdminProducts() {
                       src={product.image_url} 
                       alt={product.name} 
                       loading="lazy"
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-contain" 
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
