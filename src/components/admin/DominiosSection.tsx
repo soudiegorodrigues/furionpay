@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Globe, Plus, Loader2, Check, X, ShoppingCart } from "lucide-react";
+import { Globe, Plus, Loader2, Check, X, ShoppingCart, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -36,6 +36,7 @@ export const DominiosSection = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDomain, setEditDomain] = useState("");
   const [editName, setEditName] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadDomains();
@@ -188,6 +189,33 @@ export const DominiosSection = () => {
     }
   };
 
+  const deleteDomain = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const { error } = await supabase
+        .from('available_domains')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setDomains(domains.filter(d => d.id !== id));
+      toast({
+        title: "Sucesso",
+        description: "Domínio excluído com sucesso!"
+      });
+    } catch (error) {
+      console.error('Error deleting domain:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao excluir domínio",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const popupDomains = domains.filter(d => d.domain_type === "popup");
   const checkoutDomains = domains.filter(d => d.domain_type === "checkout");
 
@@ -248,6 +276,29 @@ export const DominiosSection = () => {
                     <p className="font-medium text-sm truncate">{domain.domain}</p>
                     {domain.name && <p className="text-xs text-muted-foreground truncate">{domain.name}</p>}
                   </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={() => startEditing(domain)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    onClick={() => deleteDomain(domain.id)}
+                    disabled={deletingId === domain.id}
+                  >
+                    {deletingId === domain.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
                 </div>
               </div>
             )}
