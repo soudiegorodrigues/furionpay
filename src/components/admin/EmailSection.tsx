@@ -342,15 +342,16 @@ export function EmailSection() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-          <Mail className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
-          Configuração de Email
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Configure o envio de emails através do Resend
-        </p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header Principal */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Mail className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Configuração de Email</h2>
+          <p className="text-muted-foreground text-sm">Configure o envio de emails através do Resend</p>
+        </div>
       </div>
 
       <Card>

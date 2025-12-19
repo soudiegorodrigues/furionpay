@@ -616,9 +616,20 @@ export function BackupsSection() {
 
       {/* Main content - only visible when authenticated */}
       {isAuthenticated && (
-      <div className="space-y-6">
-      {/* Header with stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header Principal */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Database className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Backup do Sistema</h2>
+            <p className="text-muted-foreground text-sm">Gerencie backups completos do banco de dados e storage</p>
+          </div>
+        </div>
+
+        {/* Header with stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
