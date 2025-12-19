@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Globe, Plus, Loader2, Check, X, ShoppingCart, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -310,8 +311,54 @@ export const DominiosSection = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="max-w-5xl mx-auto">
+        <Card className="w-full">
+          <CardHeader className="pb-4">
+            <Skeleton className="h-7 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Skeleton Popup Section */}
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-40" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              </div>
+              <Skeleton className="h-8 w-36" />
+              <div className="space-y-2">
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
+              </div>
+            </div>
+
+            <div className="border-t" />
+
+            {/* Skeleton Checkout Section */}
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-56" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              </div>
+              <Skeleton className="h-8 w-36" />
+              <div className="space-y-2">
+                <Skeleton className="h-14 w-full rounded-lg" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
