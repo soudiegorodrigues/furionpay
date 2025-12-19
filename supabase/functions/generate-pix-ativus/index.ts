@@ -87,6 +87,7 @@ interface GeneratePixRequest {
   utmData?: Record<string, string>;
   productName?: string;
   popupModel?: string;
+  healthCheck?: boolean;
 }
 
 interface FeeConfig {
@@ -270,9 +271,9 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, donorName, userId, utmData, productName, popupModel } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck } = await req.json() as GeneratePixRequest;
 
-    console.log('Gerando PIX Ativus Hub - Valor:', amount, 'Usuário:', userId);
+    console.log('Gerando PIX Ativus Hub - Valor:', amount, 'Usuário:', userId, 'HealthCheck:', healthCheck);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -424,23 +425,27 @@ serve(async (req) => {
       throw new Error('Código PIX não encontrado na resposta. Campos retornados: ' + Object.keys(data).join(', '));
     }
 
-    // Registrar transação
+    // Registrar transação (skip for health checks)
     console.log('Using donor name:', finalDonorName);
     
-    await logPixGenerated(
-      supabase,
-      amount,
-      transactionId,
-      pixCode,
-      finalDonorName,
-      utmData,
-      finalProductName,
-      userId,
-      popupModel,
-      feeConfig?.pix_percentage,
-      feeConfig?.pix_fixed,
-      'ativus'
-    );
+    if (!healthCheck) {
+      await logPixGenerated(
+        supabase,
+        amount,
+        transactionId,
+        pixCode,
+        finalDonorName,
+        utmData,
+        finalProductName,
+        userId,
+        popupModel,
+        feeConfig?.pix_percentage,
+        feeConfig?.pix_fixed,
+        'ativus'
+      );
+    } else {
+      console.log('Health check mode - skipping transaction log');
+    }
 
     // Utmify integration handled by database trigger (utmify-sync)
     return new Response(
