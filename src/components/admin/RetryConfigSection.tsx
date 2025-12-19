@@ -453,7 +453,7 @@ export const RetryConfigSection = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4">
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
