@@ -531,68 +531,68 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
         </Card>
       </div>
 
-      {/* Account Balances Card */}
-      {accounts.length > 0 && (
-        <Card className="border border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Wallet className="h-4 w-4 text-primary" />
-              Saldo por Conta
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {accounts.map(account => {
-                const totalAccounts = accounts.reduce((sum, a) => sum + Math.max(0, a.current_balance), 0);
-                const percentage = totalAccounts > 0 ? (Math.max(0, account.current_balance) / totalAccounts) * 100 : 0;
-                
-                return (
-                  <div key={account.id} className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{account.icon || '🏦'}</span>
-                        <div>
-                          <span className="text-sm font-medium">{account.name}</span>
-                          {account.bank_name && (
-                            <span className="text-xs text-muted-foreground ml-1">
-                              ({account.bank_name})
-                            </span>
-                          )}
+      {/* Account Balances + Financial Overview Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Account Balances Card */}
+        {accounts.length > 0 && (
+          <Card className="border border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Wallet className="h-4 w-4 text-primary" />
+                Saldo por Conta
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {accounts.map(account => {
+                  const totalAccounts = accounts.reduce((sum, a) => sum + Math.max(0, a.current_balance), 0);
+                  const percentage = totalAccounts > 0 ? (Math.max(0, account.current_balance) / totalAccounts) * 100 : 0;
+                  
+                  return (
+                    <div key={account.id} className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{account.icon || '🏦'}</span>
+                          <div>
+                            <span className="text-sm font-medium">{account.name}</span>
+                            {account.bank_name && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({account.bank_name})
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        <span className={`text-sm font-semibold ${account.current_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {formatCurrency(account.current_balance)}
+                        </span>
                       </div>
-                      <span className={`text-sm font-semibold ${account.current_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {formatCurrency(account.current_balance)}
-                      </span>
+                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${percentage}%`,
+                            backgroundColor: account.color || '#6b7280'
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ 
-                          width: `${percentage}%`,
-                          backgroundColor: account.color || '#6b7280'
-                        }}
-                      />
-                    </div>
+                  );
+                })}
+                
+                {/* Total */}
+                <div className="pt-3 border-t mt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Total em Contas</span>
+                    <span className={`text-base font-bold ${accounts.reduce((sum, a) => sum + a.current_balance, 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {formatCurrency(accounts.reduce((sum, a) => sum + a.current_balance, 0))}
+                    </span>
                   </div>
-                );
-              })}
-              
-              {/* Total */}
-              <div className="pt-3 border-t mt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Total em Contas</span>
-                  <span className={`text-base font-bold ${accounts.reduce((sum, a) => sum + a.current_balance, 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {formatCurrency(accounts.reduce((sum, a) => sum + a.current_balance, 0))}
-                  </span>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 gap-3">
         {/* Income vs Expense Comparison - Minimalist Progress Bars */}
         <Card className="border border-border/50">
           <CardHeader className="pb-2">
@@ -668,7 +668,89 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
             )}
           </CardContent>
         </Card>
+      </div>
 
+      {/* Monthly Charts Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Income vs Expense Comparison - Minimalist Progress Bars */}
+        <Card className="border border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              Visão Geral Financeira
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats.totalIncome === 0 && stats.totalExpense === 0 && stats.totalInvestment === 0 ? (
+              <div className="flex items-center justify-center h-[150px] text-muted-foreground text-sm">
+                Nenhum dado disponível
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {/* Receitas */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <span className="text-sm font-medium">Receitas</span>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                      {formatCurrency(stats.totalIncome)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={stats.totalIncome + stats.totalExpense + stats.totalInvestment > 0 
+                      ? (stats.totalIncome / (stats.totalIncome + stats.totalExpense + stats.totalInvestment)) * 100 
+                      : 0} 
+                    className="h-2.5 bg-muted [&>div]:bg-emerald-500"
+                  />
+                </div>
+
+                {/* Despesas */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                      <span className="text-sm font-medium">Despesas</span>
+                    </div>
+                    <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                      {formatCurrency(stats.totalExpense)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={stats.totalIncome + stats.totalExpense + stats.totalInvestment > 0 
+                      ? (stats.totalExpense / (stats.totalIncome + stats.totalExpense + stats.totalInvestment)) * 100 
+                      : 0} 
+                    className="h-2.5 bg-muted [&>div]:bg-red-500"
+                  />
+                </div>
+
+                {/* Investimentos */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <span className="text-sm font-medium">Investimentos</span>
+                    </div>
+                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      {formatCurrency(stats.totalInvestment)}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={stats.totalIncome + stats.totalExpense + stats.totalInvestment > 0 
+                      ? (stats.totalInvestment / (stats.totalIncome + stats.totalExpense + stats.totalInvestment)) * 100 
+                      : 0} 
+                    className="h-2.5 bg-muted [&>div]:bg-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Monthly Evolution + Balance Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Monthly Evolution Chart */}
         <Card className="border border-border/50">
           <CardHeader className="pb-2">
@@ -780,7 +862,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
       </div>
 
       {/* Category Charts */}
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Income by Category */}
         <Card className="border border-border/50">
           <CardHeader className="pb-2">
@@ -918,7 +1000,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
 
       {/* Top Categories Table */}
       {(expensesByCategory.length > 0 || incomeByCategory.length > 0) && (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Top Expenses */}
           {expensesByCategory.length > 0 && (
             <Card className="border border-border/50">
