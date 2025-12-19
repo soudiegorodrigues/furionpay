@@ -1158,27 +1158,8 @@ export const MultiAcquirersSection = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Add New Acquirer Card (Placeholder) */}
-        <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-not-allowed opacity-50">
-          <CardContent className="flex flex-col items-center justify-center h-full min-h-[120px] text-center p-3">
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mb-2">
-              <Plus className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Adicionar Nova</p>
-            <p className="text-[10px] text-muted-foreground">Em breve</p>
-          </CardContent>
-        </Card>
           </div>
         </CardContent>
       </Card>
-
-      <Card className="bg-muted/30">
-        <CardContent className="py-4">
-          <p className="text-sm text-muted-foreground">
-            💡 <strong>Dica:</strong> Novas adquirentes serão disponibilizadas em futuras atualizações.
-          </p>
-        </CardContent>
-      </Card>
-
     </div>;
 };
