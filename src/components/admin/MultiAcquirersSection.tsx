@@ -12,10 +12,12 @@ import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { RetryConfigSection } from "./RetryConfigSection";
 import { RetryDashboardSection } from "./RetryDashboardSection";
-
-
+import { RetryTestModeSection } from "./RetryTestModeSection";
 export const MultiAcquirersSection = () => {
-  const { user, isAdmin } = useAdminAuth();
+  const {
+    user,
+    isAdmin
+  } = useAdminAuth();
   const [isTestingInter, setIsTestingInter] = useState(false);
   const [isTestingAtivus, setIsTestingAtivus] = useState(false);
   const [isTestingSpedpay, setIsTestingSpedpay] = useState(false);
@@ -52,39 +54,35 @@ export const MultiAcquirersSection = () => {
     pixKey: ''
   });
   const [retryConfigKey, setRetryConfigKey] = useState(0);
-
   useEffect(() => {
     loadAcquirerStates();
   }, [isAdmin]);
-
   useEffect(() => {
     if (showInterConfigDialog) {
       loadInterCredentials();
     }
   }, [showInterConfigDialog]);
-
   const loadAcquirerStates = async () => {
     setIsLoadingStates(true);
     try {
       // Use RPC function for admin users to get global settings
-      const { data, error } = await supabase.rpc('get_admin_settings_auth');
-      
+      const {
+        data,
+        error
+      } = await supabase.rpc('get_admin_settings_auth');
       if (error) {
         console.error('Error from RPC:', error);
         // Fallback: try direct query
-        const { data: directData, error: directError } = await supabase
-          .from('admin_settings')
-          .select('key, value')
-          .is('user_id', null)
-          .in('key', ['inter_enabled', 'spedpay_enabled']);
-        
+        const {
+          data: directData,
+          error: directError
+        } = await supabase.from('admin_settings').select('key, value').is('user_id', null).in('key', ['inter_enabled', 'spedpay_enabled']);
         if (directError) {
           console.error('Direct query error:', directError);
           setInterEnabled(true);
           setSpedpayEnabled(true);
           return;
         }
-        
         if (directData) {
           const interState = directData.find(s => s.key === 'inter_enabled');
           const spedpayState = directData.find(s => s.key === 'spedpay_enabled');
@@ -93,11 +91,12 @@ export const MultiAcquirersSection = () => {
         }
         return;
       }
-      
       console.log('Loaded acquirer states from RPC:', data);
-      
       if (data) {
-        const settings = data as { key: string; value: string }[];
+        const settings = data as {
+          key: string;
+          value: string;
+        }[];
         const interState = settings.find(s => s.key === 'inter_enabled');
         const spedpayState = settings.find(s => s.key === 'spedpay_enabled');
         const ativusState = settings.find(s => s.key === 'ativus_enabled');
@@ -115,7 +114,6 @@ export const MultiAcquirersSection = () => {
         const valorionKey = settings.find(s => s.key === 'valorion_api_key');
         const valorionUrl = settings.find(s => s.key === 'valorion_api_url');
         const defaultAcq = settings.find(s => s.key === 'default_acquirer');
-        
         setInterEnabled(interState?.value !== 'false');
         setSpedpayEnabled(spedpayState?.value !== 'false');
         setAtivusEnabled(ativusState?.value !== 'false');
@@ -148,51 +146,44 @@ export const MultiAcquirersSection = () => {
       setIsLoadingStates(false);
     }
   };
-
   const toggleAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus' | 'valorion', enabled: boolean) => {
     try {
-      const { error } = await supabase.rpc('update_admin_setting_auth', {
+      const {
+        error
+      } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: `${acquirer}_enabled`,
         setting_value: enabled ? 'true' : 'false'
       });
-      
       if (error) throw error;
-      
+
       // Se desativando, remover do fluxo de retentativas
       if (!enabled) {
         // 1. Remover a etapa do adquirente
-        const { error: deleteError } = await supabase
-          .from('retry_flow_steps')
-          .delete()
-          .eq('acquirer', acquirer)
-          .eq('payment_method', 'pix');
-        
+        const {
+          error: deleteError
+        } = await supabase.from('retry_flow_steps').delete().eq('acquirer', acquirer).eq('payment_method', 'pix');
         if (deleteError) {
           console.error('Erro ao remover do fluxo:', deleteError);
         } else {
           // 2. Buscar etapas restantes e reordenar
-          const { data: remainingSteps } = await supabase
-            .from('retry_flow_steps')
-            .select('id')
-            .eq('payment_method', 'pix')
-            .order('step_order', { ascending: true });
-          
+          const {
+            data: remainingSteps
+          } = await supabase.from('retry_flow_steps').select('id').eq('payment_method', 'pix').order('step_order', {
+            ascending: true
+          });
           if (remainingSteps && remainingSteps.length > 0) {
             // 3. Atualizar ordem sequencial
-            const updatePromises = remainingSteps.map((step, index) => 
-              supabase
-                .from('retry_flow_steps')
-                .update({ step_order: index + 1, updated_at: new Date().toISOString() })
-                .eq('id', step.id)
-            );
+            const updatePromises = remainingSteps.map((step, index) => supabase.from('retry_flow_steps').update({
+              step_order: index + 1,
+              updated_at: new Date().toISOString()
+            }).eq('id', step.id));
             await Promise.all(updatePromises);
           }
-          
+
           // 4. Forçar re-render do RetryConfigSection
           setRetryConfigKey(prev => prev + 1);
         }
       }
-      
       if (acquirer === 'inter') {
         setInterEnabled(enabled);
       } else if (acquirer === 'spedpay') {
@@ -202,9 +193,12 @@ export const MultiAcquirersSection = () => {
       } else {
         setAtivusEnabled(enabled);
       }
-      
-      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub', valorion: 'Valorion' };
-      
+      const acquirerNames = {
+        inter: 'Banco Inter',
+        spedpay: 'SpedPay',
+        ativus: 'Ativus Hub',
+        valorion: 'Valorion'
+      };
       toast({
         title: enabled ? "Adquirente Ativada" : "Adquirente Desativada",
         description: `${acquirerNames[acquirer]} foi ${enabled ? 'ativada' : 'desativada'} com sucesso.${!enabled ? ' Removida do fluxo de retentativas.' : ''}`
@@ -218,10 +212,14 @@ export const MultiAcquirersSection = () => {
       });
     }
   };
-
   const setAsDefaultAcquirer = async (acquirer: 'inter' | 'spedpay' | 'ativus' | 'valorion') => {
-    const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub', valorion: 'Valorion' };
-    
+    const acquirerNames = {
+      inter: 'Banco Inter',
+      spedpay: 'SpedPay',
+      ativus: 'Ativus Hub',
+      valorion: 'Valorion'
+    };
+
     // 1. Pre-validation - check if acquirer is configured BEFORE making any DB calls
     if (acquirer === 'spedpay' && !spedpayApiKey) {
       toast({
@@ -231,7 +229,6 @@ export const MultiAcquirersSection = () => {
       });
       return;
     }
-    
     if (acquirer === 'ativus' && !ativusApiKey) {
       toast({
         title: "Configuração Incompleta",
@@ -240,7 +237,6 @@ export const MultiAcquirersSection = () => {
       });
       return;
     }
-
     if (acquirer === 'valorion' && !valorionApiKey) {
       toast({
         title: "Configuração Incompleta",
@@ -249,12 +245,14 @@ export const MultiAcquirersSection = () => {
       });
       return;
     }
-    
+
     // For Inter, we need to check if credentials are configured
     if (acquirer === 'inter') {
       // Quick check via edge function
       try {
-        const { data } = await supabase.functions.invoke('get-inter-credentials');
+        const {
+          data
+        } = await supabase.functions.invoke('get-inter-credentials');
         if (!data?.credentials?.isFullyConfigured) {
           toast({
             title: "Configuração Incompleta",
@@ -277,26 +275,29 @@ export const MultiAcquirersSection = () => {
     const previousDefault = defaultAcquirer;
     setDefaultAcquirer(acquirer);
     setIsSettingDefault(acquirer);
-
     try {
       // 3. Apply to all users (except manual overrides) AND set as default
-      const { data: applyResult, error: applyError } = await supabase.rpc('apply_default_acquirer_to_all', {
+      const {
+        data: applyResult,
+        error: applyError
+      } = await supabase.rpc('apply_default_acquirer_to_all', {
         p_acquirer: acquirer
       });
-      
       if (applyError) throw applyError;
-      
+
       // Also update retry order
-      const { error: retryError } = await supabase.rpc('set_default_acquirer_with_retry_order', {
+      const {
+        error: retryError
+      } = await supabase.rpc('set_default_acquirer_with_retry_order', {
         p_acquirer: acquirer
       });
-      
       if (retryError) throw retryError;
-      
+
       // Refresh retry config
       setRetryConfigKey(prev => prev + 1);
-      
-      const usersReset = (applyResult as { users_reset?: number })?.users_reset || 0;
+      const usersReset = (applyResult as {
+        users_reset?: number;
+      })?.users_reset || 0;
       toast({
         title: "Adquirente Principal Definida",
         description: `${acquirerNames[acquirer]} aplicado a ${usersReset} usuário(s). Usuários com configuração manual não foram alterados.`
@@ -314,24 +315,33 @@ export const MultiAcquirersSection = () => {
       setIsSettingDefault(null);
     }
   };
-
   const saveFeeSettings = async (acquirer: 'inter' | 'spedpay' | 'ativus' | 'valorion', feeRate: string, fixedFee: string) => {
     try {
-      const updates = [
-        { key: `${acquirer}_fee_rate`, value: feeRate },
-        { key: `${acquirer}_fixed_fee`, value: fixedFee }
-      ];
-      
-      for (const { key, value } of updates) {
-        const { error } = await supabase.rpc('update_admin_setting_auth', {
+      const updates = [{
+        key: `${acquirer}_fee_rate`,
+        value: feeRate
+      }, {
+        key: `${acquirer}_fixed_fee`,
+        value: fixedFee
+      }];
+      for (const {
+        key,
+        value
+      } of updates) {
+        const {
+          error
+        } = await supabase.rpc('update_admin_setting_auth', {
           setting_key: key,
           setting_value: value
         });
         if (error) throw error;
       }
-      
-      const acquirerNames = { inter: 'Banco Inter', spedpay: 'SpedPay', ativus: 'Ativus Hub', valorion: 'Valorion' };
-      
+      const acquirerNames = {
+        inter: 'Banco Inter',
+        spedpay: 'SpedPay',
+        ativus: 'Ativus Hub',
+        valorion: 'Valorion'
+      };
       toast({
         title: "Taxas Atualizadas",
         description: `Taxas do ${acquirerNames[acquirer]} salvas com sucesso.`
@@ -345,23 +355,27 @@ export const MultiAcquirersSection = () => {
       });
     }
   };
-
   const saveValorionApiKey = async () => {
     try {
-      const updates = [
-        { key: 'valorion_api_key', value: valorionApiKey },
-        { key: 'valorion_api_url', value: valorionApiUrl },
-      ];
-
-      for (const { key, value } of updates) {
-        const { error } = await supabase.rpc('update_admin_setting_auth', {
+      const updates = [{
+        key: 'valorion_api_key',
+        value: valorionApiKey
+      }, {
+        key: 'valorion_api_url',
+        value: valorionApiUrl
+      }];
+      for (const {
+        key,
+        value
+      } of updates) {
+        const {
+          error
+        } = await supabase.rpc('update_admin_setting_auth', {
           setting_key: key,
           setting_value: value
         });
-
         if (error) throw error;
       }
-      
       toast({
         title: "Sucesso",
         description: "Configurações da Valorion atualizadas!"
@@ -376,11 +390,13 @@ export const MultiAcquirersSection = () => {
       });
     }
   };
-
   const testValorionConnection = async () => {
     setIsTestingValorion(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-pix-valorion', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-pix-valorion', {
         body: {
           amount: 0.50,
           donorName: 'Teste Conexão',
@@ -388,9 +404,7 @@ export const MultiAcquirersSection = () => {
           userId: user?.id
         }
       });
-      
       if (error) throw error;
-      
       if (data?.success) {
         toast({
           title: "Conexão OK",
@@ -410,16 +424,15 @@ export const MultiAcquirersSection = () => {
       setIsTestingValorion(false);
     }
   };
-
   const saveSpedpayApiKey = async () => {
     try {
-      const { error } = await supabase.rpc('update_admin_setting_auth', {
+      const {
+        error
+      } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'spedpay_api_key',
         setting_value: spedpayApiKey
       });
-      
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Chave API do SpedPay atualizada!"
@@ -434,11 +447,13 @@ export const MultiAcquirersSection = () => {
       });
     }
   };
-
   const testSpedpayConnection = async () => {
     setIsTestingSpedpay(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-pix', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-pix', {
         body: {
           amount: 0.50,
           donorName: 'Teste Conexão',
@@ -446,9 +461,7 @@ export const MultiAcquirersSection = () => {
           userId: user?.id
         }
       });
-      
       if (error) throw error;
-      
       if (data?.success) {
         toast({
           title: "Conexão OK",
@@ -468,16 +481,15 @@ export const MultiAcquirersSection = () => {
       setIsTestingSpedpay(false);
     }
   };
-
   const saveAtivusApiKey = async () => {
     try {
-      const { error } = await supabase.rpc('update_admin_setting_auth', {
+      const {
+        error
+      } = await supabase.rpc('update_admin_setting_auth', {
         setting_key: 'ativus_api_key',
         setting_value: ativusApiKey
       });
-      
       if (error) throw error;
-      
       toast({
         title: "Sucesso",
         description: "Chave API do Ativus Hub atualizada!"
@@ -492,11 +504,13 @@ export const MultiAcquirersSection = () => {
       });
     }
   };
-
   const testAtivusConnection = async () => {
     setIsTestingAtivus(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-pix-ativus', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-pix-ativus', {
         body: {
           amount: 0.50,
           donorName: 'Teste Conexão',
@@ -504,9 +518,7 @@ export const MultiAcquirersSection = () => {
           userId: user?.id
         }
       });
-      
       if (error) throw error;
-      
       if (data?.success) {
         toast({
           title: "Conexão OK",
@@ -526,14 +538,14 @@ export const MultiAcquirersSection = () => {
       setIsTestingAtivus(false);
     }
   };
-
   const loadInterCredentials = async () => {
     setIsLoadingInterConfig(true);
     try {
-      const { data, error } = await supabase.functions.invoke('get-inter-credentials');
-      
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('get-inter-credentials');
       if (error) throw error;
-      
       if (data?.success && data?.credentials) {
         setInterConfig({
           clientId: data.credentials.clientId || '',
@@ -554,25 +566,36 @@ export const MultiAcquirersSection = () => {
       setIsLoadingInterConfig(false);
     }
   };
-
   const saveInterCredentials = async () => {
     try {
-      const updates = [
-        { key: 'inter_client_id', value: interConfig.clientId },
-        { key: 'inter_client_secret', value: interConfig.clientSecret },
-        { key: 'inter_certificate', value: interConfig.certificate },
-        { key: 'inter_private_key', value: interConfig.privateKey },
-        { key: 'inter_pix_key', value: interConfig.pixKey }
-      ];
-      
-      for (const { key, value } of updates) {
-        const { error } = await supabase.rpc('update_admin_setting_auth', {
+      const updates = [{
+        key: 'inter_client_id',
+        value: interConfig.clientId
+      }, {
+        key: 'inter_client_secret',
+        value: interConfig.clientSecret
+      }, {
+        key: 'inter_certificate',
+        value: interConfig.certificate
+      }, {
+        key: 'inter_private_key',
+        value: interConfig.privateKey
+      }, {
+        key: 'inter_pix_key',
+        value: interConfig.pixKey
+      }];
+      for (const {
+        key,
+        value
+      } of updates) {
+        const {
+          error
+        } = await supabase.rpc('update_admin_setting_auth', {
           setting_key: key,
           setting_value: value
         });
         if (error) throw error;
       }
-      
       toast({
         title: "Sucesso",
         description: "Credenciais do Banco Inter atualizadas!"
@@ -587,11 +610,13 @@ export const MultiAcquirersSection = () => {
       });
     }
   };
-
   const testInterConnection = async () => {
     setIsTestingInter(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-pix-inter', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-pix-inter', {
         body: {
           amount: 0.01,
           donorName: 'Teste Conexão',
@@ -599,9 +624,7 @@ export const MultiAcquirersSection = () => {
           userId: user?.id
         }
       });
-      
       if (error) throw error;
-      
       if (data?.success) {
         toast({
           title: "Conexão OK",
@@ -621,46 +644,27 @@ export const MultiAcquirersSection = () => {
       setIsTestingInter(false);
     }
   };
+  return <div className="space-y-4 max-w-6xl">
+      {/* 1. Dashboard de Retentativas - Real-time monitoring */}
+      <RetryDashboardSection />
 
-  return (
-    <div className="max-w-5xl mx-auto">
-      <Card className="w-full">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl sm:text-2xl font-bold">Multi-Adquirência</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* 1. Dashboard de Retentativas */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Dashboard de Retentativas
-            </h3>
-            <RetryDashboardSection />
-          </div>
+      {/* 2. Modo de Teste de Retry */}
+      <RetryTestModeSection />
 
-          <div className="border-t" />
+      {/* 3. Configuração de Retentativas */}
+      
 
-          {/* 3. Configuração de Retentativas */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Configuração de Retentativas
-            </h3>
-            <RetryConfigSection key={retryConfigKey} />
-          </div>
-
-          <div className="border-t" />
-
-          {/* 4. Adquirentes Ativas */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                Adquirentes Ativas
-                <Badge variant="secondary" className="text-xs">4</Badge>
-              </h3>
-              <Button variant="outline" size="sm" disabled>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Adquirente
-              </Button>
-            </div>
+      {/* 3. Adquirentes Ativas */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">Adquirentes Ativas</h2>
+          <Badge variant="secondary" className="text-xs">4</Badge>
+        </div>
+        <Button variant="outline" disabled>
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar Adquirente
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* BANCO INTER Card */}
@@ -674,15 +678,7 @@ export const MultiAcquirersSection = () => {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                {isLoadingStates ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                ) : (
-                  <Switch
-                    checked={interEnabled ?? true}
-                    onCheckedChange={(checked) => toggleAcquirer('inter', checked)}
-                    className="scale-75"
-                  />
-                )}
+                {isLoadingStates ? <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" /> : <Switch checked={interEnabled ?? true} onCheckedChange={checked => toggleAcquirer('inter', checked)} className="scale-75" />}
               </div>
             </div>
           </CardHeader>
@@ -691,10 +687,10 @@ export const MultiAcquirersSection = () => {
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
                   <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
-                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
-                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
-                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981" />
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981" />
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
                   </svg>
                 </div>
                 <span className="text-xs font-medium">PIX</span>
@@ -708,100 +704,45 @@ export const MultiAcquirersSection = () => {
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Taxa (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={interFeeRate}
-                    onChange={(e) => setInterFeeRate(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={interEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={interFeeRate} onChange={e => setInterFeeRate(e.target.value)} className="h-7 text-xs" disabled={interEnabled === false} />
                 </div>
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Valor Fixo (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={interFixedFee}
-                    onChange={(e) => setInterFixedFee(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={interEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={interFixedFee} onChange={e => setInterFixedFee(e.target.value)} className="h-7 text-xs" disabled={interEnabled === false} />
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => saveFeeSettings('inter', interFeeRate, interFixedFee)}
-                className="w-full h-6 text-[10px]"
-                disabled={interEnabled === false}
-              >
+              <Button variant="outline" size="sm" onClick={() => saveFeeSettings('inter', interFeeRate, interFixedFee)} className="w-full h-6 text-[10px]" disabled={interEnabled === false}>
                 Salvar Taxas
               </Button>
             </div>
 
             {/* Set as Default */}
-            {interEnabled !== false && (
-              <div className="flex items-center justify-between">
+            {interEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
-                {isSettingDefault === 'inter' ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                ) : (
-                  <Switch
-                    checked={defaultAcquirer === 'inter'}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setAsDefaultAcquirer('inter');
-                      } else if (defaultAcquirer === 'inter') {
-                        toast({
-                          title: "Já é a Adquirente Principal",
-                          description: "Banco Inter já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal.",
-                        });
-                      }
-                    }}
-                    disabled={isSettingDefault !== null}
-                    className="scale-75"
-                  />
-                )}
-              </div>
-            )}
+                {isSettingDefault === 'inter' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'inter'} onCheckedChange={checked => {
+              if (checked) {
+                setAsDefaultAcquirer('inter');
+              } else if (defaultAcquirer === 'inter') {
+                toast({
+                  title: "Já é a Adquirente Principal",
+                  description: "Banco Inter já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                });
+              }
+            }} disabled={isSettingDefault !== null} className="scale-75" />}
+              </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
-              <Badge 
-                variant="outline" 
-                className={interEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
-                }
-              >
+              <Badge variant="outline" className={interEnabled !== false ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5" : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"}>
                 {interEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
                 {interEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowInterConfigDialog(true)}
-                  className="h-5 text-[10px] px-1.5"
-                  disabled={interEnabled === false}
-                >
+                <Button variant="outline" size="sm" onClick={() => setShowInterConfigDialog(true)} className="h-5 text-[10px] px-1.5" disabled={interEnabled === false}>
                   <Settings className="w-2.5 h-2.5 mr-0.5" />
                   Config
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={testInterConnection}
-                  disabled={isTestingInter || interEnabled === false}
-                  className="h-5 text-[10px] px-1.5"
-                >
-                  {isTestingInter ? (
-                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                  ) : (
-                    "Testar"
-                  )}
+                <Button variant="outline" size="sm" onClick={testInterConnection} disabled={isTestingInter || interEnabled === false} className="h-5 text-[10px] px-1.5">
+                  {isTestingInter ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Testar"}
                 </Button>
               </div>
             </div>
@@ -823,51 +764,38 @@ export const MultiAcquirersSection = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="inter-client-id">Client ID</Label>
-                <Input
-                  id="inter-client-id"
-                  placeholder="Digite o Client ID"
-                  value={interConfig.clientId}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, clientId: e.target.value }))}
-                />
+                <Input id="inter-client-id" placeholder="Digite o Client ID" value={interConfig.clientId} onChange={e => setInterConfig(prev => ({
+                ...prev,
+                clientId: e.target.value
+              }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-client-secret">Client Secret</Label>
-                <Input
-                  id="inter-client-secret"
-                  type="password"
-                  placeholder="Digite o Client Secret"
-                  value={interConfig.clientSecret}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, clientSecret: e.target.value }))}
-                />
+                <Input id="inter-client-secret" type="password" placeholder="Digite o Client Secret" value={interConfig.clientSecret} onChange={e => setInterConfig(prev => ({
+                ...prev,
+                clientSecret: e.target.value
+              }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-certificate">Certificado (.crt)</Label>
-                <textarea
-                  id="inter-certificate"
-                  className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none"
-                  placeholder="Cole o conteúdo do certificado"
-                  value={interConfig.certificate}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, certificate: e.target.value }))}
-                />
+                <textarea id="inter-certificate" className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo do certificado" value={interConfig.certificate} onChange={e => setInterConfig(prev => ({
+                ...prev,
+                certificate: e.target.value
+              }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-private-key">Chave Privada (.key)</Label>
-                <textarea
-                  id="inter-private-key"
-                  className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none"
-                  placeholder="Cole o conteúdo da chave privada"
-                  value={interConfig.privateKey}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, privateKey: e.target.value }))}
-                />
+                <textarea id="inter-private-key" className="w-full h-24 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo da chave privada" value={interConfig.privateKey} onChange={e => setInterConfig(prev => ({
+                ...prev,
+                privateKey: e.target.value
+              }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inter-pix-key">Chave PIX (CNPJ/CPF/Email/Telefone)</Label>
-                <Input
-                  id="inter-pix-key"
-                  placeholder="Ex: 52027770000121"
-                  value={interConfig.pixKey}
-                  onChange={(e) => setInterConfig(prev => ({ ...prev, pixKey: e.target.value }))}
-                />
+                <Input id="inter-pix-key" placeholder="Ex: 52027770000121" value={interConfig.pixKey} onChange={e => setInterConfig(prev => ({
+                ...prev,
+                pixKey: e.target.value
+              }))} />
                 <p className="text-xs text-muted-foreground">
                   Para CNPJ/CPF, digite apenas números (sem pontos, traços ou barras)
                 </p>
@@ -893,15 +821,7 @@ export const MultiAcquirersSection = () => {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                {isLoadingStates ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                ) : (
-                  <Switch
-                    checked={spedpayEnabled ?? true}
-                    onCheckedChange={(checked) => toggleAcquirer('spedpay', checked)}
-                    className="scale-75"
-                  />
-                )}
+                {isLoadingStates ? <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" /> : <Switch checked={spedpayEnabled ?? true} onCheckedChange={checked => toggleAcquirer('spedpay', checked)} className="scale-75" />}
               </div>
             </div>
           </CardHeader>
@@ -910,10 +830,10 @@ export const MultiAcquirersSection = () => {
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
                   <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
-                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
-                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
-                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981" />
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981" />
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
                   </svg>
                 </div>
                 <span className="text-xs font-medium">PIX</span>
@@ -927,100 +847,45 @@ export const MultiAcquirersSection = () => {
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Taxa (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={spedpayFeeRate}
-                    onChange={(e) => setSpedpayFeeRate(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={spedpayEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={spedpayFeeRate} onChange={e => setSpedpayFeeRate(e.target.value)} className="h-7 text-xs" disabled={spedpayEnabled === false} />
                 </div>
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Valor Fixo (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={spedpayFixedFee}
-                    onChange={(e) => setSpedpayFixedFee(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={spedpayEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={spedpayFixedFee} onChange={e => setSpedpayFixedFee(e.target.value)} className="h-7 text-xs" disabled={spedpayEnabled === false} />
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => saveFeeSettings('spedpay', spedpayFeeRate, spedpayFixedFee)}
-                className="w-full h-6 text-[10px]"
-                disabled={spedpayEnabled === false}
-              >
+              <Button variant="outline" size="sm" onClick={() => saveFeeSettings('spedpay', spedpayFeeRate, spedpayFixedFee)} className="w-full h-6 text-[10px]" disabled={spedpayEnabled === false}>
                 Salvar Taxas
               </Button>
             </div>
 
             {/* Set as Default */}
-            {spedpayEnabled !== false && (
-              <div className="flex items-center justify-between">
+            {spedpayEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
-                {isSettingDefault === 'spedpay' ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                ) : (
-                  <Switch
-                    checked={defaultAcquirer === 'spedpay'}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setAsDefaultAcquirer('spedpay');
-                      } else if (defaultAcquirer === 'spedpay') {
-                        toast({
-                          title: "Já é a Adquirente Principal",
-                          description: "SpedPay já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal.",
-                        });
-                      }
-                    }}
-                    disabled={isSettingDefault !== null}
-                    className="scale-75"
-                  />
-                )}
-              </div>
-            )}
+                {isSettingDefault === 'spedpay' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'spedpay'} onCheckedChange={checked => {
+              if (checked) {
+                setAsDefaultAcquirer('spedpay');
+              } else if (defaultAcquirer === 'spedpay') {
+                toast({
+                  title: "Já é a Adquirente Principal",
+                  description: "SpedPay já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                });
+              }
+            }} disabled={isSettingDefault !== null} className="scale-75" />}
+              </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
-              <Badge 
-                variant="outline" 
-                className={spedpayEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
-                }
-              >
+              <Badge variant="outline" className={spedpayEnabled !== false ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5" : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"}>
                 {spedpayEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
                 {spedpayEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowSpedpayConfigDialog(true)}
-                  className="h-5 text-[10px] px-1.5"
-                  disabled={spedpayEnabled === false}
-                >
+                <Button variant="outline" size="sm" onClick={() => setShowSpedpayConfigDialog(true)} className="h-5 text-[10px] px-1.5" disabled={spedpayEnabled === false}>
                   <Settings className="w-2.5 h-2.5 mr-0.5" />
                   Config
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={testSpedpayConnection}
-                  disabled={isTestingSpedpay || spedpayEnabled === false}
-                  className="h-5 text-[10px] px-1.5"
-                >
-                  {isTestingSpedpay ? (
-                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                  ) : (
-                    "Testar"
-                  )}
+                <Button variant="outline" size="sm" onClick={testSpedpayConnection} disabled={isTestingSpedpay || spedpayEnabled === false} className="h-5 text-[10px] px-1.5">
+                  {isTestingSpedpay ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Testar"}
                 </Button>
               </div>
             </div>
@@ -1042,13 +907,7 @@ export const MultiAcquirersSection = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="spedpay-api-key">Chave API</Label>
-                <Input
-                  id="spedpay-api-key"
-                  type="password"
-                  placeholder="Digite a chave API do SpedPay"
-                  value={spedpayApiKey}
-                  onChange={(e) => setSpedpayApiKey(e.target.value)}
-                />
+                <Input id="spedpay-api-key" type="password" placeholder="Digite a chave API do SpedPay" value={spedpayApiKey} onChange={e => setSpedpayApiKey(e.target.value)} />
                 <p className="text-xs text-muted-foreground">
                   Esta chave será usada globalmente pela plataforma FurionPay
                 </p>
@@ -1074,15 +933,7 @@ export const MultiAcquirersSection = () => {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                {isLoadingStates ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                ) : (
-                  <Switch
-                    checked={ativusEnabled ?? true}
-                    onCheckedChange={(checked) => toggleAcquirer('ativus', checked)}
-                    className="scale-75"
-                  />
-                )}
+                {isLoadingStates ? <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" /> : <Switch checked={ativusEnabled ?? true} onCheckedChange={checked => toggleAcquirer('ativus', checked)} className="scale-75" />}
               </div>
             </div>
           </CardHeader>
@@ -1091,10 +942,10 @@ export const MultiAcquirersSection = () => {
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
                   <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
-                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
-                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
-                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981" />
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981" />
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
                   </svg>
                 </div>
                 <span className="text-xs font-medium">PIX</span>
@@ -1108,100 +959,45 @@ export const MultiAcquirersSection = () => {
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Taxa (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={ativusFeeRate}
-                    onChange={(e) => setAtivusFeeRate(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={ativusEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={ativusFeeRate} onChange={e => setAtivusFeeRate(e.target.value)} className="h-7 text-xs" disabled={ativusEnabled === false} />
                 </div>
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Valor Fixo (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={ativusFixedFee}
-                    onChange={(e) => setAtivusFixedFee(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={ativusEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={ativusFixedFee} onChange={e => setAtivusFixedFee(e.target.value)} className="h-7 text-xs" disabled={ativusEnabled === false} />
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => saveFeeSettings('ativus', ativusFeeRate, ativusFixedFee)}
-                className="w-full h-6 text-[10px]"
-                disabled={ativusEnabled === false}
-              >
+              <Button variant="outline" size="sm" onClick={() => saveFeeSettings('ativus', ativusFeeRate, ativusFixedFee)} className="w-full h-6 text-[10px]" disabled={ativusEnabled === false}>
                 Salvar Taxas
               </Button>
             </div>
 
             {/* Set as Default */}
-            {ativusEnabled !== false && (
-              <div className="flex items-center justify-between">
+            {ativusEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
-                {isSettingDefault === 'ativus' ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                ) : (
-                  <Switch
-                    checked={defaultAcquirer === 'ativus'}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setAsDefaultAcquirer('ativus');
-                      } else if (defaultAcquirer === 'ativus') {
-                        toast({
-                          title: "Já é a Adquirente Principal",
-                          description: "Ativus Hub já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal.",
-                        });
-                      }
-                    }}
-                    disabled={isSettingDefault !== null}
-                    className="scale-75"
-                  />
-                )}
-              </div>
-            )}
+                {isSettingDefault === 'ativus' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'ativus'} onCheckedChange={checked => {
+              if (checked) {
+                setAsDefaultAcquirer('ativus');
+              } else if (defaultAcquirer === 'ativus') {
+                toast({
+                  title: "Já é a Adquirente Principal",
+                  description: "Ativus Hub já está definido como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                });
+              }
+            }} disabled={isSettingDefault !== null} className="scale-75" />}
+              </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
-              <Badge 
-                variant="outline" 
-                className={ativusEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
-                }
-              >
+              <Badge variant="outline" className={ativusEnabled !== false ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5" : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"}>
                 {ativusEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
                 {ativusEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowAtivusConfigDialog(true)}
-                  className="h-5 text-[10px] px-1.5"
-                  disabled={ativusEnabled === false}
-                >
+                <Button variant="outline" size="sm" onClick={() => setShowAtivusConfigDialog(true)} className="h-5 text-[10px] px-1.5" disabled={ativusEnabled === false}>
                   <Settings className="w-2.5 h-2.5 mr-0.5" />
                   Config
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={testAtivusConnection}
-                  disabled={isTestingAtivus || ativusEnabled === false}
-                  className="h-5 text-[10px] px-1.5"
-                >
-                  {isTestingAtivus ? (
-                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                  ) : (
-                    "Testar"
-                  )}
+                <Button variant="outline" size="sm" onClick={testAtivusConnection} disabled={isTestingAtivus || ativusEnabled === false} className="h-5 text-[10px] px-1.5">
+                  {isTestingAtivus ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Testar"}
                 </Button>
               </div>
             </div>
@@ -1223,13 +1019,7 @@ export const MultiAcquirersSection = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="ativus-api-key">Chave API</Label>
-                <Input
-                  id="ativus-api-key"
-                  type="password"
-                  placeholder="Digite sua chave API do Ativus Hub"
-                  value={ativusApiKey}
-                  onChange={(e) => setAtivusApiKey(e.target.value)}
-                />
+                <Input id="ativus-api-key" type="password" placeholder="Digite sua chave API do Ativus Hub" value={ativusApiKey} onChange={e => setAtivusApiKey(e.target.value)} />
                 <p className="text-xs text-muted-foreground">
                   Obtenha sua chave API no painel do Ativus Hub
                 </p>
@@ -1255,15 +1045,7 @@ export const MultiAcquirersSection = () => {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                {isLoadingStates ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                ) : (
-                  <Switch
-                    checked={valorionEnabled ?? true}
-                    onCheckedChange={(checked) => toggleAcquirer('valorion', checked)}
-                    className="scale-75"
-                  />
-                )}
+                {isLoadingStates ? <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" /> : <Switch checked={valorionEnabled ?? true} onCheckedChange={checked => toggleAcquirer('valorion', checked)} className="scale-75" />}
               </div>
             </div>
           </CardHeader>
@@ -1272,10 +1054,10 @@ export const MultiAcquirersSection = () => {
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-4 bg-emerald-500/10 rounded flex items-center justify-center">
                   <svg width="10" height="10" viewBox="0 0 32 32" fill="none">
-                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
-                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981"/>
-                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981"/>
-                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981"/>
+                    <path d="M21.8 9.6l-4.4 4.4c-.8.8-2 .8-2.8 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.8-.8 2-.8 2.8 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
+                    <path d="M21.8 23.8l-4.4-4.4c-.8-.8-2-.8-2.8 0l-4.4 4.4c-.4.4-.4 1 0 1.4l4.4 4.4c.8.8 2 .8 2.8 0l4.4-4.4c.4-.4.4-1 0-1.4z" fill="#10b981" />
+                    <path d="M9.6 21.8l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4l-4.4 4.4c-.4.4-1 .4-1.4 0z" fill="#10b981" />
+                    <path d="M28.2 17.4l-4.4 4.4c-.4.4-1 .4-1.4 0l-4.4-4.4c-.4-.4-.4-1 0-1.4l4.4-4.4c.4-.4 1-.4 1.4 0l4.4 4.4c.4.4.4 1 0 1.4z" fill="#10b981" />
                   </svg>
                 </div>
                 <span className="text-xs font-medium">PIX</span>
@@ -1289,100 +1071,45 @@ export const MultiAcquirersSection = () => {
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Taxa (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={valorionFeeRate}
-                    onChange={(e) => setValorionFeeRate(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={valorionEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={valorionFeeRate} onChange={e => setValorionFeeRate(e.target.value)} className="h-7 text-xs" disabled={valorionEnabled === false} />
                 </div>
                 <div className="space-y-0.5">
                   <Label className="text-[10px]">Valor Fixo (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={valorionFixedFee}
-                    onChange={(e) => setValorionFixedFee(e.target.value)}
-                    className="h-7 text-xs"
-                    disabled={valorionEnabled === false}
-                  />
+                  <Input type="number" step="0.01" placeholder="0.00" value={valorionFixedFee} onChange={e => setValorionFixedFee(e.target.value)} className="h-7 text-xs" disabled={valorionEnabled === false} />
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => saveFeeSettings('valorion', valorionFeeRate, valorionFixedFee)}
-                className="w-full h-6 text-[10px]"
-                disabled={valorionEnabled === false}
-              >
+              <Button variant="outline" size="sm" onClick={() => saveFeeSettings('valorion', valorionFeeRate, valorionFixedFee)} className="w-full h-6 text-[10px]" disabled={valorionEnabled === false}>
                 Salvar Taxas
               </Button>
             </div>
 
             {/* Set as Default */}
-            {valorionEnabled !== false && (
-              <div className="flex items-center justify-between">
+            {valorionEnabled !== false && <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground">Adquirente principal:</span>
-                {isSettingDefault === 'valorion' ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                ) : (
-                  <Switch
-                    checked={defaultAcquirer === 'valorion'}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setAsDefaultAcquirer('valorion');
-                      } else if (defaultAcquirer === 'valorion') {
-                        toast({
-                          title: "Já é a Adquirente Principal",
-                          description: "Valorion já está definida como adquirente padrão. Para mudar, ative outra adquirente como principal.",
-                        });
-                      }
-                    }}
-                    disabled={isSettingDefault !== null}
-                    className="scale-75"
-                  />
-                )}
-              </div>
-            )}
+                {isSettingDefault === 'valorion' ? <Loader2 className="w-3 h-3 animate-spin text-primary" /> : <Switch checked={defaultAcquirer === 'valorion'} onCheckedChange={checked => {
+              if (checked) {
+                setAsDefaultAcquirer('valorion');
+              } else if (defaultAcquirer === 'valorion') {
+                toast({
+                  title: "Já é a Adquirente Principal",
+                  description: "Valorion já está definida como adquirente padrão. Para mudar, ative outra adquirente como principal."
+                });
+              }
+            }} disabled={isSettingDefault !== null} className="scale-75" />}
+              </div>}
             
             <div className="flex flex-wrap items-center justify-between gap-1 pt-2 border-t">
-              <Badge 
-                variant="outline" 
-                className={valorionEnabled !== false
-                  ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5"
-                  : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"
-                }
-              >
+              <Badge variant="outline" className={valorionEnabled !== false ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-[10px] h-5" : "text-muted-foreground border-muted-foreground/30 bg-muted text-[10px] h-5"}>
                 {valorionEnabled !== false ? <Check className="w-2.5 h-2.5 mr-0.5" /> : <Power className="w-2.5 h-2.5 mr-0.5" />}
                 {valorionEnabled !== false ? 'Integrado' : 'Desativado'}
               </Badge>
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowValorionConfigDialog(true)}
-                  className="h-5 text-[10px] px-1.5"
-                  disabled={valorionEnabled === false}
-                >
+                <Button variant="outline" size="sm" onClick={() => setShowValorionConfigDialog(true)} className="h-5 text-[10px] px-1.5" disabled={valorionEnabled === false}>
                   <Settings className="w-2.5 h-2.5 mr-0.5" />
                   Config
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={testValorionConnection}
-                  disabled={isTestingValorion || valorionEnabled === false}
-                  className="h-5 text-[10px] px-1.5"
-                >
-                  {isTestingValorion ? (
-                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                  ) : (
-                    "Testar"
-                  )}
+                <Button variant="outline" size="sm" onClick={testValorionConnection} disabled={isTestingValorion || valorionEnabled === false} className="h-5 text-[10px] px-1.5">
+                  {isTestingValorion ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : "Testar"}
                 </Button>
               </div>
             </div>
@@ -1404,13 +1131,7 @@ export const MultiAcquirersSection = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="valorion-api-key">Chave API (x-api-key)</Label>
-                <Input
-                  id="valorion-api-key"
-                  type="password"
-                  placeholder="Digite sua chave API da Valorion"
-                  value={valorionApiKey}
-                  onChange={(e) => setValorionApiKey(e.target.value)}
-                />
+                <Input id="valorion-api-key" type="password" placeholder="Digite sua chave API da Valorion" value={valorionApiKey} onChange={e => setValorionApiKey(e.target.value)} />
                 <p className="text-xs text-muted-foreground">
                   Obtenha sua chave API no painel da Valorion
                 </p>
@@ -1418,14 +1139,7 @@ export const MultiAcquirersSection = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="valorion-api-url">Endpoint de criação (URL)</Label>
-                <Input
-                  id="valorion-api-url"
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://..."
-                  value={valorionApiUrl}
-                  onChange={(e) => setValorionApiUrl(e.target.value)}
-                />
+                <Input id="valorion-api-url" type="url" inputMode="url" placeholder="https://..." value={valorionApiUrl} onChange={e => setValorionApiUrl(e.target.value)} />
                 <p className="text-xs text-muted-foreground">
                   Cole a URL exata do endpoint de criação PIX (se vazio, usa o padrão do sistema).
                 </p>
@@ -1451,16 +1165,14 @@ export const MultiAcquirersSection = () => {
           </CardContent>
         </Card>
       </div>
-      </div>
 
-          {/* Dica */}
-          <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              💡 <strong>Dica:</strong> Novas adquirentes serão disponibilizadas em futuras atualizações.
-            </p>
-          </div>
+      <Card className="bg-muted/30">
+        <CardContent className="py-4">
+          <p className="text-sm text-muted-foreground">
+            💡 <strong>Dica:</strong> Novas adquirentes serão disponibilizadas em futuras atualizações.
+          </p>
         </CardContent>
       </Card>
-    </div>
-  );
+
+    </div>;
 };
