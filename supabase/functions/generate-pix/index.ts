@@ -208,6 +208,12 @@ async function checkSingleIdentifier(
       return { allowed: true };
     }
 
+    // Check if whitelisted - skip ALL rate limit checks
+    if (rateLimitRecord.is_whitelisted === true) {
+      console.log(`[RATE-LIMIT] ${identifierType} is WHITELISTED, allowing without limits`);
+      return { allowed: true };
+    }
+
     // Check if blocked
     if (rateLimitRecord.blocked_until && new Date(rateLimitRecord.blocked_until) > now) {
       const retryAfter = Math.ceil((new Date(rateLimitRecord.blocked_until).getTime() - now.getTime()) / 1000);
