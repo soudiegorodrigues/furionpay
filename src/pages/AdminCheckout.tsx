@@ -18,6 +18,7 @@ import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { CheckoutOfferCard } from "@/components/CheckoutOfferCard";
+import { validateProductName } from "@/lib/blockedKeywords";
 
 interface PopupModelStats {
   popup_model: string;
@@ -207,6 +208,22 @@ const AdminCheckout = () => {
 
   const handleSaveOffer = async (offer: CheckoutOffer) => {
     const isNew = offer.id.startsWith('temp-');
+    
+    // Validar nome da oferta
+    const nameValidation = validateProductName(offer.name);
+    if (!nameValidation.valid) {
+      toast({ title: "Erro", description: nameValidation.error, variant: "destructive" });
+      throw new Error(nameValidation.error);
+    }
+    
+    // Validar nome do produto (se existir)
+    if (offer.product_name) {
+      const productValidation = validateProductName(offer.product_name);
+      if (!productValidation.valid) {
+        toast({ title: "Erro", description: productValidation.error, variant: "destructive" });
+        throw new Error(productValidation.error);
+      }
+    }
     
     try {
       if (isNew) {

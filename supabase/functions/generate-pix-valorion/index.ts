@@ -277,12 +277,20 @@ async function logPixGenerated(
 
 // Blocked keywords list from Valorion API
 const VALORION_BLOCKED_KEYWORDS = [
-  'lanche', 'lanches', 'comida', 'alimento', 'alimentação', 'refeição', 'refeicao',
+  // Comida
+  'lanche', 'lanches', 'comida', 'alimento', 'alimentação', 'alimentacao', 'refeição', 'refeicao',
+  // Bebidas/Tabaco
   'bebida', 'bebidas', 'cerveja', 'álcool', 'alcool', 'cigarro', 'tabaco',
+  // Armas/Drogas
   'arma', 'armas', 'munição', 'municao', 'drogas', 'medicamento', 'remédio', 'remedio',
+  // Apostas
   'jogo', 'jogos', 'aposta', 'apostas', 'cassino', 'casino', 'bet', 'betting',
+  // Adulto
   'sexo', 'adulto', 'pornô', 'porno', 'xxx', 'erótico', 'erotico',
+  // Pirataria
   'hack', 'hacker', 'pirata', 'pirataria', 'cracked', 'crack',
+  // Donate/Fraude
+  'doacao', 'doação', 'donate', 'donation', 'tragedia', 'tragédia', 'golpe', 'falso', 'mentira', 'fraude',
 ];
 
 // Sanitize product name to remove blocked keywords

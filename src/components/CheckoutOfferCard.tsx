@@ -23,6 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { validateProductName } from "@/lib/blockedKeywords";
 
 interface CheckoutOffer {
   id: string;
@@ -63,13 +64,6 @@ interface CheckoutOfferCardProps {
   onDelete: (offerId: string) => Promise<void>;
   isNew?: boolean;
 }
-
-const blockedProductNames = ['doação', 'doacao', 'golpe', 'falso', 'fraude', 'fake', 'scam'];
-
-const isProductNameBlocked = (name: string): boolean => {
-  const normalizedName = name.toLowerCase().trim();
-  return blockedProductNames.some(blocked => normalizedName.includes(blocked));
-};
 
 export const CheckoutOfferCard = ({
   offer,
@@ -138,10 +132,12 @@ export const CheckoutOfferCard = ({
       return;
     }
 
-    if (isProductNameBlocked(productName)) {
+    // Validar palavras bloqueadas no nome do produto
+    const productValidation = validateProductName(productName);
+    if (!productValidation.valid) {
       toast({
         title: "Nome de produto bloqueado",
-        description: "O nome do produto contém palavras não permitidas.",
+        description: productValidation.error,
         variant: "destructive"
       });
       return;
@@ -151,6 +147,17 @@ export const CheckoutOfferCard = ({
       toast({
         title: "Nome obrigatório",
         description: "Por favor, dê um nome para esta oferta.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Validar palavras bloqueadas no nome da oferta
+    const nameValidation = validateProductName(name);
+    if (!nameValidation.valid) {
+      toast({
+        title: "Nome de oferta bloqueado",
+        description: nameValidation.error,
         variant: "destructive"
       });
       return;
