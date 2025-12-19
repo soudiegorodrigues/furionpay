@@ -577,12 +577,8 @@ export default function AdminProducts() {
                     <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
                   </div>
                   <div className="mt-1 sm:mt-2">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Receba até</p>
                     <p className="text-sm sm:text-base font-bold text-primary">
-                      R$ {(product.price * 0.55).toFixed(2).replace(".", ",")}
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">
-                      Preço máximo: R$ {product.price.toFixed(2).replace(".", ",")}
+                      R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-1.5 pt-1.5 border-t">
