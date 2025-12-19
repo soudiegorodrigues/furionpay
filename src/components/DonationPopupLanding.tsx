@@ -291,21 +291,22 @@ export const DonationPopupLanding = ({
               {/* Amount Grid */}
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {DONATION_AMOUNTS.map((item) => (
-                  <button
-                    key={item.amount}
-                    onClick={() => handleSelectAmount(item.amount)}
-                    className={cn(
-                      "py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base flex flex-col items-center justify-center",
-                      selectedAmount === item.amount
-                        ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
-                        : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
-                    )}
-                  >
-                    {formatCurrency(item.amount)}
+                  <div key={item.amount} className="flex flex-col">
                     {item.badge && (
-                      <span className="text-[10px] text-green-600 mt-0.5">{item.badge}</span>
+                      <span className="text-[10px] text-green-600 text-center mb-0.5">{item.badge}</span>
                     )}
-                  </button>
+                    <button
+                      onClick={() => handleSelectAmount(item.amount)}
+                      className={cn(
+                        "py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
+                        selectedAmount === item.amount
+                          ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
+                          : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
+                      )}
+                    >
+                      {formatCurrency(item.amount)}
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
