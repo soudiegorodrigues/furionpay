@@ -616,308 +616,289 @@ export function BackupsSection() {
 
       {/* Main content - only visible when authenticated */}
       {isAuthenticated && (
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header Principal */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Database className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Backup do Sistema</h2>
-            <p className="text-muted-foreground text-sm">Gerencie backups completos do banco de dados e storage</p>
-          </div>
-        </div>
-
-        {/* Header with stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
+      <div className="max-w-5xl mx-auto">
+        <Card className="w-full">
+          <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Database className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <Database className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total de Backups</p>
-                <p className="text-2xl font-bold">{backups.length}</p>
+                <CardTitle className="text-xl">Backup do Sistema</CardTitle>
+                <CardDescription>Gerencie backups completos do banco de dados e storage</CardDescription>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <ShieldCheck className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Registros Protegidos</p>
-                <p className="text-2xl font-bold">{totalRecords.toLocaleString('pt-BR')}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Clock className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Manual / Automático</p>
-                <p className="text-2xl font-bold">{manualCount} / {automaticCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <HardDrive className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Storage</p>
-                <p className="text-2xl font-bold">
-                  {storageStats?.total_files || 0} <span className="text-sm font-normal text-muted-foreground">arquivos</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatFileSize(storageStats?.total_size_bytes || 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Storage buckets detail */}
-      {storageStats && storageStats.buckets && storageStats.buckets.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <HardDrive className="h-4 w-4" />
-                Buckets de Storage incluídos no backup
-              </CardTitle>
-              {lastStorageUpdate && (
-                <span className="text-xs text-muted-foreground">
-                  Atualizado: {lastStorageUpdate.toLocaleTimeString('pt-BR')}
-                </span>
-              )}
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {storageStats.buckets.map((bucket) => (
-                <Badge key={bucket.bucket_id} variant="outline" className="text-xs gap-1.5 py-1">
-                  {getBucketIcon(bucket.bucket_id)}
-                  <span className="font-medium">{bucket.bucket_id}</span>
-                  <span className="text-muted-foreground">
-                    ({bucket.file_count} arquivos, {formatFileSize(bucket.size_bytes)})
-                  </span>
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Create backup */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <FileArchive className="h-5 w-5 text-muted-foreground" />
+          <CardContent className="space-y-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex items-center gap-3 p-4 border rounded-lg">
+                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Database className="h-5 w-5 text-primary" />
+                </div>
                 <div>
-                  <p className="font-medium">Backup Completo do Sistema</p>
-                  <p className="text-sm text-muted-foreground">
-                    Inclui: banco de dados (30 tabelas) + Storage ({storageStats?.total_files || 0} arquivos)
+                  <p className="text-sm text-muted-foreground">Total de Backups</p>
+                  <p className="text-2xl font-bold">{backups.length}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 border rounded-lg">
+                <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center">
+                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Registros Protegidos</p>
+                  <p className="text-2xl font-bold">{totalRecords.toLocaleString('pt-BR')}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 border rounded-lg">
+                <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Manual / Automático</p>
+                  <p className="text-2xl font-bold">{manualCount} / {automaticCount}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 border rounded-lg">
+                <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center">
+                  <HardDrive className="h-5 w-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Storage</p>
+                  <p className="text-2xl font-bold">
+                    {storageStats?.total_files || 0} <span className="text-sm font-normal text-muted-foreground">arquivos</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(storageStats?.total_size_bytes || 0)}
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => { loadBackups(); loadStorageStatsWithTimestamp(); }}
-                  disabled={loading}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Atualizar
-                </Button>
-                <Button 
-                  variant="outline"
-                  size="sm" 
-                  onClick={handleExportBackup}
-                  disabled={exportLoading}
-                >
-                  <Download className={`h-4 w-4 mr-2 ${exportLoading ? 'animate-pulse' : ''}`} />
-                  {exportLoading ? 'Exportando...' : 'Exportar ZIP'}
-                </Button>
-                <Button 
-                  variant="outline"
-                  size="sm" 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={importLoading}
-                >
-                  <Upload className={`h-4 w-4 mr-2 ${importLoading ? 'animate-pulse' : ''}`} />
-                  {importLoading ? 'Importando...' : 'Importar'}
-                </Button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImportBackup}
-                  accept=".json,.zip"
-                  className="hidden"
-                />
-                <Button 
-                  size="sm" 
-                  onClick={handleCreateBackup}
-                  disabled={actionLoading}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {actionLoading ? 'Criando...' : 'Criar Backup'}
-                </Button>
-              </div>
             </div>
 
-            {/* Progress bars */}
-            {exportProgress > 0 && (
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Exportando backup completo...</span>
-                  <span>{exportProgress}%</span>
+            {/* Storage buckets detail */}
+            {storageStats && storageStats.buckets && storageStats.buckets.length > 0 && (
+              <>
+                <div className="border-t" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium flex items-center gap-2">
+                      <HardDrive className="h-4 w-4" />
+                      Buckets de Storage incluídos no backup
+                    </h3>
+                    {lastStorageUpdate && (
+                      <span className="text-xs text-muted-foreground">
+                        Atualizado: {lastStorageUpdate.toLocaleTimeString('pt-BR')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {storageStats.buckets.map((bucket) => (
+                      <Badge key={bucket.bucket_id} variant="outline" className="text-xs gap-1.5 py-1">
+                        {getBucketIcon(bucket.bucket_id)}
+                        <span className="font-medium">{bucket.bucket_id}</span>
+                        <span className="text-muted-foreground">
+                          ({bucket.file_count} arquivos, {formatFileSize(bucket.size_bytes)})
+                        </span>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <Progress value={exportProgress} className="h-2" />
-              </div>
+              </>
             )}
 
-            {importProgress > 0 && (
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Importando backup...</span>
-                  <span>{importProgress}%</span>
+            {/* Create backup section */}
+            <div className="border-t" />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <FileArchive className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Backup Completo do Sistema</p>
+                    <p className="text-sm text-muted-foreground">
+                      Inclui: banco de dados (30 tabelas) + Storage ({storageStats?.total_files || 0} arquivos)
+                    </p>
+                  </div>
                 </div>
-                <Progress value={importProgress} className="h-2" />
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => { loadBackups(); loadStorageStatsWithTimestamp(); }}
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Atualizar
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="sm" 
+                    onClick={handleExportBackup}
+                    disabled={exportLoading}
+                  >
+                    <Download className={`h-4 w-4 mr-2 ${exportLoading ? 'animate-pulse' : ''}`} />
+                    {exportLoading ? 'Exportando...' : 'Exportar ZIP'}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="sm" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={importLoading}
+                  >
+                    <Upload className={`h-4 w-4 mr-2 ${importLoading ? 'animate-pulse' : ''}`} />
+                    {importLoading ? 'Importando...' : 'Importar'}
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImportBackup}
+                    accept=".json,.zip"
+                    className="hidden"
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={handleCreateBackup}
+                    disabled={actionLoading}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {actionLoading ? 'Criando...' : 'Criar Backup'}
+                  </Button>
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Backups table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Backups Disponíveis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              {/* Progress bars */}
+              {exportProgress > 0 && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Exportando backup completo...</span>
+                    <span>{exportProgress}%</span>
+                  </div>
+                  <Progress value={exportProgress} className="h-2" />
+                </div>
+              )}
+
+              {importProgress > 0 && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Importando backup...</span>
+                    <span>{importProgress}%</span>
+                  </div>
+                  <Progress value={importProgress} className="h-2" />
+                </div>
+              )}
             </div>
-          ) : backups.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum backup encontrado</p>
-              <p className="text-sm">Crie um backup completo do sistema</p>
+
+            {/* Backups table section */}
+            <div className="border-t" />
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Backups Disponíveis</h3>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : backups.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Nenhum backup encontrado</p>
+                  <p className="text-sm">Crie um backup completo do sistema</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome / Data</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Conteúdo</TableHead>
+                        <TableHead className="hidden lg:table-cell">Criado por</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {backups.map((backup) => (
+                        <TableRow key={backup.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{backup.backup_name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {formatDate(backup.backed_up_at)}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={backup.backup_type === 'automatic' ? 'default' : 'secondary'}
+                              className={backup.backup_type === 'automatic' ? 'bg-green-500/10 text-green-600 border-green-500/20' : ''}
+                            >
+                              {backup.backup_type === 'automatic' ? 'Auto' : 'Manual'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1.5">
+                              <Badge variant="outline" className="text-xs gap-1">
+                                <DollarSign className="h-3 w-3" />
+                                {backup.pix_count} PIX
+                              </Badge>
+                              <Badge variant="outline" className="text-xs gap-1">
+                                <DollarSign className="h-3 w-3" />
+                                {backup.withdrawal_count} Saques
+                              </Badge>
+                              <Badge variant="outline" className="text-xs gap-1 hidden sm:flex">
+                                <Package className="h-3 w-3" />
+                                {backup.products_count} Produtos
+                              </Badge>
+                              <Badge variant="outline" className="text-xs gap-1 hidden md:flex">
+                                <Settings className="h-3 w-3" />
+                                {backup.settings_count} Configs
+                              </Badge>
+                              <Badge variant="outline" className="text-xs gap-1 hidden lg:flex">
+                                <Users className="h-3 w-3" />
+                                {backup.profiles_count} Perfis
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Total: {backup.total_records.toLocaleString('pt-BR')} registros
+                            </p>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {backup.backed_up_by_email || 'Sistema'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedBackup(backup);
+                                  setDialogType('restore');
+                                }}
+                              >
+                                <RotateCcw className="h-4 w-4 mr-1" />
+                                <span className="hidden sm:inline">Restaurar</span>
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedBackup(backup);
+                                  setDialogType('delete');
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome / Data</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Conteúdo</TableHead>
-                    <TableHead className="hidden lg:table-cell">Criado por</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {backups.map((backup) => (
-                    <TableRow key={backup.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{backup.backup_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDate(backup.backed_up_at)}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={backup.backup_type === 'automatic' ? 'default' : 'secondary'}
-                          className={backup.backup_type === 'automatic' ? 'bg-green-500/10 text-green-600 border-green-500/20' : ''}
-                        >
-                          {backup.backup_type === 'automatic' ? 'Auto' : 'Manual'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1.5">
-                          <Badge variant="outline" className="text-xs gap-1">
-                            <DollarSign className="h-3 w-3" />
-                            {backup.pix_count} PIX
-                          </Badge>
-                          <Badge variant="outline" className="text-xs gap-1">
-                            <DollarSign className="h-3 w-3" />
-                            {backup.withdrawal_count} Saques
-                          </Badge>
-                          <Badge variant="outline" className="text-xs gap-1 hidden sm:flex">
-                            <Package className="h-3 w-3" />
-                            {backup.products_count} Produtos
-                          </Badge>
-                          <Badge variant="outline" className="text-xs gap-1 hidden md:flex">
-                            <Settings className="h-3 w-3" />
-                            {backup.settings_count} Configs
-                          </Badge>
-                          <Badge variant="outline" className="text-xs gap-1 hidden lg:flex">
-                            <Users className="h-3 w-3" />
-                            {backup.profiles_count} Perfis
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Total: {backup.total_records.toLocaleString('pt-BR')} registros
-                        </p>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {backup.backed_up_by_email || 'Sistema'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedBackup(backup);
-                              setDialogType('restore');
-                            }}
-                          >
-                            <RotateCcw className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Restaurar</span>
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedBackup(backup);
-                              setDialogType('delete');
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Restore confirmation dialog */}
       <AlertDialog open={dialogType === 'restore'} onOpenChange={() => setDialogType(null)}>
