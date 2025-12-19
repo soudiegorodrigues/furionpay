@@ -457,20 +457,14 @@ export const RetryConfigSection = () => {
       {/* Header */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Zap className="h-5 w-5 text-primary" />
-                Configuração de Retentativas
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Configure as tentativas automáticas de reprocessamento para pagamentos com falha.
-              </CardDescription>
-            </div>
-            <Button onClick={openCreate} size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Nova Configuração
-            </Button>
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Configuração de Retentativas
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Configure as tentativas automáticas de reprocessamento para pagamentos com falha.
+            </CardDescription>
           </div>
         </CardHeader>
       </Card>
@@ -489,10 +483,16 @@ export const RetryConfigSection = () => {
         <TabsContent value="pix" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                <CardTitle className="text-base">Fluxo de Retentativas</CardTitle>
-                <Badge variant="outline">{pixSteps.length} etapa{pixSteps.length !== 1 ? 's' : ''}</Badge>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                  <CardTitle className="text-base">Fluxo de Retentativas</CardTitle>
+                  <Badge variant="outline">{pixSteps.length} etapa{pixSteps.length !== 1 ? 's' : ''}</Badge>
+                </div>
+                <Button onClick={openCreate} size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Nova Configuração
+                </Button>
               </div>
               <CardDescription className="text-xs">
                 Arraste pelo ícone ≡ para reordenar as etapas
