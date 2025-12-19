@@ -102,16 +102,13 @@ export const useTransactionNotifications = (userId: string | null) => {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const settingsRef = useRef<NotificationSettings>(DEFAULT_SETTINGS);
 
-  // Keep settingsRef always up to date
+  // Keep settingsRef always up to date and sync toast logo size
   useEffect(() => {
     settingsRef.current = settings;
-  }, [settings]);
-
-  // Keep toast logo size stable without changing CSS vars on every notification
-  useEffect(() => {
+    // Also keep toast logo size CSS var stable
     const size = settings.logoSize || 40;
     document.documentElement.style.setProperty('--toast-logo-size', `${size}px`);
-  }, [settings.logoSize]);
+  }, [settings]);
 
   // Load GLOBAL settings function - all users use the same notification appearance
   const loadSettings = useCallback(async () => {
