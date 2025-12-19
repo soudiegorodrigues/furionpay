@@ -106,7 +106,7 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
       const pageWidth = doc.internal.pageSize.getWidth();
       
       // Header
-      doc.setFillColor(239, 68, 68); // Primary red color
+      doc.setFillColor(0, 0, 0); // Black color
       doc.rect(0, 0, pageWidth, 35, 'F');
       
       doc.setTextColor(255, 255, 255);
