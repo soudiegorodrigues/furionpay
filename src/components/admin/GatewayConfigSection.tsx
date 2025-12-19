@@ -239,7 +239,7 @@ export const GatewayConfigSection = () => {
       let functionName = '';
       switch (gateway) {
         case 'ativus': functionName = 'generate-pix-ativus'; break;
-        case 'spedpay': functionName = 'generate-pix'; break;
+        case 'spedpay': functionName = 'generate-pix-spedpay'; break;
         case 'valorion': functionName = 'generate-pix-valorion'; break;
         case 'inter': functionName = 'generate-pix-inter'; break;
         default: return;
