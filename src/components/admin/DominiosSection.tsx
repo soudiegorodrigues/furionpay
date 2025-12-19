@@ -8,7 +8,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Globe, Plus, Loader2, Pencil, Trash2, Check, X, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
 interface Domain {
   id: string;
   domain: string;
@@ -17,40 +16,35 @@ interface Domain {
   created_at: string;
   domain_type: "popup" | "checkout";
 }
-
 type DomainType = "popup" | "checkout";
-
 export const DominiosSection = () => {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Popup domain form
   const [newPopupDomain, setNewPopupDomain] = useState("");
   const [newPopupDomainName, setNewPopupDomainName] = useState("");
   const [isAddingPopup, setIsAddingPopup] = useState(false);
-  
+
   // Checkout domain form
   const [newCheckoutDomain, setNewCheckoutDomain] = useState("");
   const [newCheckoutDomainName, setNewCheckoutDomainName] = useState("");
   const [isAddingCheckout, setIsAddingCheckout] = useState(false);
-  
+
   // Editing
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDomain, setEditDomain] = useState("");
   const [editName, setEditName] = useState("");
-
   useEffect(() => {
     loadDomains();
   }, []);
-
   const loadDomains = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('available_domains')
-        .select('*')
-        .order('domain');
-      
+      const {
+        data,
+        error
+      } = await supabase.from('available_domains').select('*').order('domain');
       if (error) throw error;
       setDomains((data || []) as Domain[]);
     } catch (error) {
@@ -64,7 +58,6 @@ export const DominiosSection = () => {
       setIsLoading(false);
     }
   };
-
   const addDomain = async (domainType: DomainType) => {
     const domain = domainType === "popup" ? newPopupDomain : newCheckoutDomain;
     const name = domainType === "popup" ? newPopupDomainName : newCheckoutDomainName;
@@ -78,7 +71,6 @@ export const DominiosSection = () => {
         setNewCheckoutDomainName("");
       }
     };
-
     if (!domain.trim()) {
       toast({
         title: "Erro",
@@ -87,17 +79,15 @@ export const DominiosSection = () => {
       });
       return;
     }
-
     setIsAdding(true);
     try {
-      const { error } = await supabase
-        .from('available_domains')
-        .insert({
-          domain: domain.trim().toLowerCase(),
-          name: name.trim() || null,
-          domain_type: domainType
-        });
-      
+      const {
+        error
+      } = await supabase.from('available_domains').insert({
+        domain: domain.trim().toLowerCase(),
+        name: name.trim() || null,
+        domain_type: domainType
+      });
       if (error) {
         if (error.code === '23505') {
           toast({
@@ -127,20 +117,18 @@ export const DominiosSection = () => {
       setIsAdding(false);
     }
   };
-
   const toggleDomainStatus = async (id: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('available_domains')
-        .update({ is_active: !currentStatus })
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('available_domains').update({
+        is_active: !currentStatus
+      }).eq('id', id);
       if (error) throw error;
-      
-      setDomains(domains.map(d => 
-        d.id === id ? { ...d, is_active: !currentStatus } : d
-      ));
-      
+      setDomains(domains.map(d => d.id === id ? {
+        ...d,
+        is_active: !currentStatus
+      } : d));
       toast({
         title: "Sucesso",
         description: `Domínio ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`
@@ -154,18 +142,13 @@ export const DominiosSection = () => {
       });
     }
   };
-
   const deleteDomain = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('available_domains')
-        .delete()
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('available_domains').delete().eq('id', id);
       if (error) throw error;
-      
       setDomains(domains.filter(d => d.id !== id));
-      
       toast({
         title: "Sucesso",
         description: "Domínio removido com sucesso!"
@@ -179,19 +162,16 @@ export const DominiosSection = () => {
       });
     }
   };
-
   const startEditing = (domain: Domain) => {
     setEditingId(domain.id);
     setEditDomain(domain.domain);
     setEditName(domain.name || "");
   };
-
   const cancelEditing = () => {
     setEditingId(null);
     setEditDomain("");
     setEditName("");
   };
-
   const saveEdit = async (id: string) => {
     if (!editDomain.trim()) {
       toast({
@@ -201,16 +181,13 @@ export const DominiosSection = () => {
       });
       return;
     }
-
     try {
-      const { error } = await supabase
-        .from('available_domains')
-        .update({
-          domain: editDomain.trim().toLowerCase(),
-          name: editName.trim() || null
-        })
-        .eq('id', id);
-      
+      const {
+        error
+      } = await supabase.from('available_domains').update({
+        domain: editDomain.trim().toLowerCase(),
+        name: editName.trim() || null
+      }).eq('id', id);
       if (error) {
         if (error.code === '23505') {
           toast({
@@ -222,11 +199,11 @@ export const DominiosSection = () => {
           throw error;
         }
       } else {
-        setDomains(domains.map(d => 
-          d.id === id 
-            ? { ...d, domain: editDomain.trim().toLowerCase(), name: editName.trim() || null }
-            : d
-        ));
+        setDomains(domains.map(d => d.id === id ? {
+          ...d,
+          domain: editDomain.trim().toLowerCase(),
+          name: editName.trim() || null
+        } : d));
         cancelEditing();
         toast({
           title: "Sucesso",
@@ -242,32 +219,24 @@ export const DominiosSection = () => {
       });
     }
   };
-
   const popupDomains = domains.filter(d => d.domain_type === "popup");
   const checkoutDomains = domains.filter(d => d.domain_type === "checkout");
-
   const renderDomainList = (filteredDomains: Domain[], title: string, icon: React.ReactNode) => {
     if (filteredDomains.length === 0) {
-      return (
-        <Card>
+      return <Card>
           <CardContent className="py-6 sm:py-8">
             <p className="text-muted-foreground text-center text-sm">
               Nenhum domínio cadastrado
             </p>
           </CardContent>
-        </Card>
-      );
+        </Card>;
     }
-
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-        {[0, 1].map((cardIndex) => {
-          const startIndex = cardIndex * 5;
-          const cardDomains = filteredDomains.slice(startIndex, startIndex + 5);
-          if (cardDomains.length === 0) return null;
-          
-          return (
-            <Card key={cardIndex}>
+    return <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+        {[0, 1].map(cardIndex => {
+        const startIndex = cardIndex * 5;
+        const cardDomains = filteredDomains.slice(startIndex, startIndex + 5);
+        if (cardDomains.length === 0) return null;
+        return <Card key={cardIndex}>
               <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
                 <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
                   {icon}
@@ -279,33 +248,16 @@ export const DominiosSection = () => {
               </CardHeader>
               <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
                 <div className="space-y-2">
-                  {cardDomains.map((domain) => (
-                    <div 
-                      key={domain.id} 
-                      className={`p-2 sm:p-3 rounded-lg border ${
-                        domain.is_active ? 'bg-card' : 'bg-muted/50'
-                      }`}
-                    >
-                      {editingId === domain.id ? (
-                        <div className="space-y-3">
+                  {cardDomains.map(domain => <div key={domain.id} className={`p-2 sm:p-3 rounded-lg border ${domain.is_active ? 'bg-card' : 'bg-muted/50'}`}>
+                      {editingId === domain.id ? <div className="space-y-3">
                           <div className="space-y-2">
                             <div className="space-y-1">
                               <Label className="text-xs">Domínio</Label>
-                              <Input
-                                value={editDomain}
-                                onChange={(e) => setEditDomain(e.target.value)}
-                                placeholder="exemplo.com.br"
-                                className="h-8 text-sm"
-                              />
+                              <Input value={editDomain} onChange={e => setEditDomain(e.target.value)} placeholder="exemplo.com.br" className="h-8 text-sm" />
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Nome (opcional)</Label>
-                              <Input
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                placeholder="Nome amigável"
-                                className="h-8 text-sm"
-                              />
+                              <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Nome amigável" className="h-8 text-sm" />
                             </div>
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2">
@@ -318,34 +270,19 @@ export const DominiosSection = () => {
                               Cancelar
                             </Button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        </div> : <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex items-center gap-2 min-w-0">
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                              domain.is_active ? 'bg-green-500' : 'bg-gray-400'
-                            }`} />
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${domain.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-xs sm:text-sm truncate">{domain.domain}</p>
-                              {domain.name && (
-                                <p className="text-xs text-muted-foreground truncate">{domain.name}</p>
-                              )}
+                              {domain.name && <p className="text-xs text-muted-foreground truncate">{domain.name}</p>}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 sm:gap-1 justify-end sm:justify-start flex-shrink-0">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              className="h-8 w-8 sm:h-7 sm:w-7"
-                              onClick={() => startEditing(domain)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7" onClick={() => startEditing(domain)}>
                               <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                             </Button>
-                            <Switch
-                              checked={domain.is_active}
-                              onCheckedChange={() => toggleDomainStatus(domain.id, domain.is_active)}
-                              className="scale-90 sm:scale-75"
-                            />
+                            <Switch checked={domain.is_active} onCheckedChange={() => toggleDomainStatus(domain.id, domain.is_active)} className="scale-90 sm:scale-75" />
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive">
@@ -368,38 +305,27 @@ export const DominiosSection = () => {
                               </AlertDialogContent>
                             </AlertDialog>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        </div>}
+                    </div>)}
                 </div>
               </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    );
+            </Card>;
+      })}
+      </div>;
   };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
+    return <div className="flex items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6 sm:space-y-8">
+  return <div className="space-y-6 sm:space-y-8">
       {/* POPUP DOMAINS SECTION */}
       <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           <h3 className="text-base sm:text-lg font-semibold">Domínios para Popup</h3>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Domínios usados nas páginas de doação e popup
-        </p>
+        
 
         {/* Add Popup Domain */}
         <Card>
@@ -413,35 +339,15 @@ export const DominiosSection = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="popup-domain" className="text-xs sm:text-sm">Domínio</Label>
-                <Input
-                  id="popup-domain"
-                  placeholder="exemplo.com.br"
-                  value={newPopupDomain}
-                  onChange={(e) => setNewPopupDomain(e.target.value)}
-                  className="h-9 sm:h-10 text-sm"
-                />
+                <Input id="popup-domain" placeholder="exemplo.com.br" value={newPopupDomain} onChange={e => setNewPopupDomain(e.target.value)} className="h-9 sm:h-10 text-sm" />
               </div>
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="popup-name" className="text-xs sm:text-sm">Nome (opcional)</Label>
-                <Input
-                  id="popup-name"
-                  placeholder="Nome amigável"
-                  value={newPopupDomainName}
-                  onChange={(e) => setNewPopupDomainName(e.target.value)}
-                  className="h-9 sm:h-10 text-sm"
-                />
+                <Input id="popup-name" placeholder="Nome amigável" value={newPopupDomainName} onChange={e => setNewPopupDomainName(e.target.value)} className="h-9 sm:h-10 text-sm" />
               </div>
             </div>
-            <Button 
-              onClick={() => addDomain("popup")} 
-              disabled={isAddingPopup}
-              className="w-full sm:w-auto"
-            >
-              {isAddingPopup ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4 mr-2" />
-              )}
+            <Button onClick={() => addDomain("popup")} disabled={isAddingPopup} className="w-full sm:w-auto">
+              {isAddingPopup ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
               Adicionar Domínio
             </Button>
           </CardContent>
@@ -473,35 +379,15 @@ export const DominiosSection = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="checkout-domain" className="text-xs sm:text-sm">Domínio</Label>
-                <Input
-                  id="checkout-domain"
-                  placeholder="exemplo.com.br"
-                  value={newCheckoutDomain}
-                  onChange={(e) => setNewCheckoutDomain(e.target.value)}
-                  className="h-9 sm:h-10 text-sm"
-                />
+                <Input id="checkout-domain" placeholder="exemplo.com.br" value={newCheckoutDomain} onChange={e => setNewCheckoutDomain(e.target.value)} className="h-9 sm:h-10 text-sm" />
               </div>
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="checkout-name" className="text-xs sm:text-sm">Nome (opcional)</Label>
-                <Input
-                  id="checkout-name"
-                  placeholder="Nome amigável"
-                  value={newCheckoutDomainName}
-                  onChange={(e) => setNewCheckoutDomainName(e.target.value)}
-                  className="h-9 sm:h-10 text-sm"
-                />
+                <Input id="checkout-name" placeholder="Nome amigável" value={newCheckoutDomainName} onChange={e => setNewCheckoutDomainName(e.target.value)} className="h-9 sm:h-10 text-sm" />
               </div>
             </div>
-            <Button 
-              onClick={() => addDomain("checkout")} 
-              disabled={isAddingCheckout}
-              className="w-full sm:w-auto"
-            >
-              {isAddingCheckout ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4 mr-2" />
-              )}
+            <Button onClick={() => addDomain("checkout")} disabled={isAddingCheckout} className="w-full sm:w-auto">
+              {isAddingCheckout ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
               Adicionar Domínio
             </Button>
           </CardContent>
@@ -510,6 +396,5 @@ export const DominiosSection = () => {
         {/* Checkout Domains List */}
         {renderDomainList(checkoutDomains, "Checkout", <ShoppingCart className="h-4 w-4 text-primary" />)}
       </div>
-    </div>
-  );
+    </div>;
 };
