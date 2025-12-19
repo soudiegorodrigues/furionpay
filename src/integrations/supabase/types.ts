@@ -2870,12 +2870,12 @@ export type Database = {
       update_daily_global_stats: {
         Args: {
           p_date: string
-          p_expired_count?: number
-          p_fees?: number
-          p_generated_amount?: number
-          p_generated_count?: number
-          p_paid_amount?: number
-          p_paid_count?: number
+          p_expired_count: number
+          p_fees: number
+          p_generated_amount: number
+          p_generated_count: number
+          p_paid_amount: number
+          p_paid_count: number
         }
         Returns: undefined
       }
