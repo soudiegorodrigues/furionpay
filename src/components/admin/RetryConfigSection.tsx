@@ -335,6 +335,13 @@ export const RetryConfigSection = () => {
   };
 
   const handleCreate = async () => {
+    // Verificar limite de 3 adquirentes
+    const currentPixSteps = steps.filter(s => s.payment_method === 'pix');
+    if (currentPixSteps.length >= 3) {
+      toast.error('Limite máximo de 3 adquirentes no fluxo de retentativas');
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase
@@ -472,11 +479,11 @@ export const RetryConfigSection = () => {
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-emerald-500" />
                   <CardTitle className="text-base">Fluxo de Retentativas</CardTitle>
-                  <Badge variant="outline">{pixSteps.length} etapa{pixSteps.length !== 1 ? 's' : ''}</Badge>
+                  <Badge variant="outline">{pixSteps.length}/3 etapa{pixSteps.length !== 1 ? 's' : ''}</Badge>
                 </div>
-                <Button onClick={openCreate} size="sm">
+                <Button onClick={openCreate} size="sm" disabled={pixSteps.length >= 3}>
                   <Plus className="h-4 w-4 mr-1" />
-                  Nova Configuração
+                  {pixSteps.length >= 3 ? 'Limite atingido' : 'Nova Configuração'}
                 </Button>
               </div>
               <CardDescription className="text-xs">
