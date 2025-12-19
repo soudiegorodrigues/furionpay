@@ -295,19 +295,15 @@ export const DominiosSection = () => {
   return <div className="space-y-6 sm:space-y-8">
       {/* POPUP DOMAINS SECTION */}
       <div className="space-y-3 sm:space-y-4">
-        <div className="flex items-center gap-2">
-          <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          <h3 className="text-base sm:text-lg font-semibold">Domínios para Popup</h3>
-        </div>
-        
-
-        {/* Add Popup Domain */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <Plus className="w-4 h-4" />
-              Adicionar Domínio para Popup
+              <Globe className="w-4 h-4 text-primary" />
+              Domínios para Popup
             </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Adicione e gerencie domínios para páginas de popup
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -333,21 +329,15 @@ export const DominiosSection = () => {
 
       {/* CHECKOUT DOMAINS SECTION */}
       <div className="space-y-3 sm:space-y-4">
-        <div className="flex items-center gap-2">
-          <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          <h3 className="text-base sm:text-lg font-semibold">Domínios para Produtos e Checkout</h3>
-        </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Domínios usados nas páginas de checkout de produtos
-        </p>
-
-        {/* Add Checkout Domain */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <Plus className="w-4 h-4" />
-              Adicionar Domínio para Checkout
+              <ShoppingCart className="w-4 h-4 text-primary" />
+              Domínios para Produtos e Checkout
             </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Domínios usados nas páginas de checkout de produtos
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
