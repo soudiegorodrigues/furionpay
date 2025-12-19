@@ -453,7 +453,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
       {/* Summary Cards with Circular Gauges */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Receitas */}
-        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '0ms' }}>
+        <Card className="border border-border/50">
           <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-sm text-muted-foreground mb-2">Receitas</p>
@@ -475,7 +475,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
         </Card>
 
         {/* Despesas */}
-        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '50ms' }}>
+        <Card className="border border-border/50">
           <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-sm text-muted-foreground mb-2">Despesas</p>
@@ -497,7 +497,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
         </Card>
 
         {/* Investimentos */}
-        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '100ms' }}>
+        <Card className="border border-border/50">
           <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-sm text-muted-foreground mb-2">Investimentos</p>
@@ -514,7 +514,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
         </Card>
 
         {/* Saldo */}
-        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '150ms' }}>
+        <Card className="border border-border/50">
           <CardContent className="p-4 md:p-6">
             <div className="flex flex-col items-center text-center gap-1">
               <p className="text-sm text-muted-foreground mb-2">Saldo</p>
@@ -533,7 +533,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
 
       {/* Account Balances Card */}
       {accounts.length > 0 && (
-        <Card className="border border-border/50 animate-fade-in" style={{ animationDelay: '175ms' }}>
+        <Card className="border border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Wallet className="h-4 w-4 text-primary" />
