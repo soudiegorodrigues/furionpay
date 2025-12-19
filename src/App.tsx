@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
+import { DomainGuard } from "@/components/DomainGuard";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
 import NotFound from "./pages/NotFound";
@@ -62,8 +63,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/login" element={<AdminAuth />} />
-              <Route path="/cadastro" element={<AdminAuth />} />
+              <Route path="/login" element={<DomainGuard><AdminAuth /></DomainGuard>} />
+              <Route path="/cadastro" element={<DomainGuard><AdminAuth /></DomainGuard>} />
               
               {/* API Documentation - public page */}
               <Route path="/integration" element={
@@ -75,7 +76,7 @@ const App = () => (
               <Route path="/api-docs" element={<Navigate to="/integration" replace />} />
               
               {/* Admin routes with shared layout */}
-              <Route path="/admin" element={<AdminLayoutWrapper />}>
+              <Route path="/admin" element={<DomainGuard><AdminLayoutWrapper /></DomainGuard>}>
                 <Route index element={
                   <Suspense fallback={<PageSkeleton />}>
                     <Admin />
