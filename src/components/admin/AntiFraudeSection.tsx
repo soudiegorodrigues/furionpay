@@ -317,33 +317,26 @@ export function AntiFraudeSection() {
         </DialogContent>
       </Dialog>
 
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Shield className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">Sistema Anti-Fraude</h2>
-            <p className="text-sm text-muted-foreground">
-              Proteja sua plataforma contra abusos 
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Configuration Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5" />
+      <div className="max-w-5xl mx-auto">
+        <Card className="w-full">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <Shield className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Sistema Anti-Fraude</CardTitle>
+                <CardDescription>Proteja sua plataforma contra abusos</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Configuration Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <ShieldCheck className="h-4 w-4" />
                 Configuração
-              </CardTitle>
-              <CardDescription>
-                Ajuste os parâmetros de proteção contra fraude
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+              </div>
               {/* Enable/Disable Switch */}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -419,21 +412,16 @@ export function AntiFraudeSection() {
                 {saving ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 Salvar Configurações
               </Button>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Statistics Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
+            <div className="border-t" />
+
+            {/* Statistics Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Activity className="h-4 w-4" />
                 Estatísticas
-              </CardTitle>
-              <CardDescription>
-                Monitoramento em tempo real do sistema anti-fraude
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+              </div>
               {stats ? (
                 <>
                   {/* Totais Gerais */}
@@ -537,24 +525,24 @@ export function AntiFraudeSection() {
                   <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        {/* Info Card */}
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Shield className="h-10 w-10 text-primary shrink-0" />
-              <div className="space-y-2">
-                <h3 className="font-semibold">Como funciona o sistema anti-fraude?</h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• <strong>Fingerprint:</strong> Cada dispositivo é identificado por um hash único</li>
-                  <li>• <strong>Limite de PIX:</strong> Se o dispositivo atingir o máximo de PIX não pagos, é bloqueado</li>
-                  <li>• <strong>Cooldown:</strong> Tempo mínimo obrigatório entre gerações de PIX</li>
-                  <li>• <strong>Janela de tempo:</strong> Os PIX não pagos são contados dentro desta janela</li>
-                  <li>• <strong>Desbloqueio automático:</strong> O dispositivo é desbloqueado após a janela de tempo expirar</li>
-                </ul>
+            <div className="border-t" />
+
+            {/* Info Section */}
+            <div className="p-4 rounded-lg border-primary/20 bg-primary/5">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Shield className="h-10 w-10 text-primary shrink-0" />
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Como funciona o sistema anti-fraude?</h3>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• <strong>Fingerprint:</strong> Cada dispositivo é identificado por um hash único</li>
+                    <li>• <strong>Limite de PIX:</strong> Se o dispositivo atingir o máximo de PIX não pagos, é bloqueado</li>
+                    <li>• <strong>Cooldown:</strong> Tempo mínimo obrigatório entre gerações de PIX</li>
+                    <li>• <strong>Janela de tempo:</strong> Os PIX não pagos são contados dentro desta janela</li>
+                    <li>• <strong>Desbloqueio automático:</strong> O dispositivo é desbloqueado após a janela de tempo expirar</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </CardContent>
