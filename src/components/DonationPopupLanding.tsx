@@ -302,7 +302,7 @@ export const DonationPopupLanding = ({
                     )}
                   >
                     {item.badge && (
-                      <span className="absolute -top-1 -right-1 bg-[#00A651] text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00A651] text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
                         {item.badge}
                       </span>
                     )}
