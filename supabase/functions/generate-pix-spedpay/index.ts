@@ -297,11 +297,7 @@ serve(async (req) => {
     const txid = generateTxId();
 
     // Get product name from checkout_offers if not provided
-    const originalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
-    
-    // IMPORTANT: SpedPay blocks certain product names (diet, weight loss, gambling, etc.)
-    // Use a generic safe name for the API, but keep the original for internal tracking
-    const safeProductName = 'Produto Digital';
+    const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
     
     // Use donor name without special characters to avoid API issues
     const rawDonorName = donorName || getRandomName();
@@ -311,8 +307,7 @@ serve(async (req) => {
       .replace(/[^a-zA-Z\s]/g, '');
     
     console.log('Using donor name:', finalDonorName);
-    console.log('Original product name (for tracking):', originalProductName);
-    console.log('Safe product name (for SpedPay API):', safeProductName);
+    console.log('Product name:', finalProductName);
     
     // Generate customer data
     const customerCPF = generateRandomCPF();
@@ -350,8 +345,8 @@ serve(async (req) => {
       items: [
         {
           id: `item_${externalId}`,
-          title: safeProductName,
-          description: safeProductName,
+          title: finalProductName,
+          description: finalProductName,
           price: amount,
           quantity: 1,
           is_physical: false,
@@ -476,7 +471,7 @@ serve(async (req) => {
       pixCode,
       finalDonorName,
       utmData,
-      originalProductName,
+      finalProductName,
       userId,
       popupModel,
       feeConfig?.pix_percentage,
