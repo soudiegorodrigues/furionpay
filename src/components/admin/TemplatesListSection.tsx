@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -143,114 +143,116 @@ export function TemplatesListSection() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <LayoutTemplate className="h-5 w-5 text-primary" />
-            Checkout Templates
-          </h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Gerencie os templates de checkout disponíveis
-          </p>
-        </div>
-        <Button onClick={() => setIsCreating(true)} size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Template
-        </Button>
-      </div>
-
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar templates..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      {/* Templates Grid */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : filteredTemplates.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <LayoutTemplate className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">
-              {searchQuery ? "Nenhum template encontrado" : "Nenhum template cadastrado"}
-            </p>
-            {!searchQuery && (
-              <Button variant="outline" className="mt-4" onClick={() => setIsCreating(true)}>
-                Criar primeiro template
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTemplates.map((template) => (
-            <Card key={template.id} className="overflow-hidden group">
-              <div className="aspect-video bg-muted relative overflow-hidden">
-                {template.preview_image_url ? (
-                  <img src={template.preview_image_url} alt={template.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <LayoutTemplate className="h-12 w-12 text-muted-foreground/30" />
-                  </div>
-                )}
-                <div className="absolute top-2 left-2 flex gap-1">
-                  {template.is_default && (
-                    <Badge className="bg-primary text-primary-foreground text-xs">
-                      <Star className="h-3 w-3 mr-1" />
-                      Padrão
-                    </Badge>
-                  )}
-                  <Badge variant={template.is_published ? "default" : "secondary"} className="text-xs">
-                    {template.is_published ? "Publicado" : "Rascunho"}
-                  </Badge>
-                </div>
+    <div className="max-w-5xl mx-auto">
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <LayoutTemplate className="w-5 h-5 text-primary" />
               </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold truncate">{template.name}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1 min-h-[40px]">
-                  {template.description || "Sem descrição"}
-                </p>
-                {template.template_code && (
-                  <Badge variant="outline" className="mt-2 text-xs">{template.template_code}</Badge>
-                )}
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                  <Button variant="outline" size="sm" onClick={() => setEditingTemplate(template)} className="flex-1 h-9 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground">
-                    <Edit className="h-4 w-4 mr-1.5" />
-                    Editar
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => duplicateMutation.mutate(template)} disabled={duplicateMutation.isPending}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Switch
-                    checked={template.is_published}
-                    onCheckedChange={(checked) => togglePublishMutation.mutate({ id: template.id, is_published: checked })}
-                    disabled={togglePublishMutation.isPending}
-                    className="scale-75"
-                  />
-                  {!template.is_default && (
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => setDefaultMutation.mutate(template.id)} disabled={setDefaultMutation.isPending}>
-                      <Star className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setDeleteConfirmId(template.id)} disabled={template.is_default}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              <div>
+                <CardTitle className="text-xl">Checkout Templates</CardTitle>
+                <CardDescription>Gerencie os templates de checkout disponíveis</CardDescription>
+              </div>
+            </div>
+            <Button onClick={() => setIsCreating(true)} size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Template
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar templates..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Templates Grid */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredTemplates.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted/20">
+              <LayoutTemplate className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">
+                {searchQuery ? "Nenhum template encontrado" : "Nenhum template cadastrado"}
+              </p>
+              {!searchQuery && (
+                <Button variant="outline" className="mt-4" onClick={() => setIsCreating(true)}>
+                  Criar primeiro template
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredTemplates.map((template) => (
+                <Card key={template.id} className="overflow-hidden group">
+                  <div className="aspect-video bg-muted relative overflow-hidden">
+                    {template.preview_image_url ? (
+                      <img src={template.preview_image_url} alt={template.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <LayoutTemplate className="h-12 w-12 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 flex gap-1">
+                      {template.is_default && (
+                        <Badge className="bg-primary text-primary-foreground text-xs">
+                          <Star className="h-3 w-3 mr-1" />
+                          Padrão
+                        </Badge>
+                      )}
+                      <Badge variant={template.is_published ? "default" : "secondary"} className="text-xs">
+                        {template.is_published ? "Publicado" : "Rascunho"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold truncate">{template.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1 min-h-[40px]">
+                      {template.description || "Sem descrição"}
+                    </p>
+                    {template.template_code && (
+                      <Badge variant="outline" className="mt-2 text-xs">{template.template_code}</Badge>
+                    )}
+                    <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                      <Button variant="outline" size="sm" onClick={() => setEditingTemplate(template)} className="flex-1 h-9 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground">
+                        <Edit className="h-4 w-4 mr-1.5" />
+                        Editar
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => duplicateMutation.mutate(template)} disabled={duplicateMutation.isPending}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Switch
+                        checked={template.is_published}
+                        onCheckedChange={(checked) => togglePublishMutation.mutate({ id: template.id, is_published: checked })}
+                        disabled={togglePublishMutation.isPending}
+                        className="scale-75"
+                      />
+                      {!template.is_default && (
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors hover:bg-muted/80" onClick={() => setDefaultMutation.mutate(template.id)} disabled={setDefaultMutation.isPending}>
+                          <Star className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg transition-colors text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setDeleteConfirmId(template.id)} disabled={template.is_default}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Edit/Create Dialog */}
       <Dialog open={!!editingTemplate || isCreating} onOpenChange={(open) => { if (!open) { setEditingTemplate(null); setIsCreating(false); } }}>
