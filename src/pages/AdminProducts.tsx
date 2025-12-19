@@ -558,7 +558,7 @@ export default function AdminProducts() {
                 className="overflow-hidden group cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]" 
                 onClick={() => navigate(`/admin/products/${product.id}`)}
               >
-                <div className="aspect-[4/5] bg-muted relative">
+                <div className="aspect-square bg-muted relative">
                   {product.image_url ? (
                     <img 
                       src={product.image_url} 
