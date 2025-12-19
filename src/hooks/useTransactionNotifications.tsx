@@ -107,6 +107,12 @@ export const useTransactionNotifications = (userId: string | null) => {
     settingsRef.current = settings;
   }, [settings]);
 
+  // Keep toast logo size stable without changing CSS vars on every notification
+  useEffect(() => {
+    const size = settings.logoSize || 40;
+    document.documentElement.style.setProperty('--toast-logo-size', `${size}px`);
+  }, [settings.logoSize]);
+
   // Load GLOBAL settings function - all users use the same notification appearance
   const loadSettings = useCallback(async () => {
     try {
@@ -275,31 +281,29 @@ export const useTransactionNotifications = (userId: string | null) => {
             // Show toast notification
             if (currentSettings.enableToast) {
               const logoSize = currentSettings.logoSize || 40;
-              // Set CSS variable for toast logo size
-              document.documentElement.style.setProperty('--toast-logo-size', `${logoSize}px`);
               toast.info(title, {
                 description,
                 duration: currentSettings.pixGeneratedDuration || undefined,
                 icon: currentSettings.customLogoUrl ? (
-                  <img 
-                    src={currentSettings.customLogoUrl} 
-                    alt="Logo" 
-                    style={{ 
-                      width: logoSize, 
-                      height: logoSize, 
-                      minWidth: logoSize, 
-                      minHeight: logoSize, 
-                      borderRadius: Math.round(logoSize * 0.15), 
-                      objectFit: 'contain' 
-                    }} 
+                  <img
+                    src={currentSettings.customLogoUrl}
+                    alt="Logo"
+                    style={{
+                      width: logoSize,
+                      height: logoSize,
+                      minWidth: logoSize,
+                      minHeight: logoSize,
+                      borderRadius: Math.round(logoSize * 0.15),
+                      objectFit: 'contain',
+                    }}
                   />
                 ) : undefined,
               });
             }
-            
+
             // Show browser notification
             showBrowserNotification(title, description);
-            
+
             // Play sound
             playNotificationSound(currentSettings.pixGeneratedSound);
           }
@@ -345,31 +349,29 @@ export const useTransactionNotifications = (userId: string | null) => {
             // Show success toast
             if (currentSettings.enableToast) {
               const logoSize = currentSettings.logoSize || 40;
-              // Set CSS variable for toast logo size
-              document.documentElement.style.setProperty('--toast-logo-size', `${logoSize}px`);
               toast.success(title, {
                 description,
                 duration: currentSettings.pixPaidDuration || undefined,
                 icon: currentSettings.customLogoUrl ? (
-                  <img 
-                    src={currentSettings.customLogoUrl} 
-                    alt="Logo" 
-                    style={{ 
-                      width: logoSize, 
-                      height: logoSize, 
-                      minWidth: logoSize, 
-                      minHeight: logoSize, 
-                      borderRadius: Math.round(logoSize * 0.15), 
-                      objectFit: 'contain' 
-                    }} 
+                  <img
+                    src={currentSettings.customLogoUrl}
+                    alt="Logo"
+                    style={{
+                      width: logoSize,
+                      height: logoSize,
+                      minWidth: logoSize,
+                      minHeight: logoSize,
+                      borderRadius: Math.round(logoSize * 0.15),
+                      objectFit: 'contain',
+                    }}
                   />
                 ) : undefined,
               });
             }
-            
+
             // Show browser notification
             showBrowserNotification(title, description);
-            
+
             // Play sound
             playNotificationSound(currentSettings.pixPaidSound);
           }
