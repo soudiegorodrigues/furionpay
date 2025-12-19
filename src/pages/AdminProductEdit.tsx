@@ -19,7 +19,6 @@ import {
   Section
 } from "@/components/product-edit";
 import { Package, ArrowLeft, Save, CheckCircle } from "lucide-react";
-import { validateProductName } from "@/lib/blockedKeywords";
 
 interface Product {
   id: string;
@@ -139,12 +138,6 @@ export default function AdminProductEdit() {
     mutationFn: async (data: typeof formData) => {
       if (!id) throw new Error("Product ID is required");
       
-      // Validar palavras bloqueadas
-      const validation = validateProductName(data.name);
-      if (!validation.valid) {
-        throw new Error(validation.error);
-      }
-      
       const { error } = await supabase
         .from("products")
         .update({
@@ -164,8 +157,8 @@ export default function AdminProductEdit() {
       queryClient.invalidateQueries({ queryKey: ["product", id] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao atualizar produto");
+    onError: () => {
+      toast.error("Erro ao atualizar produto");
     },
   });
 

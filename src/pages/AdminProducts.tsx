@@ -17,7 +17,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Package, Plus, FolderPlus, Search, Settings, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight } from "lucide-react";
-import { validateProductName } from "@/lib/blockedKeywords";
 
 interface Product {
   id: string;
@@ -153,14 +152,6 @@ export default function AdminProducts() {
       toast.error("Nome do produto é obrigatório");
       return;
     }
-    
-    // Validar palavras bloqueadas
-    const validation = validateProductName(newProduct.name);
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
-    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { error } = await supabase.from("products").insert({

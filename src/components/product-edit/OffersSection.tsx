@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tag, Plus, Copy, Edit2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { validateProductName } from "@/lib/blockedKeywords";
 
 interface ProductOffer {
   id: string;
@@ -193,14 +192,6 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
       toast.error("Nome da oferta é obrigatório");
       return;
     }
-    
-    // Validar palavras bloqueadas
-    const validation = validateProductName(formData.name);
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
-    
     if (!validateDomain(selectedDomain)) return;
     createMutation.mutate(formData);
   };
@@ -211,14 +202,6 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
       toast.error("Nome da oferta é obrigatório");
       return;
     }
-    
-    // Validar palavras bloqueadas
-    const validation = validateProductName(formData.name);
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
-    
     if (!validateDomain(selectedDomain)) return;
     updateMutation.mutate({ id: editingOffer.id, data: formData });
   };
