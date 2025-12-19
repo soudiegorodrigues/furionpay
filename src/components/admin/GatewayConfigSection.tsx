@@ -47,7 +47,11 @@ export const GatewayConfigSection = () => {
   const [showAtivusKey, setShowAtivusKey] = useState(false);
   const [showSpedpayKey, setShowSpedpayKey] = useState(false);
   const [showValorionKey, setShowValorionKey] = useState(false);
+  const [showInterClientId, setShowInterClientId] = useState(false);
   const [showInterSecret, setShowInterSecret] = useState(false);
+  const [showInterCert, setShowInterCert] = useState(false);
+  const [showInterKey, setShowInterKey] = useState(false);
+  const [showInterPixKey, setShowInterPixKey] = useState(false);
 
   useEffect(() => {
     loadConfigs();
@@ -559,7 +563,24 @@ export const GatewayConfigSection = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Client ID</Label>
-                <Input placeholder="Digite o Client ID" value={interConfig.clientId} onChange={e => setInterConfig(prev => ({ ...prev, clientId: e.target.value }))} />
+                <div className="relative">
+                  <Input 
+                    type={showInterClientId ? "text" : "password"} 
+                    placeholder="Digite o Client ID" 
+                    value={interConfig.clientId} 
+                    onChange={e => setInterConfig(prev => ({ ...prev, clientId: e.target.value }))} 
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowInterClientId(!showInterClientId)}
+                  >
+                    {showInterClientId ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Client Secret</Label>
@@ -583,16 +604,77 @@ export const GatewayConfigSection = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Certificado (.crt)</Label>
-                <textarea className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo do certificado" value={interConfig.certificate} onChange={e => setInterConfig(prev => ({ ...prev, certificate: e.target.value }))} />
+                <div className="flex items-center justify-between">
+                  <Label>Certificado (.crt)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    onClick={() => setShowInterCert(!showInterCert)}
+                  >
+                    {showInterCert ? <><EyeOff className="h-3 w-3 mr-1" />Ocultar</> : <><Eye className="h-3 w-3 mr-1" />Mostrar</>}
+                  </Button>
+                </div>
+                {showInterCert ? (
+                  <textarea 
+                    className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none font-mono text-xs" 
+                    placeholder="Cole o conteúdo do certificado" 
+                    value={interConfig.certificate} 
+                    onChange={e => setInterConfig(prev => ({ ...prev, certificate: e.target.value }))} 
+                  />
+                ) : (
+                  <div className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-muted/50 flex items-center justify-center text-muted-foreground">
+                    {interConfig.certificate ? '••••••••••••••••' : 'Nenhum certificado configurado'}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Chave Privada (.key)</Label>
-                <textarea className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none" placeholder="Cole o conteúdo da chave privada" value={interConfig.privateKey} onChange={e => setInterConfig(prev => ({ ...prev, privateKey: e.target.value }))} />
+                <div className="flex items-center justify-between">
+                  <Label>Chave Privada (.key)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    onClick={() => setShowInterKey(!showInterKey)}
+                  >
+                    {showInterKey ? <><EyeOff className="h-3 w-3 mr-1" />Ocultar</> : <><Eye className="h-3 w-3 mr-1" />Mostrar</>}
+                  </Button>
+                </div>
+                {showInterKey ? (
+                  <textarea 
+                    className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none font-mono text-xs" 
+                    placeholder="Cole o conteúdo da chave privada" 
+                    value={interConfig.privateKey} 
+                    onChange={e => setInterConfig(prev => ({ ...prev, privateKey: e.target.value }))} 
+                  />
+                ) : (
+                  <div className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-muted/50 flex items-center justify-center text-muted-foreground">
+                    {interConfig.privateKey ? '••••••••••••••••' : 'Nenhuma chave configurada'}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Chave PIX</Label>
-                <Input placeholder="Ex: 52027770000121" value={interConfig.pixKey} onChange={e => setInterConfig(prev => ({ ...prev, pixKey: e.target.value }))} />
+                <div className="relative">
+                  <Input 
+                    type={showInterPixKey ? "text" : "password"} 
+                    placeholder="Ex: 52027770000121" 
+                    value={interConfig.pixKey} 
+                    onChange={e => setInterConfig(prev => ({ ...prev, pixKey: e.target.value }))} 
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowInterPixKey(!showInterPixKey)}
+                  >
+                    {showInterPixKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
