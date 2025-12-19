@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Settings, Loader2, Check, Power, CreditCard, Zap } from "lucide-react";
+import { Settings, Loader2, Check, Power, CreditCard, Zap, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -42,6 +42,12 @@ export const GatewayConfigSection = () => {
   const [showInterDialog, setShowInterDialog] = useState(false);
   const [isLoadingInter, setIsLoadingInter] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Show/hide password states
+  const [showAtivusKey, setShowAtivusKey] = useState(false);
+  const [showSpedpayKey, setShowSpedpayKey] = useState(false);
+  const [showValorionKey, setShowValorionKey] = useState(false);
+  const [showInterSecret, setShowInterSecret] = useState(false);
 
   useEffect(() => {
     loadConfigs();
@@ -426,7 +432,24 @@ export const GatewayConfigSection = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Chave API</Label>
-              <Input type="password" placeholder="Digite sua chave API" value={ativusApiKey} onChange={e => setAtivusApiKey(e.target.value)} />
+              <div className="relative">
+                <Input 
+                  type={showAtivusKey ? "text" : "password"} 
+                  placeholder="Digite sua chave API" 
+                  value={ativusApiKey} 
+                  onChange={e => setAtivusApiKey(e.target.value)} 
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowAtivusKey(!showAtivusKey)}
+                >
+                  {showAtivusKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
             </div>
           </div>
           <AlertDialogFooter>
@@ -448,7 +471,24 @@ export const GatewayConfigSection = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Chave API</Label>
-              <Input type="password" placeholder="Digite a chave API do SpedPay" value={spedpayApiKey} onChange={e => setSpedpayApiKey(e.target.value)} />
+              <div className="relative">
+                <Input 
+                  type={showSpedpayKey ? "text" : "password"} 
+                  placeholder="Digite a chave API do SpedPay" 
+                  value={spedpayApiKey} 
+                  onChange={e => setSpedpayApiKey(e.target.value)} 
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowSpedpayKey(!showSpedpayKey)}
+                >
+                  {showSpedpayKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
             </div>
           </div>
           <AlertDialogFooter>
@@ -470,7 +510,24 @@ export const GatewayConfigSection = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Chave API (x-api-key)</Label>
-              <Input type="password" placeholder="Digite sua chave API" value={valorionApiKey} onChange={e => setValorionApiKey(e.target.value)} />
+              <div className="relative">
+                <Input 
+                  type={showValorionKey ? "text" : "password"} 
+                  placeholder="Digite sua chave API" 
+                  value={valorionApiKey} 
+                  onChange={e => setValorionApiKey(e.target.value)} 
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowValorionKey(!showValorionKey)}
+                >
+                  {showValorionKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Endpoint URL (opcional)</Label>
@@ -506,7 +563,24 @@ export const GatewayConfigSection = () => {
               </div>
               <div className="space-y-2">
                 <Label>Client Secret</Label>
-                <Input type="password" placeholder="Digite o Client Secret" value={interConfig.clientSecret} onChange={e => setInterConfig(prev => ({ ...prev, clientSecret: e.target.value }))} />
+                <div className="relative">
+                  <Input 
+                    type={showInterSecret ? "text" : "password"} 
+                    placeholder="Digite o Client Secret" 
+                    value={interConfig.clientSecret} 
+                    onChange={e => setInterConfig(prev => ({ ...prev, clientSecret: e.target.value }))} 
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowInterSecret(!showInterSecret)}
+                  >
+                    {showInterSecret ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Certificado (.crt)</Label>
