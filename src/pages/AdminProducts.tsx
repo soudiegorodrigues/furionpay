@@ -581,7 +581,7 @@ export default function AdminProducts() {
                       R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5 pt-1.5 border-t">
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
