@@ -235,9 +235,21 @@ export const ReceitaPlataformaSection = () => {
           stats.transactionCount = Number(rpcData.all_time.transaction_count) || 0;
         }
         
-        // Process acquirer breakdown
+        // Process acquirer breakdown - map to expected structure
         if (rpcData.acquirer_breakdown) {
-          stats.acquirerBreakdown = rpcData.acquirer_breakdown;
+          const rawBreakdown = rpcData.acquirer_breakdown as unknown as {
+            [key: string]: { today: number; sevenDays: number; thisMonth: number; total: number };
+          };
+          const breakdown: ProfitStats['acquirerBreakdown'] = {};
+          for (const [acq, costs] of Object.entries(rawBreakdown)) {
+            breakdown[acq] = {
+              today: { count: 0, cost: Number(costs.today) || 0, volume: 0 },
+              sevenDays: { count: 0, cost: Number(costs.sevenDays) || 0, volume: 0 },
+              thisMonth: { count: 0, cost: Number(costs.thisMonth) || 0, volume: 0 },
+              total: { count: 0, cost: Number(costs.total) || 0, volume: 0 }
+            };
+          }
+          stats.acquirerBreakdown = breakdown;
         }
         
         // Calculate derived stats
@@ -266,10 +278,10 @@ export const ReceitaPlataformaSection = () => {
         p_user_email: selectedUser === 'all' ? null : selectedUser
       });
       if (error) throw error;
-      // Transform RPC response: period_key -> date, net_profit -> lucro
-      const rawData = data as unknown as Array<{ period_key: string; net_profit: number }> | null;
+      // Transform RPC response: date -> date, net_profit -> lucro
+      const rawData = data as unknown as Array<{ date: string; net_profit: number }> | null;
       const transformed: ChartData[] = rawData?.map(row => ({
-        date: row.period_key,
+        date: row.date,
         lucro: Number(row.net_profit) || 0
       })) || [];
       setChartData(transformed);
