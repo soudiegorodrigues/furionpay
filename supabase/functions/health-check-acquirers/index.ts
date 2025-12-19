@@ -9,8 +9,16 @@ const corsHeaders = {
 // Acquirers to check
 const ACQUIRERS = ['spedpay', 'ativus', 'valorion', 'inter'];
 
-// Timeout for health check requests (2 seconds)
-const HEALTH_CHECK_TIMEOUT_MS = 2000;
+// Timeout for health check requests (5 seconds - increased for slower acquirers like Inter)
+const HEALTH_CHECK_TIMEOUT_MS = 5000;
+
+// Minimum amounts per acquirer (some have minimum requirements)
+const MIN_AMOUNTS: Record<string, number> = {
+  spedpay: 0.01,
+  ativus: 0.05,  // Ativus requires minimum R$0.05
+  valorion: 0.01,
+  inter: 0.01,
+};
 
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -31,13 +39,52 @@ async function isAcquirerEnabled(supabase: ReturnType<typeof getSupabaseClient>,
   return data?.value !== 'false';
 }
 
+// Extract detailed error message from response or error
+function extractErrorDetails(err: unknown, responseData?: unknown): string {
+  // If we have response data with error details
+  if (responseData && typeof responseData === 'object') {
+    const data = responseData as Record<string, unknown>;
+    
+    // Check for common error message fields
+    if (data.error && typeof data.error === 'string') {
+      return data.error;
+    }
+    if (data.message && typeof data.message === 'string') {
+      return data.message;
+    }
+    if (data.errCode && data.message) {
+      return `[${data.errCode}] ${data.message}`;
+    }
+    if (data.statusCode && data.message) {
+      return `[HTTP ${data.statusCode}] ${data.message}`;
+    }
+    // Try to stringify the whole error response
+    try {
+      return JSON.stringify(data);
+    } catch {
+      // Ignore stringify errors
+    }
+  }
+  
+  // If it's an Error instance
+  if (err instanceof Error) {
+    if (err.name === 'AbortError') {
+      return `Timeout após ${HEALTH_CHECK_TIMEOUT_MS}ms - serviço muito lento ou indisponível`;
+    }
+    return err.message;
+  }
+  
+  // Fallback
+  return 'Erro desconhecido';
+}
+
 // Test SpedPay health
 async function testSpedPay(): Promise<{ success: boolean; responseTime: number; error?: string }> {
   const startTime = Date.now();
   const apiKey = Deno.env.get('SPEDPAY_API_KEY');
   
   if (!apiKey) {
-    return { success: false, responseTime: 0, error: 'API key not configured' };
+    return { success: false, responseTime: 0, error: 'SPEDPAY_API_KEY não configurada' };
   }
 
   try {
@@ -57,11 +104,28 @@ async function testSpedPay(): Promise<{ success: boolean; responseTime: number; 
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
-    // Any response (even 401/403) means the API is alive
-    return { success: response.status < 500, responseTime };
+    // Try to get response body for better error messages
+    let responseData: unknown = null;
+    try {
+      responseData = await response.json();
+    } catch {
+      // Ignore JSON parse errors
+    }
+    
+    if (response.status >= 500) {
+      return { 
+        success: false, 
+        responseTime, 
+        error: extractErrorDetails(null, responseData) || `HTTP ${response.status} - Erro interno do servidor SpedPay`
+      };
+    }
+    
+    console.log(`[HEALTH] SpedPay responded in ${responseTime}ms with status ${response.status}`);
+    return { success: true, responseTime };
   } catch (err) {
     const responseTime = Date.now() - startTime;
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    const errorMsg = extractErrorDetails(err);
+    console.error(`[HEALTH] SpedPay error: ${errorMsg}`);
     return { success: false, responseTime, error: errorMsg };
   }
 }
@@ -76,8 +140,7 @@ async function testAtivus(): Promise<{ success: boolean; responseTime: number; e
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
     
-    // Make a minimal test call - this won't actually create a transaction
-    // but will test if the edge function and Ativus API are reachable
+    // Use R$0.05 minimum for Ativus
     const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-ativus`, {
       method: 'POST',
       headers: {
@@ -85,9 +148,9 @@ async function testAtivus(): Promise<{ success: boolean; responseTime: number; e
         'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({ 
-        amount: 0.01, // Minimal amount for health check
+        amount: MIN_AMOUNTS.ativus, // R$0.05 minimum
         donorName: 'Health Check',
-        healthCheck: true // Signal that this is a health check
+        healthCheck: true
       }),
       signal: controller.signal,
     });
@@ -95,12 +158,34 @@ async function testAtivus(): Promise<{ success: boolean; responseTime: number; e
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
-    // Check if response indicates the service is working
-    const data = await response.json();
-    return { success: data.success === true || response.status < 500, responseTime };
+    // Get response data for detailed error messages
+    let responseData: unknown = null;
+    try {
+      responseData = await response.json();
+    } catch {
+      // Ignore JSON parse errors
+    }
+    
+    const data = responseData as Record<string, unknown> | null;
+    
+    // Check for success
+    if (data?.success === true) {
+      console.log(`[HEALTH] Ativus responded successfully in ${responseTime}ms`);
+      return { success: true, responseTime };
+    }
+    
+    // Check for specific error responses
+    if (response.status >= 500 || !data?.success) {
+      const errorMsg = extractErrorDetails(null, data);
+      console.error(`[HEALTH] Ativus error: ${errorMsg}`);
+      return { success: false, responseTime, error: errorMsg };
+    }
+    
+    return { success: true, responseTime };
   } catch (err) {
     const responseTime = Date.now() - startTime;
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    const errorMsg = extractErrorDetails(err);
+    console.error(`[HEALTH] Ativus error: ${errorMsg}`);
     return { success: false, responseTime, error: errorMsg };
   }
 }
@@ -122,7 +207,7 @@ async function testValorion(): Promise<{ success: boolean; responseTime: number;
         'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({ 
-        amount: 0.01,
+        amount: MIN_AMOUNTS.valorion,
         donorName: 'Health Check',
         healthCheck: true
       }),
@@ -132,11 +217,34 @@ async function testValorion(): Promise<{ success: boolean; responseTime: number;
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
-    const data = await response.json();
-    return { success: data.success === true || response.status < 500, responseTime };
+    // Get response data for detailed error messages
+    let responseData: unknown = null;
+    try {
+      responseData = await response.json();
+    } catch {
+      // Ignore JSON parse errors
+    }
+    
+    const data = responseData as Record<string, unknown> | null;
+    
+    // Check for success
+    if (data?.success === true) {
+      console.log(`[HEALTH] Valorion responded successfully in ${responseTime}ms`);
+      return { success: true, responseTime };
+    }
+    
+    // Check for specific error responses
+    if (response.status >= 500 || !data?.success) {
+      const errorMsg = extractErrorDetails(null, data);
+      console.error(`[HEALTH] Valorion error: ${errorMsg}`);
+      return { success: false, responseTime, error: errorMsg };
+    }
+    
+    return { success: true, responseTime };
   } catch (err) {
     const responseTime = Date.now() - startTime;
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    const errorMsg = extractErrorDetails(err);
+    console.error(`[HEALTH] Valorion error: ${errorMsg}`);
     return { success: false, responseTime, error: errorMsg };
   }
 }
@@ -158,7 +266,7 @@ async function testInter(): Promise<{ success: boolean; responseTime: number; er
         'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({ 
-        amount: 0.01,
+        amount: MIN_AMOUNTS.inter,
         donorName: 'Health Check',
         healthCheck: true
       }),
@@ -168,18 +276,41 @@ async function testInter(): Promise<{ success: boolean; responseTime: number; er
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
-    const data = await response.json();
-    return { success: data.success === true || response.status < 500, responseTime };
+    // Get response data for detailed error messages
+    let responseData: unknown = null;
+    try {
+      responseData = await response.json();
+    } catch {
+      // Ignore JSON parse errors
+    }
+    
+    const data = responseData as Record<string, unknown> | null;
+    
+    // Check for success
+    if (data?.success === true) {
+      console.log(`[HEALTH] Inter responded successfully in ${responseTime}ms`);
+      return { success: true, responseTime };
+    }
+    
+    // Check for specific error responses
+    if (response.status >= 500 || !data?.success) {
+      const errorMsg = extractErrorDetails(null, data);
+      console.error(`[HEALTH] Inter error: ${errorMsg}`);
+      return { success: false, responseTime, error: errorMsg };
+    }
+    
+    return { success: true, responseTime };
   } catch (err) {
     const responseTime = Date.now() - startTime;
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    const errorMsg = extractErrorDetails(err);
+    console.error(`[HEALTH] Inter error: ${errorMsg}`);
     return { success: false, responseTime, error: errorMsg };
   }
 }
 
 // Main health check function
 async function checkAcquirerHealth(acquirer: string): Promise<{ success: boolean; responseTime: number; error?: string }> {
-  console.log(`[HEALTH] Checking ${acquirer}...`);
+  console.log(`[HEALTH] Checking ${acquirer} (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms, min amount: R$${MIN_AMOUNTS[acquirer] || 0.01})...`);
   
   switch (acquirer) {
     case 'spedpay':
@@ -191,7 +322,7 @@ async function checkAcquirerHealth(acquirer: string): Promise<{ success: boolean
     case 'inter':
       return await testInter();
     default:
-      return { success: false, responseTime: 0, error: `Unknown acquirer: ${acquirer}` };
+      return { success: false, responseTime: 0, error: `Adquirente desconhecido: ${acquirer}` };
   }
 }
 
@@ -203,7 +334,7 @@ serve(async (req) => {
   const startTime = Date.now();
   const supabase = getSupabaseClient();
   
-  console.log('[HEALTH-CHECK] Starting health check for all acquirers...');
+  console.log(`[HEALTH-CHECK] Starting health check for all acquirers (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms)...`);
   
   const results: Record<string, { success: boolean; responseTime: number; error?: string }> = {};
   
@@ -215,7 +346,7 @@ serve(async (req) => {
       
       if (!isEnabled) {
         console.log(`[HEALTH] ${acquirer} is disabled, skipping`);
-        return { acquirer, result: { success: false, responseTime: 0, error: 'Acquirer disabled' }, skipped: true };
+        return { acquirer, result: { success: false, responseTime: 0, error: 'Adquirente desabilitado' }, skipped: true };
       }
       
       const result = await checkAcquirerHealth(acquirer);
@@ -240,21 +371,32 @@ serve(async (req) => {
     if (error) {
       console.error(`[HEALTH] Error updating ${acquirer} status:`, error);
     } else {
-      console.log(`[HEALTH] ${acquirer}: ${result.success ? '✅ HEALTHY' : '❌ UNHEALTHY'} (${result.responseTime}ms)`);
+      const statusIcon = result.success ? '✅' : '❌';
+      const latencyWarning = result.responseTime > 2000 ? ' ⚠️ HIGH LATENCY' : '';
+      console.log(`[HEALTH] ${acquirer}: ${statusIcon} ${result.success ? 'HEALTHY' : 'UNHEALTHY'} (${result.responseTime}ms)${latencyWarning}${result.error ? ` - ${result.error}` : ''}`);
     }
   }
   
   const totalTime = Date.now() - startTime;
-  console.log(`[HEALTH-CHECK] Completed in ${totalTime}ms`);
+  
+  // Calculate summary stats
+  const healthyCount = Object.values(results).filter(r => r.success).length;
+  const totalCount = Object.keys(results).length;
+  
+  console.log(`[HEALTH-CHECK] Completed in ${totalTime}ms - ${healthyCount}/${totalCount} acquirers healthy`);
   
   // Return summary
   const summary = {
     timestamp: new Date().toISOString(),
     duration_ms: totalTime,
+    healthy_count: healthyCount,
+    total_count: totalCount,
+    timeout_ms: HEALTH_CHECK_TIMEOUT_MS,
     results: Object.entries(results).map(([acquirer, result]) => ({
       acquirer,
       is_healthy: result.success,
       response_time_ms: result.responseTime,
+      is_slow: result.responseTime > 2000,
       error: result.error || null
     }))
   };
