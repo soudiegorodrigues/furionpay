@@ -69,6 +69,12 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR');
   };
 
+  // Remove [ID: uuid] from description for cleaner PDF display
+  const cleanDescription = (desc: string | null): string => {
+    if (!desc) return '-';
+    return desc.replace(/\s*\[ID:\s*[a-f0-9-]+\]/gi, '').trim() || '-';
+  };
+
   const generatePDF = async () => {
     if (!effectiveUserId) return;
     
@@ -184,7 +190,7 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
 
         const incomeData = incomeTransactions.map(t => [
           formatDate(t.date),
-          t.description || '-',
+          cleanDescription(t.description),
           includeCategories ? (categoryMap.get(t.category_id || '')?.name || '-') : '',
           formatCurrency(t.amount)
         ]);
@@ -237,7 +243,7 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
 
         const expenseData = expenseTransactions.map(t => [
           formatDate(t.date),
-          t.description || '-',
+          cleanDescription(t.description),
           includeCategories ? (categoryMap.get(t.category_id || '')?.name || '-') : '',
           formatCurrency(t.amount)
         ]);
