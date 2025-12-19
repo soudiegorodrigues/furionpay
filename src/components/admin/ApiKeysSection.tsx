@@ -235,44 +235,56 @@ export function ApiKeysSection() {
   }
 
   return (
-    <Tabs defaultValue="keys" className="space-y-6">
-      <TabsList className="w-full sm:w-auto">
-        <TabsTrigger value="keys" className="flex items-center gap-2">
-          <Key className="h-4 w-4" />
-          <span className="hidden sm:inline">API Keys</span>
-        </TabsTrigger>
-        <TabsTrigger value="webhooks" className="flex items-center gap-2">
-          <Webhook className="h-4 w-4" />
-          <span className="hidden sm:inline">Webhooks</span>
-        </TabsTrigger>
-        <TabsTrigger value="docs" className="flex items-center gap-2">
-          <Book className="h-4 w-4" />
-          <span className="hidden sm:inline">Documentação</span>
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="keys" className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              API Keys
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Gerencie suas chaves de API para integração externa
-            </p>
-          </div>
-          <Button className="w-full sm:w-auto" onClick={() => {
-            setNewApiKeyName('');
-            setNewWebhookUrl('');
-            setCreatedApiKey(null);
-            setCreateDialogOpen(true);
-          }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova API Key
-          </Button>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header Principal */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Key className="h-6 w-6 text-primary" />
         </div>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">API & Integrações</h2>
+          <p className="text-muted-foreground text-sm">Gerencie chaves de API, webhooks e documentação</p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="keys" className="space-y-6">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="keys" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            <span className="hidden sm:inline">API Keys</span>
+          </TabsTrigger>
+          <TabsTrigger value="webhooks" className="flex items-center gap-2">
+            <Webhook className="h-4 w-4" />
+            <span className="hidden sm:inline">Webhooks</span>
+          </TabsTrigger>
+          <TabsTrigger value="docs" className="flex items-center gap-2">
+            <Book className="h-4 w-4" />
+            <span className="hidden sm:inline">Documentação</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="keys" className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                API Keys
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Gerencie suas chaves de API para integração externa
+              </p>
+            </div>
+            <Button className="w-full sm:w-auto" onClick={() => {
+              setNewApiKeyName('');
+              setNewWebhookUrl('');
+              setCreatedApiKey(null);
+              setCreateDialogOpen(true);
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova API Key
+            </Button>
+          </div>
 
         {/* Lista de API Keys - Tabela */}
         {apiClients.length === 0 ? (
@@ -625,6 +637,7 @@ export function ApiKeysSection() {
       <TabsContent value="docs">
         <ApiDocsSection />
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 }

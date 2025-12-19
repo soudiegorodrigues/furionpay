@@ -446,15 +446,20 @@ export function NotificacoesSection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header Principal */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Bell className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Configurações de Notificações</h2>
+          <p className="text-muted-foreground text-sm">Personalize alertas de PIX gerados e pagos</p>
+        </div>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Configurações de Notificações
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {/* Master Toggle */}
           <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
             <div>
