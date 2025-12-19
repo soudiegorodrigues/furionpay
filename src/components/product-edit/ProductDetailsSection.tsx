@@ -65,11 +65,13 @@ export function ProductDetailsSection({
 }: ProductDetailsSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [priceDisplay, setPriceDisplay] = useState(() => formatCurrency(formData.price));
+  const [priceDisplay, setPriceDisplay] = useState(() => 
+    formData.price > 0 ? formatCurrency(formData.price) : ''
+  );
 
   // Sincroniza o display quando o preço do formData muda externamente
   useEffect(() => {
-    setPriceDisplay(formatCurrency(formData.price));
+    setPriceDisplay(formData.price > 0 ? formatCurrency(formData.price) : '');
   }, [formData.price]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,8 +95,19 @@ export function ProductDetailsSection({
   };
 
   const handlePriceBlur = () => {
-    // Formata corretamente ao sair do campo
-    setPriceDisplay(formatCurrency(formData.price));
+    // Formata corretamente ao sair do campo (só se tiver valor)
+    if (formData.price > 0) {
+      setPriceDisplay(formatCurrency(formData.price));
+    } else {
+      setPriceDisplay('');
+    }
+  };
+
+  const handlePriceFocus = () => {
+    // Limpa o campo se for 0 para facilitar digitação
+    if (formData.price === 0) {
+      setPriceDisplay('');
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -305,6 +318,7 @@ export function ProductDetailsSection({
                 inputMode="decimal"
                 value={priceDisplay}
                 onChange={handlePriceChange}
+                onFocus={handlePriceFocus}
                 onBlur={handlePriceBlur}
                 placeholder="0,00"
                 className="pl-10"
