@@ -648,7 +648,7 @@ export const MultiAcquirersSection = () => {
       <RetryDashboardSection />
 
       {/* 2. Configuração de Retentativas */}
-
+      <RetryConfigSection />
       {/* 3. Adquirentes Ativas */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
