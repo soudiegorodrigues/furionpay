@@ -291,7 +291,7 @@ const AdminCheckout = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Checkout Popup </h1>
-            <p className="text-sm text-muted-foreground">Selecione e personalize seu modelo de checkout</p>
+            <p className="text-sm text-muted-foreground">Modelos de popup com API     </p>
           </div>
         </div>
 
