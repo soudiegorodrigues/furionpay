@@ -275,47 +275,6 @@ async function logPixGenerated(
   }
 }
 
-// Blocked keywords list from Valorion API
-const VALORION_BLOCKED_KEYWORDS = [
-  'lanche', 'lanches', 'comida', 'alimento', 'alimentação', 'refeição', 'refeicao',
-  'bebida', 'bebidas', 'cerveja', 'álcool', 'alcool', 'cigarro', 'tabaco',
-  'arma', 'armas', 'munição', 'municao', 'drogas', 'medicamento', 'remédio', 'remedio',
-  'jogo', 'jogos', 'aposta', 'apostas', 'cassino', 'casino', 'bet', 'betting',
-  'sexo', 'adulto', 'pornô', 'porno', 'xxx', 'erótico', 'erotico',
-  'hack', 'hacker', 'pirata', 'pirataria', 'cracked', 'crack',
-];
-
-// Sanitize product name to remove blocked keywords
-function sanitizeProductNameForValorion(productName: string): string {
-  const DEFAULT_FALLBACK = 'Produto Digital';
-  
-  if (!productName || productName.trim() === '') {
-    return DEFAULT_FALLBACK;
-  }
-  
-  let sanitized = productName;
-  
-  // Remove blocked keywords (case insensitive)
-  for (const keyword of VALORION_BLOCKED_KEYWORDS) {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-    sanitized = sanitized.replace(regex, '');
-  }
-  
-  // Clean up multiple spaces and trim
-  sanitized = sanitized.replace(/\s+/g, ' ').trim();
-  
-  // If the sanitized name is empty or too short, use fallback
-  if (sanitized.length < 3) {
-    console.log(`[VALORION] Product name "${productName}" fully blocked, using fallback: ${DEFAULT_FALLBACK}`);
-    return DEFAULT_FALLBACK;
-  }
-  
-  if (sanitized !== productName) {
-    console.log(`[VALORION] Product name sanitized: "${productName}" -> "${sanitized}"`);
-  }
-  
-  return sanitized;
-}
 
 async function getProductNameFromOffer(supabase: any, userId?: string, popupModel?: string): Promise<string> {
   const DEFAULT_PRODUCT_NAME = 'Anônimo';
@@ -437,10 +396,7 @@ serve(async (req) => {
     console.log('[VALORION] Generated txid:', txid);
 
     // Get product name from checkout_offers if not provided
-    const rawProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
-    
-    // Sanitize product name to remove blocked keywords from Valorion API
-    const finalProductName = sanitizeProductNameForValorion(rawProductName);
+    const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
     
     // Use donor name without special characters to avoid API issues
     const rawDonorName = donorName || getRandomName();
@@ -450,8 +406,7 @@ serve(async (req) => {
       .replace(/[^a-zA-Z\s]/g, '');
     
     console.log('[VALORION] Donor name:', finalDonorName);
-    console.log('[VALORION] Product name (raw):', rawProductName);
-    console.log('[VALORION] Product name (sanitized):', finalProductName);
+    console.log('[VALORION] Product name:', finalProductName);
     
     // Generate customer data
     const customerCPF = generateRandomCPF();

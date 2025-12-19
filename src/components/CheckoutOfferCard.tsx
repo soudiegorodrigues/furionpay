@@ -64,13 +64,6 @@ interface CheckoutOfferCardProps {
   isNew?: boolean;
 }
 
-const blockedProductNames = ['doação', 'doacao', 'golpe', 'falso', 'fraude', 'fake', 'scam'];
-
-const isProductNameBlocked = (name: string): boolean => {
-  const normalizedName = name.toLowerCase().trim();
-  return blockedProductNames.some(blocked => normalizedName.includes(blocked));
-};
-
 export const CheckoutOfferCard = ({
   offer,
   userId,
@@ -133,15 +126,6 @@ export const CheckoutOfferCard = ({
       toast({
         title: "Nome do produto obrigatório",
         description: "Por favor, informe o nome do produto que aparecerá no gateway de pagamento.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (isProductNameBlocked(productName)) {
-      toast({
-        title: "Nome de produto bloqueado",
-        description: "O nome do produto contém palavras não permitidas.",
         variant: "destructive"
       });
       return;
