@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -446,20 +446,20 @@ export function NotificacoesSection() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header Principal */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Bell className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Configurações de Notificações</h2>
-          <p className="text-muted-foreground text-sm">Personalize alertas de PIX gerados e pagos</p>
-        </div>
-      </div>
-
-      <Card>
-        <CardContent className="space-y-6 pt-6">
+    <div className="max-w-5xl mx-auto">
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <Bell className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Configurações de Notificações</CardTitle>
+              <CardDescription>Personalize alertas de PIX gerados e pagos</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
           {/* Master Toggle */}
           <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
             <div>
