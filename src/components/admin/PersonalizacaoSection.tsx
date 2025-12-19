@@ -181,26 +181,31 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center gap-2">
-        <Palette className="h-6 w-6 text-primary" />
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Personalização</h2>
-          <p className="text-muted-foreground text-sm">Personalize a aparência do seu dashboard</p>
-        </div>
-      </div>
-
-      <Card className="bg-card border-border">
+    <div className="max-w-5xl mx-auto">
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Image className="h-5 w-5 text-primary" />
-            Banner do Dashboard
-          </CardTitle>
-          <CardDescription>
-            Adicione uma imagem de banner que será exibida no topo do seu dashboard
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <Palette className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Personalização</CardTitle>
+              <CardDescription>Personalize a aparência do seu dashboard</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Seção Banner do Dashboard */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Image className="h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-medium">Banner do Dashboard</h3>
+                <p className="text-sm text-muted-foreground">
+                  Adicione uma imagem de banner que será exibida no topo do seu dashboard
+                </p>
+              </div>
+            </div>
           {/* Banner Atual - Mostrar primeiro se existir */}
           {bannerUrl && (
             <div className="space-y-3 pb-4 border-b border-border">
@@ -335,6 +340,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
               </Button>
             </TabsContent>
           </Tabs>
+          </div>
         </CardContent>
       </Card>
     </div>
