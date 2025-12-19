@@ -643,7 +643,7 @@ export const MultiAcquirersSection = () => {
       setIsTestingInter(false);
     }
   };
-  return <div className="space-y-4 max-w-6xl">
+  return <div className="max-w-5xl mx-auto space-y-4">
       {/* 1. Dashboard de Retentativas - Real-time monitoring */}
       <RetryDashboardSection />
 
