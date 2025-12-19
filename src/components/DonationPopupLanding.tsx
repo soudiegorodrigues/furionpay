@@ -24,11 +24,11 @@ interface DonationPopupLandingProps {
   utmParams?: UTMParams;
 }
 
-const DONATION_AMOUNTS = [
+const DONATION_AMOUNTS: { amount: number; badge?: string }[] = [
   { amount: 30 },
   { amount: 50 },
   { amount: 75 },
-  { amount: 100 },
+  { amount: 100, badge: "Doe com Amor 💚" },
   { amount: 200 },
   { amount: 500 },
   { amount: 750 },
@@ -295,12 +295,17 @@ export const DonationPopupLanding = ({
                     key={item.amount}
                     onClick={() => handleSelectAmount(item.amount)}
                     className={cn(
-                      "py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
+                      "relative py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
                       selectedAmount === item.amount
                         ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
                         : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
                     )}
                   >
+                    {item.badge && (
+                      <span className="absolute -top-2 -right-1 bg-[#00A651] text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+                        {item.badge}
+                      </span>
+                    )}
                     {formatCurrency(item.amount)}
                   </button>
                 ))}
