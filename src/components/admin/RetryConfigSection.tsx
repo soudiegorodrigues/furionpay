@@ -454,21 +454,6 @@ export const RetryConfigSection = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Configuração de Retentativas
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Configure as tentativas automáticas de reprocessamento para pagamentos com falha.
-            </CardDescription>
-          </div>
-        </CardHeader>
-      </Card>
-
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
