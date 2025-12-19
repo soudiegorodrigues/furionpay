@@ -9,6 +9,13 @@ const corsHeaders = {
 // Valorion create charge URL (from documentation)
 const DEFAULT_VALORION_CREATE_URL = 'https://api-fila-cash-in-out.onrender.com/v2/pix/charge';
 
+// Retry configuration for Render.com cold starts
+const RETRY_CONFIG = {
+  maxAttempts: 3,
+  delayMs: 2000, // 2 seconds between retries
+  retryOnStatus: [502, 503, 504, 408], // Gateway errors and timeouts
+};
+
 // Random names for anonymous donations
 const RANDOM_NAMES = [
   'João Pedro Silva', 'Carlos Eduardo Santos', 'Rafael Henrique Oliveira', 
@@ -93,6 +100,11 @@ function generateTxId(): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+// Sleep utility for retry delays
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // Get user fee config or default
@@ -301,15 +313,57 @@ async function getProductNameFromOffer(supabase: any, userId?: string, popupMode
   return DEFAULT_PRODUCT_NAME;
 }
 
+// Make API request with retry logic for Render.com cold starts
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  attempt: number = 1
+): Promise<{ response: Response; responseTime: number; attempts: number }> {
+  const startTime = Date.now();
+  
+  console.log(`[VALORION] Attempt ${attempt}/${RETRY_CONFIG.maxAttempts} - Making request to: ${url}`);
+  
+  try {
+    const response = await fetch(url, options);
+    const responseTime = Date.now() - startTime;
+    
+    console.log(`[VALORION] Attempt ${attempt} - Response status: ${response.status}, Time: ${responseTime}ms`);
+    
+    // Check if we should retry (gateway errors typically indicate cold start)
+    if (RETRY_CONFIG.retryOnStatus.includes(response.status) && attempt < RETRY_CONFIG.maxAttempts) {
+      console.log(`[VALORION] Status ${response.status} is retryable. Waiting ${RETRY_CONFIG.delayMs}ms before retry...`);
+      await sleep(RETRY_CONFIG.delayMs);
+      return fetchWithRetry(url, options, attempt + 1);
+    }
+    
+    return { response, responseTime, attempts: attempt };
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    console.error(`[VALORION] Attempt ${attempt} - Network error:`, error);
+    
+    // Retry on network errors (connection refused, timeout, etc.)
+    if (attempt < RETRY_CONFIG.maxAttempts) {
+      console.log(`[VALORION] Network error. Waiting ${RETRY_CONFIG.delayMs}ms before retry...`);
+      await sleep(RETRY_CONFIG.delayMs);
+      return fetchWithRetry(url, options, attempt + 1);
+    }
+    
+    throw error;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestStartTime = Date.now();
+
   try {
     const { amount, donorName, userId, utmData, productName, popupModel } = await req.json() as GeneratePixRequest;
 
-    console.log('Gerando PIX Valorion - Valor:', amount, 'Usuário:', userId);
+    console.log('=== VALORION PIX GENERATION START ===');
+    console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}`);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -325,17 +379,19 @@ serve(async (req) => {
 
     // Get user fee config
     const feeConfig = await getUserFeeConfig(supabase, userId);
-    console.log('Fee config for transaction:', feeConfig);
+    console.log('[VALORION] Fee config:', feeConfig);
 
     // Get Valorion API key
     const apiKey = await getValorionApiKey(supabase, userId);
+    console.log('[VALORION] API Key loaded:', apiKey ? `${apiKey.slice(0, 8)}...` : 'NOT FOUND');
 
     // Get Valorion create endpoint URL
     const apiUrl = await getValorionApiUrl(supabase, userId);
-    console.log('Valorion create URL:', apiUrl);
+    console.log('[VALORION] API URL:', apiUrl);
 
     // Gerar txid único
     const txid = generateTxId();
+    console.log('[VALORION] Generated txid:', txid);
 
     // Get product name from checkout_offers if not provided
     const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
@@ -347,18 +403,18 @@ serve(async (req) => {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z\s]/g, '');
     
-    console.log('Using donor name:', finalDonorName);
+    console.log('[VALORION] Donor name:', finalDonorName);
+    console.log('[VALORION] Product name:', finalProductName);
     
     // Generate customer data
     const customerCPF = generateRandomCPF();
-    console.log('Generated CPF:', customerCPF);
     const customerEmail = generateRandomEmail(finalDonorName);
-
-    // Generate random phone number for Valorion
     const randomPhone = `119${Math.floor(10000000 + Math.random() * 90000000)}`;
 
+    console.log('[VALORION] Customer CPF:', customerCPF);
+    console.log('[VALORION] Customer Email:', customerEmail);
+
     // Build request payload according to Valorion API spec
-    // Valorion expects amount in Reais (not cents), e.g., R$ 90 = 90
     const payload = {
       amount: amount,
       customer: {
@@ -379,9 +435,10 @@ serve(async (req) => {
       traceable: true
     };
 
-    console.log('Criando cobrança PIX Valorion:', JSON.stringify(payload));
+    console.log('[VALORION] Request payload:', JSON.stringify(payload, null, 2));
 
-    const response = await fetch(apiUrl, {
+    // Make request with retry logic
+    const { response, responseTime, attempts } = await fetchWithRetry(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -390,17 +447,30 @@ serve(async (req) => {
       body: JSON.stringify(payload),
     });
 
+    console.log(`[VALORION] Final response after ${attempts} attempt(s) in ${responseTime}ms`);
+
+    // Log response headers for debugging
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+    console.log('[VALORION] Response headers:', JSON.stringify(responseHeaders));
+
     const responseText = await response.text();
-    console.log('Resposta Valorion (raw):', responseText);
+    console.log('[VALORION] Response body (raw):', responseText.slice(0, 1000));
 
     if (!response.ok) {
       const preview = (responseText || '').slice(0, 600);
       const isHtml = /<!doctype|<html/i.test(preview);
-      const hint = (response.status === 404 && isHtml)
-        ? ' Endpoint não encontrado (provável URL incorreta). Configure a URL do endpoint de criação no painel (Valorion → Config).'
-        : '';
+      
+      let hint = '';
+      if (response.status === 404 && isHtml) {
+        hint = ' Endpoint não encontrado (provável URL incorreta). Configure a URL do endpoint de criação no painel (Valorion → Config).';
+      } else if (response.status === 502 || response.status === 503) {
+        hint = ` Serviço temporariamente indisponível após ${attempts} tentativa(s). O servidor Render.com pode estar em cold start prolongado.`;
+      }
 
-      console.error('Erro ao criar cobrança Valorion:', response.status, preview);
+      console.error(`[VALORION] API Error: ${response.status} after ${attempts} attempts. Body: ${preview}`);
       throw new Error(`Erro ao criar cobrança (Valorion): ${response.status}. URL: ${apiUrl}.${hint}`);
     }
 
@@ -408,13 +478,13 @@ serve(async (req) => {
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      console.error('Erro ao parsear resposta JSON:', e);
+      console.error('[VALORION] JSON parse error:', e);
       throw new Error('Resposta inválida da API Valorion');
     }
 
-    console.log('Resposta Valorion (parsed):', JSON.stringify(data));
+    console.log('[VALORION] Response parsed successfully:', JSON.stringify(data, null, 2));
 
-    // Extract PIX code from response - Valorion uses pix_copia_e_cola or similar
+    // Extract PIX code from response
     const pixCode = data.pix_copia_e_cola || 
                     data.pixCopiaECola || 
                     data.paymentCode ||
@@ -432,17 +502,17 @@ serve(async (req) => {
                       data.paymentCodeBase64 ||
                       null;
     
-    // IMPORTANTE: Usar o id_transaction da Valorion como txid principal
-    // O txid local é enviado como metadata e pode ser usado como fallback
     const valorionTransactionId = data.id_transaction || data.idTransaction || data.id || data.transaction_id;
     const transactionId = valorionTransactionId || txid;
     
-    console.log('Valorion id_transaction:', valorionTransactionId);
-    console.log('Local txid (metadata):', txid);
-    console.log('Using transactionId for storage:', transactionId);
+    console.log('[VALORION] Extracted values:');
+    console.log('  - PIX code found:', !!pixCode);
+    console.log('  - QR code URL found:', !!qrCodeUrl);
+    console.log('  - Valorion transaction ID:', valorionTransactionId);
+    console.log('  - Final transaction ID:', transactionId);
 
     if (!pixCode) {
-      console.error('PIX code not found in response:', JSON.stringify(data));
+      console.error('[VALORION] PIX code not found. Available fields:', Object.keys(data).join(', '));
       throw new Error('Código PIX não encontrado na resposta. Campos retornados: ' + Object.keys(data).join(', '));
     }
 
@@ -462,16 +532,21 @@ serve(async (req) => {
       'valorion'
     );
 
-    // Log API monitoring event
+    const totalTime = Date.now() - requestStartTime;
+
+    // Log API monitoring event with retry info
     try {
       await supabase.from('api_monitoring_events').insert({
         acquirer: 'valorion',
         event_type: 'success',
-        response_time_ms: Date.now() % 1000,
+        response_time_ms: totalTime,
+        retry_attempt: attempts,
       });
     } catch (logError) {
-      console.error('Error logging API event:', logError);
+      console.error('[VALORION] Error logging API event:', logError);
     }
+
+    console.log(`=== VALORION PIX GENERATION SUCCESS (${totalTime}ms, ${attempts} attempt(s)) ===`);
 
     return new Response(
       JSON.stringify({
@@ -480,12 +555,19 @@ serve(async (req) => {
         qrCodeUrl,
         txid: transactionId,
         transactionId: transactionId,
+        _debug: {
+          attempts,
+          responseTime: totalTime,
+          apiUrl,
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Erro na geração de PIX Valorion:', error);
+    const totalTime = Date.now() - requestStartTime;
+    console.error(`=== VALORION PIX GENERATION FAILED (${totalTime}ms) ===`);
+    console.error('[VALORION] Error:', error);
     
     // Log failure event
     try {
@@ -497,14 +579,19 @@ serve(async (req) => {
         acquirer: 'valorion',
         event_type: 'failure',
         error_message: error instanceof Error ? error.message : 'Unknown error',
+        response_time_ms: totalTime,
       });
     } catch (logError) {
-      console.error('Error logging failure event:', logError);
+      console.error('[VALORION] Error logging failure event:', logError);
     }
-    
-    const errorMessage = error instanceof Error ? error.message : 'Erro interno';
+
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Erro ao gerar PIX Valorion',
+        _debug: {
+          totalTime,
+        }
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -16,7 +16,7 @@ const HEALTH_CHECK_TIMEOUT_MS = 5000;
 const MIN_AMOUNTS: Record<string, number> = {
   spedpay: 0.01,
   ativus: 0.05,  // Ativus requires minimum R$0.05
-  valorion: 0.01,
+  valorion: 1.00, // Valorion: use R$1.00 for health check to avoid minimum blocking
   inter: 0.01,
 };
 
