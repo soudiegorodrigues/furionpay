@@ -110,7 +110,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
           style={{
             transform: `rotate(${needleAngle}deg)`,
             transformOrigin: `${cx}px ${cy}px`,
-            transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transition: 'transform 0.5s ease-out',
           }}
         >
           <polygon
