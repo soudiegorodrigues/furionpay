@@ -408,6 +408,8 @@ serve(async (req) => {
                     data.brcode ||
                     data.emv ||
                     data.code ||
+                    // SpedPay commonly returns the BR Code inside pix.payload
+                    data.pix?.payload ||
                     data.pix?.brcode ||
                     data.pix?.qrcode ||
                     data.pix?.copia_e_cola ||
@@ -418,6 +420,7 @@ serve(async (req) => {
                     data.pix?.qr_code ||
                     data.pix?.pix_code ||
                     data.pix?.pixCode ||
+                    (typeof data.pix === 'string' ? data.pix : null) ||
                     data.paymentCode ||
                     data.transaction?.pix_copia_e_cola ||
                     data.transaction?.brcode;
