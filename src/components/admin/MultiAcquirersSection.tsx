@@ -663,10 +663,6 @@ export const MultiAcquirersSection = () => {
                 Gerencie os gateways de pagamento PIX integrados à plataforma.
               </CardDescription>
             </div>
-            <Button variant="outline" disabled>
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Adquirente
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
