@@ -342,205 +342,219 @@ export function EmailSection() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header Principal */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Mail className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Configuração de Email</h2>
-          <p className="text-muted-foreground text-sm">Configure o envio de emails através do Resend</p>
-        </div>
-      </div>
-
-      <Card>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            Resend API
-            {hasExistingKey && (
-              <span className="ml-2 flex items-center gap-1 text-sm text-green-500">
-                <CheckCircle2 className="h-4 w-4" />
-                Configurado
-              </span>
-            )}
-          </CardTitle>
-          <CardDescription>
-            O Resend é usado para enviar emails transacionais como notificações de pagamento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
-            <p className="font-medium">Como obter sua API Key:</p>
-            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-              <li>Acesse <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">resend.com</a> e crie uma conta</li>
-              <li>Valide seu domínio em <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Domains</a></li>
-              <li>Crie uma API Key em <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">API Keys</a></li>
-              <li>Cole a chave abaixo</li>
-            </ol>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <Mail className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Configuração de Email</CardTitle>
+              <CardDescription>Configure o envio de emails através do Resend</CardDescription>
+            </div>
           </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Seção Resend API */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-medium flex items-center gap-2">
+                  Resend API
+                  {hasExistingKey && (
+                    <span className="flex items-center gap-1 text-sm text-green-500">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Configurado
+                    </span>
+                  )}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  O Resend é usado para enviar emails transacionais como notificações de pagamento.
+                </p>
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="resend-api-key">API Key do Resend</Label>
-            <div className="relative">
-              <Input
-                id="resend-api-key"
-                type={showApiKey ? "text" : "password"}
-                placeholder="re_xxxxxxxxxxxxxxxxxxxx"
-                value={resendApiKey}
-                onChange={(e) => handleInputChange(e.target.value)}
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                onClick={handleToggleShowApiKey}
-                disabled={isLoadingKey}
-              >
-                {isLoadingKey ? (
-                  <div className="h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
-                ) : showApiKey ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
+              <p className="font-medium">Como obter sua API Key:</p>
+              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                <li>Acesse <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">resend.com</a> e crie uma conta</li>
+                <li>Valide seu domínio em <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Domains</a></li>
+                <li>Crie uma API Key em <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">API Keys</a></li>
+                <li>Cole a chave abaixo</li>
+              </ol>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resend-api-key">API Key do Resend</Label>
+              <div className="relative">
+                <Input
+                  id="resend-api-key"
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxx"
+                  value={resendApiKey}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={handleToggleShowApiKey}
+                  disabled={isLoadingKey}
+                >
+                  {isLoadingKey ? (
+                    <div className="h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+                  ) : showApiKey ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A chave começa com "re_" e é usada para autenticar envios de email
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={isSaving}>
+                <Save className="h-4 w-4 mr-2" />
+                {isSaving ? "Salvando..." : "Salvar API Key"}
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Abrir Resend
+                </a>
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              A chave começa com "re_" e é usada para autenticar envios de email
-            </p>
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={isSaving}>
+          <div className="border-t" />
+
+          {/* Seção Email Remetente */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-medium flex items-center gap-2">
+                  Email Remetente
+                  {hasExistingSender && (
+                    <span className="flex items-center gap-1 text-sm text-green-500">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Configurado
+                    </span>
+                  )}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Email que aparecerá como remetente nas mensagens enviadas. Deve ser de um domínio verificado no Resend.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sender-email">Email Remetente</Label>
+              <Input
+                id="sender-email"
+                type="email"
+                placeholder="noreply@seudominio.com"
+                value={senderEmail}
+                onChange={(e) => setSenderEmail(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Use um email do domínio que você verificou no Resend (ex: noreply@seudominio.com)
+              </p>
+            </div>
+
+            <Button onClick={handleSaveSender} disabled={isSavingSender}>
               <Save className="h-4 w-4 mr-2" />
-              {isSaving ? "Salvando..." : "Salvar API Key"}
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Abrir Resend
-              </a>
+              {isSavingSender ? "Salvando..." : "Salvar Email Remetente"}
             </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            Email Remetente
-            {hasExistingSender && (
-              <span className="ml-2 flex items-center gap-1 text-sm text-green-500">
-                <CheckCircle2 className="h-4 w-4" />
-                Configurado
-              </span>
+          <div className="border-t" />
+
+          {/* Seção Logo do Email */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Image className="h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-medium flex items-center gap-2">
+                  Logo do Email
+                  {hasExistingLogo && (
+                    <span className="flex items-center gap-1 text-sm text-green-500">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Configurado
+                    </span>
+                  )}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Logo que aparecerá no topo dos emails enviados (recuperação de senha, desbloqueio de conta, etc.)
+                </p>
+              </div>
+            </div>
+
+            {emailLogoUrl && (
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <img 
+                  src={emailLogoUrl} 
+                  alt="Logo do email" 
+                  className="h-16 w-auto object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={handleRemoveLogo}
+                  disabled={isSavingLogo}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover
+                </Button>
+              </div>
             )}
-          </CardTitle>
-          <CardDescription>
-            Email que aparecerá como remetente nas mensagens enviadas. Deve ser de um domínio verificado no Resend.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="sender-email">Email Remetente</Label>
-            <Input
-              id="sender-email"
-              type="email"
-              placeholder="noreply@seudominio.com"
-              value={senderEmail}
-              onChange={(e) => setSenderEmail(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Use um email do domínio que você verificou no Resend (ex: noreply@seudominio.com)
-            </p>
-          </div>
 
-          <Button onClick={handleSaveSender} disabled={isSavingSender}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSavingSender ? "Salvando..." : "Salvar Email Remetente"}
-          </Button>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="logo-url">URL da Logo</Label>
+              <Input
+                id="logo-url"
+                type="url"
+                placeholder="https://seusite.com/logo.png"
+                value={emailLogoUrl}
+                onChange={(e) => setEmailLogoUrl(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Cole a URL de uma imagem ou faça upload abaixo
+              </p>
+            </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Image className="h-5 w-5 text-primary" />
-            Logo do Email
-            {hasExistingLogo && (
-              <span className="ml-2 flex items-center gap-1 text-sm text-green-500">
-                <CheckCircle2 className="h-4 w-4" />
-                Configurado
-              </span>
-            )}
-          </CardTitle>
-          <CardDescription>
-            Logo que aparecerá no topo dos emails enviados (recuperação de senha, desbloqueio de conta, etc.)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {emailLogoUrl && (
-            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-              <img 
-                src={emailLogoUrl} 
-                alt="Logo do email" 
-                className="h-16 w-auto object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
+            <div className="flex gap-2 flex-wrap">
+              <Button onClick={handleSaveLogoUrl} disabled={isSavingLogo || !emailLogoUrl}>
+                <Save className="h-4 w-4 mr-2" />
+                {isSavingLogo ? "Salvando..." : "Salvar URL"}
+              </Button>
+              
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleLogoUpload}
+                accept="image/*"
+                className="hidden"
               />
               <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={handleRemoveLogo}
-                disabled={isSavingLogo}
+                variant="outline" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingLogo}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Remover
+                <Upload className="h-4 w-4 mr-2" />
+                {isUploadingLogo ? "Enviando..." : "Fazer Upload"}
               </Button>
             </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="logo-url">URL da Logo</Label>
-            <Input
-              id="logo-url"
-              type="url"
-              placeholder="https://seusite.com/logo.png"
-              value={emailLogoUrl}
-              onChange={(e) => setEmailLogoUrl(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Cole a URL de uma imagem ou faça upload abaixo
-            </p>
-          </div>
-
-          <div className="flex gap-2 flex-wrap">
-            <Button onClick={handleSaveLogoUrl} disabled={isSavingLogo || !emailLogoUrl}>
-              <Save className="h-4 w-4 mr-2" />
-              {isSavingLogo ? "Salvando..." : "Salvar URL"}
-            </Button>
-            
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleLogoUpload}
-              accept="image/*"
-              className="hidden"
-            />
-            <Button 
-              variant="outline" 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingLogo}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {isUploadingLogo ? "Enviando..." : "Fazer Upload"}
-            </Button>
           </div>
         </CardContent>
       </Card>
