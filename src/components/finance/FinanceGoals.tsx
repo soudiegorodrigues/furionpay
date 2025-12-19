@@ -297,11 +297,15 @@ export const FinanceGoals = ({ userId }: { userId?: string }) => {
       </div>
 
       {goals.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-medium mb-2">Nenhuma meta criada</h3>
-            <p className="text-muted-foreground mb-4">
+        <Card className="border border-border/50">
+          <CardContent className="flex flex-col items-center justify-center py-16 md:py-20">
+            <div className="p-4 rounded-full bg-muted/50 mb-4">
+              <Target className="h-10 w-10 text-muted-foreground/60" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-center">
+              Nenhuma meta criada
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
               Crie sua primeira meta financeira para acompanhar seu progresso
             </p>
             <Button onClick={() => handleOpenDialog()} className="gap-2">

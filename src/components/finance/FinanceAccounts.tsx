@@ -292,13 +292,21 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
 
       {/* Accounts Grid */}
       {accounts.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-center">
-              Nenhuma conta cadastrada.<br />
-              Adicione sua primeira conta bancária.
+        <Card className="border border-border/50">
+          <CardContent className="flex flex-col items-center justify-center py-16 md:py-20">
+            <div className="p-4 rounded-full bg-muted/50 mb-4">
+              <Building2 className="h-10 w-10 text-muted-foreground/60" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-center">
+              Nenhuma conta cadastrada
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
+              Adicione sua primeira conta bancária para começar a controlar suas finanças
             </p>
+            <Button onClick={() => handleOpenDialog()} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Conta
+            </Button>
           </CardContent>
         </Card>
       ) : (
