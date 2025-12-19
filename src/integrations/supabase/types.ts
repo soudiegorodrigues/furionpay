@@ -940,6 +940,7 @@ export type Database = {
           fingerprint_hash: string
           id: string
           ip_address: string | null
+          is_whitelisted: boolean | null
           last_generation_at: string | null
           unpaid_count: number | null
           updated_at: string | null
@@ -950,6 +951,7 @@ export type Database = {
           fingerprint_hash: string
           id?: string
           ip_address?: string | null
+          is_whitelisted?: boolean | null
           last_generation_at?: string | null
           unpaid_count?: number | null
           updated_at?: string | null
@@ -960,6 +962,7 @@ export type Database = {
           fingerprint_hash?: string
           id?: string
           ip_address?: string | null
+          is_whitelisted?: boolean | null
           last_generation_at?: string | null
           unpaid_count?: number | null
           updated_at?: string | null
