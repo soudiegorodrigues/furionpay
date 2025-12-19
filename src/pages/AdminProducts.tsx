@@ -551,7 +551,7 @@ export default function AdminProducts() {
                   Produtos
                 </h2>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-5">
                 {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
@@ -572,12 +572,12 @@ export default function AdminProducts() {
                     </div>
                   )}
                 </div>
-                <CardContent className="p-2 sm:p-3">
+                <CardContent className="p-3 sm:p-4">
                   <div>
-                    <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
+                    <h3 className="text-base sm:text-lg font-semibold truncate">{product.name}</h3>
                   </div>
                   <div className="mt-1 sm:mt-2">
-                    <p className="text-sm sm:text-base font-bold text-primary">
+                    <p className="text-base sm:text-lg font-bold text-primary">
                       R$ {product.price.toFixed(2).replace(".", ",")}
                     </p>
                   </div>
