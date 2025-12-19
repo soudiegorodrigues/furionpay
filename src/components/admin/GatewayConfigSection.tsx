@@ -245,9 +245,12 @@ export const GatewayConfigSection = () => {
         default: return;
       }
 
+      // SpedPay requires higher minimum amount to cover fees
+      const testAmount = gateway === 'inter' ? 0.01 : (gateway === 'spedpay' ? 5.00 : 0.50);
+      
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
-          amount: gateway === 'inter' ? 0.01 : 0.50,
+          amount: testAmount,
           donorName: 'Teste Conexão',
           productName: `Teste ${gateway}`,
           userId: user?.id
