@@ -61,31 +61,25 @@ serve(async (req) => {
       return setting?.value || null;
     };
 
-    // Helper to mask sensitive values - show only first 4 and last 4 chars
-    const maskValue = (value: string | null): string | null => {
-      if (!value || value.length < 12) return value ? '****' : null;
-      return `${value.substring(0, 4)}${'*'.repeat(8)}${value.substring(value.length - 4)}`;
-    };
-
     // Helper to check if a credential is configured
     const isConfigured = (value: string | null): boolean => {
       return !!value && value.trim().length > 0;
     };
 
-    // Get raw values to check configuration status
+    // Get raw values
     const rawClientId = getValue('inter_client_id') || Deno.env.get('INTER_CLIENT_ID') || '';
     const rawClientSecret = getValue('inter_client_secret') || Deno.env.get('INTER_CLIENT_SECRET') || '';
     const rawCertificate = getValue('inter_certificate') || Deno.env.get('INTER_CERTIFICATE') || '';
     const rawPrivateKey = getValue('inter_private_key') || Deno.env.get('INTER_PRIVATE_KEY') || '';
     const rawPixKey = getValue('inter_pix_key') || Deno.env.get('INTER_PIX_KEY') || '';
 
-    // Return only masked values and configuration status - NEVER return full secrets
+    // Return actual values for admin to view/edit
     const credentials = {
-      clientId: maskValue(rawClientId),
-      clientSecret: maskValue(rawClientSecret),
-      certificate: isConfigured(rawCertificate) ? '[CERTIFICADO CONFIGURADO]' : null,
-      privateKey: isConfigured(rawPrivateKey) ? '[CHAVE PRIVADA CONFIGURADA]' : null,
-      pixKey: maskValue(rawPixKey),
+      clientId: rawClientId,
+      clientSecret: rawClientSecret,
+      certificate: rawCertificate,
+      privateKey: rawPrivateKey,
+      pixKey: rawPixKey,
       // Configuration status indicators
       hasClientId: isConfigured(rawClientId),
       hasClientSecret: isConfigured(rawClientSecret),
