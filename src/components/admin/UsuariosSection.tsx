@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Users, Loader2, RefreshCw, ChevronLeft, ChevronRight, Search, Pencil, 
-  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX, Percent, Trophy 
+  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX, Percent, Trophy, Settings2 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -392,10 +392,10 @@ export const UsuariosSection = () => {
     if (!selectedUser) return;
     setIsSavingUserSettings(true);
     try {
-      // Check if selected acquirer matches platform default
-      const isMatchingDefault = selectedUserAcquirer === defaultAcquirer;
+      // Check if user wants to use platform default (empty value or matches default)
+      const isUsingDefault = !selectedUserAcquirer || selectedUserAcquirer === defaultAcquirer;
 
-      if (isMatchingDefault) {
+      if (isUsingDefault) {
         // Remove manual flag and user_acquirer - user is using platform default
         await supabase
           .from('admin_settings')
@@ -453,7 +453,7 @@ export const UsuariosSection = () => {
       }
 
       // Update local state based on whether it's manual or default
-      if (isMatchingDefault) {
+      if (isUsingDefault) {
         setUserAcquirers(prev => {
           const newState = { ...prev };
           delete newState[selectedUser.id];
@@ -479,7 +479,7 @@ export const UsuariosSection = () => {
         return newState;
       });
 
-      const successMessage = isMatchingDefault 
+      const successMessage = isUsingDefault 
         ? 'Configurações atualizadas (usando padrão da plataforma)' 
         : 'Configurações atualizadas (override manual ativado)';
       toast({ title: 'Sucesso', description: successMessage });
@@ -797,11 +797,17 @@ export const UsuariosSection = () => {
                   <p className="text-xs text-muted-foreground">
                     Selecione qual gateway de pagamento este usuário irá utilizar
                   </p>
-                  <Select value={selectedUserAcquirer} onValueChange={setSelectedUserAcquirer}>
+                  <Select value={selectedUserAcquirer || 'default'} onValueChange={(val) => setSelectedUserAcquirer(val === 'default' ? '' : val)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o adquirente" />
+                      <SelectValue placeholder="Usar padrão do sistema" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="default">
+                        <div className="flex items-center gap-2">
+                          <Settings2 className="w-3 h-3 text-muted-foreground" />
+                          Usar padrão do sistema
+                        </div>
+                      </SelectItem>
                       <SelectItem value="valorion">
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 bg-primary/10 rounded flex items-center justify-center">
