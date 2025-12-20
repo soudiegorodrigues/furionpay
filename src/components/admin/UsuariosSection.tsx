@@ -753,172 +753,176 @@ export const UsuariosSection = () => {
 
       {/* User Details Dialog */}
       <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalhes do Usuário</DialogTitle>
             <DialogDescription>Configure as opções do usuário</DialogDescription>
           </DialogHeader>
           {selectedUser && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
-                  {selectedUser.full_name?.[0]?.toUpperCase() || selectedUser.email[0].toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-lg truncate">
-                    {selectedUser.full_name || selectedUser.email.split('@')[0]}
-                  </p>
-                  <p className="text-sm text-muted-foreground truncate">{selectedUser.email}</p>
-                  <div className="flex gap-2 mt-1">
-                    {selectedUser.is_admin ? (
-                      <Badge className="bg-primary text-[10px]">Admin</Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px]">User</Badge>
-                    )}
-                    {selectedUser.is_blocked ? (
-                      <Badge variant="destructive" className="text-[10px]">Bloqueado</Badge>
-                    ) : (
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">Ativo</Badge>
-                    )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - User Info & Settings */}
+              <div className="space-y-5">
+                {/* User Avatar & Info */}
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold shrink-0">
+                    {selectedUser.full_name?.[0]?.toUpperCase() || selectedUser.email[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-lg truncate">
+                      {selectedUser.full_name || selectedUser.email.split('@')[0]}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">{selectedUser.email}</p>
+                    <div className="flex gap-2 mt-1">
+                      {selectedUser.is_admin ? (
+                        <Badge className="bg-primary text-[10px]">Admin</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px]">User</Badge>
+                      )}
+                      {selectedUser.is_blocked ? (
+                        <Badge variant="destructive" className="text-[10px]">Bloqueado</Badge>
+                      ) : (
+                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">Ativo</Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground text-xs">Cadastro</p>
-                  <p className="font-medium">{formatDate(selectedUser.created_at)}</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">Cadastro</p>
+                    <p className="font-medium">{formatDate(selectedUser.created_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Último Acesso</p>
+                    <p className="font-medium">{formatDate(selectedUser.last_sign_in_at)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Último Acesso</p>
-                  <p className="font-medium">{formatDate(selectedUser.last_sign_in_at)}</p>
-                </div>
-              </div>
 
-              <div className="space-y-2 pt-2 border-t">
-                <Label className="text-sm font-medium">Adquirente</Label>
-                <p className="text-xs text-muted-foreground">
-                  Selecione qual gateway de pagamento este usuário irá utilizar
-                </p>
-                <Select value={selectedUserAcquirer} onValueChange={setSelectedUserAcquirer}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o adquirente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="valorion">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-primary/10 rounded flex items-center justify-center">
-                          <CreditCard className="w-3 h-3 text-primary" />
-                        </div>
-                        VALORION
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="inter">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-orange-500/10 rounded flex items-center justify-center text-orange-500 text-[10px] font-bold">I</div>
-                        Banco Inter
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ativus">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-purple-500/10 rounded flex items-center justify-center text-purple-500 text-[10px] font-bold">A</div>
-                        Ativus Hub
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2 pt-2 border-t">
-                <Label className="text-sm font-medium">Configuração de Taxa</Label>
-                <p className="text-xs text-muted-foreground">
-                  Selecione qual taxa será aplicada às transações deste usuário
-                </p>
-                <Select value={selectedUserFeeConfig || 'default'} onValueChange={(val) => setSelectedUserFeeConfig(val === 'default' ? '' : val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Usar taxa padrão" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">
-                      <div className="flex items-center gap-2">
-                        <Percent className="w-3 h-3 text-muted-foreground" />
-                        Usar taxa padrão
-                      </div>
-                    </SelectItem>
-                    {feeConfigs.filter(fc => fc.id).map(fc => (
-                      <SelectItem key={fc.id} value={fc.id}>
+                <div className="space-y-2 pt-3 border-t">
+                  <Label className="text-sm font-medium">Adquirente</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Selecione qual gateway de pagamento este usuário irá utilizar
+                  </p>
+                  <Select value={selectedUserAcquirer} onValueChange={setSelectedUserAcquirer}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o adquirente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="valorion">
                         <div className="flex items-center gap-2">
-                          <Percent className="w-3 h-3 text-primary" />
-                          {fc.name} ({fc.pix_percentage}% + R$ {fc.pix_fixed.toFixed(2)})
+                          <div className="w-4 h-4 bg-primary/10 rounded flex items-center justify-center">
+                            <CreditCard className="w-3 h-3 text-primary" />
+                          </div>
+                          VALORION
                         </div>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      <SelectItem value="inter">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-orange-500/10 rounded flex items-center justify-center text-orange-500 text-[10px] font-bold">I</div>
+                          Banco Inter
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="ativus">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-purple-500/10 rounded flex items-center justify-center text-purple-500 text-[10px] font-bold">A</div>
+                          Ativus Hub
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 pt-3 border-t">
+                  <Label className="text-sm font-medium">Configuração de Taxa</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Selecione qual taxa será aplicada às transações deste usuário
+                  </p>
+                  <Select value={selectedUserFeeConfig || 'default'} onValueChange={(val) => setSelectedUserFeeConfig(val === 'default' ? '' : val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Usar taxa padrão" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">
+                        <div className="flex items-center gap-2">
+                          <Percent className="w-3 h-3 text-muted-foreground" />
+                          Usar taxa padrão
+                        </div>
+                      </SelectItem>
+                      {feeConfigs.filter(fc => fc.id).map(fc => (
+                        <SelectItem key={fc.id} value={fc.id}>
+                          <div className="flex items-center gap-2">
+                            <Percent className="w-3 h-3 text-primary" />
+                            {fc.name} ({fc.pix_percentage}% + R$ {fc.pix_fixed.toFixed(2)})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {/* Rewards Progress Section */}
+              {/* Right Column - Rewards Progress */}
               {rewards.length > 0 && (
-                <div className="space-y-3 pt-4 border-t">
+                <div className="space-y-3 lg:border-l lg:pl-6">
                   <Label className="text-sm font-medium flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-primary" />
+                    <Trophy className="h-4 w-4 text-amber-500" />
                     Progresso de Recompensas
                   </Label>
                   
-                  {rewards.map(reward => {
-                    const progress = Math.min((userTotalPaid / reward.threshold_amount) * 100, 100);
-                    const achieved = userTotalPaid >= reward.threshold_amount;
-                    
-                    return (
-                      <div key={reward.id} className="p-4 rounded-xl border bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border-amber-500/20">
-                        {/* Imagem da placa em destaque */}
-                        <div className="flex justify-center mb-4">
-                          <div className="w-32 h-32 rounded-lg bg-white/50 dark:bg-black/20 p-2 shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 max-h-[320px] overflow-y-auto pr-1">
+                    {rewards.map(reward => {
+                      const progress = Math.min((userTotalPaid / reward.threshold_amount) * 100, 100);
+                      const achieved = userTotalPaid >= reward.threshold_amount;
+                      
+                      return (
+                        <div key={reward.id} className="flex items-start gap-3 p-3 rounded-xl border bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border-amber-500/20">
+                          {/* Compact Image */}
+                          <div className="w-16 h-16 rounded-lg bg-white/50 dark:bg-black/20 p-1.5 shadow-sm shrink-0">
                             {reward.image_url ? (
                               <img src={reward.image_url} alt={reward.name} className="w-full h-full object-contain" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Trophy className="h-12 w-12 text-amber-500" />
+                                <Trophy className="h-6 w-6 text-amber-500" />
                               </div>
                             )}
                           </div>
-                        </div>
-                        
-                        {/* Nome e Status */}
-                        <div className="text-center mb-3">
-                          <h4 className="font-bold text-base">{reward.name}</h4>
-                          {achieved ? (
-                            <Badge className="bg-green-500 text-white mt-1">🎉 Conquistado!</Badge>
-                          ) : (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Faltam <span className="font-semibold text-amber-600 dark:text-amber-400">R$ {(reward.threshold_amount - userTotalPaid).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                            </p>
-                          )}
-                        </div>
-                        
-                        {/* Barra de progresso */}
-                        <div className="space-y-1.5">
-                          <div className="h-3 bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full transition-all ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`}
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
                           
-                          {/* Valores */}
-                          <div className="flex justify-between text-xs">
-                            <span className="font-medium">R$ {userTotalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                            <span className="text-muted-foreground">Meta: R$ {reward.threshold_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="font-semibold text-sm truncate">{reward.name}</h4>
+                              {achieved && <Badge className="bg-green-500 text-white text-[10px] shrink-0">✓</Badge>}
+                            </div>
+                            
+                            {!achieved && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                Faltam <span className="font-medium text-amber-600 dark:text-amber-400">R$ {(reward.threshold_amount - userTotalPaid).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              </p>
+                            )}
+                            
+                            {/* Progress Bar */}
+                            <div className="mt-2 space-y-1">
+                              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`}
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                              <div className="flex justify-between text-[10px]">
+                                <span className="font-medium">R$ {userTotalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-muted-foreground">R$ {reward.threshold_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setUserDetailsOpen(false)}>
               Cancelar
             </Button>
