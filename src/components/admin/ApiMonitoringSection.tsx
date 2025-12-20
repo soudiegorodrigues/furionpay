@@ -324,6 +324,7 @@ export function ApiMonitoringSection() {
   const [chartEvents, setChartEvents] = useState<ApiEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [healthChecking, setHealthChecking] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [acquirerFilter, setAcquirerFilter] = useState<string>('all');
   const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('24h');
@@ -369,6 +370,21 @@ export function ApiMonitoringSection() {
     setRefreshing(true);
     setCurrentPage(1);
     fetchData();
+  }, [fetchData]);
+
+  const handleHealthCheck = useCallback(async () => {
+    setHealthChecking(true);
+    try {
+      const { error } = await supabase.functions.invoke('health-check-acquirers');
+      if (error) throw error;
+      toast.success('Health check executado com sucesso');
+      await fetchData();
+    } catch (error) {
+      console.error('Error triggering health check:', error);
+      toast.error('Erro ao executar health check');
+    } finally {
+      setHealthChecking(false);
+    }
   }, [fetchData]);
 
   const filteredEvents = useMemo(() => 
@@ -578,16 +594,28 @@ export function ApiMonitoringSection() {
             </div>
           )}
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefresh} 
-          disabled={refreshing}
-          className="h-7 sm:h-8 px-2 sm:px-3 shrink-0 text-xs"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline ml-1.5">Atualizar</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleHealthCheck} 
+            disabled={healthChecking}
+            className="h-7 sm:h-8 px-2 sm:px-3 shrink-0 text-xs"
+          >
+            <Zap className={`h-3.5 w-3.5 ${healthChecking ? 'animate-pulse' : ''}`} />
+            <span className="hidden sm:inline ml-1.5">Health Check</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh} 
+            disabled={refreshing}
+            className="h-7 sm:h-8 px-2 sm:px-3 shrink-0 text-xs"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline ml-1.5">Atualizar</span>
+          </Button>
+        </div>
       </div>
 
       {/* Acquirer Cards */}
