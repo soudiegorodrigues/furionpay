@@ -109,10 +109,6 @@
     @apply border-border;
   }
 
-  html {
-    overflow-y: scroll;
-    scrollbar-gutter: stable;
-  }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
@@ -188,14 +184,9 @@ body {
   overflow-x: clip !important;
 }
 
-/* When scroll is locked, disable stable gutter to avoid width + padding overflow */
-html:has(body[data-scroll-locked]) {
-  scrollbar-gutter: auto;
-}
-
 /* Prevent Radix UI Select scroll lock from causing horizontal shift */
 body[data-scroll-locked] {
   margin-right: 0 !important;
   padding-right: 0 !important;
-  max-width: 100vw;
+  overflow: hidden !important;
 }
