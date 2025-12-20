@@ -2045,6 +2045,10 @@ export type Database = {
         Args: { p_transaction_id: string }
         Returns: boolean
       }
+      delete_test_transactions: {
+        Args: { transaction_ids: string[] }
+        Returns: number
+      }
       delete_transaction_backup: {
         Args: { p_backup_id: string }
         Returns: boolean
