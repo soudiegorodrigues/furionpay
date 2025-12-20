@@ -539,21 +539,23 @@ const AdminVendas = () => {
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <span className="text-xs text-muted-foreground">
-                  Mostrando {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
-                </span>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-2">
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
+                  </p>
+                  <div className="flex items-center gap-1 sm:gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
+                      className="h-8 px-2 sm:px-3"
                     >
                       <ChevronLeft className="h-4 w-4" />
+                      <span className="hidden sm:inline ml-1">Anterior</span>
                     </Button>
-                    <span className="text-xs text-muted-foreground px-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground px-2">
                       {currentPage}/{totalPages}
                     </span>
                     <Button
@@ -561,12 +563,14 @@ const AdminVendas = () => {
                       size="sm"
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
+                      className="h-8 px-2 sm:px-3"
                     >
+                      <span className="hidden sm:inline mr-1">Próximo</span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
               
             </>
           )}
