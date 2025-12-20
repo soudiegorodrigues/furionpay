@@ -254,17 +254,17 @@ export const MultiAcquirersSection = () => {
       {/* Main Content - Only show after authentication */}
       {isAuthenticated && (
         <div className="max-w-5xl mx-auto space-y-4">
-          {/* 1. Configurações de Gateways (API Keys, Taxas, Testar conexão) */}
-          <GatewayConfigSection />
-
-          {/* 2. Configuração de Adquirente Principal por Método de Pagamento */}
+          {/* 1. Configuração de Adquirente Principal por Método de Pagamento */}
           <AcquirerConfigSection isAdmin={isAdmin} />
 
-          {/* 3. Configuração de Retentativas (máximo 3 adquirentes) */}
+          {/* 2. Configuração de Retentativas (máximo 3 adquirentes) */}
           <RetryConfigSection />
 
-          {/* 4. Monitoramento de Saúde em Tempo Real */}
+          {/* 3. Monitoramento de Saúde em Tempo Real */}
           <AcquirerHealthDashboard />
+
+          {/* 4. Configurações de Gateways (API Keys, Taxas, Testar conexão) */}
+          <GatewayConfigSection />
         </div>
       )}
     </>
