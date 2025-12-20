@@ -202,16 +202,15 @@ const AdminVendas = () => {
         setFeeConfig(feeData as FeeConfig);
       }
 
-      // Load transactions with limit for faster initial load
-      const MAX_INITIAL_LOAD = 2000;
+      // Load ALL transactions in batches of 1000
       let allTransactions: Transaction[] = [];
       let offset = 0;
       const batchSize = 1000;
       let hasMore = true;
 
-      console.log('[AdminVendas] Iniciando carregamento de transações (limite: 2000)...');
+      console.log('[AdminVendas] Iniciando carregamento de transações...');
 
-      while (hasMore && allTransactions.length < MAX_INITIAL_LOAD) {
+      while (hasMore) {
         const { data, error } = await supabase.rpc('get_user_transactions', {
           p_limit: batchSize,
           p_offset: offset
@@ -224,8 +223,7 @@ const AdminVendas = () => {
         
         console.log(`[AdminVendas] Batch carregado: ${txs.length} transações, total: ${allTransactions.length}`);
         
-        // Stop when no more data or reached limit
-        hasMore = txs.length > 0 && txs.length === batchSize && allTransactions.length < MAX_INITIAL_LOAD;
+        hasMore = txs.length > 0 && txs.length === batchSize;
         offset += batchSize;
       }
 
