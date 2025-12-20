@@ -97,7 +97,15 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [showConversation, setShowConversation] = useState(false);
   const [welcomeMessagesSent, setWelcomeMessagesSent] = useState(false);
+  const [lastActivityTime, setLastActivityTime] = useState<Date>(new Date());
+  const [followUpsSent, setFollowUpsSent] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update last activity time
+  const updateLastActivity = () => {
+    setLastActivityTime(new Date());
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -178,9 +186,78 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
     setWelcomeMessagesSent(true);
   }, [isOpen, showConversation, welcomeMessagesSent, config]);
 
+  // Reset follow-ups when conversation is closed
+  useEffect(() => {
+    if (!showConversation) {
+      setFollowUpsSent(new Set());
+    }
+  }, [showConversation]);
+
+  // Follow-up messages based on inactivity
+  useEffect(() => {
+    if (!isOpen || !showConversation) {
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
+
+    const followUpMessages = config.auto_messages
+      ?.filter(msg => msg.trigger === 'followup')
+      .sort((a, b) => a.order - b.order) || [];
+
+    if (followUpMessages.length === 0) return;
+
+    // Check inactivity every 2 seconds
+    inactivityTimerRef.current = setInterval(() => {
+      const now = new Date();
+      const inactivityMs = now.getTime() - lastActivityTime.getTime();
+
+      // Find follow-up message that should be sent
+      for (const msg of followUpMessages) {
+        if (!followUpsSent.has(msg.id) && inactivityMs >= msg.delay_ms) {
+          // Send follow-up message
+          if (config.show_typing_indicator) {
+            setIsTyping(true);
+            setTimeout(() => {
+              setIsTyping(false);
+              setMessages(prev => [...prev, {
+                id: `followup-${msg.id}-${Date.now()}`,
+                content: msg.content,
+                isBot: true,
+                timestamp: new Date()
+              }]);
+            }, 1000);
+          } else {
+            setMessages(prev => [...prev, {
+              id: `followup-${msg.id}-${Date.now()}`,
+              content: msg.content,
+              isBot: true,
+              timestamp: new Date()
+            }]);
+          }
+          
+          setFollowUpsSent(prev => new Set([...prev, msg.id]));
+          // Update last activity to prevent rapid consecutive messages
+          setLastActivityTime(new Date());
+          break; // Only send one follow-up at a time
+        }
+      }
+    }, 2000);
+
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+    };
+  }, [isOpen, showConversation, lastActivityTime, followUpsSent, config]);
+
   if (!config.is_enabled) return null;
 
   const handleActionCardClick = (card: ActionCard) => {
+    updateLastActivity();
     switch (card.action) {
       case 'message':
         setActiveTab('messages');
@@ -211,6 +288,8 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
+    
+    updateLastActivity();
     
     const userMessage = inputValue.trim();
     const newMessage: ChatMessage = {
@@ -378,7 +457,10 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
               <input
                 type="text"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  updateLastActivity();
+                }}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Digite sua mensagem..."
                 className="flex-1 bg-muted rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50"
@@ -404,7 +486,10 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
             Inicie uma nova conversa com nossa equipe
           </p>
           <button
-            onClick={() => setShowConversation(true)}
+            onClick={() => {
+              setShowConversation(true);
+              updateLastActivity();
+            }}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             Nova conversa
