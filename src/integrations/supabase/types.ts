@@ -2582,6 +2582,7 @@ export type Database = {
         }[]
       }
       get_user_stats_by_period: { Args: { p_period?: string }; Returns: Json }
+      get_user_total_paid: { Args: { p_user_id: string }; Returns: number }
       get_user_transactions: {
         Args: { p_limit?: number }
         Returns: {
