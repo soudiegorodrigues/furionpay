@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SPEDPAY_API_URL = 'https://api.spedpay.space';
+// SpedPay removed - using Valorion, Inter, and Ativus only
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/getTransactionStatus.php';
 const VALORION_STATUS_URL = 'https://app.valorion.com.br/api/s1/getTransaction/api/getTransactionStatus.php';
@@ -35,7 +35,6 @@ const CIRCUIT_BREAKER_CONFIG = {
 
 // In-memory circuit breaker state (per acquirer)
 const circuitBreakers: Record<string, CircuitBreakerState> = {
-  spedpay: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   inter: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   ativus: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   valorion: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
@@ -200,20 +199,7 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-async function getApiKeyForUser(supabase: any, userId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'spedpay_api_key')
-    .eq('user_id', userId)
-    .maybeSingle();
-  
-  if (error || !data?.value) {
-    return null;
-  }
-  
-  return data.value;
-}
+// SpedPay getApiKeyForUser removed - using Valorion, Inter, and Ativus only
 
 async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
   const { data, error } = await supabase
@@ -224,7 +210,7 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
     .maybeSingle();
   
   if (error || !data?.value) {
-    return 'spedpay';
+    return 'valorion';
   }
   
   return data.value;
@@ -692,10 +678,8 @@ serve(async (req) => {
 
     // Cache user acquirers and API keys to avoid repeated queries
     const userAcquirers: Record<string, string> = {};
-    const userApiKeys: Record<string, string | null> = {};
     const userAtivusKeys: Record<string, string | null> = {};
     const userValorionKeys: Record<string, string | null> = {};
-    const defaultApiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
 
     // Setup Inter client once if needed
     let mtlsClient: Deno.HttpClient | null = null;
@@ -720,9 +704,9 @@ serve(async (req) => {
         acquirer = userAcquirers[transaction.user_id];
       }
       
-      // Default to spedpay if still not determined
+      // Default to valorion if still not determined (SpedPay removed)
       if (!acquirer) {
-        acquirer = 'spedpay';
+        acquirer = 'valorion';
       }
 
       try {
@@ -850,86 +834,9 @@ serve(async (req) => {
             results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', valorion_status: valorionResult.status, acquirer: 'valorion' });
           }
         } else {
-          // Check with SpedPay
-          let apiKey: string | null = null;
-          if (transaction.user_id) {
-            if (!(transaction.user_id in userApiKeys)) {
-              userApiKeys[transaction.user_id] = await getApiKeyForUser(supabase, transaction.user_id);
-            }
-            apiKey = userApiKeys[transaction.user_id];
-          }
-          
-          if (!apiKey) {
-            apiKey = defaultApiKey;
-          }
-          
-          if (!apiKey) {
-            console.log(`Skipping transaction ${transaction.id} - no API key available`);
-            results.push({ id: transaction.id, status: 'skipped', reason: 'no_api_key' });
-            continue;
-          }
-
-          console.log(`Checking SpedPay status for txid: ${transaction.txid}`);
-          
-          // Check circuit breaker for SpedPay
-          if (isCircuitOpen('spedpay')) {
-            results.push({ id: transaction.id, txid: transaction.txid, status: 'circuit_open', acquirer: 'spedpay' });
-            continue;
-          }
-
-          try {
-            const response = await fetchWithRetry(
-              `${SPEDPAY_API_URL}/v1/transactions/${transaction.txid}`,
-              {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'api-secret': apiKey,
-                },
-              },
-              `Batch SpedPay status check for ${transaction.txid}`
-            );
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error(`SpedPay API error for ${transaction.txid}:`, response.status, errorText);
-              recordFailure('spedpay');
-              results.push({ id: transaction.id, txid: transaction.txid, status: 'error', reason: errorText });
-              continue;
-            }
-
-            const spedpayData = await response.json();
-            const spedpayStatus = spedpayData.status?.toLowerCase() || '';
-            
-            console.log(`Transaction ${transaction.txid} SpedPay status: ${spedpayStatus}`);
-
-            // Success - reset circuit breaker
-            recordSuccess('spedpay');
-
-            const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
-
-            if (isPaid) {
-              console.log(`Marking transaction ${transaction.txid} as paid (SpedPay)`);
-              
-              const { error: updateError } = await supabase.rpc('mark_pix_paid', {
-                p_txid: transaction.txid
-              });
-
-              if (updateError) {
-                console.error(`Error updating transaction ${transaction.txid}:`, updateError);
-                results.push({ id: transaction.id, txid: transaction.txid, status: 'update_error', reason: updateError.message });
-              } else {
-                updatedCount++;
-                results.push({ id: transaction.id, txid: transaction.txid, status: 'updated_to_paid', amount: transaction.amount, acquirer: 'spedpay' });
-              }
-            } else {
-              results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', spedpay_status: spedpayStatus, acquirer: 'spedpay' });
-            }
-          } catch (spedpayErr) {
-            console.error(`SpedPay check failed after retries for ${transaction.txid}:`, spedpayErr);
-            recordFailure('spedpay');
-            results.push({ id: transaction.id, txid: transaction.txid, status: 'retry_failed', reason: String(spedpayErr) });
-          }
+          // Unknown acquirer - skip (SpedPay removed)
+          console.log(`Skipping transaction ${transaction.id} - unsupported acquirer: ${acquirer}`);
+          results.push({ id: transaction.id, txid: transaction.txid, status: 'skipped', reason: 'unsupported_acquirer', acquirer });
         }
 
         // Add small delay to avoid rate limiting
