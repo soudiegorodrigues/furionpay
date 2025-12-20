@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark, Users, ShoppingCart, MessageCircle } from "lucide-react";
+import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark, Users, ShoppingCart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -27,7 +27,6 @@ const menuItems: MenuItem[] = [
   { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart, permission: "can_view_transactions" },
   { title: "Produtos", url: "/admin/products", icon: Package, permission: "can_manage_products" },
   { title: "Checkout API", url: "/admin/checkout", icon: CreditCard, permission: "can_manage_checkout" },
-  { title: "Chat Widget", url: "/admin/chat", icon: MessageCircle, permission: "can_manage_settings" },
   { title: "Integrações", url: "/admin/integrations", icon: Puzzle, permission: "can_manage_integrations" },
   { title: "Meta Pixels", url: "/admin/settings", icon: Settings, permission: "can_manage_settings" },
   { title: "Painel Financeiro", url: "/admin/financeiro", icon: Wallet, permission: "can_view_financeiro" },

@@ -27,7 +27,6 @@ const AdminGestaoFinanceira = lazy(() => import("./pages/AdminGestaoFinanceira")
 const AdminTemplates = lazy(() => import("./pages/AdminTemplates"));
 const AdminColaboradores = lazy(() => import("./pages/AdminColaboradores"));
 const AdminVendas = lazy(() => import("./pages/AdminVendas"));
-const AdminChat = lazy(() => import("./pages/AdminChat"));
 const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 
@@ -147,11 +146,6 @@ const App = () => (
                 <Route path="colaboradores" element={
                   <Suspense fallback={<PageSkeleton />}>
                     <AdminColaboradores />
-                  </Suspense>
-                } />
-                <Route path="chat" element={
-                  <Suspense fallback={<PageSkeleton />}>
-                    <AdminChat />
                   </Suspense>
                 } />
               </Route>
