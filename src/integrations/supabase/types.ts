@@ -2583,24 +2583,42 @@ export type Database = {
       }
       get_user_stats_by_period: { Args: { p_period?: string }; Returns: Json }
       get_user_total_paid: { Args: { p_user_id: string }; Returns: number }
-      get_user_transactions: {
-        Args: { p_limit?: number }
-        Returns: {
-          acquirer: string
-          amount: number
-          created_at: string
-          donor_name: string
-          fee_fixed: number
-          fee_percentage: number
-          id: string
-          paid_at: string
-          popup_model: string
-          product_name: string
-          status: string
-          txid: string
-          utm_data: Json
-        }[]
-      }
+      get_user_transactions:
+        | {
+            Args: { p_limit?: number }
+            Returns: {
+              acquirer: string
+              amount: number
+              created_at: string
+              donor_name: string
+              fee_fixed: number
+              fee_percentage: number
+              id: string
+              paid_at: string
+              popup_model: string
+              product_name: string
+              status: string
+              txid: string
+              utm_data: Json
+            }[]
+          }
+        | {
+            Args: { p_limit?: number; p_offset?: number }
+            Returns: {
+              acquirer: string
+              amount: number
+              created_at: string
+              donor_name: string
+              fee_fixed: number
+              fee_percentage: number
+              id: string
+              paid_at: string
+              product_name: string
+              status: Database["public"]["Enums"]["pix_status"]
+              txid: string
+              utm_data: Json
+            }[]
+          }
       get_user_webhook_deliveries: {
         Args: { p_client_id?: string; p_limit?: number }
         Returns: {
