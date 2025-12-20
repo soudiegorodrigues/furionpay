@@ -58,7 +58,7 @@ const ITEMS_PER_PAGE = 10;
 
 const acquirerOptions = [
   { value: 'all', label: 'Todos', short: 'All' },
-  { value: 'spedpay', label: 'VALORION', short: 'VL' },
+  { value: 'valorion', label: 'VALORION', short: 'VL' },
   { value: 'inter', label: 'Banco Inter', short: 'BI' },
   { value: 'ativus', label: 'Ativus Hub', short: 'AH' }
 ];
@@ -418,14 +418,14 @@ export function ApiMonitoringSection() {
     };
 
     if (chartPeriod === '24h') {
-      const hours: { [key: string]: { time: string; hour: number; spedpay: number; inter: number; ativus: number } } = {};
+      const hours: { [key: string]: { time: string; hour: number; valorion: number; inter: number; ativus: number } } = {};
       
       for (let i = 23; i >= 0; i--) {
         const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000);
         const brazilHour = getBrazilHour(hourDate);
         const key = `${brazilHour.toString().padStart(2, '0')}h`;
         if (!hours[key]) {
-          hours[key] = { time: key, hour: brazilHour, spedpay: 0, inter: 0, ativus: 0 };
+          hours[key] = { time: key, hour: brazilHour, valorion: 0, inter: 0, ativus: 0 };
         }
       }
       
@@ -435,7 +435,7 @@ export function ApiMonitoringSection() {
         const key = `${eventHour.toString().padStart(2, '0')}h`;
         
         if (hours[key]) {
-          if (event.acquirer === 'spedpay') hours[key].spedpay++;
+          if (event.acquirer === 'valorion') hours[key].valorion++;
           else if (event.acquirer === 'inter') hours[key].inter++;
           else if (event.acquirer === 'ativus') hours[key].ativus++;
         }
@@ -450,12 +450,12 @@ export function ApiMonitoringSection() {
     }
     
     const days = chartPeriod === '7d' ? 7 : 30;
-    const dayData: { [key: string]: { time: string; date: Date; spedpay: number; inter: number; ativus: number } } = {};
+    const dayData: { [key: string]: { time: string; date: Date; valorion: number; inter: number; ativus: number } } = {};
     
     for (let i = days - 1; i >= 0; i--) {
       const dayDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const key = getBrazilDate(dayDate);
-      dayData[key] = { time: key, date: dayDate, spedpay: 0, inter: 0, ativus: 0 };
+      dayData[key] = { time: key, date: dayDate, valorion: 0, inter: 0, ativus: 0 };
     }
     
     chartEvents.forEach(event => {
@@ -463,7 +463,7 @@ export function ApiMonitoringSection() {
       const key = getBrazilDate(eventDate);
       
       if (dayData[key]) {
-        if (event.acquirer === 'spedpay') dayData[key].spedpay++;
+        if (event.acquirer === 'valorion') dayData[key].valorion++;
         else if (event.acquirer === 'inter') dayData[key].inter++;
         else if (event.acquirer === 'ativus') dayData[key].ativus++;
       }
@@ -684,7 +684,7 @@ export function ApiMonitoringSection() {
                 <Tooltip content={<CustomChartTooltip chartPeriod={chartPeriod} />} />
                 <Line
                   type="monotone" 
-                  dataKey="spedpay" 
+                  dataKey="valorion" 
                   name="VALORION"
                   stroke="#3B82F6" 
                   strokeWidth={isMobile ? 1.5 : 2}
