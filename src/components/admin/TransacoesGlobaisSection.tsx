@@ -228,30 +228,35 @@ export const TransacoesGlobaisSection = () => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-          <Receipt className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          Transações Globais
-          <Badge variant="secondary" className="ml-2 text-xs">{totalCount}</Badge>
-        </CardTitle>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
+      <CardHeader className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Receipt className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            Transações Globais
+            <Badge variant="secondary" className="ml-2 text-xs">{totalCount}</Badge>
+          </CardTitle>
+        </div>
+
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+          <div className="relative col-span-2">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
             <Input
-              placeholder="Buscar..."
+              placeholder="Buscar email, nome, produto..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-[140px] sm:w-[180px] h-8 text-xs sm:text-sm pl-7"
+              className="w-full sm:w-[200px] h-8 text-xs sm:text-sm pl-7"
             />
           </div>
+          
           <DateRangePicker
             dateRange={dateRange}
             onDateRangeChange={handleDateRangeChange}
-            className="h-8"
-            placeholder="Data"
+            className="h-8 w-full sm:w-auto"
+            placeholder="Período"
           />
+          
           <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
-            <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs sm:text-sm">
+            <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs sm:text-sm">
               <SelectValue>
                 {statusFilter === 'all' ? 'Status' : statusFilter === 'paid' ? 'Pago' : statusFilter === 'generated' ? 'Gerado' : 'Expirado'}
               </SelectValue>
@@ -263,8 +268,9 @@ export const TransacoesGlobaisSection = () => {
               <SelectItem value="expired">Expirado</SelectItem>
             </SelectContent>
           </Select>
+
           <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-            <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs sm:text-sm">
+            <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs sm:text-sm">
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               <SelectValue>{getDateFilterLabel()}</SelectValue>
             </SelectTrigger>
