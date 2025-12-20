@@ -108,6 +108,139 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// ============= PRODUCT NAME SANITIZATION FOR VALORION =============
+// Valorion blocks certain keywords related to food, gambling, etc.
+// This function replaces blocked keywords with safe alternatives
+
+const VALORION_BLOCKED_KEYWORDS: Record<string, string> = {
+  // Food-related (blocked by Valorion)
+  'lanche': 'item',
+  'lanches': 'itens',
+  'comida': 'produto',
+  'comidas': 'produtos',
+  'alimento': 'produto',
+  'alimentos': 'produtos',
+  'refeição': 'item',
+  'refeicao': 'item',
+  'refeições': 'itens',
+  'refeicoes': 'itens',
+  'pizza': 'item',
+  'pizzas': 'itens',
+  'hamburguer': 'item',
+  'hamburger': 'item',
+  'sanduiche': 'item',
+  'sanduíche': 'item',
+  'salgado': 'item',
+  'salgados': 'itens',
+  'doce': 'item',
+  'doces': 'itens',
+  'bebida': 'item',
+  'bebidas': 'itens',
+  'cerveja': 'item',
+  'cervejas': 'itens',
+  'vinho': 'item',
+  'vinhos': 'itens',
+  'refrigerante': 'item',
+  'refrigerantes': 'itens',
+  'suco': 'item',
+  'sucos': 'itens',
+  'café': 'item',
+  'cafe': 'item',
+  'açaí': 'item',
+  'acai': 'item',
+  'sorvete': 'item',
+  'sorvetes': 'itens',
+  'bolo': 'item',
+  'bolos': 'itens',
+  'pastel': 'item',
+  'pastéis': 'itens',
+  'pasteis': 'itens',
+  'coxinha': 'item',
+  'coxinhas': 'itens',
+  'esfiha': 'item',
+  'esfirra': 'item',
+  'pão': 'item',
+  'pao': 'item',
+  'pães': 'itens',
+  'paes': 'itens',
+  'torta': 'item',
+  'tortas': 'itens',
+  'marmita': 'item',
+  'marmitas': 'itens',
+  'quentinha': 'item',
+  'quentinhas': 'itens',
+  
+  // Gambling-related (likely blocked)
+  'aposta': 'serviço',
+  'apostas': 'serviços',
+  'bet': 'serviço',
+  'bets': 'serviços',
+  'cassino': 'serviço',
+  'casino': 'serviço',
+  'cassinos': 'serviços',
+  'casinos': 'serviços',
+  'jogo': 'produto',
+  'jogos': 'produtos',
+  'loteria': 'serviço',
+  'loterias': 'serviços',
+  'rifa': 'contribuição',
+  'rifas': 'contribuições',
+  'sorteio': 'evento',
+  'sorteios': 'eventos',
+  'roleta': 'serviço',
+  'poker': 'serviço',
+  'pôquer': 'serviço',
+  'slot': 'serviço',
+  'slots': 'serviços',
+  'caça-níquel': 'serviço',
+  'caça-niqueis': 'serviços',
+  
+  // Adult content (likely blocked)
+  'adult': 'produto',
+  'adulto': 'produto',
+  'sexy': 'produto',
+  
+  // Crypto/Financial (may be blocked)
+  'crypto': 'ativo',
+  'cripto': 'ativo',
+  'bitcoin': 'ativo',
+  'ethereum': 'ativo',
+  'token': 'ativo',
+  'tokens': 'ativos',
+  'nft': 'ativo digital',
+};
+
+function sanitizeProductNameForValorian(productName: string): { sanitized: string; wasModified: boolean; replacements: string[] } {
+  let sanitized = productName;
+  const replacements: string[] = [];
+  
+  for (const [blocked, replacement] of Object.entries(VALORION_BLOCKED_KEYWORDS)) {
+    // Case-insensitive replacement with word boundaries
+    const regex = new RegExp(`\\b${blocked}\\b`, 'gi');
+    if (regex.test(sanitized)) {
+      replacements.push(`"${blocked}" → "${replacement}"`);
+      sanitized = sanitized.replace(regex, replacement);
+    }
+  }
+  
+  // Clean up multiple spaces
+  sanitized = sanitized.replace(/\s+/g, ' ').trim();
+  
+  // If the result is empty or too short, use a generic name
+  if (!sanitized || sanitized.length < 3) {
+    sanitized = 'Produto Digital';
+    if (productName && productName.length >= 3) {
+      replacements.push(`Nome completo sanitizado para "Produto Digital"`);
+    }
+  }
+  
+  return {
+    sanitized,
+    wasModified: replacements.length > 0,
+    replacements
+  };
+}
+
 // Get user fee config or default
 async function getUserFeeConfig(supabase: any, userId?: string): Promise<FeeConfig | null> {
   if (userId) {
@@ -396,7 +529,18 @@ serve(async (req) => {
     console.log('[VALORION] Generated txid:', txid);
 
     // Get product name from checkout_offers if not provided
-    const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
+    const rawProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);
+    
+    // Sanitize product name to avoid Valorion blocked keywords
+    const { sanitized: sanitizedProductName, wasModified, replacements } = sanitizeProductNameForValorian(rawProductName);
+    const finalProductName = sanitizedProductName;
+    
+    if (wasModified) {
+      console.log('[VALORION] ⚠️ Product name was sanitized:');
+      console.log('[VALORION]   Original:', rawProductName);
+      console.log('[VALORION]   Sanitized:', sanitizedProductName);
+      console.log('[VALORION]   Replacements:', replacements.join(', '));
+    }
     
     // Use donor name without special characters to avoid API issues
     const rawDonorName = donorName || getRandomName();
@@ -406,7 +550,7 @@ serve(async (req) => {
       .replace(/[^a-zA-Z\s]/g, '');
     
     console.log('[VALORION] Donor name:', finalDonorName);
-    console.log('[VALORION] Product name:', finalProductName);
+    console.log('[VALORION] Product name (final):', finalProductName);
     
     // Generate customer data
     const customerCPF = generateRandomCPF();
@@ -519,6 +663,8 @@ serve(async (req) => {
     }
 
     // Registrar transação (skip for health checks)
+    // Note: We save the ORIGINAL product name in the database for user reference,
+    // the sanitized name is only used in the Valorion API request
     if (!healthCheck) {
       await logPixGenerated(
         supabase,
@@ -527,7 +673,7 @@ serve(async (req) => {
         pixCode,
         finalDonorName,
         utmData,
-        finalProductName,
+        rawProductName, // Use original name for database record
         userId,
         popupModel,
         feeConfig?.pix_percentage,
