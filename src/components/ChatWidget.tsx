@@ -51,6 +51,13 @@ interface AutoMessage {
   order: number;
 }
 
+interface BusinessHour {
+  day: number; // 0-6 (Domingo a Sábado)
+  enabled: boolean;
+  start: string; // "08:00"
+  end: string;   // "18:00"
+}
+
 export interface ChatWidgetConfig {
   is_enabled: boolean;
   title: string;
@@ -73,6 +80,8 @@ export interface ChatWidgetConfig {
   show_bottom_nav: boolean;
   logo_url: string | null;
   auto_messages?: AutoMessage[];
+  business_hours_enabled?: boolean;
+  business_hours?: BusinessHour[];
 }
 
 interface ChatWidgetProps {
@@ -101,6 +110,31 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
   const [followUpsSent, setFollowUpsSent] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if currently within business hours
+  const isBusinessHoursOpen = (): boolean => {
+    if (!config.business_hours_enabled || !config.business_hours?.length) {
+      return true; // If not configured, always online
+    }
+    
+    const now = new Date();
+    const currentDay = now.getDay(); // 0-6
+    const currentTime = now.getHours() * 60 + now.getMinutes(); // Minutes since midnight
+    
+    const todayHours = config.business_hours.find(h => h.day === currentDay);
+    
+    if (!todayHours?.enabled) return false;
+    
+    const [startHour, startMin] = todayHours.start.split(':').map(Number);
+    const [endHour, endMin] = todayHours.end.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    return currentTime >= startMinutes && currentTime <= endMinutes;
+  };
+
+  const isOnline = isBusinessHoursOpen();
 
   // Update last activity time
   const updateLastActivity = () => {
@@ -573,7 +607,14 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
                 )}
                 <div>
                   <h3 className="font-semibold text-white">{config.title || 'Suporte'}</h3>
-                  <p className="text-xs text-white/70">{config.subtitle || 'Estamos online'}</p>
+                  <div className="flex items-center gap-1.5">
+                    {isOnline && (
+                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                    )}
+                    <p className="text-xs text-white/70">
+                      {isOnline ? (config.subtitle || 'Estamos online') : 'Estamos offline'}
+                    </p>
+                  </div>
                 </div>
               </div>
               <button 

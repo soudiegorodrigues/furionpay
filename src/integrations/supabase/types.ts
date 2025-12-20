@@ -269,6 +269,8 @@ export type Database = {
         Row: {
           action_cards: Json | null
           auto_messages: Json | null
+          business_hours: Json | null
+          business_hours_enabled: boolean | null
           created_at: string | null
           greeting_text: string | null
           help_label: string | null
@@ -296,6 +298,8 @@ export type Database = {
         Insert: {
           action_cards?: Json | null
           auto_messages?: Json | null
+          business_hours?: Json | null
+          business_hours_enabled?: boolean | null
           created_at?: string | null
           greeting_text?: string | null
           help_label?: string | null
@@ -323,6 +327,8 @@ export type Database = {
         Update: {
           action_cards?: Json | null
           auto_messages?: Json | null
+          business_hours?: Json | null
+          business_hours_enabled?: boolean | null
           created_at?: string | null
           greeting_text?: string | null
           help_label?: string | null
