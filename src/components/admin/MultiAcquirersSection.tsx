@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { AcquirerConfigSection } from "./AcquirerConfigSection";
 import { RetryConfigSection } from "./RetryConfigSection";
 import { GatewayConfigSection } from "./GatewayConfigSection";
-import { AcquirerHealthDashboard } from "./AcquirerHealthDashboard";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -260,10 +259,7 @@ export const MultiAcquirersSection = () => {
           {/* 2. Configuração de Retentativas (máximo 3 adquirentes) */}
           <RetryConfigSection />
 
-          {/* 3. Monitoramento de Saúde em Tempo Real */}
-          <AcquirerHealthDashboard />
-
-          {/* 4. Configurações de Gateways (API Keys, Taxas, Testar conexão) */}
+          {/* 3. Configurações de Gateways (API Keys, Taxas, Testar conexão) */}
           <GatewayConfigSection />
         </div>
       )}
