@@ -118,11 +118,11 @@ const AdminVendas = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Pago</Badge>;
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px] px-1.5 py-0">Pago</Badge>;
       case 'expired':
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Expirado</Badge>;
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">Expirado</Badge>;
       default:
-        return <Badge className="bg-red-500/80 text-white border-red-500/50">Gerado</Badge>;
+        return <Badge className="bg-red-500/80 text-white border-red-500/50 text-[10px] px-1.5 py-0">Gerado</Badge>;
     }
   };
 
