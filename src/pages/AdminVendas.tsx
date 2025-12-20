@@ -201,15 +201,15 @@ const AdminVendas = () => {
         setFeeConfig(feeData as FeeConfig);
       }
 
-      // Load transactions
+      // Load transactions (initial 100)
       const { data, error } = await supabase.rpc('get_user_transactions', {
-        p_limit: 100 // Load recent transactions like dashboard
+        p_limit: 100
       });
 
       if (error) throw error;
       const txs = data as unknown as Transaction[] || [];
       setTransactions(txs);
-      setHasMoreTransactions(false);
+      setHasMoreTransactions(txs.length >= 100);
     } catch (error) {
       console.error('Error loading transactions:', error);
       toast({
@@ -219,6 +219,34 @@ const AdminVendas = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Load all transactions when user clicks "Carregar Todas"
+  const loadAllTransactions = async () => {
+    setIsLoadingMore(true);
+    try {
+      const { data, error } = await supabase.rpc('get_user_transactions', {
+        p_limit: 0 // Get all transactions
+      });
+
+      if (error) throw error;
+      const txs = data as unknown as Transaction[] || [];
+      setTransactions(txs);
+      setHasMoreTransactions(false);
+      toast({
+        title: "Sucesso",
+        description: `${txs.length} transações carregadas`,
+      });
+    } catch (error) {
+      console.error('Error loading all transactions:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar todas as transações",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -543,6 +571,30 @@ const AdminVendas = () => {
                   </div>
                 )}
               </div>
+              
+              {/* Load All Button */}
+              {hasMoreTransactions && (
+                <div className="flex justify-center mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={loadAllTransactions}
+                    disabled={isLoadingMore}
+                    className="gap-2"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Carregando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4" />
+                        Carregar Todas as Transações
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </CardContent>
