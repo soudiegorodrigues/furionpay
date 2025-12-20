@@ -227,47 +227,52 @@ export function ChatConfigSection() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <MessageCircle className="h-6 w-6 text-primary" />
-            Chat Widget
-          </h2>
-          <p className="text-muted-foreground">
-            Configure o popup de atendimento que aparece no checkout
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowPreview(!showPreview)}
-            className="gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            {showPreview ? "Ocultar Preview" : "Ver Preview"}
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-            <Save className="h-4 w-4" />
-            {isSaving ? "Salvando..." : "Salvar"}
-          </Button>
-        </div>
-      </div>
+    <div className="max-w-5xl mx-auto">
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Chat de Suporte</CardTitle>
+                <CardDescription>
+                  Configure o widget de suporte interno para os sellers da plataforma
+                </CardDescription>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPreview(!showPreview)}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                {showPreview ? "Ocultar Preview" : "Ver Preview"}
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+                <Save className="h-4 w-4" />
+                {isSaving ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <Switch
+              checked={config.is_enabled}
+              onCheckedChange={(checked) => setConfig(prev => ({ ...prev, is_enabled: checked }))}
+            />
+            <div>
+              <Label className="text-base font-medium">Ativar Chat Widget</Label>
+              <p className="text-sm text-muted-foreground">
+                Quando ativado, o chat aparecerá no painel administrativo para os sellers
+              </p>
+            </div>
+          </div>
 
-      <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-        <Switch
-          checked={config.is_enabled}
-          onCheckedChange={(checked) => setConfig(prev => ({ ...prev, is_enabled: checked }))}
-        />
-        <div>
-          <Label className="text-base font-medium">Ativar Chat Widget</Label>
-          <p className="text-sm text-muted-foreground">
-            Quando ativado, o chat aparecerá nas páginas de checkout
-          </p>
-        </div>
-      </div>
-
-      <Tabs defaultValue="appearance" className="w-full">
+          <Tabs defaultValue="appearance" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="appearance">Aparência</TabsTrigger>
           <TabsTrigger value="team">Equipe</TabsTrigger>
@@ -563,7 +568,9 @@ export function ChatConfigSection() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Preview */}
       {showPreview && (
