@@ -344,13 +344,34 @@ serve(async (req) => {
   const startTime = Date.now();
   const supabase = getSupabaseClient();
   
-  console.log(`[HEALTH-CHECK] Starting health check for all acquirers (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms) - NO TRANSACTIONS WILL BE CREATED...`);
+  // Parse request body to check for singleAcquirer parameter
+  let singleAcquirer: string | null = null;
+  try {
+    const body = await req.json();
+    singleAcquirer = body?.singleAcquirer || null;
+  } catch {
+    // No body or invalid JSON - check all acquirers
+  }
+  
+  // Determine which acquirers to check
+  const acquirersToCheck = singleAcquirer 
+    ? ACQUIRERS.filter(a => a === singleAcquirer)
+    : ACQUIRERS;
+  
+  if (singleAcquirer && acquirersToCheck.length === 0) {
+    return new Response(
+      JSON.stringify({ error: `Adquirente desconhecido: ${singleAcquirer}` }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  console.log(`[HEALTH-CHECK] Starting health check for ${singleAcquirer || 'all acquirers'} (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms) - NO TRANSACTIONS WILL BE CREATED...`);
   
   const results: Record<string, { success: boolean; responseTime: number; error?: string }> = {};
   
-  // Check all acquirers in parallel for maximum speed
+  // Check acquirers in parallel for maximum speed
   const healthChecks = await Promise.all(
-    ACQUIRERS.map(async (acquirer) => {
+    acquirersToCheck.map(async (acquirer) => {
       // First check if acquirer is enabled
       const isEnabled = await isAcquirerEnabled(supabase, acquirer);
       
