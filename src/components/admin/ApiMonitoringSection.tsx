@@ -218,7 +218,7 @@ const AcquirerCard = memo(({ name, health, getStatusColor, getStatusIcon }: Acqu
           <div className="flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-xs min-w-0">
             <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Média:</span>
-            <span className="font-medium truncate">{health.avg_response_time ?? '-'}ms</span>
+            <span className="font-medium truncate">{health.avg_response_time !== null ? Math.round(health.avg_response_time) : '-'}ms</span>
           </div>
           {health.circuit_opens > 0 && (
             <Badge variant="outline" className="text-[8px] sm:text-[9px] shrink-0 h-4 px-1">
