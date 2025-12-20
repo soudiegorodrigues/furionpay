@@ -20,6 +20,7 @@ const CheckoutTemplateAfilia = lazy(() => import("@/components/checkout/Checkout
 const CheckoutTemplateMultistep = lazy(() => import("@/components/checkout/CheckoutTemplateMultistep").then(m => ({ default: m.CheckoutTemplateMultistep })));
 const CheckoutPixPayment = lazy(() => import("@/components/checkout/CheckoutPixPayment").then(m => ({ default: m.CheckoutPixPayment })));
 const ExitIntentPopup = lazy(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })));
+const ChatWidgetLoader = lazy(() => import("@/components/ChatWidgetLoader").then(m => ({ default: m.ChatWidgetLoader })));
 
 // Minimal skeleton for instant render - CSS-only, no JS
 const CheckoutSkeleton = memo(() => (
@@ -511,6 +512,11 @@ export default function PublicCheckout() {
             imageUrl={config?.discount_popup_image_url || undefined}
             onCtaClick={handleApplyDiscount}
           />
+        </Suspense>
+      )}
+      {config?.user_id && (
+        <Suspense fallback={null}>
+          <ChatWidgetLoader userId={config.user_id} />
         </Suspense>
       )}
     </Suspense>

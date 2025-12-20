@@ -333,6 +333,86 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_widget_config: {
+        Row: {
+          automation_flow_id: string | null
+          created_at: string | null
+          help_label: string | null
+          help_url: string | null
+          icon_type: string | null
+          id: string
+          is_enabled: boolean | null
+          position: string | null
+          primary_color: string | null
+          show_help_button: boolean | null
+          show_typing_indicator: boolean | null
+          show_whatsapp_button: boolean | null
+          subtitle: string | null
+          team_avatars: Json | null
+          title: string | null
+          typing_delay_ms: number | null
+          updated_at: string | null
+          user_id: string
+          welcome_message: string | null
+          whatsapp_label: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          automation_flow_id?: string | null
+          created_at?: string | null
+          help_label?: string | null
+          help_url?: string | null
+          icon_type?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          position?: string | null
+          primary_color?: string | null
+          show_help_button?: boolean | null
+          show_typing_indicator?: boolean | null
+          show_whatsapp_button?: boolean | null
+          subtitle?: string | null
+          team_avatars?: Json | null
+          title?: string | null
+          typing_delay_ms?: number | null
+          updated_at?: string | null
+          user_id: string
+          welcome_message?: string | null
+          whatsapp_label?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          automation_flow_id?: string | null
+          created_at?: string | null
+          help_label?: string | null
+          help_url?: string | null
+          icon_type?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          position?: string | null
+          primary_color?: string | null
+          show_help_button?: boolean | null
+          show_typing_indicator?: boolean | null
+          show_whatsapp_button?: boolean | null
+          subtitle?: string | null
+          team_avatars?: Json | null
+          title?: string | null
+          typing_delay_ms?: number | null
+          updated_at?: string | null
+          user_id?: string
+          welcome_message?: string | null
+          whatsapp_label?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_widget_config_automation_flow_id_fkey"
+            columns: ["automation_flow_id"]
+            isOneToOne: false
+            referencedRelation: "chat_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_offers: {
         Row: {
           created_at: string
