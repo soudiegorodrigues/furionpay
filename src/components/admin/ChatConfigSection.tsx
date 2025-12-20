@@ -18,6 +18,16 @@ interface TeamAvatar {
   url: string;
 }
 
+interface ActionCard {
+  id: string;
+  icon: string;
+  iconBg: string;
+  title: string;
+  subtitle: string;
+  action: 'message' | 'messages' | 'help' | 'whatsapp' | 'link';
+  link?: string;
+}
+
 interface ChatConfig {
   id?: string;
   is_enabled: boolean;
@@ -36,12 +46,24 @@ interface ChatConfig {
   welcome_message: string;
   show_typing_indicator: boolean;
   typing_delay_ms: number;
+  // New fields for Proxyseller-style widget
+  action_cards: ActionCard[];
+  greeting_text: string;
+  show_bottom_nav: boolean;
+  logo_url: string | null;
 }
+
+const defaultActionCards: ActionCard[] = [
+  { id: '1', icon: 'message', iconBg: 'bg-blue-500', title: 'Enviar mensagem', subtitle: 'Fale com nossa equipe', action: 'message' },
+  { id: '2', icon: 'clock', iconBg: 'bg-orange-500', title: 'Mensagem recente', subtitle: 'Veja suas conversas', action: 'messages' },
+  { id: '3', icon: 'help', iconBg: 'bg-purple-500', title: 'Central de ajuda', subtitle: 'Tire suas dúvidas', action: 'help' },
+  { id: '4', icon: 'whatsapp', iconBg: 'bg-green-500', title: 'WhatsApp', subtitle: 'Atendimento rápido', action: 'whatsapp' }
+];
 
 const defaultConfig: ChatConfig = {
   is_enabled: true,
-  title: "Atendimento",
-  subtitle: "Suporte está online",
+  title: "Suporte",
+  subtitle: "Estamos online",
   primary_color: "#ef4444",
   icon_type: "chat",
   show_whatsapp_button: true,
@@ -55,6 +77,10 @@ const defaultConfig: ChatConfig = {
   welcome_message: "Olá! 👋 Como posso ajudar você hoje?",
   show_typing_indicator: true,
   typing_delay_ms: 1500,
+  action_cards: defaultActionCards,
+  greeting_text: "Olá! 👋",
+  show_bottom_nav: true,
+  logo_url: null,
 };
 
 export function ChatConfigSection() {
@@ -90,8 +116,8 @@ export function ChatConfigSection() {
         setConfig({
           id: data.id,
           is_enabled: data.is_enabled ?? true,
-          title: data.title ?? "Atendimento",
-          subtitle: data.subtitle ?? "Suporte está online",
+          title: data.title ?? "Suporte",
+          subtitle: data.subtitle ?? "Estamos online",
           primary_color: data.primary_color ?? "#ef4444",
           icon_type: data.icon_type ?? "chat",
           show_whatsapp_button: data.show_whatsapp_button ?? true,
@@ -105,6 +131,10 @@ export function ChatConfigSection() {
           welcome_message: data.welcome_message ?? "Olá! 👋 Como posso ajudar você hoje?",
           show_typing_indicator: data.show_typing_indicator ?? true,
           typing_delay_ms: data.typing_delay_ms ?? 1500,
+          action_cards: Array.isArray(data.action_cards) ? (data.action_cards as unknown as ActionCard[]) : defaultActionCards,
+          greeting_text: (data as any).greeting_text ?? "Olá! 👋",
+          show_bottom_nav: (data as any).show_bottom_nav ?? true,
+          logo_url: (data as any).logo_url ?? null,
         });
       }
     } catch (error) {
