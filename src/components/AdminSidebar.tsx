@@ -1,4 +1,4 @@
-import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark, Users } from "lucide-react";
+import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark, Users, ShoppingCart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -24,6 +24,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { title: "Admin", url: "/admin", icon: Shield, adminOnly: true },
   { title: "Dashboard", url: "/admin/dashboard", icon: BarChart3, permission: "can_view_dashboard" },
+  { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart, permission: "can_view_transactions" },
   { title: "Produtos", url: "/admin/products", icon: Package, permission: "can_manage_products" },
   { title: "Checkout API", url: "/admin/checkout", icon: CreditCard, permission: "can_manage_checkout" },
   { title: "Integrações", url: "/admin/integrations", icon: Puzzle, permission: "can_manage_integrations" },

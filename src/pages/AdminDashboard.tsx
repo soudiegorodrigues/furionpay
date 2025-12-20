@@ -1,20 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useConfetti } from "@/hooks/useConfetti";
 import { AccessDenied } from "@/components/AccessDenied";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, ChevronLeft, ChevronRight, Calendar, QrCode, History, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -55,10 +53,8 @@ interface ChartData {
   pagos: number;
   valorPago: number;
 }
-const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
-type StatusFilter = 'all' | 'paid' | 'generated';
 interface FeeConfig {
   pix_percentage: number;
   pix_fixed: number;
@@ -114,21 +110,12 @@ const AdminDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
   const [isLoadingPeriodStats, setIsLoadingPeriodStats] = useState(true);
   const [isLoadingChart, setIsLoadingChart] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
-  const [transactionOffset, setTransactionOffset] = useState(0);
-  const TRANSACTIONS_PER_LOAD = 100;
-  const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [hideData, setHideData] = useState(() => {
     return localStorage.getItem('dashboard_hide_data') === 'true';
   });
@@ -387,30 +374,17 @@ const AdminDashboard = () => {
           });
         }
       }
-      if (feeData) {
-        setFeeConfig(feeData as FeeConfig);
-      }
-
-      // PHASE 2: Load transactions in BACKGROUND (doesn't block UI)
-      if (resetTransactions) {
-        setIsLoadingTransactions(true);
-      }
+      // Load transactions for local stats calculations
       supabase.rpc('get_user_transactions', {
-        p_limit: 10
+        p_limit: 100
       }).then(({
         data,
         error
       }) => {
         if (!error && data) {
           const newTx = data as unknown as Transaction[] || [];
-          if (resetTransactions) {
-            setTransactions(newTx);
-            setTransactionOffset(10);
-            // If we got exactly 10, there might be more
-            setHasMoreTransactions(newTx.length === 10);
-          }
+          setTransactions(newTx);
         }
-        setIsLoadingTransactions(false);
       });
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
@@ -426,33 +400,6 @@ const AdminDashboard = () => {
       }
     } finally {
       setIsLoading(false);
-    }
-  };
-  const loadMoreTransactions = async () => {
-    if (isLoadingMore || !hasMoreTransactions) return;
-    setIsLoadingMore(true);
-    try {
-      // Load all transactions when user clicks "Ver mais"
-      const {
-        data,
-        error
-      } = await supabase.rpc('get_user_transactions', {
-        p_limit: 0
-      });
-      if (error) throw error;
-      const allTx = data as unknown as Transaction[] || [];
-      setTransactions(allTx);
-      setTransactionOffset(allTx.length);
-      setHasMoreTransactions(false);
-    } catch (error) {
-      console.error('Error loading more transactions:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar mais transações",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoadingMore(false);
     }
   };
   const formatCurrency = (value: number) => {
@@ -488,81 +435,6 @@ const AdminDashboard = () => {
       <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
       <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
     </svg>;
-  const getFilterDays = (filter: DateFilter): number => {
-    switch (filter) {
-      case 'today':
-        return 1;
-      case 'yesterday':
-        return 1;
-      case '7days':
-        return 7;
-      case '15days':
-        return 15;
-      case 'month':
-        return 30;
-      case 'year':
-        return 365;
-      default:
-        return 30;
-    }
-  };
-  const getChartDays = (filter: ChartFilter): number => {
-    switch (filter) {
-      case 'today':
-        return 1;
-      case '7days':
-        return 7;
-      case '14days':
-        return 14;
-      case '30days':
-        return 30;
-      default:
-        return 30;
-    }
-  };
-  const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
-
-    // Filter by date
-    if (dateFilter !== 'all') {
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      filtered = filtered.filter(tx => {
-        const txDate = new Date(tx.created_at);
-        switch (dateFilter) {
-          case 'today':
-            return txDate >= startOfDay;
-          case 'yesterday':
-            const yesterday = new Date(startOfDay);
-            yesterday.setDate(yesterday.getDate() - 1);
-            return txDate >= yesterday && txDate < startOfDay;
-          case '7days':
-            const sevenDaysAgo = new Date(startOfDay);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            return txDate >= sevenDaysAgo;
-          case '15days':
-            const fifteenDaysAgo = new Date(startOfDay);
-            fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
-            return txDate >= fifteenDaysAgo;
-          case 'month':
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            return txDate >= startOfMonth;
-          case 'year':
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            return txDate >= startOfYear;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(tx => tx.status === statusFilter);
-    }
-    return filtered;
-  }, [transactions, dateFilter, statusFilter]);
-
   // Helper to get Brazil date string (YYYY-MM-DD) from a date
   const getBrazilDateStr = (date: Date): string => {
     return date.toLocaleDateString('en-CA', {
@@ -652,12 +524,6 @@ const AdminDashboard = () => {
   const totalBalance = useMemo(() => {
     return transactions.filter(tx => tx.status === 'paid').reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
   }, [transactions, feeConfig]);
-  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [dateFilter]);
 
   // Permission check - AFTER all hooks
   if (!permissionsLoading && !isOwner && !hasPermission('can_view_dashboard')) {
@@ -1013,96 +879,23 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <CardTitle className="text-sm sm:text-lg">Histórico de Transações</CardTitle>
+      {/* Quick Link to Vendas */}
+      <Card className="border-dashed border-2 hover:border-primary/50 transition-colors">
+        <CardContent className="p-6">
+          <Link to="/admin/vendas" className="flex items-center justify-between group">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+                <ShoppingCart className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Histórico de Vendas</h3>
+                <p className="text-sm text-muted-foreground">Ver todas as transações com filtros avançados</p>
+              </div>
             </div>
-            <Select value={statusFilter} onValueChange={v => {
-            setStatusFilter(v as StatusFilter);
-            setCurrentPage(1);
-          }}>
-              <SelectTrigger className="w-[110px] h-8 text-xs">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="paid">Pago</SelectItem>
-                <SelectItem value="generated">Gerado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? <p className="text-muted-foreground text-center py-8 text-sm">Carregando...</p> : <>
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Data</TableHead>
-                      <TableHead className="text-xs">Nome</TableHead>
-                      <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
-                      <TableHead className="text-xs">Valor</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs hidden md:table-cell">Posicionamento</TableHead>
-                      <TableHead className="text-xs text-center">UTM Tracking</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedTransactions.map(tx => <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/70 transition-colors" onClick={() => {
-                  setSelectedTransaction(tx);
-                  setIsSheetOpen(true);
-                }}>
-                        <TableCell className="text-xs whitespace-nowrap">{formatDate(tx.created_at)}</TableCell>
-                        <TableCell className="text-xs max-w-[100px] truncate">{hideData ? "•••••" : tx.donor_name}</TableCell>
-                        <TableCell className="text-xs hidden sm:table-cell max-w-[100px] truncate">{tx.product_name || '-'}</TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">{maskValue(calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed))}</TableCell>
-                        <TableCell>{getStatusBadge(tx.status)}</TableCell>
-                        <TableCell className="text-xs hidden md:table-cell max-w-[100px] truncate">{tx.utm_data?.utm_term || '-'}</TableCell>
-                        <TableCell className="text-center">
-                          {tx.utm_data?.utm_source?.toLowerCase().includes('facebook') || tx.utm_data?.utm_source?.toLowerCase().includes('fb') || tx.utm_data?.utm_source?.toLowerCase().includes('meta') ? <FacebookIcon /> : tx.utm_data?.utm_source?.toLowerCase().includes('google') || tx.utm_data?.utm_source?.toLowerCase().includes('gads') || tx.utm_data?.utm_source?.toLowerCase().includes('adwords') ? <GoogleIcon /> : null}
-                        </TableCell>
-                      </TableRow>)}
-                    {paginatedTransactions.length === 0 && <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8 text-sm">
-                          Nenhuma transação encontrada
-                        </TableCell>
-                      </TableRow>}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className="flex flex-col gap-4 mt-4 pt-4 border-t">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {hasMoreTransactions 
-                      ? `Mostrando ${transactions.length} de ${periodStats.total_generated} transações`
-                      : `${periodStats.total_generated} transações no período`}
-                  </span>
-                  {totalPages > 1 && <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="text-xs text-muted-foreground px-2">
-                        {currentPage}/{totalPages}
-                      </span>
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>}
-                </div>
-                {hasMoreTransactions && <Button variant="outline" className="w-full" onClick={loadMoreTransactions} disabled={isLoadingMore}>
-                    {isLoadingMore ? 'Carregando todas as transações...' : `Ver mais transações (${periodStats.total_generated - transactions.length} restantes)`}
-                  </Button>}
-              </div>
-            </>}
+            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+          </Link>
         </CardContent>
       </Card>
-
-      {/* Transaction Details Sheet */}
-      <TransactionDetailsSheet transaction={selectedTransaction} open={isSheetOpen} onOpenChange={setIsSheetOpen} calculateNetAmount={calculateNetAmount} />
     </div>;
 };
 export default AdminDashboard;
