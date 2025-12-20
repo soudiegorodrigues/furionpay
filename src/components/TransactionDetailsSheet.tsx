@@ -133,7 +133,7 @@ const TransactionDetailsSheet = ({
                 <CreditCard className="h-3 w-3 text-muted-foreground" />
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Adquirente</span>
               </div>
-              <p className="text-xs font-medium">{getAcquirerDisplay(transaction.acquirer)}</p>
+              <p className="text-sm font-bold">{getAcquirerDisplay(transaction.acquirer)}</p>
             </div>
 
             {/* Produto */}
