@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Puzzle, Settings, Loader2 } from "lucide-react";
+import { Puzzle, Settings, Loader2, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { UtmifySection, UtmifyInitialData } from "@/components/admin/UtmifySection";
 import { ApiKeysSection } from "@/components/admin/ApiKeysSection";
+import { ChatConfigSection } from "@/components/admin/ChatConfigSection";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/AccessDenied";
 import utmifyLogo from "@/assets/utmify-logo.png";
@@ -24,9 +25,14 @@ const AdminIntegrations = () => {
   const [apiKeysCount, setApiKeysCount] = useState(0);
   const [loadingApiKeys, setLoadingApiKeys] = useState(false);
 
+  // Chat Widget state
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [chatEnabled, setChatEnabled] = useState(false);
+
   useEffect(() => {
     loadUtmifyStatus();
     loadApiKeysStatus();
+    loadChatWidgetStatus();
   }, []);
 
   const loadUtmifyStatus = async () => {
@@ -66,6 +72,23 @@ const AdminIntegrations = () => {
     }
   };
 
+  const loadChatWidgetStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('chat_widget_config')
+        .select('is_enabled')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      setChatEnabled(data?.is_enabled ?? false);
+    } catch (error) {
+      console.error('Error loading chat widget status:', error);
+    }
+  };
+
   const handleUtmifyClick = async () => {
     setLoadingUtmify(true);
     try {
@@ -102,6 +125,10 @@ const AdminIntegrations = () => {
     setLoadingApiKeys(false);
   };
 
+  const handleChatWidgetClick = () => {
+    setChatDialogOpen(true);
+  };
+
   const handleUtmifyDialogClose = () => {
     setUtmifyDialogOpen(false);
     setUtmifyInitialData(null);
@@ -111,6 +138,11 @@ const AdminIntegrations = () => {
   const handleApiDialogClose = () => {
     setApiDialogOpen(false);
     loadApiKeysStatus();
+  };
+
+  const handleChatDialogClose = () => {
+    setChatDialogOpen(false);
+    loadChatWidgetStatus();
   };
 
   // Permission check - AFTER all hooks
@@ -255,6 +287,60 @@ const AdminIntegrations = () => {
           {/* Decorative gradient line */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
         </Card>
+
+        {/* Chat Widget Card */}
+        <Card 
+          className="relative overflow-hidden cursor-pointer shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/30"
+          onClick={handleChatWidgetClick}
+        >
+          {/* Status indicator */}
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
+            {chatEnabled ? (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] sm:text-xs font-medium text-green-600">Ativo</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-muted border border-border">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">Desativado</span>
+              </div>
+            )}
+          </div>
+
+          <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center min-h-[180px] sm:min-h-[220px]">
+            {/* Icon container */}
+            <div className="relative mt-2 sm:mt-4 mb-4 sm:mb-6">
+              <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg" />
+              <div className="relative w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl">
+                <MessageCircle className="w-8 h-8 sm:w-12 sm:h-12 text-primary" />
+              </div>
+            </div>
+            
+            {/* Content */}
+            <h3 className="font-bold text-lg sm:text-xl mb-1.5 sm:mb-2 text-primary">Chat Widget</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-3 sm:mb-4">
+              Popup de atendimento com automação e WhatsApp
+            </p>
+            
+            {/* Action button */}
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleChatWidgetClick();
+              }}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Configurar
+            </Button>
+          </CardContent>
+          
+          {/* Decorative gradient line */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
+        </Card>
       </div>
 
       {/* Utmify Configuration Dialog */}
@@ -279,6 +365,19 @@ const AdminIntegrations = () => {
           <DialogTitle className="sr-only">API de Pagamentos</DialogTitle>
           <div className="p-3 sm:p-4">
             <ApiKeysSection />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Chat Widget Configuration Dialog */}
+      <Dialog open={chatDialogOpen} onOpenChange={handleChatDialogClose}>
+        <DialogContent 
+          className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 !animate-none !duration-0 data-[state=open]:!animate-none data-[state=closed]:!animate-none" 
+          aria-describedby={undefined}
+        >
+          <DialogTitle className="sr-only">Chat Widget</DialogTitle>
+          <div className="p-3 sm:p-4">
+            <ChatConfigSection />
           </div>
         </DialogContent>
       </Dialog>
