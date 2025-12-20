@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SPEDPAY_API_URL = 'https://api.spedpay.space';
+// SpedPay removed - using Valorion, Inter, and Ativus only
 const INTER_API_URL = 'https://cdpj.partners.bancointer.com.br';
 
 // Retry with exponential backoff configuration
@@ -33,7 +33,6 @@ const CIRCUIT_BREAKER_CONFIG = {
 
 // In-memory circuit breaker state (per acquirer)
 const circuitBreakers: Record<string, CircuitBreakerState> = {
-  spedpay: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   inter: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   ativus: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
   valorion: { failures: 0, lastFailure: 0, isOpen: false, openUntil: 0 },
@@ -231,20 +230,7 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-async function getApiKeyForUser(supabase: any, userId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'spedpay_api_key')
-    .eq('user_id', userId)
-    .single();
-  
-  if (error || !data?.value) {
-    return null;
-  }
-  
-  return data.value;
-}
+// SpedPay getApiKeyForUser removed - using Valorion, Inter, and Ativus only
 
 async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
   const { data, error } = await supabase
@@ -255,10 +241,10 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
     .single();
   
   if (error || !data?.value) {
-    return 'spedpay';
+    return 'valorion';
   }
   
-  return data.value || 'spedpay';
+  return data.value || 'valorion';
 }
 
 async function getAtivusApiKey(supabase: any, userId: string): Promise<string | null> {
@@ -630,64 +616,7 @@ async function checkInterStatus(txid: string, supabase: any): Promise<{ isPaid: 
   }
 }
 
-async function checkSpedPayStatus(txid: string, apiKey: string, supabase: any): Promise<{ isPaid: boolean; status: string; paidAt?: string }> {
-  console.log('Verificando status no SpedPay, txid:', txid);
-  const startTime = Date.now();
-
-  // Check circuit breaker
-  if (isCircuitOpen('spedpay')) {
-    await logMonitoringEvent(supabase, 'spedpay', 'circuit_open', undefined, 'Request blocked by circuit breaker');
-    return { isPaid: false, status: 'circuit_open' };
-  }
-
-  try {
-    const response = await fetchWithRetry(
-      `${SPEDPAY_API_URL}/v1/transactions/${txid}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-secret': apiKey,
-        },
-      },
-      `SpedPay status check for ${txid}`
-    );
-
-    const responseTime = Date.now() - startTime;
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('SpedPay API error:', response.status, errorText);
-      recordFailure('spedpay', supabase, `HTTP ${response.status}: ${errorText}`);
-      return { isPaid: false, status: 'error' };
-    }
-
-    const data = await response.json();
-    const spedpayStatus = data.status?.toLowerCase() || '';
-    const isPaid = ['paid', 'authorized', 'approved', 'completed', 'confirmed'].includes(spedpayStatus);
-
-    // Success - reset circuit breaker and log
-    recordSuccess('spedpay', supabase, responseTime);
-
-    if (isPaid) {
-      const { error } = await supabase.rpc('mark_pix_paid', { p_txid: txid });
-      if (error) {
-        console.error('Erro ao marcar PIX como pago:', error);
-      } else {
-        console.log('PIX marcado como pago com sucesso');
-      }
-    }
-
-    return {
-      isPaid,
-      status: isPaid ? 'paid' : spedpayStatus,
-    };
-  } catch (error) {
-    console.error(`SpedPay status check failed after retries for ${txid}:`, error);
-    recordFailure('spedpay', supabase, error instanceof Error ? error.message : 'Unknown error');
-    return { isPaid: false, status: 'retry_failed' };
-  }
-}
+// SpedPay checkSpedPayStatus function removed - using Valorion, Inter, and Ativus only
 
 // Ativus Hub correct API URL for status check - from documentation
 const ATIVUS_STATUS_URL = 'https://api.ativushub.com.br/s1/getTransaction/api/getTransactionStatus.php';
@@ -1007,23 +936,12 @@ serve(async (req) => {
       }
       result = await checkValorionStatus(txid, apiKey, supabase);
     } else {
-      let apiKey: string | null = null;
-      if (transaction.user_id) {
-        apiKey = await getApiKeyForUser(supabase, transaction.user_id);
-      }
-      if (!apiKey) {
-        apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
-      }
-      
-      if (!apiKey) {
-        console.error('No SpedPay API key available');
-        return new Response(
-          JSON.stringify({ error: 'API key not configured' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      result = await checkSpedPayStatus(txid, apiKey, supabase);
+      // Unknown acquirer - return error
+      console.error('Unknown or unsupported acquirer:', acquirer);
+      return new Response(
+        JSON.stringify({ error: `Unsupported acquirer: ${acquirer}. SpedPay has been removed.` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // If payment was just confirmed, send to Utmify

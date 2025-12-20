@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-forwarded-for, x-real-ip',
 };
 
-const SPEDPAY_API_URL = 'https://api.spedpay.space';
+// SpedPay removed - using Valorion, Inter, and Ativus only
 
 // Default Rate Limit Configuration (can be overridden by database settings)
 const DEFAULT_RATE_LIMIT_CONFIG = {
@@ -627,40 +627,7 @@ async function getUserAcquirer(userId?: string): Promise<string> {
   return data.value;
 }
 
-async function getApiKeyFromDatabase(userId?: string): Promise<string | null> {
-  const supabase = getSupabaseClient();
-  
-  // First try to get user-specific API key if userId provided
-  if (userId) {
-    const { data: userData, error: userError } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('key', 'spedpay_api_key')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (!userError && userData?.value) {
-      console.log('Using user-specific SpedPay API key');
-      return userData.value;
-    }
-  }
-  
-  // Fallback to global SpedPay API key from admin_settings (user_id = null)
-  const { data: globalData, error: globalError } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('key', 'spedpay_api_key')
-    .is('user_id', null)
-    .maybeSingle();
-  
-  if (!globalError && globalData?.value) {
-    console.log('Using global SpedPay API key from admin_settings');
-    return globalData.value;
-  }
-  
-  console.log('No SpedPay API key found in database');
-  return null;
-}
+// SpedPay functions removed - using Valorion, Inter, and Ativus only
 
 async function getProductNameFromDatabase(userId?: string, popupModel?: string): Promise<string> {
   const supabase = getSupabaseClient();
@@ -927,129 +894,7 @@ async function callAcquirer(
       }
     }
     
-    if (acquirer === 'spedpay') {
-      // Get SpedPay API key
-      let apiKey = await getApiKeyFromDatabase(params.userId);
-      if (!apiKey) {
-        apiKey = Deno.env.get('SPEDPAY_API_KEY') || null;
-      }
-      
-      if (!apiKey) {
-        return { success: false, error: 'SpedPay API key not configured' };
-      }
-      
-      const externalId = `donation_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      const donorName = params.customerName || getRandomName();
-      const donorEmail = getRandomEmail(donorName);
-      const donorPhone = getRandomPhone();
-      const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
-
-      const customerData: Record<string, any> = {
-        name: donorName,
-        email: donorEmail,
-        phone: donorPhone,
-        document_type: 'CPF',
-        document: '12345678909',
-      };
-
-      if (params.utmParams) {
-        if (params.utmParams.utm_source) customerData.utm_source = params.utmParams.utm_source;
-        if (params.utmParams.utm_medium) customerData.utm_medium = params.utmParams.utm_medium;
-        if (params.utmParams.utm_campaign) customerData.utm_campaign = params.utmParams.utm_campaign;
-        if (params.utmParams.utm_content) customerData.utm_content = params.utmParams.utm_content;
-        if (params.utmParams.utm_term) customerData.utm_term = params.utmParams.utm_term;
-      }
-
-      const transactionData = {
-        external_id: externalId,
-        total_amount: params.amount,
-        payment_method: 'PIX',
-        webhook_url: webhookUrl,
-        customer: customerData,
-        items: [
-          {
-            id: `item_${externalId}`,
-            title: params.productName,
-            description: params.productName,
-            price: params.amount,
-            quantity: 1,
-            is_physical: false,
-          }
-        ],
-        ip: params.clientIp || '0.0.0.0',
-      };
-
-      const response = await fetch(`${SPEDPAY_API_URL}/v1/transactions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-secret': apiKey,
-        },
-        body: JSON.stringify(transactionData),
-      });
-
-      const responseTime = Date.now() - startTime;
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        await logApiEvent('spedpay', 'failure', responseTime, errorText);
-        return { success: false, error: errorText };
-      }
-
-      const data = await response.json();
-      
-      let pixCode = data.pix?.payload || data.pix?.qr_code || data.pixCode || data.qr_code;
-      let qrCodeUrl = data.pix?.qr_code_url || data.qrCodeUrl;
-      const transactionId = data.id || externalId;
-
-      // If PIX code not in response, poll for it
-      if (!pixCode && data.id) {
-        for (let attempt = 1; attempt <= 5; attempt++) {
-          await delay(1500);
-          
-          const detailsResponse = await fetch(`${SPEDPAY_API_URL}/v1/transactions/${data.id}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-secret': apiKey,
-            },
-          });
-          
-          if (detailsResponse.ok) {
-            const detailsData = await detailsResponse.json();
-            pixCode = detailsData.pix?.payload || detailsData.pix?.qr_code || detailsData.pixCode || detailsData.qr_code;
-            qrCodeUrl = detailsData.pix?.qr_code_url || detailsData.qrCodeUrl;
-            
-            if (pixCode) break;
-          }
-        }
-      }
-
-      if (!pixCode) {
-        await logApiEvent('spedpay', 'failure', responseTime, 'PIX code not found after polling');
-        return { success: false, error: 'PIX code not found' };
-      }
-
-      // Log to database with fingerprint
-      await logPixGenerated(
-        params.amount, 
-        transactionId, 
-        pixCode, 
-        donorName, 
-        params.utmParams, 
-        params.productName, 
-        params.userId, 
-        params.popupModel,
-        params.feeConfig?.pix_percentage,
-        params.feeConfig?.pix_fixed,
-        'spedpay',
-        params.fingerprint,
-        params.clientIp
-      );
-
-      await logApiEvent('spedpay', 'success', responseTime);
-      return { success: true, pixCode, qrCodeUrl, transactionId };
-    }
+    // SpedPay removed - no longer supported
     
     return { success: false, error: `Unknown acquirer: ${acquirer}` };
   } catch (err) {
