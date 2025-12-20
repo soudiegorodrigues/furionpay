@@ -15,7 +15,6 @@ import {
   RefreshCw, 
   ChevronLeft, 
   ChevronRight, 
-  Calendar, 
   Search,
   Filter,
   Download,
@@ -24,6 +23,8 @@ import {
   BarChart3
 } from "lucide-react";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 
 interface UTMData {
   utm_source?: string;
@@ -64,7 +65,7 @@ interface PeriodStats {
 }
 
 const ITEMS_PER_PAGE = 10;
-type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
+type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all' | 'custom';
 type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
 
 const AdminVendas = () => {
@@ -81,6 +82,7 @@ const AdminVendas = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -286,36 +288,16 @@ const AdminVendas = () => {
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
 
-    // Filter by date
-    if (dateFilter !== 'all') {
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Filter by custom date range
+    if (dateFilter === 'custom' && dateRange?.from) {
+      const start = new Date(dateRange.from);
+      start.setHours(0, 0, 0, 0);
+      const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+      end.setHours(23, 59, 59, 999);
+      
       filtered = filtered.filter(tx => {
         const txDate = new Date(tx.created_at);
-        switch (dateFilter) {
-          case 'today':
-            return txDate >= startOfDay;
-          case 'yesterday':
-            const yesterday = new Date(startOfDay);
-            yesterday.setDate(yesterday.getDate() - 1);
-            return txDate >= yesterday && txDate < startOfDay;
-          case '7days':
-            const sevenDaysAgo = new Date(startOfDay);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            return txDate >= sevenDaysAgo;
-          case '15days':
-            const fifteenDaysAgo = new Date(startOfDay);
-            fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
-            return txDate >= fifteenDaysAgo;
-          case 'month':
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            return txDate >= startOfMonth;
-          case 'year':
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            return txDate >= startOfYear;
-          default:
-            return true;
-        }
+        return txDate >= start && txDate <= end;
       });
     }
 
@@ -323,7 +305,6 @@ const AdminVendas = () => {
     if (statusFilter !== 'all') {
       filtered = filtered.filter(tx => tx.status === statusFilter);
     }
-
 
     // Filter by search query (name or product)
     if (searchQuery.trim()) {
@@ -336,7 +317,7 @@ const AdminVendas = () => {
     }
 
     return filtered;
-  }, [transactions, dateFilter, statusFilter, searchQuery]);
+  }, [transactions, dateFilter, dateRange, statusFilter, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
@@ -346,7 +327,7 @@ const AdminVendas = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, statusFilter, searchQuery]);
+  }, [dateFilter, dateRange, statusFilter, searchQuery]);
 
   // Stats calculations
   const stats = useMemo(() => {
@@ -450,22 +431,19 @@ const AdminVendas = () => {
               />
             </div>
 
-            {/* Date Filter */}
-            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-              <SelectTrigger className="w-full lg:w-[160px]">
-                <Calendar className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="today">Hoje</SelectItem>
-                <SelectItem value="yesterday">Ontem</SelectItem>
-                <SelectItem value="7days">7 dias</SelectItem>
-                <SelectItem value="15days">15 dias</SelectItem>
-                <SelectItem value="month">Este mês</SelectItem>
-                <SelectItem value="year">Este ano</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Date Range Picker */}
+            <DateRangePicker
+              dateRange={dateRange}
+              onDateRangeChange={(range) => {
+                setDateRange(range);
+                if (range) {
+                  setDateFilter('custom');
+                } else {
+                  setDateFilter('all');
+                }
+              }}
+              placeholder="Selecione um intervalo"
+            />
 
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
