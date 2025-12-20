@@ -234,6 +234,9 @@ const AdminVendas = () => {
       const txs = data as unknown as Transaction[] || [];
       setTransactions(txs);
       setHasMoreTransactions(false);
+      // Change filter to "all" so user can see all loaded transactions
+      setDateFilter('all');
+      setStatusFilter('all');
       toast({
         title: "Sucesso",
         description: `${txs.length} transações carregadas`,
