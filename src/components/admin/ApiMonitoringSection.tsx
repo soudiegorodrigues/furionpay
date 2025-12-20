@@ -83,10 +83,10 @@ const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: Toolti
   if (!active || !payload?.length) return null;
   
   const dataPoint = payload[0]?.payload;
-  const spedpay = dataPoint?.spedpay ?? 0;
+  const valorion = dataPoint?.valorion ?? 0;
   const inter = dataPoint?.inter ?? 0;
   const ativus = dataPoint?.ativus ?? 0;
-  const total = spedpay + inter + ativus;
+  const total = valorion + inter + ativus;
 
   const formatTooltipLabel = () => {
     if (chartPeriod === '24h') {
@@ -115,7 +115,7 @@ const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: Toolti
             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#3B82F6]" />
             <span className="text-muted-foreground text-[10px] sm:text-xs">VALORION</span>
           </div>
-          <span className="font-semibold text-[11px] sm:text-sm">{spedpay}</span>
+          <span className="font-semibold text-[11px] sm:text-sm">{valorion}</span>
         </div>
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2">

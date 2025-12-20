@@ -393,16 +393,14 @@ export const ReceitaPlataformaSection = () => {
 
   const periodKey = getAcquirerPeriodKey();
   const breakdown = profitStats.acquirerBreakdown || {};
-  const spedpayData = breakdown.spedpay?.[periodKey] || { count: 0, cost: 0, volume: 0 };
   const interData = breakdown.inter?.[periodKey] || { count: 0, cost: 0, volume: 0 };
   const ativusData = breakdown.ativus?.[periodKey] || { count: 0, cost: 0, volume: 0 };
   const valorionData = breakdown.valorion?.[periodKey] || { count: 0, cost: 0, volume: 0 };
-  const totalCost = spedpayData.cost + interData.cost + ativusData.cost + valorionData.cost;
-  const totalCount = spedpayData.count + interData.count + ativusData.count + valorionData.count;
+  const totalCost = interData.cost + ativusData.cost + valorionData.cost;
+  const totalCount = interData.count + ativusData.count + valorionData.count;
   const avgCost = totalCount > 0 ? totalCost / totalCount : 0;
 
-  const hasAcquirerData = (breakdown.spedpay?.total?.count || 0) > 0 || 
-    (breakdown.inter?.total?.count || 0) > 0 || 
+  const hasAcquirerData = (breakdown.inter?.total?.count || 0) > 0 || 
     (breakdown.ativus?.total?.count || 0) > 0 ||
     (breakdown.valorion?.total?.count || 0) > 0;
 
@@ -639,14 +637,13 @@ export const ReceitaPlataformaSection = () => {
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { name: 'VALORION', data: spedpayData, color: '#3B82F6', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30' },
+                    { name: 'VALORION', data: valorionData, color: '#3B82F6', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30' },
                     { name: 'BANCO INTER', data: interData, color: '#F97316', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/30' },
-                    { name: 'ATIVUS HUB', data: ativusData, color: '#10B981', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
-                    { name: 'VALORION 2', data: valorionData, color: '#8B5CF6', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30' }
+                    { name: 'ATIVUS HUB', data: ativusData, color: '#10B981', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' }
                   ]
                     .sort((a, b) => b.data.volume - a.data.volume)
                     .map((acq, index) => {
-                      const totalVolume = spedpayData.volume + interData.volume + ativusData.volume + valorionData.volume;
+                      const totalVolume = interData.volume + ativusData.volume + valorionData.volume;
                       const percentage = totalVolume > 0 ? ((acq.data.volume / totalVolume) * 100).toFixed(1) : '0';
                       const netRevenue = acq.data.volume - acq.data.cost;
                       
@@ -707,12 +704,11 @@ export const ReceitaPlataformaSection = () => {
                 </p>
                 <div className="space-y-4">
                   {(() => {
-                    const totalVolume = spedpayData.volume + interData.volume + ativusData.volume + valorionData.volume;
+                    const totalVolume = interData.volume + ativusData.volume + valorionData.volume;
                     const acquirers = [
-                      { name: 'SpedPay', data: spedpayData, color: '#3B82F6' },
                       { name: 'Banco Inter', data: interData, color: '#F97316' },
                       { name: 'Ativus Hub', data: ativusData, color: '#10B981' },
-                      { name: 'Valorion', data: valorionData, color: '#8B5CF6' }
+                      { name: 'Valorion', data: valorionData, color: '#3B82F6' }
                     ]
                       .sort((a, b) => b.data.volume - a.data.volume);
                     

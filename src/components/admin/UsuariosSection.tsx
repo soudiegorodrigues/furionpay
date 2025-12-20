@@ -153,7 +153,7 @@ export const UsuariosSection = () => {
       const acquirersMap: Record<string, string> = {};
       (acquirerData || []).forEach((item) => {
         if (item.user_id) {
-          acquirersMap[item.user_id] = item.value || 'spedpay';
+          acquirersMap[item.user_id] = item.value || 'valorion';
         }
       });
 

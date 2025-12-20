@@ -593,8 +593,8 @@ async function getDefaultAcquirer(): Promise<string> {
     .maybeSingle();
   
   if (error || !data?.value) {
-    console.log('Default acquirer not configured, using spedpay');
-    return 'spedpay';
+    console.log('Default acquirer not configured, using valorion');
+    return 'valorion';
   }
   
   console.log('Platform default acquirer:', data.value);
@@ -1150,7 +1150,7 @@ serve(async (req) => {
     const isEnabled = await isAcquirerEnabled(acquirer);
     if (!isEnabled) {
       console.log(`Acquirer ${acquirer} is disabled`);
-      const acquirerName = acquirer === 'inter' ? 'Banco Inter' : acquirer === 'ativus' ? 'Ativus Hub' : 'SpedPay';
+      const acquirerName = acquirer === 'inter' ? 'Banco Inter' : acquirer === 'ativus' ? 'Ativus Hub' : 'Valorion';
       return new Response(
         JSON.stringify({ error: `Adquirente ${acquirerName} está desativada. Ative-a no painel admin ou selecione outra adquirente.` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
