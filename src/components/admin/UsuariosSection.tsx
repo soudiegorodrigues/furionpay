@@ -377,17 +377,11 @@ export const UsuariosSection = () => {
 
       setSelectedUserFeeConfig(feeData?.value || '');
 
-      // Fetch user total paid amount
-      const { data: transactionData } = await supabase
-        .from('pix_transactions')
-        .select('amount')
-        .eq('user_id', u.id)
-        .eq('status', 'paid');
-
-      if (transactionData) {
-        const total = transactionData.reduce((sum, t) => sum + (t.amount || 0), 0);
-        setUserTotalPaid(total);
-      }
+      // Fetch user total paid amount using RPC to bypass 1000 row limit
+      const { data: totalPaid } = await supabase.rpc('get_user_total_paid', {
+        p_user_id: u.id
+      });
+      setUserTotalPaid(totalPaid || 0);
     } catch {
       setSelectedUserAcquirer(defaultAcquirer);
       setSelectedUserFeeConfig('');
