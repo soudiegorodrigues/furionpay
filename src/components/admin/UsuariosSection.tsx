@@ -588,25 +588,16 @@ export const UsuariosSection = () => {
                           <TableCell className="text-xs max-w-[180px] truncate">{u.email}</TableCell>
                           <TableCell className="text-xs hidden md:table-cell whitespace-nowrap">{formatDate(u.created_at)}</TableCell>
                           <TableCell className="text-xs hidden lg:table-cell">
-                            <div className="flex items-center gap-1">
-                              <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
-                                {(() => {
-                                  const acq = userAcquirers[u.id] || defaultAcquirer;
-                                  return acq === 'inter' ? 'Banco Inter' : acq === 'ativus' ? 'Ativus Hub' : acq === 'valorion' ? 'Valorion' : 'VALORION';
-                                })()}
-                              </Badge>
-                              {userManualAcquirers[u.id] && (
-                                <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[10px] px-1">
-                                  Manual
-                                </Badge>
-                              )}
-                            </div>
+                            <span className="text-muted-foreground">
+                              {(() => {
+                                const acq = userAcquirers[u.id] || defaultAcquirer;
+                                return acq === 'inter' ? 'Banco Inter' : acq === 'ativus' ? 'Ativus Hub' : acq === 'valorion' ? 'Valorion' : 'VALORION';
+                              })()}
+                              {userManualAcquirers[u.id] && <span className="text-amber-600 ml-1">(M)</span>}
+                            </span>
                           </TableCell>
                           <TableCell className="text-xs hidden xl:table-cell">
-                            <Badge variant="outline" className="text-[10px] px-1.5">
-                              <Percent className="h-3 w-3 mr-1" />
-                              {getFeeConfigName(u.id)}
-                            </Badge>
+                            <span className="text-muted-foreground">{getFeeConfigName(u.id)}</span>
                           </TableCell>
                           <TableCell className="text-xs hidden sm:table-cell whitespace-nowrap font-medium text-green-600 dark:text-green-400">
                             R$ {(u.available_balance || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
