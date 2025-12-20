@@ -203,7 +203,7 @@ const AdminVendas = () => {
 
       // Load transactions
       const { data, error } = await supabase.rpc('get_user_transactions', {
-        p_limit: 0 // Get all transactions
+        p_limit: 100 // Load recent transactions like dashboard
       });
 
       if (error) throw error;
