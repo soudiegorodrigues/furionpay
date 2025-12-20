@@ -208,6 +208,8 @@ const AdminVendas = () => {
       const batchSize = 1000;
       let hasMore = true;
 
+      console.log('[AdminVendas] Iniciando carregamento de transações...');
+
       while (hasMore) {
         const { data, error } = await supabase.rpc('get_user_transactions', {
           p_limit: batchSize,
@@ -219,10 +221,14 @@ const AdminVendas = () => {
         const txs = data as unknown as Transaction[] || [];
         allTransactions = [...allTransactions, ...txs];
         
-        hasMore = txs.length === batchSize;
+        console.log(`[AdminVendas] Batch carregado: ${txs.length} transações, total: ${allTransactions.length}`);
+        
+        // CORREÇÃO: Parar apenas quando não há mais dados
+        hasMore = txs.length > 0 && txs.length === batchSize;
         offset += batchSize;
       }
 
+      console.log(`[AdminVendas] Carregamento completo: ${allTransactions.length} transações`);
       setTransactions(allTransactions);
       setHasMoreTransactions(false);
     } catch (error) {
@@ -254,8 +260,36 @@ const AdminVendas = () => {
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
 
-    // Filter by custom date range
-    if (dateFilter === 'custom' && dateRange?.from) {
+    // Get current date references
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Filter by predefined date periods
+    if (dateFilter === 'today') {
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfToday);
+    } else if (dateFilter === 'yesterday') {
+      const startOfYesterday = new Date(startOfToday);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+      filtered = filtered.filter(tx => {
+        const txDate = new Date(tx.created_at);
+        return txDate >= startOfYesterday && txDate < startOfToday;
+      });
+    } else if (dateFilter === '7days') {
+      const start7Days = new Date(startOfToday);
+      start7Days.setDate(start7Days.getDate() - 7);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= start7Days);
+    } else if (dateFilter === '15days') {
+      const start15Days = new Date(startOfToday);
+      start15Days.setDate(start15Days.getDate() - 15);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= start15Days);
+    } else if (dateFilter === 'month') {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfMonth);
+    } else if (dateFilter === 'year') {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfYear);
+    } else if (dateFilter === 'custom' && dateRange?.from) {
+      // Filter by custom date range
       const start = new Date(dateRange.from);
       start.setHours(0, 0, 0, 0);
       const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
@@ -266,6 +300,7 @@ const AdminVendas = () => {
         return txDate >= start && txDate <= end;
       });
     }
+    // dateFilter === 'all' shows all transactions (no date filter)
 
     // Filter by status
     if (statusFilter !== 'all') {
