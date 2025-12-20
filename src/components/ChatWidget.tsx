@@ -67,6 +67,7 @@ export interface ChatWidgetConfig {
 
 interface ChatWidgetProps {
   config: ChatWidgetConfig;
+  previewMode?: boolean;
 }
 
 type TabType = 'home' | 'messages' | 'help';
@@ -78,8 +79,8 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-export function ChatWidget({ config }: ChatWidgetProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
+  const [isOpen, setIsOpen] = useState(previewMode);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -354,31 +355,33 @@ export function ChatWidget({ config }: ChatWidgetProps) {
 
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "fixed bottom-4 sm:bottom-6 z-50 w-14 h-14 rounded-full shadow-lg",
-          "bg-primary text-primary-foreground hover:scale-105 transition-all duration-200",
-          "flex items-center justify-center",
-          positionClasses
-        )}
-      >
-        {isOpen ? (
-          <X className="w-6 h-6" />
-        ) : (
-          <MessageCircle className="w-6 h-6" />
-        )}
-      </button>
+      {/* Floating Button - hidden in preview mode */}
+      {!previewMode && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "fixed bottom-4 sm:bottom-6 z-50 w-14 h-14 rounded-full shadow-lg",
+            "bg-primary text-primary-foreground hover:scale-105 transition-all duration-200",
+            "flex items-center justify-center",
+            positionClasses
+          )}
+        >
+          {isOpen ? (
+            <X className="w-6 h-6" />
+          ) : (
+            <MessageCircle className="w-6 h-6" />
+          )}
+        </button>
+      )}
 
       {/* Chat Window */}
       {isOpen && (
         <div 
           className={cn(
-            "fixed bottom-20 sm:bottom-24 z-50 w-[calc(100vw-2rem)] sm:w-[380px] h-[500px] sm:h-[560px]",
-            "bg-background border border-border rounded-2xl shadow-2xl overflow-hidden",
-            "flex flex-col animate-scale-in",
-            positionClasses
+            "bg-background border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col",
+            previewMode 
+              ? "relative w-full h-[480px]" 
+              : cn("fixed bottom-20 sm:bottom-24 z-50 w-[calc(100vw-2rem)] sm:w-[380px] h-[500px] sm:h-[560px] animate-scale-in", positionClasses)
           )}
         >
           {/* Header */}

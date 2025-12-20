@@ -28,7 +28,7 @@ export function ChatWidgetLoader({ userId }: ChatWidgetLoaderProps) {
     const fetchConfig = async () => {
       try {
         const { data, error } = await supabase
-          .from("chat_widget_config")
+          .from("chat_widget_config" as any)
           .select("*")
           .eq("user_id", userId)
           .eq("is_enabled", true)
@@ -38,11 +38,14 @@ export function ChatWidgetLoader({ userId }: ChatWidgetLoaderProps) {
           console.error("Error fetching chat config:", error);
           return;
         }
+        
+        // Type guard for the data
+        const configData = data as any;
 
-        if (data) {
+        if (configData) {
           // Parse JSON fields with proper type casting
-          const teamAvatars: TeamAvatar[] = Array.isArray(data.team_avatars) 
-            ? (data.team_avatars as unknown as TeamAvatar[])
+          const teamAvatars: TeamAvatar[] = Array.isArray(configData.team_avatars) 
+            ? (configData.team_avatars as TeamAvatar[])
             : [];
             
           const defaultCards: ActionCard[] = [
@@ -52,31 +55,31 @@ export function ChatWidgetLoader({ userId }: ChatWidgetLoaderProps) {
             { id: '4', icon: 'whatsapp', iconBg: 'bg-green-500', title: 'WhatsApp', subtitle: 'Atendimento rápido', action: 'whatsapp' }
           ];
             
-          const actionCards: ActionCard[] = Array.isArray(data.action_cards)
-            ? (data.action_cards as unknown as ActionCard[])
+          const actionCards: ActionCard[] = Array.isArray(configData.action_cards)
+            ? (configData.action_cards as ActionCard[])
             : defaultCards;
 
           setConfig({
-            is_enabled: data.is_enabled ?? true,
-            title: data.title ?? "Suporte",
-            subtitle: data.subtitle ?? "Estamos online",
-            primary_color: data.primary_color ?? "#ef4444",
-            icon_type: data.icon_type ?? "chat",
-            show_whatsapp_button: data.show_whatsapp_button ?? true,
-            whatsapp_number: data.whatsapp_number,
-            whatsapp_label: data.whatsapp_label ?? "WhatsApp",
-            show_help_button: data.show_help_button ?? true,
-            help_url: data.help_url,
-            help_label: data.help_label ?? "Ajuda",
+            is_enabled: configData.is_enabled ?? true,
+            title: configData.title ?? "Suporte",
+            subtitle: configData.subtitle ?? "Estamos online",
+            primary_color: configData.primary_color ?? "#ef4444",
+            icon_type: configData.icon_type ?? "chat",
+            show_whatsapp_button: configData.show_whatsapp_button ?? true,
+            whatsapp_number: configData.whatsapp_number,
+            whatsapp_label: configData.whatsapp_label ?? "WhatsApp",
+            show_help_button: configData.show_help_button ?? true,
+            help_url: configData.help_url,
+            help_label: configData.help_label ?? "Ajuda",
             team_avatars: teamAvatars,
-            position: data.position ?? "bottom-right",
-            welcome_message: data.welcome_message ?? "Olá! 👋 Como posso ajudar você hoje?",
-            show_typing_indicator: data.show_typing_indicator ?? true,
-            typing_delay_ms: data.typing_delay_ms ?? 1500,
+            position: configData.position ?? "bottom-right",
+            welcome_message: configData.welcome_message ?? "Olá! 👋 Como posso ajudar você hoje?",
+            show_typing_indicator: configData.show_typing_indicator ?? true,
+            typing_delay_ms: configData.typing_delay_ms ?? 1500,
             action_cards: actionCards,
-            greeting_text: (data as any).greeting_text ?? "Olá! 👋",
-            show_bottom_nav: (data as any).show_bottom_nav ?? true,
-            logo_url: (data as any).logo_url ?? null,
+            greeting_text: configData.greeting_text ?? "Olá! 👋",
+            show_bottom_nav: configData.show_bottom_nav ?? true,
+            logo_url: configData.logo_url ?? null,
           });
         }
       } catch (err) {
