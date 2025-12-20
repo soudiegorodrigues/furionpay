@@ -2014,9 +2014,14 @@ export type Database = {
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
       cleanup_api_monitoring_events: { Args: never; Returns: undefined }
+      cleanup_api_monitoring_events_optimized: {
+        Args: never
+        Returns: undefined
+      }
       cleanup_old_monitoring_events: { Args: never; Returns: undefined }
       cleanup_old_rate_limit_events: { Args: never; Returns: undefined }
       cleanup_rate_limit_events: { Args: never; Returns: undefined }
+      cleanup_rate_limit_events_optimized: { Args: never; Returns: undefined }
       collect_db_performance_metrics: { Args: never; Returns: undefined }
       create_api_client: {
         Args: { p_name: string; p_webhook_url?: string }
