@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageCircle, Save, Plus, Trash2, Upload, Eye } from "lucide-react";
+import { MessageCircle, Save, Plus, Trash2, Upload, Eye, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChatWidget } from "@/components/ChatWidget";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 interface TeamAvatar {
   name: string;
@@ -63,6 +64,8 @@ export function ChatConfigSection() {
   const [showPreview, setShowPreview] = useState(false);
   const [newAvatarName, setNewAvatarName] = useState("");
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConfig();
@@ -165,6 +168,33 @@ export function ChatConfigSection() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      const compressedBlob = await compressImage(file, compressionPresets.avatar);
+      const fileName = `avatar-${Date.now()}.webp`;
+
+      const { error } = await supabase.storage
+        .from("chat-avatars")
+        .upload(fileName, compressedBlob, { contentType: "image/webp" });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage.from("chat-avatars").getPublicUrl(fileName);
+      setNewAvatarUrl(data.publicUrl);
+      setAvatarPreview(data.publicUrl);
+      toast.success("Foto enviada com sucesso!");
+    } catch (err) {
+      console.error("Error uploading avatar:", err);
+      toast.error("Erro ao fazer upload da imagem");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const addAvatar = () => {
     if (!newAvatarName.trim()) {
       toast.error("Digite o nome do atendente");
@@ -177,6 +207,7 @@ export function ChatConfigSection() {
     }));
     setNewAvatarName("");
     setNewAvatarUrl("");
+    setAvatarPreview(null);
   };
 
   const removeAvatar = (index: number) => {
@@ -325,15 +356,41 @@ export function ChatConfigSection() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>URL da Foto (opcional)</Label>
-                  <Input
-                    value={newAvatarUrl}
-                    onChange={(e) => setNewAvatarUrl(e.target.value)}
-                    placeholder="https://..."
+                  <Label>Foto do Atendente (opcional)</Label>
+                  <div
+                    className="border-2 border-dashed rounded-lg p-3 text-center cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => document.getElementById("avatar-upload-input")?.click()}
+                  >
+                    {avatarPreview || newAvatarUrl ? (
+                      <img
+                        src={avatarPreview || newAvatarUrl}
+                        alt="Preview"
+                        className="w-12 h-12 rounded-full mx-auto object-cover"
+                      />
+                    ) : (
+                      <div className="py-2">
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-6 w-6 mx-auto text-primary animate-spin" />
+                        ) : (
+                          <Upload className="h-6 w-6 mx-auto text-muted-foreground" />
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {isUploadingAvatar ? "Enviando..." : "Clique para upload"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    id="avatar-upload-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={isUploadingAvatar}
                   />
                 </div>
                 <div className="flex items-end">
-                  <Button onClick={addAvatar} className="gap-2">
+                  <Button onClick={addAvatar} disabled={isUploadingAvatar} className="gap-2">
                     <Plus className="h-4 w-4" />
                     Adicionar
                   </Button>
