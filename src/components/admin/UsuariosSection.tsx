@@ -598,7 +598,7 @@ export const UsuariosSection = () => {
                               <Badge variant="outline" className="text-[10px] px-1.5 capitalize">
                                 {(() => {
                                   const acq = userAcquirers[u.id] || defaultAcquirer;
-                                  return acq === 'inter' ? 'Banco Inter' : acq === 'ativus' ? 'Ativus Hub' : acq === 'valorion' ? 'Valorion' : 'SpedPay';
+                                  return acq === 'inter' ? 'Banco Inter' : acq === 'ativus' ? 'Ativus Hub' : acq === 'valorion' ? 'Valorion' : 'VALORION';
                                 })()}
                               </Badge>
                               {userManualAcquirers[u.id] && (
@@ -810,7 +810,7 @@ export const UsuariosSection = () => {
                         <div className="w-4 h-4 bg-primary/10 rounded flex items-center justify-center">
                           <CreditCard className="w-3 h-3 text-primary" />
                         </div>
-                        SpedPay
+                        VALORION
                       </div>
                     </SelectItem>
                     <SelectItem value="inter">

@@ -577,7 +577,7 @@ export const ReceitaPlataformaSection = () => {
                 -{formatCurrency(profitStats.acquirerCosts.thisMonth)}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Custo Adquirentes</p>
-              <p className="text-[10px] text-muted-foreground">(SpedPay, Inter, Ativus, Valorion)</p>
+              <p className="text-[10px] text-muted-foreground">(VALORION, Inter, Ativus, Valorion)</p>
             </div>
             <div className="text-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
               <div className="text-sm sm:text-base font-semibold text-green-500">
@@ -639,10 +639,10 @@ export const ReceitaPlataformaSection = () => {
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { name: 'SPEDPAY', data: spedpayData, color: '#3B82F6', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30' },
+                    { name: 'VALORION', data: spedpayData, color: '#3B82F6', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30' },
                     { name: 'BANCO INTER', data: interData, color: '#F97316', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/30' },
                     { name: 'ATIVUS HUB', data: ativusData, color: '#10B981', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
-                    { name: 'VALORION', data: valorionData, color: '#8B5CF6', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30' }
+                    { name: 'VALORION 2', data: valorionData, color: '#8B5CF6', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30' }
                   ]
                     .sort((a, b) => b.data.volume - a.data.volume)
                     .map((acq, index) => {

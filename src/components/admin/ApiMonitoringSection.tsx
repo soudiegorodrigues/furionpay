@@ -58,7 +58,7 @@ const ITEMS_PER_PAGE = 10;
 
 const acquirerOptions = [
   { value: 'all', label: 'Todos', short: 'All' },
-  { value: 'spedpay', label: 'SpedPay', short: 'SP' },
+  { value: 'spedpay', label: 'VALORION', short: 'VL' },
   { value: 'inter', label: 'Banco Inter', short: 'BI' },
   { value: 'ativus', label: 'Ativus Hub', short: 'AH' }
 ];
@@ -113,7 +113,7 @@ const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: Toolti
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#3B82F6]" />
-            <span className="text-muted-foreground text-[10px] sm:text-xs">SpedPay</span>
+            <span className="text-muted-foreground text-[10px] sm:text-xs">VALORION</span>
           </div>
           <span className="font-semibold text-[11px] sm:text-sm">{spedpay}</span>
         </div>
@@ -621,7 +621,7 @@ export function ApiMonitoringSection() {
       {/* Acquirer Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         <AcquirerCard 
-          name="SpedPay" 
+          name="VALORION" 
           health={healthData?.spedpay ?? null} 
           getStatusColor={getStatusColor}
           getStatusIcon={getStatusIcon}
@@ -685,7 +685,7 @@ export function ApiMonitoringSection() {
                 <Line
                   type="monotone" 
                   dataKey="spedpay" 
-                  name="SpedPay"
+                  name="VALORION"
                   stroke="#3B82F6" 
                   strokeWidth={isMobile ? 1.5 : 2}
                   dot={false}

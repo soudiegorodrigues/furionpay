@@ -113,7 +113,7 @@ export const TransacoesGlobaisSection = () => {
       case 'inter':
         return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Inter</Badge>;
       case 'spedpay':
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">SpedPay</Badge>;
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">VALORION</Badge>;
       case 'ativus':
         return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Ativus</Badge>;
       case 'valorion':
