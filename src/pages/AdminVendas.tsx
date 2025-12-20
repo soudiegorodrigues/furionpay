@@ -81,7 +81,7 @@ const AdminVendas = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [acquirerFilter, setAcquirerFilter] = useState<string>('all');
+  
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [periodStats, setPeriodStats] = useState<PeriodStats>({
@@ -277,10 +277,6 @@ const AdminVendas = () => {
       filtered = filtered.filter(tx => tx.status === statusFilter);
     }
 
-    // Filter by acquirer
-    if (acquirerFilter !== 'all') {
-      filtered = filtered.filter(tx => tx.acquirer?.toLowerCase() === acquirerFilter.toLowerCase());
-    }
 
     // Filter by search query (name or product)
     if (searchQuery.trim()) {
@@ -293,7 +289,7 @@ const AdminVendas = () => {
     }
 
     return filtered;
-  }, [transactions, dateFilter, statusFilter, acquirerFilter, searchQuery]);
+  }, [transactions, dateFilter, statusFilter, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
@@ -303,7 +299,7 @@ const AdminVendas = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, statusFilter, acquirerFilter, searchQuery]);
+  }, [dateFilter, statusFilter, searchQuery]);
 
   // Stats calculations
   const stats = useMemo(() => {
@@ -438,18 +434,6 @@ const AdminVendas = () => {
               </SelectContent>
             </Select>
 
-            {/* Acquirer Filter */}
-            <Select value={acquirerFilter} onValueChange={setAcquirerFilter}>
-              <SelectTrigger className="w-full lg:w-[140px]">
-                <SelectValue placeholder="Adquirente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="inter">Inter</SelectItem>
-                <SelectItem value="ativus">Ativus</SelectItem>
-                <SelectItem value="valorion">Valorion</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
