@@ -181,3 +181,10 @@
   min-width: var(--toast-logo-size, 40px) !important;
   min-height: var(--toast-logo-size, 40px) !important;
 }
+
+/* Prevent Radix UI Select scroll lock from causing horizontal shift */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  overflow: visible !important;
+  padding-right: 0 !important;
+}
