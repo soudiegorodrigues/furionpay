@@ -218,14 +218,14 @@ async function getUserAcquirer(supabase: any, userId: string): Promise<string> {
 
 // Detect acquirer by txid format
 // Ativus: 26+ alphanumeric chars without hyphens (e.g., "409b79aefec44a99baf6700f95")
-// SpedPay/Inter: UUID format with hyphens (e.g., "8172e8d2-8b97-4725-b735-2f4a20938b89")
+// Valorion/Inter: UUID format with hyphens (e.g., "8172e8d2-8b97-4725-b735-2f4a20938b89")
 function detectAcquirerByTxid(txid: string): string | null {
   if (!txid) return null;
   
-  // UUID format (with hyphens) = SpedPay or Inter
+  // UUID format (with hyphens) = Valorion or Inter
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidPattern.test(txid)) {
-    return null; // Can't determine between SpedPay and Inter by txid alone
+    return null; // Can't determine between Valorion and Inter by txid alone
   }
   
   // Ativus format: 26+ alphanumeric chars without hyphens

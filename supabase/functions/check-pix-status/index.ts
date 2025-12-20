@@ -939,7 +939,7 @@ serve(async (req) => {
       // Unknown acquirer - return error
       console.error('Unknown or unsupported acquirer:', acquirer);
       return new Response(
-        JSON.stringify({ error: `Unsupported acquirer: ${acquirer}. SpedPay has been removed.` }),
+        JSON.stringify({ error: `Unsupported acquirer: ${acquirer}. Supported: valorion, inter, ativus.` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

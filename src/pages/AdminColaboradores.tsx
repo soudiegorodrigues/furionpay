@@ -108,7 +108,7 @@ const permissionLabels: Record<keyof PermissionsForm, { label: string; descripti
   can_view_financeiro: { label: 'Painel Financeiro', description: 'Ver saldo e solicitar saques' },
   can_manage_financeiro: { label: 'Gestão Financeira', description: 'Gerenciar contas e transações' },
   can_view_transactions: { label: 'Transações', description: 'Ver histórico de vendas' },
-  can_manage_integrations: { label: 'Integrações', description: 'Configurar SpedPay, Banco Inter, etc' },
+  can_manage_integrations: { label: 'Integrações', description: 'Configurar Valorion, Banco Inter, etc' },
   can_manage_settings: { label: 'Configurações', description: 'Pixels, notificações, etc' },
 };
 

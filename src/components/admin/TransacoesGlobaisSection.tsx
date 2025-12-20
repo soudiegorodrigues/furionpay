@@ -112,12 +112,10 @@ export const TransacoesGlobaisSection = () => {
     switch (acquirer?.toLowerCase()) {
       case 'inter':
         return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Inter</Badge>;
-      case 'spedpay':
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">VALORION</Badge>;
       case 'ativus':
         return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Ativus</Badge>;
       case 'valorion':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Valorion</Badge>;
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Valorion</Badge>;
       default:
         return <Badge variant="outline" className="text-muted-foreground">-</Badge>;
     }
