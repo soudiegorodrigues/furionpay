@@ -7,18 +7,18 @@ const corsHeaders = {
 };
 
 // Acquirers to check
+// IMPORTANTE: Health checks NÃO devem criar transações reais!
+// - SpedPay: usa endpoint GET /transactions (não cria transação)
+// - Ativus: usa endpoint de consulta de status (não cria transação)
+// - Valorion: usa check-pix-status com txid inexistente (não cria transação)
+// - Inter: usa get-inter-credentials para verificar conectividade (não cria transação)
 const ACQUIRERS = ['spedpay', 'ativus', 'valorion', 'inter'];
 
 // Timeout for health check requests (5 seconds - increased for slower acquirers like Inter)
 const HEALTH_CHECK_TIMEOUT_MS = 5000;
 
-// Minimum amounts per acquirer (some have minimum requirements)
-const MIN_AMOUNTS: Record<string, number> = {
-  spedpay: 0.01,
-  ativus: 0.05,  // Ativus requires minimum R$0.05
-  valorion: 1.00, // Valorion: use R$1.00 for health check to avoid minimum blocking
-  inter: 0.01,
-};
+// Ativus API base URL
+const ATIVUS_API_URL = 'https://api.ativushub.com.br/v1/gateway/api';
 
 function getSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -37,6 +37,23 @@ async function isAcquirerEnabled(supabase: ReturnType<typeof getSupabaseClient>,
   
   if (error) return true; // Default to enabled
   return data?.value !== 'false';
+}
+
+// Get Ativus API key from environment or database
+async function getAtivusApiKey(supabase: ReturnType<typeof getSupabaseClient>): Promise<string | null> {
+  // First try environment variable
+  const envKey = Deno.env.get('ATIVUS_API_KEY');
+  if (envKey) return envKey;
+  
+  // Try from admin_settings (global)
+  const { data } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'ativus_api_key')
+    .is('user_id', null)
+    .maybeSingle();
+  
+  return data?.value || null;
 }
 
 // Extract detailed error message from response or error
@@ -78,7 +95,7 @@ function extractErrorDetails(err: unknown, responseData?: unknown): string {
   return 'Erro desconhecido';
 }
 
-// Test SpedPay health
+// Test SpedPay health - Uses GET endpoint, does NOT create transactions
 async function testSpedPay(): Promise<{ success: boolean; responseTime: number; error?: string }> {
   const startTime = Date.now();
   const apiKey = Deno.env.get('SPEDPAY_API_KEY');
@@ -91,7 +108,7 @@ async function testSpedPay(): Promise<{ success: boolean; responseTime: number; 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
     
-    // Just check if API is reachable
+    // Just check if API is reachable - GET request, no transaction created
     const response = await fetch('https://api.spedpay.space/v1/transactions?limit=1', {
       method: 'GET',
       headers: {
@@ -130,35 +147,42 @@ async function testSpedPay(): Promise<{ success: boolean; responseTime: number; 
   }
 }
 
-// Test Ativus health by calling the edge function
+// Test Ativus health - DOES NOT CREATE TRANSACTIONS
+// Uses the status check endpoint to verify API connectivity
 async function testAtivus(): Promise<{ success: boolean; responseTime: number; error?: string }> {
   const startTime = Date.now();
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const supabase = getSupabaseClient();
   
   try {
+    // Get Ativus API key
+    const apiKey = await getAtivusApiKey(supabase);
+    
+    if (!apiKey) {
+      return { success: false, responseTime: 0, error: 'ATIVUS_API_KEY não configurada' };
+    }
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
     
-    // Use R$0.05 minimum for Ativus
-    const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-ativus`, {
-      method: 'POST',
+    // Create auth header (Base64 encoded API key)
+    const authHeader = btoa(apiKey);
+    
+    // Check API connectivity by querying a non-existent transaction
+    // This will return 404 or similar, but proves the API is online and responding
+    // IMPORTANTE: NÃO cria transação real, apenas verifica conectividade
+    const response = await fetch(`${ATIVUS_API_URL}/check-transaction/health-check-test-${Date.now()}`, {
+      method: 'GET',
       headers: {
+        'Authorization': `Basic ${authHeader}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
       },
-      body: JSON.stringify({ 
-        amount: MIN_AMOUNTS.ativus, // R$0.05 minimum
-        donorName: 'Health Check',
-        healthCheck: true
-      }),
       signal: controller.signal,
     });
     
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
-    // Get response data for detailed error messages
+    // Get response data for logging
     let responseData: unknown = null;
     try {
       responseData = await response.json();
@@ -166,22 +190,18 @@ async function testAtivus(): Promise<{ success: boolean; responseTime: number; e
       // Ignore JSON parse errors
     }
     
-    const data = responseData as Record<string, unknown> | null;
-    
-    // Check for success
-    if (data?.success === true) {
-      console.log(`[HEALTH] Ativus responded successfully in ${responseTime}ms`);
-      return { success: true, responseTime };
-    }
-    
-    // Check for specific error responses
-    if (response.status >= 500 || !data?.success) {
-      const errorMsg = extractErrorDetails(null, data);
+    // Any response (even 404) means the API is online
+    // Only 5xx errors indicate the service is down
+    if (response.status >= 500) {
+      const errorMsg = extractErrorDetails(null, responseData) || `HTTP ${response.status} - Erro interno do servidor Ativus`;
       console.error(`[HEALTH] Ativus error: ${errorMsg}`);
       return { success: false, responseTime, error: errorMsg };
     }
     
+    // 2xx, 3xx, or 4xx all indicate the API is responsive
+    console.log(`[HEALTH] Ativus API responded in ${responseTime}ms with status ${response.status} (connectivity check - no transaction created)`);
     return { success: true, responseTime };
+    
   } catch (err) {
     const responseTime = Date.now() - startTime;
     const errorMsg = extractErrorDetails(err);
@@ -190,7 +210,7 @@ async function testAtivus(): Promise<{ success: boolean; responseTime: number; e
   }
 }
 
-// Test Valorion health
+// Test Valorion health - Uses status check, does NOT create transactions
 async function testValorion(): Promise<{ success: boolean; responseTime: number; error?: string }> {
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -200,15 +220,16 @@ async function testValorion(): Promise<{ success: boolean; responseTime: number;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
     
-    const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-valorion`, {
+    // Use check-pix-status-valorion with a fake transaction ID
+    // This verifies API connectivity WITHOUT creating a real transaction
+    const response = await fetch(`${supabaseUrl}/functions/v1/check-pix-status-valorion`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({ 
-        amount: MIN_AMOUNTS.valorion,
-        donorName: 'Health Check',
+        transactionId: `health-check-${Date.now()}`,
         healthCheck: true
       }),
       signal: controller.signal,
@@ -225,21 +246,15 @@ async function testValorion(): Promise<{ success: boolean; responseTime: number;
       // Ignore JSON parse errors
     }
     
-    const data = responseData as Record<string, unknown> | null;
-    
-    // Check for success
-    if (data?.success === true) {
-      console.log(`[HEALTH] Valorion responded successfully in ${responseTime}ms`);
-      return { success: true, responseTime };
-    }
-    
-    // Check for specific error responses
-    if (response.status >= 500 || !data?.success) {
-      const errorMsg = extractErrorDetails(null, data);
+    // Any response means the function is working
+    // We expect an error like "transaction not found" but that's fine for health check
+    if (response.status >= 500) {
+      const errorMsg = extractErrorDetails(null, responseData);
       console.error(`[HEALTH] Valorion error: ${errorMsg}`);
       return { success: false, responseTime, error: errorMsg };
     }
     
+    console.log(`[HEALTH] Valorion responded in ${responseTime}ms (connectivity check - no transaction created)`);
     return { success: true, responseTime };
   } catch (err) {
     const responseTime = Date.now() - startTime;
@@ -249,7 +264,7 @@ async function testValorion(): Promise<{ success: boolean; responseTime: number;
   }
 }
 
-// Test Inter health
+// Test Inter health - Uses credentials check, does NOT create transactions
 async function testInter(): Promise<{ success: boolean; responseTime: number; error?: string }> {
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -259,15 +274,15 @@ async function testInter(): Promise<{ success: boolean; responseTime: number; er
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
     
-    const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
+    // Use get-inter-credentials to verify connectivity
+    // This checks if Inter API is reachable WITHOUT creating a transaction
+    const response = await fetch(`${supabaseUrl}/functions/v1/get-inter-credentials`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseAnonKey}`,
       },
       body: JSON.stringify({ 
-        amount: MIN_AMOUNTS.inter,
-        donorName: 'Health Check',
         healthCheck: true
       }),
       signal: controller.signal,
@@ -286,19 +301,14 @@ async function testInter(): Promise<{ success: boolean; responseTime: number; er
     
     const data = responseData as Record<string, unknown> | null;
     
-    // Check for success
-    if (data?.success === true) {
-      console.log(`[HEALTH] Inter responded successfully in ${responseTime}ms`);
-      return { success: true, responseTime };
-    }
-    
-    // Check for specific error responses
-    if (response.status >= 500 || !data?.success) {
+    // Check for success or any response that indicates the service is up
+    if (response.status >= 500) {
       const errorMsg = extractErrorDetails(null, data);
       console.error(`[HEALTH] Inter error: ${errorMsg}`);
       return { success: false, responseTime, error: errorMsg };
     }
     
+    console.log(`[HEALTH] Inter responded in ${responseTime}ms (connectivity check - no transaction created)`);
     return { success: true, responseTime };
   } catch (err) {
     const responseTime = Date.now() - startTime;
@@ -310,7 +320,7 @@ async function testInter(): Promise<{ success: boolean; responseTime: number; er
 
 // Main health check function
 async function checkAcquirerHealth(acquirer: string): Promise<{ success: boolean; responseTime: number; error?: string }> {
-  console.log(`[HEALTH] Checking ${acquirer} (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms, min amount: R$${MIN_AMOUNTS[acquirer] || 0.01})...`);
+  console.log(`[HEALTH] Checking ${acquirer} (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms) - connectivity only, no transactions created...`);
   
   switch (acquirer) {
     case 'spedpay':
@@ -334,7 +344,7 @@ serve(async (req) => {
   const startTime = Date.now();
   const supabase = getSupabaseClient();
   
-  console.log(`[HEALTH-CHECK] Starting health check for all acquirers (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms)...`);
+  console.log(`[HEALTH-CHECK] Starting health check for all acquirers (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms) - NO TRANSACTIONS WILL BE CREATED...`);
   
   const results: Record<string, { success: boolean; responseTime: number; error?: string }> = {};
   
@@ -383,7 +393,7 @@ serve(async (req) => {
   const healthyCount = Object.values(results).filter(r => r.success).length;
   const totalCount = Object.keys(results).length;
   
-  console.log(`[HEALTH-CHECK] Completed in ${totalTime}ms - ${healthyCount}/${totalCount} acquirers healthy`);
+  console.log(`[HEALTH-CHECK] Completed in ${totalTime}ms - ${healthyCount}/${totalCount} acquirers healthy (NO TRANSACTIONS CREATED)`);
   
   // Return summary
   const summary = {
@@ -392,6 +402,7 @@ serve(async (req) => {
     healthy_count: healthyCount,
     total_count: totalCount,
     timeout_ms: HEALTH_CHECK_TIMEOUT_MS,
+    note: 'Health checks verify connectivity only - no PIX transactions are created',
     results: Object.entries(results).map(([acquirer, result]) => ({
       acquirer,
       is_healthy: result.success,
