@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download, Upload, HardDrive, FileArchive, Image, Music, FileText, Lock, Key, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Database, Clock, Trash2, RotateCcw, Plus, RefreshCw, Package, DollarSign, Settings, Users, ShieldCheck, Download, Upload, HardDrive, FileArchive, Image, Music, FileText, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -60,13 +60,7 @@ export function BackupsSection() {
   const [showKeywordDialog, setShowKeywordDialog] = useState(() => {
     return sessionStorage.getItem(BACKUPS_AUTH_KEY) !== 'true';
   });
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [keyword, setKeyword] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ email: string } | null>(null);
 
   // Backup states
   const [backups, setBackups] = useState<SystemBackup[]>([]);
@@ -81,73 +75,19 @@ export function BackupsSection() {
   const [dialogType, setDialogType] = useState<'restore' | 'delete' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get current user on mount
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setCurrentUser({ email: user.email });
-      }
-    };
-    getCurrentUser();
-  }, []);
-
   // Security handlers
   const handleKeywordSubmit = () => {
     if (keyword.toUpperCase() !== SECURITY_KEYWORD) {
       toast.error("Palavra-chave incorreta");
       return;
     }
+    sessionStorage.setItem(BACKUPS_AUTH_KEY, 'true');
+    setIsAuthenticated(true);
     setShowKeywordDialog(false);
     setKeyword("");
-    setShowAuthDialog(true);
-  };
-
-  const handleAuthenticate = async () => {
-    if (!email || !password) {
-      toast.error("Preencha email e senha");
-      return;
-    }
-
-    // Verify email matches current user
-    if (currentUser?.email && email.toLowerCase() !== currentUser.email.toLowerCase()) {
-      toast.error("Use o email da sua conta atual");
-      return;
-    }
-
-    setIsAuthenticating(true);
-    try {
-      // Verify user is admin (they're already logged in)
-      const { data: isAdmin } = await supabase.rpc('is_admin_authenticated');
-      if (!isAdmin) {
-        toast.error("Apenas administradores podem acessar esta área");
-        return;
-      }
-
-      // Verify password by attempting sign in (won't change auth state if same user)
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        toast.error("Senha incorreta");
-        return;
-      }
-
-      // Save to sessionStorage to persist across re-renders
-      sessionStorage.setItem(BACKUPS_AUTH_KEY, 'true');
-      
-      setShowAuthDialog(false);
-      setIsAuthenticated(true);
-      setEmail("");
-      setPassword("");
-      
-      // Load data after authentication
-      loadBackups();
-      loadStorageStatsWithTimestamp();
-    } catch (error) {
-      toast.error("Falha na autenticação");
-    } finally {
-      setIsAuthenticating(false);
-    }
+    toast.success("Acesso autorizado aos backups");
+    loadBackups();
+    loadStorageStatsWithTimestamp();
   };
 
   const loadBackups = async () => {
@@ -534,81 +474,6 @@ export function BackupsSection() {
             >
               <Lock className="w-4 h-4 mr-2" />
               Continuar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Auth Dialog - Step 2 */}
-      <Dialog open={showAuthDialog} onOpenChange={(open) => !isAuthenticated && setShowAuthDialog(open)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-primary/15">
-                <Lock className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <Badge variant="outline" className="mb-1">Backups</Badge>
-                <DialogTitle>Autenticação do Administrador</DialogTitle>
-              </div>
-            </div>
-            <DialogDescription>
-              Confirme suas credenciais de administrador para acessar os backups.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAuthenticate()}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex gap-2 justify-end">
-            <Button 
-              variant="default" 
-              onClick={handleAuthenticate}
-              disabled={isAuthenticating}
-            >
-              {isAuthenticating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Verificando...
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4 mr-2" />
-                  Acessar Backups
-                </>
-              )}
             </Button>
           </div>
         </DialogContent>
