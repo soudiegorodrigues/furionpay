@@ -226,20 +226,36 @@ const AdminVendas = () => {
   const loadAllTransactions = async () => {
     setIsLoadingMore(true);
     try {
-      const { data, error } = await supabase.rpc('get_user_transactions', {
-        p_limit: 0 // Get all transactions
-      });
+      let allTransactions: Transaction[] = [];
+      let offset = 0;
+      const batchSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
-      const txs = data as unknown as Transaction[] || [];
-      setTransactions(txs);
+      // Fetch in batches of 1000 to bypass PostgREST limit
+      while (hasMore) {
+        const { data, error } = await supabase.rpc('get_user_transactions', {
+          p_limit: batchSize,
+          p_offset: offset
+        });
+
+        if (error) throw error;
+        
+        const txs = data as unknown as Transaction[] || [];
+        allTransactions = [...allTransactions, ...txs];
+        
+        // If we got less than batchSize, we've reached the end
+        hasMore = txs.length === batchSize;
+        offset += batchSize;
+      }
+
+      setTransactions(allTransactions);
       setHasMoreTransactions(false);
       // Change filter to "all" so user can see all loaded transactions
       setDateFilter('all');
       setStatusFilter('all');
       toast({
         title: "Sucesso",
-        description: `${txs.length} transações carregadas`,
+        description: `${allTransactions.length} transações carregadas`,
       });
     } catch (error) {
       console.error('Error loading all transactions:', error);
