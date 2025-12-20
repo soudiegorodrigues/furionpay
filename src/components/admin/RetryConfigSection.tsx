@@ -264,7 +264,7 @@ export const RetryConfigSection = () => {
 
       if (error) throw error;
 
-      const acquirers = ['spedpay', 'inter', 'ativus', 'valorion'];
+      const acquirers = ['valorion', 'inter', 'ativus'];
       const processedStats: Record<string, AcquirerStats> = {};
       
       acquirers.forEach(acquirer => {

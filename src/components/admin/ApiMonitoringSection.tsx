@@ -39,7 +39,7 @@ interface AcquirerHealth {
 }
 
 interface HealthSummary {
-  spedpay: AcquirerHealth | null;
+  valorion: AcquirerHealth | null;
   inter: AcquirerHealth | null;
   ativus: AcquirerHealth | null;
 }
@@ -622,7 +622,7 @@ export function ApiMonitoringSection() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         <AcquirerCard 
           name="VALORION" 
-          health={healthData?.spedpay ?? null} 
+          health={healthData?.valorion ?? null} 
           getStatusColor={getStatusColor}
           getStatusIcon={getStatusIcon}
         />
