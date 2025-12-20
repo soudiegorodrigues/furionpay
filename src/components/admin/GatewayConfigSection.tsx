@@ -233,35 +233,30 @@ export const GatewayConfigSection = () => {
     }
   };
 
+  // Testa conexão SEM criar transações reais - usa mesma lógica do health-check
   const testConnection = async (gateway: string) => {
     setIsTesting(gateway);
     try {
-      let functionName = '';
-      switch (gateway) {
-        case 'ativus': functionName = 'generate-pix-ativus'; break;
-        case 'spedpay': functionName = 'generate-pix-spedpay'; break;
-        case 'valorion': functionName = 'generate-pix-valorion'; break;
-        case 'inter': functionName = 'generate-pix-inter'; break;
-        default: return;
-      }
-
-      // SpedPay requires higher minimum amount to cover fees
-      const testAmount = gateway === 'inter' ? 0.01 : (gateway === 'spedpay' ? 5.00 : 0.50);
-      
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: {
-          amount: testAmount,
-          donorName: 'Teste Conexão',
-          productName: `Teste ${gateway}`,
-          userId: user?.id
+      // Usar o health-check-acquirers que já foi corrigido para não criar transações
+      // Ele verifica conectividade via endpoints de consulta, não de criação
+      const { data, error } = await supabase.functions.invoke('health-check-acquirers', {
+        body: { 
+          singleAcquirer: gateway // Novo parâmetro para testar apenas um adquirente
         }
       });
 
       if (error) throw error;
-      if (data?.success) {
-        toast({ title: "Conexão OK", description: `${gateway.toUpperCase()} está funcionando!` });
+      
+      // Verificar resultado do adquirente específico
+      const result = data?.results?.find((r: any) => r.acquirer === gateway);
+      
+      if (result?.is_healthy) {
+        toast({ 
+          title: "Conexão OK", 
+          description: `${gateway.toUpperCase()} respondeu em ${result.response_time_ms}ms` 
+        });
       } else {
-        throw new Error(data?.error || 'Erro desconhecido');
+        throw new Error(result?.error || 'Falha na conexão');
       }
     } catch (error: any) {
       console.error(`Erro ao testar ${gateway}:`, error);
