@@ -365,7 +365,7 @@ const AdminVendas = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 overflow-x-hidden">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 overflow-x-clip">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
