@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 
 interface Transaction {
   id: string;
@@ -23,67 +24,158 @@ interface Transaction {
   total_count: number;
 }
 
-type DateFilter = 'all' | 'today' | '7days' | 'month' | 'year';
+type DateFilter = 'all' | 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'custom';
 type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 
 const ITEMS_PER_PAGE = 10;
 
 export const TransacoesGlobaisSection = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [emailSearch, setEmailSearch] = useState("");
-  const [debouncedEmail, setDebouncedEmail] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
 
-  // Debounce email search
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedEmail(emailSearch);
+      setDebouncedSearch(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
-  }, [emailSearch]);
+  }, [searchQuery]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, statusFilter, debouncedEmail]);
+  }, [dateFilter, statusFilter, debouncedSearch, dateRange]);
 
-  // Load transactions when filters or page change
-  const loadTransactions = useCallback(async () => {
+  // Load all transactions once
+  const loadAllTransactions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_global_transactions_v2', {
-        p_limit: ITEMS_PER_PAGE,
-        p_offset: (currentPage - 1) * ITEMS_PER_PAGE,
-        p_status: statusFilter === 'all' ? null : statusFilter,
-        p_date_filter: dateFilter === 'all' ? null : dateFilter,
-        p_email_search: debouncedEmail || null
-      });
+      let allTxs: Transaction[] = [];
+      const batchSize = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (error) throw error;
+      console.log('[TransacoesGlobais] Iniciando carregamento de transações...');
 
-      const txData = (data as unknown as Transaction[]) || [];
-      setTransactions(txData);
-      
-      // Get total count from first row (all rows have same total_count)
-      if (txData.length > 0) {
-        setTotalCount(txData[0].total_count);
-      } else {
-        setTotalCount(0);
+      while (hasMore) {
+        const { data, error } = await supabase.rpc('get_global_transactions_v2', {
+          p_limit: batchSize,
+          p_offset: offset,
+          p_status: null,
+          p_date_filter: null,
+          p_email_search: null
+        });
+
+        if (error) throw error;
+
+        const txData = (data as unknown as Transaction[]) || [];
+        allTxs = [...allTxs, ...txData];
+        
+        console.log(`[TransacoesGlobais] Batch carregado: ${txData.length} transações, total: ${allTxs.length}`);
+        
+        hasMore = txData.length > 0 && txData.length === batchSize;
+        offset += batchSize;
       }
+
+      console.log(`[TransacoesGlobais] Carregamento completo: ${allTxs.length} transações`);
+      setAllTransactions(allTxs);
     } catch (error) {
       console.error('Error loading transactions:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, statusFilter, dateFilter, debouncedEmail]);
+  }, []);
 
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+    loadAllTransactions();
+  }, [loadAllTransactions]);
+
+  // Filter transactions client-side
+  const filteredTransactions = useMemo(() => {
+    let filtered = allTransactions;
+
+    // Get current date references
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Filter by predefined date periods
+    if (dateFilter === 'today') {
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfToday);
+    } else if (dateFilter === 'yesterday') {
+      const startOfYesterday = new Date(startOfToday);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+      filtered = filtered.filter(tx => {
+        const txDate = new Date(tx.created_at);
+        return txDate >= startOfYesterday && txDate < startOfToday;
+      });
+    } else if (dateFilter === '7days') {
+      const start7Days = new Date(startOfToday);
+      start7Days.setDate(start7Days.getDate() - 7);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= start7Days);
+    } else if (dateFilter === '15days') {
+      const start15Days = new Date(startOfToday);
+      start15Days.setDate(start15Days.getDate() - 15);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= start15Days);
+    } else if (dateFilter === 'month') {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfMonth);
+    } else if (dateFilter === 'year') {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfYear);
+    } else if (dateFilter === 'custom' && dateRange?.from) {
+      const start = new Date(dateRange.from);
+      start.setHours(0, 0, 0, 0);
+      const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+      end.setHours(23, 59, 59, 999);
+      
+      filtered = filtered.filter(tx => {
+        const txDate = new Date(tx.created_at);
+        return txDate >= start && txDate <= end;
+      });
+    }
+
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(tx => tx.status === statusFilter);
+    }
+
+    // Filter by search query (email, name, product, txid)
+    if (debouncedSearch) {
+      const search = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(tx => 
+        (tx.user_email?.toLowerCase().includes(search)) ||
+        (tx.donor_name?.toLowerCase().includes(search)) ||
+        (tx.product_name?.toLowerCase().includes(search)) ||
+        (tx.txid?.toLowerCase().includes(search))
+      );
+    }
+
+    return filtered;
+  }, [allTransactions, dateFilter, statusFilter, debouncedSearch, dateRange]);
+
+  // Paginated transactions
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredTransactions, currentPage]);
+
+  const totalCount = filteredTransactions.length;
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range || { from: undefined, to: undefined });
+    if (range?.from) {
+      setDateFilter('custom');
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -121,8 +213,18 @@ export const TransacoesGlobaisSection = () => {
     }
   };
 
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const getDateFilterLabel = () => {
+    switch (dateFilter) {
+      case 'today': return 'Hoje';
+      case 'yesterday': return 'Ontem';
+      case '7days': return '7 dias';
+      case '15days': return '15 dias';
+      case 'month': return 'Este mês';
+      case 'year': return 'Este ano';
+      case 'custom': return 'Personalizado';
+      default: return 'Período';
+    }
+  };
 
   return (
     <Card>
@@ -136,12 +238,18 @@ export const TransacoesGlobaisSection = () => {
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
             <Input
-              placeholder="Buscar email..."
-              value={emailSearch}
-              onChange={(e) => setEmailSearch(e.target.value)}
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-[140px] sm:w-[180px] h-8 text-xs sm:text-sm pl-7"
             />
           </div>
+          <DateRangePicker
+            dateRange={dateRange}
+            onDateRangeChange={handleDateRangeChange}
+            className="h-8"
+            placeholder="Data"
+          />
           <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
             <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs sm:text-sm">
               <SelectValue>
@@ -158,16 +266,17 @@ export const TransacoesGlobaisSection = () => {
           <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
             <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs sm:text-sm">
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              <SelectValue>
-                {dateFilter === 'all' ? 'Período' : dateFilter === 'today' ? 'Hoje' : dateFilter === '7days' ? '7 dias' : dateFilter === 'month' ? 'Este mês' : 'Este ano'}
-              </SelectValue>
+              <SelectValue>{getDateFilterLabel()}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="today">Hoje</SelectItem>
+              <SelectItem value="yesterday">Ontem</SelectItem>
               <SelectItem value="7days">7 dias</SelectItem>
+              <SelectItem value="15days">15 dias</SelectItem>
               <SelectItem value="month">Este mês</SelectItem>
               <SelectItem value="year">Este ano</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -177,7 +286,7 @@ export const TransacoesGlobaisSection = () => {
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : transactions.length === 0 ? (
+        ) : paginatedTransactions.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             Nenhuma transação encontrada
           </p>
@@ -198,7 +307,7 @@ export const TransacoesGlobaisSection = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((tx) => (
+                  {paginatedTransactions.map((tx) => (
                     <TableRow key={tx.id}>
                       <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate">
                         {tx.user_email || '-'}

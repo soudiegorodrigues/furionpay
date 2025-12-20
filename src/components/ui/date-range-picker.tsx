@@ -2,7 +2,9 @@ import * as React from "react"
 import { format, startOfDay, startOfMonth, startOfYear, endOfDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Calendar as CalendarIcon, X } from "lucide-react"
-import { DateRange } from "react-day-picker"
+import type { DateRange } from "react-day-picker"
+
+export type { DateRange }
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
