@@ -568,8 +568,8 @@ export const UsuariosSection = () => {
                     <TableRow>
                       <TableHead className="text-xs">Email</TableHead>
                       <TableHead className="text-xs hidden md:table-cell">Cadastro</TableHead>
-                      <TableHead className="text-xs hidden lg:table-cell">Adquirente</TableHead>
-                      <TableHead className="text-xs hidden xl:table-cell">Taxa</TableHead>
+                      <TableHead className="text-xs hidden lg:table-cell whitespace-nowrap">Adquirente</TableHead>
+                      <TableHead className="text-xs hidden xl:table-cell whitespace-nowrap">Taxa</TableHead>
                       <TableHead className="text-xs hidden sm:table-cell">Saldo Disponível</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
                       <TableHead className="text-right text-xs">Ações</TableHead>
