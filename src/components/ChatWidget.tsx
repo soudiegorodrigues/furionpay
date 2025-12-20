@@ -553,7 +553,7 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
             "bg-background border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col",
             previewMode 
               ? "relative w-full h-[480px]" 
-              : cn("fixed bottom-20 sm:bottom-24 z-50 w-[calc(100vw-2rem)] sm:w-[380px] h-[500px] sm:h-[560px] animate-scale-in", positionClasses)
+              : cn("fixed bottom-20 sm:bottom-24 z-50 w-[calc(100vw-2rem)] sm:w-[420px] h-[500px] sm:h-[560px] animate-scale-in", positionClasses)
           )}
         >
           {/* Header */}
