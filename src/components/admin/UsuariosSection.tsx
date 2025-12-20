@@ -62,7 +62,7 @@ export const UsuariosSection = () => {
   const [userSearch, setUserSearch] = useState("");
   const [userDetailsOpen, setUserDetailsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedUserAcquirer, setSelectedUserAcquirer] = useState<string>('spedpay');
+  const [selectedUserAcquirer, setSelectedUserAcquirer] = useState<string>('valorion');
   const [selectedUserFeeConfig, setSelectedUserFeeConfig] = useState<string>('');
   const [isSavingUserSettings, setIsSavingUserSettings] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
@@ -805,7 +805,7 @@ export const UsuariosSection = () => {
                     <SelectValue placeholder="Selecione o adquirente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="spedpay">
+                    <SelectItem value="valorion">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-primary/10 rounded flex items-center justify-center">
                           <CreditCard className="w-3 h-3 text-primary" />
