@@ -8,11 +8,10 @@ const corsHeaders = {
 
 // Acquirers to check
 // IMPORTANTE: Health checks NÃO devem criar transações reais!
-// - SpedPay: usa endpoint GET /transactions (não cria transação)
 // - Ativus: usa endpoint de consulta de status (não cria transação)
 // - Valorion: usa check-pix-status com txid inexistente (não cria transação)
 // - Inter: usa get-inter-credentials para verificar conectividade (não cria transação)
-const ACQUIRERS = ['spedpay', 'ativus', 'valorion', 'inter'];
+const ACQUIRERS = ['ativus', 'valorion', 'inter'];
 
 // Timeout for health check requests (5 seconds - increased for slower acquirers like Inter)
 const HEALTH_CHECK_TIMEOUT_MS = 5000;
@@ -95,57 +94,6 @@ function extractErrorDetails(err: unknown, responseData?: unknown): string {
   return 'Erro desconhecido';
 }
 
-// Test SpedPay health - Uses GET endpoint, does NOT create transactions
-async function testSpedPay(): Promise<{ success: boolean; responseTime: number; error?: string }> {
-  const startTime = Date.now();
-  const apiKey = Deno.env.get('SPEDPAY_API_KEY');
-  
-  if (!apiKey) {
-    return { success: false, responseTime: 0, error: 'SPEDPAY_API_KEY não configurada' };
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
-    
-    // Just check if API is reachable - GET request, no transaction created
-    const response = await fetch('https://api.spedpay.space/v1/transactions?limit=1', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-secret': apiKey,
-      },
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    const responseTime = Date.now() - startTime;
-    
-    // Try to get response body for better error messages
-    let responseData: unknown = null;
-    try {
-      responseData = await response.json();
-    } catch {
-      // Ignore JSON parse errors
-    }
-    
-    if (response.status >= 500) {
-      return { 
-        success: false, 
-        responseTime, 
-        error: extractErrorDetails(null, responseData) || `HTTP ${response.status} - Erro interno do servidor SpedPay`
-      };
-    }
-    
-    console.log(`[HEALTH] SpedPay responded in ${responseTime}ms with status ${response.status}`);
-    return { success: true, responseTime };
-  } catch (err) {
-    const responseTime = Date.now() - startTime;
-    const errorMsg = extractErrorDetails(err);
-    console.error(`[HEALTH] SpedPay error: ${errorMsg}`);
-    return { success: false, responseTime, error: errorMsg };
-  }
-}
 
 // Test Ativus health - DOES NOT CREATE TRANSACTIONS
 // Uses the status check endpoint to verify API connectivity
@@ -323,8 +271,6 @@ async function checkAcquirerHealth(acquirer: string): Promise<{ success: boolean
   console.log(`[HEALTH] Checking ${acquirer} (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms) - connectivity only, no transactions created...`);
   
   switch (acquirer) {
-    case 'spedpay':
-      return await testSpedPay();
     case 'ativus':
       return await testAtivus();
     case 'valorion':

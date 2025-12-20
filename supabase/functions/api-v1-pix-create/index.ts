@@ -127,8 +127,8 @@ async function generatePixViaAcquirer(
   let generateUrl = `${supabaseUrl}/functions/v1/generate-pix-ativus`;
   if (acquirer === 'inter') {
     generateUrl = `${supabaseUrl}/functions/v1/generate-pix-inter`;
-  } else if (acquirer === 'spedpay') {
-    generateUrl = `${supabaseUrl}/functions/v1/generate-pix`;
+  } else if (acquirer === 'valorion') {
+    generateUrl = `${supabaseUrl}/functions/v1/generate-pix-valorion`;
   }
   
   const response = await fetch(generateUrl, {
