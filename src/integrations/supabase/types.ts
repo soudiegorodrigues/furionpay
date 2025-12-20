@@ -1515,6 +1515,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          bypass_antifraud: boolean | null
           created_at: string
           full_name: string | null
           id: string
@@ -1522,6 +1523,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bypass_antifraud?: boolean | null
           created_at?: string
           full_name?: string | null
           id: string
@@ -1529,6 +1531,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bypass_antifraud?: boolean | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -2032,6 +2035,7 @@ export type Database = {
       backup_and_reset_transactions: { Args: never; Returns: string }
       block_user: { Args: { target_user_id: string }; Returns: boolean }
       bootstrap_first_admin: { Args: { admin_email: string }; Returns: boolean }
+      check_antifraud_bypass: { Args: { p_user_id: string }; Returns: boolean }
       check_login_blocked: { Args: { p_email: string }; Returns: Json }
       check_user_approved: { Args: never; Returns: boolean }
       check_user_blocked: { Args: never; Returns: boolean }
@@ -2862,6 +2866,10 @@ export type Database = {
       set_default_acquirer_with_retry_order: {
         Args: { p_acquirer: string }
         Returns: Json
+      }
+      set_user_antifraud_bypass: {
+        Args: { p_bypass: boolean; p_user_id: string }
+        Returns: boolean
       }
       unblock_user: { Args: { target_user_id: string }; Returns: boolean }
       update_acquirer_health: {
