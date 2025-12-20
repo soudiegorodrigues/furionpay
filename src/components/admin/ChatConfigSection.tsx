@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageCircle, Save, Plus, Trash2, Upload, Eye, Loader2 } from "lucide-react";
+import { MessageCircle, Save, Plus, Trash2, Upload, Eye, Loader2, Pencil, GripVertical, MessageSquare, Clock, HelpCircle, Link, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -170,6 +170,10 @@ export function ChatConfigSection() {
         welcome_message: config.welcome_message,
         show_typing_indicator: config.show_typing_indicator,
         typing_delay_ms: config.typing_delay_ms,
+        action_cards: JSON.parse(JSON.stringify(config.action_cards)),
+        greeting_text: config.greeting_text,
+        show_bottom_nav: config.show_bottom_nav,
+        logo_url: config.logo_url,
       };
 
       if (config.id) {
@@ -247,6 +251,80 @@ export function ChatConfigSection() {
       team_avatars: prev.team_avatars.filter((_, i) => i !== index)
     }));
   };
+
+  // Action Cards management
+  const addActionCard = () => {
+    if (config.action_cards.length >= 6) {
+      toast.error("Máximo de 6 cards permitidos");
+      return;
+    }
+    const newCard: ActionCard = {
+      id: crypto.randomUUID(),
+      icon: 'message',
+      iconBg: 'bg-blue-500',
+      title: 'Novo botão',
+      subtitle: 'Descrição do botão',
+      action: 'message'
+    };
+    setConfig(prev => ({
+      ...prev,
+      action_cards: [...prev.action_cards, newCard]
+    }));
+  };
+
+  const updateActionCard = (id: string, updates: Partial<ActionCard>) => {
+    setConfig(prev => ({
+      ...prev,
+      action_cards: prev.action_cards.map(card => 
+        card.id === id ? { ...card, ...updates } : card
+      )
+    }));
+  };
+
+  const removeActionCard = (id: string) => {
+    setConfig(prev => ({
+      ...prev,
+      action_cards: prev.action_cards.filter(card => card.id !== id)
+    }));
+  };
+
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case 'message': return <MessageSquare className="h-4 w-4" />;
+      case 'clock': return <Clock className="h-4 w-4" />;
+      case 'help': return <HelpCircle className="h-4 w-4" />;
+      case 'whatsapp': return <MessageCircle className="h-4 w-4" />;
+      case 'link': return <Link className="h-4 w-4" />;
+      default: return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+
+  const iconOptions = [
+    { value: 'message', label: 'Mensagem' },
+    { value: 'clock', label: 'Relógio' },
+    { value: 'help', label: 'Ajuda' },
+    { value: 'whatsapp', label: 'WhatsApp' },
+    { value: 'link', label: 'Link' },
+  ];
+
+  const colorOptions = [
+    { value: 'bg-blue-500', label: 'Azul', color: '#3b82f6' },
+    { value: 'bg-green-500', label: 'Verde', color: '#22c55e' },
+    { value: 'bg-orange-500', label: 'Laranja', color: '#f97316' },
+    { value: 'bg-purple-500', label: 'Roxo', color: '#a855f7' },
+    { value: 'bg-red-500', label: 'Vermelho', color: '#ef4444' },
+    { value: 'bg-pink-500', label: 'Rosa', color: '#ec4899' },
+    { value: 'bg-yellow-500', label: 'Amarelo', color: '#eab308' },
+    { value: 'bg-cyan-500', label: 'Ciano', color: '#06b6d4' },
+  ];
+
+  const actionOptions = [
+    { value: 'message', label: 'Enviar mensagem' },
+    { value: 'messages', label: 'Ver mensagens' },
+    { value: 'help', label: 'Abrir ajuda' },
+    { value: 'whatsapp', label: 'Abrir WhatsApp' },
+    { value: 'link', label: 'Abrir link externo' },
+  ];
 
   if (isLoading) {
     return (
@@ -471,78 +549,226 @@ export function ChatConfigSection() {
         <TabsContent value="actions" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Botões de Ação</CardTitle>
-              <CardDescription>Configure os botões que aparecem no chat</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Botões de Ação</CardTitle>
+                  <CardDescription>Configure os cards que aparecem na tela inicial do chat</CardDescription>
+                </div>
+                <Button onClick={addActionCard} size="sm" className="gap-2" disabled={config.action_cards.length >= 6}>
+                  <Plus className="h-4 w-4" />
+                  Novo Card
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* WhatsApp */}
-              <div className="space-y-4 p-4 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base font-medium">Botão WhatsApp</Label>
-                    <p className="text-sm text-muted-foreground">Redireciona para o WhatsApp</p>
-                  </div>
-                  <Switch
-                    checked={config.show_whatsapp_button}
-                    onCheckedChange={(checked) => setConfig(prev => ({ ...prev, show_whatsapp_button: checked }))}
-                  />
+            <CardContent className="space-y-4">
+              {config.action_cards.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Nenhum card configurado</p>
+                  <p className="text-sm">Clique em "Novo Card" para adicionar</p>
                 </div>
-                {config.show_whatsapp_button && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Número do WhatsApp</Label>
-                      <Input
-                        value={config.whatsapp_number}
-                        onChange={(e) => setConfig(prev => ({ ...prev, whatsapp_number: e.target.value }))}
-                        placeholder="5511999999999"
-                      />
-                      <p className="text-xs text-muted-foreground">Inclua código do país (55 para Brasil)</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Texto do Botão</Label>
-                      <Input
-                        value={config.whatsapp_label}
-                        onChange={(e) => setConfig(prev => ({ ...prev, whatsapp_label: e.target.value }))}
-                        placeholder="WhatsApp"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  {config.action_cards.map((card) => (
+                    <div key={card.id} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center text-white`}>
+                            {getIconComponent(card.icon)}
+                          </div>
+                          <div>
+                            <p className="font-medium">{card.title}</p>
+                            <p className="text-sm text-muted-foreground">{card.subtitle}</p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => removeActionCard(card.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Título</Label>
+                          <Input
+                            value={card.title}
+                            onChange={(e) => updateActionCard(card.id, { title: e.target.value })}
+                            placeholder="Título do botão"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Subtítulo</Label>
+                          <Input
+                            value={card.subtitle}
+                            onChange={(e) => updateActionCard(card.id, { subtitle: e.target.value })}
+                            placeholder="Descrição breve"
+                          />
+                        </div>
+                      </div>
 
-              {/* Help */}
-              <div className="space-y-4 p-4 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base font-medium">Botão de Ajuda</Label>
-                    <p className="text-sm text-muted-foreground">Redireciona para uma página de ajuda</p>
-                  </div>
-                  <Switch
-                    checked={config.show_help_button}
-                    onCheckedChange={(checked) => setConfig(prev => ({ ...prev, show_help_button: checked }))}
-                  />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Ícone</Label>
+                          <Select
+                            value={card.icon}
+                            onValueChange={(value) => updateActionCard(card.id, { icon: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {iconOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Cor do Ícone</Label>
+                          <Select
+                            value={card.iconBg}
+                            onValueChange={(value) => updateActionCard(card.id, { iconBg: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {colorOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded" style={{ backgroundColor: option.color }} />
+                                    {option.label}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Ação</Label>
+                          <Select
+                            value={card.action}
+                            onValueChange={(value: ActionCard['action']) => updateActionCard(card.id, { action: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {actionOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {card.action === 'link' && (
+                        <div className="space-y-2">
+                          <Label>URL do Link</Label>
+                          <Input
+                            value={card.link || ''}
+                            onChange={(e) => updateActionCard(card.id, { link: e.target.value })}
+                            placeholder="https://exemplo.com"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                {config.show_help_button && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>URL da Página de Ajuda</Label>
-                      <Input
-                        value={config.help_url}
-                        onChange={(e) => setConfig(prev => ({ ...prev, help_url: e.target.value }))}
-                        placeholder="https://ajuda.seusite.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Texto do Botão</Label>
-                      <Input
-                        value={config.help_label}
-                        onChange={(e) => setConfig(prev => ({ ...prev, help_label: e.target.value }))}
-                        placeholder="Ajuda"
-                      />
-                    </div>
-                  </div>
-                )}
+              )}
+
+              <p className="text-xs text-muted-foreground text-center">
+                {config.action_cards.length}/6 cards configurados
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* WhatsApp Config */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Configuração WhatsApp</CardTitle>
+              <CardDescription>Número usado pelos cards com ação "Abrir WhatsApp"</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Habilitar WhatsApp</Label>
+                  <p className="text-sm text-muted-foreground">Permite usar a ação WhatsApp nos cards</p>
+                </div>
+                <Switch
+                  checked={config.show_whatsapp_button}
+                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, show_whatsapp_button: checked }))}
+                />
               </div>
+              {config.show_whatsapp_button && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Número do WhatsApp</Label>
+                    <Input
+                      value={config.whatsapp_number}
+                      onChange={(e) => setConfig(prev => ({ ...prev, whatsapp_number: e.target.value }))}
+                      placeholder="5511999999999"
+                    />
+                    <p className="text-xs text-muted-foreground">Inclua código do país (55 para Brasil)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Texto do Botão</Label>
+                    <Input
+                      value={config.whatsapp_label}
+                      onChange={(e) => setConfig(prev => ({ ...prev, whatsapp_label: e.target.value }))}
+                      placeholder="WhatsApp"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Help Config */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Configuração de Ajuda</CardTitle>
+              <CardDescription>URL usada pelos cards com ação "Abrir ajuda"</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Habilitar Ajuda</Label>
+                  <p className="text-sm text-muted-foreground">Permite usar a ação Ajuda nos cards</p>
+                </div>
+                <Switch
+                  checked={config.show_help_button}
+                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, show_help_button: checked }))}
+                />
+              </div>
+              {config.show_help_button && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>URL da Página de Ajuda</Label>
+                    <Input
+                      value={config.help_url}
+                      onChange={(e) => setConfig(prev => ({ ...prev, help_url: e.target.value }))}
+                      placeholder="https://ajuda.seusite.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Texto do Botão</Label>
+                    <Input
+                      value={config.help_label}
+                      onChange={(e) => setConfig(prev => ({ ...prev, help_label: e.target.value }))}
+                      placeholder="Ajuda"
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
