@@ -43,15 +43,15 @@ interface TimelinePoint {
 }
 
 const COLORS = {
-  spedpay: '#3B82F6',
   inter: '#F97316', 
-  ativus: '#22C55E'
+  ativus: '#22C55E',
+  valorion: '#10B981'
 };
 
 const ACQUIRER_NAMES: Record<string, string> = {
-  spedpay: 'SpedPay',
   inter: 'Banco Inter',
-  ativus: 'Ativus Hub'
+  ativus: 'Ativus Hub',
+  valorion: 'Valorion'
 };
 
 export function RetryDashboardSection() {
@@ -70,7 +70,7 @@ export function RetryDashboardSection() {
       setRecentEvents(events || []);
       
       // Process stats per acquirer
-      const acquirers = ['spedpay', 'inter', 'ativus'];
+      const acquirers = ['inter', 'ativus', 'valorion'];
       const processedStats: RetryStats[] = acquirers.map(acquirer => {
         const acquirerEvents = (events || []).filter((e: any) => e.acquirer === acquirer);
         const success = acquirerEvents.filter((e: any) => e.event_type === 'success').length;

@@ -21,10 +21,6 @@ export const GatewayConfigSection = () => {
   const [ativusFeeRate, setAtivusFeeRate] = useState('');
   const [ativusFixedFee, setAtivusFixedFee] = useState('');
 
-  const [spedpayApiKey, setSpedpayApiKey] = useState('');
-  const [spedpayFeeRate, setSpedpayFeeRate] = useState('');
-  const [spedpayFixedFee, setSpedpayFixedFee] = useState('');
-
   const [valorionApiKey, setValorionApiKey] = useState('');
   const [valorionApiUrl, setValorionApiUrl] = useState('');
   const [valorionFeeRate, setValorionFeeRate] = useState('');
@@ -38,14 +34,12 @@ export const GatewayConfigSection = () => {
 
   // Enabled states for each gateway
   const [ativusEnabled, setAtivusEnabled] = useState(false);
-  const [spedpayEnabled, setSpedpayEnabled] = useState(false);
   const [valorionEnabled, setValorionEnabled] = useState(false);
   const [interEnabled, setInterEnabled] = useState(false);
   const [isTogglingEnabled, setIsTogglingEnabled] = useState<string | null>(null);
 
   // Dialog states
   const [showAtivusDialog, setShowAtivusDialog] = useState(false);
-  const [showSpedpayDialog, setShowSpedpayDialog] = useState(false);
   const [showValorionDialog, setShowValorionDialog] = useState(false);
   const [showInterDialog, setShowInterDialog] = useState(false);
   const [isLoadingInter, setIsLoadingInter] = useState(false);
@@ -53,7 +47,6 @@ export const GatewayConfigSection = () => {
   
   // Show/hide password states
   const [showAtivusKey, setShowAtivusKey] = useState(false);
-  const [showSpedpayKey, setShowSpedpayKey] = useState(false);
   const [showValorionKey, setShowValorionKey] = useState(false);
   const [showInterClientId, setShowInterClientId] = useState(false);
   const [showInterSecret, setShowInterSecret] = useState(false);
@@ -78,10 +71,6 @@ export const GatewayConfigSection = () => {
         setAtivusFeeRate(settings.find(s => s.key === 'ativus_fee_rate')?.value || '');
         setAtivusFixedFee(settings.find(s => s.key === 'ativus_fixed_fee')?.value || '');
 
-        setSpedpayApiKey(settings.find(s => s.key === 'spedpay_api_key')?.value || '');
-        setSpedpayFeeRate(settings.find(s => s.key === 'spedpay_fee_rate')?.value || '');
-        setSpedpayFixedFee(settings.find(s => s.key === 'spedpay_fixed_fee')?.value || '');
-
         setValorionApiKey(settings.find(s => s.key === 'valorion_api_key')?.value || '');
         setValorionApiUrl(settings.find(s => s.key === 'valorion_api_url')?.value || '');
         setValorionFeeRate(settings.find(s => s.key === 'valorion_fee_rate')?.value || '');
@@ -92,7 +81,6 @@ export const GatewayConfigSection = () => {
 
         // Load enabled states
         setAtivusEnabled(settings.find(s => s.key === 'ativus_enabled')?.value === 'true');
-        setSpedpayEnabled(settings.find(s => s.key === 'spedpay_enabled')?.value === 'true');
         setValorionEnabled(settings.find(s => s.key === 'valorion_enabled')?.value === 'true');
         setInterEnabled(settings.find(s => s.key === 'inter_enabled')?.value === 'true');
       }
@@ -115,7 +103,6 @@ export const GatewayConfigSection = () => {
       // Update local state
       switch (gateway) {
         case 'ativus': setAtivusEnabled(enabled); break;
-        case 'spedpay': setSpedpayEnabled(enabled); break;
         case 'valorion': setValorionEnabled(enabled); break;
         case 'inter': setInterEnabled(enabled); break;
       }
@@ -237,17 +224,14 @@ export const GatewayConfigSection = () => {
   const testConnection = async (gateway: string) => {
     setIsTesting(gateway);
     try {
-      // Usar o health-check-acquirers que já foi corrigido para não criar transações
-      // Ele verifica conectividade via endpoints de consulta, não de criação
       const { data, error } = await supabase.functions.invoke('health-check-acquirers', {
         body: { 
-          singleAcquirer: gateway // Novo parâmetro para testar apenas um adquirente
+          singleAcquirer: gateway
         }
       });
 
       if (error) throw error;
       
-      // Verificar resultado do adquirente específico
       const result = data?.results?.find((r: any) => r.acquirer === gateway);
       
       if (result?.is_healthy) {
@@ -289,7 +273,7 @@ export const GatewayConfigSection = () => {
               <CardTitle className="text-lg flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-primary" />
                 Configurações de Gateways
-                <Badge variant="secondary" className="text-xs">4</Badge>
+                <Badge variant="secondary" className="text-xs">3</Badge>
               </CardTitle>
               <CardDescription className="mt-1">
                 Configure as credenciais e taxas de cada gateway de pagamento.
@@ -298,7 +282,7 @@ export const GatewayConfigSection = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* ATIVUS HUB Card */}
             <Card className={`border-primary/30 ${!ativusEnabled ? 'opacity-60' : ''}`}>
@@ -342,53 +326,6 @@ export const GatewayConfigSection = () => {
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => testConnection('ativus')} disabled={isTesting === 'ativus' || !ativusApiKey} className="h-7 text-xs">
                     {isTesting === 'ativus' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* SPEDPAY Card */}
-            <Card className={`border-primary/30 ${!spedpayEnabled ? 'opacity-60' : ''}`}>
-              <CardHeader className="p-4 pb-2">
-                <div className="flex items-center justify-between">
-                  <Switch 
-                    checked={spedpayEnabled} 
-                    onCheckedChange={(checked) => toggleGatewayEnabled('spedpay', checked)}
-                    disabled={isTogglingEnabled === 'spedpay'}
-                    className="h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-4"
-                  />
-                  <CardTitle className="text-sm font-bold text-primary">SPEDPAY</CardTitle>
-                  <Badge variant="outline" className={spedpayEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
-                    {spedpayEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Off</>}
-                  </Badge>
-                </div>
-                <CardDescription className="text-xs text-center">Adquirente integrada ao sistema</CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 pt-2 space-y-3">
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Taxa (%)</Label>
-                      <Input type="number" step="0.01" placeholder="0.00" value={spedpayFeeRate} onChange={e => setSpedpayFeeRate(e.target.value)} className="h-8 text-sm" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Valor Fixo (R$)</Label>
-                      <Input type="number" step="0.01" placeholder="0.00" value={spedpayFixedFee} onChange={e => setSpedpayFixedFee(e.target.value)} className="h-8 text-sm" />
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => saveFeeSettings('spedpay', spedpayFeeRate, spedpayFixedFee)} className="w-full h-7 text-xs">
-                    Salvar Taxas
-                  </Button>
-                </div>
-                
-                <div className="flex items-center gap-2 pt-2 border-t">
-                  <Button variant="outline" size="sm" onClick={() => setShowSpedpayDialog(true)} className="flex-1 h-7 text-xs">
-                    <Settings className="w-3 h-3 mr-1" />
-                    Configurar API
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => testConnection('spedpay')} disabled={isTesting === 'spedpay' || !spedpayApiKey} className="h-7 text-xs">
-                    {isTesting === 'spedpay' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
                   </Button>
                 </div>
               </CardContent>
@@ -524,45 +461,6 @@ export const GatewayConfigSection = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { saveApiKey('ativus', ativusApiKey); setShowAtivusDialog(false); }} disabled={isSaving}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* SpedPay Dialog */}
-      <AlertDialog open={showSpedpayDialog} onOpenChange={setShowSpedpayDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Configurar SpedPay</AlertDialogTitle>
-            <AlertDialogDescription>Configure a chave API global do SpedPay.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Chave API</Label>
-              <div className="relative">
-                <Input 
-                  type={showSpedpayKey ? "text" : "password"} 
-                  placeholder="Digite a chave API do SpedPay" 
-                  value={spedpayApiKey} 
-                  onChange={e => setSpedpayApiKey(e.target.value)} 
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => setShowSpedpayKey(!showSpedpayKey)}
-                >
-                  {showSpedpayKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-                </Button>
-              </div>
-            </div>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { saveApiKey('spedpay', spedpayApiKey); setShowSpedpayDialog(false); }} disabled={isSaving}>
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
             </AlertDialogAction>
           </AlertDialogFooter>

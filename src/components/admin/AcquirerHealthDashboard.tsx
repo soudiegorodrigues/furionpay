@@ -29,14 +29,12 @@ interface AcquirerHealth {
 
 const ACQUIRER_LABELS: Record<string, string> = {
   ativus: 'Ativus Hub',
-  spedpay: 'SpedPay',
   inter: 'Banco Inter',
   valorion: 'Valorion',
 };
 
 const ACQUIRER_COLORS: Record<string, string> = {
   ativus: 'bg-purple-500',
-  spedpay: 'bg-blue-500',
   inter: 'bg-orange-500',
   valorion: 'bg-green-500',
 };
