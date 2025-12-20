@@ -42,6 +42,15 @@ interface TeamAvatar {
   url: string;
 }
 
+interface AutoMessage {
+  id: string;
+  content: string;
+  delay_ms: number;
+  trigger: 'welcome' | 'followup' | 'keyword';
+  keywords?: string[];
+  order: number;
+}
+
 export interface ChatWidgetConfig {
   is_enabled: boolean;
   title: string;
@@ -63,6 +72,7 @@ export interface ChatWidgetConfig {
   greeting_text: string;
   show_bottom_nav: boolean;
   logo_url: string | null;
+  auto_messages?: AutoMessage[];
 }
 
 interface ChatWidgetProps {
@@ -86,6 +96,7 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showConversation, setShowConversation] = useState(false);
+  const [welcomeMessagesSent, setWelcomeMessagesSent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -96,29 +107,76 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
     scrollToBottom();
   }, [messages]);
 
+  // Send welcome messages sequence
   useEffect(() => {
-    if (isOpen && showConversation && messages.length === 0 && config.welcome_message) {
-      if (config.show_typing_indicator) {
-        setIsTyping(true);
-        setTimeout(() => {
-          setIsTyping(false);
+    if (!isOpen || !showConversation || welcomeMessagesSent) return;
+
+    const welcomeMessages = config.auto_messages
+      ?.filter(msg => msg.trigger === 'welcome')
+      .sort((a, b) => a.order - b.order) || [];
+
+    // If no auto messages configured, use fallback welcome_message
+    if (welcomeMessages.length === 0) {
+      if (config.welcome_message) {
+        if (config.show_typing_indicator) {
+          setIsTyping(true);
+          setTimeout(() => {
+            setIsTyping(false);
+            setMessages([{
+              id: '1',
+              content: config.welcome_message,
+              isBot: true,
+              timestamp: new Date()
+            }]);
+          }, config.typing_delay_ms || 1500);
+        } else {
           setMessages([{
             id: '1',
             content: config.welcome_message,
             isBot: true,
             timestamp: new Date()
           }]);
-        }, config.typing_delay_ms || 1500);
-      } else {
-        setMessages([{
-          id: '1',
-          content: config.welcome_message,
-          isBot: true,
-          timestamp: new Date()
-        }]);
+        }
       }
+      setWelcomeMessagesSent(true);
+      return;
     }
-  }, [isOpen, showConversation, messages.length, config.welcome_message, config.show_typing_indicator, config.typing_delay_ms]);
+
+    // Send multiple welcome messages in sequence
+    let totalDelay = 0;
+    welcomeMessages.forEach((msg, index) => {
+      const delay = index === 0 ? msg.delay_ms : totalDelay + msg.delay_ms;
+      totalDelay = delay;
+
+      if (config.show_typing_indicator && index === 0) {
+        setIsTyping(true);
+      }
+
+      setTimeout(() => {
+        if (config.show_typing_indicator) {
+          setIsTyping(true);
+          setTimeout(() => {
+            setIsTyping(false);
+            setMessages(prev => [...prev, {
+              id: `welcome-${msg.id}`,
+              content: msg.content,
+              isBot: true,
+              timestamp: new Date()
+            }]);
+          }, 1000);
+        } else {
+          setMessages(prev => [...prev, {
+            id: `welcome-${msg.id}`,
+            content: msg.content,
+            isBot: true,
+            timestamp: new Date()
+          }]);
+        }
+      }, delay);
+    });
+
+    setWelcomeMessagesSent(true);
+  }, [isOpen, showConversation, welcomeMessagesSent, config]);
 
   if (!config.is_enabled) return null;
 
@@ -154,9 +212,10 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
     
+    const userMessage = inputValue.trim();
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
-      content: inputValue,
+      content: userMessage,
       isBot: false,
       timestamp: new Date()
     };
@@ -164,18 +223,46 @@ export function ChatWidget({ config, previewMode = false }: ChatWidgetProps) {
     setMessages(prev => [...prev, newMessage]);
     setInputValue('');
 
-    // Simulate bot response
-    if (config.show_typing_indicator) {
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        setMessages(prev => [...prev, {
-          id: (Date.now() + 1).toString(),
-          content: 'Obrigado pela sua mensagem! Um membro da nossa equipe responderá em breve.',
-          isBot: true,
-          timestamp: new Date()
-        }]);
-      }, config.typing_delay_ms || 1500);
+    // Check for keyword-triggered auto messages
+    const keywordMessages = config.auto_messages
+      ?.filter(msg => msg.trigger === 'keyword' && msg.keywords?.some(
+        keyword => userMessage.toLowerCase().includes(keyword.toLowerCase())
+      ))
+      .sort((a, b) => a.order - b.order) || [];
+
+    if (keywordMessages.length > 0) {
+      // Send keyword-matched messages
+      keywordMessages.forEach((msg, index) => {
+        const delay = (index + 1) * (msg.delay_ms || config.typing_delay_ms || 1500);
+        
+        if (config.show_typing_indicator) {
+          setTimeout(() => setIsTyping(true), index === 0 ? 500 : delay - 1000);
+        }
+
+        setTimeout(() => {
+          setIsTyping(false);
+          setMessages(prev => [...prev, {
+            id: `keyword-${msg.id}-${Date.now()}`,
+            content: msg.content,
+            isBot: true,
+            timestamp: new Date()
+          }]);
+        }, delay);
+      });
+    } else {
+      // Default bot response
+      if (config.show_typing_indicator) {
+        setIsTyping(true);
+        setTimeout(() => {
+          setIsTyping(false);
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            content: 'Obrigado pela sua mensagem! Um membro da nossa equipe responderá em breve.',
+            isBot: true,
+            timestamp: new Date()
+          }]);
+        }, config.typing_delay_ms || 1500);
+      }
     }
   };
 
