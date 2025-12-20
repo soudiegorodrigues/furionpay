@@ -878,24 +878,6 @@ const AdminDashboard = () => {
           </Card>
         </div>
       </div>
-
-      {/* Quick Link to Vendas */}
-      <Card className="border-dashed border-2 hover:border-primary/50 transition-colors">
-        <CardContent className="p-6">
-          <Link to="/admin/vendas" className="flex items-center justify-between group">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
-                <ShoppingCart className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Histórico de Vendas</h3>
-                <p className="text-sm text-muted-foreground">Ver todas as transações com filtros avançados</p>
-              </div>
-            </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-          </Link>
-        </CardContent>
-      </Card>
     </div>;
 };
 export default AdminDashboard;
