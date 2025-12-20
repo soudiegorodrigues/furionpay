@@ -76,7 +76,6 @@ const AdminVendas = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
@@ -175,7 +174,7 @@ const AdminVendas = () => {
     }
   };
 
-  // Load transactions
+  // Load transactions (all in batches)
   const loadTransactions = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
@@ -203,37 +202,12 @@ const AdminVendas = () => {
         setFeeConfig(feeData as FeeConfig);
       }
 
-      // Load transactions (initial 100)
-      const { data, error } = await supabase.rpc('get_user_transactions', {
-        p_limit: 100
-      });
-
-      if (error) throw error;
-      const txs = data as unknown as Transaction[] || [];
-      setTransactions(txs);
-      setHasMoreTransactions(txs.length >= 100);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar transações",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Load all transactions when user clicks "Carregar Todas"
-  const loadAllTransactions = async () => {
-    setIsLoadingMore(true);
-    try {
+      // Load ALL transactions in batches of 1000
       let allTransactions: Transaction[] = [];
       let offset = 0;
       const batchSize = 1000;
       let hasMore = true;
 
-      // Fetch in batches of 1000 to bypass PostgREST limit
       while (hasMore) {
         const { data, error } = await supabase.rpc('get_user_transactions', {
           p_limit: batchSize,
@@ -245,29 +219,21 @@ const AdminVendas = () => {
         const txs = data as unknown as Transaction[] || [];
         allTransactions = [...allTransactions, ...txs];
         
-        // If we got less than batchSize, we've reached the end
         hasMore = txs.length === batchSize;
         offset += batchSize;
       }
 
       setTransactions(allTransactions);
       setHasMoreTransactions(false);
-      // Change filter to "all" so user can see all loaded transactions
-      setDateFilter('all');
-      setStatusFilter('all');
-      toast({
-        title: "Sucesso",
-        description: `${allTransactions.length} transações carregadas`,
-      });
     } catch (error) {
-      console.error('Error loading all transactions:', error);
+      console.error('Error loading transactions:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar todas as transações",
+        description: "Erro ao carregar transações",
         variant: "destructive"
       });
     } finally {
-      setIsLoadingMore(false);
+      setIsLoading(false);
     }
   };
 
@@ -567,29 +533,6 @@ const AdminVendas = () => {
                 )}
               </div>
               
-              {/* Load All Button */}
-              {hasMoreTransactions && (
-                <div className="flex justify-center mt-4">
-                  <Button
-                    variant="outline"
-                    onClick={loadAllTransactions}
-                    disabled={isLoadingMore}
-                    className="gap-2"
-                  >
-                    {isLoadingMore ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        Carregando...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-4 w-4" />
-                        Carregar Todas as Transações
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
             </>
           )}
         </CardContent>
