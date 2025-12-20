@@ -28,6 +28,15 @@ interface ActionCard {
   link?: string;
 }
 
+interface AutoMessage {
+  id: string;
+  content: string;
+  delay_ms: number;
+  trigger: 'welcome' | 'followup' | 'keyword';
+  keywords?: string[];
+  order: number;
+}
+
 interface ChatConfig {
   id?: string;
   is_enabled: boolean;
@@ -51,6 +60,7 @@ interface ChatConfig {
   greeting_text: string;
   show_bottom_nav: boolean;
   logo_url: string | null;
+  auto_messages: AutoMessage[];
 }
 
 const defaultActionCards: ActionCard[] = [
@@ -81,6 +91,7 @@ const defaultConfig: ChatConfig = {
   greeting_text: "Olá! 👋",
   show_bottom_nav: true,
   logo_url: null,
+  auto_messages: [],
 };
 
 export function ChatConfigSection() {
@@ -136,6 +147,7 @@ export function ChatConfigSection() {
           greeting_text: configData.greeting_text ?? "Olá! 👋",
           show_bottom_nav: configData.show_bottom_nav ?? true,
           logo_url: configData.logo_url ?? null,
+          auto_messages: Array.isArray(configData.auto_messages) ? (configData.auto_messages as AutoMessage[]) : [],
         });
       }
     } catch (error) {
@@ -174,6 +186,7 @@ export function ChatConfigSection() {
         greeting_text: config.greeting_text,
         show_bottom_nav: config.show_bottom_nav,
         logo_url: config.logo_url,
+        auto_messages: JSON.parse(JSON.stringify(config.auto_messages)),
       };
 
       if (config.id) {
@@ -288,6 +301,58 @@ export function ChatConfigSection() {
     }));
   };
 
+  // Auto Messages management
+  const addAutoMessage = () => {
+    if (config.auto_messages.length >= 10) {
+      toast.error("Máximo de 10 mensagens automáticas permitidas");
+      return;
+    }
+    const newMessage: AutoMessage = {
+      id: crypto.randomUUID(),
+      content: '',
+      delay_ms: 1500,
+      trigger: 'welcome',
+      order: config.auto_messages.length,
+    };
+    setConfig(prev => ({
+      ...prev,
+      auto_messages: [...prev.auto_messages, newMessage]
+    }));
+  };
+
+  const updateAutoMessage = (id: string, updates: Partial<AutoMessage>) => {
+    setConfig(prev => ({
+      ...prev,
+      auto_messages: prev.auto_messages.map(msg => 
+        msg.id === id ? { ...msg, ...updates } : msg
+      )
+    }));
+  };
+
+  const removeAutoMessage = (id: string) => {
+    setConfig(prev => ({
+      ...prev,
+      auto_messages: prev.auto_messages.filter(msg => msg.id !== id).map((msg, index) => ({ ...msg, order: index }))
+    }));
+  };
+
+  const moveAutoMessage = (id: string, direction: 'up' | 'down') => {
+    setConfig(prev => {
+      const messages = [...prev.auto_messages];
+      const index = messages.findIndex(m => m.id === id);
+      if (index === -1) return prev;
+      
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= messages.length) return prev;
+      
+      [messages[index], messages[newIndex]] = [messages[newIndex], messages[index]];
+      return {
+        ...prev,
+        auto_messages: messages.map((msg, i) => ({ ...msg, order: i }))
+      };
+    });
+  };
+
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
       case 'message': return <MessageSquare className="h-4 w-4" />;
@@ -324,6 +389,12 @@ export function ChatConfigSection() {
     { value: 'help', label: 'Abrir ajuda' },
     { value: 'whatsapp', label: 'Abrir WhatsApp' },
     { value: 'link', label: 'Abrir link externo' },
+  ];
+
+  const triggerOptions = [
+    { value: 'welcome', label: 'Boas-vindas', description: 'Envia quando o chat abre' },
+    { value: 'followup', label: 'Follow-up', description: 'Envia após inatividade' },
+    { value: 'keyword', label: 'Palavra-chave', description: 'Envia quando detectar palavras' },
   ];
 
   if (isLoading) {
@@ -774,10 +845,11 @@ export function ChatConfigSection() {
         </TabsContent>
 
         <TabsContent value="automation" className="space-y-4 mt-4">
+          {/* Mensagem de Fallback */}
           <Card>
             <CardHeader>
-              <CardTitle>Automação de Mensagens</CardTitle>
-              <CardDescription>Configure a mensagem automática de boas-vindas</CardDescription>
+              <CardTitle>Mensagem Padrão</CardTitle>
+              <CardDescription>Mensagem de fallback quando não há mensagens automáticas configuradas</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -789,7 +861,7 @@ export function ChatConfigSection() {
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Esta mensagem aparece automaticamente quando o usuário abre o chat
+                  Esta mensagem é usada quando não há mensagens automáticas configuradas
                 </p>
               </div>
 
@@ -797,7 +869,7 @@ export function ChatConfigSection() {
                 <div>
                   <Label className="text-base font-medium">Indicador "Digitando..."</Label>
                   <p className="text-sm text-muted-foreground">
-                    Mostra animação de digitação antes da mensagem
+                    Mostra animação de digitação antes das mensagens
                   </p>
                 </div>
                 <Switch
@@ -808,7 +880,7 @@ export function ChatConfigSection() {
 
               {config.show_typing_indicator && (
                 <div className="space-y-2">
-                  <Label>Tempo de Digitação (ms)</Label>
+                  <Label>Tempo Base de Digitação (ms)</Label>
                   <Input
                     type="number"
                     value={config.typing_delay_ms}
@@ -818,10 +890,156 @@ export function ChatConfigSection() {
                     step={100}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Tempo em milissegundos (1000ms = 1 segundo)
+                    Tempo padrão em milissegundos (1000ms = 1 segundo)
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Mensagens Automáticas */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Mensagens Automáticas</CardTitle>
+                  <CardDescription>Configure sequências de mensagens para diferentes situações</CardDescription>
+                </div>
+                <Button onClick={addAutoMessage} size="sm" className="gap-2" disabled={config.auto_messages.length >= 10}>
+                  <Plus className="h-4 w-4" />
+                  Nova Mensagem
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {config.auto_messages.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Nenhuma mensagem automática configurada</p>
+                  <p className="text-sm">Clique em "Nova Mensagem" para adicionar</p>
+                  <p className="text-xs mt-2">A mensagem padrão será usada como fallback</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {config.auto_messages
+                    .sort((a, b) => a.order - b.order)
+                    .map((msg, index) => (
+                    <div key={msg.id} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              disabled={index === 0}
+                              onClick={() => moveAutoMessage(msg.id, 'up')}
+                            >
+                              <GripVertical className="h-3 w-3 rotate-90" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              disabled={index === config.auto_messages.length - 1}
+                              onClick={() => moveAutoMessage(msg.id, 'down')}
+                            >
+                              <GripVertical className="h-3 w-3 rotate-90" />
+                            </Button>
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">
+                              {triggerOptions.find(t => t.value === msg.trigger)?.label || 'Mensagem'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {triggerOptions.find(t => t.value === msg.trigger)?.description}
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => removeAutoMessage(msg.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Conteúdo da Mensagem</Label>
+                        <Textarea
+                          value={msg.content}
+                          onChange={(e) => updateAutoMessage(msg.id, { content: e.target.value })}
+                          placeholder="Digite a mensagem automática..."
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Tipo de Gatilho</Label>
+                          <Select
+                            value={msg.trigger}
+                            onValueChange={(value: AutoMessage['trigger']) => updateAutoMessage(msg.id, { trigger: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {triggerOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  <div>
+                                    <span>{option.label}</span>
+                                    <span className="text-xs text-muted-foreground ml-2">- {option.description}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Delay (ms)</Label>
+                          <Input
+                            type="number"
+                            value={msg.delay_ms}
+                            onChange={(e) => updateAutoMessage(msg.id, { delay_ms: parseInt(e.target.value) || 1500 })}
+                            min={0}
+                            max={30000}
+                            step={500}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Tempo de espera antes de enviar
+                          </p>
+                        </div>
+                      </div>
+
+                      {msg.trigger === 'keyword' && (
+                        <div className="space-y-2">
+                          <Label>Palavras-chave (separadas por vírgula)</Label>
+                          <Input
+                            value={msg.keywords?.join(', ') || ''}
+                            onChange={(e) => updateAutoMessage(msg.id, { 
+                              keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k) 
+                            })}
+                            placeholder="ajuda, suporte, problema"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            A mensagem será enviada quando o usuário digitar uma dessas palavras
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground text-center">
+                {config.auto_messages.length}/10 mensagens configuradas
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
