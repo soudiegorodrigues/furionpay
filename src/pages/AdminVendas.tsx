@@ -63,7 +63,7 @@ interface PeriodStats {
   total_fees: number;
 }
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
 type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
 
