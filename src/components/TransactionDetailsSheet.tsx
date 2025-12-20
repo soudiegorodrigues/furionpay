@@ -71,16 +71,12 @@ const TransactionDetailsSheet = ({
     }
   };
 
-  const getAcquirerBadge = (acquirer?: string) => {
+  const getAcquirerDisplay = (acquirer?: string) => {
     switch (acquirer) {
-      case 'inter':
-        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-[10px]">Banco Inter</Badge>;
-      case 'ativus':
-        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[10px]">Ativus</Badge>;
-      case 'valorion':
-        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px]">Valorion</Badge>;
-      default:
-        return <Badge variant="outline" className="text-muted-foreground text-[10px]">-</Badge>;
+      case 'inter': return 'Banco Inter';
+      case 'ativus': return 'Ativus';
+      case 'valorion': return 'Valorion';
+      default: return '-';
     }
   };
   const copyToClipboard = async (text: string, id: string) => {
@@ -137,7 +133,7 @@ const TransactionDetailsSheet = ({
                 <CreditCard className="h-3 w-3 text-muted-foreground" />
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Adquirente</span>
               </div>
-              {getAcquirerBadge(transaction.acquirer)}
+              <p className="text-xs font-medium">{getAcquirerDisplay(transaction.acquirer)}</p>
             </div>
 
             {/* Produto */}
@@ -175,20 +171,32 @@ const TransactionDetailsSheet = ({
                 <p className="text-[10px] text-muted-foreground">ID</p>
                 <p className="text-[11px] font-mono truncate">{transaction.id}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => copyToClipboard(transaction.id, 'id')} className="h-6 w-6 p-0 shrink-0">
-                {copiedId === 'id' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => copyToClipboard(transaction.id, 'id')} 
+                className="h-6 w-6 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
+              >
+                {copiedId === 'id' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
               </Button>
             </div>
 
-            {transaction.txid && <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2">
+            {transaction.txid && (
+              <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-muted-foreground">TXID</p>
                   <p className="text-[11px] font-mono truncate">{transaction.txid}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(transaction.txid, 'txid')} className="h-6 w-6 p-0 shrink-0">
-                  {copiedId === 'txid' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => copyToClipboard(transaction.txid, 'txid')} 
+                  className="h-6 w-6 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
+                >
+                  {copiedId === 'txid' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                 </Button>
-              </div>}
+              </div>
+            )}
           </div>
         </div>
       </SheetContent>
