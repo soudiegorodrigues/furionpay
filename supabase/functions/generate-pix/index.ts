@@ -1060,33 +1060,50 @@ serve(async (req) => {
       );
     }
 
-    // ============= RATE LIMIT CHECK =============
-    // Load rate limit config from database
-    const rateLimitConfig = await getRateLimitConfig();
-    const rateLimitResult = await checkRateLimit(fingerprint, clientIp, rateLimitConfig);
-    
-    if (!rateLimitResult.allowed) {
-      console.log(`[RATE-LIMIT] Request blocked. Reason: ${rateLimitResult.reason}, RetryAfter: ${rateLimitResult.retryAfter}s`);
+    // ============= CHECK USER BYPASS ANTIFRAUD =============
+    let bypassAntifraud = false;
+    if (userId) {
+      const supabase = getSupabaseClient();
+      const { data: bypassData, error: bypassError } = await supabase
+        .rpc('check_antifraud_bypass', { p_user_id: userId });
       
-      let errorMessage = 'Limite de geração de PIX atingido.';
-      if (rateLimitResult.reason === 'COOLDOWN') {
-        errorMessage = `Aguarde ${rateLimitResult.retryAfter} segundos antes de gerar outro PIX.`;
-      } else if (rateLimitResult.reason === 'MAX_UNPAID') {
-        errorMessage = `Você atingiu o limite de ${rateLimitConfig.maxUnpaidPix} PIX não pagos. Pague os PIX pendentes ou aguarde ${rateLimitConfig.windowHours} horas.`;
-      } else if (rateLimitResult.reason === 'BLOCKED') {
-        const hoursRemaining = Math.ceil((rateLimitResult.retryAfter || 0) / 3600);
-        errorMessage = `Sua conta está temporariamente bloqueada. Tente novamente em ${hoursRemaining} hora(s).`;
+      if (!bypassError && bypassData === true) {
+        bypassAntifraud = true;
+        console.log(`[ANTIFRAUD] User ${userId} has bypass_antifraud=true, skipping rate limit checks`);
       }
+    }
+    // ========================================================
+
+    // ============= RATE LIMIT CHECK =============
+    // Only check rate limit if user doesn't have bypass
+    if (!bypassAntifraud) {
+      // Load rate limit config from database
+      const rateLimitConfig = await getRateLimitConfig();
+      const rateLimitResult = await checkRateLimit(fingerprint, clientIp, rateLimitConfig);
       
-      return new Response(
-        JSON.stringify({ 
-          error: 'RATE_LIMIT',
-          message: errorMessage,
-          retryAfter: rateLimitResult.retryAfter,
-          unpaidCount: rateLimitResult.unpaidCount,
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!rateLimitResult.allowed) {
+        console.log(`[RATE-LIMIT] Request blocked. Reason: ${rateLimitResult.reason}, RetryAfter: ${rateLimitResult.retryAfter}s`);
+        
+        let errorMessage = 'Limite de geração de PIX atingido.';
+        if (rateLimitResult.reason === 'COOLDOWN') {
+          errorMessage = `Aguarde ${rateLimitResult.retryAfter} segundos antes de gerar outro PIX.`;
+        } else if (rateLimitResult.reason === 'MAX_UNPAID') {
+          errorMessage = `Você atingiu o limite de ${rateLimitConfig.maxUnpaidPix} PIX não pagos. Pague os PIX pendentes ou aguarde ${rateLimitConfig.windowHours} horas.`;
+        } else if (rateLimitResult.reason === 'BLOCKED') {
+          const hoursRemaining = Math.ceil((rateLimitResult.retryAfter || 0) / 3600);
+          errorMessage = `Sua conta está temporariamente bloqueada. Tente novamente em ${hoursRemaining} hora(s).`;
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'RATE_LIMIT',
+            message: errorMessage,
+            retryAfter: rateLimitResult.retryAfter,
+            unpaidCount: rateLimitResult.unpaidCount,
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
     // ============================================
 

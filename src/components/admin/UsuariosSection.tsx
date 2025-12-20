@@ -10,8 +10,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Users, Loader2, RefreshCw, ChevronLeft, ChevronRight, Search, Pencil, 
-  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX, Percent, Trophy, Settings2 
+  Shield, ShieldOff, Ban, Unlock, Trash2, Check, CreditCard, UserCheck, UserX, Percent, Trophy, Settings2, ShieldCheck 
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -27,6 +28,7 @@ interface User {
   is_approved: boolean;
   available_balance?: number;
   is_manual_acquirer?: boolean;
+  bypass_antifraud?: boolean;
 }
 
 interface FeeConfig {
@@ -64,6 +66,7 @@ export const UsuariosSection = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedUserAcquirer, setSelectedUserAcquirer] = useState<string>('valorion');
   const [selectedUserFeeConfig, setSelectedUserFeeConfig] = useState<string>('');
+  const [selectedUserBypassAntifraud, setSelectedUserBypassAntifraud] = useState(false);
   const [isSavingUserSettings, setIsSavingUserSettings] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [userToPromote, setUserToPromote] = useState<User | null>(null);
@@ -356,35 +359,31 @@ export const UsuariosSection = () => {
     setSelectedUser(u);
     setUserDetailsOpen(true);
     setUserTotalPaid(0);
+    setSelectedUserBypassAntifraud(false);
     try {
-      const { data: acquirerData, error: acquirerError } = await supabase
-        .from('admin_settings')
-        .select('value')
-        .eq('user_id', u.id)
-        .eq('key', 'user_acquirer')
-        .maybeSingle();
+      const [
+        { data: acquirerData, error: acquirerError },
+        { data: feeData, error: feeError },
+        { data: profileData, error: profileError },
+        { data: totalPaid }
+      ] = await Promise.all([
+        supabase.from('admin_settings').select('value').eq('user_id', u.id).eq('key', 'user_acquirer').maybeSingle(),
+        supabase.from('admin_settings').select('value').eq('user_id', u.id).eq('key', 'user_fee_config').maybeSingle(),
+        supabase.from('profiles').select('bypass_antifraud').eq('id', u.id).maybeSingle(),
+        supabase.rpc('get_user_total_paid', { p_user_id: u.id })
+      ]);
+      
       if (acquirerError) throw acquirerError;
-
-      setSelectedUserAcquirer(acquirerData?.value || defaultAcquirer);
-
-      const { data: feeData, error: feeError } = await supabase
-        .from('admin_settings')
-        .select('value')
-        .eq('user_id', u.id)
-        .eq('key', 'user_fee_config')
-        .maybeSingle();
       if (feeError) throw feeError;
-
+      
+      setSelectedUserAcquirer(acquirerData?.value || defaultAcquirer);
       setSelectedUserFeeConfig(feeData?.value || '');
-
-      // Fetch user total paid amount using RPC to bypass 1000 row limit
-      const { data: totalPaid } = await supabase.rpc('get_user_total_paid', {
-        p_user_id: u.id
-      });
+      setSelectedUserBypassAntifraud(profileData?.bypass_antifraud || false);
       setUserTotalPaid(totalPaid || 0);
     } catch {
       setSelectedUserAcquirer(defaultAcquirer);
       setSelectedUserFeeConfig('');
+      setSelectedUserBypassAntifraud(false);
     }
   };
 
@@ -450,6 +449,16 @@ export const UsuariosSection = () => {
           .delete()
           .eq('user_id', selectedUser.id)
           .eq('key', 'user_fee_config');
+      }
+
+      // Save bypass antifraud setting
+      const { error: bypassError } = await supabase.rpc('set_user_antifraud_bypass', {
+        p_user_id: selectedUser.id,
+        p_bypass: selectedUserBypassAntifraud
+      });
+      if (bypassError) {
+        console.error('Error setting bypass antifraud:', bypassError);
+        // Don't throw - just log, as other settings were saved
       }
 
       // Update local state based on whether it's manual or default
@@ -849,6 +858,24 @@ export const UsuariosSection = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2 pt-3 border-t">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-green-500" />
+                        Bypass Antifraude
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Libera este usuário para gerar PIX sem verificação de fingerprint/IP
+                      </p>
+                    </div>
+                    <Switch
+                      checked={selectedUserBypassAntifraud}
+                      onCheckedChange={setSelectedUserBypassAntifraud}
+                    />
+                  </div>
                 </div>
               </div>
 
