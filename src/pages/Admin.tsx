@@ -22,7 +22,7 @@ import { NotificacoesSection } from "@/components/admin/NotificacoesSection";
 import { BackupsSection } from "@/components/admin/BackupsSection";
 import { AntiFraudeSection } from "@/components/admin/AntiFraudeSection";
 import { TemplatesListSection } from "@/components/admin/TemplatesListSection";
-
+import { ChatConfigSection } from "@/components/admin/ChatConfigSection";
 import { AnimatedSection } from "@/components/admin/AnimatedSection";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -243,7 +243,7 @@ const Admin = () => {
         {activeSection === "api-monitoring" && <ApiMonitoringSection />}
         {activeSection === "backups" && <BackupsSection />}
         {activeSection === "templates" && <TemplatesListSection />}
-        
+        {activeSection === "chat-widget" && <ChatConfigSection />}
       </AnimatedSection>
     </div>
   );

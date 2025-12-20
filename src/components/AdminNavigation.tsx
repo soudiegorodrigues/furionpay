@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp, Bell, Database, Shield, LayoutTemplate } from "lucide-react";
+import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp, Bell, Database, Shield, LayoutTemplate, MessageSquare } from "lucide-react";
 
 const adminSections = {
   analises: {
@@ -39,6 +39,7 @@ const adminSections = {
       { id: "personalizacao", title: "Personalização", icon: Palette },
       { id: "email", title: "Email", icon: Mail },
       { id: "backups", title: "Backups", icon: Database },
+      { id: "chat-widget", title: "Chat Suporte", icon: MessageSquare },
       { id: "utm-debug", title: "UTM Debug", icon: Bug },
       { id: "zona-perigo", title: "Zona de Perigo", icon: AlertTriangle },
     ]
