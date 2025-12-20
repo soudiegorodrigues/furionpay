@@ -492,7 +492,6 @@ const AdminVendas = () => {
                       <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
                       <TableHead className="text-xs">Valor</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs hidden md:table-cell">Adquirente</TableHead>
                       <TableHead className="text-xs hidden lg:table-cell">Posicionamento</TableHead>
                       <TableHead className="text-xs text-center">UTM</TableHead>
                     </TableRow>
@@ -514,7 +513,6 @@ const AdminVendas = () => {
                           {formatCurrency(calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed))}
                         </TableCell>
                         <TableCell>{getStatusBadge(tx.status)}</TableCell>
-                        <TableCell className="hidden md:table-cell">{getAcquirerBadge(tx.acquirer)}</TableCell>
                         <TableCell className="text-xs hidden lg:table-cell max-w-[100px] truncate">
                           {tx.utm_data?.utm_term || '-'}
                         </TableCell>
