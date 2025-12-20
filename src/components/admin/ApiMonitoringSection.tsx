@@ -17,7 +17,7 @@ import {
   Timer
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import {
   Tooltip as UITooltip,
@@ -682,19 +682,7 @@ export function ApiMonitoringSection() {
                   width={isMobile ? 25 : 30}
                 />
                 <Tooltip content={<CustomChartTooltip chartPeriod={chartPeriod} />} />
-                <Legend 
-                  wrapperStyle={{ fontSize: isMobile ? '9px' : '11px', paddingTop: '6px' }}
-                  iconSize={isMobile ? 6 : 8}
-                  formatter={(value) => {
-                    if (isMobile) {
-                      if (value === 'SpedPay') return 'SP';
-                      if (value === 'Banco Inter') return 'BI';
-                      if (value === 'Ativus Hub') return 'AH';
-                    }
-                    return value;
-                  }}
-                />
-                <Line 
+                <Line
                   type="monotone" 
                   dataKey="spedpay" 
                   name="SpedPay"
