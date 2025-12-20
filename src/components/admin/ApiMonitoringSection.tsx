@@ -14,8 +14,20 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
-  Timer
+  Timer,
+  Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
@@ -387,6 +399,23 @@ export function ApiMonitoringSection() {
     }
   }, [fetchData]);
 
+  const handleClearHistory = useCallback(async () => {
+    try {
+      const { error } = await supabase
+        .from('api_monitoring_events')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      
+      if (error) throw error;
+      
+      toast.success('Histórico de API limpo com sucesso');
+      await fetchData();
+    } catch (error) {
+      console.error('Error clearing API history:', error);
+      toast.error('Erro ao limpar histórico');
+    }
+  }, [fetchData]);
+
   const filteredEvents = useMemo(() => 
     acquirerFilter === 'all' 
       ? recentEvents 
@@ -595,6 +624,36 @@ export function ApiMonitoringSection() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 sm:h-8 px-2 sm:px-3 shrink-0 text-xs text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline ml-1.5">Limpar</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar Histórico de API</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá remover <strong>todos</strong> os registros de monitoramento de API, incluindo eventos de sucesso, falha e retry. 
+                  Isso vai zerar completamente o dashboard e os gráficos. Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleClearHistory}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Limpar Tudo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button 
             variant="outline" 
             size="sm" 
