@@ -664,14 +664,14 @@ serve(async (req) => {
   try {
     const supabase = getSupabaseClient();
     
-    // Get all pending transactions (limit to 100 per batch to avoid timeout)
+    // Get all pending transactions (limit to 500 per batch for high volume - optimized for 100k PIX/day)
     const { data: pendingTransactions, error: fetchError } = await supabase
       .from('pix_transactions')
-      .select('id, txid, user_id, amount')
+      .select('id, txid, user_id, amount, acquirer')
       .eq('status', 'generated')
       .not('txid', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(500);
     
     if (fetchError) {
       console.error('Error fetching pending transactions:', fetchError);
