@@ -103,7 +103,7 @@ export function ChatConfigSection() {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from("chat_widget_config")
+        .from("chat_widget_config" as any)
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
@@ -112,29 +112,30 @@ export function ChatConfigSection() {
         throw error;
       }
 
-      if (data) {
+      const configData = data as any;
+      if (configData) {
         setConfig({
-          id: data.id,
-          is_enabled: data.is_enabled ?? true,
-          title: data.title ?? "Suporte",
-          subtitle: data.subtitle ?? "Estamos online",
-          primary_color: data.primary_color ?? "#ef4444",
-          icon_type: data.icon_type ?? "chat",
-          show_whatsapp_button: data.show_whatsapp_button ?? true,
-          whatsapp_number: data.whatsapp_number ?? "",
-          whatsapp_label: data.whatsapp_label ?? "WhatsApp",
-          show_help_button: data.show_help_button ?? true,
-          help_url: data.help_url ?? "",
-          help_label: data.help_label ?? "Ajuda",
-          team_avatars: (data.team_avatars as unknown as TeamAvatar[]) ?? [],
-          position: data.position ?? "bottom-right",
-          welcome_message: data.welcome_message ?? "Olá! 👋 Como posso ajudar você hoje?",
-          show_typing_indicator: data.show_typing_indicator ?? true,
-          typing_delay_ms: data.typing_delay_ms ?? 1500,
-          action_cards: Array.isArray(data.action_cards) ? (data.action_cards as unknown as ActionCard[]) : defaultActionCards,
-          greeting_text: (data as any).greeting_text ?? "Olá! 👋",
-          show_bottom_nav: (data as any).show_bottom_nav ?? true,
-          logo_url: (data as any).logo_url ?? null,
+          id: configData.id,
+          is_enabled: configData.is_enabled ?? true,
+          title: configData.title ?? "Suporte",
+          subtitle: configData.subtitle ?? "Estamos online",
+          primary_color: configData.primary_color ?? "#ef4444",
+          icon_type: configData.icon_type ?? "chat",
+          show_whatsapp_button: configData.show_whatsapp_button ?? true,
+          whatsapp_number: configData.whatsapp_number ?? "",
+          whatsapp_label: configData.whatsapp_label ?? "WhatsApp",
+          show_help_button: configData.show_help_button ?? true,
+          help_url: configData.help_url ?? "",
+          help_label: configData.help_label ?? "Ajuda",
+          team_avatars: (configData.team_avatars as TeamAvatar[]) ?? [],
+          position: configData.position ?? "bottom-right",
+          welcome_message: configData.welcome_message ?? "Olá! 👋 Como posso ajudar você hoje?",
+          show_typing_indicator: configData.show_typing_indicator ?? true,
+          typing_delay_ms: configData.typing_delay_ms ?? 1500,
+          action_cards: Array.isArray(configData.action_cards) ? (configData.action_cards as ActionCard[]) : defaultActionCards,
+          greeting_text: configData.greeting_text ?? "Olá! 👋",
+          show_bottom_nav: configData.show_bottom_nav ?? true,
+          logo_url: configData.logo_url ?? null,
         });
       }
     } catch (error) {
@@ -173,20 +174,20 @@ export function ChatConfigSection() {
 
       if (config.id) {
         const { error } = await supabase
-          .from("chat_widget_config")
+          .from("chat_widget_config" as any)
           .update(payload)
           .eq("id", config.id);
         
         if (error) throw error;
       } else {
         const { data, error } = await supabase
-          .from("chat_widget_config")
+          .from("chat_widget_config" as any)
           .insert(payload)
           .select()
           .single();
         
         if (error) throw error;
-        setConfig(prev => ({ ...prev, id: data.id }));
+        setConfig(prev => ({ ...prev, id: (data as any).id }));
       }
 
       toast.success("Configurações salvas com sucesso!");
@@ -605,7 +606,7 @@ export function ChatConfigSection() {
       {/* Preview */}
       {showPreview && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-lg">
+          <div className="relative w-full max-w-md">
             <Button
               variant="outline"
               size="sm"
@@ -614,9 +615,9 @@ export function ChatConfigSection() {
             >
               Fechar Preview
             </Button>
-            <div className="bg-muted/50 rounded-xl p-8 min-h-[400px] relative">
-              <p className="text-center text-muted-foreground mb-4">Preview do Chat Widget</p>
-              <ChatWidget config={config} />
+            <div className="bg-muted/50 rounded-xl p-4">
+              <p className="text-center text-muted-foreground mb-4 text-sm">Preview do Chat Widget</p>
+              <ChatWidget config={config} previewMode={true} />
             </div>
           </div>
         </div>
