@@ -111,38 +111,38 @@ const TransactionDetailsSheet = ({
           <div className="grid grid-cols-2 gap-3">
             {/* Data */}
             <div className="bg-muted/30 rounded-lg p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Calendar className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Data</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Data</span>
               </div>
-              <p className="text-xs font-medium truncate">{formatDate(transaction.created_at)}</p>
+              <p className="text-sm font-semibold truncate">{formatDate(transaction.created_at)}</p>
             </div>
 
             {/* Cliente */}
             <div className="bg-muted/30 rounded-lg p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <User className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Cliente</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Cliente</span>
               </div>
-              <p className="text-xs font-medium truncate">{transaction.donor_name || '-'}</p>
+              <p className="text-sm font-semibold truncate">{transaction.donor_name || '-'}</p>
             </div>
 
             {/* Adquirente */}
             <div className="bg-muted/30 rounded-lg p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <CreditCard className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Adquirente</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Adquirente</span>
               </div>
               <p className="text-sm font-bold">{getAcquirerDisplay(transaction.acquirer)}</p>
             </div>
 
             {/* Produto */}
             <div className="bg-muted/30 rounded-lg p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Package className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Produto</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Produto</span>
               </div>
-              <p className="text-xs font-medium truncate">{transaction.product_name || '-'}</p>
+              <p className="text-sm font-semibold truncate">{transaction.product_name || '-'}</p>
               {transaction.popup_model && <Badge variant="outline" className="mt-1.5 text-[10px] h-5">
                   {transaction.popup_model}
                 </Badge>}
@@ -151,49 +151,49 @@ const TransactionDetailsSheet = ({
 
           {/* UTM */}
           {hasUtmData && <div className="bg-muted/30 rounded-lg p-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <TrendingUp className="h-3 w-3 text-muted-foreground" />
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">UTM Tracking</span>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">UTM Tracking</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {transaction.utm_data?.utm_source && <Badge variant="secondary" className="text-[10px] h-5">{transaction.utm_data.utm_source}</Badge>}
-                {transaction.utm_data?.utm_medium && <Badge variant="outline" className="text-[10px] h-5">{transaction.utm_data.utm_medium}</Badge>}
-                {transaction.utm_data?.utm_campaign && <Badge variant="outline" className="text-[10px] h-5">{transaction.utm_data.utm_campaign}</Badge>}
+                {transaction.utm_data?.utm_source && <Badge variant="secondary" className="text-xs h-6">{transaction.utm_data.utm_source}</Badge>}
+                {transaction.utm_data?.utm_medium && <Badge variant="outline" className="text-xs h-6">{transaction.utm_data.utm_medium}</Badge>}
+                {transaction.utm_data?.utm_campaign && <Badge variant="outline" className="text-xs h-6">{transaction.utm_data.utm_campaign}</Badge>}
               </div>
             </div>}
 
           {/* IDs */}
           <div className="space-y-2">
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">IDs</span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">IDs</span>
             
-            <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2">
+            <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2.5">
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-muted-foreground">ID</p>
-                <p className="text-[11px] font-mono truncate">{transaction.id}</p>
+                <p className="text-xs text-muted-foreground font-medium">ID</p>
+                <p className="text-xs font-mono truncate">{transaction.id}</p>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => copyToClipboard(transaction.id, 'id')} 
-                className="h-6 w-6 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
+                className="h-7 w-7 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
               >
-                {copiedId === 'id' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                {copiedId === 'id' ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
               </Button>
             </div>
 
             {transaction.txid && (
-              <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2">
+              <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2.5">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-muted-foreground">TXID</p>
-                  <p className="text-[11px] font-mono truncate">{transaction.txid}</p>
+                  <p className="text-xs text-muted-foreground font-medium">TXID</p>
+                  <p className="text-xs font-mono truncate">{transaction.txid}</p>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => copyToClipboard(transaction.txid, 'txid')} 
-                  className="h-6 w-6 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
+                  className="h-7 w-7 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
                 >
-                  {copiedId === 'txid' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                  {copiedId === 'txid' ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
                 </Button>
               </div>
             )}
