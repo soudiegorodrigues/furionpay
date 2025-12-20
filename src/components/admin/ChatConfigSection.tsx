@@ -37,6 +37,13 @@ interface AutoMessage {
   order: number;
 }
 
+interface BusinessHour {
+  day: number;
+  enabled: boolean;
+  start: string;
+  end: string;
+}
+
 interface ChatConfig {
   id?: string;
   is_enabled: boolean;
@@ -61,7 +68,20 @@ interface ChatConfig {
   show_bottom_nav: boolean;
   logo_url: string | null;
   auto_messages: AutoMessage[];
+  // Business hours
+  business_hours_enabled: boolean;
+  business_hours: BusinessHour[];
 }
+
+const defaultBusinessHours: BusinessHour[] = [
+  { day: 0, enabled: false, start: '09:00', end: '18:00' },
+  { day: 1, enabled: true, start: '08:00', end: '18:00' },
+  { day: 2, enabled: true, start: '08:00', end: '18:00' },
+  { day: 3, enabled: true, start: '08:00', end: '18:00' },
+  { day: 4, enabled: true, start: '08:00', end: '18:00' },
+  { day: 5, enabled: true, start: '08:00', end: '18:00' },
+  { day: 6, enabled: false, start: '09:00', end: '13:00' },
+];
 
 const defaultActionCards: ActionCard[] = [
   { id: '1', icon: 'message', iconBg: 'bg-blue-500', title: 'Enviar mensagem', subtitle: 'Fale com nossa equipe', action: 'message' },
@@ -92,6 +112,8 @@ const defaultConfig: ChatConfig = {
   show_bottom_nav: true,
   logo_url: null,
   auto_messages: [],
+  business_hours_enabled: false,
+  business_hours: defaultBusinessHours,
 };
 
 export function ChatConfigSection() {
@@ -149,6 +171,8 @@ export function ChatConfigSection() {
           show_bottom_nav: configData.show_bottom_nav ?? true,
           logo_url: configData.logo_url ?? null,
           auto_messages: Array.isArray(configData.auto_messages) ? (configData.auto_messages as AutoMessage[]) : [],
+          business_hours_enabled: configData.business_hours_enabled ?? false,
+          business_hours: Array.isArray(configData.business_hours) ? (configData.business_hours as BusinessHour[]) : defaultBusinessHours,
         });
       }
     } catch (error) {
@@ -188,6 +212,8 @@ export function ChatConfigSection() {
         show_bottom_nav: config.show_bottom_nav,
         logo_url: config.logo_url,
         auto_messages: JSON.parse(JSON.stringify(config.auto_messages)),
+        business_hours_enabled: config.business_hours_enabled,
+        business_hours: JSON.parse(JSON.stringify(config.business_hours)),
       };
 
       if (config.id) {
@@ -634,6 +660,91 @@ export function ChatConfigSection() {
                   disabled={isUploadingLogo}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Hours Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Horário de Funcionamento
+              </CardTitle>
+              <CardDescription>
+                Configure quando o chat mostra como "online" ou "offline"
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <Switch
+                  checked={config.business_hours_enabled}
+                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, business_hours_enabled: checked }))}
+                />
+                <div>
+                  <Label className="text-base font-medium">Habilitar horário de funcionamento</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Quando desabilitado, o chat aparece sempre como online
+                  </p>
+                </div>
+              </div>
+
+              {config.business_hours_enabled && (
+                <div className="space-y-3">
+                  {config.business_hours.map((hour) => {
+                    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+                    return (
+                      <div 
+                        key={hour.day} 
+                        className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg"
+                      >
+                        <Switch
+                          checked={hour.enabled}
+                          onCheckedChange={(checked) => {
+                            setConfig(prev => ({
+                              ...prev,
+                              business_hours: prev.business_hours.map(h => 
+                                h.day === hour.day ? { ...h, enabled: checked } : h
+                              )
+                            }));
+                          }}
+                        />
+                        <span className="w-24 font-medium text-sm">{dayNames[hour.day]}</span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            type="time"
+                            value={hour.start}
+                            onChange={(e) => {
+                              setConfig(prev => ({
+                                ...prev,
+                                business_hours: prev.business_hours.map(h => 
+                                  h.day === hour.day ? { ...h, start: e.target.value } : h
+                                )
+                              }));
+                            }}
+                            disabled={!hour.enabled}
+                            className="w-28"
+                          />
+                          <span className="text-muted-foreground text-sm">até</span>
+                          <Input
+                            type="time"
+                            value={hour.end}
+                            onChange={(e) => {
+                              setConfig(prev => ({
+                                ...prev,
+                                business_hours: prev.business_hours.map(h => 
+                                  h.day === hour.day ? { ...h, end: e.target.value } : h
+                                )
+                              }));
+                            }}
+                            disabled={!hour.enabled}
+                            className="w-28"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
