@@ -103,6 +103,7 @@ export function ChatConfigSection() {
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   useEffect(() => {
     fetchConfig();
@@ -241,6 +242,36 @@ export function ChatConfigSection() {
     } finally {
       setIsUploadingAvatar(false);
     }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const compressedBlob = await compressImage(file, compressionPresets.avatar);
+      const fileName = `logo-${Date.now()}.webp`;
+
+      const { error } = await supabase.storage
+        .from("chat-avatars")
+        .upload(fileName, compressedBlob, { contentType: "image/webp" });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage.from("chat-avatars").getPublicUrl(fileName);
+      setConfig(prev => ({ ...prev, logo_url: data.publicUrl }));
+      toast.success("Logo enviado com sucesso!");
+    } catch (err) {
+      console.error("Error uploading logo:", err);
+      toast.error("Erro ao fazer upload do logo");
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const removeLogo = () => {
+    setConfig(prev => ({ ...prev, logo_url: null }));
   };
 
   const addAvatar = () => {
@@ -519,6 +550,89 @@ export function ChatConfigSection() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Logo da Empresa */}
+              <div className="space-y-3 pt-4 border-t">
+                <div>
+                  <Label className="text-base font-medium">Logo da Empresa</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Aparece no header do chat substituindo o ícone padrão
+                  </p>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  {config.logo_url ? (
+                    <div className="relative group">
+                      <div 
+                        className="w-16 h-16 rounded-lg border-2 border-border overflow-hidden flex items-center justify-center bg-background"
+                      >
+                        <img 
+                          src={config.logo_url} 
+                          alt="Logo da empresa" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <button
+                        onClick={removeLogo}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-16 h-16 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors bg-muted/50"
+                      onClick={() => document.getElementById("logo-upload-input")?.click()}
+                    >
+                      {isUploadingLogo ? (
+                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-[10px] text-muted-foreground mt-1">Upload</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="flex-1 space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      {config.logo_url 
+                        ? "Logo configurado. Clique no X para remover."
+                        : "Clique para fazer upload do logo da sua empresa. Formatos: PNG, JPG, SVG."}
+                    </p>
+                    {!config.logo_url && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => document.getElementById("logo-upload-input")?.click()}
+                        disabled={isUploadingLogo}
+                      >
+                        {isUploadingLogo ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Selecionar Logo
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                <input
+                  id="logo-upload-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleLogoUpload}
+                  disabled={isUploadingLogo}
+                />
               </div>
             </CardContent>
           </Card>
