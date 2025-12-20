@@ -365,7 +365,7 @@ const AdminVendas = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -502,7 +502,7 @@ const AdminVendas = () => {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="overflow-x-auto -mx-4 sm:mx-0 scroll-smooth">
                 <Table>
                   <TableHeader>
                     <TableRow>
