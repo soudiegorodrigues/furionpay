@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactionNotifications } from "@/hooks/useTransactionNotifications";
-import { ChatWidgetLoader } from "@/components/ChatWidgetLoader";
+
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
@@ -167,8 +167,6 @@ export function AdminLayoutWrapper() {
           </main>
         </div>
         
-        {/* Chat Widget for sellers */}
-        {user?.id && <ChatWidgetLoader userId={user.id} />}
       </div>
     </SidebarProvider>
   );
