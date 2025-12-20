@@ -509,7 +509,7 @@ const AdminVendas = () => {
                       <TableHead className="text-xs">Data</TableHead>
                       <TableHead className="text-xs">Nome</TableHead>
                       <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
-                      <TableHead className="text-xs">Valor</TableHead>
+                      <TableHead className="text-xs">Líquido</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
                       <TableHead className="text-xs hidden lg:table-cell">Posicionamento</TableHead>
                       <TableHead className="text-xs text-center">UTM</TableHead>
