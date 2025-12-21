@@ -36,20 +36,20 @@ export default function Setup2FA() {
   const [enrolling, setEnrolling] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
-  // Check if user already has 2FA enabled
+  // Check if user already has 2FA enabled and handle existing factors
   useEffect(() => {
-    const checkExisting2FA = async () => {
+    const checkAndCleanupFactors = async () => {
       if (!authLoading && isAuthenticated) {
         const info = await checkMFAStatus();
         if (info?.hasTOTPFactor) {
-          // User already has 2FA, redirect to dashboard
+          // User already has verified 2FA, redirect to dashboard
           navigate('/admin/dashboard', {
             replace: true
           });
         }
       }
     };
-    checkExisting2FA();
+    checkAndCleanupFactors();
   }, [authLoading, isAuthenticated, checkMFAStatus, navigate]);
 
   // Redirect if not authenticated
@@ -60,19 +60,42 @@ export default function Setup2FA() {
       });
     }
   }, [authLoading, isAuthenticated, navigate]);
+
+  // Remove unverified factors before enrolling a new one
+  const cleanupUnverifiedFactors = async () => {
+    try {
+      const { data } = await supabase.auth.mfa.listFactors();
+      if (data?.totp) {
+        // Remove any unverified factors (status !== 'verified')
+        for (const factor of data.totp) {
+          if (factor.status !== 'verified') {
+            await supabase.auth.mfa.unenroll({ factorId: factor.id });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning up factors:', error);
+    }
+  };
+
   const handleStartSetup = async () => {
     setEnrolling(true);
     try {
+      // Clean up any unverified factors first
+      await cleanupUnverifiedFactors();
+
       const {
         data,
         error
       } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'Authenticator App'
+        friendlyName: 'FURIONPAY'
       });
       if (error) throw error;
       if (data?.totp) {
-        setQrCodeUrl(data.totp.uri);
+        // Modify URI to show FURIONPAY
+        const modifiedUri = modifyTotpUri(data.totp.uri);
+        setQrCodeUrl(modifiedUri);
         setSecret(data.totp.secret);
         setFactorId(data.id);
         setStep('qrcode');
@@ -85,6 +108,26 @@ export default function Setup2FA() {
       });
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  // Modifica a URI TOTP para exibir "FURIONPAY" como nome do serviço
+  const modifyTotpUri = (uri: string): string => {
+    try {
+      const secretMatch = uri.match(/secret=([A-Z2-7]+)/i);
+      const secretKey = secretMatch ? secretMatch[1] : '';
+      
+      if (!secretKey) return uri;
+      
+      const pathMatch = uri.match(/otpauth:\/\/totp\/([^?]+)/);
+      const pathPart = pathMatch ? decodeURIComponent(pathMatch[1]) : '';
+      const email = pathPart.includes(':') 
+        ? pathPart.split(':').pop() || ''
+        : pathPart;
+      
+      return `otpauth://totp/FURIONPAY:${encodeURIComponent(email)}?secret=${secretKey}&issuer=FURIONPAY`;
+    } catch {
+      return uri;
     }
   };
   const handleVerifyCode = async () => {
