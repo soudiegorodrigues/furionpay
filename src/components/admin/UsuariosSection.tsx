@@ -304,13 +304,14 @@ export const UsuariosSection = () => {
                       <TableHead className="text-xs font-semibold hidden lg:table-cell">Documento</TableHead>
                       <TableHead className="text-xs font-semibold hidden xl:table-cell">Total Faturado</TableHead>
                       <TableHead className="text-xs font-semibold hidden sm:table-cell">Taxa</TableHead>
-                      <TableHead className="text-xs font-semibold">Status</TableHead>
+                      <TableHead className="text-xs font-semibold">Tipo</TableHead>
+                      <TableHead className="text-xs font-semibold hidden sm:table-cell">Aprovação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
                           Nenhum usuário encontrado
                         </TableCell>
                       </TableRow>
@@ -342,22 +343,24 @@ export const UsuariosSection = () => {
                             <span className="text-muted-foreground">{getFeeConfigName(u.id)}</span>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1 flex-wrap">
-                              {u.is_blocked ? (
-                                <Badge variant="destructive" className="text-[10px] px-1.5">Bloq.</Badge>
-                              ) : u.is_admin ? (
-                                <Badge className="bg-primary text-[10px] px-1.5">Admin</Badge>
+                            {u.is_blocked ? (
+                              <Badge variant="destructive" className="text-[10px] px-1.5">Bloq.</Badge>
+                            ) : u.is_admin ? (
+                              <Badge className="bg-primary text-[10px] px-1.5">Admin</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-[10px] px-1.5">User</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            {!u.is_admin ? (
+                              u.is_approved ? (
+                                <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] px-1.5">Aprov.</Badge>
                               ) : (
-                                <Badge variant="secondary" className="text-[10px] px-1.5">User</Badge>
-                              )}
-                              {!u.is_admin && (
-                                u.is_approved ? (
-                                  <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] px-1.5">Aprov.</Badge>
-                                ) : (
-                                  <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-[10px] px-1.5">Pend.</Badge>
-                                )
-                              )}
-                            </div>
+                                <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-[10px] px-1.5">Pend.</Badge>
+                              )
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
