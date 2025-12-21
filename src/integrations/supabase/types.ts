@@ -928,6 +928,63 @@ export type Database = {
         }
         Relationships: []
       }
+      mfa_audit_logs: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mfa_backup_codes: {
+        Row: {
+          code_hash: string
+          created_at: string | null
+          id: string
+          used: boolean | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       password_reset_codes: {
         Row: {
           code: string
@@ -2024,6 +2081,7 @@ export type Database = {
         Args: { _collaborator_email: string; _permissions: Json }
         Returns: string
       }
+      admin_can_reset_2fa: { Args: { p_user_id: string }; Returns: boolean }
       apply_default_acquirer_to_all: {
         Args: { p_acquirer: string }
         Returns: Json
@@ -2052,6 +2110,7 @@ export type Database = {
       cleanup_rate_limit_events: { Args: never; Returns: undefined }
       cleanup_rate_limit_events_optimized: { Args: never; Returns: undefined }
       collect_db_performance_metrics: { Args: never; Returns: undefined }
+      count_backup_codes: { Args: never; Returns: number }
       create_api_client: {
         Args: { p_name: string; p_webhook_url?: string }
         Returns: {
@@ -2092,6 +2151,7 @@ export type Database = {
           api_key_prefix: string
         }[]
       }
+      generate_backup_codes: { Args: { p_count?: number }; Returns: string[] }
       get_admin_settings: {
         Args: { input_token: string }
         Returns: {
@@ -3015,6 +3075,7 @@ export type Database = {
           webhook_url: string
         }[]
       }
+      verify_backup_code: { Args: { p_code: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

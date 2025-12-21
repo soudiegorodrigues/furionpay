@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { DocumentVerificationSection } from "@/components/profile/DocumentVerificationSection";
+import { TwoFactorSettings } from "@/components/auth/TwoFactorSettings";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -365,6 +366,9 @@ export default function AdminProfile() {
               </button>
             </CardContent>
           </Card>
+
+          {/* Autenticação em Duas Etapas */}
+          <TwoFactorSettings />
 
           {/* Verificação de Documentos */}
           {user?.id && (
