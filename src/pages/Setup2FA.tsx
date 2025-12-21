@@ -151,19 +151,45 @@ export default function Setup2FA() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4 relative overflow-hidden">
+      {/* Subtle grid pattern */}
+      <div 
+        className="absolute inset-0 opacity-[0.02] pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px),
+                           linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }}
+      />
+      
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-green-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        {/* Large soft gradient orb - center */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-radial from-primary/6 via-primary/2 to-transparent rounded-full" />
+        
+        {/* Floating circles with different animations */}
+        <div className="absolute top-[8%] left-[12%] w-28 h-28 bg-primary/8 rounded-full blur-2xl animate-float-slow" />
+        <div className="absolute top-[18%] right-[18%] w-20 h-20 bg-primary/6 rounded-full blur-xl animate-drift" />
+        <div className="absolute bottom-[12%] left-[22%] w-36 h-36 bg-primary/5 rounded-full blur-2xl animate-pulse-glow" />
+        <div className="absolute bottom-[22%] right-[12%] w-24 h-24 bg-primary/7 rounded-full blur-xl animate-float-slow" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[40%] right-[5%] w-16 h-16 bg-primary/4 rounded-full blur-lg animate-drift" style={{ animationDelay: '0.5s' }} />
+        
+        {/* Decorative rings */}
+        <div className="absolute top-[28%] left-[3%] w-44 h-44 border border-primary/[0.08] rounded-full animate-drift" />
+        <div className="absolute bottom-[8%] right-[6%] w-56 h-56 border border-primary/[0.05] rounded-full animate-float-slow" style={{ animationDelay: '0.5s' }} />
+        
+        {/* Small accent dots */}
+        <div className="absolute top-[42%] left-[6%] w-2.5 h-2.5 bg-primary/25 rounded-full animate-pulse-glow" />
+        <div className="absolute top-[12%] right-[32%] w-2 h-2 bg-primary/30 rounded-full animate-drift" style={{ animationDelay: '0.7s' }} />
+        <div className="absolute bottom-[32%] left-[38%] w-3 h-3 bg-primary/20 rounded-full animate-float-slow" style={{ animationDelay: '0.3s' }} />
+        <div className="absolute top-[60%] right-[28%] w-2 h-2 bg-primary/25 rounded-full animate-pulse-glow" style={{ animationDelay: '1.2s' }} />
       </div>
 
       <Card className="max-w-lg w-full relative z-10 border-border/50 shadow-2xl backdrop-blur-sm bg-card/95">
