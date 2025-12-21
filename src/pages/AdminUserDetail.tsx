@@ -381,7 +381,6 @@ const AdminUserDetail = () => {
 
   return (
     <div className="p-4 md:p-6">
-      <AdminHeader title="Detalhes do Usuário" />
       
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Back Button */}
