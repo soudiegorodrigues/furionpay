@@ -8,15 +8,13 @@ import { Loader2, Copy, Check, Smartphone, Shield, ChevronRight, Lock, KeyRound 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { useTheme } from 'next-themes';
+import { AuthBackground, AuthLoadingScreen } from '@/components/auth';
 import { QRCodeSVG } from 'qrcode.react';
-import furionPayLogoLight from '@/assets/furionpay-logo-dark-text.png';
-import furionPayLogoDark from '@/assets/furionpay-logo-white-text.png';
+import furionPayLogo from '@/assets/furionpay-logo-white-text.png';
 
 export default function Setup2FA() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { theme } = useTheme();
   const { user, loading: authLoading, isAuthenticated, mfaInfo, checkMFAStatus } = useAdminAuth();
   
   const [step, setStep] = useState<'intro' | 'qrcode' | 'verify' | 'backup' | 'complete'>('intro');
@@ -150,41 +148,21 @@ export default function Setup2FA() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
-      </div>
-    );
+    return <AuthLoadingScreen />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Large gradient orbs */}
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-radial from-pink-500/30 via-pink-500/10 to-transparent rounded-full blur-3xl animate-float-slow" />
-        <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-radial from-blue-500/25 via-blue-500/10 to-transparent rounded-full blur-3xl animate-drift" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-radial from-white/10 via-white/5 to-transparent rounded-full blur-2xl" />
-        
-        {/* Floating soft circles */}
-        <div className="absolute top-[15%] right-[20%] w-32 h-32 bg-white/10 rounded-full blur-2xl animate-float-slow" />
-        <div className="absolute bottom-[20%] left-[15%] w-40 h-40 bg-pink-400/15 rounded-full blur-2xl animate-drift" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-[60%] right-[10%] w-24 h-24 bg-blue-400/20 rounded-full blur-xl animate-pulse-glow" style={{ animationDelay: '0.5s' }} />
-        
-        {/* Subtle decorative dots */}
-        <div className="absolute top-[25%] left-[8%] w-3 h-3 bg-white/40 rounded-full animate-pulse-glow" />
-        <div className="absolute top-[70%] right-[25%] w-2 h-2 bg-white/50 rounded-full animate-drift" style={{ animationDelay: '0.7s' }} />
-        <div className="absolute bottom-[35%] left-[30%] w-2.5 h-2.5 bg-pink-300/50 rounded-full animate-float-slow" style={{ animationDelay: '0.3s' }} />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden dark">
+      <AuthBackground />
 
-      <Card className="max-w-lg w-full relative z-10 border-white/20 shadow-2xl shadow-purple-900/30 backdrop-blur-md bg-white/95 dark:bg-slate-900/90">
+      <Card className="max-w-lg w-full relative z-10 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl bg-black/60">
         <CardContent className="p-6 md:p-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <img 
-              src={theme === "dark" ? furionPayLogoDark : furionPayLogoLight} 
+              src={furionPayLogo}
               alt="FurionPay" 
-              className="h-12 md:h-14 w-auto object-contain" 
+              className="h-12 md:h-14 w-auto object-contain drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" 
             />
           </div>
 
