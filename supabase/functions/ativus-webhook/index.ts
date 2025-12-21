@@ -155,7 +155,7 @@ serve(async (req) => {
     console.log('[ATIVUS-WEBHOOK] All payload keys:', Object.keys(payload));
 
     // Extract transaction info from Ativus webhook
-    const transactionId = 
+    const rawTransactionId = 
       payload.id_transaction || 
       payload.transactionId || 
       payload.id || 
@@ -164,6 +164,11 @@ serve(async (req) => {
       payload.data?.externalRef ||
       payload.data?.id_transaction ||
       null;
+    
+    // Ensure transactionId is always a string (fixes "substring is not a function" error)
+    const transactionId = rawTransactionId !== null && rawTransactionId !== undefined 
+      ? String(rawTransactionId) 
+      : null;
     
     const status = (
       payload.situacao || 
