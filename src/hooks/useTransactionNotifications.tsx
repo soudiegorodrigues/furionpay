@@ -234,8 +234,13 @@ export const useTransactionNotifications = (userId: string | null) => {
   }, []);
 
   useEffect(() => {
+    console.log('🔔 useEffect de notificações executado - userId:', userId, 'settingsLoaded:', settingsLoaded, 'enabled:', settings.enabled);
+    
     // Wait for settings to be loaded before subscribing
-    if (!userId || !settingsLoaded) return;
+    if (!userId || !settingsLoaded) {
+      console.log('🔔 Aguardando userId ou settingsLoaded - userId:', userId, 'settingsLoaded:', settingsLoaded);
+      return;
+    }
     
     // If notifications are disabled, don't subscribe
     if (!settings.enabled) {
