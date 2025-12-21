@@ -153,67 +153,67 @@ export default function Setup2FA() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden dark">
+    <div className="min-h-screen flex items-center justify-center bg-black p-3 sm:p-4 relative overflow-hidden dark">
       <AuthBackground />
 
       <Card className="max-w-lg w-full relative z-10 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl bg-black/60">
-        <CardContent className="p-6 md:p-8">
+        <CardContent className="p-4 sm:p-6 md:p-8">
           {/* Logo */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-4 sm:mb-6">
             <img 
               src={furionPayLogo}
               alt="FurionPay" 
-              className="h-12 md:h-14 w-auto object-contain drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" 
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]" 
             />
           </div>
 
           {/* Step: Intro */}
           {step === 'intro' && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-4 sm:space-y-6 animate-fade-in">
               <div className="text-center space-y-2">
-                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Shield className="h-8 w-8 text-primary" />
+                <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
+                  <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 </div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
                   Proteja sua conta
                 </h1>
-                <p className="text-muted-foreground text-base md:text-lg">
+                <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
                   Configure a autenticação em duas etapas para maior segurança
                 </p>
               </div>
 
-              <div className="space-y-4 pt-4">
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Smartphone className="h-5 w-5 text-primary" />
+              <div className="space-y-3 sm:space-y-4 pt-2 sm:pt-4">
+                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
+                    <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">App Autenticador</h3>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-foreground text-sm sm:text-base">App Autenticador</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Use Google Authenticator, Authy ou similar para gerar códigos
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Lock className="h-5 w-5 text-primary" />
+                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
+                    <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Proteção Extra</h3>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-foreground text-sm sm:text-base">Proteção Extra</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Mesmo que sua senha seja comprometida, sua conta estará segura
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border/50">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <KeyRound className="h-5 w-5 text-primary" />
+                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
+                    <KeyRound className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Códigos de Backup</h3>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-foreground text-sm sm:text-base">Códigos de Backup</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Você receberá códigos de emergência caso perca acesso ao app
                     </p>
                   </div>
@@ -223,15 +223,15 @@ export default function Setup2FA() {
               <Button 
                 onClick={handleStartSetup} 
                 disabled={enrolling}
-                className="w-full h-12 text-base font-medium mt-4"
+                className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium mt-2 sm:mt-4"
                 size="lg"
               >
                 {enrolling ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                 ) : (
                   <>
                     Configurar Agora
-                    <ChevronRight className="h-5 w-5 ml-2" />
+                    <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
                   </>
                 )}
               </Button>
@@ -240,31 +240,32 @@ export default function Setup2FA() {
 
           {/* Step: QR Code */}
           {step === 'qrcode' && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-4 sm:space-y-6 animate-fade-in">
               <div className="text-center space-y-2">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   Escaneie o QR Code
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm sm:text-base">
                   Abra seu app autenticador e escaneie o código abaixo
                 </p>
               </div>
 
               <div className="flex justify-center">
-                <div className="p-4 bg-white rounded-2xl shadow-lg">
-                  <QRCodeSVG value={qrCodeUrl} size={180} level="M" />
+                <div className="p-3 sm:p-4 bg-white rounded-xl sm:rounded-2xl shadow-lg">
+                  <QRCodeSVG value={qrCodeUrl} size={150} level="M" className="sm:hidden" />
+                  <QRCodeSVG value={qrCodeUrl} size={180} level="M" className="hidden sm:block" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-center text-muted-foreground">
+                <p className="text-xs sm:text-sm text-center text-muted-foreground">
                   Ou insira o código manualmente:
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 p-3 bg-muted rounded-lg text-sm font-mono break-all text-center">
+                  <code className="flex-1 p-2 sm:p-3 bg-muted rounded-lg text-xs sm:text-sm font-mono break-all text-center">
                     {secret}
                   </code>
-                  <Button variant="outline" size="icon" onClick={copySecret}>
+                  <Button variant="outline" size="icon" onClick={copySecret} className="shrink-0 h-9 w-9 sm:h-10 sm:w-10">
                     {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
@@ -272,30 +273,30 @@ export default function Setup2FA() {
 
               <Button 
                 onClick={() => setStep('verify')} 
-                className="w-full h-12 text-base font-medium"
+                className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium"
                 size="lg"
               >
                 Continuar
-                <ChevronRight className="h-5 w-5 ml-2" />
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
               </Button>
             </div>
           )}
 
           {/* Step: Verify */}
           {step === 'verify' && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-4 sm:space-y-6 animate-fade-in">
               <div className="text-center space-y-2">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   Digite o código
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm sm:text-base">
                   Insira o código de 6 dígitos do seu app autenticador
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="code" className="text-sm font-medium">Código de verificação</Label>
+                  <Label htmlFor="code" className="text-xs sm:text-sm font-medium">Código de verificação</Label>
                   <Input
                     id="code"
                     type="text"
@@ -305,26 +306,26 @@ export default function Setup2FA() {
                     placeholder="000000"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                    className="text-center text-2xl font-mono tracking-widest h-14"
+                    className="text-center text-xl sm:text-2xl font-mono tracking-widest h-12 sm:h-14"
                     autoFocus
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <Button 
                   variant="outline" 
                   onClick={() => setStep('qrcode')}
-                  className="flex-1 h-12"
+                  className="flex-1 h-11 sm:h-12 text-sm sm:text-base"
                 >
                   Voltar
                 </Button>
                 <Button 
                   onClick={handleVerifyCode} 
                   disabled={verifying || verificationCode.length !== 6}
-                  className="flex-1 h-12 text-base font-medium"
+                  className="flex-1 h-11 sm:h-12 text-sm sm:text-base font-medium"
                 >
-                  {verifying ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verificar'}
+                  {verifying ? <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : 'Verificar'}
                 </Button>
               </div>
             </div>
@@ -332,49 +333,49 @@ export default function Setup2FA() {
 
           {/* Step: Backup Codes */}
           {step === 'backup' && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-4 sm:space-y-6 animate-fade-in">
               <div className="text-center space-y-2">
-                <div className="mx-auto w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
-                  <Check className="h-7 w-7 text-green-500" />
+                <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
+                  <Check className="h-6 w-6 sm:h-7 sm:w-7 text-green-500" />
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   2FA Ativado com Sucesso!
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm sm:text-base">
                   Guarde seus códigos de backup em local seguro
                 </p>
               </div>
 
-              <div className="p-4 bg-muted/50 rounded-xl border border-border/50">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-foreground">Códigos de Backup</span>
-                  <Button variant="ghost" size="sm" onClick={copyBackupCodes}>
-                    {copiedCodes ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                    <span className="ml-2">Copiar</span>
+              <div className="p-3 sm:p-4 bg-muted/50 rounded-xl border border-border/50">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <span className="text-xs sm:text-sm font-medium text-foreground">Códigos de Backup</span>
+                  <Button variant="ghost" size="sm" onClick={copyBackupCodes} className="h-8 text-xs sm:text-sm">
+                    {copiedCodes ? <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" /> : <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                    <span className="ml-1.5 sm:ml-2">Copiar</span>
                   </Button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   {backupCodes.map((code, index) => (
-                    <code key={index} className="p-2 bg-background rounded-lg text-sm font-mono text-center border border-border/50">
+                    <code key={index} className="p-1.5 sm:p-2 bg-background rounded-lg text-xs sm:text-sm font-mono text-center border border-border/50">
                       {code}
                     </code>
                   ))}
                 </div>
               </div>
 
-              <div className="p-4 bg-warning/10 border border-warning/20 rounded-xl">
-                <p className="text-sm text-warning-foreground">
+              <div className="p-3 sm:p-4 bg-warning/10 border border-warning/20 rounded-xl">
+                <p className="text-xs sm:text-sm text-warning-foreground">
                   <strong>Importante:</strong> Cada código só pode ser usado uma vez. Guarde-os offline em um local seguro.
                 </p>
               </div>
 
               <Button 
                 onClick={handleComplete}
-                className="w-full h-12 text-base font-medium"
+                className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium"
                 size="lg"
               >
                 Ir para o Dashboard
-                <ChevronRight className="h-5 w-5 ml-2" />
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
               </Button>
             </div>
           )}
