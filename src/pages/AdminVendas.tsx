@@ -187,7 +187,9 @@ const AdminVendas = () => {
   const loadPeriodStats = useCallback(async (period: DateFilter) => {
     try {
       const { data, error } = await supabase.rpc('get_user_stats_by_period', {
-        p_period: period
+        p_period: period,
+        p_start_date: period === 'custom' && dateRange?.from ? dateRange.from.toISOString() : null,
+        p_end_date: period === 'custom' && dateRange?.to ? dateRange.to.toISOString() : null
       });
       if (error) throw error;
       if (data) {
@@ -196,7 +198,7 @@ const AdminVendas = () => {
     } catch (error) {
       console.error('Error loading period stats:', error);
     }
-  }, []);
+  }, [dateRange]);
 
   // Load transactions with server-side pagination
   const loadTransactions = useCallback(async (showLoading = true) => {
@@ -243,12 +245,12 @@ const AdminVendas = () => {
     }
   }, [isAuthenticated, currentPage, dateFilter, dateRange, statusFilter, debouncedSearch, loadTransactions]);
 
-  // Load stats when date filter changes
+  // Load stats when date filter or custom range changes
   useEffect(() => {
     if (isAuthenticated) {
       loadPeriodStats(dateFilter);
     }
-  }, [dateFilter, isAuthenticated, loadPeriodStats]);
+  }, [dateFilter, dateRange, isAuthenticated, loadPeriodStats]);
 
   // Reset page when filters change (except page itself)
   useEffect(() => {

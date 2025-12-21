@@ -2629,7 +2629,16 @@ export type Database = {
           value: string
         }[]
       }
-      get_user_stats_by_period: { Args: { p_period?: string }; Returns: Json }
+      get_user_stats_by_period:
+        | { Args: { p_period?: string }; Returns: Json }
+        | {
+            Args: {
+              p_end_date?: string
+              p_period?: string
+              p_start_date?: string
+            }
+            Returns: Json
+          }
       get_user_total_paid: { Args: { p_user_id: string }; Returns: number }
       get_user_transactions: {
         Args: { p_limit?: number; p_offset?: number }
