@@ -60,6 +60,7 @@ interface Transaction {
   is_recurring: boolean;
   recurring_frequency: string | null;
   recurring_end_date: string | null;
+  person_type: string | null;
 }
 
 interface Category {
@@ -99,6 +100,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+  const [filterPersonType, setFilterPersonType] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   
   const [formData, setFormData] = useState({
@@ -110,7 +112,8 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
     account_id: '',
     is_recurring: false,
     recurring_frequency: '',
-    recurring_end_date: ''
+    recurring_end_date: '',
+    person_type: 'PF' as string
   });
   const [isGeneratingRecurring, setIsGeneratingRecurring] = useState(false);
   const [isSyncingWithdrawals, setIsSyncingWithdrawals] = useState(false);
@@ -158,10 +161,11 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
         categories.find(c => c.id === t.category_id)?.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesType = filterType === 'all' || t.type === filterType;
+      const matchesPersonType = filterPersonType === 'all' || t.person_type === filterPersonType;
       
-      return matchesSearch && matchesType;
+      return matchesSearch && matchesType && matchesPersonType;
     });
-  }, [transactions, searchTerm, filterType, categories]);
+  }, [transactions, searchTerm, filterType, filterPersonType, categories]);
 
   const paginatedTransactions = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -182,7 +186,8 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
         account_id: transaction.account_id || '',
         is_recurring: transaction.is_recurring,
         recurring_frequency: transaction.recurring_frequency || '',
-        recurring_end_date: transaction.recurring_end_date || ''
+        recurring_end_date: transaction.recurring_end_date || '',
+        person_type: transaction.person_type || 'PF'
       });
     } else {
       setEditingTransaction(null);
@@ -195,7 +200,8 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
         account_id: '',
         is_recurring: false,
         recurring_frequency: '',
-        recurring_end_date: ''
+        recurring_end_date: '',
+        person_type: 'PF'
       });
     }
     setShowDialog(true);
@@ -223,7 +229,8 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
         account_id: formData.account_id || null,
         is_recurring: formData.is_recurring,
         recurring_frequency: formData.is_recurring ? formData.recurring_frequency : null,
-        recurring_end_date: formData.is_recurring && formData.recurring_end_date ? formData.recurring_end_date : null
+        recurring_end_date: formData.is_recurring && formData.recurring_end_date ? formData.recurring_end_date : null,
+        person_type: formData.person_type
       };
 
       if (editingTransaction) {
@@ -565,6 +572,16 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
               <SelectItem value="investment">Investimentos</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filterPersonType} onValueChange={setFilterPersonType}>
+            <SelectTrigger className="w-full sm:w-32">
+              <SelectValue placeholder="PF/PJ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="PF">Pessoa Física</SelectItem>
+              <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         
         {/* Botões de ação */}
@@ -610,6 +627,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
                 <TableRow>
                   <TableHead>Data</TableHead>
                   <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                  <TableHead className="hidden lg:table-cell">PF/PJ</TableHead>
                   <TableHead className="hidden lg:table-cell">Conta</TableHead>
                   <TableHead className="hidden md:table-cell">Categoria</TableHead>
                   <TableHead className="hidden sm:table-cell">Descrição</TableHead>
@@ -620,7 +638,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
               <TableBody>
                 {paginatedTransactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nenhuma transação encontrada
                     </TableCell>
                   </TableRow>
@@ -658,6 +676,11 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
                           <div className="flex items-center gap-2">
                             {getTypeIcon(transaction.type)}
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <Badge variant={transaction.person_type === 'PJ' ? 'secondary' : 'outline'} className="text-xs">
+                            {transaction.person_type || 'PF'}
+                          </Badge>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           {account ? (
@@ -797,6 +820,22 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
                       Investimento
                     </div>
                   </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo de Pessoa</Label>
+              <Select
+                value={formData.person_type}
+                onValueChange={(value) => setFormData({ ...formData, person_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PF">Pessoa Física (PF)</SelectItem>
+                  <SelectItem value="PJ">Pessoa Jurídica (PJ)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

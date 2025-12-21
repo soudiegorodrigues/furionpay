@@ -842,6 +842,7 @@ export type Database = {
           description: string | null
           id: string
           is_recurring: boolean | null
+          person_type: string | null
           recurring_end_date: string | null
           recurring_frequency: string | null
           type: string
@@ -857,6 +858,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          person_type?: string | null
           recurring_end_date?: string | null
           recurring_frequency?: string | null
           type: string
@@ -872,6 +874,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          person_type?: string | null
           recurring_end_date?: string | null
           recurring_frequency?: string | null
           type?: string
