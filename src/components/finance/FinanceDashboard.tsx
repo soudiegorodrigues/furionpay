@@ -561,7 +561,20 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
                     <div key={account.id} className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{account.icon || '🏦'}</span>
+                          {account.icon ? (
+                            <img 
+                              src={account.icon} 
+                              alt={account.bank_name || 'Banco'} 
+                              className="h-6 w-6 rounded-full object-contain bg-white p-0.5 border"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextElementSibling) {
+                                  (e.currentTarget.nextElementSibling as HTMLElement).classList.remove('hidden');
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <span className={`text-lg ${account.icon ? 'hidden' : ''}`}>🏦</span>
                           <div>
                             <span className="text-sm font-medium">{account.name}</span>
                             {account.bank_name && (
