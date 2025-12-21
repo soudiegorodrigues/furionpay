@@ -189,7 +189,9 @@ const AdminDashboard = () => {
     setIsLoadingPeriodStats(true);
     try {
       const { data, error } = await supabase.rpc('get_user_stats_by_period', {
-        p_period: period
+        p_period: period,
+        p_start_date: null,
+        p_end_date: null
       });
       if (error) throw error;
       if (data) {
