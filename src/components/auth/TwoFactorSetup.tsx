@@ -34,18 +34,32 @@ export const TwoFactorSetup = ({ onComplete, onCancel }: TwoFactorSetupProps) =>
   // Modifica a URI TOTP para exibir "FURIONPAY" como nome do serviço
   const modifyTotpUri = (uri: string): string => {
     try {
-      const url = new URL(uri);
-      // Extrair o email do label atual (formato: "Issuer:email@example.com")
-      const label = decodeURIComponent(url.pathname.split('/').pop() || '');
-      const email = label.includes(':') ? label.split(':')[1] : label;
+      // Extrair o secret da URI original usando regex
+      const secretMatch = uri.match(/secret=([A-Z2-7]+)/i);
+      const secret = secretMatch ? secretMatch[1] : '';
       
-      // Reconstruir o path com FURIONPAY como issuer
-      url.pathname = `/totp/FURIONPAY:${email}`;
-      url.searchParams.set('issuer', 'FURIONPAY');
+      if (!secret) {
+        console.error('Secret não encontrado na URI TOTP');
+        return uri;
+      }
       
-      return url.toString();
-    } catch {
-      return uri; // Retorna original se houver erro
+      // Extrair o email - pode estar em diferentes formatos
+      // Formato: otpauth://totp/ISSUER:email@example.com ou otpauth://totp/email@example.com
+      const pathMatch = uri.match(/otpauth:\/\/totp\/([^?]+)/);
+      const pathPart = pathMatch ? decodeURIComponent(pathMatch[1]) : '';
+      
+      // O email pode estar após ":" ou ser o path inteiro
+      const email = pathPart.includes(':') 
+        ? pathPart.split(':').pop() || ''
+        : pathPart;
+      
+      // Reconstruir a URI completamente com FURIONPAY
+      const newUri = `otpauth://totp/FURIONPAY:${encodeURIComponent(email)}?secret=${secret}&issuer=FURIONPAY`;
+      
+      return newUri;
+    } catch (error) {
+      console.error('Erro ao modificar TOTP URI:', error);
+      return uri;
     }
   };
 
