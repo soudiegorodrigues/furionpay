@@ -236,7 +236,12 @@ export const useTransactionNotifications = (userId: string | null) => {
   useEffect(() => {
     // Wait for settings to be loaded before subscribing
     if (!userId || !settingsLoaded) return;
-    if (!settingsRef.current.enabled) return;
+    
+    // If notifications are disabled, don't subscribe
+    if (!settings.enabled) {
+      console.log('🔔 Notificações desativadas, não inscrevendo no canal');
+      return;
+    }
 
     console.log('🔔 Configurando listener de notificações para usuário:', userId, 'Logo:', settingsRef.current.customLogoUrl);
 
@@ -255,7 +260,7 @@ export const useTransactionNotifications = (userId: string | null) => {
           console.log('🔔 Nova transação detectada:', payload);
           const { new: transaction } = payload;
           
-          // Use settingsRef for current values
+          // Use settingsRef for current values - double check enabled
           const currentSettings = settingsRef.current;
           
           if (transaction && currentSettings.enabled) {
@@ -318,7 +323,7 @@ export const useTransactionNotifications = (userId: string | null) => {
           console.log('🔔 Transação atualizada:', payload);
           const { new: transaction, old: oldTransaction } = payload;
           
-          // Use settingsRef for current values
+          // Use settingsRef for current values - double check enabled
           const currentSettings = settingsRef.current;
           
           // Check if status changed to 'paid'
@@ -385,7 +390,7 @@ export const useTransactionNotifications = (userId: string | null) => {
       console.log('🔔 Removendo listener de notificações');
       supabase.removeChannel(channel);
     };
-  }, [userId, settingsLoaded]);
+  }, [userId, settingsLoaded, settings.enabled]);
 
   return {
     requestPermission: requestNotificationPermission,
