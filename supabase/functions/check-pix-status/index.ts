@@ -757,8 +757,22 @@ async function checkValorionStatus(
     console.log('Valorion status response:', response.status, responseText);
 
     if (!response.ok) {
-      console.error('Valorion status check failed:', response.status, responseText);
-      recordFailure('valorion', supabase, `HTTP ${response.status}: ${responseText}`);
+      // 404 = transaction not found = expected for pending/new transactions
+      // This is NOT a failure - the API is responding correctly
+      if (response.status === 404) {
+        console.log('Valorion returned 404 (transaction not found) - API is healthy, treating as success');
+        recordSuccess('valorion', supabase, responseTime);
+        return { isPaid: false, status: 'pending' };
+      }
+      
+      // Only record as failure for actual server errors (500+)
+      if (response.status >= 500) {
+        console.error('Valorion server error:', response.status, responseText);
+        recordFailure('valorion', supabase, `HTTP ${response.status}: ${responseText}`);
+      } else {
+        // 4xx errors (except 404) - log but don't count as failure
+        console.warn('Valorion client error:', response.status, responseText);
+      }
       return { isPaid: false, status: 'pending' };
     }
 
