@@ -240,6 +240,12 @@ export const TransacoesGlobaisSection = () => {
     }
   };
 
+  // Helper para validar UUID
+  const isValidUUID = (str: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
   // Verificar transação por TXID
   const handleVerifyTransaction = async () => {
     if (!txidToVerify.trim()) {
@@ -249,13 +255,20 @@ export const TransacoesGlobaisSection = () => {
 
     setIsVerifying(true);
     try {
-      // Buscar transação no banco
-      const { data, error } = await supabase
+      const searchValue = txidToVerify.trim();
+      
+      // Buscar transação no banco - só busca por ID se for UUID válido
+      let query = supabase
         .from('pix_transactions')
-        .select('*')
-        .or(`txid.ilike.%${txidToVerify.trim()}%,id.eq.${txidToVerify.trim()}`)
-        .limit(1)
-        .maybeSingle();
+        .select('*');
+
+      if (isValidUUID(searchValue)) {
+        query = query.or(`txid.ilike.%${searchValue}%,id.eq.${searchValue}`);
+      } else {
+        query = query.ilike('txid', `%${searchValue}%`);
+      }
+
+      const { data, error } = await query.limit(1).maybeSingle();
 
       if (error) throw error;
 
