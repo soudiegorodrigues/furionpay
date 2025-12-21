@@ -12,7 +12,9 @@ import {
   AuthBackground, 
   AuthLoadingScreen, 
   AuthFormFields, 
-  BlockedUserDialog 
+  BlockedUserDialog,
+  TwoFactorVerify,
+  TwoFactorRecovery
 } from '@/components/auth';
 
 const authSchema = z.object({
@@ -24,7 +26,7 @@ const signUpSchema = authSchema.extend({
   name: z.string().min(2, { message: "Nome deve ter no mínimo 2 caracteres" })
 });
 
-type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password' | 'unlock-code';
+type AuthMode = 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password' | 'unlock-code' | '2fa-verify' | '2fa-recovery';
 
 const AdminAuth = () => {
   const location = useLocation();
@@ -42,8 +44,9 @@ const AdminAuth = () => {
   const [remainingAttempts, setRemainingAttempts] = useState(3);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [pendingMfaFactorId, setPendingMfaFactorId] = useState<string | null>(null);
   
-  const { signIn, signUp, isAuthenticated, loading } = useAdminAuth();
+  const { signIn, signUp, isAuthenticated, loading, mfaInfo, needsMFAVerification, checkMFAStatus } = useAdminAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -56,11 +59,21 @@ const AdminAuth = () => {
     }
   }, [location.pathname]);
 
+  // Check if MFA verification is needed after login
   useEffect(() => {
-    if (isAuthenticated && !loading && mode !== 'reset-password') {
-      navigate('/admin/dashboard');
-    }
-  }, [isAuthenticated, loading, navigate, mode]);
+    const checkMFA = async () => {
+      if (isAuthenticated && !loading && mode !== 'reset-password' && mode !== '2fa-verify' && mode !== '2fa-recovery') {
+        const needsMfa = await needsMFAVerification();
+        if (needsMfa && mfaInfo?.verifiedFactors?.[0]) {
+          setPendingMfaFactorId(mfaInfo.verifiedFactors[0].id);
+          setMode('2fa-verify');
+        } else if (!needsMfa) {
+          navigate('/admin/dashboard');
+        }
+      }
+    };
+    checkMFA();
+  }, [isAuthenticated, loading, navigate, mode, needsMFAVerification, mfaInfo]);
 
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
@@ -328,6 +341,23 @@ const AdminAuth = () => {
     }
   };
 
+  const handleMfaSuccess = () => {
+    toast({
+      title: "Verificação concluída!",
+      description: "Autenticação de dois fatores validada"
+    });
+    navigate('/admin/dashboard');
+  };
+
+  const handleMfaRecoverySuccess = async () => {
+    toast({
+      title: "2FA desativado",
+      description: "Você pode reconfigurar nas configurações de segurança"
+    });
+    await checkMFAStatus();
+    navigate('/admin/dashboard');
+  };
+
   const getTitle = () => {
     switch (mode) {
       case 'reset-email': return 'Recuperar Senha';
@@ -335,6 +365,8 @@ const AdminAuth = () => {
       case 'reset-password': return 'Nova Senha';
       case 'signup': return 'Criar Conta';
       case 'unlock-code': return 'Conta Bloqueada';
+      case '2fa-verify': return 'Verificação 2FA';
+      case '2fa-recovery': return 'Recuperar Acesso';
       default: return 'Bem-vindo de volta';
     }
   };
@@ -346,6 +378,8 @@ const AdminAuth = () => {
       case 'reset-password': return 'Crie sua nova senha de acesso';
       case 'signup': return 'Preencha os dados para criar sua conta';
       case 'unlock-code': return `Digite o código de 6 dígitos enviado para ${email}`;
+      case '2fa-verify': return 'Digite o código do seu autenticador';
+      case '2fa-recovery': return 'Use um código de backup ou recupere via email';
       default: return 'Entre com suas credenciais para continuar';
     }
   };
@@ -403,47 +437,61 @@ const AdminAuth = () => {
                 </p>
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
-                <AuthFormFields
-                  mode={mode}
-                  name={name}
-                  email={email}
-                  password={password}
-                  confirmPassword={confirmPassword}
-                  otpCode={otpCode}
-                  showPassword={showPassword}
-                  showConfirmPassword={showConfirmPassword}
-                  rememberMe={rememberMe}
-                  resetEmail={resetEmail}
-                  isSubmitting={isSubmitting}
-                  onNameChange={setName}
-                  onEmailChange={setEmail}
-                  onPasswordChange={setPassword}
-                  onConfirmPasswordChange={setConfirmPassword}
-                  onOtpCodeChange={setOtpCode}
-                  onShowPasswordChange={setShowPassword}
-                  onShowConfirmPasswordChange={setShowConfirmPassword}
-                  onRememberMeChange={setRememberMe}
-                  onForgotPassword={() => switchMode('reset-email')}
-                  onResendCode={handleResendCode}
+              {/* 2FA Verification Mode */}
+              {mode === '2fa-verify' && pendingMfaFactorId ? (
+                <TwoFactorVerify
+                  factorId={pendingMfaFactorId}
+                  onSuccess={handleMfaSuccess}
+                  onRecovery={() => setMode('2fa-recovery')}
                 />
+              ) : mode === '2fa-recovery' ? (
+                <TwoFactorRecovery
+                  onSuccess={handleMfaRecoverySuccess}
+                  onCancel={() => setMode('2fa-verify')}
+                />
+              ) : (
+                /* Form */
+                <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
+                  <AuthFormFields
+                    mode={mode as 'login' | 'signup' | 'reset-email' | 'reset-code' | 'reset-password' | 'unlock-code'}
+                    name={name}
+                    email={email}
+                    password={password}
+                    confirmPassword={confirmPassword}
+                    otpCode={otpCode}
+                    showPassword={showPassword}
+                    showConfirmPassword={showConfirmPassword}
+                    rememberMe={rememberMe}
+                    resetEmail={resetEmail}
+                    isSubmitting={isSubmitting}
+                    onNameChange={setName}
+                    onEmailChange={setEmail}
+                    onPasswordChange={setPassword}
+                    onConfirmPasswordChange={setConfirmPassword}
+                    onOtpCodeChange={setOtpCode}
+                    onShowPasswordChange={setShowPassword}
+                    onShowConfirmPasswordChange={setShowConfirmPassword}
+                    onRememberMeChange={setRememberMe}
+                    onForgotPassword={() => switchMode('reset-email')}
+                    onResendCode={handleResendCode}
+                  />
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-500/90 text-white shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 active:scale-[0.98] border-0" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      {getButtonText()}
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-red-500 hover:from-primary/90 hover:to-red-500/90 text-white shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 active:scale-[0.98] border-0" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        {getButtonText()}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              )}
 
               {/* Footer Links */}
               <div className="mt-8 pt-6 border-t border-white/10 text-center">

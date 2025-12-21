@@ -12,16 +12,29 @@ import {
 } from "@/components/ui/input-otp";
 
 interface TwoFactorRecoveryProps {
-  email: string;
+  email?: string;
   onSuccess: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
-export const TwoFactorRecovery = ({ email, onSuccess, onCancel }: TwoFactorRecoveryProps) => {
+export const TwoFactorRecovery = ({ email: propEmail, onSuccess, onCancel }: TwoFactorRecoveryProps) => {
   const { toast } = useToast();
-  const [step, setStep] = useState<'request' | 'verify'>('request');
+  const [step, setStep] = useState<'email' | 'request' | 'verify'>(propEmail ? 'request' : 'email');
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState('');
+  const [email, setEmail] = useState(propEmail || '');
+
+  const handleSubmitEmail = async () => {
+    if (!email.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Digite seu email'
+      });
+      return;
+    }
+    setStep('request');
+  };
 
   const handleRequestCode = async () => {
     setLoading(true);
@@ -109,14 +122,38 @@ export const TwoFactorRecovery = ({ email, onSuccess, onCancel }: TwoFactorRecov
         </div>
         <h2 className="text-2xl font-bold text-white">Recuperar Acesso</h2>
         <p className="text-white/50 mt-2">
-          {step === 'request'
+          {step === 'email'
+            ? 'Digite seu email para recuperar o acesso'
+            : step === 'request'
             ? 'Enviaremos um código para seu email'
             : `Digite o código enviado para ${email}`
           }
         </p>
       </div>
 
-      {step === 'request' ? (
+      {step === 'email' ? (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="recovery-email" className="text-white/70">Email</Label>
+            <Input
+              id="recovery-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu@email.com"
+              className="bg-white/5 border-white/10 text-white"
+            />
+          </div>
+
+          <Button 
+            onClick={handleSubmitEmail} 
+            disabled={!email.trim()}
+            className="w-full h-12"
+          >
+            Continuar
+          </Button>
+        </div>
+      ) : step === 'request' ? (
         <div className="space-y-6">
           <div className="p-4 rounded-lg bg-white/5 border border-white/10">
             <div className="flex items-center gap-3">
@@ -190,14 +227,16 @@ export const TwoFactorRecovery = ({ email, onSuccess, onCancel }: TwoFactorRecov
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onCancel}
-        className="w-full text-sm text-white/50 hover:text-white/70 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4 inline mr-1" />
-        Voltar ao login
-      </button>
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full text-sm text-white/50 hover:text-white/70 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 inline mr-1" />
+          Voltar
+        </button>
+      )}
     </div>
   );
 };
