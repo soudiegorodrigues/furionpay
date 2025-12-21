@@ -30,12 +30,14 @@ interface TransactionDetailsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   calculateNetAmount: (amount: number, feePercentage?: number | null, feeFixed?: number | null) => number;
+  isAdmin?: boolean;
 }
 const TransactionDetailsSheet = ({
   transaction,
   open,
   onOpenChange,
-  calculateNetAmount
+  calculateNetAmount,
+  isAdmin = false
 }: TransactionDetailsSheetProps) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   if (!transaction) return null;
@@ -127,14 +129,16 @@ const TransactionDetailsSheet = ({
               <p className="text-sm font-semibold truncate">{transaction.donor_name || '-'}</p>
             </div>
 
-            {/* Adquirente */}
-            <div className="bg-muted/30 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Adquirente</span>
+            {/* Adquirente - apenas para admins */}
+            {isAdmin && (
+              <div className="bg-muted/30 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Adquirente</span>
+                </div>
+                <p className="text-sm font-bold">{getAcquirerDisplay(transaction.acquirer)}</p>
               </div>
-              <p className="text-sm font-bold">{getAcquirerDisplay(transaction.acquirer)}</p>
-            </div>
+            )}
 
             {/* Produto */}
             <div className="bg-muted/30 rounded-lg p-3">

@@ -69,7 +69,7 @@ type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
 
 const AdminVendas = () => {
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
-  const { isAuthenticated } = useAdminAuth();
+  const { isAuthenticated, isAdmin } = useAdminAuth();
   const { toast } = useToast();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -510,6 +510,7 @@ const AdminVendas = () => {
         open={isSheetOpen} 
         onOpenChange={setIsSheetOpen}
         calculateNetAmount={calculateNetAmount}
+        isAdmin={isAdmin}
       />
     </div>
   );
