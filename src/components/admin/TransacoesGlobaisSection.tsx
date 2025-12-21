@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -189,6 +189,16 @@ export const TransacoesGlobaisSection = () => {
     if (range?.from) {
       setDateFilter('custom');
     }
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setDebouncedSearch("");
+    setDateFilter('all');
+    setStatusFilter('all');
+    setDateRange({ from: undefined, to: undefined });
+    setCurrentPage(1);
+    toast.success("Filtros limpos!");
   };
 
   const formatCurrency = (value: number) => {
@@ -479,6 +489,27 @@ export const TransacoesGlobaisSection = () => {
               <SelectItem value="custom">Personalizado</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button 
+            onClick={loadAllTransactions} 
+            variant="default"
+            size="sm"
+            className="h-8"
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            <span className="ml-1 hidden sm:inline">Buscar</span>
+          </Button>
+
+          <Button 
+            onClick={handleClearFilters} 
+            variant="outline"
+            size="sm"
+            className="h-8"
+          >
+            <X className="h-4 w-4" />
+            <span className="ml-1 hidden sm:inline">Limpar</span>
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
