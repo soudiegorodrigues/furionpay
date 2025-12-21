@@ -2639,14 +2639,6 @@ export type Database = {
             Returns: Json
           }
         | {
-            Args: {
-              p_end_date?: string
-              p_period?: string
-              p_start_date?: string
-            }
-            Returns: Json
-          }
-        | {
             Args: { p_period?: string; p_user_id: string }
             Returns: {
               total_amount_generated: number

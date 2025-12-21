@@ -1,0 +1,2 @@
+-- Remove the duplicate function with timestamp with time zone parameters to fix PGRST203 error
+DROP FUNCTION IF EXISTS public.get_user_stats_by_period(text, timestamp with time zone, timestamp with time zone);
