@@ -216,13 +216,15 @@ export const useTransactionNotifications = (userId: string | null) => {
   const showBrowserNotification = (title: string, body: string) => {
     const currentSettings = settingsRef.current;
     if (!currentSettings.enableBrowser) return;
-    
+
     if (Notification.permission === 'granted') {
       new Notification(title, {
         body,
         icon: currentSettings.customLogoUrl || '/pwa-192x192.png',
         badge: '/pix-icon.png',
         tag: 'furionpay-notification',
+        // Evita som do sistema duplicado quando já tocamos som customizado controlado por volume.
+        silent: currentSettings.enableSound,
       });
     }
   };
