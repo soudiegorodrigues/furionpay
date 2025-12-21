@@ -11,13 +11,10 @@ interface GaugeChartProps {
 }
 
 const formatCurrency = (value: number): string => {
-  if (value >= 1000000) {
-    return `R$ ${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `R$ ${(value / 1000).toFixed(0)}k`;
-  }
-  return `R$ ${value.toFixed(0)}`;
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
 };
 
 export const GaugeChart: React.FC<GaugeChartProps> = ({
