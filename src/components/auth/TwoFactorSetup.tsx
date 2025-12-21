@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Copy, Check, Shield, Smartphone, Key } from 'lucide-react';
+import { Loader2, Copy, Check, Smartphone, Key, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BackupCodesDisplay } from './BackupCodesDisplay';
+import furionPayLogo from '@/assets/furionpay-logo-dark-text.png';
 
 interface TwoFactorSetupProps {
   onComplete: () => void;
@@ -147,8 +148,12 @@ export const TwoFactorSetup = ({ onComplete, onCancel }: TwoFactorSetupProps) =>
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <Shield className="h-8 w-8 text-primary" />
+        <div className="mx-auto mb-4">
+          <img 
+            src={furionPayLogo} 
+            alt="FurionPay" 
+            className="h-12 w-auto mx-auto"
+          />
         </div>
         <h2 className="text-2xl font-bold">Configurar Autenticação em Duas Etapas</h2>
         <p className="text-muted-foreground mt-2">
