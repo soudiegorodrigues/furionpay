@@ -2863,9 +2863,10 @@ export type Database = {
             }
             Returns: string
           }
-      mark_pix_paid:
-        | { Args: { p_txid: string }; Returns: boolean }
-        | { Args: { p_admin_email?: string; p_txid: string }; Returns: boolean }
+      mark_pix_paid: {
+        Args: { p_admin_email?: string; p_txid: string }
+        Returns: boolean
+      }
       mark_reward_sent: {
         Args: { p_request_id: string; p_tracking_code?: string }
         Returns: boolean
