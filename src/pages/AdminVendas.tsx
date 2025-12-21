@@ -261,12 +261,16 @@ const AdminVendas = () => {
 
   // Stats calculations based on period stats (from server)
   const stats = useMemo(() => {
-    const generated = periodStats.total_generated || 0;
+    const pendingCount = periodStats.total_generated || 0;
     const paidCount = periodStats.total_paid || 0;
+    const expiredCount = periodStats.total_expired || 0;
+    // Total real = pendentes + pagos + expirados
+    const totalTransactions = pendingCount + paidCount + expiredCount;
     const totalAmount = (periodStats.total_amount_paid || 0) - (periodStats.total_fees || 0);
-    const conversionRate = generated > 0 ? (paidCount / generated * 100).toFixed(1) : '0';
+    // Conversão = pagos / total de transações geradas
+    const conversionRate = totalTransactions > 0 ? (paidCount / totalTransactions * 100).toFixed(1) : '0';
     
-    return { generated, paidCount, totalAmount, conversionRate };
+    return { generated: totalTransactions, paidCount, totalAmount, conversionRate };
   }, [periodStats]);
 
   // Permission check
