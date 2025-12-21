@@ -167,10 +167,14 @@ export const useTransactionNotifications = (userId: string | null) => {
           table: 'admin_settings',
         },
         (payload) => {
-          // Only reload if it's a global notification setting
-          const record = payload.new as { user_id?: string; key?: string } | null;
-          if (record && record.user_id === null && record.key?.startsWith('notification_')) {
-            console.log('🔔 Settings globais alteradas, recarregando...', payload);
+          // Recarrega sempre que algum setting global de notificação mudar.
+          // (Em alguns eventos o realtime pode vir sem user_id em `new`, então usamos new/old e `== null`.)
+          const record = (payload.new ?? payload.old) as { user_id?: string | null; key?: string } | null;
+          const user_id = record?.user_id;
+          const key = record?.key;
+
+          if (key?.startsWith('notification_') && user_id == null) {
+            console.log('🔔 Settings globais alteradas, recarregando...', { key, user_id });
             loadSettings();
           }
         }
