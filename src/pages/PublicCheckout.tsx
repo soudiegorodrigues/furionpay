@@ -234,6 +234,49 @@ export default function PublicCheckout() {
     if (config?.discount_popup_image_url) preloadImage(config.discount_popup_image_url);
   }, [product, config]);
 
+  // Initialize Meta Pixel dynamically when pixelConfig is loaded
+  useEffect(() => {
+    if (pixelConfig?.pixelId && typeof window !== 'undefined') {
+      const pixelId = pixelConfig.pixelId;
+      
+      // Check if this pixel is already initialized
+      if (window.fbq && window.fbq.getState && window.fbq.getState().pixels?.some((p: any) => p.id === pixelId)) {
+        console.log('[PIXEL] Pixel already initialized:', pixelId);
+        return;
+      }
+      
+      console.log('[PIXEL] Initializing pixel from checkout config:', pixelId);
+      
+      // Create fbq function if it doesn't exist
+      if (!window.fbq) {
+        const n = window.fbq = function() {
+          // @ts-ignore
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        };
+        if (!window._fbq) window._fbq = n;
+        // @ts-ignore
+        n.push = n;
+        // @ts-ignore
+        n.loaded = true;
+        // @ts-ignore
+        n.version = '2.0';
+        // @ts-ignore
+        n.queue = [];
+        
+        // Load the Facebook script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+        document.head.appendChild(script);
+      }
+      
+      // Initialize this pixel
+      window.fbq('init', pixelId);
+      window.fbq('track', 'PageView');
+      console.log('[PIXEL] ✅ Pixel initialized and PageView tracked:', pixelId);
+    }
+  }, [pixelConfig]);
+
   // Back redirect handler
   useEffect(() => {
     const backRedirectUrl = config?.back_redirect_url;
