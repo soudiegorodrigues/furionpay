@@ -215,9 +215,9 @@ const AdminVendas = () => {
 
       if (error) throw error;
       
-      const result = data as unknown as { transactions: Transaction[]; total_count: number };
+      const result = data as unknown as { transactions: Transaction[]; total: number };
       setTransactions(result.transactions || []);
-      setTotalCount(result.total_count || 0);
+      setTotalCount(result.total || 0);
     } catch (error) {
       console.error('Error loading transactions:', error);
       toast({
