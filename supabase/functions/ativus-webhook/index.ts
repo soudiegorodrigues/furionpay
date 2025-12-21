@@ -155,20 +155,36 @@ serve(async (req) => {
     console.log('[ATIVUS-WEBHOOK] All payload keys:', Object.keys(payload));
 
     // Extract transaction info from Ativus webhook
+    // Priority: idtransaction (Ativus specific) > id_transaction > other formats
     const rawTransactionId = 
+      payload.idtransaction ||  // Ativus sends this in webhook
+      payload.idTransaction ||
       payload.id_transaction || 
       payload.transactionId || 
-      payload.id || 
-      payload.externalRef ||
-      payload.data?.id ||
-      payload.data?.externalRef ||
+      payload.data?.idtransaction ||
       payload.data?.id_transaction ||
+      null;
+    
+    // Also extract externalreference which is our txid
+    const externalReference = 
+      payload.externalreference ||
+      payload.externalReference ||
+      payload.externalRef ||
+      payload.external_reference ||
+      payload.data?.externalreference ||
+      payload.data?.externalReference ||
       null;
     
     // Ensure transactionId is always a string (fixes "substring is not a function" error)
     const transactionId = rawTransactionId !== null && rawTransactionId !== undefined 
       ? String(rawTransactionId) 
       : null;
+    
+    const externalRef = externalReference !== null && externalReference !== undefined
+      ? String(externalReference)
+      : null;
+    
+    console.log('[ATIVUS-WEBHOOK] External Reference (txid):', externalRef);
     
     const status = (
       payload.situacao || 
@@ -184,8 +200,8 @@ serve(async (req) => {
     console.log('[ATIVUS-WEBHOOK] Status:', status);
     console.log('[ATIVUS-WEBHOOK] PaidAt:', paidAt);
 
-    if (!transactionId) {
-      console.log('[ATIVUS-WEBHOOK] No transaction ID found in webhook payload');
+    if (!transactionId && !externalRef) {
+      console.log('[ATIVUS-WEBHOOK] No transaction ID or external reference found in webhook payload');
       return new Response(
         JSON.stringify({ success: true, message: 'Webhook received but no transaction ID found' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -202,21 +218,38 @@ serve(async (req) => {
       // Try to find the transaction
       let transaction = null;
 
-      // Strategy 1: Search by txid
-      const { data: txidData } = await supabase
-        .from('pix_transactions')
-        .select('id, user_id, txid, status')
-        .eq('txid', transactionId)
-        .eq('acquirer', 'ativus')
-        .maybeSingle();
-      
-      if (txidData) {
-        console.log('[ATIVUS-WEBHOOK] Found by txid:', txidData.id);
-        transaction = txidData;
+      // Strategy 1: Search by externalReference (our txid) - MOST RELIABLE
+      if (externalRef) {
+        const { data: externalRefData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status')
+          .eq('txid', externalRef)
+          .eq('acquirer', 'ativus')
+          .maybeSingle();
+        
+        if (externalRefData) {
+          console.log('[ATIVUS-WEBHOOK] Found by externalReference:', externalRefData.id);
+          transaction = externalRefData;
+        }
       }
 
-      // Strategy 2: Search by id if txid not found
-      if (!transaction) {
+      // Strategy 2: Search by idtransaction (Ativus internal ID)
+      if (!transaction && transactionId) {
+        const { data: txidData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status')
+          .eq('txid', transactionId)
+          .eq('acquirer', 'ativus')
+          .maybeSingle();
+        
+        if (txidData) {
+          console.log('[ATIVUS-WEBHOOK] Found by transactionId:', txidData.id);
+          transaction = txidData;
+        }
+      }
+
+      // Strategy 3: Search by UUID id
+      if (!transaction && transactionId) {
         const { data: idData } = await supabase
           .from('pix_transactions')
           .select('id, user_id, txid, status')
@@ -230,12 +263,12 @@ serve(async (req) => {
         }
       }
 
-      // Strategy 3: Partial txid match
-      if (!transaction) {
+      // Strategy 4: Partial txid match using externalRef
+      if (!transaction && externalRef && externalRef.length >= 10) {
         const { data: partialData } = await supabase
           .from('pix_transactions')
           .select('id, user_id, txid, status')
-          .ilike('txid', `%${transactionId.substring(0, 20)}%`)
+          .ilike('txid', `%${externalRef.substring(0, 20)}%`)
           .eq('acquirer', 'ativus')
           .eq('status', 'generated')
           .order('created_at', { ascending: false })
@@ -243,22 +276,22 @@ serve(async (req) => {
           .maybeSingle();
         
         if (partialData) {
-          console.log('[ATIVUS-WEBHOOK] Found by partial match:', partialData.id);
+          console.log('[ATIVUS-WEBHOOK] Found by partial externalRef match:', partialData.id);
           transaction = partialData;
         }
       }
 
       if (!transaction) {
-        console.error('[ATIVUS-WEBHOOK] Transaction not found');
+        console.error('[ATIVUS-WEBHOOK] Transaction not found. TransactionId:', transactionId, 'ExternalRef:', externalRef);
         
         await supabase.from('api_monitoring_events').insert({
           acquirer: 'ativus',
           event_type: 'failure',
-          error_message: `Transaction not found: ${transactionId}`,
+          error_message: `Transaction not found: txid=${transactionId}, externalRef=${externalRef}`,
         });
         
         return new Response(
-          JSON.stringify({ success: false, error: 'Transaction not found' }),
+          JSON.stringify({ success: false, error: 'Transaction not found', transactionId, externalRef }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
