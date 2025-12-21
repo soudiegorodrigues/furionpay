@@ -56,7 +56,9 @@ interface FeeConfig {
 interface PeriodStats {
   total_generated: number;
   total_paid: number;
-  total_amount: number;
+  total_expired: number;
+  total_amount_generated: number;
+  total_amount_paid: number;
   total_fees: number;
 }
 
@@ -85,7 +87,9 @@ const AdminVendas = () => {
   const [periodStats, setPeriodStats] = useState<PeriodStats>({
     total_generated: 0,
     total_paid: 0,
-    total_amount: 0,
+    total_expired: 0,
+    total_amount_generated: 0,
+    total_amount_paid: 0,
     total_fees: 0
   });
 
@@ -259,7 +263,7 @@ const AdminVendas = () => {
   const stats = useMemo(() => {
     const generated = periodStats.total_generated || 0;
     const paidCount = periodStats.total_paid || 0;
-    const totalAmount = (periodStats.total_amount || 0) - (periodStats.total_fees || 0);
+    const totalAmount = (periodStats.total_amount_paid || 0) - (periodStats.total_fees || 0);
     const conversionRate = generated > 0 ? (paidCount / generated * 100).toFixed(1) : '0';
     
     return { generated, paidCount, totalAmount, conversionRate };
