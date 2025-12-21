@@ -122,12 +122,19 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
   const handleOpenDialog = (account?: Account) => {
     if (account) {
       setEditingAccount(account);
+      // Formatar valor inicial para exibição no input
+      const formattedBalance = account.initial_balance > 0
+        ? new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }).format(account.initial_balance)
+        : '';
       setFormData({
         name: account.name,
         type: account.type,
         bank_name: account.bank_name || '',
         color: account.color || '#6b7280',
-        initial_balance: account.initial_balance.toString()
+        initial_balance: formattedBalance
       });
     } else {
       setEditingAccount(null);
@@ -162,7 +169,10 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
 
     setIsSubmitting(true);
     try {
-      const initialBalance = parseFloat(formData.initial_balance) || 0;
+      // Parse do valor formatado para número
+      const initialBalance = formData.initial_balance 
+        ? parseFloat(formData.initial_balance.replace(/\./g, '').replace(',', '.')) || 0 
+        : 0;
       const bank = BRAZILIAN_BANKS.find(b => b.value === formData.bank_name);
       
       const payload = {
@@ -249,6 +259,23 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  // Formatar número para exibição no input (1234.56 -> "1.234,56")
+  const formatCurrencyInput = (value: string): string => {
+    const numericValue = value.replace(/\D/g, '');
+    const floatValue = parseFloat(numericValue) / 100;
+    if (isNaN(floatValue) || floatValue === 0) return '';
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(floatValue);
+  };
+
+  // Parse de exibição para número (1.234,56 -> 1234.56)
+  const parseCurrencyInput = (value: string): number => {
+    const cleanValue = value.replace(/\./g, '').replace(',', '.');
+    return parseFloat(cleanValue) || 0;
   };
 
   const getTotalBalance = () => {
@@ -465,13 +492,22 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
 
             <div className="space-y-2">
               <Label>Saldo Inicial</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0,00"
-                value={formData.initial_balance}
-                onChange={(e) => setFormData(prev => ({ ...prev, initial_balance: e.target.value }))}
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                  R$
+                </span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0,00"
+                  className="pl-10"
+                  value={formData.initial_balance}
+                  onChange={(e) => {
+                    const formatted = formatCurrencyInput(e.target.value);
+                    setFormData(prev => ({ ...prev, initial_balance: formatted }));
+                  }}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
