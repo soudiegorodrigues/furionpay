@@ -336,20 +336,29 @@ export const TransacoesGlobaisSection = () => {
 
     setIsVerifying(true);
     try {
+      console.log('Verificando status na adquirente para:', selectedTransaction.txid);
+      
       const { data, error } = await supabase.functions.invoke('check-pix-status', {
         body: { transactionId: selectedTransaction.txid }
       });
 
+      console.log('Resposta da adquirente:', data, error);
+
       if (error) throw error;
 
-      if (data?.paid) {
-        toast.success("Transação PAGA na adquirente! Atualizando...");
-        // Recarregar para ver atualização
+      // Verificar se já está pago (pode vir de diferentes formas da API)
+      if (data?.paid || data?.isPaid || data?.status === 'paid' || data?.status === 'PAID') {
+        toast.success("✅ Transação CONFIRMADA como PAGA!");
         setTimeout(() => {
           loadAllTransactions();
           setVerifyDialogOpen(false);
           setSelectedTransaction(null);
+          setTxidToVerify("");
         }, 1000);
+      } else if (data?.status === 'expired' || data?.status === 'EXPIRED') {
+        toast.warning("⚠️ Transação EXPIRADA na adquirente");
+      } else if (data?.status === 'pending' || data?.status === 'PENDING' || data?.status === 'ATIVA') {
+        toast.info("⏳ Transação ainda PENDENTE de pagamento");
       } else {
         toast.info(`Status na adquirente: ${data?.status || 'Aguardando pagamento'}`);
       }
@@ -357,7 +366,7 @@ export const TransacoesGlobaisSection = () => {
       console.error('Error checking acquirer status:', error);
       toast.error("Erro ao verificar na adquirente: " + error.message);
     } finally {
-    setIsVerifying(false);
+      setIsVerifying(false);
     }
   };
 
