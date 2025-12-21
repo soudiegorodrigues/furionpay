@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search } from "lucide-react";
+import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface Transaction {
   id: string;
@@ -39,6 +41,13 @@ export const TransacoesGlobaisSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  
+  // Transaction verification states
+  const [txidToVerify, setTxidToVerify] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -226,7 +235,116 @@ export const TransacoesGlobaisSection = () => {
     }
   };
 
+  // Verificar transação por TXID
+  const handleVerifyTransaction = async () => {
+    if (!txidToVerify.trim()) {
+      toast.error("Digite o TXID da transação");
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      // Buscar transação no banco
+      const { data, error } = await supabase
+        .from('pix_transactions')
+        .select('*')
+        .or(`txid.ilike.%${txidToVerify.trim()}%,id.eq.${txidToVerify.trim()}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        toast.error("Transação não encontrada com esse TXID/ID");
+        return;
+      }
+
+      // Map to Transaction type
+      const tx: Transaction = {
+        id: data.id,
+        amount: data.amount,
+        status: data.status,
+        txid: data.txid || '',
+        donor_name: data.donor_name || '',
+        product_name: data.product_name,
+        created_at: data.created_at || '',
+        paid_at: data.paid_at,
+        user_email: null,
+        utm_data: data.utm_data as any,
+        acquirer: data.acquirer,
+        total_count: 0
+      };
+      
+      setSelectedTransaction(tx);
+      setVerifyDialogOpen(true);
+    } catch (error: any) {
+      console.error('Error finding transaction:', error);
+      toast.error("Erro ao buscar transação: " + error.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Marcar transação como paga manualmente
+  const handleMarkAsPaid = async () => {
+    if (!selectedTransaction) return;
+
+    setIsMarkingPaid(true);
+    try {
+      const { error } = await supabase.rpc('mark_pix_paid', {
+        p_txid: selectedTransaction.txid
+      });
+
+      if (error) throw error;
+
+      toast.success(`Transação marcada como PAGA! Valor: R$ ${selectedTransaction.amount.toFixed(2)}`);
+      setVerifyDialogOpen(false);
+      setSelectedTransaction(null);
+      setTxidToVerify("");
+      
+      // Recarregar transações
+      loadAllTransactions();
+    } catch (error: any) {
+      console.error('Error marking as paid:', error);
+      toast.error("Erro ao marcar como pago: " + error.message);
+    } finally {
+      setIsMarkingPaid(false);
+    }
+  };
+
+  // Verificar status na adquirente
+  const handleCheckAcquirerStatus = async () => {
+    if (!selectedTransaction) return;
+
+    setIsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-pix-status', {
+        body: { txid: selectedTransaction.txid }
+      });
+
+      if (error) throw error;
+
+      if (data?.paid) {
+        toast.success("Transação PAGA na adquirente! Atualizando...");
+        // Recarregar para ver atualização
+        setTimeout(() => {
+          loadAllTransactions();
+          setVerifyDialogOpen(false);
+          setSelectedTransaction(null);
+        }, 1000);
+      } else {
+        toast.info(`Status na adquirente: ${data?.status || 'Aguardando pagamento'}`);
+      }
+    } catch (error: any) {
+      console.error('Error checking acquirer status:', error);
+      toast.error("Erro ao verificar na adquirente: " + error.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -237,6 +355,27 @@ export const TransacoesGlobaisSection = () => {
           </CardTitle>
         </div>
 
+        {/* Verificar Transação - Suporte */}
+        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-dashed">
+          <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+          <span className="text-xs text-muted-foreground">Suporte:</span>
+          <Input
+            placeholder="Cole o TXID para verificar..."
+            value={txidToVerify}
+            onChange={(e) => setTxidToVerify(e.target.value)}
+            className="flex-1 h-8 text-xs"
+            onKeyDown={(e) => e.key === 'Enter' && handleVerifyTransaction()}
+          />
+          <Button 
+            size="sm" 
+            onClick={handleVerifyTransaction}
+            disabled={isVerifying || !txidToVerify.trim()}
+            className="h-8"
+          >
+            {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            <span className="ml-1 hidden sm:inline">Verificar</span>
+          </Button>
+        </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
           <div className="relative col-span-2">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
@@ -381,5 +520,101 @@ export const TransacoesGlobaisSection = () => {
         )}
       </CardContent>
     </Card>
+
+    {/* Dialog de verificação de transação */}
+    <Dialog open={verifyDialogOpen} onOpenChange={setVerifyDialogOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            Verificar Transação
+          </DialogTitle>
+          <DialogDescription>
+            Detalhes da transação encontrada
+          </DialogDescription>
+        </DialogHeader>
+
+        {selectedTransaction && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-muted-foreground text-xs">TXID</p>
+                <p className="font-mono text-xs break-all">{selectedTransaction.txid}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Status Atual</p>
+                <div className="mt-1">{getStatusBadge(selectedTransaction.status)}</div>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Cliente</p>
+                <p className="font-medium">{selectedTransaction.donor_name || '-'}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Valor</p>
+                <p className="font-medium text-green-500">{formatCurrency(selectedTransaction.amount)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Adquirente</p>
+                <div className="mt-1">{getAcquirerBadge(selectedTransaction.acquirer)}</div>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Criado em</p>
+                <p className="text-xs">{formatDate(selectedTransaction.created_at)}</p>
+              </div>
+            </div>
+
+            {selectedTransaction.status === 'paid' ? (
+              <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <div>
+                  <p className="font-medium text-green-500">Transação já está PAGA</p>
+                  <p className="text-xs text-muted-foreground">Pago em: {formatDate(selectedTransaction.paid_at)}</p>
+                </div>
+              </div>
+            ) : selectedTransaction.status === 'expired' ? (
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <p className="text-red-400">Transação expirada - não pode ser marcada como paga</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                  <p className="text-sm text-amber-400">Transação pendente de pagamento</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          {selectedTransaction?.status === 'generated' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleCheckAcquirerStatus}
+                disabled={isVerifying}
+                className="w-full sm:w-auto"
+              >
+                {isVerifying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Verificar na Adquirente
+              </Button>
+              <Button
+                onClick={handleMarkAsPaid}
+                disabled={isMarkingPaid}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+              >
+                {isMarkingPaid ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                Marcar como Pago
+              </Button>
+            </>
+          )}
+          <Button variant="ghost" onClick={() => setVerifyDialogOpen(false)}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
