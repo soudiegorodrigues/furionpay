@@ -18,14 +18,31 @@ import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
 export function AdminLayoutWrapper() {
   const navigate = useNavigate();
-  const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin, isApproved } = useAdminAuth();
+  const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin, isApproved, mfaInfo, checkMFAStatus } = useAdminAuth();
   const { isOwner, hasPermission } = usePermissions();
   const [userName, setUserName] = useState<string | null>(null);
+  const [mfaChecked, setMfaChecked] = useState(false);
   const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
 
   // Transaction notifications - only active for authenticated users inside admin
   useTransactionNotifications(user?.id || null);
+
+  // Check MFA status and redirect if not configured
+  useEffect(() => {
+    const checkMFA = async () => {
+      if (!loading && isAuthenticated && isApproved && !mfaChecked) {
+        const info = await checkMFAStatus();
+        setMfaChecked(true);
+        
+        // If user doesn't have 2FA configured, redirect to setup page
+        if (info && !info.hasTOTPFactor) {
+          navigate('/setup-2fa', { replace: true });
+        }
+      }
+    };
+    checkMFA();
+  }, [loading, isAuthenticated, isApproved, mfaChecked, checkMFAStatus, navigate]);
 
   // Redirect if not authenticated - only on initial load
   useEffect(() => {

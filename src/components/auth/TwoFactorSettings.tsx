@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,16 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Shield, ShieldCheck, ShieldOff, Loader2, Key, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { TwoFactorSetup } from './TwoFactorSetup';
 import { BackupCodesDisplay } from './BackupCodesDisplay';
 
 export const TwoFactorSettings = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [has2FA, setHas2FA] = useState(false);
   const [factorId, setFactorId] = useState<string | null>(null);
   const [backupCodesCount, setBackupCodesCount] = useState(0);
-  const [showSetup, setShowSetup] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [newBackupCodes, setNewBackupCodes] = useState<string[]>([]);
@@ -139,27 +139,15 @@ export const TwoFactorSettings = () => {
     }
   };
 
+  const handleGoToSetup = () => {
+    navigate('/setup-2fa');
+  };
+
   if (loading) {
     return (
       <Card>
         <CardContent className="py-8 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (showSetup) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <TwoFactorSetup
-            onComplete={() => {
-              setShowSetup(false);
-              check2FAStatus();
-            }}
-            onCancel={() => setShowSetup(false)}
-          />
         </CardContent>
       </Card>
     );
@@ -187,7 +175,10 @@ export const TwoFactorSettings = () => {
             Autenticação em Duas Etapas (2FA)
           </CardTitle>
           <CardDescription>
-            Adicione uma camada extra de segurança à sua conta usando um app autenticador
+            {has2FA 
+              ? 'Gerencie sua autenticação em duas etapas'
+              : 'Adicione uma camada extra de segurança à sua conta'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -248,7 +239,7 @@ export const TwoFactorSettings = () => {
             </Button>
           ) : (
             <Button
-              onClick={() => setShowSetup(true)}
+              onClick={handleGoToSetup}
               className="w-full sm:w-auto"
             >
               <Shield className="h-4 w-4 mr-2" />

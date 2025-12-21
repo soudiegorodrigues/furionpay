@@ -30,6 +30,7 @@ const AdminVendas = lazy(() => import("./pages/AdminVendas"));
 const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
 const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
+const Setup2FA = lazy(() => import("./pages/Setup2FA"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -67,6 +68,15 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<DomainGuard><AdminAuth /></DomainGuard>} />
               <Route path="/cadastro" element={<DomainGuard><AdminAuth /></DomainGuard>} />
+              
+              {/* 2FA Setup Page */}
+              <Route path="/setup-2fa" element={
+                <DomainGuard>
+                  <Suspense fallback={<PageSkeleton />}>
+                    <Setup2FA />
+                  </Suspense>
+                </DomainGuard>
+              } />
               
               {/* API Documentation - public page */}
               <Route path="/integration" element={
