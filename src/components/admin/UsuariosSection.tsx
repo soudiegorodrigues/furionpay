@@ -299,8 +299,8 @@ export const UsuariosSection = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead className="text-xs font-semibold">Email</TableHead>
-                      <TableHead className="text-xs font-semibold hidden md:table-cell">Nome</TableHead>
+                      <TableHead className="text-xs font-semibold">Nome</TableHead>
+                      <TableHead className="text-xs font-semibold hidden md:table-cell">Email</TableHead>
                       <TableHead className="text-xs font-semibold hidden lg:table-cell">Documento</TableHead>
                       <TableHead className="text-xs font-semibold hidden xl:table-cell">Total Faturado</TableHead>
                       <TableHead className="text-xs font-semibold hidden sm:table-cell">Taxa</TableHead>
@@ -322,13 +322,13 @@ export const UsuariosSection = () => {
                           onClick={() => handleRowClick(u.id)}
                         >
                           <TableCell className="text-xs max-w-[200px]">
-                            <div className="truncate font-medium">{u.email}</div>
+                            <div className="truncate font-medium">{u.full_name || '-'}</div>
                             <div className="text-muted-foreground text-[10px] md:hidden truncate">
-                              {u.full_name || '-'}
+                              {u.email}
                             </div>
                           </TableCell>
                           <TableCell className="text-xs hidden md:table-cell max-w-[150px]">
-                            <span className="truncate block">{u.full_name || '-'}</span>
+                            <span className="truncate block">{u.email}</span>
                           </TableCell>
                           <TableCell className="hidden lg:table-cell">
                             {getDocBadge(getDocStatus(u.id))}
