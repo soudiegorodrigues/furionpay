@@ -317,6 +317,79 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
         </Button>
       </div>
 
+      {/* Saldo por Conta Card */}
+      {accounts.length > 0 && (
+        <Card className="border border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wallet className="h-4 w-4 text-primary" />
+              Saldo por Conta
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {accounts.map(account => {
+                const totalAccounts = accounts.reduce((sum, a) => sum + Math.max(0, a.current_balance), 0);
+                const percentage = totalAccounts > 0 ? (Math.max(0, account.current_balance) / totalAccounts) * 100 : 0;
+                
+                return (
+                  <div key={account.id} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {account.icon ? (
+                          <img 
+                            src={account.icon} 
+                            alt={account.bank_name || 'Banco'} 
+                            className="h-6 w-6 rounded-full object-contain bg-white p-0.5 border"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              if (e.currentTarget.nextElementSibling) {
+                                (e.currentTarget.nextElementSibling as HTMLElement).classList.remove('hidden');
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <span className={`text-lg ${account.icon ? 'hidden' : ''}`}>🏦</span>
+                        <div>
+                          <span className="text-sm font-medium">{account.name}</span>
+                          {account.bank_name && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({account.bank_name})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`text-sm font-semibold ${account.current_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {formatCurrency(account.current_balance)}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${percentage}%`,
+                          backgroundColor: account.color || '#6b7280'
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Total */}
+              <div className="pt-3 border-t mt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Total em Contas</span>
+                  <span className={`text-base font-bold ${getTotalBalance() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {formatCurrency(getTotalBalance())}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Accounts Grid */}
       {accounts.length === 0 ? (
         <Card className="border border-border/50">
