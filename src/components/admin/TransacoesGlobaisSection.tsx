@@ -246,7 +246,7 @@ export const TransacoesGlobaisSection = () => {
     return uuidRegex.test(str);
   };
 
-  // Verificar transação por TXID
+  // Verificar transação por TXID - usa RPC para admins verem todas as transações
   const handleVerifyTransaction = async () => {
     if (!txidToVerify.trim()) {
       toast.error("Digite o TXID da transação");
@@ -257,39 +257,41 @@ export const TransacoesGlobaisSection = () => {
     try {
       const searchValue = txidToVerify.trim();
       
-      // Buscar transação no banco - só busca por ID se for UUID válido
-      let query = supabase
-        .from('pix_transactions')
-        .select('*');
-
-      if (isValidUUID(searchValue)) {
-        query = query.or(`txid.ilike.%${searchValue}%,id.eq.${searchValue}`);
-      } else {
-        query = query.ilike('txid', `%${searchValue}%`);
-      }
-
-      const { data, error } = await query.limit(1).maybeSingle();
+      // Usar RPC get_global_transactions_v2 que permite admins verem todas as transações
+      const { data: results, error } = await supabase.rpc('get_global_transactions_v2', {
+        p_email_search: searchValue,
+        p_limit: 10,
+        p_offset: 0
+      });
 
       if (error) throw error;
 
-      if (!data) {
+      // Filtrar resultados para encontrar match exato por txid ou id
+      const matchedTx = results?.find((tx: any) => 
+        tx.txid === searchValue || 
+        tx.id === searchValue ||
+        tx.txid?.includes(searchValue) ||
+        tx.id?.includes(searchValue)
+      );
+
+      if (!matchedTx) {
         toast.error("Transação não encontrada com esse TXID/ID");
         return;
       }
 
       // Map to Transaction type
       const tx: Transaction = {
-        id: data.id,
-        amount: data.amount,
-        status: data.status,
-        txid: data.txid || '',
-        donor_name: data.donor_name || '',
-        product_name: data.product_name,
-        created_at: data.created_at || '',
-        paid_at: data.paid_at,
-        user_email: null,
-        utm_data: data.utm_data as any,
-        acquirer: data.acquirer,
+        id: matchedTx.id,
+        amount: matchedTx.amount,
+        status: matchedTx.status,
+        txid: matchedTx.txid || '',
+        donor_name: matchedTx.donor_name || '',
+        product_name: matchedTx.product_name,
+        created_at: matchedTx.created_at || '',
+        paid_at: matchedTx.paid_at,
+        user_email: matchedTx.user_email,
+        utm_data: matchedTx.utm_data as any,
+        acquirer: matchedTx.acquirer,
         total_count: 0
       };
       
