@@ -22,8 +22,7 @@ import {
   BarChart3
 } from "lucide-react";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { DateRange } from "react-day-picker";
+import { CalendarIcon } from "lucide-react";
 
 interface UTMData {
   utm_source?: string;
@@ -62,7 +61,7 @@ interface PeriodStats {
 }
 
 const ITEMS_PER_PAGE = 10;
-type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all' | 'custom';
+type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
 type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
 
 const AdminVendas = () => {
@@ -79,7 +78,7 @@ const AdminVendas = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  
   
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -184,8 +183,8 @@ const AdminVendas = () => {
     try {
       const { data, error } = await supabase.rpc('get_user_stats_by_period', {
         p_period: period,
-        p_start_date: period === 'custom' && dateRange?.from ? dateRange.from.toISOString() : null,
-        p_end_date: period === 'custom' && dateRange?.to ? dateRange.to.toISOString() : null
+        p_start_date: null,
+        p_end_date: null
       });
       if (error) throw error;
       if (data) {
@@ -194,7 +193,7 @@ const AdminVendas = () => {
     } catch (error) {
       console.error('Error loading period stats:', error);
     }
-  }, [dateRange]);
+  }, []);
 
   // Load transactions with server-side pagination
   const loadTransactions = useCallback(async (showLoading = true) => {
@@ -204,8 +203,8 @@ const AdminVendas = () => {
         p_page: currentPage,
         p_per_page: ITEMS_PER_PAGE,
         p_date_filter: dateFilter,
-        p_start_date: dateFilter === 'custom' && dateRange?.from ? dateRange.from.toISOString() : null,
-        p_end_date: dateFilter === 'custom' && dateRange?.to ? dateRange.to.toISOString() : null,
+        p_start_date: null,
+        p_end_date: null,
         p_status: statusFilter,
         p_search: debouncedSearch
       });
@@ -225,7 +224,7 @@ const AdminVendas = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, dateFilter, dateRange, statusFilter, debouncedSearch, toast]);
+  }, [currentPage, dateFilter, statusFilter, debouncedSearch, toast]);
 
   // Initial load
   useEffect(() => {
@@ -239,19 +238,19 @@ const AdminVendas = () => {
     if (isAuthenticated) {
       loadTransactions();
     }
-  }, [isAuthenticated, currentPage, dateFilter, dateRange, statusFilter, debouncedSearch, loadTransactions]);
+  }, [isAuthenticated, currentPage, dateFilter, statusFilter, debouncedSearch, loadTransactions]);
 
-  // Load stats when date filter or custom range changes
+  // Load stats when date filter changes
   useEffect(() => {
     if (isAuthenticated) {
       loadPeriodStats(dateFilter);
     }
-  }, [dateFilter, dateRange, isAuthenticated, loadPeriodStats]);
+  }, [dateFilter, isAuthenticated, loadPeriodStats]);
 
   // Reset page when filters change (except page itself)
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, dateRange, statusFilter, debouncedSearch]);
+  }, [dateFilter, statusFilter, debouncedSearch]);
 
   // Pagination
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -357,19 +356,22 @@ const AdminVendas = () => {
               />
             </div>
 
-            {/* Date Range Picker */}
-            <DateRangePicker
-              dateRange={dateRange}
-              onDateRangeChange={(range) => {
-                setDateRange(range);
-                if (range) {
-                  setDateFilter('custom');
-                } else {
-                  setDateFilter('all');
-                }
-              }}
-              placeholder="Selecione um intervalo"
-            />
+            {/* Date Filter */}
+            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+              <SelectTrigger className="w-full lg:w-[160px]">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="yesterday">Ontem</SelectItem>
+                <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                <SelectItem value="15days">Últimos 15 dias</SelectItem>
+                <SelectItem value="month">Este mês</SelectItem>
+                <SelectItem value="year">Este ano</SelectItem>
+              </SelectContent>
+            </Select>
 
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
