@@ -362,6 +362,16 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
     }).format(value);
   };
 
+  const formatCompact = (value: number) => {
+    if (Math.abs(value) >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`;
+    }
+    if (Math.abs(value) >= 1000) {
+      return `${(value / 1000).toFixed(1)}k`;
+    }
+    return value.toFixed(0);
+  };
+
   const formatPercent = (value: number) => {
     const sign = value >= 0 ? '+' : '';
     return `${sign}${value.toFixed(1)}%`;
@@ -671,7 +681,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
         </Card>
 
       {/* Monthly Evolution + Balance Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Monthly Evolution Chart */}
         <Card className="border border-border/50">
           <CardHeader className="pb-2">
@@ -680,10 +690,13 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
               Evolução Mensal
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[180px]">
+          <CardContent className="px-2 sm:px-6">
+            <div className="h-[220px] sm:h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData}>
+                <AreaChart 
+                  data={monthlyData}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={COLORS.income} stopOpacity={0.3}/>
@@ -695,20 +708,26 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 10 }}
+                    interval="preserveStartEnd"
+                  />
                   <YAxis 
-                    className="text-xs"
-                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                    tick={{ fontSize: 10 }}
+                    tickFormatter={(value) => formatCompact(value)}
+                    width={45}
                   />
                   <Tooltip 
                     formatter={(value: number) => formatCurrency(value)}
                     contentStyle={{
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      fontSize: '12px'
                     }}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
                   <Area 
                     type="monotone" 
                     dataKey="income" 
@@ -739,18 +758,32 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
               Saldo Mensal
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[200px]">
+          <CardContent className="px-2 sm:px-6">
+            <div className="h-[240px] sm:h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={monthlyData}
-                  margin={{ top: 28, right: 8, left: 8, bottom: 0 }}
+                  margin={{ top: 30, right: 10, left: 0, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 10 }}
+                    interval="preserveStartEnd"
+                  />
                   <YAxis 
-                    className="text-xs"
-                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                    tick={{ fontSize: 10 }}
+                    tickFormatter={(value) => formatCompact(value)}
+                    width={45}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
                   />
                   <Bar 
                     dataKey="balance" 
@@ -761,12 +794,12 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
                     <LabelList
                       dataKey="balance"
                       position="top"
-                      offset={8}
+                      offset={6}
                       formatter={(value: number) => {
                         if (value === 0) return "";
-                        return `R$ ${value.toLocaleString("pt-BR")}`;
+                        return formatCompact(value);
                       }}
-                      style={{ fontSize: "10px", fill: "hsl(var(--foreground))" }}
+                      style={{ fontSize: "9px", fill: "hsl(var(--foreground))" }}
                     />
                     {monthlyData.map((entry, index) => (
                       <Cell 
