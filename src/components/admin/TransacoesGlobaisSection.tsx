@@ -419,11 +419,6 @@ export const TransacoesGlobaisSection = () => {
   // Reverter aprovação manual
   const handleRevertApproval = async () => {
     if (!selectedTransaction) return;
-    
-    // Confirmação
-    if (!confirm(`Tem certeza que deseja reverter a aprovação manual da transação?\n\nTXID: ${selectedTransaction.txid}\nCliente: ${selectedTransaction.donor_name}\nValor: R$ ${selectedTransaction.amount.toFixed(2)}`)) {
-      return;
-    }
 
     setIsReverting(true);
     try {
