@@ -32,6 +32,8 @@ interface GeneratePixRequest {
   productName?: string;
   popupModel?: string;
   healthCheck?: boolean;
+  fingerprint?: string;
+  clientIp?: string;
 }
 
 interface InterCredentials {
@@ -341,7 +343,9 @@ async function logPixGenerated(
   popupModel?: string,
   feePercentage?: number,
   feeFixed?: number,
-  acquirer: string = 'inter'
+  acquirer: string = 'inter',
+  fingerprint?: string,
+  clientIp?: string
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -356,6 +360,8 @@ async function logPixGenerated(
       p_fee_percentage: feePercentage ?? null,
       p_fee_fixed: feeFixed ?? null,
       p_acquirer: acquirer,
+      p_fingerprint_hash: fingerprint || null,
+      p_client_ip: clientIp || null,
     });
 
     if (error) {
@@ -415,9 +421,9 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp } = await req.json() as GeneratePixRequest;
 
-    console.log('Gerando PIX Inter - Valor:', amount, 'Usuário:', userId, 'HealthCheck:', healthCheck);
+    console.log('Gerando PIX Inter - Valor:', amount, 'Usuário:', userId, 'HealthCheck:', healthCheck, 'IP:', clientIp);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -473,7 +479,9 @@ serve(async (req) => {
         popupModel,
         feeConfig?.pix_percentage,
         feeConfig?.pix_fixed,
-        'inter'
+        'inter',
+        fingerprint,
+        clientIp
       );
     } else {
       console.log('Health check mode - skipping transaction log');
