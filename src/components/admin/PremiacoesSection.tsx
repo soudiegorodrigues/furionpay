@@ -57,7 +57,7 @@ export function PremiacoesSection() {
   const [trackingCode, setTrackingCode] = useState("");
 
   // Billing goal state
-  const [billingGoal, setBillingGoal] = useState("");
+  const [billingGoal, setBillingGoal] = useState("R$ 1.000.000,00");
   const [currentBillingGoal, setCurrentBillingGoal] = useState<number>(1000000);
   const [savingGoal, setSavingGoal] = useState(false);
 
@@ -89,9 +89,12 @@ export function PremiacoesSection() {
       if (data) {
         setCurrentBillingGoal(data);
         setBillingGoal(formatCurrencyInput(data));
+      } else {
+        setBillingGoal(formatCurrencyInput(1000000));
       }
     } catch (error) {
       console.error('Error loading billing goal:', error);
+      setBillingGoal(formatCurrencyInput(1000000));
     }
   };
 
