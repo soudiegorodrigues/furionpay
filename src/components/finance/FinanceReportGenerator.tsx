@@ -32,6 +32,7 @@ interface Transaction {
   description: string | null;
   date: string;
   category_id: string | null;
+  person_type: string | null;
 }
 
 interface Category {
@@ -42,6 +43,7 @@ interface Category {
 }
 
 type ReportType = 'income' | 'expense' | 'both';
+type PersonTypeFilter = 'all' | 'PF' | 'PJ';
 
 export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
   const { user } = useAdminAuth(); const effectiveUserId = userId ?? user?.id;
@@ -50,6 +52,7 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   
   const [reportType, setReportType] = useState<ReportType>('both');
+  const [personTypeFilter, setPersonTypeFilter] = useState<PersonTypeFilter>('all');
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setMonth(date.getMonth() - 1);
@@ -95,6 +98,10 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
         query = query.in('type', ['income', 'expense']);
       }
 
+      if (personTypeFilter !== 'all') {
+        query = query.eq('person_type', personTypeFilter);
+      }
+
       const { data: transactions, error: txError } = await query;
       if (txError) throw txError;
 
@@ -124,9 +131,10 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
       doc.setFont('helvetica', 'normal');
       doc.text(`Período: ${formatDate(startDate)} a ${formatDate(endDate)}`, 14, 28);
       
-      // Report type badge
+      // Report type and person type badges
       const reportTypeLabel = reportType === 'income' ? 'Receitas' : reportType === 'expense' ? 'Despesas' : 'Receitas e Despesas';
-      doc.text(`Tipo: ${reportTypeLabel}`, pageWidth - 14 - doc.getTextWidth(`Tipo: ${reportTypeLabel}`), 28);
+      const personTypeLabel = personTypeFilter === 'all' ? 'PF e PJ' : personTypeFilter;
+      doc.text(`Tipo: ${reportTypeLabel} | ${personTypeLabel}`, pageWidth - 14 - doc.getTextWidth(`Tipo: ${reportTypeLabel} | ${personTypeLabel}`), 28);
 
       // Reset text color
       doc.setTextColor(0, 0, 0);
@@ -506,6 +514,20 @@ export const FinanceReportGenerator = ({ userId }: { userId?: string }) => {
                   <SelectItem value="both">Receitas e Despesas</SelectItem>
                   <SelectItem value="income">Apenas Receitas</SelectItem>
                   <SelectItem value="expense">Apenas Despesas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo de Pessoa</Label>
+              <Select value={personTypeFilter} onValueChange={(v) => setPersonTypeFilter(v as PersonTypeFilter)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos (PF e PJ)</SelectItem>
+                  <SelectItem value="PF">Pessoa Física (PF)</SelectItem>
+                  <SelectItem value="PJ">Pessoa Jurídica (PJ)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
