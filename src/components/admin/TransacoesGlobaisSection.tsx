@@ -246,7 +246,7 @@ export const TransacoesGlobaisSection = () => {
     return uuidRegex.test(str);
   };
 
-  // Verificar transação por TXID - usa RPC para admins verem todas as transações
+  // Verificar transação por TXID - busca nas transações já carregadas (que vem da RPC de admin)
   const handleVerifyTransaction = async () => {
     if (!txidToVerify.trim()) {
       toast.error("Digite o TXID da transação");
@@ -255,24 +255,32 @@ export const TransacoesGlobaisSection = () => {
 
     setIsVerifying(true);
     try {
-      const searchValue = txidToVerify.trim();
+      const searchValue = txidToVerify.trim().toLowerCase();
       
-      // Usar RPC get_global_transactions_v2 que permite admins verem todas as transações
-      const { data: results, error } = await supabase.rpc('get_global_transactions_v2', {
-        p_email_search: searchValue,
-        p_limit: 10,
-        p_offset: 0
-      });
-
-      if (error) throw error;
-
-      // Filtrar resultados para encontrar match exato por txid ou id
-      const matchedTx = results?.find((tx: any) => 
-        tx.txid === searchValue || 
-        tx.id === searchValue ||
-        tx.txid?.includes(searchValue) ||
-        tx.id?.includes(searchValue)
+      // Primeiro busca nas transações já carregadas (que vieram via RPC de admin)
+      let matchedTx = transactions.find((tx) => 
+        tx.txid?.toLowerCase() === searchValue || 
+        tx.id?.toLowerCase() === searchValue ||
+        tx.txid?.toLowerCase().includes(searchValue) ||
+        tx.id?.toLowerCase().includes(searchValue)
       );
+
+      // Se não encontrou nas já carregadas, busca via RPC com mais transações
+      if (!matchedTx) {
+        const { data: results, error } = await supabase.rpc('get_global_transactions_v2', {
+          p_limit: 5000,
+          p_offset: 0
+        });
+
+        if (error) throw error;
+
+        matchedTx = (results as Transaction[] | null)?.find((tx) => 
+          tx.txid?.toLowerCase() === searchValue || 
+          tx.id?.toLowerCase() === searchValue ||
+          tx.txid?.toLowerCase().includes(searchValue) ||
+          tx.id?.toLowerCase().includes(searchValue)
+        );
+      }
 
       if (!matchedTx) {
         toast.error("Transação não encontrada com esse TXID/ID");
@@ -290,7 +298,7 @@ export const TransacoesGlobaisSection = () => {
         created_at: matchedTx.created_at || '',
         paid_at: matchedTx.paid_at,
         user_email: matchedTx.user_email,
-        utm_data: matchedTx.utm_data as any,
+        utm_data: matchedTx.utm_data as { utm_term?: string; utm_source?: string } | undefined,
         acquirer: matchedTx.acquirer,
         total_count: 0
       };
