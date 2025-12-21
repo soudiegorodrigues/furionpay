@@ -169,30 +169,30 @@ export default function Setup2FA() {
 
           {/* Step: Intro */}
           {step === 'intro' && (
-            <div className="space-y-4 sm:space-y-6 animate-fade-in">
-              <div className="text-center space-y-2">
-                <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
-                  <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <div className="space-y-3 sm:space-y-4 animate-fade-in">
+              <div className="text-center space-y-1.5">
+                <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2 sm:mb-3">
+                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   Proteja sua conta
                 </h1>
-                <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   Configure a autenticação em duas etapas para maior segurança
                 </p>
               </div>
 
-              <div className="space-y-3 sm:space-y-4 pt-2 sm:pt-4">
-                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
-                    <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <div className="space-y-2 sm:space-y-2.5 pt-1 sm:pt-2">
+                <div className="flex items-start gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="p-1 sm:p-1.5 rounded-md bg-primary/10 shrink-0">
+                    <Smartphone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-medium text-foreground text-sm sm:text-base">App Autenticador</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Use Google Authenticator, Authy ou similar para gerar códigos
+                    <h3 className="font-medium text-foreground text-xs sm:text-sm">App Autenticador</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
+                      Google Authenticator, Authy ou similar
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1.5 mt-1.5">
                       <a 
                         href="#" 
                         target="_blank" 
@@ -200,7 +200,7 @@ export default function Setup2FA() {
                         className="transition-opacity hover:opacity-80"
                         aria-label="Baixar no Google Play"
                       >
-                        <svg className="h-7 sm:h-9" viewBox="0 0 135 40" xmlns="http://www.w3.org/2000/svg">
+                        <svg className="h-5 sm:h-6" viewBox="0 0 135 40" xmlns="http://www.w3.org/2000/svg">
                           <rect width="135" height="40" rx="5" fill="#000"/>
                           <path d="M47.418 10.24c0 .93-.276 1.67-.828 2.221-.627.66-1.444.99-2.446.99-.963 0-1.783-.334-2.458-1.003-.675-.67-1.012-1.493-1.012-2.472 0-.98.337-1.802 1.012-2.471.675-.67 1.495-1.004 2.458-1.004.48 0 .94.096 1.377.286.438.19.788.447 1.05.766l-.59.59c-.438-.527-1.037-.79-1.798-.79-.7 0-1.304.248-1.811.745-.508.498-.762 1.144-.762 1.94 0 .795.254 1.44.762 1.938.507.497 1.111.746 1.811.746.74 0 1.358-.25 1.851-.75.32-.325.505-.777.553-1.357h-2.404v-.81h3.21c.032.17.05.334.05.494l-.025-.06z" fill="#fff"/>
                           <path d="M52.003 7.704h-2.89v2.196h2.606v.81h-2.606v2.195h2.89v.824h-3.75V6.88h3.75v.824zM55.58 13.73h-.86V7.704h-1.77V6.88h4.4v.824h-1.77v6.025zM60.935 13.73V6.88h.86v6.848h-.86zM65.573 13.73h-.86V7.704H62.94V6.88h4.4v.824h-1.77l.003 6.025zM74.645 12.892c-.66.68-1.48 1.02-2.458 1.02-.978 0-1.798-.34-2.458-1.02-.66-.68-.99-1.5-.99-2.456 0-.956.33-1.776.99-2.455.66-.68 1.48-1.02 2.458-1.02.973 0 1.79.342 2.453 1.024.662.682.993 1.5.993 2.45 0 .957-.33 1.777-.988 2.457zm-4.274-.565c.497.507 1.104.76 1.816.76.712 0 1.32-.253 1.816-.76.498-.506.746-1.15.746-1.93 0-.78-.248-1.424-.746-1.93-.497-.508-1.104-.762-1.816-.762-.712 0-1.32.254-1.816.762-.497.506-.746 1.15-.746 1.93 0 .78.249 1.424.746 1.93zM76.502 13.73V6.88h1.047l3.257 5.342h.037l-.037-1.324V6.88h.86v6.848h-.897l-3.408-5.608h-.037l.037 1.324v4.284h-.86z" fill="#fff"/>
@@ -232,7 +232,7 @@ export default function Setup2FA() {
                         className="transition-opacity hover:opacity-80"
                         aria-label="Baixar na App Store"
                       >
-                        <svg className="h-7 sm:h-9" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+                        <svg className="h-5 sm:h-6" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
                           <rect width="120" height="40" rx="5" fill="#000"/>
                           <path d="M24.769 20.3a4.948 4.948 0 012.356-4.151 5.066 5.066 0 00-3.99-2.158c-1.68-.176-3.308 1.005-4.164 1.005-.872 0-2.19-.988-3.608-.958a5.315 5.315 0 00-4.473 2.728c-1.934 3.348-.491 8.269 1.361 10.976.927 1.325 2.01 2.805 3.428 2.753 1.387-.058 1.905-.885 3.58-.885 1.658 0 2.144.885 3.59.852 1.489-.025 2.426-1.332 3.32-2.67a10.962 10.962 0 001.52-3.092 4.782 4.782 0 01-2.92-4.4zM22.037 12.21a4.872 4.872 0 001.115-3.49 4.957 4.957 0 00-3.208 1.66 4.636 4.636 0 00-1.144 3.36 4.1 4.1 0 003.237-1.53z" fill="#fff"/>
                           <path d="M42.302 27.14H37.57l-1.137 3.356h-2.005l4.484-12.418h2.083l4.483 12.418h-2.039l-1.136-3.356zm-4.243-1.55h3.752l-1.85-5.446h-.051l-1.85 5.447zM55.16 25.97c0 2.813-1.506 4.62-3.779 4.62a3.07 3.07 0 01-2.848-1.583h-.043v4.484H46.63V21.442h1.8v1.506h.034a3.212 3.212 0 012.883-1.6c2.298 0 3.813 1.816 3.813 4.621zm-1.91 0c0-1.833-.948-3.038-2.393-3.038-1.42 0-2.375 1.23-2.375 3.038 0 1.824.955 3.046 2.375 3.046 1.445 0 2.392-1.197 2.392-3.046zM65.125 25.97c0 2.813-1.506 4.62-3.779 4.62a3.07 3.07 0 01-2.848-1.583h-.043v4.484h-1.859V21.442h1.799v1.506h.034a3.212 3.212 0 012.883-1.6c2.298 0 3.813 1.816 3.813 4.621zm-1.91 0c0-1.833-.948-3.038-2.393-3.038-1.42 0-2.375 1.23-2.375 3.038 0 1.824.955 3.046 2.375 3.046 1.445 0 2.393-1.197 2.393-3.046zM71.71 27.036c.138 1.231 1.334 2.04 2.97 2.04 1.566 0 2.693-.809 2.693-1.919 0-.964-.68-1.54-2.29-1.936l-1.609-.388c-2.28-.55-3.339-1.617-3.339-3.348 0-2.142 1.867-3.614 4.519-3.614 2.624 0 4.423 1.472 4.483 3.614h-1.876c-.112-1.239-1.136-1.987-2.634-1.987-1.497 0-2.521.757-2.521 1.858 0 .878.654 1.395 2.255 1.79l1.368.336c2.548.603 3.606 1.626 3.606 3.443 0 2.323-1.85 3.778-4.793 3.778-2.754 0-4.614-1.42-4.734-3.667h1.902zM83.346 19.3v2.142h1.722v1.472h-1.722v4.991c0 .776.345 1.137 1.102 1.137.204-.004.408-.018.611-.043v1.463c-.34.063-.686.092-1.032.086-1.833 0-2.548-.689-2.548-2.444v-5.19h-1.316v-1.472h1.316V19.3h1.867zM86.065 25.97c0-2.849 1.678-4.639 4.294-4.639 2.625 0 4.295 1.79 4.295 4.639 0 2.856-1.661 4.638-4.295 4.638-2.633 0-4.294-1.782-4.294-4.638zm6.695 0c0-1.954-.895-3.108-2.401-3.108s-2.4 1.162-2.4 3.108c0 1.962.894 3.106 2.4 3.106s2.401-1.144 2.401-3.106zM96.186 21.442h1.773v1.541h.043a2.16 2.16 0 012.177-1.635c.214 0 .428.023.637.07v1.738a2.598 2.598 0 00-.835-.112 1.873 1.873 0 00-1.937 2.083v5.37h-1.858v-9.055zM109.384 27.837c-.25 1.643-1.85 2.771-3.898 2.771-2.634 0-4.269-1.764-4.269-4.595 0-2.84 1.644-4.682 4.19-4.682 2.506 0 4.08 1.72 4.08 4.466v.637h-6.394v.112a2.358 2.358 0 002.436 2.564 2.048 2.048 0 002.09-1.273h1.765zm-6.282-2.702h4.526a2.177 2.177 0 00-2.22-2.298 2.292 2.292 0 00-2.306 2.298z" fill="#fff"/>
@@ -243,26 +243,26 @@ export default function Setup2FA() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
-                    <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="flex items-start gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="p-1 sm:p-1.5 rounded-md bg-primary/10 shrink-0">
+                    <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-medium text-foreground text-sm sm:text-base">Proteção Extra</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Mesmo que sua senha seja comprometida, sua conta estará segura
+                    <h3 className="font-medium text-foreground text-xs sm:text-sm">Proteção Extra</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
+                      Sua conta permanece segura mesmo com senha comprometida
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
-                    <KeyRound className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="flex items-start gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="p-1 sm:p-1.5 rounded-md bg-primary/10 shrink-0">
+                    <KeyRound className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-medium text-foreground text-sm sm:text-base">Códigos de Backup</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Você receberá códigos de emergência caso perca acesso ao app
+                    <h3 className="font-medium text-foreground text-xs sm:text-sm">Códigos de Backup</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
+                      Códigos de emergência para recuperação de acesso
                     </p>
                   </div>
                 </div>
@@ -271,15 +271,14 @@ export default function Setup2FA() {
               <Button 
                 onClick={handleStartSetup} 
                 disabled={enrolling}
-                className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium mt-2 sm:mt-4"
-                size="lg"
+                className="w-full h-9 sm:h-10 text-xs sm:text-sm font-medium mt-1 sm:mt-2"
               >
                 {enrolling ? (
-                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 ) : (
                   <>
                     Configurar Agora
-                    <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
+                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1.5" />
                   </>
                 )}
               </Button>
