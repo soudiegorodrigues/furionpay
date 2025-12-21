@@ -337,7 +337,7 @@ export const TransacoesGlobaisSection = () => {
     setIsVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke('check-pix-status', {
-        body: { txid: selectedTransaction.txid }
+        body: { transactionId: selectedTransaction.txid }
       });
 
       if (error) throw error;
