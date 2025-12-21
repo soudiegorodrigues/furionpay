@@ -14,7 +14,7 @@ import {
 interface TwoFactorVerifyProps {
   factorId: string;
   onSuccess: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   onRecovery: () => void;
 }
 
@@ -239,13 +239,15 @@ export const TwoFactorVerify = ({ factorId, onSuccess, onCancel, onRecovery }: T
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onCancel}
-        className="w-full text-sm text-white/50 hover:text-white/70 transition-colors"
-      >
-        Cancelar
-      </button>
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full text-sm text-white/50 hover:text-white/70 transition-colors"
+        >
+          Cancelar
+        </button>
+      )}
     </div>
   );
 };

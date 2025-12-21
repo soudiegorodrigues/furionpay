@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthenticatorAssuranceLevels, Factor } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+
+interface MFAInfo {
+  currentLevel: AuthenticatorAssuranceLevels | null;
+  nextLevel: AuthenticatorAssuranceLevels | null;
+  currentAuthenticationMethods: string[];
+  hasTOTPFactor: boolean;
+  verifiedFactors: Factor[];
+  unverifiedFactors: Factor[];
+}
 
 export const useAdminAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -10,6 +19,7 @@ export const useAdminAuth = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
+  const [mfaInfo, setMfaInfo] = useState<MFAInfo | null>(null);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -79,6 +89,131 @@ export const useAdminAuth = () => {
     }
   }, []);
 
+  // Check MFA status
+  const checkMFAStatus = useCallback(async (): Promise<MFAInfo | null> => {
+    try {
+      const { data: aalData, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      
+      if (aalError) {
+        console.error('Error checking AAL:', aalError);
+        return null;
+      }
+
+      const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+      
+      if (factorsError) {
+        console.error('Error listing factors:', factorsError);
+        return null;
+      }
+
+      const verifiedFactors = factorsData?.totp?.filter(f => f.status === 'verified') || [];
+      const unverifiedFactors = factorsData?.totp?.filter(f => f.status !== 'verified') || [];
+
+      const info: MFAInfo = {
+        currentLevel: aalData?.currentLevel || null,
+        nextLevel: aalData?.nextLevel || null,
+        currentAuthenticationMethods: aalData?.currentAuthenticationMethods?.map(m => m.method) || [],
+        hasTOTPFactor: verifiedFactors.length > 0,
+        verifiedFactors,
+        unverifiedFactors
+      };
+
+      setMfaInfo(info);
+      return info;
+    } catch (err) {
+      console.error('Error in checkMFAStatus:', err);
+      return null;
+    }
+  }, []);
+
+  // Check if user needs MFA verification (has factor but hasn't verified in this session)
+  const needsMFAVerification = useCallback(async (): Promise<boolean> => {
+    const info = await checkMFAStatus();
+    if (!info) return false;
+    
+    // User has TOTP factor but current session is only aal1
+    return info.hasTOTPFactor && info.currentLevel === 'aal1' && info.nextLevel === 'aal2';
+  }, [checkMFAStatus]);
+
+  // Verify TOTP code
+  const verifyTOTP = useCallback(async (factorId: string, code: string) => {
+    try {
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+      
+      if (challengeError) {
+        return { error: challengeError };
+      }
+
+      const { data, error } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challengeData.id,
+        code
+      });
+
+      if (!error) {
+        await checkMFAStatus();
+      }
+
+      return { data, error };
+    } catch (err: any) {
+      return { error: err };
+    }
+  }, [checkMFAStatus]);
+
+  // Enroll TOTP factor
+  const enrollTOTP = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: 'Authenticator App'
+      });
+
+      return { data, error };
+    } catch (err: any) {
+      return { data: null, error: err };
+    }
+  }, []);
+
+  // Verify and complete TOTP enrollment
+  const verifyTOTPEnrollment = useCallback(async (factorId: string, code: string) => {
+    try {
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+      
+      if (challengeError) {
+        return { error: challengeError };
+      }
+
+      const { data, error } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challengeData.id,
+        code
+      });
+
+      if (!error) {
+        await checkMFAStatus();
+      }
+
+      return { data, error };
+    } catch (err: any) {
+      return { error: err };
+    }
+  }, [checkMFAStatus]);
+
+  // Unenroll TOTP factor (disable 2FA)
+  const unenrollTOTP = useCallback(async (factorId: string) => {
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId });
+      
+      if (!error) {
+        await checkMFAStatus();
+      }
+
+      return { error };
+    } catch (err: any) {
+      return { error: err };
+    }
+  }, [checkMFAStatus]);
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -92,12 +227,14 @@ export const useAdminAuth = () => {
           checkIfBlocked();
           checkIfAdmin();
           checkIfApproved();
+          setTimeout(() => checkMFAStatus(), 0);
         }
         
         if (event === 'SIGNED_OUT') {
           setIsAdmin(false);
           setIsApproved(false);
           setAdminLoading(false);
+          setMfaInfo(null);
         }
       }
     );
@@ -113,6 +250,7 @@ export const useAdminAuth = () => {
         checkIfBlocked();
         await checkIfAdmin();
         await checkIfApproved();
+        await checkMFAStatus();
       } else {
         setIsAdmin(false);
         setIsApproved(false);
@@ -121,7 +259,7 @@ export const useAdminAuth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [checkIfBlocked, checkIfAdmin, checkIfApproved]);
+  }, [checkIfBlocked, checkIfAdmin, checkIfApproved, checkMFAStatus]);
 
   // Periodically check if user is blocked (every 30 seconds)
   useEffect(() => {
@@ -211,6 +349,7 @@ export const useAdminAuth = () => {
     isBlocked,
     isAdmin,
     isApproved,
+    mfaInfo,
     signIn,
     signUp,
     signOut,
@@ -221,6 +360,12 @@ export const useAdminAuth = () => {
     checkIfBlocked,
     checkIfAdmin,
     checkIfApproved,
+    checkMFAStatus,
+    needsMFAVerification,
+    verifyTOTP,
+    enrollTOTP,
+    verifyTOTPEnrollment,
+    unenrollTOTP,
     isAuthenticated: !!session
   };
 };

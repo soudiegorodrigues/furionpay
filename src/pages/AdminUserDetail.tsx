@@ -9,12 +9,17 @@ import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   ArrowLeft, Loader2, Check, CreditCard, Settings2, Percent, Trophy, ShieldCheck,
-  Shield, ShieldOff, Ban, Unlock, Trash2, UserCheck, UserX, Mail, Calendar, Clock, Wallet
+  Shield, ShieldOff, Ban, Unlock, Trash2, UserCheck, UserX, Mail, Calendar, Clock, Wallet, KeyRound
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "@/components/AdminSidebar";
+
+interface User2FAStatus {
+  hasTOTP: boolean;
+  factorId?: string;
+}
 
 interface User {
   id: string;
@@ -69,6 +74,8 @@ const AdminUserDetail = () => {
   const [bypassAntifraud, setBypassAntifraud] = useState(false);
   const [userTotalPaid, setUserTotalPaid] = useState(0);
   const [verification, setVerification] = useState<VerificationStatus | null>(null);
+  const [user2FAStatus, setUser2FAStatus] = useState<User2FAStatus | null>(null);
+  const [reset2FADialogOpen, setReset2FADialogOpen] = useState(false);
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
@@ -79,8 +86,42 @@ const AdminUserDetail = () => {
       loadFeeConfigs();
       loadRewards();
       loadDefaultAcquirer();
+      loadUser2FAStatus();
     }
   }, [id]);
+
+  const loadUser2FAStatus = async () => {
+    if (!id) return;
+    try {
+      const { data, error } = await supabase.rpc('admin_can_reset_2fa', { p_user_id: id });
+      setUser2FAStatus({ hasTOTP: data === true });
+    } catch (error) {
+      console.error('Error checking 2FA status:', error);
+      setUser2FAStatus({ hasTOTP: false });
+    }
+  };
+
+  const handleReset2FA = async () => {
+    if (!user) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-2fa', {
+        body: { targetUserId: user.id }
+      });
+
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Erro ao resetar 2FA');
+      }
+
+      setUser2FAStatus({ hasTOTP: false });
+      setReset2FADialogOpen(false);
+      toast({ title: 'Sucesso', description: '2FA do usuário foi desativado' });
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const loadDefaultAcquirer = async () => {
     try {
@@ -462,6 +503,12 @@ const AdminUserDetail = () => {
                       Bloquear
                     </Button>
                   )}
+                  {user2FAStatus?.hasTOTP && (
+                    <Button variant="outline" size="sm" onClick={() => setReset2FADialogOpen(true)} disabled={actionLoading}>
+                      <KeyRound className="h-4 w-4 mr-2" />
+                      Resetar 2FA
+                    </Button>
+                  )}
                   <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)} disabled={actionLoading}>
                     <Trash2 className="h-4 w-4 mr-2" />
                     Excluir
@@ -711,6 +758,26 @@ const AdminUserDetail = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleGrantAdmin}>
               Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset 2FA Dialog */}
+      <AlertDialog open={reset2FADialogOpen} onOpenChange={setReset2FADialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar 2FA</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desativar a autenticação de dois fatores de <strong>{user.email}</strong>? 
+              O usuário precisará configurar o 2FA novamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReset2FA} disabled={actionLoading}>
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirmar Reset
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
