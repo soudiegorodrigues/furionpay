@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw, X, UserCheck, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
@@ -28,7 +28,7 @@ interface Transaction {
   is_manual_approval: boolean | null;
 }
 
-type DateFilter = 'all' | 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'custom';
+type DateFilter = 'all' | 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year';
 type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
 
 const ITEMS_PER_PAGE = 10;
@@ -42,7 +42,7 @@ export const TransacoesGlobaisSection = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  
   
   // Transaction verification states
   const [txidToVerify, setTxidToVerify] = useState("");
@@ -67,7 +67,7 @@ export const TransacoesGlobaisSection = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, statusFilter, debouncedSearch, dateRange]);
+  }, [dateFilter, statusFilter, debouncedSearch]);
 
   // Load transactions with server-side pagination
   const loadTransactions = useCallback(async () => {
@@ -79,8 +79,8 @@ export const TransacoesGlobaisSection = () => {
         p_page: currentPage,
         p_per_page: ITEMS_PER_PAGE,
         p_date_filter: dateFilter,
-        p_start_date: dateFilter === 'custom' && dateRange?.from ? dateRange.from.toISOString() : null,
-        p_end_date: dateFilter === 'custom' && dateRange?.to ? dateRange.to.toISOString() : null,
+        p_start_date: null,
+        p_end_date: null,
         p_status: statusFilter,
         p_search: debouncedSearch || ''
       });
@@ -101,7 +101,7 @@ export const TransacoesGlobaisSection = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, dateFilter, statusFilter, debouncedSearch, dateRange]);
+  }, [currentPage, dateFilter, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     loadTransactions();
@@ -110,19 +110,12 @@ export const TransacoesGlobaisSection = () => {
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range || { from: undefined, to: undefined });
-    if (range?.from) {
-      setDateFilter('custom');
-    }
-  };
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setDebouncedSearch("");
     setDateFilter('all');
     setStatusFilter('all');
-    setDateRange({ from: undefined, to: undefined });
     setCurrentPage(1);
     toast.success("Filtros limpos!");
   };
@@ -171,7 +164,6 @@ export const TransacoesGlobaisSection = () => {
       case '15days': return '15 dias';
       case 'month': return 'Este mês';
       case 'year': return 'Este ano';
-      case 'custom': return 'Personalizado';
       default: return 'Período';
     }
   };
@@ -373,10 +365,6 @@ export const TransacoesGlobaisSection = () => {
                 className="pl-9 text-sm"
               />
             </div>
-            <DateRangePicker
-              dateRange={dateRange}
-              onDateRangeChange={handleDateRangeChange}
-            />
           </div>
 
           {/* Quick Filters */}
