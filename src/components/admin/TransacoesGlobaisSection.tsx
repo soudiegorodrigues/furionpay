@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw, X } from "lucide-react";
+import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw, X, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -25,6 +25,8 @@ interface Transaction {
   utm_data: { utm_term?: string; utm_source?: string } | null;
   acquirer: string | null;
   total_count: number;
+  approved_by_email: string | null;
+  is_manual_approval: boolean | null;
 }
 
 type DateFilter = 'all' | 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'custom';
@@ -310,7 +312,9 @@ export const TransacoesGlobaisSection = () => {
         user_email: matchedTx.user_email,
         utm_data: matchedTx.utm_data as { utm_term?: string; utm_source?: string } | undefined,
         acquirer: matchedTx.acquirer,
-        total_count: 0
+        total_count: 0,
+        approved_by_email: matchedTx.approved_by_email || null,
+        is_manual_approval: matchedTx.is_manual_approval || false
       };
       
       setSelectedTransaction(tx);
@@ -329,8 +333,13 @@ export const TransacoesGlobaisSection = () => {
 
     setIsMarkingPaid(true);
     try {
+      // Pegar o email do usuário logado (admin)
+      const { data: { user } } = await supabase.auth.getUser();
+      const adminEmail = user?.email || 'unknown';
+
       const { error } = await supabase.rpc('mark_pix_paid', {
-        p_txid: selectedTransaction.txid
+        p_txid: selectedTransaction.txid,
+        p_admin_email: adminEmail
       });
 
       if (error) throw error;
@@ -534,7 +543,8 @@ export const TransacoesGlobaisSection = () => {
                     <TableHead className="text-xs">Valor</TableHead>
                     <TableHead className="text-xs hidden sm:table-cell">Status</TableHead>
                     <TableHead className="text-xs hidden sm:table-cell">Adquirente</TableHead>
-                    <TableHead className="text-xs hidden md:table-cell">Posicionamento</TableHead>
+                    <TableHead className="text-xs hidden md:table-cell">Aprovado Por</TableHead>
+                    <TableHead className="text-xs hidden lg:table-cell">Posicionamento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -565,7 +575,22 @@ export const TransacoesGlobaisSection = () => {
                       <TableCell className="hidden sm:table-cell">
                         {getAcquirerBadge(tx.acquirer)}
                       </TableCell>
-                      <TableCell className="text-xs hidden md:table-cell max-w-[100px] truncate">
+                      <TableCell className="text-xs hidden md:table-cell max-w-[120px]">
+                        {tx.is_manual_approval ? (
+                          <div className="flex items-center gap-1">
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20">
+                              <UserCheck className="h-3 w-3 mr-0.5" />
+                              Manual
+                            </Badge>
+                            <span className="text-muted-foreground truncate" title={tx.approved_by_email || ''}>
+                              {tx.approved_by_email?.split('@')[0] || '-'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs hidden lg:table-cell max-w-[100px] truncate">
                         {tx.utm_data?.utm_term || '-'}
                       </TableCell>
                     </TableRow>
