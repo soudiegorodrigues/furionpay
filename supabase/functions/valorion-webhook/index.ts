@@ -166,17 +166,24 @@ serve(async (req) => {
     }
 
     console.log('[VALORION-WEBHOOK] Received payload:', JSON.stringify(payload));
+    console.log('[VALORION-WEBHOOK] All payload keys:', Object.keys(payload));
 
     // Extract transaction ID from multiple possible fields
-    const transactionId = payload.id_transaction || 
+    // IMPORTANT: Valorion sends 'idtransaction' (all lowercase) with our txid
+    const transactionId = payload.idtransaction ||       // Valorion lowercase - PRIORITY
+                          payload.externalreference ||   // External reference field
+                          payload.id_transaction || 
                           payload.idTransaction || 
                           payload.transaction_id || 
-                          payload.id ||
+                          payload.data?.idtransaction ||
                           payload.data?.id_transaction ||
                           payload.data?.id;
     
-    // Extract metadata (contains our local txid)
-    const metadata = payload.metadata || payload.data?.metadata;
+    // Valorion's internal ID (NOT our txid)
+    const valorionInternalId = payload.id || payload.data?.id;
+    
+    // Extract metadata (may contain our local txid)
+    const metadata = payload.metadata || payload.data?.metadata || payload.externalreference;
                           
     const status = (payload.situacao || 
                     payload.status || 
@@ -184,7 +191,8 @@ serve(async (req) => {
                     payload.data?.situacao ||
                     '').toString().toUpperCase();
 
-    console.log('[VALORION-WEBHOOK] Transaction ID:', transactionId);
+    console.log('[VALORION-WEBHOOK] Transaction ID (our txid):', transactionId);
+    console.log('[VALORION-WEBHOOK] Valorion Internal ID:', valorionInternalId);
     console.log('[VALORION-WEBHOOK] Metadata:', metadata);
     console.log('[VALORION-WEBHOOK] Status:', status);
 
