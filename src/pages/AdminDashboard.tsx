@@ -116,6 +116,8 @@ const AdminDashboard = () => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [isBannerLoading, setIsBannerLoading] = useState(true);
+  const [isBannerImageLoaded, setIsBannerImageLoaded] = useState(false);
   const [hideData, setHideData] = useState(() => {
     return localStorage.getItem('dashboard_hide_data') === 'true';
   });
@@ -355,6 +357,7 @@ const AdminDashboard = () => {
 
       // Load global banner (visible to all users)
       supabase.rpc('get_global_banner_url').then(({ data, error }) => {
+        setIsBannerLoading(false);
         if (!error && data) {
           setBannerUrl(data);
         }
@@ -590,11 +593,24 @@ const AdminDashboard = () => {
       </div>
 
       {/* Banner */}
-      {bannerUrl && <div className="rounded-lg overflow-hidden border border-border">
-          <img src={bannerUrl} alt="Banner do Dashboard" className="w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px]" onError={e => {
-        (e.target as HTMLImageElement).style.display = 'none';
-      }} />
-        </div>}
+      {isBannerLoading ? (
+        <div className="rounded-lg overflow-hidden border border-border h-[100px] sm:h-[150px] lg:h-[200px] bg-muted animate-pulse" />
+      ) : bannerUrl ? (
+        <div className="rounded-lg overflow-hidden border border-border">
+          <div className={`relative ${!isBannerImageLoaded ? 'h-[100px] sm:h-[150px] lg:h-[200px] bg-muted animate-pulse' : ''}`}>
+            <img 
+              src={bannerUrl} 
+              alt="Banner do Dashboard" 
+              className={`w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px] transition-opacity duration-300 ${isBannerImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setIsBannerImageLoaded(true)}
+              onError={e => {
+                (e.target as HTMLImageElement).style.display = 'none';
+                setIsBannerImageLoaded(true);
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {/* Stats Grid - Unified */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 lg:gap-4">
