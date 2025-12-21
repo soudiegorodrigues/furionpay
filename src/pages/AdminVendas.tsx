@@ -470,7 +470,7 @@ const AdminVendas = () => {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {totalCount > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} de {totalCount}

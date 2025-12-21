@@ -2638,6 +2638,7 @@ export type Database = {
             }
             Returns: Json
           }
+        | { Args: { p_period?: string }; Returns: Json }
         | {
             Args: { p_period?: string; p_user_id: string }
             Returns: {
