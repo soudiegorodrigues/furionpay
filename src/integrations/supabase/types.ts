@@ -2181,55 +2181,31 @@ export type Database = {
           value: string
         }[]
       }
-      get_global_transactions_v2:
-        | {
-            Args: {
-              p_date_filter?: string
-              p_email_search?: string
-              p_limit?: number
-              p_offset?: number
-              p_status?: string
-            }
-            Returns: {
-              acquirer: string
-              amount: number
-              approved_by_email: string
-              created_at: string
-              donor_name: string
-              id: string
-              is_manual_approval: boolean
-              paid_at: string
-              product_name: string
-              status: Database["public"]["Enums"]["pix_status"]
-              total_count: number
-              txid: string
-              user_email: string
-              utm_data: Json
-            }[]
-          }
-        | {
-            Args: {
-              p_date_filter?: string
-              p_email_search?: string
-              p_limit?: number
-              p_offset?: number
-              p_status?: string
-            }
-            Returns: {
-              acquirer: string
-              amount: number
-              created_at: string
-              donor_name: string
-              id: string
-              paid_at: string
-              product_name: string
-              status: Database["public"]["Enums"]["pix_status"]
-              total_count: number
-              txid: string
-              user_email: string
-              utm_data: Json
-            }[]
-          }
+      get_global_transactions_v2: {
+        Args: {
+          p_date_filter?: string
+          p_email_search?: string
+          p_limit?: number
+          p_offset?: number
+          p_status?: string
+        }
+        Returns: {
+          acquirer: string
+          amount: number
+          approved_by_email: string
+          created_at: string
+          donor_name: string
+          id: string
+          is_manual_approval: boolean
+          paid_at: string
+          product_name: string
+          status: Database["public"]["Enums"]["pix_status"]
+          total_count: number
+          txid: string
+          user_email: string
+          utm_data: Json
+        }[]
+      }
       get_healthy_acquirers: {
         Args: never
         Returns: {
