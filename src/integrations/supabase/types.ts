@@ -2182,6 +2182,18 @@ export type Database = {
           value: string
         }[]
       }
+      get_global_transactions_paginated: {
+        Args: {
+          p_date_filter?: string
+          p_end_date?: string
+          p_page?: number
+          p_per_page?: number
+          p_search?: string
+          p_start_date?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
       get_global_transactions_v2: {
         Args: {
           p_date_filter?: string
