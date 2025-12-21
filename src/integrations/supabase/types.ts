@@ -1733,8 +1733,6 @@ export type Database = {
           backed_up_by: string | null
           backup_name: string
           backup_type: string
-          chat_blocks_data: Json | null
-          chat_flows_data: Json | null
           checkout_offers_data: Json | null
           checkout_templates_data: Json | null
           created_at: string
@@ -1761,8 +1759,6 @@ export type Database = {
           backed_up_by?: string | null
           backup_name: string
           backup_type?: string
-          chat_blocks_data?: Json | null
-          chat_flows_data?: Json | null
           checkout_offers_data?: Json | null
           checkout_templates_data?: Json | null
           created_at?: string
@@ -1789,8 +1785,6 @@ export type Database = {
           backed_up_by?: string | null
           backup_name?: string
           backup_type?: string
-          chat_blocks_data?: Json | null
-          chat_flows_data?: Json | null
           checkout_offers_data?: Json | null
           checkout_templates_data?: Json | null
           created_at?: string
