@@ -79,8 +79,11 @@ export const TransacoesGlobaisSection = () => {
       let hasMore = true;
 
       console.log('[TransacoesGlobais] Iniciando carregamento de transações...');
+      console.log('[TransacoesGlobais] Chamando RPC get_global_transactions_v2...');
 
       while (hasMore) {
+        console.log(`[TransacoesGlobais] Buscando batch: offset=${offset}, limit=${batchSize}`);
+        
         const { data, error } = await supabase.rpc('get_global_transactions_v2', {
           p_limit: batchSize,
           p_offset: offset,
@@ -89,7 +92,13 @@ export const TransacoesGlobaisSection = () => {
           p_email_search: null
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('[TransacoesGlobais] Erro RPC:', error);
+          toast.error(`Erro ao carregar transações: ${error.message}`);
+          throw error;
+        }
+
+        console.log('[TransacoesGlobais] Resposta RPC:', { dataLength: data?.length, data: data?.slice(0, 2) });
 
         const txData = (data as unknown as Transaction[]) || [];
         allTxs = [...allTxs, ...txData];
@@ -101,9 +110,16 @@ export const TransacoesGlobaisSection = () => {
       }
 
       console.log(`[TransacoesGlobais] Carregamento completo: ${allTxs.length} transações`);
+      
+      if (allTxs.length === 0) {
+        console.warn('[TransacoesGlobais] Nenhuma transação retornada pela RPC');
+        toast.info("Nenhuma transação encontrada no sistema");
+      }
+      
       setAllTransactions(allTxs);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
+    } catch (error: any) {
+      console.error('[TransacoesGlobais] Erro ao carregar transações:', error);
+      toast.error(`Falha ao carregar transações: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setIsLoading(false);
     }
