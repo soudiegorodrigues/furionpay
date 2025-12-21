@@ -363,13 +363,12 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
   };
 
   const formatCompact = (value: number) => {
-    if (Math.abs(value) >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M`;
-    }
-    if (Math.abs(value) >= 1000) {
-      return `${(value / 1000).toFixed(1)}k`;
-    }
-    return value.toFixed(0);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      notation: 'compact',
+      compactDisplay: 'short'
+    }).format(value);
   };
 
   const formatPercent = (value: number) => {
