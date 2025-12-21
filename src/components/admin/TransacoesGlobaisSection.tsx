@@ -558,15 +558,6 @@ export const TransacoesGlobaisSection = () => {
             <span className="ml-1 hidden sm:inline">Buscar</span>
           </Button>
 
-          <Button 
-            onClick={handleClearFilters} 
-            variant="outline"
-            size="sm"
-            className="h-8"
-          >
-            <X className="h-4 w-4" />
-            <span className="ml-1 hidden sm:inline">Limpar</span>
-          </Button>
         </div>
       </CardHeader>
       <CardContent>
