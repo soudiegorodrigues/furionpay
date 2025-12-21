@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Info, Settings } from "lucide-react";
+import { Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface BillingProgressBadgeProps {
   userId?: string;
@@ -26,8 +21,6 @@ const formatCurrency = (value: number): string => {
 export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
   const [currentAmount, setCurrentAmount] = useState<number>(0);
   const [goalAmount, setGoalAmount] = useState<number>(1000000);
-  const [isOpen, setIsOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,13 +35,10 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
           setCurrentAmount(totalPaid);
         }
 
-        // Load billing goal from settings
-        const { data: settings } = await supabase.rpc('get_user_settings');
-        if (settings) {
-          const goalSetting = (settings as any[]).find((s: any) => s.key === 'billing_goal');
-          if (goalSetting?.value) {
-            setGoalAmount(parseFloat(goalSetting.value));
-          }
+        // Load global billing goal set by admin
+        const { data: globalGoal } = await supabase.rpc('get_global_billing_goal');
+        if (globalGoal) {
+          setGoalAmount(globalGoal);
         }
       } catch (error) {
         console.error('Error loading billing data:', error);
@@ -59,28 +49,6 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
 
     loadData();
   }, [userId]);
-
-  const handleSaveGoal = async () => {
-    const parsedGoal = parseFloat(newGoal.replace(/[^\d.,]/g, '').replace(',', '.'));
-    if (isNaN(parsedGoal) || parsedGoal <= 0) {
-      toast.error("Digite um valor válido para a meta");
-      return;
-    }
-
-    try {
-      await supabase.rpc('update_user_setting', {
-        setting_key: 'billing_goal',
-        setting_value: parsedGoal.toString()
-      });
-      setGoalAmount(parsedGoal);
-      setIsOpen(false);
-      setNewGoal("");
-      toast.success("Meta atualizada com sucesso!");
-    } catch (error) {
-      console.error('Error saving goal:', error);
-      toast.error("Erro ao salvar meta");
-    }
-  };
 
   const progressPercentage = Math.min((currentAmount / goalAmount) * 100, 100);
 
@@ -118,37 +86,6 @@ export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
       <span className="text-sm font-medium text-foreground whitespace-nowrap">
         {formatCurrency(currentAmount)} / {formatCurrency(goalAmount)}
       </span>
-
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <button className="p-1 hover:bg-muted rounded-full transition-colors">
-            <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Definir Meta de Faturamento</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="goal">Nova meta (R$)</Label>
-              <Input
-                id="goal"
-                type="text"
-                placeholder="Ex: 1000000"
-                value={newGoal}
-                onChange={(e) => setNewGoal(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Meta atual: {formatCurrency(goalAmount)}
-              </p>
-            </div>
-            <Button onClick={handleSaveGoal} className="w-full">
-              Salvar Meta
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

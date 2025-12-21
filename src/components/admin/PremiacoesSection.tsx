@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, Package, Send, CheckCircle, MapPin, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Package, Send, CheckCircle, MapPin, Clock, Target } from "lucide-react";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
 interface Reward {
   id: string;
@@ -56,6 +56,11 @@ export function PremiacoesSection() {
   const [selectedRequest, setSelectedRequest] = useState<PendingRequest | null>(null);
   const [trackingCode, setTrackingCode] = useState("");
 
+  // Billing goal state
+  const [billingGoal, setBillingGoal] = useState("");
+  const [currentBillingGoal, setCurrentBillingGoal] = useState<number>(1000000);
+  const [savingGoal, setSavingGoal] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState({
     name: "",
@@ -67,14 +72,55 @@ export function PremiacoesSection() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     loadData();
+    loadBillingGoal();
   }, []);
   const loadData = async () => {
     setLoading(true);
     await Promise.all([loadRewards(), loadPendingRequests(), loadSentRequests()]);
     setLoading(false);
   };
+
+  const loadBillingGoal = async () => {
+    try {
+      const { data } = await supabase.rpc('get_global_billing_goal');
+      if (data) {
+        setCurrentBillingGoal(data);
+        setBillingGoal(formatCurrencyInput(data));
+      }
+    } catch (error) {
+      console.error('Error loading billing goal:', error);
+    }
+  };
+
+  const handleSaveBillingGoal = async () => {
+    const parsedGoal = parseCurrencyInput(billingGoal);
+    if (parsedGoal <= 0) {
+      toast.error("Digite um valor válido para a meta");
+      return;
+    }
+
+    setSavingGoal(true);
+    try {
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'global_billing_goal',
+        setting_value: parsedGoal.toString()
+      });
+
+      if (error) throw error;
+      
+      setCurrentBillingGoal(parsedGoal);
+      toast.success("Meta global de faturamento atualizada!");
+    } catch (error) {
+      console.error('Error saving billing goal:', error);
+      toast.error("Erro ao salvar meta");
+    } finally {
+      setSavingGoal(false);
+    }
+  };
+
   const loadRewards = async () => {
     const {
       data,
@@ -270,6 +316,40 @@ export function PremiacoesSection() {
     });
   };
   return <div className="max-w-5xl mx-auto space-y-6">
+      {/* Card: Meta Global de Faturamento */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Meta de Faturamento Global</CardTitle>
+          </div>
+          <CardDescription>
+            Define a meta de faturamento exibida para todos os usuários no dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+            <div className="space-y-2 flex-1 w-full sm:w-auto">
+              <Label htmlFor="billingGoal">Meta (R$)</Label>
+              <Input
+                id="billingGoal"
+                type="text"
+                value={billingGoal}
+                onChange={(e) => setBillingGoal(e.target.value)}
+                placeholder="Ex: 1.000.000"
+                className="max-w-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                Valor atual: {formatCurrency(currentBillingGoal)}
+              </p>
+            </div>
+            <Button onClick={handleSaveBillingGoal} disabled={savingGoal} className="w-full sm:w-auto">
+              {savingGoal ? "Salvando..." : "Salvar Meta"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="premiacoes" className="w-full">
         <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="premiacoes">Premiações</TabsTrigger>
