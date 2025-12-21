@@ -88,6 +88,8 @@ interface GeneratePixRequest {
   productName?: string;
   popupModel?: string;
   healthCheck?: boolean;
+  fingerprint?: string;
+  clientIp?: string;
 }
 
 interface FeeConfig {
@@ -197,7 +199,9 @@ async function logPixGenerated(
   popupModel?: string,
   feePercentage?: number,
   feeFixed?: number,
-  acquirer: string = 'ativus'
+  acquirer: string = 'ativus',
+  fingerprint?: string,
+  clientIp?: string
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -212,6 +216,8 @@ async function logPixGenerated(
       p_fee_percentage: feePercentage ?? null,
       p_fee_fixed: feeFixed ?? null,
       p_acquirer: acquirer,
+      p_fingerprint_hash: fingerprint || null,
+      p_client_ip: clientIp || null,
     });
 
     if (error) {
@@ -271,9 +277,9 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp } = await req.json() as GeneratePixRequest;
 
-    console.log('Gerando PIX Ativus Hub - Valor:', amount, 'Usuário:', userId, 'HealthCheck:', healthCheck);
+    console.log('Gerando PIX Ativus Hub - Valor:', amount, 'Usuário:', userId, 'HealthCheck:', healthCheck, 'IP:', clientIp);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -320,7 +326,7 @@ serve(async (req) => {
     const payload = {
       amount: amount,
       id_seller: `seller_${userId || 'default'}`,
-      ip: "177.38.123.45", // Client IP - required field
+      ip: clientIp || "0.0.0.0", // Client IP - required field
       customer: {
         name: finalDonorName,
         email: customerEmail,
@@ -441,7 +447,9 @@ serve(async (req) => {
         popupModel,
         feeConfig?.pix_percentage,
         feeConfig?.pix_fixed,
-        'ativus'
+        'ativus',
+        fingerprint,
+        clientIp
       );
     } else {
       console.log('Health check mode - skipping transaction log');

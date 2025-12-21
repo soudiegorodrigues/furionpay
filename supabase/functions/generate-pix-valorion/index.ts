@@ -87,6 +87,8 @@ interface GeneratePixRequest {
   productName?: string;
   popupModel?: string;
   healthCheck?: boolean;
+  fingerprint?: string;
+  clientIp?: string;
 }
 
 interface FeeConfig {
@@ -379,7 +381,9 @@ async function logPixGenerated(
   popupModel?: string,
   feePercentage?: number,
   feeFixed?: number,
-  acquirer: string = 'valorion'
+  acquirer: string = 'valorion',
+  fingerprint?: string,
+  clientIp?: string
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -394,6 +398,8 @@ async function logPixGenerated(
       p_fee_percentage: feePercentage ?? null,
       p_fee_fixed: feeFixed ?? null,
       p_acquirer: acquirer,
+      p_fingerprint_hash: fingerprint || null,
+      p_client_ip: clientIp || null,
     });
 
     if (error) {
@@ -495,10 +501,10 @@ serve(async (req) => {
   const requestStartTime = Date.now();
 
   try {
-    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp } = await req.json() as GeneratePixRequest;
 
     console.log('=== VALORION PIX GENERATION START ===');
-    console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}, HealthCheck: ${healthCheck}`);
+    console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}, HealthCheck: ${healthCheck}, IP: ${clientIp}`);
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -576,7 +582,7 @@ serve(async (req) => {
         tangible: false
       }],
       postbackUrl: `${supabaseUrl}/functions/v1/valorion-webhook`,
-      ip: "177.38.123.45",
+      ip: clientIp || "0.0.0.0",
       metadata: txid,
       traceable: true
     };
@@ -678,7 +684,9 @@ serve(async (req) => {
         popupModel,
         feeConfig?.pix_percentage,
         feeConfig?.pix_fixed,
-        'valorion'
+        'valorion',
+        fingerprint,
+        clientIp
       );
     } else {
       console.log('[VALORION] Health check mode - skipping transaction log');
