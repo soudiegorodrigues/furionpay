@@ -299,7 +299,7 @@ export const UsuariosSection = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead className="text-xs font-semibold">Nome</TableHead>
+                      <TableHead className="text-xs font-semibold text-center">Nome</TableHead>
                       <TableHead className="text-xs font-semibold hidden md:table-cell">Email</TableHead>
                       <TableHead className="text-xs font-semibold hidden lg:table-cell">Documento</TableHead>
                       <TableHead className="text-xs font-semibold hidden xl:table-cell">Total Faturado</TableHead>
