@@ -130,6 +130,32 @@ export function NotificacoesSection() {
     }
   };
 
+  // Auto-save master toggle immediately
+  const handleMasterToggle = async (enabled: boolean) => {
+    // Update local state immediately for responsive UI
+    setSettings(prev => ({ ...prev, enabled }));
+    
+    try {
+      // Save only the enabled setting to the database
+      const { error } = await supabase.rpc('update_global_notification_setting', {
+        setting_key: 'notification_enabled',
+        setting_value: String(enabled)
+      });
+      
+      if (error) throw error;
+      
+      // Update saved settings to reflect the change
+      setSavedSettings(prev => ({ ...prev, enabled }));
+      
+      toast.success(enabled ? 'Notificações ativadas' : 'Notificações desativadas');
+    } catch (error) {
+      console.error('Erro ao salvar configuração:', error);
+      // Revert local state on error
+      setSettings(prev => ({ ...prev, enabled: !enabled }));
+      toast.error('Erro ao salvar configuração');
+    }
+  };
+
   const saveSettings = async () => {
     setSaving(true);
     try {
@@ -468,7 +494,7 @@ export function NotificacoesSection() {
             </div>
             <Switch
               checked={settings.enabled}
-              onCheckedChange={(enabled) => setSettings(prev => ({ ...prev, enabled }))}
+              onCheckedChange={handleMasterToggle}
             />
           </div>
 
