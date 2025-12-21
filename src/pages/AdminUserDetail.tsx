@@ -384,7 +384,7 @@ const AdminUserDetail = () => {
       
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Back Button */}
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="gap-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/admin', { state: { section: 'usuarios' } })} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Voltar para Usuários
         </Button>
