@@ -2,3 +2,8 @@ export { AuthBackground } from './AuthBackground';
 export { AuthLoadingScreen } from './AuthLoadingScreen';
 export { AuthFormFields } from './AuthFormFields';
 export { BlockedUserDialog } from './BlockedUserDialog';
+export { TwoFactorSetup } from './TwoFactorSetup';
+export { TwoFactorVerify } from './TwoFactorVerify';
+export { TwoFactorRecovery } from './TwoFactorRecovery';
+export { TwoFactorSettings } from './TwoFactorSettings';
+export { BackupCodesDisplay } from './BackupCodesDisplay';

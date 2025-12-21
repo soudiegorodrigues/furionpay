@@ -80,3 +80,12 @@ verify_jwt = false
 
 [functions.health-check-acquirers]
 verify_jwt = false
+
+[functions.reset-2fa]
+verify_jwt = false
+
+[functions.verify-2fa-reset]
+verify_jwt = false
+
+[functions.admin-reset-2fa]
+verify_jwt = false
