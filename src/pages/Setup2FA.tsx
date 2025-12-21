@@ -8,7 +8,8 @@ import { Loader2, Copy, Check, Smartphone, Shield, ChevronRight, Lock, KeyRound 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { AuthBackground, AuthLoadingScreen } from '@/components/auth';
+import { AuthBackground } from '@/components/auth/AuthBackground';
+import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { QRCodeSVG } from 'qrcode.react';
 import furionPayLogo from '@/assets/furionpay-logo-white-text.png';
 
