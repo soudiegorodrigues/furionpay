@@ -70,13 +70,15 @@ const App = () => (
               <Route path="/cadastro" element={<DomainGuard><AdminAuth /></DomainGuard>} />
               
               {/* 2FA Setup Page */}
-              <Route path="/setup-2fa" element={
+              <Route path="/autenticador" element={
                 <DomainGuard>
                   <Suspense fallback={<PageSkeleton />}>
                     <Setup2FA />
                   </Suspense>
                 </DomainGuard>
               } />
+              {/* Redirect old URL to new one */}
+              <Route path="/setup-2fa" element={<Navigate to="/autenticador" replace />} />
               
               {/* API Documentation - public page */}
               <Route path="/integration" element={
