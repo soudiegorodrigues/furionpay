@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AccessDenied } from "@/components/AccessDenied";
@@ -17,7 +17,6 @@ import {
   ChevronRight, 
   Search,
   Filter,
-  Download,
   TrendingUp,
   DollarSign,
   BarChart3
@@ -74,13 +73,14 @@ const AdminVendas = () => {
   const { toast } = useToast();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -93,6 +93,14 @@ const AdminVendas = () => {
     total_amount_paid: 0,
     total_fees: 0
   });
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Calculate net amount after fee deduction
   const calculateNetAmount = (grossAmount: number, storedFeePercentage?: number | null, storedFeeFixed?: number | null): number => {
@@ -127,20 +135,6 @@ const AdminVendas = () => {
     }
   };
 
-  const getAcquirerBadge = (acquirer?: string) => {
-    if (!acquirer) return <span className="text-muted-foreground">-</span>;
-    const colors: Record<string, string> = {
-      inter: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-      ativus: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      valorion: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-    };
-    return (
-      <Badge className={colors[acquirer.toLowerCase()] || 'bg-muted text-muted-foreground'}>
-        {acquirer}
-      </Badge>
-    );
-  };
-
   // Facebook icon with blue circle background
   const FacebookIcon = () => (
     <svg viewBox="0 0 48 48" className="h-5 w-5 mx-auto">
@@ -159,26 +153,9 @@ const AdminVendas = () => {
     </svg>
   );
 
-  // Load period stats
-  const loadPeriodStats = async (period: DateFilter) => {
+  // Load fee config
+  const loadFeeConfig = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_stats_by_period', {
-        p_period: period
-      });
-      if (error) throw error;
-      if (data) {
-        setPeriodStats(data as unknown as PeriodStats);
-      }
-    } catch (error) {
-      console.error('Error loading period stats:', error);
-    }
-  };
-
-  // Load transactions (all in batches)
-  const loadTransactions = async (showLoading = true) => {
-    if (showLoading) setIsLoading(true);
-    try {
-      // Load fee config
       const [userSettingsResult, defaultFeeResult] = await Promise.all([
         supabase.rpc('get_user_settings'),
         supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle()
@@ -201,35 +178,45 @@ const AdminVendas = () => {
       if (feeData) {
         setFeeConfig(feeData as FeeConfig);
       }
+    } catch (error) {
+      console.error('Error loading fee config:', error);
+    }
+  }, []);
 
-      // Load ALL transactions in batches of 1000
-      let allTransactions: Transaction[] = [];
-      let offset = 0;
-      const batchSize = 1000;
-      let hasMore = true;
-
-      console.log('[AdminVendas] Iniciando carregamento de transações...');
-
-      while (hasMore) {
-        const { data, error } = await supabase.rpc('get_user_transactions', {
-          p_limit: batchSize,
-          p_offset: offset
-        });
-
-        if (error) throw error;
-        
-        const txs = data as unknown as Transaction[] || [];
-        allTransactions = [...allTransactions, ...txs];
-        
-        console.log(`[AdminVendas] Batch carregado: ${txs.length} transações, total: ${allTransactions.length}`);
-        
-        hasMore = txs.length > 0 && txs.length === batchSize;
-        offset += batchSize;
+  // Load period stats
+  const loadPeriodStats = useCallback(async (period: DateFilter) => {
+    try {
+      const { data, error } = await supabase.rpc('get_user_stats_by_period', {
+        p_period: period
+      });
+      if (error) throw error;
+      if (data) {
+        setPeriodStats(data as unknown as PeriodStats);
       }
+    } catch (error) {
+      console.error('Error loading period stats:', error);
+    }
+  }, []);
 
-      console.log(`[AdminVendas] Carregamento completo: ${allTransactions.length} transações`);
-      setTransactions(allTransactions);
-      setHasMoreTransactions(false);
+  // Load transactions with server-side pagination
+  const loadTransactions = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_user_transactions_paginated', {
+        p_page: currentPage,
+        p_per_page: ITEMS_PER_PAGE,
+        p_date_filter: dateFilter,
+        p_start_date: dateFilter === 'custom' && dateRange?.from ? dateRange.from.toISOString() : null,
+        p_end_date: dateFilter === 'custom' && dateRange?.to ? dateRange.to.toISOString() : null,
+        p_status: statusFilter,
+        p_search: debouncedSearch
+      });
+
+      if (error) throw error;
+      
+      const result = data as unknown as { transactions: Transaction[]; total_count: number };
+      setTransactions(result.transactions || []);
+      setTotalCount(result.total_count || 0);
     } catch (error) {
       console.error('Error loading transactions:', error);
       toast({
@@ -240,105 +227,46 @@ const AdminVendas = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, dateFilter, dateRange, statusFilter, debouncedSearch, toast]);
 
+  // Initial load
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadFeeConfig();
+    }
+  }, [isAuthenticated, loadFeeConfig]);
+
+  // Load transactions when filters change
   useEffect(() => {
     if (isAuthenticated) {
       loadTransactions();
-      loadPeriodStats(dateFilter);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentPage, dateFilter, dateRange, statusFilter, debouncedSearch, loadTransactions]);
 
+  // Load stats when date filter changes
   useEffect(() => {
     if (isAuthenticated) {
       loadPeriodStats(dateFilter);
     }
-  }, [dateFilter, isAuthenticated]);
+  }, [dateFilter, isAuthenticated, loadPeriodStats]);
 
-  // Filter transactions
-  const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
-
-    // Get current date references
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    // Filter by predefined date periods
-    if (dateFilter === 'today') {
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfToday);
-    } else if (dateFilter === 'yesterday') {
-      const startOfYesterday = new Date(startOfToday);
-      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-      filtered = filtered.filter(tx => {
-        const txDate = new Date(tx.created_at);
-        return txDate >= startOfYesterday && txDate < startOfToday;
-      });
-    } else if (dateFilter === '7days') {
-      const start7Days = new Date(startOfToday);
-      start7Days.setDate(start7Days.getDate() - 7);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= start7Days);
-    } else if (dateFilter === '15days') {
-      const start15Days = new Date(startOfToday);
-      start15Days.setDate(start15Days.getDate() - 15);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= start15Days);
-    } else if (dateFilter === 'month') {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfMonth);
-    } else if (dateFilter === 'year') {
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfYear);
-    } else if (dateFilter === 'custom' && dateRange?.from) {
-      // Filter by custom date range
-      const start = new Date(dateRange.from);
-      start.setHours(0, 0, 0, 0);
-      const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
-      end.setHours(23, 59, 59, 999);
-      
-      filtered = filtered.filter(tx => {
-        const txDate = new Date(tx.created_at);
-        return txDate >= start && txDate <= end;
-      });
-    }
-    // dateFilter === 'all' shows all transactions (no date filter)
-
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(tx => tx.status === statusFilter);
-    }
-
-    // Filter by search query (name or product)
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(tx => 
-        tx.donor_name?.toLowerCase().includes(query) ||
-        tx.product_name?.toLowerCase().includes(query) ||
-        tx.txid?.toLowerCase().includes(query)
-      );
-    }
-
-    return filtered;
-  }, [transactions, dateFilter, dateRange, statusFilter, searchQuery]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  // Reset page when filters change
+  // Reset page when filters change (except page itself)
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, dateRange, statusFilter, searchQuery]);
+  }, [dateFilter, dateRange, statusFilter, debouncedSearch]);
 
-  // Stats calculations
+  // Pagination
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  // Stats calculations based on period stats (from server)
   const stats = useMemo(() => {
-    const paid = filteredTransactions.filter(tx => tx.status === 'paid');
-    const generated = filteredTransactions.length;
-    const paidCount = paid.length;
-    const totalAmount = paid.reduce((sum, tx) => sum + calculateNetAmount(tx.amount, tx.fee_percentage, tx.fee_fixed), 0);
+    const generated = periodStats.total_generated;
+    const paidCount = periodStats.total_paid;
+    const totalAmount = periodStats.total_amount_paid - periodStats.total_fees;
     const conversionRate = generated > 0 ? (paidCount / generated * 100).toFixed(1) : '0';
     
     return { generated, paidCount, totalAmount, conversionRate };
-  }, [filteredTransactions, feeConfig]);
+  }, [periodStats]);
 
   // Permission check
   if (!permissionsLoading && !isOwner && !hasPermission('can_view_transactions')) {
@@ -469,7 +397,7 @@ const AdminVendas = () => {
           <CardTitle className="text-sm sm:text-lg flex items-center gap-2">
             Transações
             <Badge variant="secondary" className="ml-2">
-              {filteredTransactions.length}
+              {totalCount}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -494,7 +422,7 @@ const AdminVendas = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedTransactions.map((tx) => (
+                    {transactions.map((tx) => (
                       <TableRow 
                         key={tx.id} 
                         className="cursor-pointer hover:bg-muted/70 transition-colors"
@@ -526,7 +454,7 @@ const AdminVendas = () => {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {paginatedTransactions.length === 0 && (
+                    {transactions.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
                           Nenhuma transação encontrada
@@ -541,7 +469,7 @@ const AdminVendas = () => {
               {totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredTransactions.length)} de {filteredTransactions.length}
+                    {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} de {totalCount}
                   </p>
                   <div className="flex items-center gap-1 sm:gap-2">
                     <Button
