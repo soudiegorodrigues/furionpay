@@ -693,10 +693,15 @@ serve(async (req) => {
       checkedCount++;
       
       // Determine acquirer for this transaction
-      // First, try to detect by txid format (most reliable for Ativus)
-      let acquirer = detectAcquirerByTxid(transaction.txid);
+      // FIRST: Use stored acquirer from transaction (most reliable - set when PIX was generated)
+      let acquirer = transaction.acquirer || null;
       
-      // If not detected by txid, check user settings
+      // SECOND: Fall back to txid detection if not stored
+      if (!acquirer) {
+        acquirer = detectAcquirerByTxid(transaction.txid);
+      }
+      
+      // THIRD: Fall back to user settings if still not detected
       if (!acquirer && transaction.user_id) {
         if (!(transaction.user_id in userAcquirers)) {
           userAcquirers[transaction.user_id] = await getUserAcquirer(supabase, transaction.user_id);
@@ -704,10 +709,12 @@ serve(async (req) => {
         acquirer = userAcquirers[transaction.user_id];
       }
       
-      // Default to valorion if still not determined (SpedPay removed)
+      // Default to valorion if still not determined
       if (!acquirer) {
         acquirer = 'valorion';
       }
+      
+      console.log(`Transaction ${transaction.txid}: using acquirer=${acquirer} (stored=${transaction.acquirer}, detected=${detectAcquirerByTxid(transaction.txid)})`);
 
       try {
         if (acquirer === 'ativus') {
