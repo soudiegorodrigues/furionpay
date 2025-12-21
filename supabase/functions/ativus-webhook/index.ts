@@ -29,7 +29,6 @@ const ATIVUS_ALLOWED_USER_AGENTS = [
 
 function extractClientIp(req: Request): string {
   const headers = req.headers;
-  // Check various headers that might contain the real IP
   const ip = headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
              headers.get('x-real-ip') ||
              headers.get('cf-connecting-ip') ||
@@ -44,7 +43,6 @@ function validateAtivusRequest(req: Request): { valid: boolean; reason: string; 
   // Validate IP
   const ipValid = ATIVUS_ALLOWED_IPS.some(allowedIp => {
     if (allowedIp.endsWith('.')) {
-      // Prefix match for IP ranges
       return ip.startsWith(allowedIp);
     }
     return ip === allowedIp;
@@ -84,16 +82,18 @@ serve(async (req) => {
 
   const timestamp = new Date().toISOString();
   console.log('=== ATIVUS WEBHOOK RECEIVED ===');
-  console.log('Timestamp:', timestamp);
+  console.log('[ATIVUS-WEBHOOK] Timestamp:', timestamp);
   
   // STRICT MODE: Validate request origin
   const validation = validateAtivusRequest(req);
   
-  console.log('[SECURITY] IP:', validation.ip);
-  console.log('[SECURITY] User-Agent:', validation.userAgent);
-  console.log('[SECURITY] Valid:', validation.valid);
+  console.log('[ATIVUS-WEBHOOK] IP:', validation.ip);
+  console.log('[ATIVUS-WEBHOOK] User-Agent:', validation.userAgent);
+  console.log('[ATIVUS-WEBHOOK] Valid:', validation.valid);
   
   const supabase = getSupabaseClient();
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
   // Log security event regardless of validation result
   try {
@@ -109,12 +109,12 @@ serve(async (req) => {
       }).slice(0, 500)
     });
   } catch (logError) {
-    console.error('Failed to log security event:', logError);
+    console.error('[ATIVUS-WEBHOOK] Failed to log security event:', logError);
   }
 
   // STRICT MODE: Block unauthorized requests
   if (!validation.valid) {
-    console.error('[SECURITY] BLOCKED - Unauthorized request:', validation.reason);
+    console.error('[ATIVUS-WEBHOOK] BLOCKED - Unauthorized request:', validation.reason);
     
     return new Response(
       JSON.stringify({ 
@@ -129,12 +129,14 @@ serve(async (req) => {
     );
   }
 
-  console.log('[SECURITY] Request authenticated successfully');
+  console.log('[ATIVUS-WEBHOOK] Request authenticated successfully');
 
   try {
     let payload: any;
     const contentType = req.headers.get('content-type') || '';
     const rawBody = await req.text();
+
+    console.log('[ATIVUS-WEBHOOK] Raw body:', rawBody);
 
     if (contentType.includes('application/json')) {
       payload = JSON.parse(rawBody);
@@ -149,7 +151,8 @@ serve(async (req) => {
       }
     }
 
-    console.log('Parsed payload:', JSON.stringify(payload));
+    console.log('[ATIVUS-WEBHOOK] Parsed payload:', JSON.stringify(payload));
+    console.log('[ATIVUS-WEBHOOK] All payload keys:', Object.keys(payload));
 
     // Extract transaction info from Ativus webhook
     const transactionId = 
@@ -159,6 +162,7 @@ serve(async (req) => {
       payload.externalRef ||
       payload.data?.id ||
       payload.data?.externalRef ||
+      payload.data?.id_transaction ||
       null;
     
     const status = (
@@ -171,11 +175,12 @@ serve(async (req) => {
     
     const paidAt = payload.data_transacao || payload.paidAt || payload.data?.paidAt || null;
 
-    console.log('Transaction ID:', transactionId);
-    console.log('Status:', status);
+    console.log('[ATIVUS-WEBHOOK] Transaction ID:', transactionId);
+    console.log('[ATIVUS-WEBHOOK] Status:', status);
+    console.log('[ATIVUS-WEBHOOK] PaidAt:', paidAt);
 
     if (!transactionId) {
-      console.log('No transaction ID found in webhook payload');
+      console.log('[ATIVUS-WEBHOOK] No transaction ID found in webhook payload');
       return new Response(
         JSON.stringify({ success: true, message: 'Webhook received but no transaction ID found' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -187,52 +192,148 @@ serve(async (req) => {
     const isPaid = paidStatuses.includes(status);
 
     if (isPaid) {
-      console.log('*** PAYMENT CONFIRMED via webhook! Marking as paid ***');
+      console.log('[ATIVUS-WEBHOOK] *** PAYMENT CONFIRMED via webhook! Searching in database ***');
       
-      // Try to find and update the transaction
-      const { error: updateError } = await supabase.rpc('mark_pix_paid', {
-        p_txid: transactionId
+      // Try to find the transaction
+      let transaction = null;
+
+      // Strategy 1: Search by txid
+      const { data: txidData } = await supabase
+        .from('pix_transactions')
+        .select('id, user_id, txid, status')
+        .eq('txid', transactionId)
+        .eq('acquirer', 'ativus')
+        .maybeSingle();
+      
+      if (txidData) {
+        console.log('[ATIVUS-WEBHOOK] Found by txid:', txidData.id);
+        transaction = txidData;
+      }
+
+      // Strategy 2: Search by id if txid not found
+      if (!transaction) {
+        const { data: idData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status')
+          .eq('id', transactionId)
+          .eq('acquirer', 'ativus')
+          .maybeSingle();
+        
+        if (idData) {
+          console.log('[ATIVUS-WEBHOOK] Found by id:', idData.id);
+          transaction = idData;
+        }
+      }
+
+      // Strategy 3: Partial txid match
+      if (!transaction) {
+        const { data: partialData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status')
+          .ilike('txid', `%${transactionId.substring(0, 20)}%`)
+          .eq('acquirer', 'ativus')
+          .eq('status', 'generated')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (partialData) {
+          console.log('[ATIVUS-WEBHOOK] Found by partial match:', partialData.id);
+          transaction = partialData;
+        }
+      }
+
+      if (!transaction) {
+        console.error('[ATIVUS-WEBHOOK] Transaction not found');
+        
+        await supabase.from('api_monitoring_events').insert({
+          acquirer: 'ativus',
+          event_type: 'failure',
+          error_message: `Transaction not found: ${transactionId}`,
+        });
+        
+        return new Response(
+          JSON.stringify({ success: false, error: 'Transaction not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Skip if already paid
+      if (transaction.status === 'paid') {
+        console.log('[ATIVUS-WEBHOOK] Transaction already paid');
+        return new Response(
+          JSON.stringify({ success: true, message: 'Already paid' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Mark transaction as paid using RPC function
+      const { error: rpcError } = await supabase.rpc('mark_pix_paid', {
+        p_txid: transaction.txid
       });
 
-      if (updateError) {
-        console.error('Error marking PIX as paid:', updateError);
+      if (rpcError) {
+        console.error('[ATIVUS-WEBHOOK] RPC error:', rpcError);
         
         // Try direct update as fallback
         const { error: directError } = await supabase
           .from('pix_transactions')
           .update({ 
             status: 'paid', 
-            paid_at: paidAt || new Date().toISOString() 
+            paid_at: paidAt || new Date().toISOString(),
+            paid_date_brazil: new Date().toISOString().split('T')[0]
           })
-          .eq('txid', transactionId);
+          .eq('id', transaction.id);
         
         if (directError) {
-          console.error('Direct update also failed:', directError);
+          console.error('[ATIVUS-WEBHOOK] Direct update also failed:', directError);
         } else {
-          console.log('Transaction marked as paid via direct update');
+          console.log('[ATIVUS-WEBHOOK] Transaction marked as paid via direct update');
         }
       } else {
-        console.log('Transaction marked as paid successfully via RPC');
+        console.log('[ATIVUS-WEBHOOK] Transaction marked as paid via RPC');
       }
-    } else {
-      console.log('Webhook received but status is not paid:', status);
-    }
 
-    // Log the webhook event
-    try {
+      // Dispatch webhook to API clients (same as Valorion)
+      if (transaction.id) {
+        try {
+          const webhookResponse = await fetch(`${supabaseUrl}/functions/v1/api-webhook-dispatch`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseAnonKey}`,
+            },
+            body: JSON.stringify({
+              transaction_id: transaction.id,
+              event: 'payment.paid',
+            }),
+          });
+
+          console.log('[ATIVUS-WEBHOOK] Webhook dispatch:', webhookResponse.status);
+        } catch (webhookError) {
+          console.error('[ATIVUS-WEBHOOK] Webhook dispatch error:', webhookError);
+        }
+      }
+
+      // Log success event
       await supabase.from('api_monitoring_events').insert({
         acquirer: 'ativus',
-        event_type: isPaid ? 'webhook_paid' : 'webhook_received',
+        event_type: 'webhook_paid',
         error_message: JSON.stringify({ 
-          transactionId, 
-          status, 
-          paidAt,
-          isPaid,
+          txid: transaction.txid, 
+          id: transaction.id,
           ip: validation.ip
         }).slice(0, 500)
       });
-    } catch (logError) {
-      console.log('Failed to log webhook event:', logError);
+
+    } else {
+      console.log('[ATIVUS-WEBHOOK] Status not paid:', status);
+      
+      await supabase.from('api_monitoring_events').insert({
+        acquirer: 'ativus',
+        event_type: 'webhook_received',
+        error_message: `Status ${status} for id=${transactionId}`,
+      });
     }
 
     return new Response(
@@ -247,7 +348,17 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error processing Ativus webhook:', error);
+    console.error('[ATIVUS-WEBHOOK] Error:', error);
+    
+    try {
+      await supabase.from('api_monitoring_events').insert({
+        acquirer: 'ativus',
+        event_type: 'failure',
+        error_message: `${error instanceof Error ? error.message : 'Error'} - IP: ${validation.ip}`,
+      });
+    } catch (logError) {
+      console.error('[ATIVUS-WEBHOOK] Log error failed:', logError);
+    }
     
     // Always return 200 to prevent retries
     return new Response(
