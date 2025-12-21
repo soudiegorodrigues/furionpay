@@ -563,7 +563,7 @@ export const TransacoesGlobaisSection = () => {
 
     {/* Dialog de verificação de transação */}
     <Dialog open={verifyDialogOpen} onOpenChange={setVerifyDialogOpen}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[95vw] max-w-md overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
@@ -576,8 +576,8 @@ export const TransacoesGlobaisSection = () => {
 
         {selectedTransaction && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="sm:col-span-2">
                 <p className="text-muted-foreground text-xs">TXID</p>
                 <p className="font-mono text-xs break-all">{selectedTransaction.txid}</p>
               </div>
@@ -587,7 +587,7 @@ export const TransacoesGlobaisSection = () => {
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Cliente</p>
-                <p className="font-medium">{selectedTransaction.donor_name || '-'}</p>
+                <p className="font-medium truncate">{selectedTransaction.donor_name || '-'}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Valor</p>
@@ -597,29 +597,29 @@ export const TransacoesGlobaisSection = () => {
                 <p className="text-muted-foreground text-xs">Adquirente</p>
                 <div className="mt-1">{getAcquirerBadge(selectedTransaction.acquirer)}</div>
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <p className="text-muted-foreground text-xs">Criado em</p>
                 <p className="text-xs">{formatDate(selectedTransaction.created_at)}</p>
               </div>
             </div>
 
             {selectedTransaction.status === 'paid' ? (
-              <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="font-medium text-green-500">Transação já está PAGA</p>
+              <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="font-medium text-green-500 text-sm">Transação já está PAGA</p>
                   <p className="text-xs text-muted-foreground">Pago em: {formatDate(selectedTransaction.paid_at)}</p>
                 </div>
               </div>
             ) : selectedTransaction.status === 'expired' ? (
-              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-500" />
-                <p className="text-red-400">Transação expirada - não pode ser marcada como paga</p>
+              <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-red-400 text-sm">Transação expirada - não pode ser marcada como paga</p>
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-sm text-amber-400">Transação pendente de pagamento</p>
                 </div>
               </div>
@@ -627,7 +627,10 @@ export const TransacoesGlobaisSection = () => {
           </div>
         )}
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-4">
+          <Button variant="ghost" onClick={() => setVerifyDialogOpen(false)} className="w-full sm:w-auto">
+            Fechar
+          </Button>
           {selectedTransaction?.status === 'generated' && (
             <>
               <Button
@@ -649,9 +652,6 @@ export const TransacoesGlobaisSection = () => {
               </Button>
             </>
           )}
-          <Button variant="ghost" onClick={() => setVerifyDialogOpen(false)}>
-            Fechar
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
