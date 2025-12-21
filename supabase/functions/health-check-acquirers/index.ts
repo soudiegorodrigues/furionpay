@@ -158,52 +158,76 @@ async function testAtivus(): Promise<{ success: boolean; responseTime: number; e
   }
 }
 
-// Test Valorion health - Uses status check, does NOT create transactions
+// Test Valorion health - Calls Valorion API directly to verify connectivity
+// Does NOT create transactions - just checks if API is responsive
 async function testValorion(): Promise<{ success: boolean; responseTime: number; error?: string }> {
   const startTime = Date.now();
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const supabase = getSupabaseClient();
   
   try {
+    // Get Valorion API key from admin_settings
+    const { data: apiKeyData } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', 'valorion_api_key')
+      .is('user_id', null)
+      .maybeSingle();
+    
+    const apiKey = apiKeyData?.value || Deno.env.get('VALORION_API_KEY');
+    
+    if (!apiKey) {
+      return { success: false, responseTime: 0, error: 'VALORION_API_KEY não configurada' };
+    }
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
     
-    // Use check-pix-status-valorion with a fake transaction ID
-    // This verifies API connectivity WITHOUT creating a real transaction
-    const response = await fetch(`${supabaseUrl}/functions/v1/check-pix-status-valorion`, {
-      method: 'POST',
+    // Call Valorion's status endpoint with a fake transaction ID
+    // This verifies API connectivity - 404 is EXPECTED and means API is working
+    const valorionUrl = 'https://app.valorion.com.br/api/s1/getTransactionStatus.php';
+    const healthCheckTxId = `health-check-${Date.now()}`;
+    
+    const response = await fetch(`${valorionUrl}?id_transaction=${healthCheckTxId}`, {
+      method: 'GET',
       headers: {
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
       },
-      body: JSON.stringify({ 
-        transactionId: `health-check-${Date.now()}`,
-        healthCheck: true
-      }),
       signal: controller.signal,
     });
     
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
-    // Get response data for detailed error messages
-    let responseData: unknown = null;
+    // Get response text for logging
+    let responseText = '';
     try {
-      responseData = await response.json();
+      responseText = await response.text();
     } catch {
-      // Ignore JSON parse errors
+      // Ignore read errors
     }
     
-    // Any response means the function is working
-    // We expect an error like "transaction not found" but that's fine for health check
+    // For health check purposes:
+    // - 404 "File not found" = API is responding, transaction just doesn't exist = SUCCESS
+    // - 200/201 = API is responding = SUCCESS
+    // - 400/401/403 = API is responding (auth issue but API is up) = SUCCESS
+    // - 500+ = Server error = FAILURE
+    // - Timeout = FAILURE
+    
     if (response.status >= 500) {
-      const errorMsg = extractErrorDetails(null, responseData);
+      const errorMsg = `HTTP ${response.status} - Erro interno do servidor Valorion`;
       console.error(`[HEALTH] Valorion error: ${errorMsg}`);
       return { success: false, responseTime, error: errorMsg };
     }
     
-    console.log(`[HEALTH] Valorion responded in ${responseTime}ms (connectivity check - no transaction created)`);
+    // 404 is expected for a non-existent transaction - this means the API is working!
+    const statusNote = response.status === 404 
+      ? '404 expected for fake txid - API is responsive' 
+      : `status ${response.status}`;
+    
+    console.log(`[HEALTH] Valorion API responded in ${responseTime}ms (${statusNote} - connectivity verified)`);
     return { success: true, responseTime };
+    
   } catch (err) {
     const responseTime = Date.now() - startTime;
     const errorMsg = extractErrorDetails(err);
