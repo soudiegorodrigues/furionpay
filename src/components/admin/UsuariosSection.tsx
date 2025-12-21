@@ -40,7 +40,7 @@ interface VerificationData {
   person_type: string;
 }
 
-const USERS_PER_PAGE = 15;
+const USERS_PER_PAGE = 10;
 
 export const UsuariosSection = () => {
   const navigate = useNavigate();
