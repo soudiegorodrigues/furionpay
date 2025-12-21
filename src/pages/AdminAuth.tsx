@@ -46,7 +46,7 @@ const AdminAuth = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [pendingMfaFactorId, setPendingMfaFactorId] = useState<string | null>(null);
   
-  const { signIn, signUp, isAuthenticated, loading, mfaInfo, needsMFAVerification, checkMFAStatus } = useAdminAuth();
+  const { signIn, signUp, isAuthenticated, loading, checkMFAStatus } = useAdminAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,17 +63,26 @@ const AdminAuth = () => {
   useEffect(() => {
     const checkMFA = async () => {
       if (isAuthenticated && !loading && mode !== 'reset-password' && mode !== '2fa-verify' && mode !== '2fa-recovery') {
-        const needsMfa = await needsMFAVerification();
-        if (needsMfa && mfaInfo?.verifiedFactors?.[0]) {
-          setPendingMfaFactorId(mfaInfo.verifiedFactors[0].id);
-          setMode('2fa-verify');
-        } else if (!needsMfa) {
-          navigate('/admin/dashboard');
+        console.log('[2FA] Checking MFA status after login...');
+        const mfaStatus = await checkMFAStatus();
+        console.log('[2FA] MFA Status:', mfaStatus);
+        
+        if (mfaStatus?.hasTOTPFactor && mfaStatus.currentLevel === 'aal1' && mfaStatus.nextLevel === 'aal2') {
+          console.log('[2FA] User needs to verify TOTP');
+          const factorId = mfaStatus.verifiedFactors?.[0]?.id;
+          if (factorId) {
+            setPendingMfaFactorId(factorId);
+            setMode('2fa-verify');
+            return;
+          }
         }
+        
+        console.log('[2FA] No 2FA required, redirecting to dashboard');
+        navigate('/admin/dashboard');
       }
     };
     checkMFA();
-  }, [isAuthenticated, loading, navigate, mode, needsMFAVerification, mfaInfo]);
+  }, [isAuthenticated, loading, navigate, mode, checkMFAStatus]);
 
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
