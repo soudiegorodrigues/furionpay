@@ -510,7 +510,6 @@ const AdminVendas = () => {
         open={isSheetOpen} 
         onOpenChange={setIsSheetOpen}
         calculateNetAmount={calculateNetAmount}
-        isAdmin={isAdmin}
       />
     </div>
   );
