@@ -689,6 +689,7 @@ export const TransacoesGlobaisSection = () => {
         onOpenChange={setSheetOpen}
         transaction={sheetTransaction}
         calculateNetAmount={calculateNetAmount}
+        isAdmin={true}
       />
     )}
     </>
