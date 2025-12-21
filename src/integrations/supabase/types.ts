@@ -1073,7 +1073,7 @@ export type Database = {
           product_name: string | null
           status: Database["public"]["Enums"]["pix_status"]
           txid: string | null
-          user_id: string | null
+          user_id: string
           utm_data: Json | null
         }
         Insert: {
@@ -1097,7 +1097,7 @@ export type Database = {
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
-          user_id?: string | null
+          user_id: string
           utm_data?: Json | null
         }
         Update: {
@@ -1121,7 +1121,7 @@ export type Database = {
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
-          user_id?: string | null
+          user_id?: string
           utm_data?: Json | null
         }
         Relationships: []
