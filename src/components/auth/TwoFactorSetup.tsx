@@ -31,18 +31,38 @@ export const TwoFactorSetup = ({ onComplete, onCancel }: TwoFactorSetupProps) =>
     enrollTotp();
   }, []);
 
+  // Modifica a URI TOTP para exibir "FURIONPAY" como nome do serviço
+  const modifyTotpUri = (uri: string): string => {
+    try {
+      const url = new URL(uri);
+      // Extrair o email do label atual (formato: "Issuer:email@example.com")
+      const label = decodeURIComponent(url.pathname.split('/').pop() || '');
+      const email = label.includes(':') ? label.split(':')[1] : label;
+      
+      // Reconstruir o path com FURIONPAY como issuer
+      url.pathname = `/totp/FURIONPAY:${email}`;
+      url.searchParams.set('issuer', 'FURIONPAY');
+      
+      return url.toString();
+    } catch {
+      return uri; // Retorna original se houver erro
+    }
+  };
+
   const enrollTotp = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'Authenticator App'
+        friendlyName: 'FURIONPAY'
       });
 
       if (error) throw error;
 
       if (data?.totp) {
-        setTotpUri(data.totp.uri);
+        // Modifica a URI para exibir FURIONPAY no app autenticador
+        const modifiedUri = modifyTotpUri(data.totp.uri);
+        setTotpUri(modifiedUri);
         setSecret(data.totp.secret);
         setFactorId(data.id);
       }
