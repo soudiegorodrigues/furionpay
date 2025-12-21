@@ -351,6 +351,13 @@ const AdminDashboard = () => {
         setUserName(profileResult.data.full_name);
       }
 
+      // Load global banner (visible to all users)
+      supabase.rpc('get_global_banner_url').then(({ data, error }) => {
+        if (!error && data) {
+          setBannerUrl(data);
+        }
+      });
+
       // Process settings and fee config
       let feeData = defaultFeeResult.data;
       if (userSettingsResult.data) {
@@ -361,9 +368,7 @@ const AdminDashboard = () => {
         const feeConfigSetting = settings.find(s => s.key === 'user_fee_config');
         const userFeeConfigId = feeConfigSetting?.value || null;
 
-        // Get banner URL
-        const banner = settings.find(s => s.key === 'dashboard_banner_url');
-        setBannerUrl(banner?.value || null);
+        // Banner is now loaded globally (not per user) - removed from here
 
         // Load user-specific fee config if exists
         if (userFeeConfigId) {

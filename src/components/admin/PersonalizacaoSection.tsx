@@ -25,11 +25,12 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_settings');
+      // Load global banner from admin settings (user_id IS NULL)
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
       if (error) throw error;
       
       const settings = data as { key: string; value: string }[] || [];
-      const banner = settings.find(s => s.key === 'dashboard_banner_url');
+      const banner = settings.find(s => s.key === 'global_dashboard_banner_url');
       if (banner) {
         setBannerUrl(banner.value || "");
       }
@@ -40,7 +41,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !userId) return;
+    if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       toast({
@@ -64,7 +65,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
     try {
       // Compress image before upload
       const compressedBlob = await compressImage(file, compressionPresets.banner);
-      const fileName = `${userId}/banner.webp`;
+      const fileName = `global/banner.webp`;
 
       const { error: uploadError } = await supabase.storage
         .from('banners')
@@ -82,8 +83,9 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
       const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
       setBannerUrl(urlWithTimestamp);
 
-      const { error: saveError } = await supabase.rpc('update_user_setting', {
-        setting_key: 'dashboard_banner_url',
+      // Save to global admin settings (admin only)
+      const { error: saveError } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'global_dashboard_banner_url',
         setting_value: urlWithTimestamp
       });
 
@@ -91,7 +93,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
 
       toast({
         title: "Sucesso",
-        description: "Banner enviado e salvo com sucesso!"
+        description: "Banner global enviado e salvo com sucesso!"
       });
     } catch (error: any) {
       console.error('Error uploading banner:', error);
@@ -111,8 +113,9 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase.rpc('update_user_setting', {
-        setting_key: 'dashboard_banner_url',
+      // Save to global admin settings (admin only)
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'global_dashboard_banner_url',
         setting_value: bannerUrl
       });
       
@@ -120,7 +123,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
       
       toast({
         title: "Sucesso",
-        description: "Banner atualizado com sucesso!"
+        description: "Banner global atualizado com sucesso!"
       });
     } catch (error: any) {
       console.error('Error saving banner:', error);
@@ -154,9 +157,9 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
         }
       }
 
-      // Clear URL from database
-      const { error } = await supabase.rpc('update_user_setting', {
-        setting_key: 'dashboard_banner_url',
+      // Clear URL from global admin settings
+      const { error } = await supabase.rpc('update_admin_setting_auth', {
+        setting_key: 'global_dashboard_banner_url',
         setting_value: ''
       });
       
@@ -166,7 +169,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
       
       toast({
         title: "Sucesso",
-        description: "Banner removido com sucesso!"
+        description: "Banner global removido com sucesso!"
       });
     } catch (error: any) {
       console.error('Error removing banner:', error);
@@ -190,7 +193,7 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
             </div>
             <div>
               <CardTitle className="text-xl">Personalização</CardTitle>
-              <CardDescription>Personalize a aparência do seu dashboard</CardDescription>
+              <CardDescription>Personalize o banner global do dashboard (visível para todos os usuários)</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -200,9 +203,9 @@ export function PersonalizacaoSection({ userId }: PersonalizacaoSectionProps) {
             <div className="flex items-center gap-2">
               <Image className="h-5 w-5 text-primary" />
               <div>
-                <h3 className="font-medium">Banner do Dashboard</h3>
+                <h3 className="font-medium">Banner Global do Dashboard</h3>
                 <p className="text-sm text-muted-foreground">
-                  Adicione uma imagem de banner que será exibida no topo do seu dashboard
+                  Este banner será exibido para todos os usuários no topo do dashboard
                 </p>
               </div>
             </div>

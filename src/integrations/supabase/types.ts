@@ -2173,6 +2173,7 @@ export type Database = {
       }
       get_db_performance_summary: { Args: never; Returns: Json }
       get_effective_owner_id: { Args: { _user_id: string }; Returns: string }
+      get_global_banner_url: { Args: never; Returns: string }
       get_global_dashboard_v2: { Args: never; Returns: Json }
       get_global_notification_settings: {
         Args: never
