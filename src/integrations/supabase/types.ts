@@ -995,6 +995,7 @@ export type Database = {
         Row: {
           acquirer: string | null
           amount: number
+          approved_by_email: string | null
           client_ip: string | null
           created_at: string | null
           created_date_brazil: string | null
@@ -1004,6 +1005,7 @@ export type Database = {
           fee_percentage: number | null
           fingerprint_hash: string | null
           id: string
+          is_manual_approval: boolean | null
           paid_at: string | null
           paid_date_brazil: string | null
           pix_code: string | null
@@ -1017,6 +1019,7 @@ export type Database = {
         Insert: {
           acquirer?: string | null
           amount: number
+          approved_by_email?: string | null
           client_ip?: string | null
           created_at?: string | null
           created_date_brazil?: string | null
@@ -1026,6 +1029,7 @@ export type Database = {
           fee_percentage?: number | null
           fingerprint_hash?: string | null
           id?: string
+          is_manual_approval?: boolean | null
           paid_at?: string | null
           paid_date_brazil?: string | null
           pix_code?: string | null
@@ -1039,6 +1043,7 @@ export type Database = {
         Update: {
           acquirer?: string | null
           amount?: number
+          approved_by_email?: string | null
           client_ip?: string | null
           created_at?: string | null
           created_date_brazil?: string | null
@@ -1048,6 +1053,7 @@ export type Database = {
           fee_percentage?: number | null
           fingerprint_hash?: string | null
           id?: string
+          is_manual_approval?: boolean | null
           paid_at?: string | null
           paid_date_brazil?: string | null
           pix_code?: string | null
@@ -2175,29 +2181,55 @@ export type Database = {
           value: string
         }[]
       }
-      get_global_transactions_v2: {
-        Args: {
-          p_date_filter?: string
-          p_email_search?: string
-          p_limit?: number
-          p_offset?: number
-          p_status?: string
-        }
-        Returns: {
-          acquirer: string
-          amount: number
-          created_at: string
-          donor_name: string
-          id: string
-          paid_at: string
-          product_name: string
-          status: Database["public"]["Enums"]["pix_status"]
-          total_count: number
-          txid: string
-          user_email: string
-          utm_data: Json
-        }[]
-      }
+      get_global_transactions_v2:
+        | {
+            Args: {
+              p_date_filter?: string
+              p_email_search?: string
+              p_limit?: number
+              p_offset?: number
+              p_status?: string
+            }
+            Returns: {
+              acquirer: string
+              amount: number
+              approved_by_email: string
+              created_at: string
+              donor_name: string
+              id: string
+              is_manual_approval: boolean
+              paid_at: string
+              product_name: string
+              status: Database["public"]["Enums"]["pix_status"]
+              total_count: number
+              txid: string
+              user_email: string
+              utm_data: Json
+            }[]
+          }
+        | {
+            Args: {
+              p_date_filter?: string
+              p_email_search?: string
+              p_limit?: number
+              p_offset?: number
+              p_status?: string
+            }
+            Returns: {
+              acquirer: string
+              amount: number
+              created_at: string
+              donor_name: string
+              id: string
+              paid_at: string
+              product_name: string
+              status: Database["public"]["Enums"]["pix_status"]
+              total_count: number
+              txid: string
+              user_email: string
+              utm_data: Json
+            }[]
+          }
       get_healthy_acquirers: {
         Args: never
         Returns: {
@@ -2803,7 +2835,9 @@ export type Database = {
             }
             Returns: string
           }
-      mark_pix_paid: { Args: { p_txid: string }; Returns: boolean }
+      mark_pix_paid:
+        | { Args: { p_txid: string }; Returns: boolean }
+        | { Args: { p_admin_email?: string; p_txid: string }; Returns: boolean }
       mark_reward_sent: {
         Args: { p_request_id: string; p_tracking_code?: string }
         Returns: boolean
