@@ -2868,6 +2868,10 @@ export type Database = {
         Args: { p_delivery_id: string }
         Returns: boolean
       }
+      revert_manual_approval: {
+        Args: { p_admin_email: string; p_txid: string }
+        Returns: Json
+      }
       revoke_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       revoke_user_approval: {
         Args: { target_user_id: string }

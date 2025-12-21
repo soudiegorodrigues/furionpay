@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw, X, UserCheck } from "lucide-react";
+import { Receipt, Loader2, ChevronLeft, ChevronRight, Calendar, Search, CheckCircle, AlertCircle, RefreshCw, X, UserCheck, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -51,6 +51,7 @@ export const TransacoesGlobaisSection = () => {
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
   
   // Sheet states
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -415,6 +416,42 @@ export const TransacoesGlobaisSection = () => {
     }
   };
 
+  // Reverter aprovação manual
+  const handleRevertApproval = async () => {
+    if (!selectedTransaction) return;
+    
+    // Confirmação
+    if (!confirm(`Tem certeza que deseja reverter a aprovação manual da transação?\n\nTXID: ${selectedTransaction.txid}\nCliente: ${selectedTransaction.donor_name}\nValor: R$ ${selectedTransaction.amount.toFixed(2)}`)) {
+      return;
+    }
+
+    setIsReverting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const adminEmail = user?.email || 'unknown';
+
+      const { data, error } = await supabase.rpc('revert_manual_approval', {
+        p_txid: selectedTransaction.txid,
+        p_admin_email: adminEmail
+      });
+
+      if (error) throw error;
+
+      toast.success(`Aprovação manual revertida! Transação voltou para status "Gerado"`);
+      setVerifyDialogOpen(false);
+      setSelectedTransaction(null);
+      setTxidToVerify("");
+      
+      // Recarregar transações
+      loadAllTransactions();
+    } catch (error: any) {
+      console.error('Error reverting approval:', error);
+      toast.error("Erro ao reverter: " + error.message);
+    } finally {
+      setIsReverting(false);
+    }
+  };
+
   // Handle row click to open sheet
   const handleRowClick = (tx: Transaction) => {
     setSheetTransaction({
@@ -695,12 +732,25 @@ export const TransacoesGlobaisSection = () => {
             </div>
 
             {selectedTransaction.status === 'paid' ? (
-              <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <p className="font-medium text-green-500 text-sm">Transação já está PAGA</p>
-                  <p className="text-xs text-muted-foreground">Pago em: {formatDate(selectedTransaction.paid_at)}</p>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-green-500 text-sm">Transação já está PAGA</p>
+                    <p className="text-xs text-muted-foreground">Pago em: {formatDate(selectedTransaction.paid_at)}</p>
+                  </div>
                 </div>
+                {selectedTransaction.is_manual_approval && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <UserCheck className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-amber-600 dark:text-amber-400 text-sm">Aprovação Manual</p>
+                      <p className="text-xs text-muted-foreground">
+                        Por: {selectedTransaction.approved_by_email || 'Desconhecido'}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : selectedTransaction.status === 'expired' ? (
               <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
@@ -739,6 +789,17 @@ export const TransacoesGlobaisSection = () => {
                 Verificar na Adquirente
               </Button>
             </>
+          )}
+          {selectedTransaction?.status === 'paid' && selectedTransaction?.is_manual_approval && (
+            <Button
+              onClick={handleRevertApproval}
+              disabled={isReverting}
+              variant="destructive"
+              className="w-full"
+            >
+              {isReverting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Undo2 className="h-4 w-4 mr-2" />}
+              Reverter Aprovação Manual
+            </Button>
           )}
           <Button variant="ghost" onClick={() => setVerifyDialogOpen(false)} className="w-full">
             Fechar
