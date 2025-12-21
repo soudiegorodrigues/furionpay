@@ -455,6 +455,8 @@ export function NotificacoesSection() {
       new Notification(title, {
         body: formattedDesc,
         icon: settings.customLogoUrl || '/pwa-192x192.png',
+        // Evita som do sistema duplicado durante o teste quando o som interno está ligado.
+        silent: settings.enableSound,
       });
     }
 
