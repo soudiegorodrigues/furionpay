@@ -576,8 +576,8 @@ export const TransacoesGlobaisSection = () => {
 
         {selectedTransaction && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className="sm:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div className="md:col-span-2">
                 <p className="text-muted-foreground text-xs">TXID</p>
                 <p className="font-mono text-xs break-all">{selectedTransaction.txid}</p>
               </div>
@@ -587,7 +587,7 @@ export const TransacoesGlobaisSection = () => {
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Cliente</p>
-                <p className="font-medium truncate">{selectedTransaction.donor_name || '-'}</p>
+                <p className="font-medium break-words">{selectedTransaction.donor_name || '-'}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Valor</p>
@@ -597,7 +597,7 @@ export const TransacoesGlobaisSection = () => {
                 <p className="text-muted-foreground text-xs">Adquirente</p>
                 <div className="mt-1">{getAcquirerBadge(selectedTransaction.acquirer)}</div>
               </div>
-              <div className="sm:col-span-2">
+              <div className="md:col-span-2">
                 <p className="text-muted-foreground text-xs">Criado em</p>
                 <p className="text-xs">{formatDate(selectedTransaction.created_at)}</p>
               </div>
@@ -627,7 +627,7 @@ export const TransacoesGlobaisSection = () => {
           </div>
         )}
 
-        <DialogFooter className="flex flex-col gap-2 mt-4">
+        <DialogFooter className="!flex !flex-col gap-2 mt-4">
           {selectedTransaction?.status === 'generated' && (
             <>
               <Button
