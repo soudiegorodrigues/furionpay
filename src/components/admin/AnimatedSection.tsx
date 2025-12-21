@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface AnimatedSectionProps {
   children: React.ReactNode;
   sectionKey: string;
