@@ -460,18 +460,22 @@ const AdminDashboard = () => {
   // Chart data is now loaded from RPC via loadChartData function
   // Use periodStats from RPC for accurate counts (bypasses Supabase row limit)
   const filteredStats = useMemo(() => {
-    const generated = periodStats.total_generated;
+    const pendingCount = periodStats.total_generated;
     const paid = periodStats.total_paid;
+    const expiredCount = periodStats.total_expired;
+    // Total real = pendentes + pagos + expirados
+    const totalTransactions = pendingCount + paid + expiredCount;
     // Net amounts already calculated in RPC (total_amount_paid - total_fees)
     const amountPaid = periodStats.total_amount_paid - periodStats.total_fees;
     const amountGenerated = periodStats.total_amount_generated;
     const ticketMedio = paid > 0 ? amountPaid / paid : 0;
     return {
-      generated,
+      generated: totalTransactions,
       paid,
       amountGenerated,
       amountPaid,
-      conversionRate: generated > 0 ? (paid / generated * 100).toFixed(1) : '0',
+      // Conversão = pagos / total de transações geradas
+      conversionRate: totalTransactions > 0 ? (paid / totalTransactions * 100).toFixed(1) : '0',
       ticketMedio
     };
   }, [periodStats]);
