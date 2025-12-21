@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,6 @@ interface Transaction {
   user_email: string | null;
   utm_data: { utm_term?: string; utm_source?: string } | null;
   acquirer: string | null;
-  total_count: number;
   approved_by_email: string | null;
   is_manual_approval: boolean | null;
 }
@@ -36,7 +35,7 @@ const ITEMS_PER_PAGE = 10;
 
 export const TransacoesGlobaisSection = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
@@ -70,136 +69,44 @@ export const TransacoesGlobaisSection = () => {
     setCurrentPage(1);
   }, [dateFilter, statusFilter, debouncedSearch, dateRange]);
 
-  // Load all transactions once
-  const loadAllTransactions = useCallback(async () => {
+  // Load transactions with server-side pagination
+  const loadTransactions = useCallback(async () => {
     setIsLoading(true);
     try {
-      let allTxs: Transaction[] = [];
-      const batchSize = 1000;
-      let offset = 0;
-      let hasMore = true;
+      console.log('[TransacoesGlobais] Carregando página:', currentPage, 'filtros:', { dateFilter, statusFilter, debouncedSearch });
 
-      console.log('[TransacoesGlobais] Iniciando carregamento de transações...');
-      console.log('[TransacoesGlobais] Chamando RPC get_global_transactions_v2...');
+      const { data, error } = await supabase.rpc('get_global_transactions_paginated', {
+        p_page: currentPage,
+        p_per_page: ITEMS_PER_PAGE,
+        p_date_filter: dateFilter,
+        p_start_date: dateFilter === 'custom' && dateRange?.from ? dateRange.from.toISOString() : null,
+        p_end_date: dateFilter === 'custom' && dateRange?.to ? dateRange.to.toISOString() : null,
+        p_status: statusFilter,
+        p_search: debouncedSearch || ''
+      });
 
-      while (hasMore) {
-        console.log(`[TransacoesGlobais] Buscando batch: offset=${offset}, limit=${batchSize}`);
-        
-        const { data, error } = await supabase.rpc('get_global_transactions_v2', {
-          p_limit: batchSize,
-          p_offset: offset,
-          p_status: null,
-          p_date_filter: null,
-          p_email_search: null
-        });
-
-        if (error) {
-          console.error('[TransacoesGlobais] Erro RPC:', error);
-          toast.error(`Erro ao carregar transações: ${error.message}`);
-          throw error;
-        }
-
-        console.log('[TransacoesGlobais] Resposta RPC:', { dataLength: data?.length, data: data?.slice(0, 2) });
-
-        const txData = (data as unknown as Transaction[]) || [];
-        allTxs = [...allTxs, ...txData];
-        
-        console.log(`[TransacoesGlobais] Batch carregado: ${txData.length} transações, total: ${allTxs.length}`);
-        
-        hasMore = txData.length > 0 && txData.length === batchSize;
-        offset += batchSize;
+      if (error) {
+        console.error('[TransacoesGlobais] Erro RPC:', error);
+        toast.error(`Erro ao carregar transações: ${error.message}`);
+        throw error;
       }
 
-      console.log(`[TransacoesGlobais] Carregamento completo: ${allTxs.length} transações`);
-      
-      if (allTxs.length === 0) {
-        console.warn('[TransacoesGlobais] Nenhuma transação retornada pela RPC');
-        toast.info("Nenhuma transação encontrada no sistema");
-      }
-      
-      setAllTransactions(allTxs);
+      const result = data as unknown as { transactions: Transaction[]; total_count: number };
+      console.log('[TransacoesGlobais] Resultado:', { transactions: result.transactions?.length, total: result.total_count });
+
+      setTransactions(result.transactions || []);
+      setTotalCount(result.total_count || 0);
     } catch (error: any) {
       console.error('[TransacoesGlobais] Erro ao carregar transações:', error);
-      toast.error(`Falha ao carregar transações: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentPage, dateFilter, statusFilter, debouncedSearch, dateRange]);
 
   useEffect(() => {
-    loadAllTransactions();
-  }, [loadAllTransactions]);
+    loadTransactions();
+  }, [loadTransactions]);
 
-  // Filter transactions client-side
-  const filteredTransactions = useMemo(() => {
-    let filtered = allTransactions;
-
-    // Get current date references
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    // Filter by predefined date periods
-    if (dateFilter === 'today') {
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfToday);
-    } else if (dateFilter === 'yesterday') {
-      const startOfYesterday = new Date(startOfToday);
-      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-      filtered = filtered.filter(tx => {
-        const txDate = new Date(tx.created_at);
-        return txDate >= startOfYesterday && txDate < startOfToday;
-      });
-    } else if (dateFilter === '7days') {
-      const start7Days = new Date(startOfToday);
-      start7Days.setDate(start7Days.getDate() - 7);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= start7Days);
-    } else if (dateFilter === '15days') {
-      const start15Days = new Date(startOfToday);
-      start15Days.setDate(start15Days.getDate() - 15);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= start15Days);
-    } else if (dateFilter === 'month') {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfMonth);
-    } else if (dateFilter === 'year') {
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= startOfYear);
-    } else if (dateFilter === 'custom' && dateRange?.from) {
-      const start = new Date(dateRange.from);
-      start.setHours(0, 0, 0, 0);
-      const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
-      end.setHours(23, 59, 59, 999);
-      
-      filtered = filtered.filter(tx => {
-        const txDate = new Date(tx.created_at);
-        return txDate >= start && txDate <= end;
-      });
-    }
-
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(tx => tx.status === statusFilter);
-    }
-
-    // Filter by search query (email, name, product, txid)
-    if (debouncedSearch) {
-      const search = debouncedSearch.toLowerCase();
-      filtered = filtered.filter(tx => 
-        (tx.user_email?.toLowerCase().includes(search)) ||
-        (tx.donor_name?.toLowerCase().includes(search)) ||
-        (tx.product_name?.toLowerCase().includes(search)) ||
-        (tx.txid?.toLowerCase().includes(search))
-      );
-    }
-
-    return filtered;
-  }, [allTransactions, dateFilter, statusFilter, debouncedSearch, dateRange]);
-
-  // Paginated transactions
-  const paginatedTransactions = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredTransactions, currentPage]);
-
-  const totalCount = filteredTransactions.length;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -269,13 +176,7 @@ export const TransacoesGlobaisSection = () => {
     }
   };
 
-  // Helper para validar UUID
-  const isValidUUID = (str: string) => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(str);
-  };
-
-  // Verificar transação por TXID - busca nas transações já carregadas (que vem da RPC de admin)
+  // Verificar transação por TXID
   const handleVerifyTransaction = async () => {
     if (!txidToVerify.trim()) {
       toast.error("Digite o TXID da transação");
@@ -286,7 +187,7 @@ export const TransacoesGlobaisSection = () => {
     try {
       const searchValue = txidToVerify.trim().toLowerCase();
       
-      // Primeiro busca nas transações já carregadas (que vieram via RPC de admin)
+      // Busca nas transações já carregadas primeiro
       let matchedTx = transactions.find((tx) => 
         tx.txid?.toLowerCase() === searchValue || 
         tx.id?.toLowerCase() === searchValue ||
@@ -294,16 +195,20 @@ export const TransacoesGlobaisSection = () => {
         tx.id?.toLowerCase().includes(searchValue)
       );
 
-      // Se não encontrou nas já carregadas, busca via RPC com mais transações
+      // Se não encontrou, busca via RPC com busca específica
       if (!matchedTx) {
-        const { data: results, error } = await supabase.rpc('get_global_transactions_v2', {
-          p_limit: 5000,
-          p_offset: 0
+        const { data, error } = await supabase.rpc('get_global_transactions_paginated', {
+          p_page: 1,
+          p_per_page: 10,
+          p_date_filter: 'all',
+          p_status: 'all',
+          p_search: txidToVerify.trim()
         });
 
         if (error) throw error;
 
-        matchedTx = (results as Transaction[] | null)?.find((tx) => 
+        const result = data as unknown as { transactions: Transaction[]; total_count: number };
+        matchedTx = result.transactions?.find((tx) => 
           tx.txid?.toLowerCase() === searchValue || 
           tx.id?.toLowerCase() === searchValue ||
           tx.txid?.toLowerCase().includes(searchValue) ||
@@ -316,25 +221,7 @@ export const TransacoesGlobaisSection = () => {
         return;
       }
 
-      // Map to Transaction type
-      const tx: Transaction = {
-        id: matchedTx.id,
-        amount: matchedTx.amount,
-        status: matchedTx.status,
-        txid: matchedTx.txid || '',
-        donor_name: matchedTx.donor_name || '',
-        product_name: matchedTx.product_name,
-        created_at: matchedTx.created_at || '',
-        paid_at: matchedTx.paid_at,
-        user_email: matchedTx.user_email,
-        utm_data: matchedTx.utm_data as { utm_term?: string; utm_source?: string } | undefined,
-        acquirer: matchedTx.acquirer,
-        total_count: 0,
-        approved_by_email: matchedTx.approved_by_email || null,
-        is_manual_approval: matchedTx.is_manual_approval || false
-      };
-      
-      setSelectedTransaction(tx);
+      setSelectedTransaction(matchedTx);
       setVerifyDialogOpen(true);
     } catch (error: any) {
       console.error('Error finding transaction:', error);
@@ -350,7 +237,6 @@ export const TransacoesGlobaisSection = () => {
 
     setIsMarkingPaid(true);
     try {
-      // Pegar o email do usuário logado (admin)
       const { data: { user } } = await supabase.auth.getUser();
       const adminEmail = user?.email || 'unknown';
 
@@ -366,8 +252,7 @@ export const TransacoesGlobaisSection = () => {
       setSelectedTransaction(null);
       setTxidToVerify("");
       
-      // Recarregar transações
-      loadAllTransactions();
+      loadTransactions();
     } catch (error: any) {
       console.error('Error marking as paid:', error);
       toast.error("Erro ao marcar como pago: " + error.message);
@@ -392,11 +277,10 @@ export const TransacoesGlobaisSection = () => {
 
       if (error) throw error;
 
-      // Verificar se já está pago (pode vir de diferentes formas da API)
       if (data?.paid || data?.isPaid || data?.status === 'paid' || data?.status === 'PAID') {
         toast.success("✅ Transação CONFIRMADA como PAGA!");
         setTimeout(() => {
-          loadAllTransactions();
+          loadTransactions();
           setVerifyDialogOpen(false);
           setSelectedTransaction(null);
           setTxidToVerify("");
@@ -425,7 +309,7 @@ export const TransacoesGlobaisSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       const adminEmail = user?.email || 'unknown';
 
-      const { data, error } = await supabase.rpc('revert_manual_approval', {
+      const { error } = await supabase.rpc('revert_manual_approval', {
         p_txid: selectedTransaction.txid,
         p_admin_email: adminEmail
       });
@@ -437,8 +321,7 @@ export const TransacoesGlobaisSection = () => {
       setSelectedTransaction(null);
       setTxidToVerify("");
       
-      // Recarregar transações
-      loadAllTransactions();
+      loadTransactions();
     } catch (error: any) {
       console.error('Error reverting approval:', error);
       toast.error("Erro ao reverter: " + error.message);
@@ -477,160 +360,161 @@ export const TransacoesGlobaisSection = () => {
           </CardTitle>
         </div>
 
-        {/* Verificar Transação - Suporte */}
-        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-dashed">
-          <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-          <span className="text-xs text-muted-foreground">Suporte:</span>
-          <Input
-            placeholder="Cole o TXID para verificar..."
-            value={txidToVerify}
-            onChange={(e) => setTxidToVerify(e.target.value)}
-            className="flex-1 h-8 text-xs"
-            onKeyDown={(e) => e.key === 'Enter' && handleVerifyTransaction()}
-          />
-          <Button 
-            size="sm" 
-            onClick={handleVerifyTransaction}
-            disabled={isVerifying || !txidToVerify.trim()}
-            className="h-8"
-          >
-            {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            <span className="ml-1 hidden sm:inline">Verificar</span>
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-          <div className="relative col-span-2">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-            <Input
-              placeholder="Buscar email, nome, produto..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-[200px] h-8 text-xs sm:text-sm pl-7"
+        {/* Filters Row */}
+        <div className="flex flex-col gap-3">
+          {/* Search and Date Range */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por email, nome, produto ou TXID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 text-sm"
+              />
+            </div>
+            <DateRangePicker
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
             />
           </div>
-          
-          <DateRangePicker
-            dateRange={dateRange}
-            onDateRangeChange={handleDateRangeChange}
-            className="h-8 w-full sm:w-auto"
-            placeholder="Período"
-          />
-          
-          <Select value={statusFilter} onValueChange={(value: StatusFilter) => setStatusFilter(value)}>
-            <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs sm:text-sm">
-              <SelectValue>
-                {statusFilter === 'all' ? 'Status' : statusFilter === 'paid' ? 'Pago' : statusFilter === 'generated' ? 'Gerado' : 'Expirado'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="paid">Pago</SelectItem>
-              <SelectItem value="generated">Gerado</SelectItem>
-              <SelectItem value="expired">Expirado</SelectItem>
-            </SelectContent>
-          </Select>
 
-          <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
-            <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs sm:text-sm">
-              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              <SelectValue>{getDateFilterLabel()}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="today">Hoje</SelectItem>
-              <SelectItem value="yesterday">Ontem</SelectItem>
-              <SelectItem value="7days">7 dias</SelectItem>
-              <SelectItem value="15days">15 dias</SelectItem>
-              <SelectItem value="month">Este mês</SelectItem>
-              <SelectItem value="year">Este ano</SelectItem>
-              <SelectItem value="custom">Personalizado</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Quick Filters */}
+          <div className="flex flex-wrap gap-2">
+            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+              <SelectTrigger className="w-[130px] h-9 text-xs">
+                <Calendar className="h-3 w-3 mr-1" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="yesterday">Ontem</SelectItem>
+                <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                <SelectItem value="15days">Últimos 15 dias</SelectItem>
+                <SelectItem value="month">Este mês</SelectItem>
+                <SelectItem value="year">Este ano</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Button 
-            onClick={loadAllTransactions} 
-            variant="default"
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger className="w-[120px] h-9 text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="generated">Gerado</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="expired">Expirado</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearFilters}
+              className="h-9 text-xs"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Limpar
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadTransactions}
+              disabled={isLoading}
+              className="h-9 text-xs"
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
+        </div>
+
+        {/* Verify Transaction Section */}
+        <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+          <div className="flex-1">
+            <Input
+              placeholder="Digite o TXID para verificar..."
+              value={txidToVerify}
+              onChange={(e) => setTxidToVerify(e.target.value)}
+              className="text-sm"
+              onKeyDown={(e) => e.key === 'Enter' && handleVerifyTransaction()}
+            />
+          </div>
+          <Button
+            onClick={handleVerifyTransaction}
+            disabled={isVerifying || !txidToVerify.trim()}
             size="sm"
-            className="h-8"
-            disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            <span className="ml-1 hidden sm:inline">Buscar</span>
+            {isVerifying ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Search className="h-4 w-4 mr-1" />
+            )}
+            Verificar
           </Button>
-
         </div>
       </CardHeader>
+
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : paginatedTransactions.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            Nenhuma transação encontrada
-          </p>
+        ) : transactions.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p>Nenhuma transação encontrada</p>
+          </div>
         ) : (
           <>
-            <div className="rounded-md border overflow-x-auto -mx-4 sm:mx-0">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">Email</TableHead>
                     <TableHead className="text-xs">Data</TableHead>
+                    <TableHead className="text-xs">Usuário</TableHead>
                     <TableHead className="text-xs">Cliente</TableHead>
-                    <TableHead className="text-xs hidden sm:table-cell">Produto</TableHead>
-                    <TableHead className="text-xs">Valor</TableHead>
-                    <TableHead className="text-xs hidden sm:table-cell">Status</TableHead>
-                    <TableHead className="text-xs hidden sm:table-cell">Adquirente</TableHead>
-                    <TableHead className="text-xs hidden md:table-cell">Aprovado Por</TableHead>
-                    <TableHead className="text-xs hidden lg:table-cell">Posicionamento</TableHead>
+                    <TableHead className="text-xs">Produto</TableHead>
+                    <TableHead className="text-xs text-right">Valor</TableHead>
+                    <TableHead className="text-xs text-center">Status</TableHead>
+                    <TableHead className="text-xs text-center">Adquirente</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedTransactions.map((tx) => (
+                  {transactions.map((tx) => (
                     <TableRow 
                       key={tx.id} 
+                      className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleRowClick(tx)}
-                      className="cursor-pointer"
                     >
-                      <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate">
-                        {tx.user_email || '-'}
-                      </TableCell>
                       <TableCell className="text-xs whitespace-nowrap">
                         {formatDate(tx.created_at)}
                       </TableCell>
-                      <TableCell className="text-xs font-medium max-w-[60px] truncate">
+                      <TableCell className="text-xs max-w-[150px] truncate">
+                        {tx.user_email || '-'}
+                      </TableCell>
+                      <TableCell className="text-xs max-w-[120px] truncate">
                         {tx.donor_name || '-'}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground hidden sm:table-cell max-w-[100px] truncate">
+                      <TableCell className="text-xs max-w-[120px] truncate">
                         {tx.product_name || '-'}
                       </TableCell>
-                      <TableCell className="text-xs font-medium whitespace-nowrap">
+                      <TableCell className="text-xs text-right font-medium">
                         {formatCurrency(tx.amount)}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {getStatusBadge(tx.status)}
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {getStatusBadge(tx.status)}
+                          {tx.is_manual_approval && (
+                            <span title="Aprovação manual"><UserCheck className="h-3 w-3 text-yellow-500" /></span>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell className="text-center">
                         {getAcquirerBadge(tx.acquirer)}
-                      </TableCell>
-                      <TableCell className="text-xs hidden md:table-cell max-w-[120px]">
-                        {tx.is_manual_approval ? (
-                          <div className="flex items-center gap-1">
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20">
-                              <UserCheck className="h-3 w-3 mr-0.5" />
-                              Manual
-                            </Badge>
-                            <span className="text-muted-foreground truncate" title={tx.approved_by_email || ''}>
-                              {tx.approved_by_email?.split('@')[0] || '-'}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs hidden lg:table-cell max-w-[100px] truncate">
-                        {tx.utm_data?.utm_term || '-'}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -638,169 +522,175 @@ export const TransacoesGlobaisSection = () => {
               </Table>
             </div>
 
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, totalCount)} de {totalCount}
-                </p>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="h-8 px-2 sm:px-3"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    <span className="hidden sm:inline ml-1">Anterior</span>
-                  </Button>
-                  <span className="text-xs sm:text-sm text-muted-foreground px-2">
-                    {currentPage}/{totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="h-8 px-2 sm:px-3"
-                  >
-                    <span className="hidden sm:inline mr-1">Próximo</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+            {/* Pagination */}
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <p className="text-xs text-muted-foreground">
+                Mostrando {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, totalCount)} de {totalCount}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1 || isLoading}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {currentPage} / {totalPages || 1}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages || isLoading}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-            )}
+            </div>
           </>
         )}
       </CardContent>
     </Card>
 
-    {/* Dialog de verificação de transação */}
+    {/* Verify Transaction Dialog */}
     <Dialog open={verifyDialogOpen} onOpenChange={setVerifyDialogOpen}>
-      <DialogContent className="w-[95vw] max-w-md overflow-hidden">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
-            Verificar Transação
+            Detalhes da Transação
           </DialogTitle>
           <DialogDescription>
-            Detalhes da transação encontrada
+            Verifique os detalhes e tome uma ação se necessário.
           </DialogDescription>
         </DialogHeader>
 
         {selectedTransaction && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="md:col-span-2">
-                <p className="text-muted-foreground text-xs">TXID</p>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-muted-foreground">TXID</p>
                 <p className="font-mono text-xs break-all">{selectedTransaction.txid}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Status Atual</p>
-                <div className="mt-1">{getStatusBadge(selectedTransaction.status)}</div>
+                <p className="text-muted-foreground">Status</p>
+                <div className="flex items-center gap-1">
+                  {getStatusBadge(selectedTransaction.status)}
+                  {selectedTransaction.is_manual_approval && (
+                    <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-500/30">
+                      Manual
+                    </Badge>
+                  )}
+                </div>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Cliente</p>
-                <p className="font-medium break-words">{selectedTransaction.donor_name || '-'}</p>
+                <p className="text-muted-foreground">Valor</p>
+                <p className="font-semibold text-green-500">{formatCurrency(selectedTransaction.amount)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Valor</p>
-                <p className="font-medium text-green-500">{formatCurrency(selectedTransaction.amount)}</p>
+                <p className="text-muted-foreground">Cliente</p>
+                <p>{selectedTransaction.donor_name || '-'}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Adquirente</p>
-                <div className="mt-1">{getAcquirerBadge(selectedTransaction.acquirer)}</div>
+                <p className="text-muted-foreground">Usuário</p>
+                <p className="text-xs truncate">{selectedTransaction.user_email || '-'}</p>
               </div>
-              <div className="md:col-span-2">
-                <p className="text-muted-foreground text-xs">Criado em</p>
+              <div>
+                <p className="text-muted-foreground">Adquirente</p>
+                {getAcquirerBadge(selectedTransaction.acquirer)}
+              </div>
+              <div>
+                <p className="text-muted-foreground">Criado em</p>
                 <p className="text-xs">{formatDate(selectedTransaction.created_at)}</p>
               </div>
+              {selectedTransaction.paid_at && (
+                <div>
+                  <p className="text-muted-foreground">Pago em</p>
+                  <p className="text-xs">{formatDate(selectedTransaction.paid_at)}</p>
+                </div>
+              )}
+              {selectedTransaction.is_manual_approval && selectedTransaction.approved_by_email && (
+                <div className="col-span-2">
+                  <p className="text-muted-foreground">Aprovado por</p>
+                  <p className="text-xs text-yellow-500">{selectedTransaction.approved_by_email}</p>
+                </div>
+              )}
             </div>
 
-            {selectedTransaction.status === 'paid' ? (
-              <div className="space-y-3">
-                <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="font-medium text-green-500 text-sm">Transação já está PAGA</p>
-                    <p className="text-xs text-muted-foreground">Pago em: {formatDate(selectedTransaction.paid_at)}</p>
-                  </div>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
+              {selectedTransaction.status === 'generated' && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleCheckAcquirerStatus}
+                    disabled={isVerifying}
+                    className="flex-1"
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                    )}
+                    Verificar na Adquirente
+                  </Button>
+                  <Button
+                    onClick={handleMarkAsPaid}
+                    disabled={isMarkingPaid}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  >
+                    {isMarkingPaid ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                    )}
+                    Marcar como Pago
+                  </Button>
+                </>
+              )}
+              {selectedTransaction.status === 'paid' && selectedTransaction.is_manual_approval && (
+                <Button
+                  variant="destructive"
+                  onClick={handleRevertApproval}
+                  disabled={isReverting}
+                  className="flex-1"
+                >
+                  {isReverting ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <Undo2 className="h-4 w-4 mr-1" />
+                  )}
+                  Reverter Aprovação Manual
+                </Button>
+              )}
+              {selectedTransaction.status === 'paid' && !selectedTransaction.is_manual_approval && (
+                <div className="flex items-center gap-2 text-green-500">
+                  <CheckCircle className="h-5 w-5" />
+                  <span>Pagamento confirmado pela adquirente</span>
                 </div>
-                {selectedTransaction.is_manual_approval && (
-                  <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                    <UserCheck className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <p className="font-medium text-amber-600 dark:text-amber-400 text-sm">Aprovação Manual</p>
-                      <p className="text-xs text-muted-foreground">
-                        Por: {selectedTransaction.approved_by_email || 'Desconhecido'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : selectedTransaction.status === 'expired' ? (
-              <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-                <p className="text-red-400 text-sm">Transação expirada - não pode ser marcada como paga</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-sm text-black dark:text-white">Transação pendente de pagamento</p>
+              )}
+              {selectedTransaction.status === 'expired' && (
+                <div className="flex items-center gap-2 text-red-400">
+                  <AlertCircle className="h-5 w-5" />
+                  <span>Transação expirada</span>
                 </div>
-              </div>
-            )}
+              )}
+            </DialogFooter>
           </div>
         )}
-
-        <DialogFooter className="!flex !flex-col gap-2 mt-4">
-          {selectedTransaction?.status === 'generated' && (
-            <>
-              <Button
-                onClick={handleMarkAsPaid}
-                disabled={isMarkingPaid}
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                {isMarkingPaid ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                Marcar como Pago
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCheckAcquirerStatus}
-                disabled={isVerifying}
-                className="w-full"
-              >
-                {isVerifying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                Verificar na Adquirente
-              </Button>
-            </>
-          )}
-          {selectedTransaction?.status === 'paid' && selectedTransaction?.is_manual_approval && (
-            <Button
-              onClick={handleRevertApproval}
-              disabled={isReverting}
-              variant="destructive"
-              className="w-full"
-            >
-              {isReverting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Undo2 className="h-4 w-4 mr-2" />}
-              Reverter Aprovação Manual
-            </Button>
-          )}
-          <Button variant="ghost" onClick={() => setVerifyDialogOpen(false)} className="w-full">
-            Fechar
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
 
-    {/* Sheet lateral de detalhes */}
-    <TransactionDetailsSheet
-      transaction={sheetTransaction}
-      open={sheetOpen}
-      onOpenChange={setSheetOpen}
-      calculateNetAmount={calculateNetAmount}
-    />
+    {/* Transaction Details Sheet */}
+    {sheetTransaction && (
+      <TransactionDetailsSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        transaction={sheetTransaction}
+        calculateNetAmount={calculateNetAmount}
+      />
+    )}
     </>
   );
 };
