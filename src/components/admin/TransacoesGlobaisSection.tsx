@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 
 interface Transaction {
   id: string;
@@ -48,6 +49,10 @@ export const TransacoesGlobaisSection = () => {
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+  
+  // Sheet states
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetTransaction, setSheetTransaction] = useState<any>(null);
 
   // Debounce search
   useEffect(() => {
@@ -339,8 +344,26 @@ export const TransacoesGlobaisSection = () => {
       console.error('Error checking acquirer status:', error);
       toast.error("Erro ao verificar na adquirente: " + error.message);
     } finally {
-      setIsVerifying(false);
+    setIsVerifying(false);
     }
+  };
+
+  // Handle row click to open sheet
+  const handleRowClick = (tx: Transaction) => {
+    setSheetTransaction({
+      ...tx,
+      fee_percentage: 0,
+      fee_fixed: 0,
+      popup_model: null
+    });
+    setSheetOpen(true);
+  };
+
+  // Calculate net amount for sheet
+  const calculateNetAmount = (amount: number, feePercentage?: number | null, feeFixed?: number | null) => {
+    const pct = feePercentage || 0;
+    const fixed = feeFixed || 0;
+    return amount - (amount * pct / 100) - fixed;
   };
 
   return (
@@ -453,7 +476,11 @@ export const TransacoesGlobaisSection = () => {
                 </TableHeader>
                 <TableBody>
                   {paginatedTransactions.map((tx) => (
-                    <TableRow key={tx.id}>
+                    <TableRow 
+                      key={tx.id} 
+                      onClick={() => handleRowClick(tx)}
+                      className="cursor-pointer"
+                    >
                       <TableCell className="text-xs text-muted-foreground max-w-[100px] truncate">
                         {tx.user_email || '-'}
                       </TableCell>
@@ -615,6 +642,14 @@ export const TransacoesGlobaisSection = () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Sheet lateral de detalhes */}
+    <TransactionDetailsSheet
+      transaction={sheetTransaction}
+      open={sheetOpen}
+      onOpenChange={setSheetOpen}
+      calculateNetAmount={calculateNetAmount}
+    />
     </>
   );
 };
