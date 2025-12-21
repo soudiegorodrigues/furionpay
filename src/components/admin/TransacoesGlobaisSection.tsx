@@ -627,31 +627,31 @@ export const TransacoesGlobaisSection = () => {
           </div>
         )}
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-4">
-          <Button variant="ghost" onClick={() => setVerifyDialogOpen(false)} className="w-full sm:w-auto">
-            Fechar
-          </Button>
+        <DialogFooter className="flex flex-col gap-2 mt-4">
           {selectedTransaction?.status === 'generated' && (
             <>
               <Button
-                variant="outline"
-                onClick={handleCheckAcquirerStatus}
-                disabled={isVerifying}
-                className="w-full sm:w-auto"
-              >
-                {isVerifying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                Verificar na Adquirente
-              </Button>
-              <Button
                 onClick={handleMarkAsPaid}
                 disabled={isMarkingPaid}
-                className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+                className="w-full bg-green-600 hover:bg-green-700"
               >
                 {isMarkingPaid ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                 Marcar como Pago
               </Button>
+              <Button
+                variant="outline"
+                onClick={handleCheckAcquirerStatus}
+                disabled={isVerifying}
+                className="w-full"
+              >
+                {isVerifying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Verificar na Adquirente
+              </Button>
             </>
           )}
+          <Button variant="ghost" onClick={() => setVerifyDialogOpen(false)} className="w-full">
+            Fechar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
