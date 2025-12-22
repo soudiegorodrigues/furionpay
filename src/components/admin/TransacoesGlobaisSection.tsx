@@ -37,7 +37,8 @@ const ITEMS_PER_PAGE = 10;
 export const TransacoesGlobaisSection = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isPaginating, setIsPaginating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -71,8 +72,14 @@ export const TransacoesGlobaisSection = () => {
   }, [dateFilter, statusFilter, debouncedSearch]);
 
   // Load transactions with server-side pagination
-  const loadTransactions = useCallback(async () => {
-    setIsLoading(true);
+  const loadTransactions = useCallback(async (isPaginationChange = false) => {
+    // Se é paginação, usa estado sutil; senão, mostra loading completo na primeira carga
+    if (isPaginationChange) {
+      setIsPaginating(true);
+    } else if (transactions.length === 0) {
+      setIsInitialLoading(true);
+    }
+    
     try {
       console.log('[TransacoesGlobais] Carregando página:', currentPage, 'filtros:', { dateFilter, statusFilter, debouncedSearch });
 
@@ -100,13 +107,24 @@ export const TransacoesGlobaisSection = () => {
     } catch (error: any) {
       console.error('[TransacoesGlobais] Erro ao carregar transações:', error);
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
+      setIsPaginating(false);
     }
-  }, [currentPage, dateFilter, statusFilter, debouncedSearch]);
+  }, [currentPage, dateFilter, statusFilter, debouncedSearch, transactions.length]);
 
+  // Load transactions when filters change (not pagination)
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+    loadTransactions(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFilter, statusFilter, debouncedSearch]);
+
+  // Load transactions when page changes (pagination)
+  useEffect(() => {
+    if (currentPage > 0) {
+      loadTransactions(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -411,11 +429,11 @@ export const TransacoesGlobaisSection = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={loadTransactions}
-              disabled={isLoading}
+              onClick={() => loadTransactions(false)}
+              disabled={isInitialLoading || isPaginating}
               className="h-9 text-xs"
             >
-              <RefreshCw className={`h-3 w-3 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-3 w-3 mr-1 ${isInitialLoading || isPaginating ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
           </div>
@@ -448,7 +466,7 @@ export const TransacoesGlobaisSection = () => {
       </CardHeader>
 
       <CardContent>
-        {isLoading ? (
+        {isInitialLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -459,7 +477,7 @@ export const TransacoesGlobaisSection = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className={`overflow-x-auto transition-opacity duration-200 ${isPaginating ? 'opacity-50' : ''}`}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -521,9 +539,13 @@ export const TransacoesGlobaisSection = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1 || isLoading}
+                  disabled={currentPage === 1 || isPaginating}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  {isPaginating && currentPage > 1 ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ChevronLeft className="h-4 w-4" />
+                  )}
                 </Button>
                 <span className="text-xs text-muted-foreground">
                   {currentPage} / {totalPages || 1}
@@ -532,9 +554,13 @@ export const TransacoesGlobaisSection = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages || isLoading}
+                  disabled={currentPage >= totalPages || isPaginating}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  {isPaginating && currentPage < totalPages ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
