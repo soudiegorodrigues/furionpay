@@ -723,79 +723,121 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="flex-1 min-h-[300px] sm:min-h-[180px] w-full">
-              {isLoadingChart ? <div className="flex items-center justify-center h-full">
-                  <div className="flex flex-col items-center gap-3">
-                    <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
-                    <span className="text-sm text-muted-foreground">Carregando gráfico...</span>
-                  </div>
-                </div> : <div className="animate-fade-in h-full"><ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{
-                top: 20,
-                right: 10,
-                left: 10,
-                bottom: isTabletOrSmaller || chartFilter === '30days' ? 40 : 5
-              }}>
+            <div className="flex-1 h-[300px] sm:h-[180px] w-full relative overflow-hidden">
+              {/* Mantém o gráfico sempre montado para evitar "pulos" visuais */}
+              <div
+                className={`h-full w-full transition-opacity duration-300 ${
+                  isLoadingChart
+                    ? (chartData.length > 0 ? "opacity-60" : "opacity-0")
+                    : "opacity-100"
+                }`}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={chartData}
+                    margin={{
+                      top: 20,
+                      right: 10,
+                      left: 10,
+                      bottom: isTabletOrSmaller || chartFilter === '30days' ? 40 : 5,
+                    }}
+                  >
                     <defs>
                       <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
                         <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
                       </linearGradient>
                     </defs>
-                    
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                    
-                    <XAxis 
-                      dataKey="date" 
+
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="hsl(var(--border))"
+                      opacity={0.5}
+                    />
+
+                    <XAxis
+                      dataKey="date"
                       tick={{
                         fontSize: 10,
-                        fill: 'hsl(var(--muted-foreground))'
-                      }} 
-                      angle={isTabletOrSmaller ? -90 : (chartFilter === '30days' ? -45 : 0)} 
-                      textAnchor={isTabletOrSmaller || chartFilter === '30days' ? "end" : "middle"} 
-                      tickLine={false} 
+                        fill: 'hsl(var(--muted-foreground))',
+                      }}
+                      angle={isTabletOrSmaller ? -90 : chartFilter === '30days' ? -45 : 0}
+                      textAnchor={isTabletOrSmaller || chartFilter === '30days' ? 'end' : 'middle'}
+                      tickLine={false}
                       axisLine={{
                         stroke: 'hsl(var(--foreground))',
-                        strokeWidth: 1
-                      }} 
-                      interval={0} 
-                      ticks={chartFilter === 'today' ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'] : undefined} 
-                      height={isTabletOrSmaller ? 50 : (chartFilter === '30days' ? 60 : 30)} 
+                        strokeWidth: 1,
+                      }}
+                      interval={0}
+                      ticks={
+                        chartFilter === 'today'
+                          ? ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00']
+                          : undefined
+                      }
+                      height={isTabletOrSmaller ? 50 : chartFilter === '30days' ? 60 : 30}
                     />
-                    <YAxis tick={{
-                  fontSize: 10,
-                  fill: 'hsl(var(--muted-foreground))'
-                }} tickLine={false} axisLine={{
-                  stroke: 'hsl(var(--foreground))',
-                  strokeWidth: 1
-                }} allowDecimals={false} width={30} domain={[0, (dataMax: number) => Math.max(5, Math.ceil(dataMax * 1.18))]} />
-                    <Tooltip contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  padding: '12px 16px',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
-                }} labelStyle={{
-                  color: 'hsl(var(--foreground))',
-                  fontWeight: 600,
-                  marginBottom: '6px'
-                }} formatter={(value: number, name: string) => {
-                  if (name === 'pagos') return [value, '🔴 Pagos'];
-                  return [value, name];
-                }} />
-                    <Area 
-                      type="monotone" 
-                      dataKey="pagos" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2} 
-                      fill="url(#areaGradientPaid)" 
+
+                    <YAxis
+                      tick={{
+                        fontSize: 10,
+                        fill: 'hsl(var(--muted-foreground))',
+                      }}
+                      tickLine={false}
+                      axisLine={{
+                        stroke: 'hsl(var(--foreground))',
+                        strokeWidth: 1,
+                      }}
+                      allowDecimals={false}
+                      width={30}
+                      domain={[0, (dataMax: number) => Math.max(5, Math.ceil(dataMax * 1.18))]}
+                    />
+
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        padding: '12px 16px',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                      }}
+                      labelStyle={{
+                        color: 'hsl(var(--foreground))',
+                        fontWeight: 600,
+                        marginBottom: '6px',
+                      }}
+                      formatter={(value: number, name: string) => {
+                        if (name === 'pagos') return [value, '🔴 Pagos'];
+                        return [value, name];
+                      }}
+                    />
+
+                    <Area
+                      type="monotone"
+                      dataKey="pagos"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#areaGradientPaid)"
                       isAnimationActive={false}
-                      dot={false} 
-                      activeDot={false} 
+                      dot={false}
+                      activeDot={false}
                     />
                   </AreaChart>
-                </ResponsiveContainer></div>}
+                </ResponsiveContainer>
+              </div>
+
+              {/* Overlay de loading (sem desmontar o gráfico) */}
+              {isLoadingChart && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[2px]">
+                  <div className="flex flex-col items-center gap-3">
+                    <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
+                    <span className="text-sm text-muted-foreground">
+                      {chartData.length > 0 ? 'Atualizando gráfico...' : 'Carregando gráfico...'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="flex items-center gap-2">
