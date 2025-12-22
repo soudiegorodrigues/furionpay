@@ -729,7 +729,7 @@ const AdminDashboard = () => {
                     <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
                     <span className="text-sm text-muted-foreground">Carregando gráfico...</span>
                   </div>
-                </div> : <ResponsiveContainer width="100%" height="100%">
+                </div> : <div className="animate-fade-in h-full"><ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{
                 top: 20,
                 right: 10,
@@ -790,15 +790,12 @@ const AdminDashboard = () => {
                       stroke="hsl(var(--primary))" 
                       strokeWidth={2} 
                       fill="url(#areaGradientPaid)" 
-                      isAnimationActive={true}
-                      animationDuration={1200}
-                      animationEasing="ease-out"
-                      animationBegin={100}
+                      isAnimationActive={false}
                       dot={false} 
                       activeDot={false} 
                     />
                   </AreaChart>
-                </ResponsiveContainer>}
+                </ResponsiveContainer></div>}
             </div>
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="flex items-center gap-2">
