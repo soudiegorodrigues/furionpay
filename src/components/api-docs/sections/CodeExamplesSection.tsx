@@ -10,7 +10,7 @@ const languages = [
 ];
 
 const codeExamples = {
-  curl: `# Criar PIX
+  curl: `# Criar PIX com UTMs
 curl -X POST https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1/api-v1-pix-create \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -22,6 +22,11 @@ curl -X POST https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1/api-v1-pix-cr
       "name": "João Silva",
       "email": "joao@email.com",
       "document": "12345678900"
+    },
+    "utm": {
+      "utm_source": "facebook",
+      "utm_medium": "cpc",
+      "utm_campaign": "black_friday"
     }
   }'
 
@@ -34,7 +39,7 @@ curl -X GET "https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1/api-v1-pix-st
 const API_KEY = process.env.FURIONPAY_API_KEY;
 const BASE_URL = 'https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1';
 
-// Criar PIX
+// Criar PIX com UTMs
 async function createPix(data) {
   const response = await axios.post(\`\${BASE_URL}/api-v1-pix-create\`, {
     amount: data.amount,
@@ -46,6 +51,7 @@ async function createPix(data) {
       document: data.customerDocument,
     },
     metadata: data.metadata,
+    utm: data.utm, // Dados de rastreamento UTM
   }, {
     headers: {
       'Authorization': \`Bearer \${API_KEY}\`,
@@ -68,7 +74,7 @@ async function checkStatus(txid) {
   return response.data;
 }
 
-// Exemplo de uso
+// Exemplo de uso com UTMs
 async function main() {
   const pix = await createPix({
     amount: 150.00,
@@ -78,6 +84,13 @@ async function main() {
     customerEmail: 'joao@email.com',
     customerDocument: '12345678900',
     metadata: { order_id: '123' },
+    utm: {
+      utm_source: 'facebook',
+      utm_medium: 'cpc',
+      utm_campaign: 'black_friday',
+      utm_content: 'banner_01',
+      fbclid: 'AbCdEfGh123456',
+    },
   });
   
   console.log('PIX criado:', pix.data.txid);
@@ -98,10 +111,10 @@ headers = {
     'Content-Type': 'application/json'
 }
 
-# Criar PIX
+# Criar PIX com UTMs
 def create_pix(amount, description=None, external_reference=None, 
                customer_name=None, customer_email=None, customer_document=None,
-               metadata=None):
+               metadata=None, utm=None):
     payload = {
         'amount': amount,
         'description': description,
@@ -111,7 +124,8 @@ def create_pix(amount, description=None, external_reference=None,
             'email': customer_email,
             'document': customer_document
         },
-        'metadata': metadata or {}
+        'metadata': metadata or {},
+        'utm': utm or {}  # Dados de rastreamento UTM
     }
     
     response = requests.post(
@@ -132,7 +146,7 @@ def check_status(txid):
     
     return response.json()
 
-# Exemplo de uso
+# Exemplo de uso com UTMs
 if __name__ == '__main__':
     pix = create_pix(
         amount=150.00,
@@ -141,7 +155,14 @@ if __name__ == '__main__':
         customer_name='João Silva',
         customer_email='joao@email.com',
         customer_document='12345678900',
-        metadata={'order_id': '123'}
+        metadata={'order_id': '123'},
+        utm={
+            'utm_source': 'facebook',
+            'utm_medium': 'cpc',
+            'utm_campaign': 'black_friday',
+            'utm_content': 'banner_01',
+            'fbclid': 'AbCdEfGh123456'
+        }
     )
     
     print(f"PIX criado: {pix['data']['txid']}")
@@ -153,10 +174,10 @@ if __name__ == '__main__':
 $apiKey = getenv('FURIONPAY_API_KEY');
 $baseUrl = 'https://qtlhwjotfkyyqzgxlmkg.supabase.co/functions/v1';
 
-// Criar PIX
+// Criar PIX com UTMs
 function createPix($amount, $description = null, $externalReference = null,
                    $customerName = null, $customerEmail = null, $customerDocument = null,
-                   $metadata = []) {
+                   $metadata = [], $utm = []) {
     global $apiKey, $baseUrl;
     
     $payload = json_encode([
@@ -168,7 +189,8 @@ function createPix($amount, $description = null, $externalReference = null,
             'email' => $customerEmail,
             'document' => $customerDocument
         ],
-        'metadata' => $metadata
+        'metadata' => $metadata,
+        'utm' => $utm  // Dados de rastreamento UTM
     ]);
     
     $ch = curl_init();
@@ -208,7 +230,7 @@ function checkStatus($txid) {
     return json_decode($response, true);
 }
 
-// Exemplo de uso
+// Exemplo de uso com UTMs
 $pix = createPix(
     150.00,
     'Compra de produto XYZ',
@@ -216,7 +238,14 @@ $pix = createPix(
     'João Silva',
     'joao@email.com',
     '12345678900',
-    ['order_id' => '123']
+    ['order_id' => '123'],
+    [
+        'utm_source' => 'facebook',
+        'utm_medium' => 'cpc',
+        'utm_campaign' => 'black_friday',
+        'utm_content' => 'banner_01',
+        'fbclid' => 'AbCdEfGh123456'
+    ]
 );
 
 echo "PIX criado: " . $pix['data']['txid'] . "\\n";

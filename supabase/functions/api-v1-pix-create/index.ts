@@ -5,6 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface UTMData {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  fbclid?: string;
+}
+
 interface CreatePixRequest {
   amount: number;
   description?: string;
@@ -15,6 +24,7 @@ interface CreatePixRequest {
     document?: string;
   };
   metadata?: Record<string, unknown>;
+  utm?: UTMData;
 }
 
 function getSupabaseClient() {
@@ -84,7 +94,8 @@ async function generatePixViaAcquirer(
   userId: string,
   amount: number,
   customerName: string,
-  productName: string
+  productName: string,
+  utmData?: UTMData
 ) {
   // Buscar adquirente do usuário
   const { data: userAcquirerData } = await supabase
@@ -142,7 +153,8 @@ async function generatePixViaAcquirer(
       donorName: customerName || 'Cliente API',
       userId,
       productName,
-      popupModel: 'api'
+      popupModel: 'api',
+      utmData: utmData || undefined
     })
   });
   
@@ -262,33 +274,47 @@ Deno.serve(async (req) => {
   }
   
   try {
-    // Gerar PIX via adquirente
+    // Gerar PIX via adquirente (passando UTMs)
     const pixResult = await generatePixViaAcquirer(
       supabase,
       client.user_id,
       requestBody.amount,
       requestBody.customer?.name || 'Cliente API',
-      requestBody.description || 'Pagamento via API'
+      requestBody.description || 'Pagamento via API',
+      requestBody.utm
     );
     
     if (pixResult.error) {
       throw new Error(pixResult.error);
     }
     
-    // Atualizar transação com external_reference e metadata
-    if (requestBody.external_reference || requestBody.metadata) {
-      await supabase
-        .from('pix_transactions')
-        .update({
-          utm_data: {
-            external_reference: requestBody.external_reference,
-            metadata: requestBody.metadata,
-            api_client_id: client.client_id,
-            customer: requestBody.customer
-          }
-        })
-        .eq('txid', pixResult.txid);
+    // Sempre atualizar transação com dados da API (UTMs, external_reference, metadata)
+    const utmDataToSave: Record<string, unknown> = {
+      api_client_id: client.client_id,
+      source: 'api'
+    };
+    
+    // Adicionar UTMs se fornecidos
+    if (requestBody.utm) {
+      if (requestBody.utm.utm_source) utmDataToSave.utm_source = requestBody.utm.utm_source;
+      if (requestBody.utm.utm_medium) utmDataToSave.utm_medium = requestBody.utm.utm_medium;
+      if (requestBody.utm.utm_campaign) utmDataToSave.utm_campaign = requestBody.utm.utm_campaign;
+      if (requestBody.utm.utm_content) utmDataToSave.utm_content = requestBody.utm.utm_content;
+      if (requestBody.utm.utm_term) utmDataToSave.utm_term = requestBody.utm.utm_term;
+      if (requestBody.utm.fbclid) utmDataToSave.fbclid = requestBody.utm.fbclid;
     }
+    
+    // Adicionar dados extras
+    if (requestBody.external_reference) utmDataToSave.external_reference = requestBody.external_reference;
+    if (requestBody.metadata) utmDataToSave.metadata = requestBody.metadata;
+    if (requestBody.customer) utmDataToSave.customer = requestBody.customer;
+    
+    await supabase
+      .from('pix_transactions')
+      .update({ utm_data: utmDataToSave })
+      .eq('txid', pixResult.txid);
+    
+    console.log(`[API-PIX-CREATE] UTM data saved for txid=${pixResult.txid}:`, utmDataToSave);
     
     const responseTime = Date.now() - startTime;
     const successResponse = {
