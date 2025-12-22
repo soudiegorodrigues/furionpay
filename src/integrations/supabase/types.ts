@@ -1059,6 +1059,7 @@ export type Database = {
           client_ip: string | null
           created_at: string | null
           created_date_brazil: string | null
+          donor_email: string | null
           donor_name: string | null
           expired_at: string | null
           fee_fixed: number | null
@@ -1083,6 +1084,7 @@ export type Database = {
           client_ip?: string | null
           created_at?: string | null
           created_date_brazil?: string | null
+          donor_email?: string | null
           donor_name?: string | null
           expired_at?: string | null
           fee_fixed?: number | null
@@ -1107,6 +1109,7 @@ export type Database = {
           client_ip?: string | null
           created_at?: string | null
           created_date_brazil?: string | null
+          donor_email?: string | null
           donor_name?: string | null
           expired_at?: string | null
           fee_fixed?: number | null

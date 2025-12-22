@@ -128,3 +128,26 @@ export function getTrafficSource(utmData: UTMData | null | undefined): 'facebook
   
   return 'other';
 }
+
+/**
+ * Extracts customer email from UTM data or direct donor_email field
+ */
+export function getCustomerEmail(transaction: { donor_email?: string; utm_data?: UTMData | null } | null | undefined): string | undefined {
+  if (!transaction) return undefined;
+  
+  // Check direct donor_email field first
+  if (transaction.donor_email && transaction.donor_email.length > 0) {
+    return transaction.donor_email;
+  }
+  
+  // Check nested in utm_data.customer.email (API transactions)
+  const utmData = normalizeUtmData(transaction.utm_data as any);
+  if (utmData) {
+    const customerEmail = (utmData as any).customer?.email;
+    if (customerEmail && String(customerEmail).length > 0) {
+      return String(customerEmail);
+    }
+  }
+  
+  return undefined;
+}
