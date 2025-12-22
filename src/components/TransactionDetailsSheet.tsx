@@ -9,6 +9,14 @@ interface UTMData {
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+  // Estrutura da API - UTMs vêm dentro de metadata
+  metadata?: {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+    utm_term?: string;
+  };
 }
 interface Transaction {
   id: string;
@@ -86,9 +94,20 @@ const TransactionDetailsSheet = ({
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
+
+  // Helper para extrair UTM de ambas estruturas (checkout normal e API)
+  const getUtmValue = (key: 'utm_source' | 'utm_medium' | 'utm_campaign' | 'utm_content' | 'utm_term') => {
+    return transaction.utm_data?.[key] || transaction.utm_data?.metadata?.[key];
+  };
+
   const netAmount = calculateNetAmount(transaction.amount, transaction.fee_percentage, transaction.fee_fixed);
   const feeAmount = transaction.amount - netAmount;
-  const hasUtmData = transaction.utm_data && Object.values(transaction.utm_data).some(v => v);
+  
+  // Verifica UTMs diretos ou dentro de metadata (API)
+  const hasUtmData = transaction.utm_data && (
+    Object.entries(transaction.utm_data).some(([k, v]) => k !== 'metadata' && v && typeof v === 'string') ||
+    (transaction.utm_data.metadata && Object.values(transaction.utm_data.metadata).some(v => v))
+  );
   const statusConfig = getStatusConfig(transaction.status);
   return <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[340px] sm:w-[380px] p-0 border-l border-border/50 bg-background">
@@ -160,9 +179,9 @@ const TransactionDetailsSheet = ({
                 <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">UTM Tracking</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {transaction.utm_data?.utm_source && <Badge variant="secondary" className="text-xs h-6">{transaction.utm_data.utm_source}</Badge>}
-                {transaction.utm_data?.utm_medium && <Badge variant="outline" className="text-xs h-6">{transaction.utm_data.utm_medium}</Badge>}
-                {transaction.utm_data?.utm_campaign && <Badge variant="outline" className="text-xs h-6">{transaction.utm_data.utm_campaign}</Badge>}
+                {getUtmValue('utm_source') && <Badge variant="secondary" className="text-xs h-6">{getUtmValue('utm_source')}</Badge>}
+                {getUtmValue('utm_medium') && <Badge variant="outline" className="text-xs h-6">{getUtmValue('utm_medium')}</Badge>}
+                {getUtmValue('utm_campaign') && <Badge variant="outline" className="text-xs h-6">{getUtmValue('utm_campaign')}</Badge>}
               </div>
             </div>}
 
