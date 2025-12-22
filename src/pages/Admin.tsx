@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AdminNavigation } from "@/components/AdminNavigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
