@@ -784,7 +784,7 @@ const AdminDashboard = () => {
                   if (name === 'pagos') return [value, '🔴 Pagos'];
                   return [value, name];
                 }} />
-                    <Area type="monotone" dataKey="pagos" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#areaGradientPaid)" animationDuration={800} animationEasing="ease-out" dot={false} activeDot={false} />
+                    <Area type="monotone" dataKey="pagos" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#areaGradientPaid)" isAnimationActive={false} dot={false} activeDot={false} />
                   </AreaChart>
                 </ResponsiveContainer>}
             </div>
