@@ -345,7 +345,7 @@ export const UsuariosSection = () => {
                             {u.is_blocked ? (
                               <span className="text-red-500 text-[10px] font-medium">Bloqueado</span>
                             ) : u.is_admin ? (
-                              <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] px-1.5">Administrador</Badge>
+                              <span className="text-foreground text-[10px] font-medium">Administrador</span>
                             ) : u.is_approved ? (
                               <span className="text-foreground text-[10px] font-medium">User. Aprovado</span>
                             ) : (
