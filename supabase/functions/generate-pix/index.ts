@@ -706,7 +706,8 @@ async function logPixGenerated(
   feeFixed?: number,
   acquirer: string = 'spedpay',
   fingerprintHash?: string,
-  clientIp?: string
+  clientIp?: string,
+  donorEmail?: string
 ): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
@@ -719,6 +720,7 @@ async function logPixGenerated(
         txid,
         pix_code: pixCode,
         donor_name: donorName,
+        donor_email: donorEmail || null,
         status: 'generated',
         utm_data: utmData || null,
         product_name: productName || null,
