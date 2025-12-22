@@ -16,6 +16,14 @@ export const EndpointsSection = () => {
   "metadata": {
     "order_id": "123",
     "custom_field": "valor"
+  },
+  "utm": {
+    "utm_source": "facebook",
+    "utm_medium": "cpc",
+    "utm_campaign": "black_friday",
+    "utm_content": "banner_01",
+    "utm_term": "oferta",
+    "fbclid": "AbCdEfGh123456"
   }
 }`;
 
@@ -56,6 +64,13 @@ export const EndpointsSection = () => {
     { name: 'customer.email', type: 'string', required: false, description: 'E-mail do cliente' },
     { name: 'customer.document', type: 'string', required: false, description: 'CPF/CNPJ do cliente (apenas números)' },
     { name: 'metadata', type: 'object', required: false, description: 'Dados adicionais em formato chave-valor' },
+    { name: 'utm', type: 'object', required: false, description: 'Dados de rastreamento UTM para analytics' },
+    { name: 'utm.utm_source', type: 'string', required: false, description: 'Origem do tráfego (ex: facebook, google)' },
+    { name: 'utm.utm_medium', type: 'string', required: false, description: 'Meio de marketing (ex: cpc, email, banner)' },
+    { name: 'utm.utm_campaign', type: 'string', required: false, description: 'Nome da campanha (ex: black_friday)' },
+    { name: 'utm.utm_content', type: 'string', required: false, description: 'Identificador do conteúdo (ex: banner_01)' },
+    { name: 'utm.utm_term', type: 'string', required: false, description: 'Termo de busca pago (para Google Ads)' },
+    { name: 'utm.fbclid', type: 'string', required: false, description: 'Facebook Click ID (capturado automaticamente)' },
   ];
 
   // Note: PIX expires in 30 minutes after creation
