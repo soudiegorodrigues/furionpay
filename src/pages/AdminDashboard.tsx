@@ -698,7 +698,7 @@ const AdminDashboard = () => {
       {/* Chart + Side Cards Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
         {/* Chart - Visão Geral Style */}
-        <Card className="xl:col-span-2 h-full flex flex-col">
+        <Card className="xl:col-span-2 h-full min-w-0 flex flex-col">
           <div className="h-px bg-border" />
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
@@ -722,12 +722,12 @@ const AdminDashboard = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
+          <CardContent className="flex-1 min-w-0 flex flex-col">
             {/* Container com dimensões estáveis para evitar recálculo de largura */}
-            <div className="flex-1 h-[300px] sm:h-[180px] w-full min-w-0 relative overflow-hidden">
+            <div className="h-[300px] sm:h-[180px] w-full max-w-full min-w-0 relative overflow-hidden">
               {/* Mantém o gráfico sempre montado para evitar "pulos" visuais */}
               <div
-                className={`absolute inset-0 transition-opacity duration-300 ${
+                className={`absolute inset-0 w-full h-full transition-opacity duration-300 ${
                   isLoadingChart
                     ? (chartData.length > 0 ? "opacity-60" : "opacity-0")
                     : "opacity-100"
