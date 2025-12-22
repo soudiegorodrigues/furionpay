@@ -3078,7 +3078,7 @@ export type Database = {
       verify_backup_code: { Args: { p_code: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "super_admin"
       pix_status: "generated" | "paid" | "expired"
       withdrawal_status: "pending" | "approved" | "rejected"
     }
@@ -3208,7 +3208,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "super_admin"],
       pix_status: ["generated", "paid", "expired"],
       withdrawal_status: ["pending", "approved", "rejected"],
     },
