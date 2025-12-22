@@ -342,8 +342,8 @@ export const UsuariosSection = () => {
                             <span className="text-muted-foreground">{getFeeConfigName(u.id)}</span>
                           </TableCell>
                           <TableCell>
-                          {u.is_blocked ? (
-                              <Badge className="bg-red-500/20 text-red-500 border-red-500/30 text-[10px] px-1.5">Bloqueado</Badge>
+                            {u.is_blocked ? (
+                              <span className="text-red-500 text-[10px] font-medium">Bloqueado</span>
                             ) : u.is_admin ? (
                               <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] px-1.5">Administrador</Badge>
                             ) : u.is_approved ? (
