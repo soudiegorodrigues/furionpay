@@ -68,13 +68,13 @@ const AdminVendas = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isPaginating, setIsPaginating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  
   
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -194,8 +194,14 @@ const AdminVendas = () => {
   }, []);
 
   // Load transactions with server-side pagination
-  const loadTransactions = useCallback(async (showLoading = true) => {
-    if (showLoading) setIsLoading(true);
+  const loadTransactions = useCallback(async (isPaginationChange = false) => {
+    // Se é paginação, usa estado sutil; senão, mostra loading completo na primeira carga
+    if (isPaginationChange) {
+      setIsPaginating(true);
+    } else if (transactions.length === 0) {
+      setIsInitialLoading(true);
+    }
+    
     try {
       const { data, error } = await supabase.rpc('get_user_transactions_paginated', {
         p_page: currentPage,
@@ -220,9 +226,10 @@ const AdminVendas = () => {
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
+      setIsPaginating(false);
     }
-  }, [currentPage, dateFilter, statusFilter, debouncedSearch, toast]);
+  }, [currentPage, dateFilter, statusFilter, debouncedSearch, toast, transactions.length]);
 
   // Initial load
   useEffect(() => {
@@ -231,12 +238,21 @@ const AdminVendas = () => {
     }
   }, [isAuthenticated, loadFeeConfig]);
 
-  // Load transactions when filters change
+  // Load transactions when filters change (not pagination)
   useEffect(() => {
     if (isAuthenticated) {
-      loadTransactions();
+      loadTransactions(false); // false = não é paginação
     }
-  }, [isAuthenticated, currentPage, dateFilter, statusFilter, debouncedSearch, loadTransactions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, dateFilter, statusFilter, debouncedSearch]);
+
+  // Load transactions when page changes (pagination)
+  useEffect(() => {
+    if (isAuthenticated && currentPage > 0) {
+      loadTransactions(true); // true = é paginação
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   // Load stats when date filter changes
   useEffect(() => {
@@ -404,13 +420,13 @@ const AdminVendas = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isInitialLoading ? (
             <div className="flex items-center justify-center py-12">
               <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className={`overflow-x-auto -mx-4 sm:mx-0 transition-opacity duration-200 ${isPaginating ? 'opacity-50' : ''}`}>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -474,10 +490,14 @@ const AdminVendas = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
+                      disabled={currentPage === 1 || isPaginating}
                       className="h-8 px-2 sm:px-3"
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      {isPaginating && currentPage > 1 ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ChevronLeft className="h-4 w-4" />
+                      )}
                       <span className="hidden sm:inline ml-1">Anterior</span>
                     </Button>
                     <span className="text-xs sm:text-sm text-muted-foreground px-2">
@@ -487,11 +507,15 @@ const AdminVendas = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
+                      disabled={currentPage === totalPages || isPaginating}
                       className="h-8 px-2 sm:px-3"
                     >
                       <span className="hidden sm:inline mr-1">Próximo</span>
-                      <ChevronRight className="h-4 w-4" />
+                      {isPaginating && currentPage < totalPages ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
