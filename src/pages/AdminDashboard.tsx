@@ -722,12 +722,14 @@ const AdminDashboard = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 min-w-0 flex flex-col">
-            {/* Container com dimensões estáveis para evitar recálculo de largura */}
-            <div className="h-[300px] sm:h-[180px] w-full max-w-full min-w-0 relative overflow-hidden">
-              {/* Mantém o gráfico sempre montado para evitar "pulos" visuais */}
+          <CardContent className="p-4 sm:p-6">
+            {/* Container com aspect-ratio para forçar largura 100% imediatamente */}
+            <div 
+              className="w-full relative"
+              style={{ aspectRatio: '16 / 5', minHeight: '180px', maxHeight: '300px' }}
+            >
               <div
-                className={`absolute inset-0 w-full h-full transition-opacity duration-300 ${
+                className={`w-full h-full transition-opacity duration-300 ${
                   isLoadingChart
                     ? (chartData.length > 0 ? "opacity-60" : "opacity-0")
                     : "opacity-100"
