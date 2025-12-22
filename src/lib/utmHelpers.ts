@@ -20,23 +20,54 @@ export interface UTMData {
 export type UTMKey = 'utm_source' | 'utm_medium' | 'utm_campaign' | 'utm_content' | 'utm_term';
 
 /**
+ * Normalizes UTM data that may arrive as JSON strings (e.g. from RPC/json serialization),
+ * ensuring we always work with an object and parsed metadata.
+ */
+function normalizeUtmData(input: any): UTMData | null {
+  if (!input) return null;
+
+  let data: any = input;
+
+  // Sometimes JSON fields can arrive stringified
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return null;
+    }
+  }
+
+  // Sometimes metadata may arrive stringified
+  if (data && typeof data === "object" && typeof data.metadata === "string") {
+    try {
+      data = { ...data, metadata: JSON.parse(data.metadata) };
+    } catch {
+      // ignore
+    }
+  }
+
+  return data as UTMData;
+}
+
+/**
  * Extracts a UTM value from transaction data, checking both direct and nested (API) structures
  */
 export function getUtmValue(utmData: UTMData | null | undefined, key: UTMKey): string | undefined {
-  if (!utmData) return undefined;
-  
+  const data = normalizeUtmData(utmData as any);
+  if (!data) return undefined;
+
   // Check direct value first (checkout transactions)
-  const directValue = utmData[key];
-  if (directValue && typeof directValue === 'string') {
-    return directValue;
+  const directValue = (data as any)[key];
+  if (directValue != null && String(directValue).length > 0) {
+    return typeof directValue === "string" ? directValue : String(directValue);
   }
-  
+
   // Check nested metadata (API transactions)
-  const nestedValue = utmData.metadata?.[key];
-  if (nestedValue && typeof nestedValue === 'string') {
-    return nestedValue;
+  const nestedValue = (data as any).metadata?.[key];
+  if (nestedValue != null && String(nestedValue).length > 0) {
+    return typeof nestedValue === "string" ? nestedValue : String(nestedValue);
   }
-  
+
   return undefined;
 }
 
@@ -44,28 +75,26 @@ export function getUtmValue(utmData: UTMData | null | undefined, key: UTMKey): s
  * Checks if transaction has any UTM data (from either structure)
  */
 export function hasUtmData(utmData: UTMData | null | undefined): boolean {
-  if (!utmData) return false;
-  
+  const data = normalizeUtmData(utmData as any);
+  if (!data) return false;
+
   const keys: UTMKey[] = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-  
+
   // Check direct values
-  const hasDirectUtm = keys.some(key => {
-    const value = utmData[key];
-    return value && typeof value === 'string';
+  const hasDirectUtm = keys.some((key) => {
+    const value = (data as any)[key];
+    return value != null && String(value).length > 0;
   });
-  
+
   if (hasDirectUtm) return true;
-  
+
   // Check nested metadata
-  if (utmData.metadata) {
-    const hasNestedUtm = keys.some(key => {
-      const value = utmData.metadata?.[key];
-      return value && typeof value === 'string';
-    });
-    if (hasNestedUtm) return true;
-  }
-  
-  return false;
+  const hasNestedUtm = keys.some((key) => {
+    const value = (data as any).metadata?.[key];
+    return value != null && String(value).length > 0;
+  });
+
+  return hasNestedUtm;
 }
 
 /**

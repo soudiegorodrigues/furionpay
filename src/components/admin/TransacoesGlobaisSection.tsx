@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
+import type { UTMData } from "@/lib/utmHelpers";
 
 interface Transaction {
   id: string;
@@ -22,7 +23,7 @@ interface Transaction {
   created_at: string;
   paid_at: string | null;
   user_email: string | null;
-  utm_data: { utm_term?: string; utm_source?: string } | null;
+  utm_data: UTMData | null;
   acquirer: string | null;
   approved_by_email: string | null;
   is_manual_approval: boolean | null;
