@@ -48,8 +48,8 @@ export const EndpointsSection = () => {
 }`;
 
   const createPixParams = [
-    { name: 'amount', type: 'number', required: true, description: 'Valor do PIX em reais (mínimo: 0.50)' },
-    { name: 'description', type: 'string', required: false, description: 'Descrição do pagamento' },
+    { name: 'amount', type: 'number', required: true, description: 'Valor do PIX em reais (mínimo: R$ 0,50)' },
+    { name: 'description', type: 'string', required: false, description: 'Descrição do pagamento (exibida no PIX)' },
     { name: 'external_reference', type: 'string', required: false, description: 'ID externo para referência no seu sistema' },
     { name: 'customer', type: 'object', required: false, description: 'Dados do cliente (objeto)' },
     { name: 'customer.name', type: 'string', required: false, description: 'Nome completo do cliente' },
@@ -57,6 +57,8 @@ export const EndpointsSection = () => {
     { name: 'customer.document', type: 'string', required: false, description: 'CPF/CNPJ do cliente (apenas números)' },
     { name: 'metadata', type: 'object', required: false, description: 'Dados adicionais em formato chave-valor' },
   ];
+
+  // Note: PIX expires in 30 minutes after creation
 
   const statusParams = [
     { name: 'txid', type: 'string', required: true, description: 'ID da transação retornado na criação do PIX' },
@@ -155,12 +157,11 @@ export const EndpointsSection = () => {
 
         <div>
           <h4 className="text-sm font-semibold mb-3">Status possíveis</h4>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { status: 'pending', label: 'Aguardando', color: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30' },
-              { status: 'paid', label: 'Pago', color: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' },
-              { status: 'expired', label: 'Expirado', color: 'bg-muted text-muted-foreground border-border' },
-              { status: 'cancelled', label: 'Cancelado', color: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30' },
+              { status: 'pending', label: 'Aguardando pagamento', color: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+              { status: 'paid', label: 'Pagamento confirmado', color: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' },
+              { status: 'expired', label: 'PIX expirado (30 min)', color: 'bg-muted text-muted-foreground border-border' },
             ].map((s) => (
               <div key={s.status} className="flex items-center gap-2 p-3 rounded-lg border bg-card">
                 <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold border ${s.color}`}>
@@ -170,6 +171,9 @@ export const EndpointsSection = () => {
               </div>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            ⏱️ O PIX expira automaticamente após <strong>30 minutos</strong> se não for pago.
+          </p>
         </div>
       </EndpointCard>
     </section>
