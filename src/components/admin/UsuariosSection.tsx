@@ -342,14 +342,14 @@ export const UsuariosSection = () => {
                             <span className="text-muted-foreground">{getFeeConfigName(u.id)}</span>
                           </TableCell>
                           <TableCell>
-                            {u.is_blocked ? (
-                              <Badge variant="destructive" className="text-[10px] px-1.5">Bloq.</Badge>
+                          {u.is_blocked ? (
+                              <Badge variant="destructive" className="text-[10px] px-1.5">Bloqueado</Badge>
                             ) : u.is_admin ? (
-                              <Badge className="bg-primary text-[10px] px-1.5">Admin</Badge>
+                              <Badge className="bg-primary text-[10px] px-1.5">Administrador</Badge>
                             ) : u.is_approved ? (
-                              <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] px-1.5">Aprov.</Badge>
+                              <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] px-1.5">Aprovado</Badge>
                             ) : (
-                              <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-[10px] px-1.5">Pend.</Badge>
+                              <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-[10px] px-1.5">Pendente</Badge>
                             )}
                           </TableCell>
                         </TableRow>
