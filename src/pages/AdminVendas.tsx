@@ -23,14 +23,7 @@ import {
 } from "lucide-react";
 import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 import { CalendarIcon } from "lucide-react";
-
-interface UTMData {
-  utm_source?: string;
-  utm_medium?: string;
-  utm_campaign?: string;
-  utm_content?: string;
-  utm_term?: string;
-}
+import { UTMData, getUtmValue, getTrafficSource } from "@/lib/utmHelpers";
 
 interface Transaction {
   id: string;
@@ -447,16 +440,12 @@ const AdminVendas = () => {
                         </TableCell>
                         <TableCell>{getStatusBadge(tx.status)}</TableCell>
                         <TableCell className="text-xs hidden lg:table-cell max-w-[100px] truncate">
-                          {tx.utm_data?.utm_term || '-'}
+                          {getUtmValue(tx.utm_data, 'utm_term') || '-'}
                         </TableCell>
                         <TableCell className="text-center">
-                          {tx.utm_data?.utm_source?.toLowerCase().includes('facebook') || 
-                           tx.utm_data?.utm_source?.toLowerCase().includes('fb') || 
-                           tx.utm_data?.utm_source?.toLowerCase().includes('meta') ? (
+                          {getTrafficSource(tx.utm_data) === 'facebook' ? (
                             <FacebookIcon />
-                          ) : tx.utm_data?.utm_source?.toLowerCase().includes('google') || 
-                               tx.utm_data?.utm_source?.toLowerCase().includes('gads') || 
-                               tx.utm_data?.utm_source?.toLowerCase().includes('adwords') ? (
+                          ) : getTrafficSource(tx.utm_data) === 'google' ? (
                             <GoogleIcon />
                           ) : null}
                         </TableCell>

@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, CheckCircle, AlertTriangle, TrendingUp, Eye, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { getUtmValue, hasUtmData, getAllUtmValues, UTMData } from "@/lib/utmHelpers";
 
 interface Transaction {
   id: string;
@@ -14,7 +15,7 @@ interface Transaction {
   product_name: string | null;
   status: string;
   amount: number;
-  utm_data: Record<string, string> | null;
+  utm_data: UTMData | null;
 }
 
 interface UTMStats {
@@ -61,12 +62,12 @@ export function UTMDebugSection() {
 
       const typedData = (data || []) as Transaction[];
       
-      // Filter by UTM status
+      // Filter by UTM status using helper
       let filtered = typedData;
       if (statusFilter === "with") {
-        filtered = typedData.filter(t => t.utm_data && Object.keys(t.utm_data).length > 0);
+        filtered = typedData.filter(t => hasUtmData(t.utm_data));
       } else if (statusFilter === "without") {
-        filtered = typedData.filter(t => !t.utm_data || Object.keys(t.utm_data).length === 0);
+        filtered = typedData.filter(t => !hasUtmData(t.utm_data));
       }
 
       setTransactions(filtered);
@@ -80,7 +81,7 @@ export function UTMDebugSection() {
 
   const calculateStats = (data: Transaction[]) => {
     const total = data.length;
-    const withUtm = data.filter(t => t.utm_data && Object.keys(t.utm_data).length > 0).length;
+    const withUtm = data.filter(t => hasUtmData(t.utm_data)).length;
     const withoutUtm = total - withUtm;
     const successRate = total > 0 ? (withUtm / total) * 100 : 0;
 
@@ -88,11 +89,13 @@ export function UTMDebugSection() {
     const trafficTypeBreakdown: Record<string, number> = {};
 
     data.forEach(t => {
-      if (t.utm_data && Object.keys(t.utm_data).length > 0) {
-        const source = t.utm_data.utm_source || 'unknown';
+      if (hasUtmData(t.utm_data)) {
+        // Use helper to get utm_source from either structure
+        const source = getUtmValue(t.utm_data, 'utm_source') || 'unknown';
         sourceBreakdown[source] = (sourceBreakdown[source] || 0) + 1;
 
-        const trafficType = t.utm_data.traffic_type || 'unknown';
+        // Traffic type might be at root level or in metadata
+        const trafficType = (t.utm_data as any)?.traffic_type || (t.utm_data as any)?.metadata?.traffic_type || 'unknown';
         trafficTypeBreakdown[trafficType] = (trafficTypeBreakdown[trafficType] || 0) + 1;
       } else {
         sourceBreakdown['sem_utm'] = (sourceBreakdown['sem_utm'] || 0) + 1;
@@ -152,7 +155,7 @@ export function UTMDebugSection() {
     });
   };
 
-  const hasUtm = (t: Transaction) => t.utm_data && Object.keys(t.utm_data).length > 0;
+  const txHasUtm = (t: Transaction) => hasUtmData(t.utm_data);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -340,12 +343,12 @@ export function UTMDebugSection() {
                         >
                           <TableCell className="text-xs whitespace-nowrap">{formatDate(t.created_at)}</TableCell>
                           <TableCell className="text-xs max-w-[120px] truncate">{t.product_name || '-'}</TableCell>
-                          <TableCell className="text-xs">{t.utm_data?.utm_source || '-'}</TableCell>
-                          <TableCell className="text-xs">{t.utm_data?.utm_medium || '-'}</TableCell>
-                          <TableCell className="text-xs max-w-[100px] truncate">{t.utm_data?.utm_campaign || '-'}</TableCell>
-                          <TableCell className="text-xs">{t.utm_data?.traffic_type || '-'}</TableCell>
+                          <TableCell className="text-xs">{getUtmValue(t.utm_data, 'utm_source') || '-'}</TableCell>
+                          <TableCell className="text-xs">{getUtmValue(t.utm_data, 'utm_medium') || '-'}</TableCell>
+                          <TableCell className="text-xs max-w-[100px] truncate">{getUtmValue(t.utm_data, 'utm_campaign') || '-'}</TableCell>
+                          <TableCell className="text-xs">{(t.utm_data as any)?.traffic_type || (t.utm_data as any)?.metadata?.traffic_type || '-'}</TableCell>
                           <TableCell>
-                            {hasUtm(t) ? (
+                            {txHasUtm(t) ? (
                               <Badge className="bg-emerald-500/10 text-emerald-600 text-xs">✓</Badge>
                             ) : (
                               <Badge className="bg-amber-500/10 text-amber-600 text-xs">⚠</Badge>
