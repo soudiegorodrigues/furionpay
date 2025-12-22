@@ -723,16 +723,17 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <div className="flex-1 h-[300px] sm:h-[180px] w-full relative overflow-hidden">
+            {/* Container com dimensões estáveis para evitar recálculo de largura */}
+            <div className="flex-1 h-[300px] sm:h-[180px] w-full min-w-0 relative overflow-hidden">
               {/* Mantém o gráfico sempre montado para evitar "pulos" visuais */}
               <div
-                className={`h-full w-full transition-opacity duration-300 ${
+                className={`absolute inset-0 transition-opacity duration-300 ${
                   isLoadingChart
                     ? (chartData.length > 0 ? "opacity-60" : "opacity-0")
                     : "opacity-100"
                 }`}
               >
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" debounce={0}>
                   <AreaChart
                     data={chartData}
                     margin={{
