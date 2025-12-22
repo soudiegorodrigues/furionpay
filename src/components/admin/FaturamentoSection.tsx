@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,17 +27,18 @@ interface GlobalStats {
 
 interface ChartData {
   date: string;
-  vendas: number;
-  faturamento: number;
+  gerados: number;
+  pagos: number;
+  valorPago: number;
 }
 
-type ChartFilter = '7days' | '15days' | '30days' | '90days';
+type ChartFilter = 'today' | '7days' | '14days' | '30days';
 
 const chartFilterOptions: { value: ChartFilter; label: string }[] = [
+  { value: 'today', label: 'Hoje' },
   { value: '7days', label: '7 dias' },
-  { value: '15days', label: '15 dias' },
+  { value: '14days', label: '14 dias' },
   { value: '30days', label: '30 dias' },
-  { value: '90days', label: '90 dias' },
 ];
 
 // Memoized StatCard component
@@ -118,7 +119,7 @@ export const FaturamentoSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [isCheckingBatch, setIsCheckingBatch] = useState(false);
-  const [chartFilter, setChartFilter] = useState<ChartFilter>('7days');
+  const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
 
   // Memoized currency formatter
   const formatCurrency = useCallback((value: number) => {
@@ -148,16 +149,46 @@ export const FaturamentoSection = () => {
   const loadChartData = useCallback(async (filter: ChartFilter = chartFilter) => {
     setIsChartLoading(true);
     try {
-      const days = filter === '7days' ? 7 : filter === '15days' ? 15 : filter === '30days' ? 30 : 90;
-      const { data, error } = await supabase.rpc('get_chart_data_by_day', { p_days: days });
-      if (error) throw error;
-      
-      const formattedData = (data || []).map((row: { date_brazil: string; gerados: number; pagos: number; valor_pago: number }) => ({
-        date: new Date(row.date_brazil).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-        vendas: Number(row.pagos),
-        faturamento: Number(row.valor_pago)
-      }));
-      setChartData(formattedData);
+      if (filter === 'today') {
+        const todayBrazil = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+        const { data, error } = await supabase.rpc('get_chart_data_by_hour', { p_date: todayBrazil });
+        if (error) throw error;
+        
+        // Criar mapa de dados existentes
+        const dataMap = new Map<number, { gerados: number; pagos: number; valor_pago: number }>();
+        (data || []).forEach((row: { hour_brazil: number; gerados: number; pagos: number; valor_pago: number }) => {
+          dataMap.set(row.hour_brazil, {
+            gerados: Number(row.gerados),
+            pagos: Number(row.pagos),
+            valor_pago: Number(row.valor_pago)
+          });
+        });
+        
+        // Gerar todas as 24 horas (00:00 a 23:00)
+        const formattedData: ChartData[] = [];
+        for (let hour = 0; hour < 24; hour++) {
+          const hourData = dataMap.get(hour);
+          formattedData.push({
+            date: `${hour.toString().padStart(2, '0')}:00`,
+            gerados: hourData?.gerados || 0,
+            pagos: hourData?.pagos || 0,
+            valorPago: hourData?.valor_pago || 0
+          });
+        }
+        setChartData(formattedData);
+      } else {
+        const days = filter === '7days' ? 7 : filter === '14days' ? 14 : 30;
+        const { data, error } = await supabase.rpc('get_chart_data_by_day', { p_days: days });
+        if (error) throw error;
+        
+        const formattedData = (data || []).map((row: { date_brazil: string; gerados: number; pagos: number; valor_pago: number }) => ({
+          date: new Date(row.date_brazil).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          gerados: Number(row.gerados),
+          pagos: Number(row.pagos),
+          valorPago: Number(row.valor_pago)
+        }));
+        setChartData(formattedData);
+      }
     } catch (error) {
       console.error('Error loading chart data:', error);
     } finally {
@@ -169,7 +200,7 @@ export const FaturamentoSection = () => {
   useEffect(() => {
     const loadAll = async () => {
       setIsLoading(true);
-      await Promise.all([loadGlobalStats(), loadChartData('7days')]);
+      await Promise.all([loadGlobalStats(), loadChartData('today')]);
       setIsLoading(false);
     };
     loadAll();
@@ -303,23 +334,26 @@ export const FaturamentoSection = () => {
         </CardContent>
       </Card>
 
-      {/* Chart - Visão Geral */}
-      <Card className="bg-slate-900 border-slate-800 rounded-xl">
+      {/* Chart */}
+      <Card>
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <CardTitle className="text-white text-lg">Visão Geral</CardTitle>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <CardTitle className="text-sm sm:text-lg">Evolução de Transações</CardTitle>
+            </div>
             
-            {/* Filter buttons */}
-            <div className="flex items-center gap-1">
+            {/* Pill-style filter buttons */}
+            <div className="flex items-center bg-muted rounded-full p-1">
               {chartFilterOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => setChartFilter(option.value)}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200",
+                    "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
                     chartFilter === option.value
-                      ? "bg-primary text-primary-foreground"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {option.label}
@@ -334,84 +368,66 @@ export const FaturamentoSection = () => {
           ) : (
             <>
               <div className={cn(
-                "h-[250px] w-full transition-opacity duration-300",
+                "h-[280px] sm:h-[320px] w-full transition-opacity duration-300",
                 isChartLoading && "opacity-50"
               )}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart 
+                  <AreaChart 
                     data={chartData} 
                     margin={{ top: 20, right: 10, left: 10, bottom: 20 }}
                   >
-                    <CartesianGrid 
-                      strokeDasharray="3 3" 
-                      stroke="hsl(var(--border))" 
-                      opacity={0.2} 
-                    />
+                    <defs>
+                      <linearGradient id="areaGradientPaid" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
                     <XAxis
                       dataKey="date" 
-                      tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                       tickLine={false}
                       axisLine={false}
-                      interval="preserveStartEnd"
+                      interval={chartFilter === 'today' ? 1 : 'preserveStartEnd'}
                     />
                     <YAxis 
-                      tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                       tickLine={false}
                       axisLine={false}
                       allowDecimals={false}
-                      width={40}
+                      width={30}
                     />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#1e293b',
-                        border: '1px solid #334155',
-                        borderRadius: '8px',
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
                         padding: '12px 16px',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                         fontSize: '12px'
                       }}
-                      labelStyle={{ color: '#f1f5f9', fontWeight: 600, marginBottom: '6px' }}
+                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: '6px' }}
                       formatter={(value: number, name: string) => {
-                        if (name === 'vendas') return [value, 'Vendas'];
-                        if (name === 'faturamento') return [
-                          new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value),
-                          'Faturamento'
-                        ];
+                        if (name === 'pagos') return [value, 'Pagos'];
                         return [value, name];
                       }}
                     />
-                    <Line 
+                    <Area 
                       type="monotone"
-                      dataKey="vendas" 
+                      dataKey="pagos" 
                       stroke="hsl(var(--primary))"
                       strokeWidth={2}
-                      dot={false}
+                      fill="url(#areaGradientPaid)"
                       animationDuration={800}
                       animationEasing="ease-out"
-                    />
-                    <Line 
-                      type="monotone"
-                      dataKey="faturamento" 
-                      stroke="#3b82f6"
-                      strokeWidth={2}
                       dot={false}
-                      animationDuration={800}
-                      animationEasing="ease-out"
+                      activeDot={false}
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
-              
-              {/* Legenda centralizada */}
-              <div className="flex items-center justify-center gap-6 mt-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-primary"></span>
-                  <span className="text-xs text-slate-400">Vendas</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                  <span className="text-xs text-slate-400">Faturamento</span>
-                </div>
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <span className="w-3 h-3 rounded-full bg-primary"></span>
+                <span className="text-xs text-muted-foreground font-medium">Pagos</span>
               </div>
             </>
           )}
