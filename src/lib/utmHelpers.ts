@@ -1,0 +1,101 @@
+// Helper utilities for extracting UTM data from both checkout and API transaction structures
+// Checkout saves UTMs directly: { utm_source, utm_medium, ... }
+// API saves UTMs nested: { metadata: { utm_source, utm_medium, ... } }
+
+export interface UTMData {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  metadata?: {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+    utm_term?: string;
+  };
+}
+
+export type UTMKey = 'utm_source' | 'utm_medium' | 'utm_campaign' | 'utm_content' | 'utm_term';
+
+/**
+ * Extracts a UTM value from transaction data, checking both direct and nested (API) structures
+ */
+export function getUtmValue(utmData: UTMData | null | undefined, key: UTMKey): string | undefined {
+  if (!utmData) return undefined;
+  
+  // Check direct value first (checkout transactions)
+  const directValue = utmData[key];
+  if (directValue && typeof directValue === 'string') {
+    return directValue;
+  }
+  
+  // Check nested metadata (API transactions)
+  const nestedValue = utmData.metadata?.[key];
+  if (nestedValue && typeof nestedValue === 'string') {
+    return nestedValue;
+  }
+  
+  return undefined;
+}
+
+/**
+ * Checks if transaction has any UTM data (from either structure)
+ */
+export function hasUtmData(utmData: UTMData | null | undefined): boolean {
+  if (!utmData) return false;
+  
+  const keys: UTMKey[] = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  
+  // Check direct values
+  const hasDirectUtm = keys.some(key => {
+    const value = utmData[key];
+    return value && typeof value === 'string';
+  });
+  
+  if (hasDirectUtm) return true;
+  
+  // Check nested metadata
+  if (utmData.metadata) {
+    const hasNestedUtm = keys.some(key => {
+      const value = utmData.metadata?.[key];
+      return value && typeof value === 'string';
+    });
+    if (hasNestedUtm) return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Gets all UTM values as an object (merging both structures)
+ */
+export function getAllUtmValues(utmData: UTMData | null | undefined): Record<UTMKey, string | undefined> {
+  return {
+    utm_source: getUtmValue(utmData, 'utm_source'),
+    utm_medium: getUtmValue(utmData, 'utm_medium'),
+    utm_campaign: getUtmValue(utmData, 'utm_campaign'),
+    utm_content: getUtmValue(utmData, 'utm_content'),
+    utm_term: getUtmValue(utmData, 'utm_term'),
+  };
+}
+
+/**
+ * Determines traffic source type from UTM data
+ */
+export function getTrafficSource(utmData: UTMData | null | undefined): 'facebook' | 'google' | 'other' | null {
+  const source = getUtmValue(utmData, 'utm_source')?.toLowerCase();
+  
+  if (!source) return null;
+  
+  if (source.includes('facebook') || source.includes('fb') || source.includes('instagram') || source.includes('ig')) {
+    return 'facebook';
+  }
+  
+  if (source.includes('google') || source.includes('gads') || source.includes('youtube')) {
+    return 'google';
+  }
+  
+  return 'other';
+}

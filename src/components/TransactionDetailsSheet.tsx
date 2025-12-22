@@ -3,21 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard } from "lucide-react";
 import { useState } from "react";
-interface UTMData {
-  utm_source?: string;
-  utm_medium?: string;
-  utm_campaign?: string;
-  utm_content?: string;
-  utm_term?: string;
-  // Estrutura da API - UTMs vêm dentro de metadata
-  metadata?: {
-    utm_source?: string;
-    utm_medium?: string;
-    utm_campaign?: string;
-    utm_content?: string;
-    utm_term?: string;
-  };
-}
+import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, UTMData } from "@/lib/utmHelpers";
 interface Transaction {
   id: string;
   amount: number;
@@ -95,19 +81,16 @@ const TransactionDetailsSheet = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Helper para extrair UTM de ambas estruturas (checkout normal e API)
+  // Helper para extrair UTM usando o utilitário compartilhado
   const getUtmValue = (key: 'utm_source' | 'utm_medium' | 'utm_campaign' | 'utm_content' | 'utm_term') => {
-    return transaction.utm_data?.[key] || transaction.utm_data?.metadata?.[key];
+    return getUtmValueHelper(transaction.utm_data, key);
   };
 
   const netAmount = calculateNetAmount(transaction.amount, transaction.fee_percentage, transaction.fee_fixed);
   const feeAmount = transaction.amount - netAmount;
   
-  // Verifica UTMs diretos ou dentro de metadata (API)
-  const hasUtmData = transaction.utm_data && (
-    Object.entries(transaction.utm_data).some(([k, v]) => k !== 'metadata' && v && typeof v === 'string') ||
-    (transaction.utm_data.metadata && Object.values(transaction.utm_data.metadata).some(v => v))
-  );
+  // Verifica UTMs usando o utilitário compartilhado
+  const hasUtm = hasUtmDataHelper(transaction.utm_data);
   const statusConfig = getStatusConfig(transaction.status);
   return <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[340px] sm:w-[380px] p-0 border-l border-border/50 bg-background">
@@ -173,7 +156,7 @@ const TransactionDetailsSheet = ({
           </div>
 
           {/* UTM */}
-          {hasUtmData && <div className="bg-muted/30 rounded-lg p-3">
+          {hasUtm && <div className="bg-muted/30 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">UTM Tracking</span>
@@ -182,6 +165,8 @@ const TransactionDetailsSheet = ({
                 {getUtmValue('utm_source') && <Badge variant="secondary" className="text-xs h-6">{getUtmValue('utm_source')}</Badge>}
                 {getUtmValue('utm_medium') && <Badge variant="outline" className="text-xs h-6">{getUtmValue('utm_medium')}</Badge>}
                 {getUtmValue('utm_campaign') && <Badge variant="outline" className="text-xs h-6">{getUtmValue('utm_campaign')}</Badge>}
+                {getUtmValue('utm_content') && <Badge variant="outline" className="text-xs h-6">{getUtmValue('utm_content')}</Badge>}
+                {getUtmValue('utm_term') && <Badge variant="outline" className="text-xs h-6">{getUtmValue('utm_term')}</Badge>}
               </div>
             </div>}
 
