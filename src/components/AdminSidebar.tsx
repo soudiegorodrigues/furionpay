@@ -76,7 +76,7 @@ export function AdminSidebar({
     <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-sidebar">
       {/* Header compacto */}
       <SidebarHeader className="p-4 flex flex-col items-center justify-center">
-        <img src={logoSrc} alt="FurionPay" className="h-12 w-auto object-contain" />
+        <img src={logoSrc} alt="FurionPay" className="h-16 w-auto object-contain" />
       </SidebarHeader>
 
       <SidebarContent className="px-3 flex-1 overflow-y-auto overflow-x-hidden">
