@@ -11,14 +11,15 @@ export const ErrorsSection = () => {
   ];
 
   const errorCodes = [
-    { code: 'INVALID_AMOUNT', description: 'Valor inválido. Mínimo: R$ 0,50' },
-    { code: 'INVALID_DOCUMENT', description: 'CPF/CNPJ inválido' },
-    { code: 'INVALID_EMAIL', description: 'E-mail em formato inválido' },
-    { code: 'MISSING_REQUIRED_FIELD', description: 'Campo obrigatório não fornecido' },
-    { code: 'TRANSACTION_NOT_FOUND', description: 'Transação não encontrada' },
-    { code: 'TRANSACTION_EXPIRED', description: 'Transação já expirada' },
-    { code: 'ACQUIRER_ERROR', description: 'Erro no processador de pagamento' },
+    { code: 'UNAUTHORIZED', description: 'API Key não fornecida ou inválida' },
+    { code: 'INVALID_API_KEY', description: 'API Key não encontrada ou desativada' },
+    { code: 'INVALID_REQUEST', description: 'Corpo da requisição inválido ou mal formatado' },
+    { code: 'AMOUNT_TOO_LOW', description: 'Valor mínimo para PIX é R$ 0,50' },
+    { code: 'MISSING_TXID', description: 'ID da transação (txid) não fornecido' },
+    { code: 'TRANSACTION_NOT_FOUND', description: 'Transação não encontrada ou não pertence à sua conta' },
+    { code: 'PIX_GENERATION_FAILED', description: 'Falha ao gerar PIX no processador de pagamento' },
     { code: 'RATE_LIMIT_EXCEEDED', description: 'Limite de requisições excedido' },
+    { code: 'INTERNAL_ERROR', description: 'Erro interno do servidor' },
   ];
 
   return (
@@ -93,7 +94,7 @@ export const ErrorsSection = () => {
             <code>{`{
   "success": false,
   "error": {
-    "code": "INVALID_AMOUNT",
+    "code": "AMOUNT_TOO_LOW",
     "message": "O valor mínimo para PIX é R$ 0,50"
   }
 }`}</code>

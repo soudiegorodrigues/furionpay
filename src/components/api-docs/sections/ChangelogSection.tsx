@@ -12,6 +12,16 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: '1.0.1',
+    date: '2024-12-15',
+    changes: [
+      { type: 'improvement', description: 'Documentação expandida com mais exemplos de código' },
+      { type: 'improvement', description: 'Melhoria no tempo de resposta dos endpoints' },
+      { type: 'fix', description: 'Correção no cálculo de expiração do PIX (30 minutos)' },
+      { type: 'fix', description: 'Correção em edge cases de validação de valores' },
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2024-12-01',
     changes: [
@@ -20,24 +30,6 @@ const changelog: ChangelogEntry[] = [
       { type: 'feature', description: 'Endpoint para consulta de status de transações' },
       { type: 'feature', description: 'Sistema de webhooks para notificações em tempo real' },
       { type: 'feature', description: 'Autenticação via API Key' },
-    ],
-  },
-  {
-    version: '1.0.1',
-    date: '2024-12-10',
-    changes: [
-      { type: 'improvement', description: 'Melhoria no tempo de resposta dos endpoints' },
-      { type: 'fix', description: 'Correção no cálculo de expiração do PIX' },
-      { type: 'improvement', description: 'Adicionado suporte a metadados customizados' },
-    ],
-  },
-  {
-    version: '1.1.0',
-    date: '2024-12-15',
-    changes: [
-      { type: 'feature', description: 'Novo endpoint para listagem de transações' },
-      { type: 'improvement', description: 'Documentação expandida com mais exemplos de código' },
-      { type: 'fix', description: 'Correção em edge cases de validação de CPF/CNPJ' },
     ],
   },
 ];
