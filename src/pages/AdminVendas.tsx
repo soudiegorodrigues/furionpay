@@ -31,6 +31,7 @@ interface Transaction {
   status: 'generated' | 'paid' | 'expired';
   txid: string;
   donor_name: string;
+  donor_email?: string;
   product_name: string | null;
   created_at: string;
   paid_at: string | null;
