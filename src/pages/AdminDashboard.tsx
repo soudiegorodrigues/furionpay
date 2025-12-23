@@ -1190,58 +1190,40 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
             {/* Coluna Esquerda - Seção de Homenagem */}
             <div className="relative bg-gradient-to-br from-gray-950 via-black to-red-950/20 p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px] border-l-4 border-primary shadow-[inset_4px_0_20px_-5px_hsl(var(--primary)/0.4)] overflow-hidden">
               
-              {/* Orb de Glow Gigante - Canto Superior Direito */}
+              {/* Glow primário - canto superior direito (sutil) */}
               <div 
-                className="absolute -top-20 -right-20 w-[400px] h-[400px] rounded-full pointer-events-none" 
+                className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none" 
                 style={{
-                  background: 'radial-gradient(circle, hsl(var(--primary) / 0.25) 0%, transparent 70%)',
-                  filter: 'blur(80px)'
-                }} 
-              />
-              
-              {/* Orb de Glow Secundário - Canto Inferior Esquerdo */}
-              <div 
-                className="absolute -bottom-20 -left-20 w-[300px] h-[300px] rounded-full pointer-events-none" 
-                style={{
-                  background: 'radial-gradient(circle, hsl(var(--primary) / 0.18) 0%, transparent 70%)',
+                  background: 'radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)',
                   filter: 'blur(100px)'
                 }} 
               />
               
-              {/* Orb Central Elíptico */}
+              {/* Glow secundário - canto inferior esquerdo (mais sutil) */}
               <div 
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] rounded-full opacity-40 pointer-events-none" 
+                className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full pointer-events-none" 
                 style={{
-                  background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.15) 0%, transparent 60%)',
-                  filter: 'blur(60px)'
+                  background: 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)',
+                  filter: 'blur(120px)'
                 }} 
               />
               
-              {/* Linhas Verticais e Horizontais Sutis - Estilo Futurista */}
-              <div className="absolute inset-0 opacity-[0.04] pointer-events-none">
+              {/* Linhas sutis - estilo AuthBackground */}
+              <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-primary to-transparent" />
                 <div className="absolute top-0 left-3/4 w-px h-full bg-gradient-to-b from-transparent via-primary to-transparent" />
                 <div className="absolute top-1/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-                <div className="absolute top-2/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
               </div>
               
-              {/* Grade High-Tech Sutil */}
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none" />
+              {/* Partículas sutis */}
+              <div className="absolute top-20 right-[15%] w-1 h-1 bg-primary/20 rounded-full animate-float pointer-events-none" />
+              <div className="absolute bottom-[25%] left-[10%] w-1 h-1 bg-primary/15 rounded-full animate-float-slow pointer-events-none" style={{ animationDelay: '1s' }} />
               
-              {/* Partículas Flutuantes Animadas */}
-              <div className="absolute top-[15%] right-[20%] w-1.5 h-1.5 bg-primary/30 rounded-full animate-float pointer-events-none" />
-              <div className="absolute bottom-[30%] left-[15%] w-1 h-1 bg-primary/25 rounded-full animate-float-slow pointer-events-none" style={{ animationDelay: '1s' }} />
-              <div className="absolute top-[55%] right-[30%] w-2 h-2 bg-primary/20 rounded-full animate-drift pointer-events-none" style={{ animationDelay: '2s' }} />
-              <div className="absolute top-[25%] left-[25%] w-1 h-1 bg-primary/40 rounded-full animate-pulse pointer-events-none" style={{ animationDelay: '0.5s' }} />
-              <div className="absolute bottom-[20%] right-[15%] w-1.5 h-1.5 bg-primary/35 rounded-full animate-float pointer-events-none" style={{ animationDelay: '1.5s' }} />
+              {/* Círculo geométrico sutil */}
+              <div className="absolute top-[20%] left-[8%] w-20 h-20 border border-primary/5 rounded-full animate-spin-slow pointer-events-none" />
               
-              {/* Elementos Geométricos Animados - Círculos Girando */}
-              <div className="absolute top-[10%] left-[8%] w-16 h-16 border border-primary/10 rounded-full animate-spin-slow pointer-events-none" />
-              <div className="absolute bottom-[15%] right-[10%] w-12 h-12 border border-primary/8 rounded-full animate-spin-slow pointer-events-none" style={{ animationDirection: 'reverse' }} />
-              <div className="absolute top-[60%] left-[5%] w-8 h-8 border border-primary/5 rounded-full animate-spin-slow pointer-events-none" style={{ animationDelay: '3s' }} />
-              
-              {/* Vinheta Intensa nas Bordas */}
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(0,0,0,0.8)_100%)] pointer-events-none" />
+              {/* Vinheta suave */}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)] pointer-events-none" />
               
               
               <div className="relative z-10 space-y-4">
