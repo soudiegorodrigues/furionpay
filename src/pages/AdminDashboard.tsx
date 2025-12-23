@@ -1192,19 +1192,6 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
               {/* Efeito de brilho vermelho de fundo */}
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,hsl(var(--primary)/0.15),transparent_60%)]" />
               
-              {/* Ícones decorativos profissionais */}
-              <div className="absolute top-4 left-4 animate-pulse" style={{ animationDelay: '0s' }}>
-                <Star className="h-8 w-8 text-primary/40" fill="currentColor" />
-              </div>
-              <div className="absolute top-6 right-6 animate-pulse" style={{ animationDelay: '0.5s' }}>
-                <Award className="h-7 w-7 text-primary/30" />
-              </div>
-              <div className="absolute bottom-6 left-6 animate-pulse" style={{ animationDelay: '1s' }}>
-                <Sparkles className="h-6 w-6 text-primary/25" />
-              </div>
-              <div className="absolute bottom-4 right-4 animate-pulse" style={{ animationDelay: '0.3s' }}>
-                <Trophy className="h-7 w-7 text-primary/35" />
-              </div>
               
               <div className="relative z-10 space-y-4">
                 {/* Título Parabéns */}
