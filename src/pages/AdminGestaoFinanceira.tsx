@@ -16,14 +16,65 @@ import { FinanceTransactions } from "@/components/finance/FinanceTransactions";
 import { FinanceGoals } from "@/components/finance/FinanceGoals";
 import { FinanceAccounts } from "@/components/finance/FinanceAccounts";
 import { FinanceReportGenerator } from "@/components/finance/FinanceReportGenerator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+
+const LoadingSkeleton = () => (
+  <div className="p-4 md:p-8 lg:p-10 space-y-6 animate-fade-in max-w-7xl mx-auto">
+    {/* Header skeleton */}
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-72 mt-2" />
+      </div>
+      <Skeleton className="h-10 w-32" />
+    </div>
+    
+    {/* Tabs skeleton */}
+    <Skeleton className="h-12 w-full" />
+    
+    {/* Cards skeleton */}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <Card key={i}>
+          <CardContent className="p-6">
+            <Skeleton className="h-32 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+    
+    {/* Charts skeleton */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardContent className="p-6">
+          <Skeleton className="h-64 w-full" />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="p-6">
+          <Skeleton className="h-64 w-full" />
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+);
 
 const AdminGestaoFinanceira = () => {
-  const { user } = useAdminAuth();
-  const { permissions, isOwner, hasPermission, loading: permissionsLoading } = usePermissions(); const effectiveUserId = permissions?.owner_id ?? user?.id;
+  const { user, loading: authLoading } = useAdminAuth();
+  const { permissions, isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
+  const effectiveUserId = permissions?.owner_id ?? user?.id;
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Permission check
-  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_financeiro')) {
+  // Show skeleton while initializing
+  const isInitializing = authLoading || permissionsLoading || !effectiveUserId;
+
+  if (isInitializing) {
+    return <LoadingSkeleton />;
+  }
+
+  // Permission check (only after loading is complete)
+  if (!isOwner && !hasPermission('can_manage_financeiro')) {
     return <AccessDenied message="Você não tem permissão para acessar a Gestão Financeira." />;
   }
 
