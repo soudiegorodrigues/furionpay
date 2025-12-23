@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Settings, Loader2, Check, Power, CreditCard, Zap, Eye, EyeOff } from "lucide-react";
+import { Settings, Loader2, Check, Power, CreditCard, Zap, Eye, EyeOff, Upload, FileKey } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -52,6 +52,11 @@ export const GatewayConfigSection = () => {
   const [showInterDialog, setShowInterDialog] = useState(false);
   const [showEfiDialog, setShowEfiDialog] = useState(false);
   const [isLoadingInter, setIsLoadingInter] = useState(false);
+  
+  // P12 upload states
+  const [p12Password, setP12Password] = useState('');
+  const [isConvertingP12, setIsConvertingP12] = useState(false);
+  const p12FileInputRef = useRef<HTMLInputElement>(null);
   const [isLoadingEfi, setIsLoadingEfi] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -290,6 +295,89 @@ export const GatewayConfigSection = () => {
       toast({ title: "Erro", description: "Falha ao salvar credenciais", variant: "destructive" });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle P12 file upload and conversion
+  const handleP12Upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.p12') && !file.name.endsWith('.pfx')) {
+      toast({ 
+        title: "Arquivo inválido", 
+        description: "Selecione um arquivo .p12 ou .pfx", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    setIsConvertingP12(true);
+    
+    try {
+      // Read file as base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      console.log("Arquivo P12 carregado, tentando converter...");
+      
+      // Call edge function to convert
+      const { data, error } = await supabase.functions.invoke('convert-p12-to-pem', {
+        body: { p12Base64: base64, password: p12Password }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        // Auto-fill the certificate and private key fields
+        setEfiConfig(prev => ({
+          ...prev,
+          certificate: data.certificate,
+          privateKey: data.privateKey
+        }));
+        
+        toast({ 
+          title: "Certificado convertido!", 
+          description: "Certificado e chave privada preenchidos automaticamente." 
+        });
+      } else if (data?.manualInstructions) {
+        // Show manual instructions
+        toast({ 
+          title: "Conversão manual necessária", 
+          description: "Use uma ferramenta online para converter o certificado. Veja as instruções abaixo.",
+          variant: "destructive"
+        });
+        
+        // Show instructions in console for now
+        console.log("Instruções de conversão manual:", data.manualInstructions);
+        
+        // Alert with instructions
+        alert(`Conversão automática não disponível.\n\nOpções:\n\n1. Acesse: https://www.sslshopper.com/ssl-converter.html\n2. Faça upload do arquivo .p12\n3. Tipo de origem: PKCS#12\n4. Tipo de destino: PEM\n5. Digite a senha do certificado\n\nOu use OpenSSL:\nopenssl pkcs12 -in ${file.name} -clcerts -nokeys -out cert.pem\nopenssl pkcs12 -in ${file.name} -nocerts -nodes -out key.pem`);
+      } else {
+        throw new Error(data?.error || "Erro desconhecido");
+      }
+      
+    } catch (error: any) {
+      console.error("Erro ao converter P12:", error);
+      toast({ 
+        title: "Erro na conversão", 
+        description: error.message || "Falha ao converter certificado",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsConvertingP12(false);
+      // Reset file input
+      if (p12FileInputRef.current) {
+        p12FileInputRef.current.value = '';
+      }
     }
   };
 
@@ -825,6 +913,54 @@ export const GatewayConfigSection = () => {
                   </Button>
                 </div>
               </div>
+              
+              {/* P12 Upload Section */}
+              <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <FileKey className="h-4 w-4 text-primary" />
+                  <Label className="font-medium">Upload Certificado .p12</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Faça upload do arquivo .p12 para extrair automaticamente o certificado e chave privada.
+                </p>
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    placeholder="Senha do certificado (se houver)"
+                    value={p12Password}
+                    onChange={e => setP12Password(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                  <input
+                    ref={p12FileInputRef}
+                    type="file"
+                    accept=".p12,.pfx"
+                    onChange={handleP12Upload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => p12FileInputRef.current?.click()}
+                    disabled={isConvertingP12}
+                  >
+                    {isConvertingP12 ? (
+                      <><Loader2 className="w-3 h-3 animate-spin mr-2" />Convertendo...</>
+                    ) : (
+                      <><Upload className="w-3 h-3 mr-2" />Selecionar arquivo .p12</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 py-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">ou cole manualmente</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Certificado (.crt / .pem)</Label>
