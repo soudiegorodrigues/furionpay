@@ -170,6 +170,7 @@ const AdminDashboard = () => {
   const [isLoadingRewards, setIsLoadingRewards] = useState(true);
   const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [userName, setUserName] = useState<string>("");
+  const [existingRequests, setExistingRequests] = useState<string[]>([]); // IDs das rewards já solicitadas
   
   // Estados para o Dialog de resgate de premiação
   const [redeemDialogOpen, setRedeemDialogOpen] = useState(false);
@@ -312,6 +313,9 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         });
 
       if (error) throw error;
+
+      // Adicionar à lista de pedidos existentes para atualizar UI
+      setExistingRequests(prev => [...prev, selectedReward.id]);
 
       toast({ title: "Sucesso!", description: "Pedido de premiação enviado com sucesso!" });
       setRedeemDialogOpen(false);
@@ -514,6 +518,17 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
       // Set user name from profile
       if (!profileResult.error && profileResult.data?.full_name) {
         setUserName(profileResult.data.full_name);
+      }
+
+      // Buscar pedidos de premiação existentes do usuário
+      if (user?.id) {
+        supabase
+          .from('reward_requests')
+          .select('reward_id')
+          .eq('user_id', user.id)
+          .then(({ data: requestsData }) => {
+            setExistingRequests(requestsData?.map(r => r.reward_id) || []);
+          });
       }
 
       // Load global banner (visible to all users)
@@ -1127,7 +1142,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                   
                       {/* Botão Resgatar */}
                       <div className="flex justify-center">
-                        {achieved ? (
+                        {achieved && !existingRequests.includes(nextReward.id) ? (
                           <Button 
                             className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 animate-pulse"
                             onClick={() => {
@@ -1137,6 +1152,14 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                           >
                             <Gift className="h-3 w-3 mr-1" />
                             Resgatar Recompensa
+                          </Button>
+                        ) : achieved && existingRequests.includes(nextReward.id) ? (
+                          <Button 
+                            disabled 
+                            className="bg-amber-500/70 text-white font-medium py-1 px-3 text-[10px] cursor-not-allowed"
+                          >
+                            <Trophy className="h-3 w-3 mr-1" />
+                            Solicitado
                           </Button>
                         ) : (
                           <Button disabled className="bg-muted text-muted-foreground font-medium py-1 px-3 text-[10px] cursor-not-allowed opacity-60">
