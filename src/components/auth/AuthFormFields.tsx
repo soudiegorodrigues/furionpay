@@ -62,7 +62,7 @@ export function AuthFormFields({
             Nome completo
           </Label>
           <div className="relative group">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input 
               id="name" 
               type="text" 
@@ -83,7 +83,7 @@ export function AuthFormFields({
             Email
           </Label>
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input 
               id="email" 
               type="email" 
@@ -143,7 +143,7 @@ export function AuthFormFields({
             {mode === 'signup' ? 'Criar senha' : 'Senha'}
           </Label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input 
               id="password" 
               type={showPassword ? "text" : "password"} 
@@ -173,7 +173,7 @@ export function AuthFormFields({
               Nova senha
             </Label>
             <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 group-focus-within:text-primary transition-colors" />
               <Input 
                 id="newPassword" 
                 type={showPassword ? "text" : "password"} 
@@ -198,7 +198,7 @@ export function AuthFormFields({
               Confirmar senha
             </Label>
             <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-white/40 group-focus-within:text-primary transition-colors" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 group-focus-within:text-primary transition-colors" />
               <Input 
                 id="confirmPassword" 
                 type={showConfirmPassword ? "text" : "password"} 
