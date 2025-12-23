@@ -722,9 +722,9 @@ const AdminDashboard = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-3 sm:p-4">
-            {/* Container com altura fixa responsiva para gráfico compacto */}
-            <div className="w-full relative h-[160px] sm:h-[180px] md:h-[200px]">
+          <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
+            {/* Container flex-1 para preencher 100% do card */}
+            <div className="w-full relative flex-1 min-h-[160px]">
               <div
                 className={`w-full h-full transition-opacity duration-300 ${
                   isLoadingChart
