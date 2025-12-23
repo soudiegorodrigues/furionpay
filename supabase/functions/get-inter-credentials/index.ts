@@ -36,14 +36,22 @@ serve(async (req) => {
     }
 
     // Check if user is admin or super_admin
-    const { data: roleData } = await supabase
+    const { data: roleRows, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .in('role', ['admin', 'super_admin'])
-      .maybeSingle();
+      .in('role', ['admin', 'super_admin']);
 
-    if (!roleData) {
+    if (roleError) {
+      console.error('Error checking roles:', roleError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Erro ao validar permissões' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
+    if (!roleRows || roleRows.length === 0) {
+      console.log('Access denied for user:', user.email, user.id);
       return new Response(
         JSON.stringify({ success: false, error: 'Acesso negado' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
