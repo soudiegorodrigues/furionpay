@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
 import { CheckoutPreviewMini } from "./CheckoutPreviewMini";
 import { TestimonialsManager } from "./TestimonialsManager";
+import { BannersManager } from "./BannersManager";
 import { Section } from "@/components/product-edit";
 import {
   LayoutTemplate,
@@ -589,69 +590,19 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium flex items-center gap-2">
                         <Image className="h-4 w-4" />
-                        Banner
+                        Banners
                       </Label>
                       <Switch
                         checked={customizations.showBanner}
                         onCheckedChange={(v) => setCustomizations(p => ({ ...p, showBanner: v }))}
                       />
                     </div>
-                    {customizations.showBanner && (
-                      <div className="space-y-2">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                        {bannerImageUrl ? (
-                          <div className="space-y-2">
-                            <img
-                              src={bannerImageUrl}
-                              alt="Banner"
-                              className="w-full h-24 object-cover rounded-lg"
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 h-8 text-xs"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isUploadingImage}
-                              >
-                                {isUploadingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : "Trocar"}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 px-3 text-destructive hover:text-destructive"
-                                onClick={() => setBannerImageUrl(null)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full h-12 flex flex-col gap-1"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isUploadingImage}
-                          >
-                            {isUploadingImage ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Upload className="h-4 w-4" />
-                                <span className="text-xs">Upload Banner</span>
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    <BannersManager
+                      productId={productId}
+                      userId={userId}
+                      showBanners={customizations.showBanner}
+                      onShowBannersChange={(v) => setCustomizations(p => ({ ...p, showBanner: v }))}
+                    />
                   </div>
 
                   {/* Delivery Description */}

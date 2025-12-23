@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,14 @@ import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { cn } from "@/lib/utils";
 import { AddressFields } from "./AddressFields";
+import { BannersCarousel } from "./BannersCarousel";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Banner {
+  id: string;
+  image_url: string;
+  display_order: number;
+}
 
 // Memoized star rating component
 const StarRating = memo(({ rating }: { rating: number }) => (
@@ -49,6 +57,27 @@ export function CheckoutTemplatePadrao({
   discountApplied,
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#22C55E";
+  const [banners, setBanners] = useState<Banner[]>([]);
+
+  // Fetch banners from checkout_banners table
+  useEffect(() => {
+    if (!config?.show_banners || !product?.id) return;
+
+    const fetchBanners = async () => {
+      const { data, error } = await supabase
+        .from("checkout_banners")
+        .select("id, image_url, display_order")
+        .eq("product_id", product.id)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (!error && data) {
+        setBanners(data);
+      }
+    };
+
+    fetchBanners();
+  }, [config?.show_banners, product?.id]);
 
   const getInitials = useCallback((name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -82,17 +111,10 @@ export function CheckoutTemplatePadrao({
         </div>
       )}
 
-      {/* Banner Image */}
-      {config?.show_banners && config?.header_logo_url && (
+      {/* Banner Images Carousel */}
+      {config?.show_banners && banners.length > 0 && (
         <div className="container max-w-4xl mx-auto px-4 pt-4">
-          <img 
-            src={config.header_logo_url} 
-            alt="Banner" 
-            className="w-full rounded-lg object-cover"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-          />
+          <BannersCarousel banners={banners} />
         </div>
       )}
 
