@@ -254,7 +254,7 @@ export const useTransactionNotifications = (userId: string | null) => {
   }, [loadSettings]);
 
   // Play notification sound - uses settingsRef for current values
-  const playNotificationSound = useCallback((soundId: string) => {
+  const playNotificationSound = (soundId: string) => {
     const currentSettings = settingsRef.current;
     
     console.log('🔊 Tentando tocar som:', { 
@@ -295,14 +295,8 @@ export const useTransactionNotifications = (userId: string | null) => {
       .catch((error) => {
         console.error('🔇 Erro ao reproduzir som:', error.message);
         // Navegadores bloqueiam autoplay sem interação do usuário
-        // Tentar novamente quando houver interação
-        const playOnInteraction = () => {
-          audio.play().catch(() => {});
-          document.removeEventListener('click', playOnInteraction);
-        };
-        document.addEventListener('click', playOnInteraction, { once: true });
       });
-  }, []);
+  };
 
   // Show browser notification - uses settingsRef for current values
   const showBrowserNotification = (title: string, body: string) => {
