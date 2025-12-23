@@ -50,11 +50,7 @@ interface AcquirerHealth {
   is_circuit_open: boolean;
 }
 
-interface HealthSummary {
-  valorion: AcquirerHealth | null;
-  inter: AcquirerHealth | null;
-  ativus: AcquirerHealth | null;
-}
+type HealthSummary = Record<string, AcquirerHealth | null>;
 
 interface ApiEvent {
   id: string;
@@ -72,7 +68,8 @@ const acquirerOptions = [
   { value: 'all', label: 'Todos', short: 'All' },
   { value: 'valorion', label: 'VALORION', short: 'VL' },
   { value: 'inter', label: 'Banco Inter', short: 'BI' },
-  { value: 'ativus', label: 'Ativus Hub', short: 'AH' }
+  { value: 'ativus', label: 'Ativus Hub', short: 'AH' },
+  { value: 'efi', label: 'EFI Pay', short: 'EFI' },
 ];
 
 type ChartPeriod = '24h' | '7d' | '30d';
@@ -93,12 +90,13 @@ interface TooltipProps {
 
 const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: TooltipProps) => {
   if (!active || !payload?.length) return null;
-  
+
   const dataPoint = payload[0]?.payload;
   const valorion = dataPoint?.valorion ?? 0;
   const inter = dataPoint?.inter ?? 0;
   const ativus = dataPoint?.ativus ?? 0;
-  const total = valorion + inter + ativus;
+  const efi = dataPoint?.efi ?? 0;
+  const total = valorion + inter + ativus + efi;
 
   const formatTooltipLabel = () => {
     if (chartPeriod === '24h') {
@@ -107,9 +105,9 @@ const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: Toolti
     const [day, month] = (label || '').split('/');
     const year = new Date().getFullYear();
     const date = new Date(year, parseInt(month, 10) - 1, parseInt(day, 10));
-    return date.toLocaleDateString('pt-BR', { 
-      weekday: 'long', 
-      day: 'numeric', 
+    return date.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
       month: 'long',
       year: 'numeric'
     });
@@ -120,7 +118,7 @@ const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: Toolti
       <div className="font-semibold text-foreground mb-1.5 sm:mb-2 pb-1.5 sm:pb-2 border-b border-border capitalize text-[11px] sm:text-sm">
         {formatTooltipLabel()}
       </div>
-      
+
       <div className="space-y-1 sm:space-y-1.5">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -138,13 +136,20 @@ const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: Toolti
         </div>
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#10B981]" />
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#22C55E]" />
             <span className="text-muted-foreground text-[10px] sm:text-xs">Ativus Hub</span>
           </div>
           <span className="font-semibold text-[11px] sm:text-sm">{ativus}</span>
         </div>
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#0EA5E9]" />
+            <span className="text-muted-foreground text-[10px] sm:text-xs">EFI Pay</span>
+          </div>
+          <span className="font-semibold text-[11px] sm:text-sm">{efi}</span>
+        </div>
       </div>
-      
+
       <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-border flex items-center justify-between">
         <span className="text-muted-foreground font-medium text-[10px] sm:text-xs">Total</span>
         <span className="font-bold text-foreground text-[11px] sm:text-sm">{total}</span>
@@ -152,8 +157,6 @@ const CustomChartTooltip = memo(({ active, payload, label, chartPeriod }: Toolti
     </div>
   );
 });
-
-CustomChartTooltip.displayName = 'CustomChartTooltip';
 
 // Memoized Acquirer Card Component
 interface AcquirerCardProps {
@@ -447,29 +450,30 @@ export function ApiMonitoringSection() {
     };
 
     if (chartPeriod === '24h') {
-      const hours: { [key: string]: { time: string; hour: number; valorion: number; inter: number; ativus: number } } = {};
-      
+      const hours: { [key: string]: { time: string; hour: number; valorion: number; inter: number; ativus: number; efi: number } } = {};
+
       for (let i = 23; i >= 0; i--) {
         const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000);
         const brazilHour = getBrazilHour(hourDate);
         const key = `${brazilHour.toString().padStart(2, '0')}h`;
         if (!hours[key]) {
-          hours[key] = { time: key, hour: brazilHour, valorion: 0, inter: 0, ativus: 0 };
+          hours[key] = { time: key, hour: brazilHour, valorion: 0, inter: 0, ativus: 0, efi: 0 };
         }
       }
-      
+
       chartEvents.forEach(event => {
         const eventDate = new Date(event.created_at);
         const eventHour = getBrazilHour(eventDate);
         const key = `${eventHour.toString().padStart(2, '0')}h`;
-        
+
         if (hours[key]) {
           if (event.acquirer === 'valorion') hours[key].valorion++;
           else if (event.acquirer === 'inter') hours[key].inter++;
           else if (event.acquirer === 'ativus') hours[key].ativus++;
+          else if (event.acquirer === 'efi') hours[key].efi++;
         }
       });
-      
+
       const nowHour = getBrazilHour(now);
       return Object.values(hours).sort((a, b) => {
         const aOffset = (a.hour - nowHour + 48) % 24;
@@ -477,27 +481,28 @@ export function ApiMonitoringSection() {
         return aOffset - bOffset;
       });
     }
-    
+
     const days = chartPeriod === '7d' ? 7 : 30;
-    const dayData: { [key: string]: { time: string; date: Date; valorion: number; inter: number; ativus: number } } = {};
-    
+    const dayData: { [key: string]: { time: string; date: Date; valorion: number; inter: number; ativus: number; efi: number } } = {};
+
     for (let i = days - 1; i >= 0; i--) {
       const dayDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const key = getBrazilDate(dayDate);
-      dayData[key] = { time: key, date: dayDate, valorion: 0, inter: 0, ativus: 0 };
+      dayData[key] = { time: key, date: dayDate, valorion: 0, inter: 0, ativus: 0, efi: 0 };
     }
-    
+
     chartEvents.forEach(event => {
       const eventDate = new Date(event.created_at);
       const key = getBrazilDate(eventDate);
-      
+
       if (dayData[key]) {
         if (event.acquirer === 'valorion') dayData[key].valorion++;
         else if (event.acquirer === 'inter') dayData[key].inter++;
         else if (event.acquirer === 'ativus') dayData[key].ativus++;
+        else if (event.acquirer === 'efi') dayData[key].efi++;
       }
     });
-    
+
     return Object.values(dayData).sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [chartEvents, chartPeriod]);
 
@@ -678,7 +683,7 @@ export function ApiMonitoringSection() {
       </div>
 
       {/* Acquirer Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <AcquirerCard 
           name="VALORION" 
           health={healthData?.valorion ?? null} 
@@ -694,6 +699,12 @@ export function ApiMonitoringSection() {
         <AcquirerCard 
           name="Ativus Hub" 
           health={healthData?.ativus ?? null}
+          getStatusColor={getStatusColor}
+          getStatusIcon={getStatusIcon}
+        />
+        <AcquirerCard 
+          name="EFI Pay" 
+          health={healthData?.efi ?? null}
           getStatusColor={getStatusColor}
           getStatusIcon={getStatusIcon}
         />
