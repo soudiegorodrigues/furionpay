@@ -32,17 +32,27 @@ export const GatewayConfigSection = () => {
     clientId: '', clientSecret: '', certificate: '', privateKey: '', pixKey: ''
   });
 
+  // EFI Pay states
+  const [efiFeeRate, setEfiFeeRate] = useState('');
+  const [efiFixedFee, setEfiFixedFee] = useState('');
+  const [efiConfig, setEfiConfig] = useState({
+    clientId: '', clientSecret: '', certificate: '', privateKey: '', pixKey: '', environment: 'production'
+  });
+
   // Enabled states for each gateway
   const [ativusEnabled, setAtivusEnabled] = useState(false);
   const [valorionEnabled, setValorionEnabled] = useState(false);
   const [interEnabled, setInterEnabled] = useState(false);
+  const [efiEnabled, setEfiEnabled] = useState(false);
   const [isTogglingEnabled, setIsTogglingEnabled] = useState<string | null>(null);
 
   // Dialog states
   const [showAtivusDialog, setShowAtivusDialog] = useState(false);
   const [showValorionDialog, setShowValorionDialog] = useState(false);
   const [showInterDialog, setShowInterDialog] = useState(false);
+  const [showEfiDialog, setShowEfiDialog] = useState(false);
   const [isLoadingInter, setIsLoadingInter] = useState(false);
+  const [isLoadingEfi, setIsLoadingEfi] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   // Show/hide password states
@@ -53,6 +63,11 @@ export const GatewayConfigSection = () => {
   const [showInterCert, setShowInterCert] = useState(false);
   const [showInterKey, setShowInterKey] = useState(false);
   const [showInterPixKey, setShowInterPixKey] = useState(false);
+  const [showEfiClientId, setShowEfiClientId] = useState(false);
+  const [showEfiSecret, setShowEfiSecret] = useState(false);
+  const [showEfiCert, setShowEfiCert] = useState(false);
+  const [showEfiKey, setShowEfiKey] = useState(false);
+  const [showEfiPixKey, setShowEfiPixKey] = useState(false);
 
   useEffect(() => {
     loadConfigs();
@@ -79,10 +94,14 @@ export const GatewayConfigSection = () => {
         setInterFeeRate(settings.find(s => s.key === 'inter_fee_rate')?.value || '');
         setInterFixedFee(settings.find(s => s.key === 'inter_fixed_fee')?.value || '');
 
+        setEfiFeeRate(settings.find(s => s.key === 'efi_fee_rate')?.value || '');
+        setEfiFixedFee(settings.find(s => s.key === 'efi_fixed_fee')?.value || '');
+
         // Load enabled states
         setAtivusEnabled(settings.find(s => s.key === 'ativus_enabled')?.value === 'true');
         setValorionEnabled(settings.find(s => s.key === 'valorion_enabled')?.value === 'true');
         setInterEnabled(settings.find(s => s.key === 'inter_enabled')?.value === 'true');
+        setEfiEnabled(settings.find(s => s.key === 'efi_enabled')?.value === 'true');
       }
     } catch (error) {
       console.error('Error loading configs:', error);
@@ -105,6 +124,7 @@ export const GatewayConfigSection = () => {
         case 'ativus': setAtivusEnabled(enabled); break;
         case 'valorion': setValorionEnabled(enabled); break;
         case 'inter': setInterEnabled(enabled); break;
+        case 'efi': setEfiEnabled(enabled); break;
       }
 
       toast({ 
@@ -220,6 +240,59 @@ export const GatewayConfigSection = () => {
     }
   };
 
+  const loadEfiCredentials = async () => {
+    setIsLoadingEfi(true);
+    try {
+      const { data, error } = await supabase.rpc('get_admin_settings_auth');
+      if (error) throw error;
+      if (data) {
+        const settings = data as { key: string; value: string }[];
+        setEfiConfig({
+          clientId: settings.find(s => s.key === 'efi_client_id')?.value || '',
+          clientSecret: settings.find(s => s.key === 'efi_client_secret')?.value || '',
+          certificate: settings.find(s => s.key === 'efi_certificate')?.value || '',
+          privateKey: settings.find(s => s.key === 'efi_private_key')?.value || '',
+          pixKey: settings.find(s => s.key === 'efi_pix_key')?.value || '',
+          environment: settings.find(s => s.key === 'efi_environment')?.value || 'production',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading EFI credentials:', error);
+    } finally {
+      setIsLoadingEfi(false);
+    }
+  };
+
+  const saveEfiCredentials = async () => {
+    setIsSaving(true);
+    try {
+      const updates = [
+        { key: 'efi_client_id', value: efiConfig.clientId },
+        { key: 'efi_client_secret', value: efiConfig.clientSecret },
+        { key: 'efi_certificate', value: efiConfig.certificate },
+        { key: 'efi_private_key', value: efiConfig.privateKey },
+        { key: 'efi_pix_key', value: efiConfig.pixKey },
+        { key: 'efi_environment', value: efiConfig.environment },
+      ];
+      
+      for (const { key, value } of updates) {
+        const { error } = await supabase.rpc('update_admin_setting_auth', {
+          setting_key: key,
+          setting_value: value
+        });
+        if (error) throw error;
+      }
+      
+      toast({ title: "Sucesso", description: "Credenciais da EFI Pay atualizadas!" });
+      setShowEfiDialog(false);
+    } catch (error) {
+      console.error('Error saving EFI credentials:', error);
+      toast({ title: "Erro", description: "Falha ao salvar credenciais", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Testa conexão SEM criar transações reais - usa mesma lógica do health-check
   const testConnection = async (gateway: string) => {
     setIsTesting(gateway);
@@ -273,7 +346,7 @@ export const GatewayConfigSection = () => {
               <CardTitle className="text-lg flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-primary" />
                 Configurações de Gateways
-                <Badge variant="secondary" className="text-xs">3</Badge>
+                <Badge variant="secondary" className="text-xs">4</Badge>
               </CardTitle>
               <CardDescription className="mt-1">
                 Configure as credenciais e taxas de cada gateway de pagamento.
@@ -420,6 +493,53 @@ export const GatewayConfigSection = () => {
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => testConnection('inter')} disabled={isTesting === 'inter'} className="h-7 text-xs">
                     {isTesting === 'inter' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* EFI PAY Card */}
+            <Card className={`border-primary/30 ${!efiEnabled ? 'opacity-60' : ''}`}>
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <Switch 
+                    checked={efiEnabled} 
+                    onCheckedChange={(checked) => toggleGatewayEnabled('efi', checked)}
+                    disabled={isTogglingEnabled === 'efi'}
+                    className="h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-4"
+                  />
+                  <CardTitle className="text-sm font-bold text-primary">EFI PAY</CardTitle>
+                  <Badge variant="outline" className={efiEnabled ? "text-emerald-600 border-emerald-600/30 bg-emerald-600/10 text-xs" : "text-muted-foreground text-xs"}>
+                    {efiEnabled ? <><Check className="w-3 h-3 mr-1" />Ativo</> : <><Power className="w-3 h-3 mr-1" />Off</>}
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs text-center">Gateway PIX via EFI Pay (Gerencianet)</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-2 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Taxas:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Taxa (%)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={efiFeeRate} onChange={e => setEfiFeeRate(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor Fixo (R$)</Label>
+                      <Input type="number" step="0.01" placeholder="0.00" value={efiFixedFee} onChange={e => setEfiFixedFee(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => saveFeeSettings('efi', efiFeeRate, efiFixedFee)} className="w-full h-7 text-xs">
+                    Salvar Taxas
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Button variant="outline" size="sm" onClick={() => { loadEfiCredentials(); setShowEfiDialog(true); }} className="flex-1 h-7 text-xs">
+                    <Settings className="w-3 h-3 mr-1" />
+                    Configurar Credenciais
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => testConnection('efi')} disabled={isTesting === 'efi'} className="h-7 text-xs">
+                    {isTesting === 'efi' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Zap className="w-3 h-3 mr-1" />Testar</>}
                   </Button>
                 </div>
               </CardContent>
@@ -644,6 +764,156 @@ export const GatewayConfigSection = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={saveInterCredentials} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* EFI Dialog */}
+      <AlertDialog open={showEfiDialog} onOpenChange={setShowEfiDialog}>
+        <AlertDialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Configurar EFI Pay</AlertDialogTitle>
+            <AlertDialogDescription>Configure as credenciais da EFI Pay (Gerencianet).</AlertDialogDescription>
+          </AlertDialogHeader>
+          {isLoadingEfi ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Client ID</Label>
+                <div className="relative">
+                  <Input 
+                    type={showEfiClientId ? "text" : "password"} 
+                    placeholder="Digite o Client ID" 
+                    value={efiConfig.clientId} 
+                    onChange={e => setEfiConfig(prev => ({ ...prev, clientId: e.target.value }))} 
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowEfiClientId(!showEfiClientId)}
+                  >
+                    {showEfiClientId ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Client Secret</Label>
+                <div className="relative">
+                  <Input 
+                    type={showEfiSecret ? "text" : "password"} 
+                    placeholder="Digite o Client Secret" 
+                    value={efiConfig.clientSecret} 
+                    onChange={e => setEfiConfig(prev => ({ ...prev, clientSecret: e.target.value }))} 
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowEfiSecret(!showEfiSecret)}
+                  >
+                    {showEfiSecret ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Certificado (.crt / .pem)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    onClick={() => setShowEfiCert(!showEfiCert)}
+                  >
+                    {showEfiCert ? <><EyeOff className="h-3 w-3 mr-1" />Ocultar</> : <><Eye className="h-3 w-3 mr-1" />Mostrar</>}
+                  </Button>
+                </div>
+                {showEfiCert ? (
+                  <textarea 
+                    className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none font-mono text-xs" 
+                    placeholder="Cole o conteúdo do certificado" 
+                    value={efiConfig.certificate} 
+                    onChange={e => setEfiConfig(prev => ({ ...prev, certificate: e.target.value }))} 
+                  />
+                ) : (
+                  <div className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-muted/50 flex items-center justify-center text-muted-foreground">
+                    {efiConfig.certificate ? '••••••••••••••••' : 'Nenhum certificado configurado'}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Chave Privada (.key)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    onClick={() => setShowEfiKey(!showEfiKey)}
+                  >
+                    {showEfiKey ? <><EyeOff className="h-3 w-3 mr-1" />Ocultar</> : <><Eye className="h-3 w-3 mr-1" />Mostrar</>}
+                  </Button>
+                </div>
+                {showEfiKey ? (
+                  <textarea 
+                    className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-background resize-none font-mono text-xs" 
+                    placeholder="Cole o conteúdo da chave privada" 
+                    value={efiConfig.privateKey} 
+                    onChange={e => setEfiConfig(prev => ({ ...prev, privateKey: e.target.value }))} 
+                  />
+                ) : (
+                  <div className="w-full h-20 px-3 py-2 text-sm border rounded-md bg-muted/50 flex items-center justify-center text-muted-foreground">
+                    {efiConfig.privateKey ? '••••••••••••••••' : 'Nenhuma chave configurada'}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Chave PIX</Label>
+                <div className="relative">
+                  <Input 
+                    type={showEfiPixKey ? "text" : "password"} 
+                    placeholder="CPF, CNPJ, Email ou Telefone" 
+                    value={efiConfig.pixKey} 
+                    onChange={e => setEfiConfig(prev => ({ ...prev, pixKey: e.target.value }))} 
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowEfiPixKey(!showEfiPixKey)}
+                  >
+                    {showEfiPixKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Ambiente</Label>
+                <select 
+                  className="w-full h-9 px-3 py-2 text-sm border rounded-md bg-background"
+                  value={efiConfig.environment}
+                  onChange={e => setEfiConfig(prev => ({ ...prev, environment: e.target.value }))}
+                >
+                  <option value="production">Produção</option>
+                  <option value="sandbox">Sandbox (Homologação)</option>
+                </select>
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={saveEfiCredentials} disabled={isSaving}>
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Salvar
             </AlertDialogAction>
           </AlertDialogFooter>
