@@ -96,11 +96,11 @@ export function AdminSidebar({
 
       <SidebarContent className="px-3 flex-1 overflow-y-auto overflow-x-hidden">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-4">
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/50 font-semibold mb-3 px-2">
             Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5 w-full">
+            <SidebarMenu className="space-y-1.5 w-full">
               {visibleMenuItems.map((item, index) => (
                 <SidebarMenuItem 
                   key={item.title} 
@@ -111,10 +111,12 @@ export function AdminSidebar({
                     <NavLink 
                       to={item.url} 
                       end 
-                      className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 hover:bg-muted/30 group relative text-muted-foreground hover:text-foreground"
-                      activeClassName="text-primary font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-5 before:bg-primary before:rounded-full"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02] group relative"
+                      activeClassName="bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-medium shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-6 before:bg-primary before:rounded-r-full"
                     >
-                      <item.icon className="h-5 w-5 shrink-0 transition-colors" />
+                      <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center group-hover:bg-muted/60 transition-colors shrink-0">
+                        <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </div>
                       <span className="text-sm">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -129,9 +131,11 @@ export function AdminSidebar({
                 <SidebarMenuButton asChild>
                   <button 
                     onClick={openInstallDialog} 
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 w-full text-primary/70 hover:text-primary hover:bg-primary/5 group relative"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 w-full border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:scale-[1.02] text-primary group"
                   >
-                    <Download className="h-5 w-5 shrink-0" />
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
+                      <Download className="h-4 w-4" />
+                    </div>
                     <span className="text-sm font-medium">Instalar App</span>
                   </button>
                 </SidebarMenuButton>
@@ -141,36 +145,43 @@ export function AdminSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer minimalista */}
-      <SidebarFooter className="p-3 mt-auto border-t border-border/50">
-        <NavLink 
-          to="/admin/profile" 
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/30 transition-all duration-200 text-muted-foreground hover:text-foreground relative" 
-          activeClassName="text-primary before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-5 before:bg-primary before:rounded-full"
-        >
-          <div className="w-9 h-9 rounded-full bg-muted/50 flex items-center justify-center shrink-0">
-            <User className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-sm font-medium truncate">{userName || "Usuário"}</span>
-            <span className="text-xs text-muted-foreground truncate">
-              {userEmail || "Não identificado"}
-            </span>
-          </div>
-        </NavLink>
-        
-        <div className="flex items-center justify-center gap-2 mt-2 pt-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onLogout} 
-            className="h-9 w-9 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+      {/* Linha separadora antes do footer */}
+      <div className="mx-3">
+        <div className="h-px bg-border" />
+      </div>
+
+      {/* Footer moderno */}
+      <SidebarFooter className="p-3 mt-auto">
+        <div className="bg-gradient-to-r from-muted/40 to-transparent rounded-xl p-2">
+          <NavLink 
+            to="/admin/profile" 
+            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-all duration-200" 
+            activeClassName="bg-primary/10"
           >
-            <LogOut className="h-4 w-4" />
-            <span className="sr-only">Sair</span>
-          </Button>
-          <NotificationToggle userId={userId} />
-          <ThemeToggle />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 ring-2 ring-primary/20 flex items-center justify-center shrink-0">
+              <User className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-semibold truncate">{userName || "Usuário"}</span>
+              <span className="text-xs text-muted-foreground/70 truncate">
+                {userEmail || "Não identificado"}
+              </span>
+            </div>
+          </NavLink>
+          
+          <div className="flex items-center justify-center gap-3 mt-2 px-1.5 py-1.5 bg-gradient-to-r from-primary/5 to-black/10 rounded-md">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onLogout} 
+              className="h-9 w-9 rounded-lg bg-muted/50 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Sair</span>
+            </Button>
+            <NotificationToggle userId={userId} />
+            <ThemeToggle />
+          </div>
         </div>
       </SidebarFooter>
 
