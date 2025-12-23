@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight, Loader2 } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight, Loader2, MapPin } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { fetchAddressByCep, formatCep } from "@/lib/viaCep";
 interface DashboardStats {
@@ -1183,186 +1183,228 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                         )}
       </div>
 
-      {/* Dialog de Resgate de Premiação */}
+      {/* Dialog de Resgate de Premiação - Layout Celebratório */}
       <Dialog open={redeemDialogOpen} onOpenChange={setRedeemDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-green-500" />
-              Resgatar Premiação
-            </DialogTitle>
-            <DialogDescription>
-              Preencha os dados de entrega para receber sua premiação
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Preview da premiação */}
-          {selectedReward && (
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
-              {selectedReward.image_url ? (
-                <img 
-                  src={selectedReward.image_url} 
-                  alt={selectedReward.name}
-                  className="w-14 h-14 object-contain rounded"
-                />
-              ) : (
-                <div className="w-14 h-14 flex items-center justify-center bg-primary/10 rounded">
-                  <Trophy className="h-8 w-8 text-primary" />
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            {/* Coluna Esquerda - Seção de Homenagem */}
+            <div className="relative bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px]">
+              {/* Efeito de brilho de fundo */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.2),transparent_60%)]" />
+              
+              {/* Confetti decorativo */}
+              <div className="absolute top-4 left-4 text-4xl animate-bounce" style={{ animationDelay: '0s' }}>🎉</div>
+              <div className="absolute top-6 right-6 text-3xl animate-bounce" style={{ animationDelay: '0.5s' }}>🎊</div>
+              <div className="absolute bottom-6 left-6 text-2xl animate-bounce" style={{ animationDelay: '1s' }}>✨</div>
+              <div className="absolute bottom-4 right-4 text-3xl animate-bounce" style={{ animationDelay: '0.3s' }}>🏆</div>
+              
+              <div className="relative z-10 space-y-4">
+                {/* Título Parabéns */}
+                <div className="space-y-2">
+                  <h2 className="text-3xl lg:text-4xl font-black tracking-tight drop-shadow-lg">
+                    PARABÉNS!
+                  </h2>
+                  <p className="text-xl lg:text-2xl font-bold text-white/90">
+                    {userName || 'Campeão(a)'}
+                  </p>
                 </div>
-              )}
-              <div>
-                <p className="font-semibold text-sm">{selectedReward.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  Meta: {formatCurrency(selectedReward.threshold_amount)}
+                
+                {/* Texto motivacional */}
+                <p className="text-sm lg:text-base text-white/80 max-w-xs mx-auto">
+                  Você alcançou uma conquista incrível e merece toda essa celebração!
                 </p>
-              </div>
-            </div>
-          )}
-
-          {/* Formulário em grid 2 colunas */}
-          <div className="grid gap-3 py-2">
-            {/* Linha 1: Destinatário + Telefone */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="destinatario" className="text-xs">Nome do destinatário *</Label>
-                <Input
-                  id="destinatario"
-                  placeholder="Nome completo"
-                  value={redeemFormData.destinatario}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, destinatario: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="telefone" className="text-xs">Telefone</Label>
-                <Input
-                  id="telefone"
-                  placeholder="(00) 00000-0000"
-                  value={redeemFormData.telefone}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, telefone: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            {/* Linha 2: CEP + Número */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="cep" className="text-xs">CEP *</Label>
-                <div className="relative">
-                  <Input
-                    id="cep"
-                    placeholder="00000-000"
-                    value={redeemFormData.cep}
-                    onChange={(e) => setRedeemFormData(prev => ({ ...prev, cep: formatCep(e.target.value) }))}
-                    onBlur={handleCepBlur}
-                    maxLength={9}
-                  />
-                  {fetchingCep && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                
+                {/* Placa Grande */}
+                {selectedReward && (
+                  <div className="my-6 relative">
+                    <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full transform scale-110" />
+                    {selectedReward.image_url ? (
+                      <img 
+                        src={selectedReward.image_url} 
+                        alt={selectedReward.name}
+                        className="relative w-40 h-40 lg:w-52 lg:h-52 object-contain mx-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="relative w-40 h-40 lg:w-52 lg:h-52 flex items-center justify-center bg-white/20 backdrop-blur rounded-2xl mx-auto">
+                        <Trophy className="h-24 w-24 text-yellow-300 drop-shadow-lg" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Badge de conquista */}
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                    <span className="text-lg">✨</span>
+                    <span className="font-semibold text-sm lg:text-base">Conquistado!</span>
+                  </div>
+                  {selectedReward && (
+                    <p className="text-lg font-bold text-yellow-200 drop-shadow">
+                      Meta: {formatCurrency(selectedReward.threshold_amount)}
+                    </p>
                   )}
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="numero" className="text-xs">Número *</Label>
-                <Input
-                  id="numero"
-                  placeholder="123"
-                  value={redeemFormData.numero}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, numero: e.target.value }))}
-                />
-              </div>
             </div>
+            
+            {/* Coluna Direita - Formulário */}
+            <div className="p-6 lg:p-8 bg-background">
+              <DialogHeader className="mb-4">
+                <DialogTitle className="flex items-center gap-2 text-lg">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Dados de Entrega
+                </DialogTitle>
+                <DialogDescription className="text-sm">
+                  Informe o endereço para envio da sua premiação
+                </DialogDescription>
+              </DialogHeader>
 
-            {/* Linha 3: Logradouro + Complemento */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="logradouro" className="text-xs">Logradouro *</Label>
-                <Input
-                  id="logradouro"
-                  placeholder="Rua, Avenida..."
-                  value={redeemFormData.logradouro}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, logradouro: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="complemento" className="text-xs">Complemento</Label>
-                <Input
-                  id="complemento"
-                  placeholder="Apto, Bloco..."
-                  value={redeemFormData.complemento}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, complemento: e.target.value }))}
-                />
-              </div>
-            </div>
+              {/* Formulário em grid 2 colunas */}
+              <div className="grid gap-3">
+                {/* Linha 1: Destinatário + Telefone */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="destinatario" className="text-xs">Nome do destinatário *</Label>
+                    <Input
+                      id="destinatario"
+                      placeholder="Nome completo"
+                      value={redeemFormData.destinatario}
+                      onChange={(e) => setRedeemFormData(prev => ({ ...prev, destinatario: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="telefone" className="text-xs">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      placeholder="(00) 00000-0000"
+                      value={redeemFormData.telefone}
+                      onChange={(e) => setRedeemFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                    />
+                  </div>
+                </div>
 
-            {/* Linha 4: Bairro + Cidade */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="bairro" className="text-xs">Bairro *</Label>
-                <Input
-                  id="bairro"
-                  placeholder="Bairro"
-                  value={redeemFormData.bairro}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, bairro: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cidade" className="text-xs">Cidade *</Label>
-                <Input
-                  id="cidade"
-                  placeholder="Cidade"
-                  value={redeemFormData.cidade}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, cidade: e.target.value }))}
-                />
-              </div>
-            </div>
+                {/* Linha 2: CEP + Número */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cep" className="text-xs">CEP *</Label>
+                    <div className="relative">
+                      <Input
+                        id="cep"
+                        placeholder="00000-000"
+                        value={redeemFormData.cep}
+                        onChange={(e) => setRedeemFormData(prev => ({ ...prev, cep: formatCep(e.target.value) }))}
+                        onBlur={handleCepBlur}
+                        maxLength={9}
+                      />
+                      {fetchingCep && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="numero" className="text-xs">Número *</Label>
+                    <Input
+                      id="numero"
+                      placeholder="123"
+                      value={redeemFormData.numero}
+                      onChange={(e) => setRedeemFormData(prev => ({ ...prev, numero: e.target.value }))}
+                    />
+                  </div>
+                </div>
 
-            {/* Linha 5: Estado (metade da largura) */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="estado" className="text-xs">Estado *</Label>
-                <Select
-                  value={redeemFormData.estado}
-                  onValueChange={(value) => setRedeemFormData(prev => ({ ...prev, estado: value }))}
+                {/* Linha 3: Logradouro + Complemento */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="logradouro" className="text-xs">Logradouro *</Label>
+                    <Input
+                      id="logradouro"
+                      placeholder="Rua, Avenida..."
+                      value={redeemFormData.logradouro}
+                      onChange={(e) => setRedeemFormData(prev => ({ ...prev, logradouro: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="complemento" className="text-xs">Complemento</Label>
+                    <Input
+                      id="complemento"
+                      placeholder="Apto, Bloco..."
+                      value={redeemFormData.complemento}
+                      onChange={(e) => setRedeemFormData(prev => ({ ...prev, complemento: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* Linha 4: Bairro + Cidade */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="bairro" className="text-xs">Bairro *</Label>
+                    <Input
+                      id="bairro"
+                      placeholder="Bairro"
+                      value={redeemFormData.bairro}
+                      onChange={(e) => setRedeemFormData(prev => ({ ...prev, bairro: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cidade" className="text-xs">Cidade *</Label>
+                    <Input
+                      id="cidade"
+                      placeholder="Cidade"
+                      value={redeemFormData.cidade}
+                      onChange={(e) => setRedeemFormData(prev => ({ ...prev, cidade: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                {/* Linha 5: Estado */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="estado" className="text-xs">Estado *</Label>
+                    <Select
+                      value={redeemFormData.estado}
+                      onValueChange={(value) => setRedeemFormData(prev => ({ ...prev, estado: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="UF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map((uf) => (
+                          <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="mt-6 gap-2 sm:gap-0">
+                <Button
+                  variant="outline"
+                  onClick={() => setRedeemDialogOpen(false)}
+                  disabled={submittingRedeem}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map((uf) => (
-                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleRedeemSubmit}
+                  disabled={submittingRedeem}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                >
+                  {submittingRedeem ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="h-4 w-4 mr-2" />
+                      Enviar Pedido
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
             </div>
           </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setRedeemDialogOpen(false)}
-              disabled={submittingRedeem}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleRedeemSubmit}
-              disabled={submittingRedeem}
-              className="bg-green-500 hover:bg-green-600 text-white"
-            >
-              {submittingRedeem ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Gift className="h-4 w-4 mr-2" />
-                  Enviar Pedido
-                </>
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>;
