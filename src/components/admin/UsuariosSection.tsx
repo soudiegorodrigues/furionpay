@@ -344,7 +344,7 @@ export const UsuariosSection = () => {
                                     : 'bg-purple-500/20 text-purple-600 border-purple-500/30 text-[10px]'
                                 }
                               >
-                                {verificationsMap[u.id].person_type}
+                                {verificationsMap[u.id].person_type.toUpperCase()}
                               </Badge>
                             ) : (
                               <span className="text-muted-foreground">-</span>
