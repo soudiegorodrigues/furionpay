@@ -290,6 +290,140 @@ async function testInter(): Promise<{ success: boolean; responseTime: number; er
   }
 }
 
+// EFI Pay API URLs
+const EFI_PRODUCTION_URL = 'https://pix.api.efipay.com.br';
+const EFI_SANDBOX_URL = 'https://pix-h.api.efipay.com.br';
+
+// Get EFI credentials from admin_settings
+async function getEfiCredentials(supabase: ReturnType<typeof getSupabaseClient>): Promise<{
+  clientId: string;
+  clientSecret: string;
+  certificate: string;
+  privateKey: string;
+  pixKey: string;
+  environment: 'production' | 'sandbox';
+} | null> {
+  const keys = ['efi_client_id', 'efi_client_secret', 'efi_certificate', 'efi_private_key', 'efi_pix_key', 'efi_environment'];
+  
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('key, value')
+    .is('user_id', null)
+    .in('key', keys);
+  
+  if (error || !data || data.length === 0) {
+    return null;
+  }
+  
+  const settings: Record<string, string> = {};
+  data.forEach((item: { key: string; value: string }) => {
+    settings[item.key] = item.value;
+  });
+  
+  if (settings.efi_client_id && settings.efi_client_secret && 
+      settings.efi_certificate && settings.efi_private_key && settings.efi_pix_key) {
+    return {
+      clientId: settings.efi_client_id,
+      clientSecret: settings.efi_client_secret,
+      certificate: settings.efi_certificate,
+      privateKey: settings.efi_private_key,
+      pixKey: settings.efi_pix_key,
+      environment: (settings.efi_environment as 'production' | 'sandbox') || 'production',
+    };
+  }
+  
+  return null;
+}
+
+function normalizePem(pem: string): string {
+  let normalized = pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  
+  const certMatch = normalized.match(/-----BEGIN CERTIFICATE-----([\s\S]*?)-----END CERTIFICATE-----/);
+  const privKeyMatch = normalized.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+  const rsaKeyMatch = normalized.match(/-----BEGIN RSA PRIVATE KEY-----([\s\S]*?)-----END RSA PRIVATE KEY-----/);
+  
+  if (certMatch) {
+    const base64Content = certMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN CERTIFICATE-----\n${wrappedContent}\n-----END CERTIFICATE-----`;
+  }
+  
+  if (privKeyMatch) {
+    const base64Content = privKeyMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN PRIVATE KEY-----\n${wrappedContent}\n-----END PRIVATE KEY-----`;
+  }
+  
+  if (rsaKeyMatch) {
+    const base64Content = rsaKeyMatch[1].replace(/\s/g, '');
+    const wrappedContent = base64Content.match(/.{1,64}/g)?.join('\n') || base64Content;
+    return `-----BEGIN RSA PRIVATE KEY-----\n${wrappedContent}\n-----END RSA PRIVATE KEY-----`;
+  }
+  
+  return normalized;
+}
+
+// Test EFI health - Checks token acquisition without creating transactions
+async function testEfi(): Promise<{ success: boolean; responseTime: number; error?: string }> {
+  const startTime = Date.now();
+  const supabase = getSupabaseClient();
+  
+  try {
+    // Get EFI credentials
+    const credentials = await getEfiCredentials(supabase);
+    
+    if (!credentials) {
+      return { success: false, responseTime: 0, error: 'Credenciais EFI Pay não configuradas' };
+    }
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
+    
+    // Create mTLS client
+    const certPem = normalizePem(credentials.certificate);
+    const keyPem = normalizePem(credentials.privateKey);
+    
+    const mtlsClient = Deno.createHttpClient({
+      cert: certPem,
+      key: keyPem,
+    });
+    
+    // Try to get an access token - this validates credentials without creating transactions
+    const baseUrl = credentials.environment === 'sandbox' ? EFI_SANDBOX_URL : EFI_PRODUCTION_URL;
+    const tokenUrl = `${baseUrl}/oauth/token`;
+    const basicAuth = btoa(`${credentials.clientId}:${credentials.clientSecret}`);
+    
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${basicAuth}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ grant_type: 'client_credentials' }),
+      client: mtlsClient,
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    const responseTime = Date.now() - startTime;
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[HEALTH] EFI token error: ${response.status} ${errorText}`);
+      return { success: false, responseTime, error: `HTTP ${response.status} - Erro ao obter token` };
+    }
+    
+    console.log(`[HEALTH] EFI responded in ${responseTime}ms (token obtained - connectivity verified)`);
+    return { success: true, responseTime };
+    
+  } catch (err) {
+    const responseTime = Date.now() - startTime;
+    const errorMsg = extractErrorDetails(err);
+    console.error(`[HEALTH] EFI error: ${errorMsg}`);
+    return { success: false, responseTime, error: errorMsg };
+  }
+}
+
 // Main health check function
 async function checkAcquirerHealth(acquirer: string): Promise<{ success: boolean; responseTime: number; error?: string }> {
   console.log(`[HEALTH] Checking ${acquirer} (timeout: ${HEALTH_CHECK_TIMEOUT_MS}ms) - connectivity only, no transactions created...`);
@@ -301,6 +435,8 @@ async function checkAcquirerHealth(acquirer: string): Promise<{ success: boolean
       return await testValorion();
     case 'inter':
       return await testInter();
+    case 'efi':
+      return await testEfi();
     default:
       return { success: false, responseTime: 0, error: `Adquirente desconhecido: ${acquirer}` };
   }
