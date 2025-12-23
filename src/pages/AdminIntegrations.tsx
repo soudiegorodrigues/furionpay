@@ -24,6 +24,16 @@ const AdminIntegrations = () => {
   const [apiKeysCount, setApiKeysCount] = useState(0);
   const [loadingApiKeys, setLoadingApiKeys] = useState(false);
 
+  // Preload images for instant rendering
+  useEffect(() => {
+    const preloadImage = (src: string) => {
+      const img = new Image();
+      img.src = src;
+    };
+    preloadImage(utmifyLogo);
+    preloadImage(apiLogo);
+  }, []);
+
   useEffect(() => {
     loadUtmifyStatus();
     loadApiKeysStatus();
@@ -162,7 +172,14 @@ const AdminIntegrations = () => {
             <div className="relative mt-2 sm:mt-4 mb-4 sm:mb-6">
               <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg" />
               <div className="relative w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center">
-                <img src={utmifyLogo} alt="Utmify" className="w-full h-full object-contain drop-shadow-lg" />
+                <img 
+                  src={utmifyLogo} 
+                  alt="Utmify" 
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full h-full object-contain drop-shadow-lg" 
+                />
               </div>
             </div>
             
@@ -221,7 +238,14 @@ const AdminIntegrations = () => {
             <div className="relative mt-2 sm:mt-4 mb-4 sm:mb-6">
               <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg" />
               <div className="relative w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center">
-                <img src={apiLogo} alt="API de Pagamentos" className="w-full h-full object-contain drop-shadow-lg" />
+                <img 
+                  src={apiLogo} 
+                  alt="API de Pagamentos" 
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full h-full object-contain drop-shadow-lg" 
+                />
               </div>
             </div>
             
