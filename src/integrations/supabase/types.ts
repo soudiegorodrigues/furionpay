@@ -2439,6 +2439,18 @@ export type Database = {
           total_paid: number
         }[]
       }
+      get_product_folder_counts: { Args: { p_user_id: string }; Returns: Json }
+      get_products_paginated: {
+        Args: {
+          p_folder_id?: string
+          p_page?: number
+          p_per_page?: number
+          p_search?: string
+          p_status?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_public_checkout_config: {
         Args: { p_product_id: string }
         Returns: {
@@ -2998,6 +3010,8 @@ export type Database = {
         Args: { p_bypass: boolean; p_user_id: string }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       unblock_user: { Args: { target_user_id: string }; Returns: boolean }
       update_acquirer_health: {
         Args: {
