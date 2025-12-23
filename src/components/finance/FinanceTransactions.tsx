@@ -685,7 +685,22 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
                         <TableCell className="hidden lg:table-cell">
                           {account ? (
                             <div className="flex items-center gap-2">
-                              <span>{account.icon || '🏦'}</span>
+                              {account.icon ? (
+                                account.icon.startsWith('http') ? (
+                                  <img 
+                                    src={account.icon} 
+                                    alt={account.name} 
+                                    className="h-5 w-5 rounded-full object-contain bg-white p-0.5 border"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <span>{account.icon}</span>
+                                )
+                              ) : (
+                                <span>🏦</span>
+                              )}
                               <span className="text-sm">{account.name}</span>
                             </div>
                           ) : (
