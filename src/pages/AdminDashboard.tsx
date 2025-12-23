@@ -169,6 +169,7 @@ const AdminDashboard = () => {
   };
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoadingRewards, setIsLoadingRewards] = useState(true);
+  const [isLoadingRewardRequests, setIsLoadingRewardRequests] = useState(true);
   const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [userName, setUserName] = useState<string>("");
   const [existingRequests, setExistingRequests] = useState<string[]>([]); // IDs das rewards já solicitadas
@@ -206,6 +207,8 @@ const AdminDashboard = () => {
 
   // Calcular próxima meta ou meta conquistada não resgatada
   const rewardData = useMemo(() => {
+    // Não calcular enquanto estiver carregando para evitar flash
+    if (isLoadingRewards || isLoadingStats || isLoadingRewardRequests) return null;
     if (rewards.length === 0) return null;
     
     const sortedRewards = [...rewards].sort((a, b) => a.threshold_amount - b.threshold_amount);
@@ -229,7 +232,7 @@ const AdminDashboard = () => {
     const achieved = stats.total_amount_paid >= nextReward.threshold_amount;
     
     return { nextReward, progress, achieved };
-  }, [rewards, stats.total_amount_paid, existingRequests]);
+  }, [rewards, stats.total_amount_paid, existingRequests, isLoadingRewards, isLoadingStats, isLoadingRewardRequests]);
 
   // Disparar confete quando meta for conquistada
   useEffect(() => {
@@ -507,13 +510,21 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
   }, [isAuthenticated]);
   const loadData = async (showLoading = true, resetTransactions = true) => {
     try {
+      // Resolve userId upfront to ensure reward_requests can be fetched in parallel
+      const uid = user?.id ?? (await supabase.auth.getUser()).data.user?.id;
+
       // PHASE 1: Load small/fast data FIRST (non-blocking for UI)
-      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult, bannerResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard_v2'), supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
-        ascending: true
-      }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance'), user?.id ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle() : Promise.resolve({
-        data: null,
-        error: null
-      }), supabase.rpc('get_global_banner_url')]);
+      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult, bannerResult, rewardRequestsResult] = await Promise.all([
+        supabase.rpc('get_user_settings'), 
+        supabase.rpc('get_user_dashboard_v2'), 
+        supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', { ascending: true }), 
+        supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), 
+        supabase.rpc('get_user_available_balance'), 
+        uid ? supabase.from('profiles').select('full_name').eq('id', uid).maybeSingle() : Promise.resolve({ data: null, error: null }), 
+        supabase.rpc('get_global_banner_url'),
+        // Fetch reward_requests in the same Promise.all to avoid flash
+        uid ? supabase.from('reward_requests').select('reward_id').eq('user_id', uid) : Promise.resolve({ data: null, error: null })
+      ]);
 
       // Set available balance immediately
       if (!availableBalanceResult.error && availableBalanceResult.data !== null) {
@@ -530,6 +541,10 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
       setRewards(rewardsResult.data || []);
       setIsLoadingRewards(false);
 
+      // Set existing reward requests immediately
+      setExistingRequests(rewardRequestsResult.data?.map((r: { reward_id: string }) => r.reward_id) || []);
+      setIsLoadingRewardRequests(false);
+
       // Set user name from profile
       if (!profileResult.error && profileResult.data?.full_name) {
         setUserName(profileResult.data.full_name);
@@ -540,17 +555,6 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         setBannerUrl(bannerResult.data);
       }
       setIsBannerLoading(false);
-
-      // Buscar pedidos de premiação existentes do usuário
-      if (user?.id) {
-        supabase
-          .from('reward_requests')
-          .select('reward_id')
-          .eq('user_id', user.id)
-          .then(({ data: requestsData }) => {
-            setExistingRequests(requestsData?.map(r => r.reward_id) || []);
-          });
-      }
 
       // Banner is now loaded in the main Promise.all above
 
@@ -1077,7 +1081,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
           {/* Progresso de Recompensas */}
           <Card className="shadow-xl flex-1 flex flex-col">
             <CardContent className="p-5 flex-1 flex flex-col justify-center">
-              {(isLoadingRewards || isLoadingStats) ? <div className="space-y-4 animate-pulse">
+              {(isLoadingRewards || isLoadingStats || isLoadingRewardRequests) ? <div className="space-y-4 animate-pulse">
                   <div className="flex justify-center">
                     <div className="w-64 h-64 bg-muted/50 rounded-xl" />
                   </div>
