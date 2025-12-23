@@ -51,7 +51,7 @@ interface PaginatedResponse {
   total_pages: number;
 }
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 15;
 
 // Lista de palavras bloqueadas para nomes de produtos
 const BLOCKED_PRODUCT_KEYWORDS = [
