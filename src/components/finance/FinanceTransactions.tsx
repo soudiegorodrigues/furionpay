@@ -914,7 +914,22 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
                   {accounts.map(account => (
                     <SelectItem key={account.id} value={account.id}>
                       <div className="flex items-center gap-2">
-                        <span>{account.icon || '🏦'}</span>
+                        {account.icon ? (
+                          account.icon.startsWith('http') ? (
+                            <img 
+                              src={account.icon} 
+                              alt={account.name} 
+                              className="h-4 w-4 rounded-full object-contain bg-white"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span>{account.icon}</span>
+                          )
+                        ) : (
+                          <span>🏦</span>
+                        )}
                         {account.name}
                       </div>
                     </SelectItem>
