@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,14 @@ import {
 import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { AddressFields } from "./AddressFields";
+import { BannersCarousel } from "./BannersCarousel";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Banner {
+  id: string;
+  image_url: string;
+  display_order: number;
+}
 
 // Template AFILIA - Checkout estilo E-commerce
 // Inspirado em: Mercado Livre, Amazon Brasil, Lojas Americanas
@@ -29,6 +38,27 @@ export function CheckoutTemplateAfilia({
   formatCountdown,
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#3B82F6";
+  const [banners, setBanners] = useState<Banner[]>([]);
+
+  // Fetch banners
+  useEffect(() => {
+    if (!config?.show_banners || !product?.id) return;
+
+    const fetchBanners = async () => {
+      const { data, error } = await supabase
+        .from("checkout_banners")
+        .select("id, image_url, display_order")
+        .eq("product_id", product.id)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (!error && data) {
+        setBanners(data);
+      }
+    };
+
+    fetchBanners();
+  }, [config?.show_banners, product?.id]);
 
   return (
     <div className="min-h-screen bg-[#EDEDED]">
@@ -73,6 +103,13 @@ export function CheckoutTemplateAfilia({
           </div>
         </div>
       </header>
+
+      {/* Banner Images Carousel */}
+      {config?.show_banners && banners.length > 0 && (
+        <div className="container max-w-6xl mx-auto px-4 pt-4">
+          <BannersCarousel banners={banners} />
+        </div>
+      )}
 
       <main className="container max-w-6xl mx-auto px-4 py-6">
         {step === "form" ? (
