@@ -141,6 +141,7 @@ const AdminDashboard = () => {
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPeriodStats, setIsLoadingPeriodStats] = useState(true);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [initialChartLoadComplete, setInitialChartLoadComplete] = useState(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -522,6 +523,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
       // Set stats immediately
       if (!statsResult.error && statsResult.data) {
         setStats(statsResult.data as unknown as DashboardStats);
+        setIsLoadingStats(false);
       }
 
       // Set rewards immediately and mark loading complete
@@ -1075,7 +1077,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
           {/* Progresso de Recompensas */}
           <Card className="shadow-xl flex-1 flex flex-col">
             <CardContent className="p-5 flex-1 flex flex-col justify-center">
-              {isLoadingRewards ? <div className="space-y-4 animate-pulse">
+              {(isLoadingRewards || isLoadingStats) ? <div className="space-y-4 animate-pulse">
                   <div className="flex justify-center">
                     <div className="w-64 h-64 bg-muted/50 rounded-xl" />
                   </div>
