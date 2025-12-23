@@ -740,7 +740,7 @@ const AdminDashboard = () => {
       {/* Chart + Side Cards Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
         {/* Chart - Visão Geral Style */}
-        <Card className="xl:col-span-2 h-full min-w-0 flex flex-col">
+        <Card className="xl:col-span-2 h-[400px] sm:h-[450px] md:h-[480px] min-w-0 flex flex-col">
           <div className="h-px bg-border" />
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
@@ -768,7 +768,7 @@ const AdminDashboard = () => {
             {/* Container com ref para cálculo manual de dimensões */}
             <div 
               ref={chartContainerRef}
-              className="w-full relative flex-1 min-h-[280px] sm:min-h-[350px] md:min-h-[400px] lg:min-h-[450px]"
+              className="w-full relative flex-1"
             >
               {/* Gráfico com dimensões calculadas manualmente - elimina piscar */}
               <div
