@@ -408,6 +408,15 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
     
     setIsSyncingWithdrawals(true);
     try {
+      // Fetch user's person_type from user_verification
+      const { data: verification } = await supabase
+        .from('user_verification')
+        .select('person_type')
+        .eq('user_id', effectiveUserId!)
+        .single();
+
+      const userPersonType = verification?.person_type?.toUpperCase() === 'PJ' ? 'PJ' : 'PF';
+
       // Fetch approved withdrawals for this user
       const { data: withdrawals, error: wError } = await supabase
         .from('withdrawal_requests')
@@ -458,7 +467,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
         }).filter(Boolean) || []
       );
 
-      // Create transactions for non-synced withdrawals
+      // Create transactions for non-synced withdrawals with correct person_type
       const transactionsToCreate = withdrawals
         .filter(w => !existingWithdrawalIds.has(w.id))
         .map(w => ({
@@ -470,8 +479,12 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
           category_id: saquesCategory!.id,
           is_recurring: false,
           recurring_frequency: null,
-          recurring_end_date: null
+          recurring_end_date: null,
+          person_type: userPersonType
         }));
+
+      let createdCount = 0;
+      let updatedCount = 0;
 
       if (transactionsToCreate.length > 0) {
         const { error: insertError } = await supabase
@@ -479,14 +492,34 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
           .insert(transactionsToCreate);
 
         if (insertError) throw insertError;
+        createdCount = transactionsToCreate.length;
+      }
 
+      // Update existing transactions with correct person_type
+      const { data: updatedTxs, error: updateError } = await supabase
+        .from('finance_transactions')
+        .update({ person_type: userPersonType })
+        .eq('user_id', effectiveUserId!)
+        .eq('category_id', saquesCategory.id)
+        .neq('person_type', userPersonType)
+        .select('id');
+
+      if (!updateError && updatedTxs) {
+        updatedCount = updatedTxs.length;
+      }
+
+      if (createdCount > 0 || updatedCount > 0) {
+        const messages: string[] = [];
+        if (createdCount > 0) messages.push(`${createdCount} saque(s) importado(s)`);
+        if (updatedCount > 0) messages.push(`${updatedCount} transação(ões) atualizada(s) para ${userPersonType}`);
+        
         toast({
           title: "Saques sincronizados!",
-          description: `${transactionsToCreate.length} saque(s) importado(s) como receita`
+          description: messages.join(' e ')
         });
         fetchData();
       } else {
-        toast({ title: "Todos os saques já estão sincronizados" });
+        toast({ title: "Todos os saques já estão sincronizados e atualizados" });
       }
     } catch (error) {
       console.error('Error syncing withdrawals:', error);
