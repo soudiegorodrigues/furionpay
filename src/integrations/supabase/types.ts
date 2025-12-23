@@ -2709,7 +2709,7 @@ export type Database = {
         | {
             Args: {
               p_end_date?: string
-              p_period?: string
+              p_period: string
               p_start_date?: string
             }
             Returns: Json
