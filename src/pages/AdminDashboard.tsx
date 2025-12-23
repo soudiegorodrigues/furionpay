@@ -1188,7 +1188,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Coluna Esquerda - Seção de Homenagem */}
-            <div className="relative bg-gradient-to-br from-black via-zinc-950 to-red-950/40 p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px] border-l-4 border-red-600 shadow-[inset_4px_0_30px_-5px_rgba(220,38,38,0.5)] overflow-hidden">
+            <div className="relative bg-gradient-to-br from-black via-zinc-950 to-red-950/40 p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px] overflow-hidden">
               
               {/* Base escura sólida */}
               <div className="absolute inset-0 bg-black/60 pointer-events-none" />
