@@ -253,13 +253,7 @@ export default function AdminProductEdit() {
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-2xl font-bold">{product?.name}</h1>
-                  <Badge variant={product?.is_active ? "default" : "secondary"} className="gap-1">
-                    <CheckCircle className="h-3 w-3" />
-                    {product?.is_active ? "Aprovado" : "Inativo"}
-                  </Badge>
-                </div>
+                <h1 className="text-2xl font-bold">{product?.name}</h1>
                 <p className="text-muted-foreground">Gerencie os detalhes e configurações do seu produto</p>
               </div>
               
