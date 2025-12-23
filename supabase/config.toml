@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.admin-reset-2fa]
 verify_jwt = false
+
+[functions.convert-p12-to-pem]
+verify_jwt = false
