@@ -724,7 +724,7 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
             {/* Container flex-1 para preencher 100% do card */}
-            <div className="w-full relative flex-1 min-h-[160px]">
+            <div className="w-full relative flex-1 min-h-[120px] sm:min-h-[140px] md:min-h-[160px]">
               <div
                 className={`w-full h-full transition-opacity duration-300 ${
                   isLoadingChart
@@ -808,7 +808,13 @@ const AdminDashboard = () => {
                         marginBottom: '6px',
                       }}
                       formatter={(value: number, name: string) => {
-                        if (name === 'pagos') return [value, '🔴 Pagos'];
+                        if (name === 'pagos') return [
+                          <span key="value" className="font-semibold">{value}</span>,
+                          <span key="label" className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                            Pagos
+                          </span>
+                        ];
                         return [value, name];
                       }}
                     />
@@ -821,7 +827,12 @@ const AdminDashboard = () => {
                       fill="url(#areaGradientPaid)"
                       isAnimationActive={false}
                       dot={false}
-                      activeDot={false}
+                      activeDot={{
+                        r: 5,
+                        stroke: 'hsl(var(--primary))',
+                        strokeWidth: 2,
+                        fill: 'hsl(var(--background))',
+                      }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -829,21 +840,25 @@ const AdminDashboard = () => {
 
               {/* Overlay de loading (sem desmontar o gráfico) */}
               {isLoadingChart && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[2px]">
-                  <div className="flex flex-col items-center gap-3">
+                <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+                  <div className="flex flex-col items-center gap-3 bg-card/90 px-6 py-4 rounded-xl shadow-lg border border-border/50">
                     <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground font-medium">
                       {chartData.length > 0 ? 'Atualizando gráfico...' : 'Carregando gráfico...'}
                     </span>
                   </div>
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-center gap-4 mt-4">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-primary"></span>
-                <span className="text-xs text-muted-foreground font-medium">Pagos</span>
-              </div>
+            <div className="flex items-center justify-center gap-6 mt-4 flex-wrap">
+              {[
+                { key: 'pagos', label: 'Pagos', color: 'bg-primary' },
+              ].map((item) => (
+                <div key={item.key} className="flex items-center gap-2">
+                  <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                  <span className="text-xs text-muted-foreground font-medium">{item.label}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
