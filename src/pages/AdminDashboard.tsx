@@ -1185,7 +1185,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
 
       {/* Dialog de Resgate de Premiação */}
       <Dialog open={redeemDialogOpen} onOpenChange={setRedeemDialogOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Gift className="h-5 w-5 text-green-500" />
@@ -1219,21 +1219,34 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
             </div>
           )}
 
-          {/* Formulário */}
-          <div className="grid gap-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="destinatario">Nome do destinatário *</Label>
-              <Input
-                id="destinatario"
-                placeholder="Nome completo"
-                value={redeemFormData.destinatario}
-                onChange={(e) => setRedeemFormData(prev => ({ ...prev, destinatario: e.target.value }))}
-              />
+          {/* Formulário em grid 2 colunas */}
+          <div className="grid gap-3 py-2">
+            {/* Linha 1: Destinatário + Telefone */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="destinatario" className="text-xs">Nome do destinatário *</Label>
+                <Input
+                  id="destinatario"
+                  placeholder="Nome completo"
+                  value={redeemFormData.destinatario}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, destinatario: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="telefone" className="text-xs">Telefone</Label>
+                <Input
+                  id="telefone"
+                  placeholder="(00) 00000-0000"
+                  value={redeemFormData.telefone}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                />
+              </div>
             </div>
 
+            {/* Linha 2: CEP + Número */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="cep">CEP *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="cep" className="text-xs">CEP *</Label>
                 <div className="relative">
                   <Input
                     id="cep"
@@ -1248,8 +1261,8 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                   )}
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="numero">Número *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="numero" className="text-xs">Número *</Label>
                 <Input
                   id="numero"
                   placeholder="123"
@@ -1259,29 +1272,32 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="logradouro">Logradouro *</Label>
-              <Input
-                id="logradouro"
-                placeholder="Rua, Avenida..."
-                value={redeemFormData.logradouro}
-                onChange={(e) => setRedeemFormData(prev => ({ ...prev, logradouro: e.target.value }))}
-              />
+            {/* Linha 3: Logradouro + Complemento */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="logradouro" className="text-xs">Logradouro *</Label>
+                <Input
+                  id="logradouro"
+                  placeholder="Rua, Avenida..."
+                  value={redeemFormData.logradouro}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, logradouro: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="complemento" className="text-xs">Complemento</Label>
+                <Input
+                  id="complemento"
+                  placeholder="Apto, Bloco..."
+                  value={redeemFormData.complemento}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, complemento: e.target.value }))}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="complemento">Complemento</Label>
-              <Input
-                id="complemento"
-                placeholder="Apto, Bloco..."
-                value={redeemFormData.complemento}
-                onChange={(e) => setRedeemFormData(prev => ({ ...prev, complemento: e.target.value }))}
-              />
-            </div>
-
+            {/* Linha 4: Bairro + Cidade */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="bairro" className="text-xs">Bairro *</Label>
                 <Input
                   id="bairro"
                   placeholder="Bairro"
@@ -1289,8 +1305,8 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                   onChange={(e) => setRedeemFormData(prev => ({ ...prev, bairro: e.target.value }))}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="cidade" className="text-xs">Cidade *</Label>
                 <Input
                   id="cidade"
                   placeholder="Cidade"
@@ -1300,9 +1316,10 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
               </div>
             </div>
 
+            {/* Linha 5: Estado (metade da largura) */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="estado">Estado *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="estado" className="text-xs">Estado *</Label>
                 <Select
                   value={redeemFormData.estado}
                   onValueChange={(value) => setRedeemFormData(prev => ({ ...prev, estado: value }))}
@@ -1316,15 +1333,6 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  placeholder="(00) 00000-0000"
-                  value={redeemFormData.telefone}
-                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, telefone: e.target.value }))}
-                />
               </div>
             </div>
           </div>
