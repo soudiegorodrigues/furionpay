@@ -1097,9 +1097,9 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                     />
                     <div
                       key={nextReward.id} 
-                      className={`space-y-4 p-4 rounded-xl transition-all duration-500 ${
+                    className={`space-y-4 p-4 rounded-xl transition-all duration-500 ${
                         achieved 
-                          ? 'bg-gradient-to-br from-green-500/15 via-emerald-500/10 to-transparent border-2 border-green-500/50 shadow-lg shadow-green-500/20' 
+                          ? 'bg-gradient-to-br from-primary/15 via-red-500/10 to-transparent border-2 border-primary/50 shadow-lg shadow-primary/20' 
                           : ''
                       }`}
                     >
@@ -1107,8 +1107,8 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                         <div className="text-center">
                           {userName && <p className="text-sm text-muted-foreground mb-1">{userName}</p>}
                           <h3 className="text-base font-bold">{nextReward.name}</h3>
-                          {achieved && <Badge className="bg-green-500 text-white mt-1 px-3 py-0.5 text-xs animate-pulse">
-                              🎉 Conquistado!
+                          {achieved && <Badge className="bg-primary text-white mt-1 px-3 py-0.5 text-xs animate-pulse">
+                              <Award className="h-3 w-3 mr-1" /> Conquistado!
                             </Badge>}
                         </div>
                         
@@ -1118,11 +1118,11 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                             {nextReward.image_url ? <img 
                               src={nextReward.image_url} 
                               alt={nextReward.name} 
-                              className={`relative w-56 h-56 object-contain transition-all duration-500 ${
+                            className={`relative w-56 h-56 object-contain transition-all duration-500 ${
                                 achieved 
-                                  ? 'scale-105 drop-shadow-[0_0_25px_rgba(34,197,94,0.4)]' 
+                                  ? 'scale-105 drop-shadow-[0_0_25px_hsl(var(--primary)/0.5)]' 
                                   : 'drop-shadow-xl'
-                              }`} 
+                              }`}
                             /> : <div className={`relative w-56 h-56 flex items-center justify-center transition-all duration-500 ${
                                 achieved ? 'scale-105' : ''
                               }`}>
@@ -1139,10 +1139,10 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs font-medium">
                             <span>Progresso</span>
-                            <span className={`font-bold ${achieved ? 'text-green-500' : 'text-primary'}`}>{progress.toFixed(0)}%</span>
+                            <span className={`font-bold ${achieved ? 'text-primary' : 'text-primary'}`}>{progress.toFixed(0)}%</span>
                           </div>
                           <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
-                            <div className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-green-500' : 'bg-gradient-to-r from-primary via-red-400 to-red-500'} shadow-lg`} style={{
+                            <div className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-primary' : 'bg-gradient-to-r from-primary via-red-400 to-red-500'} shadow-lg`} style={{
                         width: `${progress}%`
                       }} />
                           </div>
@@ -1157,7 +1157,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                       <div className="flex justify-center">
                         {achieved && !existingRequests.includes(nextReward.id) ? (
                           <Button 
-                            className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 transition-shadow duration-[3000ms] hover:shadow-xl hover:shadow-green-500/40"
+                            className="bg-primary hover:bg-primary/90 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-primary/30 transition-shadow duration-[3000ms] hover:shadow-xl hover:shadow-primary/40"
                             style={{ animation: 'subtlePulse 6s ease-in-out infinite' }}
                             onClick={() => {
                               setSelectedReward(nextReward);
