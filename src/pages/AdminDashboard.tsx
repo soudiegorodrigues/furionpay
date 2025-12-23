@@ -507,12 +507,12 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
   const loadData = async (showLoading = true, resetTransactions = true) => {
     try {
       // PHASE 1: Load small/fast data FIRST (non-blocking for UI)
-      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard_v2'), supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
+      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult, bannerResult] = await Promise.all([supabase.rpc('get_user_settings'), supabase.rpc('get_user_dashboard_v2'), supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', {
         ascending: true
       }), supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), supabase.rpc('get_user_available_balance'), user?.id ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle() : Promise.resolve({
         data: null,
         error: null
-      })]);
+      }), supabase.rpc('get_global_banner_url')]);
 
       // Set available balance immediately
       if (!availableBalanceResult.error && availableBalanceResult.data !== null) {
@@ -533,6 +533,12 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         setUserName(profileResult.data.full_name);
       }
 
+      // Set banner immediately from Promise.all result
+      if (!bannerResult.error && bannerResult.data) {
+        setBannerUrl(bannerResult.data);
+      }
+      setIsBannerLoading(false);
+
       // Buscar pedidos de premiação existentes do usuário
       if (user?.id) {
         supabase
@@ -544,13 +550,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
           });
       }
 
-      // Load global banner (visible to all users)
-      supabase.rpc('get_global_banner_url').then(({ data, error }) => {
-        setIsBannerLoading(false);
-        if (!error && data) {
-          setBannerUrl(data);
-        }
-      });
+      // Banner is now loaded in the main Promise.all above
 
       // Process settings and fee config
       let feeData = defaultFeeResult.data;
