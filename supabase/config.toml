@@ -18,16 +18,25 @@ verify_jwt = false
 [functions.generate-pix-valorion]
 verify_jwt = false
 
+[functions.generate-pix-efi]
+verify_jwt = false
+
 [functions.check-pix-status-ativus]
 verify_jwt = false
 
 [functions.check-pix-status-valorion]
 verify_jwt = false
 
+[functions.check-pix-status-efi]
+verify_jwt = false
+
 [functions.valorion-webhook]
 verify_jwt = false
 
 [functions.ativus-webhook]
+verify_jwt = false
+
+[functions.efi-webhook]
 verify_jwt = false
 
 [functions.get-popup-model]
