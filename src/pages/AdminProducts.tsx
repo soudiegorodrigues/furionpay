@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Settings, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Settings, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -26,7 +26,10 @@ interface Product {
   image_url: string | null;
   is_active: boolean;
   folder_id: string | null;
+  product_code: string | null;
+  website_url: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 interface ProductFolder {
@@ -35,52 +38,53 @@ interface ProductFolder {
   color: string | null;
 }
 
+interface FolderCount {
+  folder_id: string | null;
+  count: number;
+}
+
+interface PaginatedResponse {
+  products: Product[];
+  total_count: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+const ITEMS_PER_PAGE = 12;
+
 // Lista de palavras bloqueadas para nomes de produtos
 const BLOCKED_PRODUCT_KEYWORDS = [
-  // Conteúdo Adulto
   'adult', 'porn', 'xxx', 'sex', 'sexy', 'erotic',
-  // Armas/Drogas
   'arma', 'weapon', 'gun', 'droga', 'drug', 'cocaina', 'maconha', 'cannabis', 
   'weed', 'narcotic', 'trafico', 'traficante', 'fuzil', 'pistola', 'rifle', 
   'munição', 'ammunition',
-  // Doações
   'donate', 'donation', 'doação', 'doacao', 'doações', 'doacoes', 'vakinha', 
   'vaquinha', 'crowdfunding', 'arrecadação', 'arrecadacao', 'ajuda financeira', 
   'contribuição', 'contribuicao', 'caridade', 'charity', 'fundraising', 
   'campanha solidária', 'campanha solidaria', 'pix solidário', 'pix solidario', 
   'rifinha', 'rifa', 'sorteio beneficente',
-  // Financeiro/Cripto
   'cripto', 'crypto', 'bitcoin', 'forex', 'trade', 'trading', 'investimento', 
   'investir', 'renda fixa', 'day trade', 'mmn', 'marketing multinivel', 
   'multinível', 'pirâmide', 'esquema', 'empréstimo', 'financiamento', 'crédito'
 ];
 
-// Função para normalizar texto (remover acentos e converter para minúsculo)
 const normalizeText = (text: string): string => {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 };
 
-// Verifica se o texto contém alguma palavra bloqueada
 const containsBlockedKeyword = (text: string): string | null => {
   const normalizedText = normalizeText(text);
-  
   for (const keyword of BLOCKED_PRODUCT_KEYWORDS) {
-    const normalizedKeyword = normalizeText(keyword);
-    if (normalizedText.includes(normalizedKeyword)) {
-      return keyword;
-    }
+    if (normalizedText.includes(normalizeText(keyword))) return keyword;
   }
-  
   return null;
 };
 
-// Skeleton Card Component
-const ProductSkeleton = () => (
+// Memoized Skeleton Component
+const ProductSkeleton = memo(() => (
   <Card className="overflow-hidden">
-    <div className="aspect-[3/4] bg-muted animate-pulse" />
+    <div className="aspect-square bg-muted animate-pulse" />
     <CardContent className="p-2 sm:p-4 space-y-2 sm:space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 space-y-2">
@@ -96,14 +100,116 @@ const ProductSkeleton = () => (
       </div>
     </CardContent>
   </Card>
-);
+));
+ProductSkeleton.displayName = 'ProductSkeleton';
+
+// Memoized Product Card Component
+interface ProductCardProps {
+  product: Product;
+  folders: ProductFolder[];
+  onNavigate: (id: string) => void;
+  onMoveToFolder: (productId: string, folderId: string | null) => void;
+}
+
+const ProductCard = memo(({ product, folders, onNavigate, onMoveToFolder }: ProductCardProps) => (
+  <Card 
+    className="overflow-hidden group cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]" 
+    onClick={() => onNavigate(product.id)}
+  >
+    <div className="aspect-square bg-muted relative">
+      {product.image_url ? (
+        <img 
+          src={product.image_url} 
+          alt={product.name} 
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-cover" 
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Image className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground" />
+        </div>
+      )}
+    </div>
+    <CardContent className="p-3 sm:p-4">
+      <div>
+        <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
+      </div>
+      <div className="mt-1 sm:mt-2">
+        <p className="text-sm sm:text-base font-bold text-primary">
+          R$ {product.price.toFixed(2).replace(".", ",")}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2 mt-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="flex-1 h-7 text-xs px-2.5 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+              onClick={e => e.stopPropagation()}
+            >
+              <FolderInput className="h-3 w-3 mr-1" />
+              Pasta
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" onClick={e => e.stopPropagation()}>
+            <div className="space-y-1">
+              <Button
+                variant={!product.folder_id ? "secondary" : "ghost"}
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => onMoveToFolder(product.id, null)}
+              >
+                Sem pasta
+              </Button>
+              {folders.map(folder => (
+                <Button
+                  key={folder.id}
+                  variant={product.folder_id === folder.id ? "secondary" : "ghost"}
+                  size="sm"
+                  className="w-full justify-start text-xs gap-2"
+                  onClick={() => onMoveToFolder(product.id, folder.id)}
+                >
+                  <Folder className="h-3 w-3" style={{ color: folder.color || undefined }} />
+                  {folder.name}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Button
+          size="sm" 
+          variant="outline" 
+          className="flex-1 h-7 text-xs px-2.5 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+          onClick={e => {
+            e.stopPropagation();
+            onNavigate(product.id);
+          }}
+        >
+          <Settings className="h-3 w-3 mr-1" />
+          Configurar
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+));
+ProductCard.displayName = 'ProductCard';
 
 export default function AdminProducts() {
   const navigate = useNavigate();
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
+  
+  // Search with debounce
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  // Filters and pagination
   const [activeTab, setActiveTab] = useState("all");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Dialogs
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -113,103 +219,157 @@ export default function AdminProducts() {
     image_url: "",
     folder_id: ""
   });
-  const [newFolder, setNewFolder] = useState({
-    name: "",
-    color: "#dc2626"
+  const [newFolder, setNewFolder] = useState({ name: "", color: "#dc2626" });
+
+  // Debounce search - 300ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1); // Reset to page 1 on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedFolder]);
+
+  // Check admin status
+  const { data: isAdmin } = useQuery({
+    queryKey: ["admin-check"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('is_admin_authenticated');
+      return data === true;
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Combined query: check admin and fetch products together
-  const {
-    data: productsData,
-    refetch: refetchProducts,
-    isLoading: isLoadingProducts
-  } = useQuery({
-    queryKey: ["products-with-admin-check"],
+  // Get user ID once
+  const { data: userId } = useQuery({
+    queryKey: ["current-user-id"],
     queryFn: async () => {
-      // Check admin status first
-      const { data: isAdmin } = await supabase.rpc('is_admin_authenticated');
-      
-      if (!isAdmin) {
-        return { isAdmin: false, products: [] };
-      }
-      
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { isAdmin: true, products: [] };
+      return user?.id || null;
+    },
+    enabled: isAdmin === true,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch paginated products using RPC
+  const {
+    data: paginatedData,
+    isLoading: isLoadingProducts,
+    isFetching: isFetchingProducts,
+    refetch: refetchProducts
+  } = useQuery({
+    queryKey: ["products-paginated", userId, currentPage, debouncedSearch, activeTab, selectedFolder],
+    queryFn: async (): Promise<PaginatedResponse> => {
+      if (!userId) return { products: [], total_count: 0, page: 1, per_page: ITEMS_PER_PAGE, total_pages: 0 };
       
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc('get_products_paginated', {
+        p_user_id: userId,
+        p_page: currentPage,
+        p_per_page: ITEMS_PER_PAGE,
+        p_search: debouncedSearch || null,
+        p_status: activeTab,
+        p_folder_id: selectedFolder
+      });
       
       if (error) throw error;
-      return { isAdmin: true, products: data as Product[] };
+      const result = data as unknown as PaginatedResponse;
+      return result;
     },
+    enabled: isAdmin === true && !!userId,
+    staleTime: 30 * 1000, // 30 seconds
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching
   });
 
-  const isAdmin = productsData?.isAdmin ?? null;
-  const products = productsData?.products ?? [];
-
-  const {
-    data: folders = [],
-    refetch: refetchFolders
-  } = useQuery({
-    queryKey: ["product_folders"],
+  // Fetch folders
+  const { data: folders = [], refetch: refetchFolders } = useQuery({
+    queryKey: ["product_folders", userId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!userId) return [];
       const { data, error } = await supabase
         .from("product_folders")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as ProductFolder[];
     },
-    enabled: isAdmin === true
+    enabled: isAdmin === true && !!userId,
+    staleTime: 60 * 1000, // 1 minute
   });
 
-  const countProductsInFolder = (folderId: string) => {
-    return products.filter(p => p.folder_id === folderId).length;
-  };
-
-  // When inside a folder, show only products from that folder
-  // When at root (selectedFolder === null), show only products without folder
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === "all" || 
-      (activeTab === "active" && product.is_active) || 
-      (activeTab === "inactive" && !product.is_active);
-    const matchesFolder = selectedFolder 
-      ? product.folder_id === selectedFolder 
-      : !product.folder_id;
-    return matchesSearch && matchesTab && matchesFolder;
+  // Fetch folder counts using RPC
+  const { data: folderCounts = [] } = useQuery({
+    queryKey: ["product_folder_counts", userId],
+    queryFn: async (): Promise<FolderCount[]> => {
+      if (!userId) return [];
+      const { data, error } = await supabase.rpc('get_product_folder_counts', {
+        p_user_id: userId
+      });
+      if (error) throw error;
+      return (data as unknown as FolderCount[]) || [];
+    },
+    enabled: isAdmin === true && !!userId,
+    staleTime: 30 * 1000,
   });
 
-  // Get the selected folder info
-  const selectedFolderInfo = selectedFolder ? folders.find(f => f.id === selectedFolder) : null;
+  // Memoized folder count lookup
+  const getFolderCount = useCallback((folderId: string) => {
+    const found = folderCounts.find(fc => fc.folder_id === folderId);
+    return found?.count || 0;
+  }, [folderCounts]);
+
+  // Get selected folder info
+  const selectedFolderInfo = useMemo(() => {
+    return selectedFolder ? folders.find(f => f.id === selectedFolder) : null;
+  }, [selectedFolder, folders]);
+
+  // Extracted data
+  const products = paginatedData?.products || [];
+  const totalCount = paginatedData?.total_count || 0;
+  const totalPages = paginatedData?.total_pages || 0;
+
+  // Handlers
+  const handleNavigate = useCallback((id: string) => {
+    navigate(`/admin/products/${id}`);
+  }, [navigate]);
+
+  const handleMoveToFolder = useCallback(async (productId: string, folderId: string | null) => {
+    const { error } = await supabase
+      .from("products")
+      .update({ folder_id: folderId })
+      .eq("id", productId);
+    if (error) {
+      toast.error("Erro ao mover produto");
+      return;
+    }
+    toast.success(folderId ? "Produto movido para pasta" : "Produto removido da pasta");
+    refetchProducts();
+  }, [refetchProducts]);
 
   const handleCreateProduct = async () => {
     if (!newProduct.name.trim()) {
       toast.error("Nome do produto é obrigatório");
       return;
     }
-
-    // Validação de palavras bloqueadas
     const blockedWord = containsBlockedKeyword(newProduct.name);
     if (blockedWord) {
       toast.error(`Nome do produto contém termos não permitidos ("${blockedWord}")`);
       return;
     }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!userId) return;
+    
     const { error } = await supabase.from("products").insert({
       name: newProduct.name,
       description: newProduct.description || null,
       price: newProduct.price,
       image_url: newProduct.image_url || null,
       folder_id: newProduct.folder_id && newProduct.folder_id !== "none" ? newProduct.folder_id : null,
-      user_id: user.id
+      user_id: userId
     });
     if (error) {
       toast.error("Erro ao criar produto");
@@ -226,12 +386,12 @@ export default function AdminProducts() {
       toast.error("Nome da pasta é obrigatório");
       return;
     }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!userId) return;
+    
     const { error } = await supabase.from("product_folders").insert({
       name: newFolder.name,
       color: newFolder.color,
-      user_id: user.id
+      user_id: userId
     });
     if (error) {
       toast.error("Erro ao criar pasta");
@@ -244,9 +404,7 @@ export default function AdminProducts() {
   };
 
   const handleDeleteFolder = async (folderId: string) => {
-    // Remove folder association from products first
     await supabase.from("products").update({ folder_id: null }).eq("folder_id", folderId);
-    // Then delete the folder
     const { error } = await supabase.from("product_folders").delete().eq("id", folderId);
     if (error) {
       toast.error("Erro ao excluir pasta");
@@ -260,35 +418,12 @@ export default function AdminProducts() {
     refetchProducts();
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    const { error } = await supabase.from("products").delete().eq("id", productId);
-    if (error) {
-      toast.error("Erro ao excluir produto");
-      return;
-    }
-    toast.success("Produto excluído com sucesso");
-    refetchProducts();
-  };
-
-  const handleMoveToFolder = async (productId: string, folderId: string | null) => {
-    const { error } = await supabase
-      .from("products")
-      .update({ folder_id: folderId })
-      .eq("id", productId);
-    if (error) {
-      toast.error("Erro ao mover produto");
-      return;
-    }
-    toast.success(folderId ? "Produto movido para pasta" : "Produto removido da pasta");
-    refetchProducts();
-  };
-
-  // Permission check - AFTER all hooks
+  // Permission check
   if (!permissionsLoading && !isOwner && !hasPermission('can_manage_products')) {
     return <AccessDenied message="Você não tem permissão para gerenciar Produtos." />;
   }
 
-  // Non-admin users see the "Página em Produção" notice (after loading completes)
+  // Non-admin users see notice
   if (isAdmin === false) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -311,7 +446,6 @@ export default function AdminProducts() {
     );
   }
 
-  // Admin users see the full products page (renders immediately with skeletons)
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 p-4 md:p-6">
@@ -319,7 +453,9 @@ export default function AdminProducts() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold">Produtos</h1>
-            <p className="text-muted-foreground">Visualize e gerencie todos seus produtos.</p>
+            <p className="text-muted-foreground">
+              {totalCount > 0 ? `${totalCount} produto${totalCount !== 1 ? 's' : ''} encontrado${totalCount !== 1 ? 's' : ''}` : 'Visualize e gerencie todos seus produtos.'}
+            </p>
           </div>
           <div className="flex gap-2">
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -454,34 +590,34 @@ export default function AdminProducts() {
             <div className="flex items-center gap-2 mt-2">
               <Folder className="h-5 w-5" style={{ color: selectedFolderInfo.color || undefined }} />
               <h3 className="text-lg font-semibold">{selectedFolderInfo.name}</h3>
-              <Badge variant="secondary">{countProductsInFolder(selectedFolder)} produtos</Badge>
+              <Badge variant="secondary">{getFolderCount(selectedFolder)} produtos</Badge>
             </div>
           </div>
         )}
 
-        {/* Products Grid with Skeletons */}
+        {/* Loading state */}
         {isLoadingProducts ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <ProductSkeleton key={i} />
             ))}
           </div>
-        ) : (filteredProducts.length === 0 && (selectedFolder || folders.length === 0)) ? (
+        ) : products.length === 0 && (selectedFolder || folders.length === 0) ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">
-                {selectedFolder ? "Nenhum produto nesta pasta" : "Nenhum produto encontrado"}
+                {selectedFolder ? "Nenhum produto nesta pasta" : debouncedSearch ? "Nenhum produto encontrado" : "Nenhum produto encontrado"}
               </h3>
               <p className="text-muted-foreground">
-                {selectedFolder ? "Adicione produtos a esta pasta para visualizá-los aqui." : "Crie seu primeiro produto para começar."}
+                {selectedFolder ? "Adicione produtos a esta pasta para visualizá-los aqui." : debouncedSearch ? "Tente buscar por outro termo." : "Crie seu primeiro produto para começar."}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-6">
             {/* SEÇÃO DE PASTAS - só mostra no nível raiz */}
-            {!selectedFolder && folders.length > 0 && (
+            {!selectedFolder && folders.length > 0 && !debouncedSearch && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <Folder className="h-5 w-5" />
@@ -495,7 +631,6 @@ export default function AdminProducts() {
                       style={{ backgroundColor: `${folder.color}10` }}
                       onClick={() => setSelectedFolder(folder.id)}
                     >
-                      {/* Delete button */}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -507,24 +642,16 @@ export default function AdminProducts() {
                       >
                         <X className="h-3 w-3" />
                       </Button>
-                      
-                      {/* Folder icon */}
                       <Folder 
                         className="h-10 w-10 sm:h-12 sm:w-12" 
                         style={{ color: folder.color || 'hsl(var(--muted-foreground))' }} 
                       />
-                      
-                      {/* Folder name */}
                       <h3 className="text-xs sm:text-sm font-semibold mt-2 px-2 text-center truncate max-w-full">
                         {folder.name}
                       </h3>
-                      
-                      {/* Product count */}
                       <p className="text-[10px] sm:text-xs text-muted-foreground">
-                        {countProductsInFolder(folder.id)} {countProductsInFolder(folder.id) === 1 ? 'produto' : 'produtos'}
+                        {getFolderCount(folder.id)} {getFolderCount(folder.id) === 1 ? 'produto' : 'produtos'}
                       </p>
-                      
-                      {/* Acessar button */}
                       <Button
                         variant="outline"
                         size="sm"
@@ -544,98 +671,74 @@ export default function AdminProducts() {
             )}
 
             {/* SEÇÃO DE PRODUTOS */}
-            <div>
-              {!selectedFolder && (
+            <div className={isFetchingProducts && !isLoadingProducts ? "opacity-70 transition-opacity" : ""}>
+              {!selectedFolder && !debouncedSearch && (
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <Package className="h-5 w-5" />
                   Produtos
                 </h2>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
-                {filteredProducts.map(product => (
-              <Card 
-                key={product.id} 
-                className="overflow-hidden group cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]" 
-                onClick={() => navigate(`/admin/products/${product.id}`)}
-              >
-                <div className="aspect-square bg-muted relative">
-                  {product.image_url ? (
-                    <img 
-                      src={product.image_url} 
-                      alt={product.name} 
-                      loading="lazy"
-                      className="w-full h-full object-cover" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Image className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
-                <CardContent className="p-3 sm:p-4">
-                  <div>
-                    <h3 className="text-sm sm:text-base font-semibold truncate">{product.name}</h3>
-                  </div>
-                  <div className="mt-1 sm:mt-2">
-                    <p className="text-sm sm:text-base font-bold text-primary">
-                      R$ {product.price.toFixed(2).replace(".", ",")}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="flex-1 h-7 text-xs px-2.5 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <FolderInput className="h-3 w-3 mr-1" />
-                          Pasta
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-48 p-2" onClick={e => e.stopPropagation()}>
-                        <div className="space-y-1">
-                          <Button
-                            variant={!product.folder_id ? "secondary" : "ghost"}
-                            size="sm"
-                            className="w-full justify-start text-xs"
-                            onClick={() => handleMoveToFolder(product.id, null)}
-                          >
-                            Sem pasta
-                          </Button>
-                          {folders.map(folder => (
-                            <Button
-                              key={folder.id}
-                              variant={product.folder_id === folder.id ? "secondary" : "ghost"}
-                              size="sm"
-                              className="w-full justify-start text-xs gap-2"
-                              onClick={() => handleMoveToFolder(product.id, folder.id)}
-                            >
-                              <Folder className="h-3 w-3" style={{ color: folder.color || undefined }} />
-                              {folder.name}
-                            </Button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <Button
-                      size="sm" 
-                      variant="outline" 
-                      className="flex-1 h-7 text-xs px-2.5 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate(`/admin/products/${product.id}`);
-                      }}
-                    >
-                      <Settings className="h-3 w-3 mr-1" />
-                      Configurar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                {products.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    folders={folders}
+                    onNavigate={handleNavigate}
+                    onMoveToFolder={handleMoveToFolder}
+                  />
+                ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1 || isFetchingProducts}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          className="w-8 h-8 p-0"
+                          onClick={() => setCurrentPage(pageNum)}
+                          disabled={isFetchingProducts}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages || isFetchingProducts}
+                  >
+                    Próximo
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
