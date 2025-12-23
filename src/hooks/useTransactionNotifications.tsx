@@ -254,9 +254,20 @@ export const useTransactionNotifications = (userId: string | null) => {
   }, [loadSettings]);
 
   // Play notification sound - uses settingsRef for current values
-  const playNotificationSound = (soundId: string) => {
+  const playNotificationSound = useCallback((soundId: string) => {
     const currentSettings = settingsRef.current;
-    if (!currentSettings.enableSound) return;
+    
+    console.log('🔊 Tentando tocar som:', { 
+      soundId, 
+      enableSound: currentSettings.enableSound,
+      volume: currentSettings.volume,
+      customSoundUrl: currentSettings.customSoundUrl 
+    });
+    
+    if (!currentSettings.enableSound) {
+      console.log('🔇 Som desativado nas configurações globais');
+      return;
+    }
     
     let soundUrl = '';
     
@@ -266,15 +277,32 @@ export const useTransactionNotifications = (userId: string | null) => {
       soundUrl = PREDEFINED_SOUNDS[soundId] || PREDEFINED_SOUNDS.coin;
     }
     
+    console.log('🔊 URL do som:', soundUrl);
+    
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current = null;
     }
-    audioRef.current = new Audio(soundUrl);
-    audioRef.current.volume = currentSettings.volume / 100;
-    audioRef.current.play().catch(() => {
-      // Ignore audio play errors (user interaction required)
-    });
-  };
+    
+    const audio = new Audio(soundUrl);
+    audio.volume = currentSettings.volume / 100;
+    audioRef.current = audio;
+    
+    audio.play()
+      .then(() => {
+        console.log('🔊 Som reproduzido com sucesso!');
+      })
+      .catch((error) => {
+        console.error('🔇 Erro ao reproduzir som:', error.message);
+        // Navegadores bloqueiam autoplay sem interação do usuário
+        // Tentar novamente quando houver interação
+        const playOnInteraction = () => {
+          audio.play().catch(() => {});
+          document.removeEventListener('click', playOnInteraction);
+        };
+        document.addEventListener('click', playOnInteraction, { once: true });
+      });
+  }, []);
 
   // Show browser notification - uses settingsRef for current values
   const showBrowserNotification = (title: string, body: string) => {
