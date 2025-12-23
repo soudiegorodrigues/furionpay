@@ -1383,7 +1383,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                 <Button
                   onClick={handleRedeemSubmit}
                   disabled={submittingRedeem}
-                  className="bg-green-500 hover:bg-green-600 text-white"
+                  className="bg-red-500/80 hover:bg-red-500 text-white"
                 >
                   {submittingRedeem ? (
                     <>
