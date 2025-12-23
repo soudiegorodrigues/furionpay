@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight, Loader2, MapPin } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight, Loader2, MapPin, Star, Award, Sparkles } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { fetchAddressByCep, formatCep } from "@/lib/viaCep";
 interface DashboardStats {
@@ -1188,36 +1188,44 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Coluna Esquerda - Seção de Homenagem */}
-            <div className="relative bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px]">
-              {/* Efeito de brilho de fundo */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.2),transparent_60%)]" />
+            <div className="relative bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px] border-l-4 border-primary/50">
+              {/* Efeito de brilho vermelho de fundo */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,hsl(var(--primary)/0.15),transparent_60%)]" />
               
-              {/* Confetti decorativo */}
-              <div className="absolute top-4 left-4 text-4xl animate-bounce" style={{ animationDelay: '0s' }}>🎉</div>
-              <div className="absolute top-6 right-6 text-3xl animate-bounce" style={{ animationDelay: '0.5s' }}>🎊</div>
-              <div className="absolute bottom-6 left-6 text-2xl animate-bounce" style={{ animationDelay: '1s' }}>✨</div>
-              <div className="absolute bottom-4 right-4 text-3xl animate-bounce" style={{ animationDelay: '0.3s' }}>🏆</div>
+              {/* Ícones decorativos profissionais */}
+              <div className="absolute top-4 left-4 animate-pulse" style={{ animationDelay: '0s' }}>
+                <Star className="h-8 w-8 text-primary/40" fill="currentColor" />
+              </div>
+              <div className="absolute top-6 right-6 animate-pulse" style={{ animationDelay: '0.5s' }}>
+                <Award className="h-7 w-7 text-primary/30" />
+              </div>
+              <div className="absolute bottom-6 left-6 animate-pulse" style={{ animationDelay: '1s' }}>
+                <Sparkles className="h-6 w-6 text-primary/25" />
+              </div>
+              <div className="absolute bottom-4 right-4 animate-pulse" style={{ animationDelay: '0.3s' }}>
+                <Trophy className="h-7 w-7 text-primary/35" />
+              </div>
               
               <div className="relative z-10 space-y-4">
                 {/* Título Parabéns */}
                 <div className="space-y-2">
-                  <h2 className="text-3xl lg:text-4xl font-black tracking-tight drop-shadow-lg">
+                  <h2 className="text-3xl lg:text-4xl font-black tracking-tight drop-shadow-lg text-white">
                     PARABÉNS!
                   </h2>
-                  <p className="text-xl lg:text-2xl font-bold text-white/90">
+                  <p className="text-xl lg:text-2xl font-bold text-primary">
                     {userName || 'Campeão(a)'}
                   </p>
                 </div>
                 
                 {/* Texto motivacional */}
-                <p className="text-sm lg:text-base text-white/80 max-w-xs mx-auto">
+                <p className="text-sm lg:text-base text-zinc-400 max-w-xs mx-auto">
                   Você alcançou uma conquista incrível e merece toda essa celebração!
                 </p>
                 
                 {/* Placa Grande */}
                 {selectedReward && (
                   <div className="my-6 relative">
-                    <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full transform scale-110" />
+                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full transform scale-110" />
                     {selectedReward.image_url ? (
                       <img 
                         src={selectedReward.image_url} 
@@ -1225,8 +1233,8 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                         className="relative w-40 h-40 lg:w-52 lg:h-52 object-contain mx-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="relative w-40 h-40 lg:w-52 lg:h-52 flex items-center justify-center bg-white/20 backdrop-blur rounded-2xl mx-auto">
-                        <Trophy className="h-24 w-24 text-yellow-300 drop-shadow-lg" />
+                      <div className="relative w-40 h-40 lg:w-52 lg:h-52 flex items-center justify-center bg-primary/10 backdrop-blur rounded-2xl mx-auto border border-primary/30">
+                        <Trophy className="h-24 w-24 text-primary drop-shadow-lg" />
                       </div>
                     )}
                   </div>
@@ -1234,12 +1242,12 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                 
                 {/* Badge de conquista */}
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                    <span className="text-lg">✨</span>
-                    <span className="font-semibold text-sm lg:text-base">Conquistado!</span>
+                  <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm px-4 py-2 rounded-full border border-primary/30">
+                    <Award className="h-4 w-4 text-primary" />
+                    <span className="font-semibold text-sm lg:text-base text-white">Conquistado!</span>
                   </div>
                   {selectedReward && (
-                    <p className="text-lg font-bold text-yellow-200 drop-shadow">
+                    <p className="text-lg font-bold text-primary drop-shadow">
                       Meta: {formatCurrency(selectedReward.threshold_amount)}
                     </p>
                   )}
