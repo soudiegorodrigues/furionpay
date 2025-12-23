@@ -768,7 +768,7 @@ const AdminDashboard = () => {
             {/* Container com ref para cálculo manual de dimensões */}
             <div 
               ref={chartContainerRef}
-              className="w-full relative flex-1 min-h-[200px] sm:min-h-[250px] md:min-h-[300px]"
+              className="w-full relative flex-1 min-h-[280px] sm:min-h-[350px] md:min-h-[400px] lg:min-h-[450px]"
             >
               {/* Gráfico com dimensões calculadas manualmente - elimina piscar */}
               <div
