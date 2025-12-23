@@ -73,7 +73,8 @@ export const AcquirerConfigSection = ({ isAdmin }: AcquirerConfigSectionProps) =
       const acquirerNames: Record<string, string> = { 
         ativus: 'Ativus Hub', 
         inter: 'Banco Inter',
-        valorion: 'Valorion'
+        valorion: 'Valorion',
+        efi: 'EFI Pay'
       };
       
       toast({
@@ -132,6 +133,7 @@ export const AcquirerConfigSection = ({ isAdmin }: AcquirerConfigSectionProps) =
                       <SelectItem value="ativus">Ativus Hub</SelectItem>
                       <SelectItem value="inter">Banco Inter</SelectItem>
                       <SelectItem value="valorion">Valorion</SelectItem>
+                      <SelectItem value="efi">EFI Pay</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

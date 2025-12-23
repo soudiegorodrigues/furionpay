@@ -11,7 +11,7 @@ const corsHeaders = {
 // - Ativus: usa endpoint de consulta de status (não cria transação)
 // - Valorion: usa check-pix-status com txid inexistente (não cria transação)
 // - Inter: usa get-inter-credentials para verificar conectividade (não cria transação)
-const ACQUIRERS = ['ativus', 'valorion', 'inter'];
+const ACQUIRERS = ['ativus', 'valorion', 'inter', 'efi'];
 
 // Timeout for health check requests (5 seconds - increased for slower acquirers like Inter)
 const HEALTH_CHECK_TIMEOUT_MS = 5000;
