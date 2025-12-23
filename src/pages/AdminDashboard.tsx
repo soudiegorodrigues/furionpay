@@ -203,11 +203,24 @@ const AdminDashboard = () => {
     signOut
   } = useAdminAuth();
 
-  // Calcular próxima meta fora do JSX para poder usar em useEffect
+  // Calcular próxima meta ou meta conquistada não resgatada
   const rewardData = useMemo(() => {
     if (rewards.length === 0) return null;
     
     const sortedRewards = [...rewards].sort((a, b) => a.threshold_amount - b.threshold_amount);
+    
+    // Primeiro, verificar se existe alguma meta conquistada que ainda não foi resgatada
+    const achievedNotRedeemed = sortedRewards.find(
+      r => stats.total_amount_paid >= r.threshold_amount && !existingRequests.includes(r.id)
+    );
+    
+    if (achievedNotRedeemed) {
+      // Mostrar meta conquistada que pode ser resgatada
+      const progress = 100;
+      return { nextReward: achievedNotRedeemed, progress, achieved: true };
+    }
+    
+    // Se não há metas conquistadas não resgatadas, mostrar próxima meta
     const nextReward = sortedRewards.find(r => stats.total_amount_paid < r.threshold_amount) 
       || sortedRewards[sortedRewards.length - 1];
     
@@ -215,7 +228,7 @@ const AdminDashboard = () => {
     const achieved = stats.total_amount_paid >= nextReward.threshold_amount;
     
     return { nextReward, progress, achieved };
-  }, [rewards, stats.total_amount_paid]);
+  }, [rewards, stats.total_amount_paid, existingRequests]);
 
   // Disparar confete quando meta for conquistada
   useEffect(() => {
