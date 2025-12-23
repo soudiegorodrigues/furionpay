@@ -111,7 +111,9 @@ const AdminDashboard = () => {
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPeriodStats, setIsLoadingPeriodStats] = useState(true);
-  const [isLoadingChart, setIsLoadingChart] = useState(true);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
+  const [initialChartLoadComplete, setInitialChartLoadComplete] = useState(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
@@ -215,7 +217,14 @@ const AdminDashboard = () => {
 
   // Load chart data from RPC (aggregated directly in database)
   const loadChartData = async (filter: ChartFilter) => {
-    setIsLoadingChart(true);
+    // Delay antes de mostrar o loading (evita piscar em requisições rápidas)
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+    loadingTimeoutRef.current = setTimeout(() => {
+      setIsLoadingChart(true);
+    }, 150);
+    
     try {
       if (filter === 'today') {
         const { data, error } = await supabase.rpc('get_user_chart_data_by_hour');
@@ -291,7 +300,12 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error loading chart data:', error);
     } finally {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
       setIsLoadingChart(false);
+      setInitialChartLoadComplete(true);
     }
   };
 
@@ -725,14 +739,22 @@ const AdminDashboard = () => {
           <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
             {/* Container flex-1 para preencher 100% do card */}
             <div className="w-full relative flex-1 min-h-[120px] sm:min-h-[140px] md:min-h-[160px]">
-              <div
-                className={`w-full h-full transition-opacity duration-300 ${
-                  isLoadingChart
-                    ? (chartData.length > 0 ? "opacity-60" : "opacity-0")
-                    : "opacity-100"
-                }`}
-              >
-                <ResponsiveContainer width="100%" height="100%" debounce={0}>
+              {/* Skeleton para o primeiro load */}
+              {!initialChartLoadComplete ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <BarChart3 className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
+                    <span className="text-sm text-muted-foreground/50">Carregando gráfico...</span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className={`w-full h-full transition-opacity duration-300 ${
+                      isLoadingChart ? "opacity-50" : "opacity-100"
+                    }`}
+                  >
+                    <ResponsiveContainer width="100%" height="100%" debounce={50}>
                   <AreaChart
                     data={chartData}
                     margin={{
@@ -838,16 +860,20 @@ const AdminDashboard = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Overlay de loading (sem desmontar o gráfico) */}
-              {isLoadingChart && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-                  <div className="flex flex-col items-center gap-3 bg-card/90 px-6 py-4 rounded-xl shadow-lg border border-border/50">
-                    <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
-                    <span className="text-sm text-muted-foreground font-medium">
-                      {chartData.length > 0 ? 'Atualizando gráfico...' : 'Carregando gráfico...'}
-                    </span>
+                  {/* Overlay de loading com transição suave */}
+                  <div 
+                    className={`absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm transition-opacity duration-200 ${
+                      isLoadingChart ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-3 bg-card/90 px-6 py-4 rounded-xl shadow-lg border border-border/50">
+                      <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
+                      <span className="text-sm text-muted-foreground font-medium">
+                        Atualizando gráfico...
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
             <div className="flex items-center justify-center gap-6 mt-4 flex-wrap">
