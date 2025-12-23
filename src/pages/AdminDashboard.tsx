@@ -1157,7 +1157,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                       <div className="flex justify-center">
                         {achieved && !existingRequests.includes(nextReward.id) ? (
                           <Button 
-                            className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 animate-[pulse_3s_ease-in-out_infinite]"
+                            className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 animate-[pulse_4s_ease-in-out_infinite] [animation-timing-function:ease-in-out] opacity-90 hover:opacity-100"
                             onClick={() => {
                               setSelectedReward(nextReward);
                               setRedeemDialogOpen(true);
