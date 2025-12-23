@@ -722,12 +722,9 @@ const AdminDashboard = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            {/* Container com aspect-ratio para forçar largura 100% imediatamente */}
-            <div 
-              className="w-full relative"
-              style={{ aspectRatio: '16 / 5', minHeight: '180px', maxHeight: '300px' }}
-            >
+          <CardContent className="p-3 sm:p-4">
+            {/* Container com altura fixa responsiva para gráfico compacto */}
+            <div className="w-full relative h-[160px] sm:h-[180px] md:h-[200px]">
               <div
                 className={`w-full h-full transition-opacity duration-300 ${
                   isLoadingChart
@@ -739,10 +736,10 @@ const AdminDashboard = () => {
                   <AreaChart
                     data={chartData}
                     margin={{
-                      top: 20,
-                      right: 10,
-                      left: 10,
-                      bottom: isTabletOrSmaller || chartFilter === '30days' ? 40 : 5,
+                      top: 10,
+                      right: 5,
+                      left: 5,
+                      bottom: isTabletOrSmaller || chartFilter === '30days' ? 30 : 5,
                     }}
                   >
                     <defs>
