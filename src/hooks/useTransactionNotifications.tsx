@@ -253,8 +253,10 @@ export const useTransactionNotifications = (userId: string | null) => {
     };
   }, [loadSettings]);
 
-  // Play notification sound - uses settingsRef for current values
-  const playNotificationSound = (soundId: string) => {
+  // Play notification sound - uses ref to always have latest function
+  const playNotificationSoundRef = useRef<(soundId: string) => void>(() => {});
+  
+  playNotificationSoundRef.current = (soundId: string) => {
     const currentSettings = settingsRef.current;
     
     console.log('🔊 Tentando tocar som:', { 
@@ -294,12 +296,18 @@ export const useTransactionNotifications = (userId: string | null) => {
       })
       .catch((error) => {
         console.error('🔇 Erro ao reproduzir som:', error.message);
-        // Navegadores bloqueiam autoplay sem interação do usuário
       });
   };
+  
+  // Stable function that delegates to ref
+  const playNotificationSound = useCallback((soundId: string) => {
+    playNotificationSoundRef.current(soundId);
+  }, []);
 
-  // Show browser notification - uses settingsRef for current values
-  const showBrowserNotification = (title: string, body: string) => {
+  // Show browser notification - uses ref to always have latest function
+  const showBrowserNotificationRef = useRef<(title: string, body: string) => void>(() => {});
+  
+  showBrowserNotificationRef.current = (title: string, body: string) => {
     const currentSettings = settingsRef.current;
     if (!currentSettings.enableBrowser) return;
 
@@ -309,11 +317,15 @@ export const useTransactionNotifications = (userId: string | null) => {
         icon: currentSettings.customLogoUrl || '/pwa-192x192.png',
         badge: '/pix-icon.png',
         tag: 'furionpay-notification',
-        // Evita som do sistema duplicado quando já tocamos som customizado controlado por volume.
         silent: currentSettings.enableSound,
       });
     }
   };
+  
+  // Stable function that delegates to ref
+  const showBrowserNotification = useCallback((title: string, body: string) => {
+    showBrowserNotificationRef.current(title, body);
+  }, []);
 
   useEffect(() => {
     // Request permission on mount
