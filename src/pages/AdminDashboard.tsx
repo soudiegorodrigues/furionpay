@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -86,6 +86,32 @@ const AdminDashboard = () => {
     window.addEventListener('resize', checkSize);
     return () => window.removeEventListener('resize', checkSize);
   }, []);
+
+  // Calcular dimensões do gráfico manualmente para evitar o piscar do ResponsiveContainer
+  useEffect(() => {
+    const updateChartDimensions = () => {
+      if (chartContainerRef.current) {
+        const { width, height } = chartContainerRef.current.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          setChartDimensions({ width, height });
+        }
+      }
+    };
+
+    // Atualizar imediatamente
+    updateChartDimensions();
+    
+    // Atualizar após um pequeno delay para garantir que o layout está completo
+    const timeoutId = setTimeout(updateChartDimensions, 50);
+
+    // Atualizar no resize
+    window.addEventListener('resize', updateChartDimensions);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', updateChartDimensions);
+    };
+  }, []);
   // Initialize with default values for instant rendering (no null states)
   const [stats, setStats] = useState<DashboardStats>({
     total_generated: 0,
@@ -144,6 +170,8 @@ const AdminDashboard = () => {
   const { triggerConfettiInElement } = useConfetti();
   const previousAchievedRef = useRef<string | null>(null);
   const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [chartDimensions, setChartDimensions] = useState({ width: 0, height: 0 });
   const {
     toast
   } = useToast();
@@ -737,16 +765,21 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
-            {/* Container flex-1 com min-height consistente para evitar redimensionamento */}
-            <div className="w-full relative flex-1 min-h-[200px] sm:min-h-[250px] md:min-h-[300px]">
-              {/* Gráfico sempre montado para evitar recálculo de tamanho */}
+            {/* Container com ref para cálculo manual de dimensões */}
+            <div 
+              ref={chartContainerRef}
+              className="w-full relative flex-1 min-h-[200px] sm:min-h-[250px] md:min-h-[300px]"
+            >
+              {/* Gráfico com dimensões calculadas manualmente - elimina piscar */}
               <div
-                className={`w-full h-full transition-opacity duration-300 ${
-                  !initialChartLoadComplete ? "opacity-0" : isLoadingChart ? "opacity-50" : "opacity-100"
+                className={`absolute inset-0 transition-opacity duration-300 ${
+                  !initialChartLoadComplete || chartDimensions.width === 0 ? "opacity-0" : isLoadingChart ? "opacity-50" : "opacity-100"
                 }`}
               >
-                    <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                {chartDimensions.width > 0 && chartDimensions.height > 0 && (
                   <AreaChart
+                    width={chartDimensions.width}
+                    height={chartDimensions.height}
                     data={chartData}
                     margin={{
                       top: 10,
@@ -848,7 +881,7 @@ const AdminDashboard = () => {
                       }}
                     />
                   </AreaChart>
-                </ResponsiveContainer>
+                )}
               </div>
 
               {/* Overlay de loading inicial - skeleton */}
