@@ -737,23 +737,14 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
-            {/* Container flex-1 para preencher 100% do card */}
-            <div className="w-full relative flex-1 min-h-[120px] sm:min-h-[140px] md:min-h-[160px]">
-              {/* Skeleton para o primeiro load */}
-              {!initialChartLoadComplete ? (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <BarChart3 className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
-                    <span className="text-sm text-muted-foreground/50">Carregando gráfico...</span>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div
-                    className={`w-full h-full transition-opacity duration-300 ${
-                      isLoadingChart ? "opacity-50" : "opacity-100"
-                    }`}
-                  >
+            {/* Container flex-1 com min-height consistente para evitar redimensionamento */}
+            <div className="w-full relative flex-1 min-h-[200px] sm:min-h-[250px] md:min-h-[300px]">
+              {/* Gráfico sempre montado para evitar recálculo de tamanho */}
+              <div
+                className={`w-full h-full transition-opacity duration-300 ${
+                  !initialChartLoadComplete ? "opacity-0" : isLoadingChart ? "opacity-50" : "opacity-100"
+                }`}
+              >
                     <ResponsiveContainer width="100%" height="100%" debounce={50}>
                   <AreaChart
                     data={chartData}
@@ -860,21 +851,31 @@ const AdminDashboard = () => {
                 </ResponsiveContainer>
               </div>
 
-                  {/* Overlay de loading com transição suave */}
-                  <div 
-                    className={`absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm transition-opacity duration-200 ${
-                      isLoadingChart ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-3 bg-card/90 px-6 py-4 rounded-xl shadow-lg border border-border/50">
-                      <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
-                      <span className="text-sm text-muted-foreground font-medium">
-                        Atualizando gráfico...
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
+              {/* Overlay de loading inicial - skeleton */}
+              <div 
+                className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                  !initialChartLoadComplete ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <BarChart3 className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
+                  <span className="text-sm text-muted-foreground/50">Carregando gráfico...</span>
+                </div>
+              </div>
+
+              {/* Overlay de loading para atualizações */}
+              <div 
+                className={`absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm transition-opacity duration-200 ${
+                  isLoadingChart && initialChartLoadComplete ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-3 bg-card/90 px-6 py-4 rounded-xl shadow-lg border border-border/50">
+                  <BarChart3 className="h-10 w-10 text-muted-foreground/50 animate-pulse" />
+                  <span className="text-sm text-muted-foreground font-medium">
+                    Atualizando gráfico...
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-center gap-6 mt-4 flex-wrap">
               {[
