@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, RefreshCw, AlertTriangle, Copy, Search, ChevronLeft, ChevronRight, FileText, DollarSign } from "lucide-react";
+import { Check, X, RefreshCw, AlertTriangle, Copy, Search, ChevronLeft, ChevronRight, FileText, DollarSign, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 interface Withdrawal {
   id: string;
   user_id: string;
@@ -25,7 +27,15 @@ interface Withdrawal {
   processed_at?: string;
   rejection_reason?: string;
 }
+
+interface UserBalance {
+  user_id: string;
+  balance: number;
+  loading: boolean;
+}
+
 type StatusFilter = 'pending' | 'approved' | 'rejected' | 'all';
+
 export function SaquesGlobaisSection() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,21 +46,26 @@ export function SaquesGlobaisSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending');
   const [currentPage, setCurrentPage] = useState(1);
+  const [userBalances, setUserBalances] = useState<Record<string, UserBalance>>({});
   const itemsPerPage = 10;
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const loadWithdrawals = async () => {
     setIsLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.rpc('get_all_withdrawals_admin', {
+      const { data, error } = await supabase.rpc('get_all_withdrawals_admin', {
         p_limit: 500
       });
       if (error) throw error;
       setWithdrawals(data || []);
+      
+      // Carregar saldos dos usuários com saques pendentes
+      const pendingWithdrawals = (data || []).filter((w: Withdrawal) => w.status === 'pending');
+      const uniqueUserIds = [...new Set(pendingWithdrawals.map((w: Withdrawal) => w.user_id))];
+      
+      for (const userId of uniqueUserIds) {
+        loadUserBalance(userId as string);
+      }
     } catch (error) {
       console.error('Error loading withdrawals:', error);
       toast({
@@ -62,9 +77,37 @@ export function SaquesGlobaisSection() {
       setIsLoading(false);
     }
   };
+
+  const loadUserBalance = async (userId: string) => {
+    setUserBalances(prev => ({
+      ...prev,
+      [userId]: { user_id: userId, balance: 0, loading: true }
+    }));
+    
+    try {
+      const { data, error } = await supabase.rpc('get_user_balance_for_admin', {
+        p_user_id: userId
+      });
+      
+      if (error) throw error;
+      
+      setUserBalances(prev => ({
+        ...prev,
+        [userId]: { user_id: userId, balance: data || 0, loading: false }
+      }));
+    } catch (error) {
+      console.error('Error loading user balance:', error);
+      setUserBalances(prev => ({
+        ...prev,
+        [userId]: { user_id: userId, balance: 0, loading: false }
+      }));
+    }
+  };
+
   useEffect(() => {
     loadWithdrawals();
   }, []);
+
   const filteredWithdrawals = useMemo(() => {
     let filtered = withdrawals;
 
@@ -76,15 +119,22 @@ export function SaquesGlobaisSection() {
     // Filter by search term
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(w => w.user_email.toLowerCase().includes(search) || w.id.toLowerCase().includes(search) || w.pix_key.toLowerCase().includes(search));
+      filtered = filtered.filter(w => 
+        w.user_email.toLowerCase().includes(search) || 
+        w.id.toLowerCase().includes(search) || 
+        w.pix_key.toLowerCase().includes(search)
+      );
     }
     return filtered;
   }, [withdrawals, statusFilter, searchTerm]);
+
   const paginatedWithdrawals = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredWithdrawals.slice(start, start + itemsPerPage);
   }, [filteredWithdrawals, currentPage]);
+
   const totalPages = Math.ceil(filteredWithdrawals.length / itemsPerPage);
+
   const stats = useMemo(() => {
     const pending = withdrawals.filter(w => w.status === 'pending');
     const approved = withdrawals.filter(w => w.status === 'approved');
@@ -95,6 +145,7 @@ export function SaquesGlobaisSection() {
       approvedValue: approved.reduce((acc, w) => acc + w.amount, 0)
     };
   }, [withdrawals]);
+
   const sendNotificationEmail = async (withdrawal: Withdrawal, status: 'approved' | 'rejected', rejectionReason?: string) => {
     try {
       await supabase.functions.invoke('send-withdrawal-notification', {
@@ -111,16 +162,47 @@ export function SaquesGlobaisSection() {
       console.error('Error sending notification email:', error);
     }
   };
+
+  const hasInsufficientBalance = (withdrawal: Withdrawal): boolean => {
+    const userBalance = userBalances[withdrawal.user_id];
+    if (!userBalance || userBalance.loading) return false;
+    return userBalance.balance < withdrawal.amount;
+  };
+
   const handleApprove = async (withdrawal: Withdrawal) => {
+    // Validação de saldo no frontend (segurança em dupla camada)
+    const userBalance = userBalances[withdrawal.user_id];
+    if (userBalance && !userBalance.loading && userBalance.balance < withdrawal.amount) {
+      toast({
+        title: "Saldo Insuficiente",
+        description: `O usuário não possui saldo suficiente. Saldo: ${formatCurrency(userBalance.balance)}, Valor do saque: ${formatCurrency(withdrawal.amount)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setProcessingId(withdrawal.id);
     try {
-      const {
-        error
-      } = await supabase.rpc('process_withdrawal', {
+      const { error } = await supabase.rpc('process_withdrawal', {
         p_withdrawal_id: withdrawal.id,
         p_status: 'approved'
       });
-      if (error) throw error;
+      
+      if (error) {
+        // Trata erro de saldo insuficiente do banco de dados
+        if (error.message.includes('Saldo insuficiente')) {
+          toast({
+            title: "Saldo Insuficiente",
+            description: error.message,
+            variant: "destructive"
+          });
+          // Recarregar saldo do usuário
+          loadUserBalance(withdrawal.user_id);
+          return;
+        }
+        throw error;
+      }
+      
       await sendNotificationEmail(withdrawal, 'approved');
       toast({
         title: "Saque aprovado!",
@@ -137,13 +219,12 @@ export function SaquesGlobaisSection() {
       setProcessingId(null);
     }
   };
+
   const handleReject = async () => {
     if (!selectedWithdrawal) return;
     setProcessingId(selectedWithdrawal.id);
     try {
-      const {
-        error
-      } = await supabase.rpc('process_withdrawal', {
+      const { error } = await supabase.rpc('process_withdrawal', {
         p_withdrawal_id: selectedWithdrawal.id,
         p_status: 'rejected',
         p_rejection_reason: rejectionReason || null
@@ -168,12 +249,14 @@ export function SaquesGlobaisSection() {
       setProcessingId(null);
     }
   };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
   };
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -183,6 +266,7 @@ export function SaquesGlobaisSection() {
       minute: '2-digit'
     });
   };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -190,6 +274,7 @@ export function SaquesGlobaisSection() {
       description: "Chave PIX copiada para a área de transferência."
     });
   };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -202,13 +287,47 @@ export function SaquesGlobaisSection() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-  return <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        
-        
-      </div>
 
+  const getBalanceBadge = (withdrawal: Withdrawal) => {
+    const userBalance = userBalances[withdrawal.user_id];
+    
+    if (!userBalance || userBalance.loading) {
+      return (
+        <span className="text-xs text-muted-foreground animate-pulse">
+          Carregando...
+        </span>
+      );
+    }
+
+    const isInsufficient = userBalance.balance < withdrawal.amount;
+    
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
+              isInsufficient 
+                ? 'bg-red-500/10 text-red-600 border border-red-500/30' 
+                : 'bg-green-500/10 text-green-600 border border-green-500/30'
+            }`}>
+              <Wallet className="h-3 w-3" />
+              {formatCurrency(userBalance.balance)}
+              {isInsufficient && <AlertTriangle className="h-3 w-3 ml-1" />}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            {isInsufficient 
+              ? `Saldo insuficiente! Faltam ${formatCurrency(withdrawal.amount - userBalance.balance)}`
+              : `Saldo suficiente para aprovar o saque`
+            }
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* Main Card */}
       <Card>
         <CardContent className="p-6">
@@ -250,14 +369,19 @@ export function SaquesGlobaisSection() {
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Pesquisar saque..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 w-[200px]" />
+                <Input 
+                  placeholder="Pesquisar saque..." 
+                  value={searchTerm} 
+                  onChange={e => setSearchTerm(e.target.value)} 
+                  className="pl-9 w-[200px]" 
+                />
               </div>
             </div>
 
             <Tabs value={statusFilter} onValueChange={v => {
-            setStatusFilter(v as StatusFilter);
-            setCurrentPage(1);
-          }}>
+              setStatusFilter(v as StatusFilter);
+              setCurrentPage(1);
+            }}>
               <TabsList className="bg-transparent border">
                 <TabsTrigger value="pending" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   Pendentes
@@ -281,66 +405,107 @@ export function SaquesGlobaisSection() {
                   <TableHead className="font-semibold">Data de Solicitação</TableHead>
                   <TableHead className="font-semibold">ID</TableHead>
                   <TableHead className="font-semibold">Valor do Saque</TableHead>
+                  {statusFilter === 'pending' && <TableHead className="font-semibold">Saldo Disponível</TableHead>}
                   <TableHead className="font-semibold">Chave PIX</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   {statusFilter === 'pending' && <TableHead className="font-semibold text-right">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedWithdrawals.length === 0 ? <TableRow>
-                    <TableCell colSpan={statusFilter === 'pending' ? 7 : 6} className="text-center py-12">
+                {paginatedWithdrawals.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={statusFilter === 'pending' ? 8 : 6} className="text-center py-12">
                       <div className="flex flex-col items-center text-muted-foreground">
                         <Search className="h-12 w-12 mb-4 opacity-30" />
                         <p>Nenhum saque encontrado</p>
                       </div>
                     </TableCell>
-                  </TableRow> : paginatedWithdrawals.map(withdrawal => <TableRow key={withdrawal.id}>
-                      <TableCell className="text-sm">
-                        {withdrawal.user_email}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(withdrawal.created_at)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {withdrawal.id.slice(0, 8)}...
-                      </TableCell>
+                  </TableRow>
+                ) : paginatedWithdrawals.map(withdrawal => (
+                  <TableRow key={withdrawal.id} className={hasInsufficientBalance(withdrawal) ? 'bg-red-50/50 dark:bg-red-950/20' : ''}>
+                    <TableCell className="text-sm">
+                      {withdrawal.user_email}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {formatDate(withdrawal.created_at)}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {withdrawal.id.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-bold text-primary">
+                        {formatCurrency(withdrawal.amount)}
+                      </span>
+                    </TableCell>
+                    {statusFilter === 'pending' && (
                       <TableCell>
-                        <span className="font-bold text-primary">
-                          {formatCurrency(withdrawal.amount)}
-                        </span>
+                        {getBalanceBadge(withdrawal)}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs text-muted-foreground">{withdrawal.pix_key_type}</span>
-                            <span className="text-sm font-mono truncate max-w-[150px]" title={withdrawal.pix_key}>
-                              {withdrawal.pix_key}
-                            </span>
-                          </div>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => copyToClipboard(withdrawal.pix_key)}>
-                            <Copy className="h-4 w-4" />
+                    )}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs text-muted-foreground">{withdrawal.pix_key_type}</span>
+                          <span className="text-sm font-mono truncate max-w-[150px]" title={withdrawal.pix_key}>
+                            {withdrawal.pix_key}
+                          </span>
+                        </div>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => copyToClipboard(withdrawal.pix_key)}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(withdrawal.status)}
+                    </TableCell>
+                    {statusFilter === 'pending' && (
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className={`gap-1 ${
+                                      hasInsufficientBalance(withdrawal)
+                                        ? 'text-muted-foreground cursor-not-allowed opacity-50'
+                                        : 'text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950'
+                                    }`}
+                                    onClick={() => handleApprove(withdrawal)} 
+                                    disabled={processingId === withdrawal.id || hasInsufficientBalance(withdrawal)}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                    Aprovar
+                                  </Button>
+                                </div>
+                              </TooltipTrigger>
+                              {hasInsufficientBalance(withdrawal) && (
+                                <TooltipContent>
+                                  <p>Saldo insuficiente para aprovar este saque</p>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TooltipProvider>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                            onClick={() => {
+                              setSelectedWithdrawal(withdrawal);
+                              setShowRejectDialog(true);
+                            }} 
+                            disabled={processingId === withdrawal.id}
+                          >
+                            <X className="h-4 w-4" />
+                            Rejeitar
                           </Button>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {getStatusBadge(withdrawal.status)}
-                      </TableCell>
-                      {statusFilter === 'pending' && <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button size="sm" variant="outline" className="gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950" onClick={() => handleApprove(withdrawal)} disabled={processingId === withdrawal.id}>
-                              <Check className="h-4 w-4" />
-                              Aprovar
-                            </Button>
-                            <Button size="sm" variant="outline" className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => {
-                      setSelectedWithdrawal(withdrawal);
-                      setShowRejectDialog(true);
-                    }} disabled={processingId === withdrawal.id}>
-                              <X className="h-4 w-4" />
-                              Rejeitar
-                            </Button>
-                          </div>
-                        </TableCell>}
-                    </TableRow>)}
+                    )}
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -375,7 +540,8 @@ export function SaquesGlobaisSection() {
             </DialogTitle>
           </DialogHeader>
 
-          {selectedWithdrawal && <div className="space-y-4">
+          {selectedWithdrawal && (
+            <div className="space-y-4">
               <div className="p-4 rounded-lg bg-muted/30 space-y-2">
                 <p className="text-sm">
                   <span className="text-muted-foreground">Usuário:</span>{" "}
@@ -391,16 +557,22 @@ export function SaquesGlobaisSection() {
 
               <div className="space-y-2">
                 <Label>Motivo da rejeição (opcional)</Label>
-                <Textarea placeholder="Explique o motivo da rejeição..." value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} rows={3} />
+                <Textarea 
+                  placeholder="Explique o motivo da rejeição..." 
+                  value={rejectionReason} 
+                  onChange={e => setRejectionReason(e.target.value)} 
+                  rows={3} 
+                />
               </div>
-            </div>}
+            </div>
+          )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => {
-            setShowRejectDialog(false);
-            setSelectedWithdrawal(null);
-            setRejectionReason("");
-          }}>
+              setShowRejectDialog(false);
+              setSelectedWithdrawal(null);
+              setRejectionReason("");
+            }}>
               Cancelar
             </Button>
             <Button variant="destructive" onClick={handleReject} disabled={processingId !== null}>
@@ -409,5 +581,6 @@ export function SaquesGlobaisSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 }
