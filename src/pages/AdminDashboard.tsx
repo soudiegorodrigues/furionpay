@@ -9,10 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight } from "lucide-react";
+import { BarChart3, Clock, RefreshCw, Calendar, QrCode, TrendingUp, Trophy, Gift, Wallet, Eye, EyeOff, ShoppingCart, ArrowRight, Loader2 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { fetchAddressByCep, formatCep } from "@/lib/viaCep";
 interface DashboardStats {
   total_generated: number;
   total_paid: number;
@@ -166,6 +170,23 @@ const AdminDashboard = () => {
   const [isLoadingRewards, setIsLoadingRewards] = useState(true);
   const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [userName, setUserName] = useState<string>("");
+  
+  // Estados para o Dialog de resgate de premiação
+  const [redeemDialogOpen, setRedeemDialogOpen] = useState(false);
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [redeemFormData, setRedeemFormData] = useState({
+    cep: "",
+    logradouro: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    telefone: "",
+    destinatario: ""
+  });
+  const [submittingRedeem, setSubmittingRedeem] = useState(false);
+  const [fetchingCep, setFetchingCep] = useState(false);
   const navigate = useNavigate();
   const { triggerConfettiInElement } = useConfetti();
   const previousAchievedRef = useRef<string | null>(null);
@@ -215,6 +236,104 @@ const AdminDashboard = () => {
       });
     }
   }, [rewardData, triggerConfettiInElement, toast]);
+
+  // Buscar endereço por CEP
+  const handleCepBlur = async () => {
+    const cleanCep = redeemFormData.cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+    
+    setFetchingCep(true);
+    try {
+      const address = await fetchAddressByCep(cleanCep);
+      if (address) {
+        setRedeemFormData(prev => ({
+          ...prev,
+          logradouro: address.logradouro || prev.logradouro,
+          bairro: address.bairro || prev.bairro,
+          cidade: address.localidade || prev.cidade,
+          estado: address.uf || prev.estado
+        }));
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+    } finally {
+      setFetchingCep(false);
+    }
+  };
+
+  // Submeter pedido de resgate
+  const handleRedeemSubmit = async () => {
+    if (!redeemFormData.destinatario.trim()) {
+      toast({ title: "Erro", description: "Preencha o nome do destinatário", variant: "destructive" });
+      return;
+    }
+    if (!redeemFormData.cep.trim() || redeemFormData.cep.replace(/\D/g, '').length !== 8) {
+      toast({ title: "Erro", description: "Preencha um CEP válido", variant: "destructive" });
+      return;
+    }
+    if (!redeemFormData.logradouro.trim()) {
+      toast({ title: "Erro", description: "Preencha o logradouro", variant: "destructive" });
+      return;
+    }
+    if (!redeemFormData.numero.trim()) {
+      toast({ title: "Erro", description: "Preencha o número", variant: "destructive" });
+      return;
+    }
+    if (!redeemFormData.bairro.trim()) {
+      toast({ title: "Erro", description: "Preencha o bairro", variant: "destructive" });
+      return;
+    }
+    if (!redeemFormData.cidade.trim()) {
+      toast({ title: "Erro", description: "Preencha a cidade", variant: "destructive" });
+      return;
+    }
+    if (!redeemFormData.estado.trim()) {
+      toast({ title: "Erro", description: "Preencha o estado", variant: "destructive" });
+      return;
+    }
+
+    if (!selectedReward || !user?.id) return;
+
+    setSubmittingRedeem(true);
+    try {
+      const fullAddress = `${redeemFormData.destinatario}
+${redeemFormData.logradouro}, ${redeemFormData.numero}${redeemFormData.complemento ? ` - ${redeemFormData.complemento}` : ''}
+${redeemFormData.bairro} - ${redeemFormData.cidade}/${redeemFormData.estado}
+CEP: ${formatCep(redeemFormData.cep)}
+${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
+
+      const { error } = await supabase
+        .from("reward_requests")
+        .insert({
+          user_id: user.id,
+          reward_id: selectedReward.id,
+          delivery_address: fullAddress,
+          status: "pending"
+        });
+
+      if (error) throw error;
+
+      toast({ title: "Sucesso!", description: "Pedido de premiação enviado com sucesso!" });
+      setRedeemDialogOpen(false);
+      setRedeemFormData({
+        cep: "",
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        telefone: "",
+        destinatario: ""
+      });
+      setSelectedReward(null);
+    } catch (error: any) {
+      console.error('Erro ao enviar pedido:', error);
+      toast({ title: "Erro", description: error.message || "Erro ao enviar pedido de premiação", variant: "destructive" });
+    } finally {
+      setSubmittingRedeem(false);
+    }
+  };
 
   // Load period stats when dateFilter changes
   const loadPeriodStats = async (period: DateFilter) => {
@@ -1009,7 +1128,13 @@ const AdminDashboard = () => {
                       {/* Botão Resgatar */}
                       <div className="flex justify-center">
                         {achieved ? (
-                          <Button className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 animate-pulse">
+                          <Button 
+                            className="bg-green-500 hover:bg-green-600 text-white font-medium py-1 px-3 text-[10px] shadow-lg shadow-green-500/30 animate-pulse"
+                            onClick={() => {
+                              setSelectedReward(nextReward);
+                              setRedeemDialogOpen(true);
+                            }}
+                          >
                             <Gift className="h-3 w-3 mr-1" />
                             Resgatar Recompensa
                           </Button>
@@ -1019,8 +1144,183 @@ const AdminDashboard = () => {
                             Resgatar Recompensa
                           </Button>
                         )}
-                      </div>
-                    </div>;
+      </div>
+
+      {/* Dialog de Resgate de Premiação */}
+      <Dialog open={redeemDialogOpen} onOpenChange={setRedeemDialogOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-green-500" />
+              Resgatar Premiação
+            </DialogTitle>
+            <DialogDescription>
+              Preencha os dados de entrega para receber sua premiação
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Preview da premiação */}
+          {selectedReward && (
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
+              {selectedReward.image_url ? (
+                <img 
+                  src={selectedReward.image_url} 
+                  alt={selectedReward.name}
+                  className="w-14 h-14 object-contain rounded"
+                />
+              ) : (
+                <div className="w-14 h-14 flex items-center justify-center bg-primary/10 rounded">
+                  <Trophy className="h-8 w-8 text-primary" />
+                </div>
+              )}
+              <div>
+                <p className="font-semibold text-sm">{selectedReward.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  Meta: {formatCurrency(selectedReward.threshold_amount)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Formulário */}
+          <div className="grid gap-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="destinatario">Nome do destinatário *</Label>
+              <Input
+                id="destinatario"
+                placeholder="Nome completo"
+                value={redeemFormData.destinatario}
+                onChange={(e) => setRedeemFormData(prev => ({ ...prev, destinatario: e.target.value }))}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="cep">CEP *</Label>
+                <div className="relative">
+                  <Input
+                    id="cep"
+                    placeholder="00000-000"
+                    value={redeemFormData.cep}
+                    onChange={(e) => setRedeemFormData(prev => ({ ...prev, cep: formatCep(e.target.value) }))}
+                    onBlur={handleCepBlur}
+                    maxLength={9}
+                  />
+                  {fetchingCep && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="numero">Número *</Label>
+                <Input
+                  id="numero"
+                  placeholder="123"
+                  value={redeemFormData.numero}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, numero: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="logradouro">Logradouro *</Label>
+              <Input
+                id="logradouro"
+                placeholder="Rua, Avenida..."
+                value={redeemFormData.logradouro}
+                onChange={(e) => setRedeemFormData(prev => ({ ...prev, logradouro: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="complemento">Complemento</Label>
+              <Input
+                id="complemento"
+                placeholder="Apto, Bloco..."
+                value={redeemFormData.complemento}
+                onChange={(e) => setRedeemFormData(prev => ({ ...prev, complemento: e.target.value }))}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="bairro">Bairro *</Label>
+                <Input
+                  id="bairro"
+                  placeholder="Bairro"
+                  value={redeemFormData.bairro}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, bairro: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cidade">Cidade *</Label>
+                <Input
+                  id="cidade"
+                  placeholder="Cidade"
+                  value={redeemFormData.cidade}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, cidade: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="estado">Estado *</Label>
+                <Select
+                  value={redeemFormData.estado}
+                  onValueChange={(value) => setRedeemFormData(prev => ({ ...prev, estado: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map((uf) => (
+                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  placeholder="(00) 00000-0000"
+                  value={redeemFormData.telefone}
+                  onChange={(e) => setRedeemFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setRedeemDialogOpen(false)}
+              disabled={submittingRedeem}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleRedeemSubmit}
+              disabled={submittingRedeem}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              {submittingRedeem ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Gift className="h-4 w-4 mr-2" />
+                  Enviar Pedido
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>;
                 })() : <div className="text-center py-4">
                   <div className="p-2 bg-primary/10 rounded-full w-fit mx-auto mb-2">
                     <Trophy className="h-8 w-8 text-primary/50" />
