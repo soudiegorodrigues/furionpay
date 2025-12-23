@@ -190,3 +190,15 @@ body[data-scroll-locked] {
   padding-right: 0 !important;
   overflow: hidden !important;
 }
+
+/* Subtle pulse animation for reward button */
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    opacity: 0.92;
+    box-shadow: 0 10px 20px -3px rgba(34, 197, 94, 0.45);
+  }
+}
