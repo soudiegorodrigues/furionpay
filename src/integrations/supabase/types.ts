@@ -2648,6 +2648,10 @@ export type Database = {
         Returns: number
       }
       get_user_balance_details: { Args: never; Returns: Json }
+      get_user_balance_for_admin: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_user_by_email: {
         Args: { _email: string }
         Returns: {
