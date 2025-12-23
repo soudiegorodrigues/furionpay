@@ -31,12 +31,14 @@ const ACQUIRER_LABELS: Record<string, string> = {
   ativus: 'Ativus Hub',
   inter: 'Banco Inter',
   valorion: 'Valorion',
+  efi: 'EFI Pay',
 };
 
 const ACQUIRER_COLORS: Record<string, string> = {
   ativus: 'bg-purple-500',
   inter: 'bg-orange-500',
   valorion: 'bg-green-500',
+  efi: 'bg-blue-500',
 };
 
 export const AcquirerHealthDashboard = () => {
