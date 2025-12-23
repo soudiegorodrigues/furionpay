@@ -1188,9 +1188,24 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Coluna Esquerda - Seção de Homenagem */}
-            <div className="relative bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px] border-l-4 border-primary/50">
-              {/* Efeito de brilho vermelho de fundo */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,hsl(var(--primary)/0.15),transparent_60%)]" />
+            <div className="relative bg-gradient-to-br from-black via-zinc-900 to-black p-8 flex flex-col items-center justify-center text-center text-white rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none min-h-[300px] lg:min-h-[500px] border-l-4 border-primary overflow-hidden">
+              {/* Efeito de brilho vermelho intenso no topo */}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.35),transparent_60%)]" />
+              
+              {/* Efeito de brilho secundário no centro */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.12),transparent_50%)]" />
+              
+              {/* Linhas de grade sutis para textura high-tech */}
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
+              
+              {/* Partículas/brilhos animados */}
+              <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary/50 rounded-full blur-sm animate-pulse" />
+              <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-primary/40 rounded-full blur-sm animate-pulse" style={{ animationDelay: '0.5s' }} />
+              <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-primary/60 rounded-full blur-sm animate-pulse" style={{ animationDelay: '1s' }} />
+              <div className="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-primary/30 rounded-full blur-sm animate-pulse" style={{ animationDelay: '1.5s' }} />
+              
+              {/* Vinheta nas bordas para profundidade */}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.7)_100%)]" />
               
               
               <div className="relative z-10 space-y-4">
