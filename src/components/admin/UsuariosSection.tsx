@@ -302,6 +302,7 @@ export const UsuariosSection = () => {
                       <TableHead className="text-xs font-semibold text-center">Nome</TableHead>
                       <TableHead className="text-xs font-semibold hidden md:table-cell text-center">Email</TableHead>
                       <TableHead className="text-xs font-semibold hidden lg:table-cell">Documento</TableHead>
+                      <TableHead className="text-xs font-semibold hidden lg:table-cell">Tipo</TableHead>
                       <TableHead className="text-xs font-semibold hidden xl:table-cell">Total Faturado</TableHead>
                       <TableHead className="text-xs font-semibold hidden sm:table-cell">Taxa</TableHead>
                       <TableHead className="text-xs font-semibold">Aprovação</TableHead>
@@ -310,7 +311,7 @@ export const UsuariosSection = () => {
                   <TableBody>
                     {paginatedUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
                           Nenhum usuário encontrado
                         </TableCell>
                       </TableRow>
@@ -332,6 +333,22 @@ export const UsuariosSection = () => {
                           </TableCell>
                           <TableCell className="hidden lg:table-cell">
                             {getDocBadge(getDocStatus(u.id))}
+                          </TableCell>
+                          <TableCell className="text-xs hidden lg:table-cell">
+                            {verificationsMap[u.id]?.person_type ? (
+                              <Badge 
+                                variant="outline" 
+                                className={
+                                  verificationsMap[u.id].person_type === 'PJ' 
+                                    ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 text-[10px]'
+                                    : 'bg-purple-500/20 text-purple-600 border-purple-500/30 text-[10px]'
+                                }
+                              >
+                                {verificationsMap[u.id].person_type}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-xs hidden xl:table-cell whitespace-nowrap">
                             <span className="font-medium text-green-600 dark:text-green-400">
