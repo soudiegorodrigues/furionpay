@@ -887,7 +887,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
       {/* Chart + Side Cards Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
         {/* Chart - Visão Geral Style */}
-        <Card className="xl:col-span-2 h-[400px] sm:h-[450px] md:h-[480px] min-w-0 flex flex-col">
+        <Card className="xl:col-span-2 h-[400px] sm:h-[450px] md:h-[480px] xl:h-auto xl:min-h-[480px] min-w-0 flex flex-col">
           <div className="h-px bg-border" />
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
@@ -1071,10 +1071,10 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         </Card>
 
         {/* Side Cards */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 h-full">
           {/* Progresso de Recompensas */}
-          <Card className="shadow-xl">
-            <CardContent className="p-5">
+          <Card className="shadow-xl flex-1 flex flex-col">
+            <CardContent className="p-5 flex-1 flex flex-col justify-center">
               {isLoadingRewards ? <div className="space-y-4 animate-pulse">
                   <div className="flex justify-center">
                     <div className="w-64 h-64 bg-muted/50 rounded-xl" />
