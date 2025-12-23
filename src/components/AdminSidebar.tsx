@@ -112,7 +112,7 @@ export function AdminSidebar({
                       to={item.url} 
                       end 
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02] group relative"
-                      activeClassName="bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-medium shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-6 before:bg-primary before:rounded-r-full"
+                      activeClassName="bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-medium shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-8 before:bg-primary before:rounded-full"
                     >
                       <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center group-hover:bg-muted/60 transition-colors shrink-0">
                         <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
