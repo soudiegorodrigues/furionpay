@@ -260,6 +260,7 @@ export default function AdminProducts() {
   const {
     data: paginatedData,
     isLoading: isLoadingProducts,
+    isPending: isPendingProducts,
     isFetching: isFetchingProducts,
     refetch: refetchProducts
   } = useQuery({
@@ -595,8 +596,8 @@ export default function AdminProducts() {
           </div>
         )}
 
-        {/* Loading state */}
-        {isLoadingProducts ? (
+        {/* Loading state - mostra skeleton durante carregamento inicial completo */}
+        {(isPendingProducts || isLoadingProducts || isAdmin === undefined || !userId) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <ProductSkeleton key={i} />
