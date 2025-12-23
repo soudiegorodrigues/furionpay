@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Key, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw, Activity, Globe, Book, Webhook } from 'lucide-react';
-import { ApiDocsSection } from './ApiDocsSection';
+import { Key, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw, Activity, Globe, Book, Webhook, ExternalLink } from 'lucide-react';
+
 import { WebhookDeliveriesSection } from './WebhookDeliveriesSection';
 
 interface ApiClient {
@@ -248,20 +248,29 @@ export function ApiKeysSection() {
       </div>
 
       <Tabs defaultValue="keys" className="space-y-6">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="keys" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            <span className="hidden sm:inline">API Keys</span>
-          </TabsTrigger>
-          <TabsTrigger value="webhooks" className="flex items-center gap-2">
-            <Webhook className="h-4 w-4" />
-            <span className="hidden sm:inline">Webhooks</span>
-          </TabsTrigger>
-          <TabsTrigger value="docs" className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="keys" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              <span className="hidden sm:inline">API Keys</span>
+            </TabsTrigger>
+            <TabsTrigger value="webhooks" className="flex items-center gap-2">
+              <Webhook className="h-4 w-4" />
+              <span className="hidden sm:inline">Webhooks</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <a 
+            href="https://api.furionpay.com/integration" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors border border-transparent hover:border-primary/20"
+          >
             <Book className="h-4 w-4" />
-            <span className="hidden sm:inline">Documentação</span>
-          </TabsTrigger>
-        </TabsList>
+            <span>Documentação</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
 
         <TabsContent value="keys" className="space-y-6">
           {/* Header */}
@@ -634,9 +643,6 @@ export function ApiKeysSection() {
         <WebhookDeliveriesSection />
       </TabsContent>
 
-      <TabsContent value="docs">
-        <ApiDocsSection />
-      </TabsContent>
       </Tabs>
     </div>
   );
