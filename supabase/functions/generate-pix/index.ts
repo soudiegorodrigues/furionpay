@@ -896,7 +896,37 @@ async function callAcquirer(
       }
     }
     
-    // SpedPay removed - no longer supported
+    if (acquirer === 'efi') {
+      console.log('[EFI] Calling generate-pix-efi...');
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-efi`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ 
+          amount: params.amount, 
+          donorName: params.customerName, 
+          utmData: params.utmParams, 
+          userId: params.userId, 
+          popupModel: params.popupModel,
+          fingerprint: params.fingerprint,
+          clientIp: params.clientIp,
+        }),
+      });
+      
+      const data = await response.json();
+      const responseTime = Date.now() - startTime;
+      console.log('[EFI] Response:', JSON.stringify(data), 'responseTime:', responseTime);
+      
+      if (data.success) {
+        await logApiEvent('efi', 'success', responseTime);
+        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
+      } else {
+        await logApiEvent('efi', 'failure', responseTime, data.error);
+        return { success: false, error: data.error };
+      }
+    }
     
     return { success: false, error: `Unknown acquirer: ${acquirer}` };
   } catch (err) {
