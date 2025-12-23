@@ -1,58 +1,62 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import forge from "https://esm.sh/node-forge@1.3.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple ASN.1 parser for PKCS#12
-function parseP12(base64Data: string, password: string): { certificate: string; privateKey: string } {
-  try {
-    // Decode base64 to bytes
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+function convertP12ToPem(p12Base64: string, password: string): { certificate: string; privateKey: string } {
+  console.log("Starting P12 to PEM conversion...");
+  
+  // Decode base64 to binary string
+  const p12Der = forge.util.decode64(p12Base64);
+  console.log(`P12 file size: ${p12Der.length} bytes`);
+  
+  // Parse ASN.1 structure
+  const p12Asn1 = forge.asn1.fromDer(p12Der);
+  
+  // Parse PKCS#12 structure
+  const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, password || '');
+  console.log("P12 parsed successfully");
+  
+  // Extract certificate
+  const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+  const certBagList = certBags[forge.pki.oids.certBag] || [];
+  
+  if (certBagList.length === 0) {
+    throw new Error("Nenhum certificado encontrado no arquivo P12");
+  }
+  
+  const certificate = forge.pki.certificateToPem(certBagList[0].cert);
+  console.log("Certificate extracted successfully");
+  
+  // Extract private key - try different bag types
+  let privateKey = '';
+  
+  // Try pkcs8ShroudedKeyBag first (most common)
+  const shroudedKeyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
+  const shroudedKeyBagList = shroudedKeyBags[forge.pki.oids.pkcs8ShroudedKeyBag] || [];
+  
+  if (shroudedKeyBagList.length > 0 && shroudedKeyBagList[0].key) {
+    privateKey = forge.pki.privateKeyToPem(shroudedKeyBagList[0].key);
+    console.log("Private key extracted from pkcs8ShroudedKeyBag");
+  } else {
+    // Try keyBag
+    const keyBags = p12.getBags({ bagType: forge.pki.oids.keyBag });
+    const keyBagList = keyBags[forge.pki.oids.keyBag] || [];
+    
+    if (keyBagList.length > 0 && keyBagList[0].key) {
+      privateKey = forge.pki.privateKeyToPem(keyBagList[0].key);
+      console.log("Private key extracted from keyBag");
     }
-    
-    console.log(`P12 file size: ${bytes.length} bytes`);
-    
-    // For now, we'll use a simplified approach:
-    // We'll call an external service or use a workaround
-    
-    // Since Deno doesn't have native PKCS#12 support, we need to use a different approach
-    // We'll try to extract using SubtleCrypto or return an error message
-    
-    throw new Error("PKCS#12 parsing requires OpenSSL. Please convert manually or use online converter.");
-    
-  } catch (error) {
-    console.error("Error parsing P12:", error);
-    throw error;
-  }
-}
-
-// Alternative: Use forge-like parsing with pure JS
-// This is a simplified implementation that works for most EFI certificates
-function extractFromP12Simple(p12Base64: string, password: string): { certificate: string; privateKey: string } {
-  // The EFI/Gerencianet certificates are typically in a standard format
-  // We'll attempt to decode and extract the relevant parts
-  
-  const p12Data = Uint8Array.from(atob(p12Base64), c => c.charCodeAt(0));
-  console.log(`Processing P12 of ${p12Data.length} bytes`);
-  
-  // Basic validation - P12 files start with a specific sequence
-  if (p12Data.length < 100) {
-    throw new Error("Arquivo P12 muito pequeno ou inválido");
   }
   
-  // Check for PKCS#12 header (30 82 = SEQUENCE with 2-byte length)
-  if (p12Data[0] !== 0x30) {
-    throw new Error("Arquivo não parece ser um P12 válido");
+  if (!privateKey) {
+    throw new Error("Nenhuma chave privada encontrada no arquivo P12");
   }
   
-  // Since we can't fully parse PKCS#12 without a proper library,
-  // we'll provide instructions for manual conversion
-  throw new Error("MANUAL_CONVERSION_REQUIRED");
+  return { certificate, privateKey };
 }
 
 serve(async (req) => {
@@ -78,8 +82,9 @@ serve(async (req) => {
     console.log(`Password provided: ${password ? 'Yes' : 'No'}`);
     
     try {
-      // Try to extract
-      const result = extractFromP12Simple(p12Base64, password || '');
+      const result = convertP12ToPem(p12Base64, password || '');
+      
+      console.log("Conversion successful!");
       
       return new Response(
         JSON.stringify({ 
@@ -91,23 +96,17 @@ serve(async (req) => {
       );
       
     } catch (parseError: any) {
-      if (parseError.message === "MANUAL_CONVERSION_REQUIRED") {
-        // Return helpful instructions
+      console.error("Error during P12 parsing:", parseError.message);
+      
+      // Check for common errors
+      if (parseError.message.includes("Invalid password") || 
+          parseError.message.includes("PKCS#12 MAC could not be verified")) {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: "Conversão automática não disponível",
-            manualInstructions: {
-              step1: "Acesse https://www.sslshopper.com/ssl-converter.html",
-              step2: "Faça upload do arquivo .p12",
-              step3: "Selecione 'PKCS#12' como tipo de origem",
-              step4: "Selecione 'PEM' como tipo de destino",
-              step5: "Digite a senha do certificado",
-              step6: "Baixe o arquivo convertido e copie o conteúdo",
-              alternative: "Ou use OpenSSL: openssl pkcs12 -in cert.p12 -clcerts -nokeys -out cert.pem && openssl pkcs12 -in cert.p12 -nocerts -nodes -out key.pem"
-            }
+            error: "Senha incorreta para o certificado P12"
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         );
       }
       
