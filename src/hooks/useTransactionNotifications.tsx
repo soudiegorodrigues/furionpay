@@ -101,6 +101,10 @@ export const useTransactionNotifications = (userId: string | null) => {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const settingsRef = useRef<NotificationSettings>(DEFAULT_SETTINGS);
+  
+  // Estado para preferência do usuário (toggle do sino)
+  const [userEnabled, setUserEnabled] = useState(true);
+  const userEnabledRef = useRef(true);
 
   // Keep settingsRef always up to date and sync toast logo size
   useEffect(() => {
@@ -109,6 +113,66 @@ export const useTransactionNotifications = (userId: string | null) => {
     const size = settings.logoSize || 40;
     document.documentElement.style.setProperty('--toast-logo-size', `${size}px`);
   }, [settings]);
+  
+  // Keep userEnabledRef in sync
+  useEffect(() => {
+    userEnabledRef.current = userEnabled;
+  }, [userEnabled]);
+
+  // Load user preference (notification toggle)
+  useEffect(() => {
+    if (!userId) return;
+    
+    const loadUserPreference = async () => {
+      const { data } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('user_id', userId)
+        .eq('key', 'user_notifications_enabled')
+        .maybeSingle();
+      
+      if (data) {
+        const enabled = data.value !== 'false';
+        setUserEnabled(enabled);
+        userEnabledRef.current = enabled;
+      }
+    };
+    
+    loadUserPreference();
+  }, [userId]);
+
+  // Subscribe to user preference changes
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`user-notification-preference-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'admin_settings',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new === 'object' && 'key' in payload.new) {
+            const newData = payload.new as { key: string; value: string };
+            if (newData.key === 'user_notifications_enabled') {
+              const enabled = newData.value !== 'false';
+              setUserEnabled(enabled);
+              userEnabledRef.current = enabled;
+              console.log('🔔 Preferência do usuário atualizada:', enabled);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   // Load GLOBAL settings function - all users use the same notification appearance
   const loadSettings = useCallback(async () => {
@@ -240,7 +304,7 @@ export const useTransactionNotifications = (userId: string | null) => {
   }, []);
 
   useEffect(() => {
-    console.log('🔔 useEffect de notificações executado - userId:', userId, 'settingsLoaded:', settingsLoaded, 'enabled:', settings.enabled);
+    console.log('🔔 useEffect de notificações executado - userId:', userId, 'settingsLoaded:', settingsLoaded, 'enabled:', settings.enabled, 'userEnabled:', userEnabled);
     
     // Wait for settings to be loaded before subscribing
     if (!userId || !settingsLoaded) {
@@ -248,9 +312,9 @@ export const useTransactionNotifications = (userId: string | null) => {
       return;
     }
     
-    // If notifications are disabled, don't subscribe
-    if (!settings.enabled) {
-      console.log('🔔 Notificações desativadas, não inscrevendo no canal');
+    // If notifications are disabled globally OR by user, don't subscribe
+    if (!settings.enabled || !userEnabled) {
+      console.log('🔔 Notificações desativadas (global:', settings.enabled, ', usuário:', userEnabled, '), não inscrevendo no canal');
       return;
     }
 
@@ -271,10 +335,11 @@ export const useTransactionNotifications = (userId: string | null) => {
           console.log('🔔 Nova transação detectada:', payload);
           const { new: transaction } = payload;
           
-          // Use settingsRef for current values - double check enabled
+          // Use settingsRef and userEnabledRef for current values - double check enabled
           const currentSettings = settingsRef.current;
+          const isUserEnabled = userEnabledRef.current;
           
-          if (transaction && currentSettings.enabled) {
+          if (transaction && currentSettings.enabled && isUserEnabled) {
             const netAmount = calculateNetAmount(
               transaction.amount,
               transaction.fee_percentage,
@@ -334,14 +399,16 @@ export const useTransactionNotifications = (userId: string | null) => {
           console.log('🔔 Transação atualizada:', payload);
           const { new: transaction, old: oldTransaction } = payload;
           
-          // Use settingsRef for current values - double check enabled
+          // Use settingsRef and userEnabledRef for current values - double check enabled
           const currentSettings = settingsRef.current;
+          const isUserEnabled = userEnabledRef.current;
           
           // Check if status changed to 'paid'
           if (transaction && oldTransaction && 
               oldTransaction.status !== 'paid' && 
               transaction.status === 'paid' &&
-              currentSettings.enabled) {
+              currentSettings.enabled &&
+              isUserEnabled) {
             
             const netAmount = calculateNetAmount(
               transaction.amount,
@@ -401,7 +468,7 @@ export const useTransactionNotifications = (userId: string | null) => {
       console.log('🔔 Removendo listener de notificações');
       supabase.removeChannel(channel);
     };
-  }, [userId, settingsLoaded, settings.enabled]);
+  }, [userId, settingsLoaded, settings.enabled, userEnabled]);
 
   return {
     requestPermission: requestNotificationPermission,

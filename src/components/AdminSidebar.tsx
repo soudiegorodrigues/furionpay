@@ -1,4 +1,7 @@
 import { BarChart3, Settings, LogOut, CreditCard, Shield, LucideIcon, User, Puzzle, Download, Package, Wallet, Landmark, Users, ShoppingCart } from "lucide-react";
+import { NotificationToggle } from "@/components/NotificationToggle";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -52,6 +55,7 @@ export function AdminSidebar({
   hasPermission
 }: AdminSidebarProps) {
   const { theme } = useTheme();
+  const [userId, setUserId] = useState<string | null>(null);
   const {
     promptInstall,
     showInstallDialog,
@@ -59,6 +63,17 @@ export function AdminSidebar({
     closeInstallDialog,
     isIOS
   } = usePWAInstall();
+
+  // Obter userId do usuário logado
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   const visibleMenuItems = menuItems.filter(item => {
     // Admin only items
@@ -164,6 +179,7 @@ export function AdminSidebar({
               <LogOut className="h-4 w-4" />
               <span className="sr-only">Sair</span>
             </Button>
+            <NotificationToggle userId={userId} />
             <ThemeToggle />
           </div>
         </div>
