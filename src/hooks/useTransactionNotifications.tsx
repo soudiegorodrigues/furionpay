@@ -101,18 +101,31 @@ export const useTransactionNotifications = (userId: string | null) => {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const settingsRef = useRef<NotificationSettings>(DEFAULT_SETTINGS);
-
+  
   // Estado para preferência do usuário (toggle do sino)
   const [userEnabled, setUserEnabled] = useState(true);
   const userEnabledRef = useRef(true);
 
   // Para colaboradores: ouvir transações do "owner" efetivo.
-  // Para owners: o owner efetivo é o próprio userId.
-  const [transactionUserId, setTransactionUserId] = useState<string | null>(null);
+  const [effectiveOwnerId, setEffectiveOwnerId] = useState<string | null>(null);
 
+  // Keep settingsRef always up to date and sync toast logo size
+  useEffect(() => {
+    settingsRef.current = settings;
+    // Also keep toast logo size CSS var stable
+    const size = settings.logoSize || 40;
+    document.documentElement.style.setProperty('--toast-logo-size', `${size}px`);
+  }, [settings]);
+  
+  // Keep userEnabledRef in sync
+  useEffect(() => {
+    userEnabledRef.current = userEnabled;
+  }, [userEnabled]);
+
+  // Resolve effective owner for collaborators
   useEffect(() => {
     if (!userId) {
-      setTransactionUserId(null);
+      setEffectiveOwnerId(null);
       return;
     }
 
@@ -125,12 +138,12 @@ export const useTransactionNotifications = (userId: string | null) => {
 
         const effective = (data as string) || userId;
         if (!cancelled) {
-          setTransactionUserId(effective);
-          console.log('🔔 transactionUserId resolvido:', { userId, transactionUserId: effective });
+          setEffectiveOwnerId(effective);
+          console.log('🔔 effectiveOwnerId resolvido:', { userId, effectiveOwnerId: effective });
         }
       } catch (err) {
         console.warn('🔔 Falha ao resolver owner efetivo, usando userId da sessão:', err);
-        if (!cancelled) setTransactionUserId(userId);
+        if (!cancelled) setEffectiveOwnerId(userId);
       }
     };
 
@@ -140,19 +153,6 @@ export const useTransactionNotifications = (userId: string | null) => {
       cancelled = true;
     };
   }, [userId]);
-
-  // Keep settingsRef always up to date and sync toast logo size
-  useEffect(() => {
-    settingsRef.current = settings;
-    // Also keep toast logo size CSS var stable
-    const size = settings.logoSize || 40;
-    document.documentElement.style.setProperty('--toast-logo-size', `${size}px`);
-  }, [settings]);
-
-  // Keep userEnabledRef in sync
-  useEffect(() => {
-    userEnabledRef.current = userEnabled;
-  }, [userEnabled]);
 
   // Load user preference (notification toggle)
   useEffect(() => {
@@ -373,11 +373,14 @@ export const useTransactionNotifications = (userId: string | null) => {
   }, []);
 
   useEffect(() => {
-    console.log('🔔 useEffect de notificações executado - userId:', userId, 'settingsLoaded:', settingsLoaded, 'enabled:', settings.enabled, 'userEnabled:', userEnabled);
+    // Use effectiveOwnerId for the realtime filter so collaborators also receive notifications
+    const targetUserId = effectiveOwnerId || userId;
     
-    // Wait for settings to be loaded before subscribing
-    if (!userId || !settingsLoaded) {
-      console.log('🔔 Aguardando userId ou settingsLoaded - userId:', userId, 'settingsLoaded:', settingsLoaded);
+    console.log('🔔 useEffect de notificações executado - userId:', userId, 'effectiveOwnerId:', effectiveOwnerId, 'targetUserId:', targetUserId, 'settingsLoaded:', settingsLoaded, 'enabled:', settings.enabled, 'userEnabled:', userEnabled);
+    
+    // Wait for settings to be loaded and effectiveOwnerId to be resolved before subscribing
+    if (!userId || !targetUserId || !settingsLoaded) {
+      console.log('🔔 Aguardando userId, targetUserId ou settingsLoaded - userId:', userId, 'targetUserId:', targetUserId, 'settingsLoaded:', settingsLoaded);
       return;
     }
     
@@ -387,18 +390,18 @@ export const useTransactionNotifications = (userId: string | null) => {
       return;
     }
 
-    console.log('🔔 Configurando listener de notificações para usuário:', userId, 'Logo:', settingsRef.current.customLogoUrl);
+    console.log('🔔 Configurando listener de notificações para owner:', targetUserId, 'Logo:', settingsRef.current.customLogoUrl);
 
-    // Subscribe to realtime changes on pix_transactions for this user
+    // Subscribe to realtime changes on pix_transactions for the effective owner
     const channel = supabase
-      .channel(`transaction-notifications-${userId}`)
+      .channel(`transaction-notifications-${targetUserId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'pix_transactions',
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${targetUserId}`,
         },
         (payload) => {
           console.log('🔔 Nova transação detectada:', payload);
@@ -462,7 +465,7 @@ export const useTransactionNotifications = (userId: string | null) => {
           event: 'UPDATE',
           schema: 'public',
           table: 'pix_transactions',
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${targetUserId}`,
         },
         (payload) => {
           console.log('🔔 Transação atualizada:', payload);
@@ -529,7 +532,7 @@ export const useTransactionNotifications = (userId: string | null) => {
       .subscribe((status) => {
         console.log('🔔 Status do canal de notificações:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Canal de notificações ativo para usuário:', userId);
+          console.log('✅ Canal de notificações ativo para owner:', targetUserId);
         }
       });
 
@@ -537,7 +540,7 @@ export const useTransactionNotifications = (userId: string | null) => {
       console.log('🔔 Removendo listener de notificações');
       supabase.removeChannel(channel);
     };
-  }, [userId, settingsLoaded, settings.enabled, userEnabled]);
+  }, [userId, effectiveOwnerId, settingsLoaded, settings.enabled, userEnabled]);
 
   return {
     requestPermission: requestNotificationPermission,
