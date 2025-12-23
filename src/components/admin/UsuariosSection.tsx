@@ -335,20 +335,9 @@ export const UsuariosSection = () => {
                             {getDocBadge(getDocStatus(u.id))}
                           </TableCell>
                           <TableCell className="text-xs hidden lg:table-cell">
-                            {verificationsMap[u.id]?.person_type ? (
-                              <Badge 
-                                variant="outline" 
-                                className={
-                                  verificationsMap[u.id].person_type === 'PJ' 
-                                    ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 text-[10px]'
-                                    : 'bg-purple-500/20 text-purple-600 border-purple-500/30 text-[10px]'
-                                }
-                              >
-                                {verificationsMap[u.id].person_type.toUpperCase()}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
+                            <span className="font-medium">
+                              {verificationsMap[u.id]?.person_type?.toUpperCase() || '-'}
+                            </span>
                           </TableCell>
                           <TableCell className="text-xs hidden xl:table-cell whitespace-nowrap">
                             <span className="font-medium text-green-600 dark:text-green-400">
