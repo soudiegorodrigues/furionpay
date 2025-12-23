@@ -101,10 +101,45 @@ export const useTransactionNotifications = (userId: string | null) => {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const settingsRef = useRef<NotificationSettings>(DEFAULT_SETTINGS);
-  
+
   // Estado para preferência do usuário (toggle do sino)
   const [userEnabled, setUserEnabled] = useState(true);
   const userEnabledRef = useRef(true);
+
+  // Para colaboradores: ouvir transações do "owner" efetivo.
+  // Para owners: o owner efetivo é o próprio userId.
+  const [transactionUserId, setTransactionUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) {
+      setTransactionUserId(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const resolveEffectiveOwner = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_effective_owner_id', { _user_id: userId });
+        if (error) throw error;
+
+        const effective = (data as string) || userId;
+        if (!cancelled) {
+          setTransactionUserId(effective);
+          console.log('🔔 transactionUserId resolvido:', { userId, transactionUserId: effective });
+        }
+      } catch (err) {
+        console.warn('🔔 Falha ao resolver owner efetivo, usando userId da sessão:', err);
+        if (!cancelled) setTransactionUserId(userId);
+      }
+    };
+
+    resolveEffectiveOwner();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   // Keep settingsRef always up to date and sync toast logo size
   useEffect(() => {
@@ -113,7 +148,7 @@ export const useTransactionNotifications = (userId: string | null) => {
     const size = settings.logoSize || 40;
     document.documentElement.style.setProperty('--toast-logo-size', `${size}px`);
   }, [settings]);
-  
+
   // Keep userEnabledRef in sync
   useEffect(() => {
     userEnabledRef.current = userEnabled;
