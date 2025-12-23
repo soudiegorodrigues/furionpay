@@ -791,7 +791,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingTransaction ? 'Editar Transação' : 'Nova Transação'}
@@ -804,7 +804,8 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {/* Row 1: Tipo + Tipo de Pessoa */}
             <div className="space-y-2">
               <Label>Tipo</Label>
               <Select
@@ -855,6 +856,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
               </Select>
             </div>
 
+            {/* Row 2: Valor + Data */}
             <div className="space-y-2">
               <Label>Valor (R$)</Label>
               <Input
@@ -876,6 +878,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
               />
             </div>
 
+            {/* Row 3: Categoria + Conta */}
             <div className="space-y-2">
               <Label>Categoria</Label>
               <Select
@@ -908,7 +911,7 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
                 onValueChange={(value) => setFormData({ ...formData, account_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma conta (opcional)" />
+                  <SelectValue placeholder="Conta (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map(account => (
@@ -938,18 +941,19 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            {/* Row 4: Descrição (full width) */}
+            <div className="space-y-2 md:col-span-2">
               <Label>Descrição (opcional)</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Detalhes da transação..."
-                rows={2}
+                rows={1}
               />
             </div>
 
-            {/* Recurring Transaction Options */}
-            <div className="space-y-4 border-t pt-4">
+            {/* Recurring Transaction Options (full width) */}
+            <div className="space-y-4 border-t pt-4 md:col-span-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Transação Recorrente</Label>
