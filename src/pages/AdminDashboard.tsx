@@ -1281,16 +1281,16 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
                 {/* Placa Grande */}
                 {selectedReward && (
                   <div className="my-6 relative">
-                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full transform scale-110" />
+                    <div className="absolute inset-0 bg-primary/25 blur-3xl rounded-full transform scale-125" />
                     {selectedReward.image_url ? (
                       <img 
                         src={selectedReward.image_url} 
                         alt={selectedReward.name}
-                        className="relative w-40 h-40 lg:w-52 lg:h-52 object-contain mx-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-300"
+                        className="relative w-52 h-52 lg:w-72 lg:h-72 object-contain mx-auto drop-shadow-2xl animate-float-slow"
                       />
                     ) : (
-                      <div className="relative w-40 h-40 lg:w-52 lg:h-52 flex items-center justify-center bg-primary/10 backdrop-blur rounded-2xl mx-auto border border-primary/30">
-                        <Trophy className="h-24 w-24 text-primary drop-shadow-lg" />
+                      <div className="relative w-52 h-52 lg:w-72 lg:h-72 flex items-center justify-center bg-primary/10 backdrop-blur rounded-2xl mx-auto border border-primary/30 animate-float-slow">
+                        <Trophy className="h-32 w-32 lg:h-40 lg:w-40 text-primary drop-shadow-lg" />
                       </div>
                     )}
                   </div>
