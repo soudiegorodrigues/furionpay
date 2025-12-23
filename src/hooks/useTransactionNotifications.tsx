@@ -108,6 +108,10 @@ export const useTransactionNotifications = (userId: string | null) => {
 
   // Para colaboradores: ouvir transações do "owner" efetivo.
   const [effectiveOwnerId, setEffectiveOwnerId] = useState<string | null>(null);
+  
+  // Cache de transações já notificadas como "pagas" para evitar duplicatas
+  // e não depender do oldTransaction.status que pode não vir corretamente
+  const notifiedPaidTransactionsRef = useRef<Set<string>>(new Set());
 
   // Keep settingsRef always up to date and sync toast logo size
   useEffect(() => {
@@ -468,65 +472,121 @@ export const useTransactionNotifications = (userId: string | null) => {
           filter: `user_id=eq.${targetUserId}`,
         },
         (payload) => {
-          console.log('🔔 Transação atualizada:', payload);
           const { new: transaction, old: oldTransaction } = payload;
+          
+          // Log detalhado de TODOS os UPDATEs
+          console.log('🔔 [UPDATE] Transação atualizada:', {
+            eventType: payload.eventType,
+            transactionId: transaction?.id,
+            newStatus: transaction?.status,
+            oldStatus: oldTransaction?.status,
+            hasOldTransaction: !!oldTransaction,
+            donorName: transaction?.donor_name,
+            amount: transaction?.amount,
+            fullPayload: payload
+          });
           
           // Use settingsRef and userEnabledRef for current values - double check enabled
           const currentSettings = settingsRef.current;
           const isUserEnabled = userEnabledRef.current;
           
-          // Check if status changed to 'paid'
-          if (transaction && oldTransaction && 
-              oldTransaction.status !== 'paid' && 
-              transaction.status === 'paid' &&
-              currentSettings.enabled &&
-              isUserEnabled) {
-            
-            const netAmount = calculateNetAmount(
-              transaction.amount,
-              transaction.fee_percentage,
-              transaction.fee_fixed
-            );
-            const data = {
-              nome: transaction.donor_name || 'Cliente',
-              valor: formatCurrency(netAmount),
-              produto: transaction.product_name || '',
-            };
-            
-            const title = currentSettings.pixPaidTitle;
-            const description = formatMessage(currentSettings.pixPaidDescription, data);
-            
-            console.log('🔔 Exibindo notificação PIX Pago:', { title, description, logo: currentSettings.customLogoUrl });
-            
-            // Show success toast
-            if (currentSettings.enableToast) {
-              const logoSize = currentSettings.logoSize || 40;
-              toast.success(title, {
-                description,
-                duration: currentSettings.pixPaidDuration || undefined,
-                icon: currentSettings.customLogoUrl ? (
-                  <img
-                    src={currentSettings.customLogoUrl}
-                    alt="Logo"
-                    style={{
-                      width: logoSize,
-                      height: logoSize,
-                      minWidth: logoSize,
-                      minHeight: logoSize,
-                      borderRadius: Math.round(logoSize * 0.15),
-                      objectFit: 'contain',
-                    }}
-                  />
-                ) : undefined,
-              });
-            }
-
-            // Show browser notification
-            showBrowserNotification(title, description);
-
-            // Play sound
-            playNotificationSound(currentSettings.pixPaidSound);
+          // Verificar se notificações estão habilitadas
+          if (!currentSettings.enabled || !isUserEnabled) {
+            console.log('🔔 [UPDATE] Notificações desabilitadas, ignorando');
+            return;
           }
+          
+          // Verificar se a transação existe e está com status 'paid'
+          if (!transaction || transaction.status !== 'paid') {
+            console.log('🔔 [UPDATE] Transação não é paga ou não existe:', transaction?.status);
+            return;
+          }
+          
+          const transactionId = transaction.id as string;
+          
+          // Verificar se já notificamos esta transação como paga
+          if (notifiedPaidTransactionsRef.current.has(transactionId)) {
+            console.log('🔔 [UPDATE] Transação já notificada anteriormente:', transactionId);
+            return;
+          }
+          
+          // Lógica robusta: verificar se o status mudou para 'paid'
+          // Aceita se:
+          // 1. oldTransaction.status existe e não era 'paid' (caso ideal)
+          // 2. oldTransaction.status não existe (fallback - Realtime às vezes não manda)
+          const oldStatus = oldTransaction?.status;
+          const shouldNotify = oldStatus !== 'paid';
+          
+          console.log('🔔 [UPDATE] Decisão de notificação:', {
+            transactionId,
+            oldStatus,
+            shouldNotify,
+            alreadyNotified: notifiedPaidTransactionsRef.current.has(transactionId)
+          });
+          
+          if (!shouldNotify) {
+            console.log('🔔 [UPDATE] Status antigo já era paid, não notificando');
+            return;
+          }
+          
+          // Marcar como notificada ANTES de exibir para evitar duplicatas
+          notifiedPaidTransactionsRef.current.add(transactionId);
+          
+          // Limitar o tamanho do cache (manter últimas 100 transações)
+          if (notifiedPaidTransactionsRef.current.size > 100) {
+            const entries = Array.from(notifiedPaidTransactionsRef.current);
+            notifiedPaidTransactionsRef.current = new Set(entries.slice(-50));
+          }
+          
+          const netAmount = calculateNetAmount(
+            transaction.amount,
+            transaction.fee_percentage,
+            transaction.fee_fixed
+          );
+          const data = {
+            nome: transaction.donor_name || 'Cliente',
+            valor: formatCurrency(netAmount),
+            produto: transaction.product_name || '',
+          };
+          
+          const title = currentSettings.pixPaidTitle;
+          const description = formatMessage(currentSettings.pixPaidDescription, data);
+          
+          console.log('🔔 [UPDATE] ✅ Exibindo notificação PIX Pago:', { 
+            title, 
+            description, 
+            transactionId,
+            logo: currentSettings.customLogoUrl 
+          });
+          
+          // Show success toast
+          if (currentSettings.enableToast) {
+            const logoSize = currentSettings.logoSize || 40;
+            toast.success(title, {
+              description,
+              duration: currentSettings.pixPaidDuration || undefined,
+              icon: currentSettings.customLogoUrl ? (
+                <img
+                  src={currentSettings.customLogoUrl}
+                  alt="Logo"
+                  style={{
+                    width: logoSize,
+                    height: logoSize,
+                    minWidth: logoSize,
+                    minHeight: logoSize,
+                    borderRadius: Math.round(logoSize * 0.15),
+                    objectFit: 'contain',
+                  }}
+                />
+              ) : undefined,
+            });
+          }
+
+          // Show browser notification
+          showBrowserNotification(title, description);
+
+          // Play sound
+          playNotificationSound(currentSettings.pixPaidSound);
         }
       )
       .subscribe((status) => {
