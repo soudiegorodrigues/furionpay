@@ -119,6 +119,36 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
+// Check if seller has bypass_antifraud enabled by admin
+async function checkSellerBypassAntifraud(userId: string | undefined): Promise<boolean> {
+  if (!userId) {
+    console.log('[BYPASS-ANTIFRAUDE] No userId provided, bypass not applicable');
+    return false;
+  }
+  
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('bypass_antifraud')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('[BYPASS-ANTIFRAUDE] Error checking bypass status:', error);
+      return false;
+    }
+    
+    const bypassEnabled = data?.bypass_antifraud === true;
+    console.log(`[BYPASS-ANTIFRAUDE] User ${userId.substring(0, 8)}... bypass_antifraud = ${bypassEnabled}`);
+    
+    return bypassEnabled;
+  } catch (err) {
+    console.error('[BYPASS-ANTIFRAUDE] Exception checking bypass status:', err);
+    return false;
+  }
+}
+
 // Get rate limit config from database or use defaults
 async function getRateLimitConfig(): Promise<RateLimitConfig> {
   const supabase = getSupabaseClient();
@@ -1181,35 +1211,44 @@ serve(async (req) => {
       );
     }
 
-    // ============= RATE LIMIT CHECK =============
-    // IMPORTANTE: Rate limit é SEMPRE verificado para o fingerprint/IP do COMPRADOR
-    // O bypass_antifraud do seller NÃO pode ignorar limites do comprador (segurança crítica)
-    // Mesmo que o seller tenha bypass_antifraud=true, os limites do fingerprint/IP são sempre aplicados
-    const rateLimitConfig = await getRateLimitConfig();
-    const rateLimitResult = await checkRateLimit(fingerprint, clientIp, rateLimitConfig);
+    // ============= CHECK SELLER BYPASS ANTIFRAUDE =============
+    // Verifica se o vendedor tem bypass_antifraud ativado pelo admin
+    const sellerBypassAntifraud = await checkSellerBypassAntifraud(userId);
     
-    if (!rateLimitResult.allowed) {
-      console.log(`[RATE-LIMIT] Request blocked. Reason: ${rateLimitResult.reason}, RetryAfter: ${rateLimitResult.retryAfter}s`);
+    if (sellerBypassAntifraud) {
+      console.log('[BYPASS-ANTIFRAUDE] Seller has bypass_antifraud enabled, skipping rate limit check');
+    }
+    // ===========================================================
+
+    // ============= RATE LIMIT CHECK =============
+    // Rate limit só é aplicado se o vendedor NÃO tiver bypass ativo
+    if (!sellerBypassAntifraud) {
+      const rateLimitConfig = await getRateLimitConfig();
+      const rateLimitResult = await checkRateLimit(fingerprint, clientIp, rateLimitConfig);
       
-      let errorMessage = 'Limite de geração de PIX atingido.';
-      if (rateLimitResult.reason === 'COOLDOWN') {
-        errorMessage = `Aguarde ${rateLimitResult.retryAfter} segundos antes de gerar outro PIX.`;
-      } else if (rateLimitResult.reason === 'MAX_UNPAID') {
-        errorMessage = `Você atingiu o limite de ${rateLimitConfig.maxUnpaidPix} PIX não pagos. Pague os PIX pendentes ou aguarde ${rateLimitConfig.windowHours} horas.`;
-      } else if (rateLimitResult.reason === 'BLOCKED') {
-        const hoursRemaining = Math.ceil((rateLimitResult.retryAfter || 0) / 3600);
-        errorMessage = `Sua conta está temporariamente bloqueada. Tente novamente em ${hoursRemaining} hora(s).`;
+      if (!rateLimitResult.allowed) {
+        console.log(`[RATE-LIMIT] Request blocked. Reason: ${rateLimitResult.reason}, RetryAfter: ${rateLimitResult.retryAfter}s`);
+        
+        let errorMessage = 'Limite de geração de PIX atingido.';
+        if (rateLimitResult.reason === 'COOLDOWN') {
+          errorMessage = `Aguarde ${rateLimitResult.retryAfter} segundos antes de gerar outro PIX.`;
+        } else if (rateLimitResult.reason === 'MAX_UNPAID') {
+          errorMessage = `Você atingiu o limite de ${rateLimitConfig.maxUnpaidPix} PIX não pagos. Pague os PIX pendentes ou aguarde ${rateLimitConfig.windowHours} horas.`;
+        } else if (rateLimitResult.reason === 'BLOCKED') {
+          const hoursRemaining = Math.ceil((rateLimitResult.retryAfter || 0) / 3600);
+          errorMessage = `Sua conta está temporariamente bloqueada. Tente novamente em ${hoursRemaining} hora(s).`;
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'RATE_LIMIT',
+            message: errorMessage,
+            retryAfter: rateLimitResult.retryAfter,
+            unpaidCount: rateLimitResult.unpaidCount,
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'RATE_LIMIT',
-          message: errorMessage,
-          retryAfter: rateLimitResult.retryAfter,
-          unpaidCount: rateLimitResult.unpaidCount,
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
     // ============================================
 
