@@ -72,33 +72,38 @@ export function BannersCarousel({ banners, autoPlayInterval = 4000 }: BannersCar
         </div>
       </div>
 
-      {/* Navigation arrows */}
+      {/* Navigation arrows - always visible */}
       <button
         onClick={goToPrev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all shadow-lg"
         aria-label="Banner anterior"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-5 w-5" />
       </button>
       <button
         onClick={goToNext}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all shadow-lg"
         aria-label="Próximo banner"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-5 w-5" />
       </button>
 
-      {/* Dots indicator */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+      {/* Counter indicator */}
+      <div className="absolute top-2 right-2 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded-full shadow-lg">
+        {currentIndex + 1} / {sortedBanners.length}
+      </div>
+
+      {/* Dots indicator - more visible */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 px-3 py-1.5 rounded-full">
         {sortedBanners.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
             className={cn(
-              "w-2 h-2 rounded-full transition-all",
+              "rounded-full transition-all",
               index === currentIndex
-                ? "bg-white w-4"
-                : "bg-white/50 hover:bg-white/70"
+                ? "bg-white w-6 h-2"
+                : "bg-white/60 hover:bg-white/80 w-2 h-2"
             )}
             aria-label={`Ir para banner ${index + 1}`}
           />
