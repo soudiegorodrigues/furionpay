@@ -2323,6 +2323,9 @@ export type Database = {
           bank_code: string
           bank_name: string
           created_at: string
+          fee_fixed: number
+          fee_percentage: number
+          gross_amount: number
           id: string
           pix_key: string
           pix_key_type: string

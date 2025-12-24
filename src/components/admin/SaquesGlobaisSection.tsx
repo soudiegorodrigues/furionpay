@@ -17,7 +17,10 @@ interface Withdrawal {
   id: string;
   user_id: string;
   user_email: string;
-  amount: number;
+  amount: number; // valor líquido (NET) que o usuário recebe
+  gross_amount: number | null; // valor bruto (GROSS) que é descontado do saldo
+  fee_percentage: number | null;
+  fee_fixed: number | null;
   bank_code: string;
   bank_name: string;
   pix_key_type: string;
@@ -27,6 +30,12 @@ interface Withdrawal {
   processed_at?: string;
   rejection_reason?: string;
 }
+
+// Helper para obter o valor bruto do saque (usado para validação de saldo)
+const getWithdrawalGrossAmount = (withdrawal: Withdrawal): number => {
+  // Se gross_amount está disponível, usa ele; caso contrário, assume amount como bruto (legado)
+  return withdrawal.gross_amount ?? withdrawal.amount;
+};
 
 interface UserBalance {
   user_id: string;
@@ -163,19 +172,43 @@ export function SaquesGlobaisSection() {
     }
   };
 
-  const hasInsufficientBalance = (withdrawal: Withdrawal): boolean => {
+  // Calcula se o saque pode ser aprovado
+  // Importante: userBalance retorna o saldo APÓS reservar TODOS os pendentes.
+  // Para validar este saque específico, precisamos adicionar o gross_amount dele de volta.
+  const canApproveWithdrawal = (withdrawal: Withdrawal): boolean => {
     const userBalance = userBalances[withdrawal.user_id];
-    if (!userBalance || userBalance.loading) return false;
-    return userBalance.balance < withdrawal.amount;
+    if (!userBalance || userBalance.loading) return true; // Assume OK se ainda carregando
+    
+    const grossAmount = getWithdrawalGrossAmount(withdrawal);
+    // Saldo para aprovar ESTE saque = saldo restante + gross_amount deste saque
+    // Porque o saldo restante já subtraiu este saque pendente
+    const balanceToApproveThis = userBalance.balance + grossAmount;
+    
+    return balanceToApproveThis >= grossAmount;
+  };
+
+  const hasInsufficientBalance = (withdrawal: Withdrawal): boolean => {
+    return !canApproveWithdrawal(withdrawal);
+  };
+  
+  // Calcula o saldo disponível para aprovar este saque específico
+  const getBalanceForApproval = (withdrawal: Withdrawal): number => {
+    const userBalance = userBalances[withdrawal.user_id];
+    if (!userBalance || userBalance.loading) return 0;
+    
+    const grossAmount = getWithdrawalGrossAmount(withdrawal);
+    // Saldo para aprovar = saldo atual + gross deste saque (porque já foi subtraído)
+    return userBalance.balance + grossAmount;
   };
 
   const handleApprove = async (withdrawal: Withdrawal) => {
     // Validação de saldo no frontend (segurança em dupla camada)
-    const userBalance = userBalances[withdrawal.user_id];
-    if (userBalance && !userBalance.loading && userBalance.balance < withdrawal.amount) {
+    if (!canApproveWithdrawal(withdrawal)) {
+      const grossAmount = getWithdrawalGrossAmount(withdrawal);
+      const balanceForApproval = getBalanceForApproval(withdrawal);
       toast({
         title: "Saldo Insuficiente",
-        description: `O usuário não possui saldo suficiente. Saldo: ${formatCurrency(userBalance.balance)}, Valor do saque: ${formatCurrency(withdrawal.amount)}`,
+        description: `O usuário não possui saldo suficiente. Saldo disponível: ${formatCurrency(balanceForApproval)}, Valor bruto do saque: ${formatCurrency(grossAmount)}`,
         variant: "destructive"
       });
       return;
@@ -299,7 +332,9 @@ export function SaquesGlobaisSection() {
       );
     }
 
-    const isInsufficient = userBalance.balance < withdrawal.amount;
+    const grossAmount = getWithdrawalGrossAmount(withdrawal);
+    const balanceForApproval = getBalanceForApproval(withdrawal);
+    const isInsufficient = !canApproveWithdrawal(withdrawal);
     
     return (
       <TooltipProvider>
@@ -311,14 +346,14 @@ export function SaquesGlobaisSection() {
                 : 'bg-green-500/10 text-green-600 border border-green-500/30'
             }`}>
               <Wallet className="h-3 w-3" />
-              {formatCurrency(userBalance.balance)}
+              {formatCurrency(balanceForApproval)}
               {isInsufficient && <AlertTriangle className="h-3 w-3 ml-1" />}
             </div>
           </TooltipTrigger>
           <TooltipContent>
             {isInsufficient 
-              ? `Saldo insuficiente! Faltam ${formatCurrency(withdrawal.amount - userBalance.balance)}`
-              : `Saldo suficiente para aprovar o saque`
+              ? `Saldo insuficiente! Saldo: ${formatCurrency(balanceForApproval)}, Bruto: ${formatCurrency(grossAmount)}`
+              : `Saldo ${formatCurrency(balanceForApproval)} suficiente para aprovar (bruto: ${formatCurrency(grossAmount)})`
             }
           </TooltipContent>
         </Tooltip>
@@ -433,9 +468,31 @@ export function SaquesGlobaisSection() {
                       {withdrawal.id.slice(0, 8)}...
                     </TableCell>
                     <TableCell>
-                      <span className="font-bold text-primary">
-                        {formatCurrency(withdrawal.amount)}
-                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-primary">
+                                {formatCurrency(withdrawal.amount)}
+                              </span>
+                              {withdrawal.gross_amount && withdrawal.gross_amount !== withdrawal.amount && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  Bruto: {formatCurrency(withdrawal.gross_amount)}
+                                </span>
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="text-xs space-y-1">
+                              <p>Líquido (usuário recebe): {formatCurrency(withdrawal.amount)}</p>
+                              <p>Bruto (desconta do saldo): {formatCurrency(getWithdrawalGrossAmount(withdrawal))}</p>
+                              {withdrawal.fee_percentage !== null && (
+                                <p className="text-muted-foreground">Taxa: {withdrawal.fee_percentage}% + {formatCurrency(withdrawal.fee_fixed ?? 0)}</p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     {statusFilter === 'pending' && (
                       <TableCell>
