@@ -273,8 +273,8 @@ serve(async (req) => {
         utm_term: utmData?.utm_term || null,
       },
       commission: {
-        totalPriceInCents: grossPriceInCents,
-        gatewayFeeInCents: feeInCents,
+        totalPriceInCents: netPriceInCents,  // Enviar valor líquido para Utmify calcular corretamente
+        gatewayFeeInCents: 0,                 // Taxa já descontada do valor líquido
         userCommissionInCents: netPriceInCents,
       },
     };
