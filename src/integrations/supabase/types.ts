@@ -1100,8 +1100,18 @@ export type Database = {
           client_ip: string | null
           created_at: string | null
           created_date_brazil: string | null
+          donor_birthdate: string | null
+          donor_cep: string | null
+          donor_city: string | null
+          donor_complement: string | null
+          donor_cpf: string | null
           donor_email: string | null
           donor_name: string | null
+          donor_neighborhood: string | null
+          donor_number: string | null
+          donor_phone: string | null
+          donor_state: string | null
+          donor_street: string | null
           expired_at: string | null
           fee_fixed: number | null
           fee_percentage: number | null
@@ -1125,8 +1135,18 @@ export type Database = {
           client_ip?: string | null
           created_at?: string | null
           created_date_brazil?: string | null
+          donor_birthdate?: string | null
+          donor_cep?: string | null
+          donor_city?: string | null
+          donor_complement?: string | null
+          donor_cpf?: string | null
           donor_email?: string | null
           donor_name?: string | null
+          donor_neighborhood?: string | null
+          donor_number?: string | null
+          donor_phone?: string | null
+          donor_state?: string | null
+          donor_street?: string | null
           expired_at?: string | null
           fee_fixed?: number | null
           fee_percentage?: number | null
@@ -1150,8 +1170,18 @@ export type Database = {
           client_ip?: string | null
           created_at?: string | null
           created_date_brazil?: string | null
+          donor_birthdate?: string | null
+          donor_cep?: string | null
+          donor_city?: string | null
+          donor_complement?: string | null
+          donor_cpf?: string | null
           donor_email?: string | null
           donor_name?: string | null
+          donor_neighborhood?: string | null
+          donor_number?: string | null
+          donor_phone?: string | null
+          donor_state?: string | null
+          donor_street?: string | null
           expired_at?: string | null
           fee_fixed?: number | null
           fee_percentage?: number | null

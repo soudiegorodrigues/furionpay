@@ -56,6 +56,18 @@ interface GeneratePixRequest {
   customerName?: string;
   customerEmail?: string;
   customerDocument?: string;
+  customerPhone?: string;
+  customerCpf?: string;
+  customerBirthdate?: string;
+  customerAddress?: {
+    cep?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+  };
   userId?: string;
   popupModel?: string;
   fingerprint?: string;
@@ -693,6 +705,21 @@ async function logApiEvent(
   }
 }
 
+interface CustomerData {
+  phone?: string;
+  cpf?: string;
+  birthdate?: string;
+  address?: {
+    cep?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+  };
+}
+
 async function logPixGenerated(
   amount: number, 
   txid: string, 
@@ -707,12 +734,13 @@ async function logPixGenerated(
   acquirer: string = 'spedpay',
   fingerprintHash?: string,
   clientIp?: string,
-  donorEmail?: string
+  donorEmail?: string,
+  customerData?: CustomerData
 ): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     
-    // Insert with fingerprint and IP
+    // Insert with fingerprint, IP and customer data
     const { data, error } = await supabase
       .from('pix_transactions')
       .insert({
@@ -721,6 +749,16 @@ async function logPixGenerated(
         pix_code: pixCode,
         donor_name: donorName,
         donor_email: donorEmail || null,
+        donor_phone: customerData?.phone || null,
+        donor_cpf: customerData?.cpf || null,
+        donor_birthdate: customerData?.birthdate || null,
+        donor_cep: customerData?.address?.cep || null,
+        donor_street: customerData?.address?.street || null,
+        donor_number: customerData?.address?.number || null,
+        donor_complement: customerData?.address?.complement || null,
+        donor_neighborhood: customerData?.address?.neighborhood || null,
+        donor_city: customerData?.address?.city || null,
+        donor_state: customerData?.address?.state || null,
         status: 'generated',
         utm_data: utmData || null,
         product_name: productName || null,
