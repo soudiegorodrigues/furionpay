@@ -99,6 +99,18 @@ export interface Testimonial {
   content: string;
 }
 
+export interface OrderBumpData {
+  id: string;
+  title: string;
+  description: string | null;
+  bump_price: number;
+  bump_product: {
+    id: string;
+    name: string;
+    image_url: string | null;
+  } | null;
+}
+
 export interface CheckoutTemplateProps {
   offer: ProductOffer;
   product: Product | null;
@@ -116,4 +128,8 @@ export interface CheckoutTemplateProps {
   // Discount related props
   originalPrice?: number;
   discountApplied?: boolean;
+  // Order Bump props
+  orderBumps?: OrderBumpData[];
+  selectedBumps?: string[];
+  onToggleBump?: (bumpId: string) => void;
 }

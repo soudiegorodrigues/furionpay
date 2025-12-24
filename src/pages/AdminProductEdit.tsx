@@ -17,6 +17,7 @@ import {
   ProductNavigation,
   Section
 } from "@/components/product-edit";
+import { OrderBumpSection } from "@/components/product-edit/OrderBumpSection";
 import { Package, ArrowLeft, Save, CheckCircle } from "lucide-react";
 
 interface Product {
@@ -199,6 +200,7 @@ export default function AdminProductEdit() {
       case "domains":
         return <ComingSoonSection title="Domínios" description="Adicione seu próprio domínio personalizado no checkout." />;
       case "order-bump":
+        return <OrderBumpSection productId={product.id} userId={product.user_id} />;
         return <ComingSoonSection title="Order Bump" description="Configure ofertas adicionais que aparecem no checkout." />;
       case "upsell":
         return <ComingSoonSection title="Upsell um clique" description="Configure ofertas de upsell após a compra." />;

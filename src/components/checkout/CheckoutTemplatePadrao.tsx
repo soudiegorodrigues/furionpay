@@ -13,6 +13,7 @@ import { CheckoutTemplateProps } from "./types";
 import { cn } from "@/lib/utils";
 import { AddressFields } from "./AddressFields";
 import { BannersCarousel } from "./BannersCarousel";
+import { OrderBumpCard } from "./OrderBumpCard";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Banner {
@@ -55,6 +56,9 @@ export function CheckoutTemplatePadrao({
   testimonials = [],
   originalPrice,
   discountApplied,
+  orderBumps = [],
+  selectedBumps = [],
+  onToggleBump,
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#22C55E";
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -325,6 +329,22 @@ export function CheckoutTemplatePadrao({
                   )}
                 </CardContent>
               </Card>
+
+              {/* Order Bumps Section */}
+              {orderBumps.length > 0 && onToggleBump && (
+                <div className="space-y-3">
+                  {orderBumps.map((bump) => (
+                    <OrderBumpCard
+                      key={bump.id}
+                      bump={bump}
+                      isSelected={selectedBumps.includes(bump.id)}
+                      onToggle={onToggleBump}
+                      formatPrice={formatPrice}
+                      primaryColor={primaryColor}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Payment Method Card */}
               <Card className="shadow-md border-0">
