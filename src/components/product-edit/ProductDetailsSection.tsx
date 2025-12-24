@@ -63,14 +63,17 @@ export function ProductDetailsSection({
 }: ProductDetailsSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPriceFocused, setIsPriceFocused] = useState(false);
   const [priceDisplay, setPriceDisplay] = useState(() => 
     formData.price > 0 ? formatCurrency(formData.price) : ''
   );
 
-  // Sincroniza o display quando o preço do formData muda externamente
+  // Sincroniza o display quando o preço do formData muda externamente (só quando NÃO está focado)
   useEffect(() => {
-    setPriceDisplay(formData.price > 0 ? formatCurrency(formData.price) : '');
-  }, [formData.price]);
+    if (!isPriceFocused) {
+      setPriceDisplay(formData.price > 0 ? formatCurrency(formData.price) : '');
+    }
+  }, [formData.price, isPriceFocused]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -93,7 +96,8 @@ export function ProductDetailsSection({
   };
 
   const handlePriceBlur = () => {
-    // Formata corretamente ao sair do campo (só se tiver valor)
+    setIsPriceFocused(false);
+    // Formata corretamente ao sair do campo
     if (formData.price > 0) {
       setPriceDisplay(formatCurrency(formData.price));
     } else {
@@ -102,9 +106,12 @@ export function ProductDetailsSection({
   };
 
   const handlePriceFocus = () => {
-    // Mostra valor limpo sem separador de milhar para facilitar edição
+    setIsPriceFocused(true);
+    // Mostra valor limpo para edição (ex: "2,99" em vez de "2,99")
     if (formData.price > 0) {
-      setPriceDisplay(formData.price.toFixed(2).replace('.', ','));
+      // Remove zeros desnecessários (2.00 → "2", 2.50 → "2,5", 2.99 → "2,99")
+      const formatted = formData.price.toString().replace('.', ',');
+      setPriceDisplay(formatted);
     } else {
       setPriceDisplay('');
     }
