@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
+import { preloadCheckoutResources, trackPerformanceMetrics } from "@/lib/performanceUtils";
 import {
   ProductOffer,
   Product,
@@ -20,6 +21,11 @@ const CheckoutTemplateAfilia = lazy(() => import("@/components/checkout/Checkout
 const CheckoutTemplateMultistep = lazy(() => import("@/components/checkout/CheckoutTemplateMultistep").then(m => ({ default: m.CheckoutTemplateMultistep })));
 const CheckoutPixPayment = lazy(() => import("@/components/checkout/CheckoutPixPayment").then(m => ({ default: m.CheckoutPixPayment })));
 const ExitIntentPopup = lazy(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })));
+
+// Track performance metrics in production
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+  trackPerformanceMetrics();
+}
 
 // Minimal skeleton for instant render - CSS-only, no JS
 const CheckoutSkeleton = memo(() => (
@@ -46,19 +52,6 @@ const CheckoutSkeleton = memo(() => (
   </div>
 ));
 CheckoutSkeleton.displayName = "CheckoutSkeleton";
-
-// Preload critical images with priority
-const preloadImage = (src: string | null | undefined) => {
-  if (!src || typeof document === 'undefined') return;
-  const existing = document.querySelector(`link[href="${src}"]`);
-  if (existing) return;
-  const link = document.createElement("link");
-  link.rel = "preload";
-  link.as = "image";
-  link.href = src;
-  link.fetchPriority = "high";
-  document.head.appendChild(link);
-};
 
 export default function PublicCheckout() {
   const { offerCode } = useParams<{ offerCode: string }>();
@@ -227,11 +220,15 @@ export default function PublicCheckout() {
   const testimonials = checkoutData?.testimonials || [];
   const pixelConfig = checkoutData?.pixelConfig;
 
-  // Preload critical images as soon as data is available
+  // Preload critical resources as soon as data is available
   useEffect(() => {
-    if (product?.image_url) preloadImage(product.image_url);
-    if (config?.header_logo_url) preloadImage(config.header_logo_url);
-    if (config?.discount_popup_image_url) preloadImage(config.discount_popup_image_url);
+    if (product || config) {
+      preloadCheckoutResources({
+        productImage: product?.image_url,
+        headerLogo: config?.header_logo_url,
+        videoUrl: config?.video_url,
+      });
+    }
   }, [product, config]);
 
   // Initialize Meta Pixel dynamically when pixelConfig is loaded

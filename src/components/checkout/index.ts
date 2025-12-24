@@ -11,3 +11,5 @@ export { CheckoutBuilderSimple } from "./CheckoutBuilderSimple";
 export { CheckoutPreviewMini } from "./CheckoutPreviewMini";
 export { ExitIntentPopup } from "./ExitIntentPopup";
 export { AddressFields } from "./AddressFields";
+export { BannersCarousel } from "./BannersCarousel";
+export { OptimizedImage, OptimizedVideo } from "./OptimizedImage";
