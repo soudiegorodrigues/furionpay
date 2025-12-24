@@ -82,6 +82,19 @@ function generateRandomEmail(name: string): string {
 interface GeneratePixRequest {
   amount: number;
   donorName?: string;
+  donorEmail?: string;
+  donorPhone?: string;
+  donorCpf?: string;
+  donorBirthdate?: string;
+  donorAddress?: {
+    cep?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+  };
   userId?: string;
   utmData?: Record<string, string>;
   productName?: string;
@@ -383,7 +396,12 @@ async function logPixGenerated(
   feeFixed?: number,
   acquirer: string = 'valorion',
   fingerprint?: string,
-  clientIp?: string
+  clientIp?: string,
+  donorEmail?: string,
+  donorPhone?: string,
+  donorCpf?: string,
+  donorBirthdate?: string,
+  donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; }
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -400,6 +418,17 @@ async function logPixGenerated(
       p_acquirer: acquirer,
       p_fingerprint_hash: fingerprint || null,
       p_client_ip: clientIp || null,
+      p_donor_email: donorEmail || null,
+      p_donor_phone: donorPhone || null,
+      p_donor_cpf: donorCpf || null,
+      p_donor_birthdate: donorBirthdate || null,
+      p_donor_cep: donorAddress?.cep || null,
+      p_donor_street: donorAddress?.street || null,
+      p_donor_number: donorAddress?.number || null,
+      p_donor_complement: donorAddress?.complement || null,
+      p_donor_neighborhood: donorAddress?.neighborhood || null,
+      p_donor_city: donorAddress?.city || null,
+      p_donor_state: donorAddress?.state || null,
     });
 
     if (error) {
@@ -501,7 +530,7 @@ serve(async (req) => {
   const requestStartTime = Date.now();
 
   try {
-    const { amount, donorName, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp } = await req.json() as GeneratePixRequest;
 
     console.log('=== VALORION PIX GENERATION START ===');
     console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}, HealthCheck: ${healthCheck}, IP: ${clientIp}`);
@@ -679,14 +708,19 @@ serve(async (req) => {
         pixCode,
         finalDonorName,
         utmData,
-        rawProductName, // Use original name for database record
+        rawProductName,
         userId,
         popupModel,
         feeConfig?.pix_percentage,
         feeConfig?.pix_fixed,
         'valorion',
         fingerprint,
-        clientIp
+        clientIp,
+        donorEmail,
+        donorPhone,
+        donorCpf,
+        donorBirthdate,
+        donorAddress
       );
     } else {
       console.log('[VALORION] Health check mode - skipping transaction log');
