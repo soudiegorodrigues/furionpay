@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminHeader } from "@/components/AdminSidebar";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/AccessDenied";
 import { Button } from "@/components/ui/button";
@@ -220,7 +219,6 @@ export default function AdminProductEdit() {
   if (!isLoading && !product) {
     return (
       <div className="flex flex-col min-h-screen">
-        <AdminHeader title="Produto não encontrado" icon={Package} />
         <main className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center gap-4">
           <p className="text-muted-foreground">O produto solicitado não foi encontrado.</p>
           <Button onClick={() => navigate("/admin/products")}>
@@ -234,7 +232,6 @@ export default function AdminProductEdit() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <AdminHeader title={product?.name || "Carregando..."} icon={Package} />
       
       <main className="flex-1 p-4 md:p-6">
         {isLoading ? (
