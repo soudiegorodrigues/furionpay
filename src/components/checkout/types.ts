@@ -104,6 +104,7 @@ export interface OrderBumpData {
   title: string;
   description: string | null;
   bump_price: number;
+  image_url?: string | null;
   bump_product: {
     id: string;
     name: string;

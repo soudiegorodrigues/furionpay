@@ -174,6 +174,7 @@ export default function PublicCheckout() {
             title,
             description,
             bump_price,
+            image_url,
             bump_product:products!bump_product_id(id, name, image_url)
           `)
           .eq("product_id", offer.product_id)
@@ -193,6 +194,7 @@ export default function PublicCheckout() {
         title: bump.title,
         description: bump.description,
         bump_price: bump.bump_price,
+        image_url: bump.image_url,
         bump_product: bump.bump_product?.[0] || bump.bump_product || null,
       }));
       
