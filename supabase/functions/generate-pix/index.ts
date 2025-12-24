@@ -71,6 +71,7 @@ interface GeneratePixRequest {
   userId?: string;
   popupModel?: string;
   fingerprint?: string;
+  productName?: string;
   utmParams?: {
     utm_source?: string;
     utm_medium?: string;
@@ -821,6 +822,19 @@ async function callAcquirer(
   params: {
     amount: number;
     customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    customerCpf?: string;
+    customerBirthdate?: string;
+    customerAddress?: {
+      cep?: string;
+      street?: string;
+      number?: string;
+      complement?: string;
+      neighborhood?: string;
+      city?: string;
+      state?: string;
+    };
     utmParams?: Record<string, any>;
     userId?: string;
     popupModel?: string;
@@ -853,10 +867,16 @@ async function callAcquirer(
         },
         body: JSON.stringify({ 
           amount: params.amount, 
-          donorName: params.customerName, 
+          donorName: params.customerName,
+          donorEmail: params.customerEmail,
+          donorPhone: params.customerPhone,
+          donorCpf: params.customerCpf,
+          donorBirthdate: params.customerBirthdate,
+          donorAddress: params.customerAddress,
           utmData: params.utmParams, 
           userId: params.userId, 
           popupModel: params.popupModel,
+          productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
         }),
@@ -883,10 +903,16 @@ async function callAcquirer(
         },
         body: JSON.stringify({ 
           amount: params.amount, 
-          donorName: params.customerName, 
+          donorName: params.customerName,
+          donorEmail: params.customerEmail,
+          donorPhone: params.customerPhone,
+          donorCpf: params.customerCpf,
+          donorBirthdate: params.customerBirthdate,
+          donorAddress: params.customerAddress,
           utmData: params.utmParams, 
           userId: params.userId, 
           popupModel: params.popupModel,
+          productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
         }),
@@ -913,10 +939,16 @@ async function callAcquirer(
         },
         body: JSON.stringify({ 
           amount: params.amount, 
-          donorName: params.customerName, 
+          donorName: params.customerName,
+          donorEmail: params.customerEmail,
+          donorPhone: params.customerPhone,
+          donorCpf: params.customerCpf,
+          donorBirthdate: params.customerBirthdate,
+          donorAddress: params.customerAddress,
           utmData: params.utmParams, 
           userId: params.userId, 
           popupModel: params.popupModel,
+          productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
         }),
@@ -944,10 +976,16 @@ async function callAcquirer(
         },
         body: JSON.stringify({ 
           amount: params.amount, 
-          donorName: params.customerName, 
+          donorName: params.customerName,
+          donorEmail: params.customerEmail,
+          donorPhone: params.customerPhone,
+          donorCpf: params.customerCpf,
+          donorBirthdate: params.customerBirthdate,
+          donorAddress: params.customerAddress,
           utmData: params.utmParams, 
           userId: params.userId, 
           popupModel: params.popupModel,
+          productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
         }),
@@ -981,6 +1019,19 @@ async function generatePixWithRetry(
   params: {
     amount: number;
     customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    customerCpf?: string;
+    customerBirthdate?: string;
+    customerAddress?: {
+      cep?: string;
+      street?: string;
+      number?: string;
+      complement?: string;
+      neighborhood?: string;
+      city?: string;
+      state?: string;
+    };
     utmParams?: Record<string, any>;
     userId?: string;
     popupModel?: string;
@@ -1111,7 +1162,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, customerName, customerEmail, customerDocument, utmParams, userId, popupModel, fingerprint }: GeneratePixRequest = await req.json();
+    const { amount, customerName, customerEmail, customerDocument, customerPhone, customerCpf, customerBirthdate, customerAddress, utmParams, userId, popupModel, fingerprint, productName: requestProductName }: GeneratePixRequest = await req.json();
     
     // Get client IP
     const clientIp = getClientIp(req);
@@ -1166,8 +1217,8 @@ serve(async (req) => {
     const feeConfig = await getUserFeeConfig(userId);
     console.log('Fee config for transaction:', feeConfig);
 
-    // Get product name from checkout_offers
-    const productName = await getProductNameFromDatabase(userId, popupModel);
+    // Get product name - use from request if provided, otherwise fetch from database
+    const productName = requestProductName || await getProductNameFromDatabase(userId, popupModel);
     console.log('Product name:', productName);
 
     // Get retry configuration
@@ -1180,6 +1231,11 @@ serve(async (req) => {
       const result = await generatePixWithRetry(retryConfig, {
         amount,
         customerName,
+        customerEmail,
+        customerPhone,
+        customerCpf,
+        customerBirthdate,
+        customerAddress,
         utmParams,
         userId,
         popupModel,
@@ -1233,6 +1289,11 @@ serve(async (req) => {
     const result = await callAcquirer(acquirer, {
       amount,
       customerName,
+      customerEmail,
+      customerPhone,
+      customerCpf,
+      customerBirthdate,
+      customerAddress,
       utmParams,
       userId,
       popupModel,
