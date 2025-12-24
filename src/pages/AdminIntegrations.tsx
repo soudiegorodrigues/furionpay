@@ -11,16 +11,16 @@ import utmifyLogo from "@/assets/utmify-logo.png";
 import apiLogo from "@/assets/api-logo.webp";
 import { supabase } from "@/integrations/supabase/client";
 
-// Cache helpers for instant status display
+// Cache helpers for instant status display - ALWAYS use cached values if they exist
+// This eliminates any visual flash on subsequent visits
 const getCachedUtmifyStatus = (): { configured: boolean | null; enabled: boolean | null } => {
   try {
     const cached = localStorage.getItem('utmify_status_cache');
     if (cached) {
       const data = JSON.parse(cached);
-      // Cache valid for 5 minutes
-      if (Date.now() - data.timestamp < 5 * 60 * 1000) {
-        return { configured: data.configured, enabled: data.enabled };
-      }
+      // Always return cached values for instant display (no time check)
+      // Background refresh will update if needed
+      return { configured: data.configured, enabled: data.enabled };
     }
   } catch {}
   return { configured: null, enabled: null };
@@ -31,9 +31,8 @@ const getCachedApiKeysCount = (): number | null => {
     const cached = localStorage.getItem('api_keys_count_cache');
     if (cached) {
       const data = JSON.parse(cached);
-      if (Date.now() - data.timestamp < 5 * 60 * 1000) {
-        return data.count;
-      }
+      // Always return cached value for instant display
+      return data.count;
     }
   } catch {}
   return null;
