@@ -11,18 +11,47 @@ import utmifyLogo from "@/assets/utmify-logo.png";
 import apiLogo from "@/assets/api-logo.webp";
 import { supabase } from "@/integrations/supabase/client";
 
+// Cache helpers for instant status display
+const getCachedUtmifyStatus = (): { configured: boolean | null; enabled: boolean | null } => {
+  try {
+    const cached = localStorage.getItem('utmify_status_cache');
+    if (cached) {
+      const data = JSON.parse(cached);
+      // Cache valid for 5 minutes
+      if (Date.now() - data.timestamp < 5 * 60 * 1000) {
+        return { configured: data.configured, enabled: data.enabled };
+      }
+    }
+  } catch {}
+  return { configured: null, enabled: null };
+};
+
+const getCachedApiKeysCount = (): number | null => {
+  try {
+    const cached = localStorage.getItem('api_keys_count_cache');
+    if (cached) {
+      const data = JSON.parse(cached);
+      if (Date.now() - data.timestamp < 5 * 60 * 1000) {
+        return data.count;
+      }
+    }
+  } catch {}
+  return null;
+};
+
 const AdminIntegrations = () => {
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [utmifyDialogOpen, setUtmifyDialogOpen] = useState(false);
-  // null = still checking, boolean = checked
-  const [utmifyConfigured, setUtmifyConfigured] = useState<boolean | null>(null);
-  const [utmifyEnabled, setUtmifyEnabled] = useState<boolean | null>(null);
+  
+  // Initialize from cache for instant display
+  const [utmifyConfigured, setUtmifyConfigured] = useState<boolean | null>(() => getCachedUtmifyStatus().configured);
+  const [utmifyEnabled, setUtmifyEnabled] = useState<boolean | null>(() => getCachedUtmifyStatus().enabled);
   const [loadingUtmify, setLoadingUtmify] = useState(false);
   const [utmifyInitialData, setUtmifyInitialData] = useState<UtmifyInitialData | null>(null);
 
-  // API Keys state - null = still checking
+  // API Keys state - initialize from cache
   const [apiDialogOpen, setApiDialogOpen] = useState(false);
-  const [apiKeysCount, setApiKeysCount] = useState<number | null>(null);
+  const [apiKeysCount, setApiKeysCount] = useState<number | null>(() => getCachedApiKeysCount());
   const [loadingApiKeys, setLoadingApiKeys] = useState(false);
 
   // Preload images for instant rendering
@@ -43,7 +72,7 @@ const AdminIntegrations = () => {
   const loadUtmifyStatus = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      // If no user yet (session restoring), keep null state - don't assume "Pendente"
+      // If no user yet (session restoring), keep cached/null state
       if (!user) return;
 
       const { data: tokenData } = await supabase
@@ -60,8 +89,18 @@ const AdminIntegrations = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      setUtmifyConfigured(!!tokenData?.value);
-      setUtmifyEnabled(enabledData?.value === 'true');
+      const configured = !!tokenData?.value;
+      const enabled = enabledData?.value === 'true';
+      
+      setUtmifyConfigured(configured);
+      setUtmifyEnabled(enabled);
+      
+      // Update cache
+      localStorage.setItem('utmify_status_cache', JSON.stringify({
+        configured,
+        enabled,
+        timestamp: Date.now()
+      }));
     } catch (error) {
       console.error('Error loading Utmify status:', error);
     }
@@ -73,6 +112,12 @@ const AdminIntegrations = () => {
       if (error) throw error;
       const activeCount = (data || []).filter((client: { is_active: boolean }) => client.is_active).length;
       setApiKeysCount(activeCount);
+      
+      // Update cache
+      localStorage.setItem('api_keys_count_cache', JSON.stringify({
+        count: activeCount,
+        timestamp: Date.now()
+      }));
     } catch (error) {
       console.error('Error loading API keys status:', error);
     }
