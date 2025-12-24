@@ -42,9 +42,19 @@ export function CheckoutTemplateAfilia({
 
   // Fetch banners
   useEffect(() => {
-    if (!config?.show_banners || !product?.id) return;
+    console.log('[BANNERS DEBUG - Afilia] Verificando condições:', {
+      show_banners: config?.show_banners,
+      product_id: product?.id,
+    });
+    
+    if (!config?.show_banners || !product?.id) {
+      console.log('[BANNERS DEBUG - Afilia] Condições não atendidas, pulando fetch');
+      return;
+    }
 
     const fetchBanners = async () => {
+      console.log('[BANNERS DEBUG - Afilia] Buscando banners para product_id:', product.id);
+      
       const { data, error } = await supabase
         .from("checkout_banners")
         .select("id, image_url, display_order")
@@ -52,7 +62,14 @@ export function CheckoutTemplateAfilia({
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
-      if (!error && data) {
+      if (error) {
+        console.error('[BANNERS DEBUG - Afilia] Erro ao buscar banners:', error);
+        return;
+      }
+      
+      console.log('[BANNERS DEBUG - Afilia] Banners encontrados:', data?.length || 0, data);
+      
+      if (data) {
         setBanners(data);
       }
     };

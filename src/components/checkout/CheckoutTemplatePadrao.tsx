@@ -61,9 +61,19 @@ export function CheckoutTemplatePadrao({
 
   // Fetch banners from checkout_banners table
   useEffect(() => {
-    if (!config?.show_banners || !product?.id) return;
+    console.log('[BANNERS DEBUG - Padrao] Verificando condições:', {
+      show_banners: config?.show_banners,
+      product_id: product?.id,
+    });
+    
+    if (!config?.show_banners || !product?.id) {
+      console.log('[BANNERS DEBUG - Padrao] Condições não atendidas, pulando fetch');
+      return;
+    }
 
     const fetchBanners = async () => {
+      console.log('[BANNERS DEBUG - Padrao] Buscando banners para product_id:', product.id);
+      
       const { data, error } = await supabase
         .from("checkout_banners")
         .select("id, image_url, display_order")
@@ -71,7 +81,14 @@ export function CheckoutTemplatePadrao({
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
-      if (!error && data) {
+      if (error) {
+        console.error('[BANNERS DEBUG - Padrao] Erro ao buscar banners:', error);
+        return;
+      }
+      
+      console.log('[BANNERS DEBUG - Padrao] Banners encontrados:', data?.length || 0, data);
+      
+      if (data) {
         setBanners(data);
       }
     };
