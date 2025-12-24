@@ -57,6 +57,11 @@ CheckoutSkeleton.displayName = "CheckoutSkeleton";
 export default function PublicCheckout() {
   const { offerCode } = useParams<{ offerCode: string }>();
   const navigate = useNavigate();
+
+  const debugEnabled =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debug") === "1";
+
   const [step, setStep] = useState<"form" | "payment">("form");
   const [formData, setFormData] = useState<FormData>({
     name: "",
