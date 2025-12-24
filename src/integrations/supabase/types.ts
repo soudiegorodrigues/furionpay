@@ -2149,6 +2149,59 @@ export type Database = {
           },
         ]
       }
+      withdrawal_audit_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          available_balance_at_action: number
+          created_at: string | null
+          error_message: string | null
+          gross_amount: number
+          id: string
+          metadata: Json | null
+          net_amount: number
+          user_id: string
+          validation_passed: boolean
+          withdrawal_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          available_balance_at_action: number
+          created_at?: string | null
+          error_message?: string | null
+          gross_amount: number
+          id?: string
+          metadata?: Json | null
+          net_amount: number
+          user_id: string
+          validation_passed: boolean
+          withdrawal_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          available_balance_at_action?: number
+          created_at?: string | null
+          error_message?: string | null
+          gross_amount?: number
+          id?: string
+          metadata?: Json | null
+          net_amount?: number
+          user_id?: string
+          validation_passed?: boolean
+          withdrawal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_audit_log_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "withdrawal_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       withdrawal_requests: {
         Row: {
           acquirer: string | null
@@ -2228,6 +2281,10 @@ export type Database = {
         Returns: boolean
       }
       approve_user: { Args: { target_user_id: string }; Returns: boolean }
+      approve_withdrawal: {
+        Args: { p_admin_notes?: string; p_withdrawal_id: string }
+        Returns: Json
+      }
       auto_backup_transactions: { Args: never; Returns: string }
       auto_full_system_backup: { Args: never; Returns: string }
       backup_and_reset_transactions: { Args: never; Returns: string }
@@ -3051,20 +3108,36 @@ export type Database = {
         Args: { p_reason: string; p_user_id: string }
         Returns: boolean
       }
+      reject_withdrawal: {
+        Args: { p_rejection_reason: string; p_withdrawal_id: string }
+        Returns: Json
+      }
       remove_collaborator: {
         Args: { _collaborator_id: string }
         Returns: boolean
       }
-      request_withdrawal: {
-        Args: {
-          p_amount: number
-          p_bank_code: string
-          p_bank_name: string
-          p_pix_key: string
-          p_pix_key_type: string
-        }
-        Returns: string
-      }
+      request_withdrawal:
+        | {
+            Args: {
+              p_amount: number
+              p_bank_code: string
+              p_bank_name: string
+              p_pix_key: string
+              p_pix_key_type: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_acquirer?: string
+              p_amount: number
+              p_bank_code: string
+              p_bank_name: string
+              p_pix_key: string
+              p_pix_key_type: string
+            }
+            Returns: Json
+          }
       reset_login_attempts: { Args: { p_email: string }; Returns: boolean }
       reset_pix_transactions: {
         Args: { input_token: string }

@@ -216,17 +216,18 @@ export function SaquesGlobaisSection() {
 
     setProcessingId(withdrawal.id);
     try {
-      const { error } = await supabase.rpc('process_withdrawal', {
+      // Usa a nova RPC approve_withdrawal com validação dupla e log de auditoria
+      const { data, error } = await supabase.rpc('approve_withdrawal', {
         p_withdrawal_id: withdrawal.id,
-        p_status: 'approved'
+        p_admin_notes: null
       });
       
       if (error) {
-        // Trata erro de saldo insuficiente do banco de dados
-        if (error.message.includes('Saldo insuficiente')) {
+        // Trata erro de saldo insuficiente do banco de dados ou trigger
+        if (error.message.includes('Saldo insuficiente') || error.message.includes('TRIGGER_BLOCK')) {
           toast({
             title: "Saldo Insuficiente",
-            description: error.message,
+            description: error.message.replace('TRIGGER_BLOCK: ', ''),
             variant: "destructive"
           });
           // Recarregar saldo do usuário
@@ -237,9 +238,12 @@ export function SaquesGlobaisSection() {
       }
       
       await sendNotificationEmail(withdrawal, 'approved');
+      
+      // Mostra detalhes da aprovação
+      const result = data as { success: boolean; available_balance_before?: number; available_balance_after?: number };
       toast({
         title: "Saque aprovado!",
-        description: `Saque de ${formatCurrency(withdrawal.amount)} aprovado com sucesso.`
+        description: `Saque de ${formatCurrency(withdrawal.amount)} aprovado. Novo saldo: ${formatCurrency(result.available_balance_after || 0)}`
       });
       loadWithdrawals();
     } catch (error: any) {
@@ -257,16 +261,16 @@ export function SaquesGlobaisSection() {
     if (!selectedWithdrawal) return;
     setProcessingId(selectedWithdrawal.id);
     try {
-      const { error } = await supabase.rpc('process_withdrawal', {
+      // Usa a nova RPC reject_withdrawal com log de auditoria
+      const { error } = await supabase.rpc('reject_withdrawal', {
         p_withdrawal_id: selectedWithdrawal.id,
-        p_status: 'rejected',
-        p_rejection_reason: rejectionReason || null
+        p_rejection_reason: rejectionReason || 'Solicitação rejeitada pelo administrador'
       });
       if (error) throw error;
       await sendNotificationEmail(selectedWithdrawal, 'rejected', rejectionReason || undefined);
       toast({
         title: "Saque rejeitado",
-        description: `Saque de ${formatCurrency(selectedWithdrawal.amount)} foi rejeitado.`
+        description: `Saque de ${formatCurrency(selectedWithdrawal.amount)} foi rejeitado e registrado no log de auditoria.`
       });
       setShowRejectDialog(false);
       setSelectedWithdrawal(null);
