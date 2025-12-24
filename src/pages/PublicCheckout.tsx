@@ -235,8 +235,9 @@ export default function PublicCheckout() {
       return { offer, product, config, testimonials, pixelConfig, orderBumps };
     },
     enabled: !!offerCode,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    refetchOnMount: "always", // Force refetch on every mount
   });
 
   const offer = checkoutData?.offer;
