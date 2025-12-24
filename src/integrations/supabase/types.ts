@@ -1560,6 +1560,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          image_url: string | null
           is_active: boolean | null
           position: number | null
           product_id: string
@@ -1573,6 +1574,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           position?: number | null
           product_id: string
@@ -1586,6 +1588,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           position?: number | null
           product_id?: string

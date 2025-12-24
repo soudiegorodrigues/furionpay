@@ -8,6 +8,7 @@ export interface OrderBump {
   title: string;
   description: string | null;
   bump_price: number;
+  image_url?: string | null;
   bump_product: {
     id: string;
     name: string;
@@ -62,12 +63,12 @@ export const OrderBumpCard = memo(function OrderBumpCard({
           />
         </div>
 
-        {/* Image */}
-        {bump.bump_product?.image_url && (
+        {/* Image - prioritize custom image_url over product image */}
+        {(bump.image_url || bump.bump_product?.image_url) && (
           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
             <img
-              src={bump.bump_product.image_url}
-              alt={bump.bump_product.name}
+              src={bump.image_url || bump.bump_product?.image_url || ""}
+              alt={bump.bump_product?.name || "Order Bump"}
               className="w-full h-full object-cover"
             />
           </div>

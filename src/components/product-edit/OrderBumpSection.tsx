@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Gift, GripVertical, Zap, Eye, Package } from "lucide-react";
+import { Plus, Trash2, Gift, GripVertical, Zap, Eye, Package, Upload, X, Image as ImageIcon } from "lucide-react";
 import { OrderBumpCard, OrderBump } from "@/components/checkout/OrderBumpCard";
 
 interface OrderBumpData {
@@ -24,6 +24,7 @@ interface OrderBumpData {
   bump_price: number;
   is_active: boolean;
   position: number;
+  image_url: string | null;
   created_at: string;
   bump_product?: {
     id: string;
@@ -48,11 +49,14 @@ interface OrderBumpSectionProps {
 export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newBump, setNewBump] = useState({
     bump_product_id: "",
     title: "🔥 Adicione também!",
     description: "",
     bump_price: 0,
+    image_url: "",
   });
   const [previewBump, setPreviewBump] = useState<OrderBump | null>(null);
 
@@ -101,6 +105,7 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
           title: newBump.title,
           description: newBump.description || null,
           bump_price: newBump.bump_price || selectedProduct.price,
+          image_url: newBump.image_url || null,
           bump_product: {
             id: selectedProduct.id,
             name: selectedProduct.name,
@@ -112,6 +117,51 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
       setPreviewBump(null);
     }
   }, [newBump, availableProducts]);
+
+  // Handle image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `order-bump-${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("order-bumps")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("order-bumps")
+        .getPublicUrl(filePath);
+
+      setNewBump(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success("Imagem enviada com sucesso!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setNewBump(prev => ({ ...prev, image_url: "" }));
+  };
 
   // Create mutation
   const createMutation = useMutation({
@@ -127,6 +177,7 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
           title: data.title,
           description: data.description || null,
           bump_price: data.bump_price,
+          image_url: data.image_url || null,
           position: maxPosition + 1,
         });
 
@@ -141,6 +192,7 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
         title: "🔥 Adicione também!",
         description: "",
         bump_price: 0,
+        image_url: "",
       });
     },
     onError: () => {
@@ -315,6 +367,58 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
                   />
                   <p className="text-xs text-muted-foreground">
                     Pode ser diferente do preço original do produto
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Imagem do Order Bump (opcional)</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  
+                  {newBump.image_url ? (
+                    <div className="relative w-32 h-32">
+                      <img
+                        src={newBump.image_url}
+                        alt="Preview"
+                        className="w-full h-full object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={removeImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="w-full h-24 flex flex-col gap-2 border-dashed"
+                    >
+                      {uploadingImage ? (
+                        <span>Enviando...</span>
+                      ) : (
+                        <>
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            Clique para enviar imagem
+                          </span>
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Se não enviar, usará a imagem do produto
                   </p>
                 </div>
 
