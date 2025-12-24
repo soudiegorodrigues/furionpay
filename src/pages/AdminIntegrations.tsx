@@ -17,6 +17,7 @@ const AdminIntegrations = () => {
   const [utmifyConfigured, setUtmifyConfigured] = useState(false);
   const [utmifyEnabled, setUtmifyEnabled] = useState(false);
   const [loadingUtmify, setLoadingUtmify] = useState(false);
+  const [loadingUtmifyStatus, setLoadingUtmifyStatus] = useState(true);
   const [utmifyInitialData, setUtmifyInitialData] = useState<UtmifyInitialData | null>(null);
 
   // API Keys state
@@ -40,6 +41,7 @@ const AdminIntegrations = () => {
   }, []);
 
   const loadUtmifyStatus = async () => {
+    setLoadingUtmifyStatus(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -62,6 +64,8 @@ const AdminIntegrations = () => {
       setUtmifyEnabled(enabledData?.value === 'true');
     } catch (error) {
       console.error('Error loading Utmify status:', error);
+    } finally {
+      setLoadingUtmifyStatus(false);
     }
   };
 
@@ -149,7 +153,12 @@ const AdminIntegrations = () => {
         >
           {/* Status indicator */}
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
-            {utmifyConfigured && utmifyEnabled ? (
+            {loadingUtmifyStatus ? (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-muted border border-border animate-pulse">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">...</span>
+              </div>
+            ) : utmifyConfigured && utmifyEnabled ? (
               <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-green-500/10 border border-green-500/20">
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-[10px] sm:text-xs font-medium text-green-600">Ativo</span>
