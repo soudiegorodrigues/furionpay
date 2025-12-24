@@ -35,6 +35,7 @@ export function CheckoutTemplateVega({
   onGeneratePix,
   formatPrice,
   formatCountdown,
+  testimonials = [],
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#10B981";
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -199,6 +200,42 @@ export function CheckoutTemplateVega({
                       <p className="text-xs text-gray-400">Suporte VIP</p>
                     </div>
                   </div>
+
+                  {/* Testimonials Section */}
+                  {config?.show_notifications && testimonials && testimonials.length > 0 && (
+                    <div className="pt-4 border-t border-white/10 space-y-3">
+                      <h4 className="font-semibold text-white text-sm flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-400" />
+                        O que nossos clientes dizem
+                      </h4>
+                      {testimonials.slice(0, 3).map((testimonial) => (
+                        <div key={testimonial.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                          <div className="flex items-center gap-2 mb-2">
+                            {testimonial.author_photo_url ? (
+                              <img 
+                                src={testimonial.author_photo_url} 
+                                alt={testimonial.author_name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+                                <User className="h-4 w-4 text-white" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-white text-sm font-medium">{testimonial.author_name}</p>
+                              <div className="flex gap-0.5">
+                                {[...Array(testimonial.rating || 5)].map((_, i) => (
+                                  <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-gray-400 text-xs line-clamp-2">{testimonial.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
