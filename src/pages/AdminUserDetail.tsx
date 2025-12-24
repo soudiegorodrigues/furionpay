@@ -9,8 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   ArrowLeft, Loader2, Check, CreditCard, Settings2, Percent, Trophy, ShieldCheck,
-  Shield, ShieldOff, Ban, Unlock, Trash2, UserCheck, UserX, Mail, Calendar, Clock, Wallet, KeyRound
+  Shield, ShieldOff, Ban, Unlock, Trash2, UserCheck, UserX, Mail, Calendar, Clock, Wallet, KeyRound, BarChart3
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -73,6 +74,8 @@ const AdminUserDetail = () => {
   const [selectedFeeConfig, setSelectedFeeConfig] = useState<string>('');
   const [bypassAntifraud, setBypassAntifraud] = useState(false);
   const [userTotalPaid, setUserTotalPaid] = useState(0);
+  const [userTotalLiquid, setUserTotalLiquid] = useState(0);
+  const [userTotalWithdrawn, setUserTotalWithdrawn] = useState(0);
   const [verification, setVerification] = useState<VerificationStatus | null>(null);
   const [user2FAStatus, setUser2FAStatus] = useState<User2FAStatus | null>(null);
   const [reset2FADialogOpen, setReset2FADialogOpen] = useState(false);
@@ -191,19 +194,37 @@ const AdminUserDetail = () => {
         { data: feeData },
         { data: profileData },
         { data: totalPaid },
-        { data: verificationData }
+        { data: verificationData },
+        { data: transactionsData },
+        { data: withdrawalsData }
       ] = await Promise.all([
         supabase.from('admin_settings').select('value').eq('user_id', id).eq('key', 'user_acquirer').maybeSingle(),
         supabase.from('admin_settings').select('value').eq('user_id', id).eq('key', 'user_fee_config').maybeSingle(),
         supabase.from('profiles').select('bypass_antifraud').eq('id', id).maybeSingle(),
         supabase.rpc('get_user_total_paid', { p_user_id: id }),
-        supabase.from('user_verification').select('status, person_type, document_type_selected').eq('user_id', id).maybeSingle()
+        supabase.from('user_verification').select('status, person_type, document_type_selected').eq('user_id', id).maybeSingle(),
+        supabase.from('pix_transactions').select('amount, fee_fixed, fee_percentage').eq('user_id', id).eq('status', 'paid'),
+        supabase.from('withdrawal_requests').select('gross_amount').eq('user_id', id).eq('status', 'approved')
       ]);
 
       setSelectedAcquirer(acquirerData?.value || '');
       setSelectedFeeConfig(feeData?.value || '');
       setBypassAntifraud(profileData?.bypass_antifraud || false);
       setUserTotalPaid(totalPaid || 0);
+      
+      // Calculate total liquid (amount - fees)
+      const totalLiquid = (transactionsData || []).reduce((sum, tx) => {
+        const feeFixed = tx.fee_fixed || 0;
+        const feePercentage = tx.fee_percentage || 0;
+        const fee = feeFixed + (tx.amount * feePercentage / 100);
+        return sum + (tx.amount - fee);
+      }, 0);
+      setUserTotalLiquid(totalLiquid);
+      
+      // Calculate total withdrawn
+      const totalWithdrawn = (withdrawalsData || []).reduce((sum, w) => sum + (w.gross_amount || 0), 0);
+      setUserTotalWithdrawn(totalWithdrawn);
+      
       setVerification(verificationData ? {
         status: verificationData.status,
         person_type: verificationData.person_type,
@@ -560,6 +581,79 @@ const AdminUserDetail = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Revenue Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Receita do Usuário
+            </CardTitle>
+            <CardDescription>Visão geral financeira</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={[
+                    { name: 'Faturado', value: userTotalPaid, color: '#3b82f6' },
+                    { name: 'Líquido', value: userTotalLiquid, color: '#10b981' },
+                    { name: 'Disponível', value: user.available_balance || 0, color: '#22c55e' },
+                    { name: 'Sacado', value: userTotalWithdrawn, color: '#f59e0b' },
+                  ]}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis 
+                    tickFormatter={(value) => value >= 1000 ? `R$ ${(value/1000).toFixed(0)}K` : `R$ ${value}`} 
+                    className="text-xs"
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Valor']}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {[
+                      { name: 'Faturado', value: userTotalPaid, color: '#3b82f6' },
+                      { name: 'Líquido', value: userTotalLiquid, color: '#10b981' },
+                      { name: 'Disponível', value: user.available_balance || 0, color: '#22c55e' },
+                      { name: 'Sacado', value: userTotalWithdrawn, color: '#f59e0b' },
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+              <div className="text-center">
+                <div className="w-3 h-3 rounded-full bg-blue-500 mx-auto mb-1"></div>
+                <p className="text-xs text-muted-foreground">Faturado</p>
+                <p className="font-semibold text-sm">R$ {userTotalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div className="text-center">
+                <div className="w-3 h-3 rounded-full bg-emerald-500 mx-auto mb-1"></div>
+                <p className="text-xs text-muted-foreground">Líquido</p>
+                <p className="font-semibold text-sm">R$ {userTotalLiquid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div className="text-center">
+                <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-1"></div>
+                <p className="text-xs text-muted-foreground">Disponível</p>
+                <p className="font-semibold text-sm">R$ {(user.available_balance || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div className="text-center">
+                <div className="w-3 h-3 rounded-full bg-amber-500 mx-auto mb-1"></div>
+                <p className="text-xs text-muted-foreground">Sacado</p>
+                <p className="font-semibold text-sm">R$ {userTotalWithdrawn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Settings Card */}
         <Card>
