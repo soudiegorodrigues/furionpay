@@ -33,6 +33,8 @@ interface Product {
   product_code: string | null;
   created_at: string;
   updated_at: string;
+  delivery_link: string | null;
+  delivery_file_url: string | null;
 }
 
 // Skeleton for main content
@@ -97,6 +99,8 @@ export default function AdminProductEdit() {
     price: 0,
     image_url: "",
     website_url: "",
+    delivery_link: "",
+    delivery_file_url: "",
   });
 
   // Permission check
@@ -130,6 +134,8 @@ export default function AdminProductEdit() {
         price: product.price,
         image_url: product.image_url || "",
         website_url: product.website_url || "",
+        delivery_link: product.delivery_link || "",
+        delivery_file_url: product.delivery_file_url || "",
       });
     }
   }, [product]);
@@ -146,6 +152,8 @@ export default function AdminProductEdit() {
           price: data.price,
           image_url: data.image_url || null,
           website_url: data.website_url || null,
+          delivery_link: data.delivery_link || null,
+          delivery_file_url: data.delivery_file_url || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id);

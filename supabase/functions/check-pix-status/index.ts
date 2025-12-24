@@ -958,12 +958,13 @@ serve(async (req) => {
       );
     }
 
-    // If payment was just confirmed, send to Utmify
+    // If payment was just confirmed, send to Utmify and deliver product
     if (result.isPaid) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      
+      // Send to Utmify
       try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-        
         fetch(`${supabaseUrl}/functions/v1/utmify-send-order`, {
           method: 'POST',
           headers: {
@@ -983,6 +984,48 @@ serve(async (req) => {
         }).catch(err => console.log('[UTMIFY] Error sending paid order (non-blocking):', err));
       } catch (utmifyError) {
         console.log('[UTMIFY] Error preparing paid request (non-blocking):', utmifyError);
+      }
+
+      // Send product delivery email if customer has email and product has delivery content
+      if (transaction.donor_email && transaction.product_name) {
+        try {
+          console.log('[DELIVERY] Checking product delivery for:', transaction.product_name);
+          
+          // Fetch product to check for delivery content
+          const { data: product } = await supabase
+            .from('products')
+            .select('delivery_link, delivery_file_url')
+            .eq('name', transaction.product_name)
+            .eq('user_id', transaction.user_id)
+            .maybeSingle();
+          
+          if (product && (product.delivery_link || product.delivery_file_url)) {
+            console.log('[DELIVERY] Product has delivery content, sending email...');
+            
+            fetch(`${supabaseUrl}/functions/v1/send-product-delivery`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+              },
+              body: JSON.stringify({
+                transactionId: transaction.id,
+                txid: transaction.txid,
+                customerEmail: transaction.donor_email,
+                customerName: transaction.donor_name,
+                productName: transaction.product_name,
+                amount: transaction.amount,
+                deliveryLink: product.delivery_link,
+                deliveryFileUrl: product.delivery_file_url,
+                userId: transaction.user_id,
+              }),
+            }).catch(err => console.log('[DELIVERY] Error sending product delivery (non-blocking):', err));
+          } else {
+            console.log('[DELIVERY] No delivery content configured for product');
+          }
+        } catch (deliveryError) {
+          console.log('[DELIVERY] Error preparing delivery (non-blocking):', deliveryError);
+        }
       }
     }
 

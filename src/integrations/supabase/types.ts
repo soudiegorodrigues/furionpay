@@ -1666,6 +1666,8 @@ export type Database = {
       products: {
         Row: {
           created_at: string
+          delivery_file_url: string | null
+          delivery_link: string | null
           description: string | null
           folder_id: string | null
           id: string
@@ -1680,6 +1682,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_file_url?: string | null
+          delivery_link?: string | null
           description?: string | null
           folder_id?: string | null
           id?: string
@@ -1694,6 +1698,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_file_url?: string | null
+          delivery_link?: string | null
           description?: string | null
           folder_id?: string | null
           id?: string
