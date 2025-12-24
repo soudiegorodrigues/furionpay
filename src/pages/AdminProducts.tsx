@@ -455,12 +455,17 @@ export default function AdminProducts() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Preço (R$)</Label>
+                    <Label>Preço</Label>
                     <Input 
-                      type="number" 
-                      value={newProduct.price} 
-                      onChange={e => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })} 
-                      placeholder="0.00" 
+                      type="text"
+                      inputMode="numeric"
+                      value={newProduct.price > 0 ? newProduct.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''}
+                      onChange={e => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        const numericValue = (parseInt(value) || 0) / 100;
+                        setNewProduct({ ...newProduct, price: numericValue });
+                      }}
+                      placeholder="R$ 0,00" 
                     />
                   </div>
                   {folders.length > 0 && (
