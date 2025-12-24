@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Settings, Image, Construction, Folder, X, FolderInput, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Settings, Image, Folder, X, FolderInput, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -235,16 +235,6 @@ export default function AdminProducts() {
     setCurrentPage(1);
   }, [activeTab, selectedFolder]);
 
-  // Check admin status
-  const { data: isAdmin } = useQuery({
-    queryKey: ["admin-check"],
-    queryFn: async () => {
-      const { data } = await supabase.rpc('is_admin_authenticated');
-      return data === true;
-    },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
   // Get user ID once
   const { data: userId } = useQuery({
     queryKey: ["current-user-id"],
@@ -252,7 +242,6 @@ export default function AdminProducts() {
       const { data: { user } } = await supabase.auth.getUser();
       return user?.id || null;
     },
-    enabled: isAdmin === true,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -281,7 +270,7 @@ export default function AdminProducts() {
       const result = data as unknown as PaginatedResponse;
       return result;
     },
-    enabled: isAdmin === true && !!userId,
+    enabled: !!userId,
     staleTime: 30 * 1000, // 30 seconds
     placeholderData: (previousData) => previousData, // Keep previous data while fetching
   });
@@ -299,7 +288,7 @@ export default function AdminProducts() {
       if (error) throw error;
       return data as ProductFolder[];
     },
-    enabled: isAdmin === true && !!userId,
+    enabled: !!userId,
     staleTime: 60 * 1000, // 1 minute
   });
 
@@ -314,7 +303,7 @@ export default function AdminProducts() {
       if (error) throw error;
       return (data as unknown as FolderCount[]) || [];
     },
-    enabled: isAdmin === true && !!userId,
+    enabled: !!userId,
     staleTime: 30 * 1000,
   });
 
@@ -424,28 +413,6 @@ export default function AdminProducts() {
     return <AccessDenied message="Você não tem permissão para gerenciar Produtos." />;
   }
 
-  // Non-admin users see notice
-  if (isAdmin === false) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <AdminHeader title="Produtos" icon={Package} />
-        <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
-          <Card className="max-w-md w-full">
-            <CardContent className="p-12 text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 rounded-full mb-6">
-                <Construction className="h-10 w-10 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold mb-3">Página em Produção</h2>
-              <p className="text-muted-foreground mb-4">
-                Estamos trabalhando para trazer a melhor experiência de gerenciamento de produtos para você.
-              </p>
-              <Badge variant="secondary" className="text-sm">Em breve</Badge>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -597,7 +564,7 @@ export default function AdminProducts() {
         )}
 
         {/* Loading state - mostra skeleton durante carregamento inicial completo */}
-        {(isPendingProducts || isLoadingProducts || isAdmin === undefined || !userId) ? (
+        {(isPendingProducts || isLoadingProducts || !userId) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <ProductSkeleton key={i} />
