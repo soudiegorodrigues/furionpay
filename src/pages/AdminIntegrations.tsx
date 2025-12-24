@@ -14,15 +14,15 @@ import { supabase } from "@/integrations/supabase/client";
 const AdminIntegrations = () => {
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [utmifyDialogOpen, setUtmifyDialogOpen] = useState(false);
-  const [utmifyConfigured, setUtmifyConfigured] = useState(false);
-  const [utmifyEnabled, setUtmifyEnabled] = useState(false);
+  // null = still checking, boolean = checked
+  const [utmifyConfigured, setUtmifyConfigured] = useState<boolean | null>(null);
+  const [utmifyEnabled, setUtmifyEnabled] = useState<boolean | null>(null);
   const [loadingUtmify, setLoadingUtmify] = useState(false);
-  const [loadingUtmifyStatus, setLoadingUtmifyStatus] = useState(true);
   const [utmifyInitialData, setUtmifyInitialData] = useState<UtmifyInitialData | null>(null);
 
-  // API Keys state
+  // API Keys state - null = still checking
   const [apiDialogOpen, setApiDialogOpen] = useState(false);
-  const [apiKeysCount, setApiKeysCount] = useState(0);
+  const [apiKeysCount, setApiKeysCount] = useState<number | null>(null);
   const [loadingApiKeys, setLoadingApiKeys] = useState(false);
 
   // Preload images for instant rendering
@@ -41,9 +41,9 @@ const AdminIntegrations = () => {
   }, []);
 
   const loadUtmifyStatus = async () => {
-    setLoadingUtmifyStatus(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      // If no user yet (session restoring), keep null state - don't assume "Pendente"
       if (!user) return;
 
       const { data: tokenData } = await supabase
@@ -64,8 +64,6 @@ const AdminIntegrations = () => {
       setUtmifyEnabled(enabledData?.value === 'true');
     } catch (error) {
       console.error('Error loading Utmify status:', error);
-    } finally {
-      setLoadingUtmifyStatus(false);
     }
   };
 
@@ -153,7 +151,7 @@ const AdminIntegrations = () => {
         >
           {/* Status indicator */}
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
-            {loadingUtmifyStatus ? (
+            {utmifyConfigured === null ? (
               <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-muted border border-border animate-pulse">
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-muted-foreground/40" />
                 <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">...</span>
@@ -229,7 +227,12 @@ const AdminIntegrations = () => {
         >
           {/* Status indicator */}
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
-            {apiKeysCount > 0 ? (
+            {apiKeysCount === null ? (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-muted border border-border animate-pulse">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">...</span>
+              </div>
+            ) : apiKeysCount > 0 ? (
               <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-green-500/10 border border-green-500/20">
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-[10px] sm:text-xs font-medium text-green-600">Ativo</span>
