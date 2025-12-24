@@ -2993,67 +2993,36 @@ export type Database = {
       is_admin_authenticated: { Args: never; Returns: boolean }
       is_any_admin: { Args: { _user_id: string }; Returns: boolean }
       is_user_authenticated: { Args: never; Returns: boolean }
-      log_pix_generated_user:
-        | {
-            Args: {
-              p_acquirer?: string
-              p_amount: number
-              p_client_ip?: string
-              p_donor_birthdate?: string
-              p_donor_cep?: string
-              p_donor_city?: string
-              p_donor_complement?: string
-              p_donor_cpf?: string
-              p_donor_email?: string
-              p_donor_name: string
-              p_donor_neighborhood?: string
-              p_donor_number?: string
-              p_donor_phone?: string
-              p_donor_state?: string
-              p_donor_street?: string
-              p_fee_fixed?: number
-              p_fee_percentage?: number
-              p_fingerprint_hash?: string
-              p_order_bumps?: Json
-              p_pix_code: string
-              p_popup_model?: string
-              p_product_name?: string
-              p_txid: string
-              p_user_id?: string
-              p_utm_data?: Json
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_acquirer?: string
-              p_amount: number
-              p_client_ip?: string
-              p_donor_birthdate?: string
-              p_donor_cep?: string
-              p_donor_city?: string
-              p_donor_complement?: string
-              p_donor_cpf?: string
-              p_donor_email?: string
-              p_donor_name?: string
-              p_donor_neighborhood?: string
-              p_donor_number?: string
-              p_donor_phone?: string
-              p_donor_state?: string
-              p_donor_street?: string
-              p_fee_fixed?: number
-              p_fee_percentage?: number
-              p_fingerprint_hash?: string
-              p_order_bumps?: Json
-              p_pix_code: string
-              p_popup_model?: string
-              p_product_name?: string
-              p_txid: string
-              p_user_id: string
-              p_utm_data?: Json
-            }
-            Returns: string
-          }
+      log_pix_generated_user: {
+        Args: {
+          p_acquirer?: string
+          p_amount: number
+          p_client_ip?: string
+          p_donor_birthdate?: string
+          p_donor_cep?: string
+          p_donor_city?: string
+          p_donor_complement?: string
+          p_donor_cpf?: string
+          p_donor_email?: string
+          p_donor_name?: string
+          p_donor_neighborhood?: string
+          p_donor_number?: string
+          p_donor_phone?: string
+          p_donor_state?: string
+          p_donor_street?: string
+          p_fee_fixed?: number
+          p_fee_percentage?: number
+          p_fingerprint_hash?: string
+          p_order_bumps?: Json
+          p_pix_code: string
+          p_popup_model?: string
+          p_product_name?: string
+          p_txid: string
+          p_user_id: string
+          p_utm_data?: Json
+        }
+        Returns: string
+      }
       mark_pix_paid: {
         Args: { p_admin_email?: string; p_txid: string }
         Returns: boolean
