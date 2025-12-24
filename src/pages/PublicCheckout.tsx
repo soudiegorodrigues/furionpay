@@ -12,6 +12,7 @@ import {
   FormData,
   PixData,
   Testimonial,
+  OrderBumpData,
 } from "@/components/checkout";
 
 // Lazy load ALL templates for maximum code splitting
@@ -77,6 +78,7 @@ export default function PublicCheckout() {
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [selectedBumps, setSelectedBumps] = useState<string[]>([]);
 
   // Capture and save UTM params IMMEDIATELY on component mount
   useEffect(() => {
@@ -156,8 +158,8 @@ export default function PublicCheckout() {
         is_active: true,
       };
 
-      // Step 2: Fetch config and testimonials IN PARALLEL using secure RPC
-      const [configResult, testimonialsResult] = await Promise.all([
+      // Step 2: Fetch config, testimonials, and order bumps IN PARALLEL using secure RPC
+      const [configResult, testimonialsResult, orderBumpsResult] = await Promise.all([
         supabase.rpc("get_public_checkout_config", { p_product_id: offer.product_id }),
         supabase
           .from("product_testimonials")
@@ -165,6 +167,18 @@ export default function PublicCheckout() {
           .eq("product_id", offer.product_id)
           .eq("is_active", true)
           .order("display_order", { ascending: true }),
+        supabase
+          .from("product_order_bumps")
+          .select(`
+            id,
+            title,
+            description,
+            bump_price,
+            bump_product:products!bump_product_id(id, name, image_url)
+          `)
+          .eq("product_id", offer.product_id)
+          .eq("is_active", true)
+          .order("position", { ascending: true }),
       ]);
 
       // RPC returns array, get first result (cast via unknown to handle type differences)
@@ -172,6 +186,15 @@ export default function PublicCheckout() {
         ? configResult.data[0] as unknown
         : null) as CheckoutConfig | null;
       const testimonials = (testimonialsResult.data || []) as Testimonial[];
+      
+      // Process order bumps - handle the nested bump_product array
+      const orderBumps: OrderBumpData[] = (orderBumpsResult.data || []).map((bump: any) => ({
+        id: bump.id,
+        title: bump.title,
+        description: bump.description,
+        bump_price: bump.bump_price,
+        bump_product: bump.bump_product?.[0] || bump.bump_product || null,
+      }));
       
       // Fetch pixel config using config's user_id (separate call to avoid circular reference)
       let pixelConfig: { pixelId?: string; accessToken?: string } = {};
@@ -207,7 +230,7 @@ export default function PublicCheckout() {
         }
       }
 
-      return { offer, product, config, testimonials, pixelConfig };
+      return { offer, product, config, testimonials, pixelConfig, orderBumps };
     },
     enabled: !!offerCode,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
@@ -219,6 +242,7 @@ export default function PublicCheckout() {
   const config = checkoutData?.config;
   const testimonials = checkoutData?.testimonials || [];
   const pixelConfig = checkoutData?.pixelConfig;
+  const orderBumps = checkoutData?.orderBumps || [];
 
   // Preload critical resources as soon as data is available
   useEffect(() => {
@@ -377,14 +401,47 @@ export default function PublicCheckout() {
     return `${formData.street}, ${formData.number}${complement} - ${formData.neighborhood}, ${formData.city}/${formData.state} - CEP: ${formData.cep}`;
   };
 
-  // Calculate current price (with discount if applied)
+  // Calculate current price (with discount and order bumps)
   const getCurrentPrice = () => {
     if (!offer) return 0;
+    
+    let basePrice = offer.price;
+    
+    // Apply discount if applicable
     if (discountApplied && config?.discount_popup_percentage) {
       const discountMultiplier = 1 - (config.discount_popup_percentage / 100);
-      return offer.price * discountMultiplier;
+      basePrice = basePrice * discountMultiplier;
     }
-    return offer.price;
+    
+    // Add selected order bumps
+    const bumpTotal = selectedBumps.reduce((total, bumpId) => {
+      const bump = orderBumps.find(b => b.id === bumpId);
+      return total + (bump?.bump_price || 0);
+    }, 0);
+    
+    return basePrice + bumpTotal;
+  };
+
+  // Toggle order bump selection
+  const handleToggleBump = (bumpId: string) => {
+    setSelectedBumps(prev => 
+      prev.includes(bumpId)
+        ? prev.filter(id => id !== bumpId)
+        : [...prev, bumpId]
+    );
+  };
+
+  // Get selected bumps data for PIX generation
+  const getSelectedBumpsData = () => {
+    return selectedBumps.map(bumpId => {
+      const bump = orderBumps.find(b => b.id === bumpId);
+      return bump ? {
+        id: bump.id,
+        title: bump.title,
+        price: bump.bump_price,
+        product_name: bump.bump_product?.name || "Oferta adicional",
+      } : null;
+    }).filter(Boolean);
   };
 
   const handleApplyDiscount = () => {
@@ -431,6 +488,7 @@ export default function PublicCheckout() {
         productName: product?.name || offer.name,
         popupModel: "checkout",
         utmParams: utmToSend,
+        orderBumps: getSelectedBumpsData(),
       };
       
       console.log('[UTM DEBUG] Body completo:', JSON.stringify(requestBody, null, 2));
@@ -510,6 +568,10 @@ export default function PublicCheckout() {
     // Pass original price and discount info for display
     originalPrice: discountApplied ? offer.price : undefined,
     discountApplied,
+    // Order bump props
+    orderBumps,
+    selectedBumps,
+    onToggleBump: handleToggleBump,
   };
 
   // If PIX is generated, show the payment page

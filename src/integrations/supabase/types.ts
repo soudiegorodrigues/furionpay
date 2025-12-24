@@ -1118,6 +1118,7 @@ export type Database = {
           fingerprint_hash: string | null
           id: string
           is_manual_approval: boolean | null
+          order_bumps: Json | null
           paid_at: string | null
           paid_date_brazil: string | null
           pix_code: string | null
@@ -1153,6 +1154,7 @@ export type Database = {
           fingerprint_hash?: string | null
           id?: string
           is_manual_approval?: boolean | null
+          order_bumps?: Json | null
           paid_at?: string | null
           paid_date_brazil?: string | null
           pix_code?: string | null
@@ -1188,6 +1190,7 @@ export type Database = {
           fingerprint_hash?: string | null
           id?: string
           is_manual_approval?: boolean | null
+          order_bumps?: Json | null
           paid_at?: string | null
           paid_date_brazil?: string | null
           pix_code?: string | null
@@ -1543,6 +1546,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_order_bumps: {
+        Row: {
+          bump_price: number
+          bump_product_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          position: number | null
+          product_id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bump_price: number
+          bump_product_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          position?: number | null
+          product_id: string
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bump_price?: number
+          bump_product_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          position?: number | null
+          product_id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_order_bumps_bump_product_id_fkey"
+            columns: ["bump_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_order_bumps_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"

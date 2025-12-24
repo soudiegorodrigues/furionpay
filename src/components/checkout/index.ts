@@ -13,3 +13,4 @@ export { ExitIntentPopup } from "./ExitIntentPopup";
 export { AddressFields } from "./AddressFields";
 export { BannersCarousel } from "./BannersCarousel";
 export { OptimizedImage, OptimizedVideo } from "./OptimizedImage";
+export { OrderBumpCard } from "./OrderBumpCard";
