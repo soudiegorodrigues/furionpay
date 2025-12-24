@@ -418,7 +418,7 @@ export default function PublicCheckout() {
         amount: finalPrice,
         customerName: formData.name,
         customerEmail: formData.email,
-        userId: offer.user_id,
+        userId: config?.user_id || offer.user_id,
         productName: offer.name,
         popupModel: "checkout",
         utmParams: utmToSend,
