@@ -126,6 +126,42 @@ export const TransacoesGlobaisSection = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
+  // Realtime subscription for new transactions
+  useEffect(() => {
+    console.log('[TransacoesGlobais] Configurando realtime subscription...');
+    
+    const channel = supabase
+      .channel('pix-transactions-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pix_transactions'
+        },
+        (payload) => {
+          console.log('[TransacoesGlobais] Realtime event:', payload.eventType, payload);
+          
+          // Reload transactions when any change happens
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            toast.info('📥 Nova atualização de transação!', {
+              duration: 2000,
+              position: 'top-right'
+            });
+            loadTransactions(false);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[TransacoesGlobais] Realtime status:', status);
+      });
+
+    return () => {
+      console.log('[TransacoesGlobais] Removendo realtime subscription...');
+      supabase.removeChannel(channel);
+    };
+  }, [loadTransactions]);
+
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
