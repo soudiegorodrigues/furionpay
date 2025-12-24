@@ -20,11 +20,9 @@ const formatCurrency = (value: number): string => {
 
 // Parseia string formatada para número (ex: "19,90" → 19.90 ou "1.990,00" → 1990.00)
 const parseCurrency = (value: string): number => {
-  // Remove tudo exceto números e vírgula
-  const cleaned = value.replace(/[^\d,]/g, '');
-  // Substitui vírgula por ponto para conversão
-  const normalized = cleaned.replace(',', '.');
-  return parseFloat(normalized) || 0;
+  // Remove pontos (separador de milhar) e depois substitui vírgula por ponto
+  const cleaned = value.replace(/\./g, '').replace(',', '.');
+  return parseFloat(cleaned) || 0;
 };
 
 interface Product {
@@ -77,14 +75,14 @@ export function ProductDetailsSection({
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Permite apenas números e vírgula
-    const cleaned = inputValue.replace(/[^\d,]/g, '');
+    // Remove pontos (separador de milhar) e outros caracteres inválidos, mantém só números e vírgula
+    const cleaned = inputValue.replace(/\./g, '').replace(/[^\d,]/g, '');
     
-    // Limita a uma vírgula
+    // Limita a uma vírgula e máximo 2 decimais
     const parts = cleaned.split(',');
     let formatted = parts[0];
     if (parts.length > 1) {
-      formatted += ',' + parts[1].slice(0, 2); // Máximo 2 decimais
+      formatted += ',' + parts[1].slice(0, 2);
     }
     
     setPriceDisplay(formatted);
@@ -104,8 +102,10 @@ export function ProductDetailsSection({
   };
 
   const handlePriceFocus = () => {
-    // Limpa o campo se for 0 para facilitar digitação
-    if (formData.price === 0) {
+    // Mostra valor limpo sem separador de milhar para facilitar edição
+    if (formData.price > 0) {
+      setPriceDisplay(formData.price.toFixed(2).replace('.', ','));
+    } else {
       setPriceDisplay('');
     }
   };
