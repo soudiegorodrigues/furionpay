@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Gift, GripVertical, Zap, Eye, Package, Upload, X, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Gift, GripVertical, Zap, Eye, Package, Upload, X, Image as ImageIcon, Pencil } from "lucide-react";
 import { OrderBumpCard, OrderBump } from "@/components/checkout/OrderBumpCard";
 
 interface OrderBumpData {
@@ -49,11 +49,19 @@ interface OrderBumpSectionProps {
 export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingBump, setEditingBump] = useState<OrderBumpData | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [newBump, setNewBump] = useState({
     bump_product_id: "",
     title: "🔥 Adicione também!",
+    description: "",
+    bump_price: 0,
+    image_url: "",
+  });
+  const [editForm, setEditForm] = useState({
+    title: "",
     description: "",
     bump_price: 0,
     image_url: "",
@@ -163,6 +171,71 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
     setNewBump(prev => ({ ...prev, image_url: "" }));
   };
 
+  // Handle edit image upload
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `order-bump-${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("order-bumps")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("order-bumps")
+        .getPublicUrl(filePath);
+
+      setEditForm(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success("Imagem enviada com sucesso!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeEditImage = () => {
+    setEditForm(prev => ({ ...prev, image_url: "" }));
+  };
+
+  const startEditing = (bump: OrderBumpData) => {
+    setEditingBump(bump);
+    setEditForm({
+      title: bump.title,
+      description: bump.description || "",
+      bump_price: bump.bump_price,
+      image_url: bump.image_url || "",
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingBump(null);
+    setEditForm({
+      title: "",
+      description: "",
+      bump_price: 0,
+      image_url: "",
+    });
+  };
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: typeof newBump) => {
@@ -233,6 +306,44 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
       toast.error("Erro ao remover Order Bump");
     },
   });
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof editForm }) => {
+      const { error } = await supabase
+        .from("product_order_bumps")
+        .update({
+          title: data.title,
+          description: data.description || null,
+          bump_price: data.bump_price,
+          image_url: data.image_url || null,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Order Bump atualizado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["order-bumps", productId] });
+      cancelEditing();
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar Order Bump");
+    },
+  });
+
+  const handleUpdate = () => {
+    if (!editingBump) return;
+    if (!editForm.title.trim()) {
+      toast.error("Título é obrigatório");
+      return;
+    }
+    if (editForm.bump_price <= 0) {
+      toast.error("Preço deve ser maior que zero");
+      return;
+    }
+    updateMutation.mutate({ id: editingBump.id, data: editForm });
+  };
 
   const handleProductSelect = (productId: string) => {
     const product = availableProducts?.find(p => p.id === productId);
@@ -476,55 +587,170 @@ export function OrderBumpSection({ productId, userId }: OrderBumpSectionProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {orderBumps.map((bump) => (
-              <div
-                key={bump.id}
-                className="flex items-center gap-4 p-4 rounded-lg border bg-card"
-              >
-                <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                
-                {bump.bump_product?.image_url && (
-                  <img
-                    src={bump.bump_product.image_url}
-                    alt={bump.bump_product.name}
-                    className="w-12 h-12 rounded-lg object-cover"
-                  />
+              <div key={bump.id}>
+                {editingBump?.id === bump.id ? (
+                  /* Edit Form */
+                  <div className="p-4 rounded-lg border-2 border-orange-300 bg-orange-50/30 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Pencil className="h-4 w-4 text-orange-500" />
+                        Editando Order Bump
+                      </h4>
+                      <Badge variant="outline">{bump.bump_product?.name}</Badge>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Título chamativo *</Label>
+                          <Input
+                            value={editForm.title}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                            placeholder="Ex: 🔥 Adicione também!"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Descrição (opcional)</Label>
+                          <Textarea
+                            value={editForm.description}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Ex: Complemento perfeito para seu pedido!"
+                            rows={2}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Preço do Order Bump *</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            value={editForm.bump_price}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, bump_price: parseFloat(e.target.value) || 0 }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Imagem do Order Bump</Label>
+                          <input
+                            ref={editFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleEditImageUpload}
+                            className="hidden"
+                          />
+                          
+                          {editForm.image_url ? (
+                            <div className="relative w-24 h-24">
+                              <img
+                                src={editForm.image_url}
+                                alt="Preview"
+                                className="w-full h-full object-cover rounded-lg border"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-6 w-6"
+                                onClick={removeEditImage}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => editFileInputRef.current?.click()}
+                              disabled={uploadingImage}
+                              className="w-full h-20 flex flex-col gap-1 border-dashed"
+                            >
+                              {uploadingImage ? (
+                                <span>Enviando...</span>
+                              ) : (
+                                <>
+                                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">
+                                    Enviar imagem
+                                  </span>
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+                        {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
+                      </Button>
+                      <Button variant="outline" onClick={cancelEditing}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Display Item */
+                  <div className="flex items-center gap-4 p-4 rounded-lg border bg-card">
+                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+                    
+                    {(bump.image_url || bump.bump_product?.image_url) && (
+                      <img
+                        src={bump.image_url || bump.bump_product?.image_url || ""}
+                        alt={bump.bump_product?.name || "Order Bump"}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium truncate">{bump.title}</h4>
+                        <Badge variant={bump.is_active ? "default" : "secondary"}>
+                          {bump.is_active ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {bump.bump_product?.name} • {formatPrice(bump.bump_price)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`active-${bump.id}`} className="text-sm">
+                          Ativo
+                        </Label>
+                        <Switch
+                          id={`active-${bump.id}`}
+                          checked={bump.is_active}
+                          onCheckedChange={(checked) => 
+                            toggleActiveMutation.mutate({ id: bump.id, is_active: checked })
+                          }
+                        />
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => startEditing(bump)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteMutation.mutate(bump.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 )}
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium truncate">{bump.title}</h4>
-                    <Badge variant={bump.is_active ? "default" : "secondary"}>
-                      {bump.is_active ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {bump.bump_product?.name} • {formatPrice(bump.bump_price)}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`active-${bump.id}`} className="text-sm">
-                      Ativo
-                    </Label>
-                    <Switch
-                      id={`active-${bump.id}`}
-                      checked={bump.is_active}
-                      onCheckedChange={(checked) => 
-                        toggleActiveMutation.mutate({ id: bump.id, is_active: checked })
-                      }
-                    />
-                  </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteMutation.mutate(bump.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             ))}
           </CardContent>
