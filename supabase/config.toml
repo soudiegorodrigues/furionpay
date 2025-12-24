@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.convert-p12-to-pem]
 verify_jwt = false
+
+[functions.send-product-delivery]
+verify_jwt = false
