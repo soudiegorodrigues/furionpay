@@ -610,6 +610,7 @@ const AdminUserDetail = () => {
                     className="text-xs"
                   />
                   <Tooltip 
+                    cursor={false}
                     formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Valor']}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
