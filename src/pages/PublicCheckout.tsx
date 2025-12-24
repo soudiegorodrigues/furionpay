@@ -419,7 +419,7 @@ export default function PublicCheckout() {
         customerName: formData.name,
         customerEmail: formData.email,
         userId: config?.user_id || offer.user_id,
-        productName: offer.name,
+        productName: product?.name || offer.name,
         popupModel: "checkout",
         utmParams: utmToSend,
       };
