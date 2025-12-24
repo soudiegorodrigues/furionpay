@@ -36,6 +36,7 @@ export function CheckoutTemplateAfilia({
   onGeneratePix,
   formatPrice,
   formatCountdown,
+  testimonials = [],
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#3B82F6";
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -369,6 +370,42 @@ export function CheckoutTemplateAfilia({
                       </div>
                     </div>
                   </div>
+
+                  {/* Testimonials Section */}
+                  {config?.show_notifications && testimonials && testimonials.length > 0 && (
+                    <div className="mt-4 pt-4 border-t space-y-3">
+                      <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        Avaliações de clientes
+                      </h4>
+                      {testimonials.slice(0, 3).map((testimonial) => (
+                        <div key={testimonial.id} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                          <div className="flex items-center gap-2 mb-2">
+                            {testimonial.author_photo_url ? (
+                              <img 
+                                src={testimonial.author_photo_url} 
+                                alt={testimonial.author_name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <User className="h-4 w-4 text-blue-600" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-gray-900 text-sm font-medium">{testimonial.author_name}</p>
+                              <div className="flex gap-0.5">
+                                {[...Array(testimonial.rating || 5)].map((_, i) => (
+                                  <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-gray-600 text-xs line-clamp-2">{testimonial.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

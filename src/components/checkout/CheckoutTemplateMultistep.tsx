@@ -30,6 +30,7 @@ export function CheckoutTemplateMultistep({
   onGeneratePix,
   formatPrice,
   formatCountdown,
+  testimonials = [],
 }: CheckoutTemplateProps) {
   const [currentStep, setCurrentStep] = useState<MultiStep>("info");
   const primaryColor = config?.primary_color || "#8B5CF6";
@@ -351,6 +352,42 @@ export function CheckoutTemplateMultistep({
                   </div>
                   <p className="text-sm text-amber-600 mt-1">Você também receberá materiais extras após a compra</p>
                 </div>
+
+                {/* Testimonials Section */}
+                {config?.show_notifications && testimonials && testimonials.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                      <Star className="h-4 w-4 text-yellow-500" />
+                      O que dizem nossos clientes
+                    </h4>
+                    {testimonials.slice(0, 2).map((testimonial) => (
+                      <div key={testimonial.id} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          {testimonial.author_photo_url ? (
+                            <img 
+                              src={testimonial.author_photo_url} 
+                              alt={testimonial.author_name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                              <User className="h-4 w-4 text-purple-600" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-gray-900 text-sm font-medium">{testimonial.author_name}</p>
+                            <div className="flex gap-0.5">
+                              {[...Array(testimonial.rating || 5)].map((_, i) => (
+                                <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-gray-600 text-xs line-clamp-2">{testimonial.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
