@@ -2,9 +2,7 @@ import { useState, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
-  DragMoveEvent,
   DragStartEvent,
-  DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
@@ -70,8 +68,6 @@ export function FunnelCanvas({
   products,
   stepMetrics,
 }: FunnelCanvasProps) {
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [connectionMode, setConnectionMode] = useState<ConnectionMode | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -84,21 +80,9 @@ export function FunnelCanvas({
     })
   );
 
-
   const handleDragStart = (event: DragStartEvent) => {
-    if (connectionMode) return; // Disable drag in connection mode
-    setActiveId(event.active.id as string);
-    setDragOffset({ x: 0, y: 0 });
-  };
-
-  const handleDragMove = (event: DragMoveEvent) => {
     if (connectionMode) return;
-    if (event.delta) {
-      setDragOffset({
-        x: event.delta.x / zoom,
-        y: event.delta.y / zoom,
-      });
-    }
+    // Drag started - FunnelStepBlock will handle visual movement via transform
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -113,9 +97,6 @@ export function FunnelCanvas({
       
       onUpdatePosition(stepId, newX, newY);
     }
-    
-    setActiveId(null);
-    setDragOffset({ x: 0, y: 0 });
   };
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
@@ -170,7 +151,6 @@ export function FunnelCanvas({
     setConnectionMode(null);
   };
 
-  const activeStep = steps.find(s => s.id === activeId);
   const firstStep = steps.find((s) => s.position === 0);
   // Calculate canvas dimensions based on step positions
   const maxX = Math.max(CANVAS_MIN_WIDTH, ...steps.map(s => s.position_x + 320));
@@ -265,7 +245,6 @@ export function FunnelCanvas({
           <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
-            onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
           >
             {/* Product Principal - Fixed at top */}
@@ -337,77 +316,33 @@ export function FunnelCanvas({
 
             {/* Funnel Steps */}
             {steps.map((step) => {
-              const isActive = step.id === activeId;
-              // Don't move wrapper during drag - DragOverlay handles visual movement
-              const displayX = step.position_x;
-              const displayY = step.position_y;
               const isConnectionSource = connectionMode?.sourceId === step.id;
               const isConnectionTarget = connectionMode && connectionMode.sourceId !== step.id;
               
               return (
-                <div
+                <FunnelStepBlock
                   key={step.id}
-                  className={cn(
-                    "absolute",
-                    !isActive && "transition-all",
-                    isConnectionSource && "ring-2 ring-primary ring-offset-2 rounded-lg",
-                    isConnectionTarget && "cursor-pointer hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 rounded-lg"
-                  )}
-                  style={{
-                    left: displayX,
-                    top: displayY,
-                    width: 280,
-                    zIndex: isActive ? 100 : isConnectionSource ? 50 : 1,
-                  }}
-                  onClick={() => {
-                    if (isConnectionTarget) {
-                      handleCompleteConnection(step.id);
-                    }
-                  }}
-                >
-                  <FunnelStepBlock
-                    step={step}
-                    isSelected={selectedStepId === step.id}
-                    onSelect={() => !connectionMode && onSelectStep(step.id)}
-                    onToggleActive={(active) => onToggleStepActive(step.id, active)}
-                    onDelete={() => onDeleteStep(step.id)}
-                    onSave={onSaveStep}
-                    onUpdateConnection={(field, targetId) => onUpdateConnection(step.id, field, targetId)}
-                    onStartConnection={handleStartConnection}
-                    products={products}
-                    allSteps={steps}
-                    metrics={stepMetrics?.[step.id]}
-                    isDraggable={!connectionMode}
-                    isInConnectionMode={!!connectionMode}
-                    isConnectionTarget={!!isConnectionTarget}
-                    onClickToConnect={isConnectionTarget ? () => handleCompleteConnection(step.id) : undefined}
-                  />
-                </div>
+                  step={step}
+                  isSelected={selectedStepId === step.id}
+                  onSelect={() => !connectionMode && onSelectStep(step.id)}
+                  onToggleActive={(active) => onToggleStepActive(step.id, active)}
+                  onDelete={() => onDeleteStep(step.id)}
+                  onSave={onSaveStep}
+                  onUpdateConnection={(field, targetId) => onUpdateConnection(step.id, field, targetId)}
+                  onStartConnection={handleStartConnection}
+                  products={products}
+                  allSteps={steps}
+                  metrics={stepMetrics?.[step.id]}
+                  isDraggable={!connectionMode}
+                  isInConnectionMode={!!connectionMode}
+                  isConnectionTarget={!!isConnectionTarget}
+                  isConnectionSource={isConnectionSource}
+                  onClickToConnect={isConnectionTarget ? () => handleCompleteConnection(step.id) : undefined}
+                  zoom={zoom}
+                />
               );
             })}
 
-            {/* Drag Overlay */}
-            <DragOverlay dropAnimation={null} adjustScale>
-              {activeStep && (
-                <div className="w-[280px] opacity-80 pointer-events-none">
-                  <FunnelStepBlock
-                    step={activeStep}
-                    isSelected={false}
-                    onSelect={() => {}}
-                    onToggleActive={() => {}}
-                    onDelete={() => {}}
-                    onSave={() => {}}
-                    onUpdateConnection={() => {}}
-                    onStartConnection={() => {}}
-                    products={products}
-                    allSteps={steps}
-                    metrics={stepMetrics?.[activeStep.id]}
-                    isDraggable={false}
-                    isInConnectionMode={false}
-                  />
-                </div>
-              )}
-            </DragOverlay>
           </DndContext>
 
           {/* Empty State */}
