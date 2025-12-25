@@ -45,42 +45,22 @@ export function FunnelConnections({
     });
   }
 
-  // Build connections from step configs
+  // Build connections from step configs - linear mode (single line per step)
   steps.forEach(step => {
-    // Accept connection
+    // Only draw one line per step (use accept as source of truth since both are the same in linear mode)
     if (step.next_step_on_accept) {
       const targetStep = steps.find(s => s.id === step.next_step_on_accept);
       if (targetStep) {
         lines.push({
           from: { 
             x: step.position_x + cardWidth, 
-            y: step.position_y + cardHeight * 0.35 
+            y: step.position_y + cardHeight / 2 
           },
           to: { 
             x: targetStep.position_x, 
             y: targetStep.position_y + cardHeight / 2 
           },
-          type: 'accept',
-          fromStepId: step.id,
-          toStepId: targetStep.id,
-        });
-      }
-    }
-
-    // Decline connection
-    if (step.next_step_on_decline) {
-      const targetStep = steps.find(s => s.id === step.next_step_on_decline);
-      if (targetStep) {
-        lines.push({
-          from: { 
-            x: step.position_x + cardWidth, 
-            y: step.position_y + cardHeight * 0.65 
-          },
-          to: { 
-            x: targetStep.position_x, 
-            y: targetStep.position_y + cardHeight / 2 
-          },
-          type: 'decline',
+          type: 'accept', // Use 'accept' color (blue/green) for the single line
           fromStepId: step.id,
           toStepId: targetStep.id,
         });
