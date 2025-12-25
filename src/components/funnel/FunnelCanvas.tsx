@@ -101,7 +101,7 @@ export function FunnelCanvas({
             items={steps.map((s) => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex flex-col items-center gap-1.5 w-full max-w-[180px]">
+            <div className="flex flex-col items-center gap-2 w-full max-w-[280px] sm:max-w-xs lg:max-w-sm">
               {steps.map((step, index) => (
                 <div key={step.id} className="w-full">
                   {/* Connection arrow */}
