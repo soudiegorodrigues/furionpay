@@ -177,12 +177,13 @@ export function FunnelStepBlock({
 
               {/* Footer */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
                   {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    <ChevronUp className="h-4 w-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <ChevronDown className="h-4 w-4" />
                   )}
+                  <span>Configurar</span>
                 </div>
                 <Button
                   variant="ghost"
