@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { FunnelStepBlock } from './FunnelStepBlock';
-import { FunnelStep } from './types';
+import { FunnelStep, StepMetrics } from './types';
 import { Package, ArrowDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,6 +38,7 @@ interface FunnelCanvasProps {
   onAddStep: () => void;
   onSaveStep: (step: FunnelStep) => void;
   products: Product[];
+  stepMetrics?: Record<string, StepMetrics>;
 }
 
 export function FunnelCanvas({
@@ -52,6 +53,7 @@ export function FunnelCanvas({
   onAddStep,
   onSaveStep,
   products,
+  stepMetrics,
 }: FunnelCanvasProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -134,6 +136,7 @@ export function FunnelCanvas({
                     onSave={onSaveStep}
                     products={products}
                     allSteps={steps}
+                    metrics={stepMetrics?.[step.id]}
                   />
                 </div>
               ))}

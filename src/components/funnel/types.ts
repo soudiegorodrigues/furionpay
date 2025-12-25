@@ -97,3 +97,11 @@ export const STEP_CONFIG = {
     textColor: 'text-blue-600',
   },
 } as const;
+
+export interface StepMetrics {
+  views: number;
+  accepted: number;
+  declined: number;
+  paid: number;
+  revenue: number;
+}
