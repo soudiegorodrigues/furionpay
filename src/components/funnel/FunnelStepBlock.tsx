@@ -239,22 +239,93 @@ export function FunnelStepBlock({
                 </div>
               </div>
 
-              {/* Current Connections Display */}
+              {/* Current Connections Display with Quick Actions */}
               {step.step_type !== 'thankyou' && (
-                <div className="flex flex-col gap-1 mb-3 text-xs">
+                <div className="flex flex-col gap-1.5 mb-3 text-xs">
+                  {/* Accept Connection */}
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-muted-foreground">Aceite:</span>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-muted-foreground shrink-0">Aceite:</span>
                     <span className="font-medium truncate flex-1">
                       {acceptStep ? (acceptStep.title || STEP_CONFIG[acceptStep.step_type].label) : 'Não conectado'}
                     </span>
+                    {acceptStep ? (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                          onClick={handleStartAcceptConnection}
+                          disabled={isInConnectionMode}
+                        >
+                          <Link2 className="h-3 w-3 mr-0.5" />
+                          Trocar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => handleRemoveConnection(e, 'accept')}
+                          disabled={isInConnectionMode}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 shrink-0"
+                        onClick={handleStartAcceptConnection}
+                        disabled={otherSteps.length === 0 || isInConnectionMode}
+                      >
+                        <Link2 className="h-3 w-3 mr-0.5" />
+                        Ligar
+                      </Button>
+                    )}
                   </div>
+                  
+                  {/* Decline Connection */}
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span className="text-muted-foreground">Recusa:</span>
+                    <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                    <span className="text-muted-foreground shrink-0">Recusa:</span>
                     <span className="font-medium truncate flex-1">
                       {declineStep ? (declineStep.title || STEP_CONFIG[declineStep.step_type].label) : 'Não conectado'}
                     </span>
+                    {declineStep ? (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                          onClick={handleStartDeclineConnection}
+                          disabled={isInConnectionMode}
+                        >
+                          <Link2 className="h-3 w-3 mr-0.5" />
+                          Trocar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => handleRemoveConnection(e, 'decline')}
+                          disabled={isInConnectionMode}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 shrink-0"
+                        onClick={handleStartDeclineConnection}
+                        disabled={otherSteps.length === 0 || isInConnectionMode}
+                      >
+                        <Link2 className="h-3 w-3 mr-0.5" />
+                        Ligar
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
