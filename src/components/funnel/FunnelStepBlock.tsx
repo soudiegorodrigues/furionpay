@@ -48,6 +48,8 @@ interface FunnelStepBlockProps {
   metrics?: StepMetrics;
   isDraggable?: boolean;
   isInConnectionMode?: boolean;
+  isConnectionTarget?: boolean;
+  onClickToConnect?: () => void;
 }
 
 const ICONS = {
@@ -70,7 +72,9 @@ export function FunnelStepBlock({
   allSteps,
   metrics,
   isDraggable = true,
-  isInConnectionMode = false
+  isInConnectionMode = false,
+  isConnectionTarget = false,
+  onClickToConnect
 }: FunnelStepBlockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState<Partial<FunnelStep>>({});
@@ -133,13 +137,23 @@ export function FunnelStepBlock({
   };
 
   const handleStartAcceptConnection = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onStartConnection(step.id, 'accept');
   };
 
   const handleStartDeclineConnection = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onStartConnection(step.id, 'decline');
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isConnectionTarget && onClickToConnect) {
+      e.preventDefault();
+      e.stopPropagation();
+      onClickToConnect();
+    }
   };
 
   const handleRemoveConnection = (e: React.MouseEvent, type: 'accept' | 'decline') => {
@@ -164,8 +178,10 @@ export function FunnelStepBlock({
             ? `${config.borderColor} shadow-lg ring-2 ring-offset-2 ring-offset-background` 
             : 'border-border hover:border-muted-foreground/50',
           isDragging && 'shadow-2xl scale-105',
-          !step.is_active && 'opacity-60'
+          !step.is_active && 'opacity-60',
+          isConnectionTarget && 'ring-2 ring-emerald-500 ring-offset-2 cursor-pointer hover:ring-4 animate-pulse border-emerald-500'
         )}
+        onClick={handleCardClick}
       >
         {/* Drag handle */}
         <div
