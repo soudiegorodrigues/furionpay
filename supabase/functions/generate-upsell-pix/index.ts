@@ -13,16 +13,16 @@ serve(async (req) => {
   }
 
   try {
-    const { originalTransactionId, upsellId } = await req.json();
+    const { originalTransactionId, stepId } = await req.json();
 
-    if (!originalTransactionId || !upsellId) {
+    if (!originalTransactionId || !stepId) {
       return new Response(
-        JSON.stringify({ error: "originalTransactionId and upsellId are required" }),
+        JSON.stringify({ error: "originalTransactionId and stepId are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[Upsell PIX] Starting for transaction ${originalTransactionId}, upsell ${upsellId}`);
+    console.log(`[Upsell PIX] Starting for transaction ${originalTransactionId}, step ${stepId}`);
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -44,25 +44,30 @@ serve(async (req) => {
       );
     }
 
-    // Fetch upsell configuration
-    const { data: upsell, error: upsellError } = await supabase
-      .from("product_upsells")
+    // Fetch funnel step with product data
+    const { data: step, error: stepError } = await supabase
+      .from("funnel_steps")
       .select(`
-        *,
-        upsell_product:products!upsell_product_id(id, name, price, image_url)
+        id, funnel_id, offer_price, offer_product_id,
+        offer_product:products!offer_product_id(id, name, price, image_url)
       `)
-      .eq("id", upsellId)
+      .eq("id", stepId)
       .single();
 
-    if (upsellError || !upsell) {
-      console.error("[Upsell PIX] Upsell not found:", upsellError);
+    if (stepError || !step) {
+      console.error("[Upsell PIX] Funnel step not found:", stepError);
       return new Response(
-        JSON.stringify({ error: "Upsell configuration not found" }),
+        JSON.stringify({ error: "Funnel step not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[Upsell PIX] Generating PIX for ${upsell.upsell_product?.name} - ${upsell.upsell_price}`);
+    // Get the price - use offer_price if set, otherwise product price
+    const offerProduct = Array.isArray(step.offer_product) ? step.offer_product[0] : step.offer_product;
+    const offerPrice = step.offer_price || offerProduct?.price || 0;
+    const productName = offerProduct?.name || 'Produto';
+
+    console.log(`[Upsell PIX] Generating PIX for ${productName} - R$ ${offerPrice}`);
 
     // Get fee config for the user
     const { data: feeConfig } = await supabase
@@ -75,12 +80,11 @@ serve(async (req) => {
     const feeFixed = feeConfig?.pix_fixed ?? 2.49;
 
     // Generate PIX via the existing generate-pix function logic
-    // We'll call the generate-pix function with the customer data from original transaction
     const generatePixResponse = await supabase.functions.invoke("generate-pix", {
       body: {
-        amount: upsell.upsell_price,
+        amount: offerPrice,
         userId: originalTx.user_id,
-        productName: `Upsell: ${upsell.upsell_product?.name || 'Produto'}`,
+        productName: `Upsell: ${productName}`,
         donorName: originalTx.donor_name,
         donorEmail: originalTx.donor_email,
         donorPhone: originalTx.donor_phone,
@@ -111,22 +115,6 @@ serve(async (req) => {
 
     const pixData = generatePixResponse.data;
     console.log(`[Upsell PIX] PIX generated successfully: ${pixData.transactionId}`);
-
-    // Create upsell_transaction record
-    const { error: upsellTxError } = await supabase
-      .from("upsell_transactions")
-      .insert({
-        original_transaction_id: originalTransactionId,
-        upsell_id: upsellId,
-        upsell_transaction_id: pixData.transactionId,
-        status: "accepted",
-        accepted_at: new Date().toISOString(),
-      });
-
-    if (upsellTxError) {
-      console.error("[Upsell PIX] Error creating upsell transaction record:", upsellTxError);
-      // Don't fail the request, just log
-    }
 
     return new Response(
       JSON.stringify({

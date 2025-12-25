@@ -1,32 +1,43 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Clock, CheckCircle, Shield, Lock, X } from "lucide-react";
+import { Clock, CheckCircle, Shield, Lock } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
-interface UpsellData {
+interface FunnelStepData {
   id: string;
-  title: string;
-  description: string | null;
+  funnel_id: string;
+  step_type: string;
+  title: string | null;
   headline: string | null;
-  upsell_price: number;
+  description: string | null;
+  offer_price: number | null;
   original_price: number | null;
-  timer_seconds: number;
-  button_text: string;
-  decline_text: string;
+  timer_seconds: number | null;
+  button_accept_text: string | null;
+  button_decline_text: string | null;
   image_url: string | null;
   video_url: string | null;
-  background_color: string;
-  button_color: string;
-  upsell_product: {
+  background_color: string | null;
+  button_color: string | null;
+  next_step_on_accept: string | null;
+  next_step_on_decline: string | null;
+  is_active: boolean | null;
+  offer_product: {
     id: string;
     name: string;
     price: number;
     image_url: string | null;
   } | null;
+}
+
+interface FunnelData {
+  id: string;
+  thank_you_url: string | null;
+  product_id: string;
 }
 
 interface TransactionData {
@@ -40,8 +51,7 @@ interface TransactionData {
 }
 
 export default function UpsellPage() {
-  const { transactionId } = useParams<{ transactionId: string }>();
-  const [searchParams] = useSearchParams();
+  const { stepId, transactionId } = useParams<{ stepId: string; transactionId: string }>();
   const navigate = useNavigate();
   
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -53,9 +63,6 @@ export default function UpsellPage() {
   } | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
-
-  // Get thank you URL from query params
-  const thankYouUrl = searchParams.get("thank_you_url");
 
   // Fetch original transaction data
   const { data: transaction, isLoading: loadingTransaction } = useQuery({
@@ -75,50 +82,55 @@ export default function UpsellPage() {
     enabled: !!transactionId,
   });
 
-  // Fetch upsell configuration for the product
-  const { data: upsell, isLoading: loadingUpsell } = useQuery({
-    queryKey: ["upsell-for-transaction", transaction?.product_name, transaction?.user_id],
+  // Fetch current funnel step
+  const { data: currentStep, isLoading: loadingStep } = useQuery({
+    queryKey: ["funnel-step", stepId],
     queryFn: async () => {
-      if (!transaction?.product_name || !transaction?.user_id) return null;
+      if (!stepId) return null;
       
-      // First, find the product by name and user_id
-      const { data: products, error: productError } = await supabase
-        .from("products")
-        .select("id")
-        .eq("user_id", transaction.user_id)
-        .eq("name", transaction.product_name)
-        .limit(1);
-      
-      if (productError || !products?.length) return null;
-      
-      const productId = products[0].id;
-      
-      // Then fetch the active upsell for this product
       const { data, error } = await supabase
-        .from("product_upsells")
+        .from("funnel_steps")
         .select(`
-          id, title, description, headline, upsell_price, original_price,
-          timer_seconds, button_text, decline_text, image_url, video_url,
-          background_color, button_color,
-          upsell_product:products!upsell_product_id(id, name, price, image_url)
+          id, funnel_id, step_type, title, headline, description,
+          offer_price, original_price, timer_seconds,
+          button_accept_text, button_decline_text,
+          image_url, video_url, background_color, button_color,
+          next_step_on_accept, next_step_on_decline, is_active,
+          offer_product:products!offer_product_id(id, name, price, image_url)
         `)
-        .eq("product_id", productId)
-        .eq("is_active", true)
-        .order("position", { ascending: true })
-        .limit(1);
+        .eq("id", stepId)
+        .single();
       
       if (error) throw error;
-      return data?.[0] as UpsellData | null;
+      return data as FunnelStepData;
     },
-    enabled: !!transaction?.product_name && !!transaction?.user_id,
+    enabled: !!stepId,
+  });
+
+  // Fetch funnel data for thank_you_url
+  const { data: funnel } = useQuery({
+    queryKey: ["funnel-for-step", currentStep?.funnel_id],
+    queryFn: async () => {
+      if (!currentStep?.funnel_id) return null;
+      
+      const { data, error } = await supabase
+        .from("sales_funnels")
+        .select("id, thank_you_url, product_id")
+        .eq("id", currentStep.funnel_id)
+        .single();
+      
+      if (error) throw error;
+      return data as FunnelData;
+    },
+    enabled: !!currentStep?.funnel_id,
   });
 
   // Initialize timer
   useEffect(() => {
-    if (upsell && timeLeft === null) {
-      setTimeLeft(upsell.timer_seconds);
+    if (currentStep && timeLeft === null) {
+      setTimeLeft(currentStep.timer_seconds || 300);
     }
-  }, [upsell, timeLeft]);
+  }, [currentStep, timeLeft]);
 
   // Countdown timer
   useEffect(() => {
@@ -128,7 +140,7 @@ export default function UpsellPage() {
       setTimeLeft((prev) => {
         if (prev === null || prev <= 1) {
           clearInterval(timer);
-          // Timer expired - go to thank you
+          // Timer expired - go to decline path
           handleDecline();
           return 0;
         }
@@ -151,12 +163,22 @@ export default function UpsellPage() {
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
-          toast.success("Pagamento do Upsell confirmado!");
+          toast.success("Pagamento confirmado!");
           clearInterval(pollInterval);
           
-          // Wait a bit then redirect
+          // Record conversion
+          if (currentStep && funnel) {
+            await supabase.from("funnel_conversions").insert({
+              funnel_id: funnel.id,
+              step_id: currentStep.id,
+              transaction_id: upsellPixData.transactionId,
+              action: "paid",
+            });
+          }
+          
+          // Wait then redirect to next step or thank you
           setTimeout(() => {
-            redirectToThankYou();
+            navigateToNextStep("accept");
           }, 2000);
         }
       } catch (err) {
@@ -165,29 +187,65 @@ export default function UpsellPage() {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [upsellPixData?.transactionId, isPaid]);
+  }, [upsellPixData?.transactionId, isPaid, currentStep, funnel]);
 
-  const redirectToThankYou = useCallback(() => {
-    if (thankYouUrl) {
-      window.location.href = thankYouUrl;
-    } else {
+  // Navigate to next step or thank you page
+  const navigateToNextStep = useCallback((action: "accept" | "decline") => {
+    if (!currentStep || !transactionId) {
       navigate("/");
+      return;
     }
-  }, [thankYouUrl, navigate]);
 
-  const handleDecline = useCallback(() => {
-    redirectToThankYou();
-  }, [redirectToThankYou]);
+    const nextStepId = action === "accept" 
+      ? currentStep.next_step_on_accept 
+      : currentStep.next_step_on_decline;
+
+    if (nextStepId) {
+      // Go to next funnel step
+      navigate(`/upsell/${nextStepId}/${transactionId}`);
+    } else {
+      // No next step - go to thank you page
+      if (funnel?.thank_you_url) {
+        window.location.href = funnel.thank_you_url;
+      } else {
+        navigate("/");
+      }
+    }
+  }, [currentStep, funnel, transactionId, navigate]);
+
+  const handleDecline = useCallback(async () => {
+    // Record decline conversion
+    if (currentStep && funnel) {
+      await supabase.from("funnel_conversions").insert({
+        funnel_id: funnel.id,
+        step_id: currentStep.id,
+        transaction_id: transactionId,
+        action: "declined",
+      });
+    }
+    
+    navigateToNextStep("decline");
+  }, [currentStep, funnel, transactionId, navigateToNextStep]);
 
   const handleAccept = async () => {
-    if (!upsell || !transaction) return;
+    if (!currentStep || !transaction) return;
     
     setIsAccepting(true);
     try {
+      // Record accepted conversion
+      if (funnel) {
+        await supabase.from("funnel_conversions").insert({
+          funnel_id: funnel.id,
+          step_id: currentStep.id,
+          transaction_id: transactionId,
+          action: "accepted",
+        });
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-upsell-pix", {
         body: {
           originalTransactionId: transactionId,
-          upsellId: upsell.id,
+          stepId: currentStep.id,
         },
       });
 
@@ -223,8 +281,19 @@ export default function UpsellPage() {
       if (!error && data && data.status === "paid") {
         setIsPaid(true);
         toast.success("Pagamento confirmado!");
+        
+        // Record conversion
+        if (currentStep && funnel) {
+          await supabase.from("funnel_conversions").insert({
+            funnel_id: funnel.id,
+            step_id: currentStep.id,
+            transaction_id: upsellPixData.transactionId,
+            action: "paid",
+          });
+        }
+        
         setTimeout(() => {
-          redirectToThankYou();
+          navigateToNextStep("accept");
         }, 2000);
       } else {
         toast.info("Pagamento ainda não identificado. Aguarde alguns segundos.");
@@ -261,7 +330,7 @@ export default function UpsellPage() {
   };
 
   // Loading state
-  if (loadingTransaction || loadingUpsell) {
+  if (loadingTransaction || loadingStep) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -269,16 +338,31 @@ export default function UpsellPage() {
     );
   }
 
-  // No upsell configured - redirect to thank you
-  if (!upsell) {
-    redirectToThankYou();
+  // No step found - redirect to home
+  if (!currentStep) {
+    navigate("/");
     return null;
   }
+
+  // Thank you step type - redirect to thank you page
+  if (currentStep.step_type === "thankyou") {
+    if (funnel?.thank_you_url) {
+      window.location.href = funnel.thank_you_url;
+    } else {
+      navigate("/");
+    }
+    return null;
+  }
+
+  // Get colors with defaults
+  const backgroundColor = currentStep.background_color || "#f3f4f6";
+  const buttonColor = currentStep.button_color || "#22c55e";
+  const offerPrice = currentStep.offer_price || currentStep.offer_product?.price || 0;
 
   // Payment confirmed state
   if (isPaid) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-12 h-12 text-green-600" />
@@ -287,7 +371,7 @@ export default function UpsellPage() {
             Pagamento Confirmado!
           </h1>
           <p className="text-gray-600 mb-4">
-            Seu upsell foi processado com sucesso.
+            Seu pedido foi processado com sucesso.
           </p>
           <p className="text-sm text-gray-500">
             Redirecionando...
@@ -302,19 +386,19 @@ export default function UpsellPage() {
     return (
       <div 
         className="min-h-screen flex items-center justify-center p-4"
-        style={{ backgroundColor: upsell.background_color }}
+        style={{ backgroundColor }}
       >
         <div className="bg-white rounded-2xl shadow-xl p-6 max-w-lg w-full">
           <h2 className="text-xl font-bold text-center mb-4">
-            Finalize o pagamento do Upsell
+            Finalize o pagamento
           </h2>
           
           <div className="text-center mb-4">
             <p className="text-2xl font-bold text-green-600">
-              {formatPrice(upsell.upsell_price)}
+              {formatPrice(offerPrice)}
             </p>
             <p className="text-sm text-gray-500">
-              {upsell.upsell_product?.name}
+              {currentStep.offer_product?.name}
             </p>
           </div>
 
@@ -340,8 +424,8 @@ export default function UpsellPage() {
           <Button
             onClick={handleCheckPayment}
             disabled={isCheckingPayment}
-            className="w-full"
-            style={{ backgroundColor: upsell.button_color }}
+            className="w-full text-white"
+            style={{ backgroundColor: buttonColor }}
           >
             {isCheckingPayment ? "Verificando..." : "Já fiz o pagamento"}
           </Button>
@@ -358,11 +442,11 @@ export default function UpsellPage() {
     );
   }
 
-  // Main upsell offer view
+  // Main offer view (upsell, downsell, crosssell)
   return (
     <div 
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundColor: upsell.background_color }}
+      style={{ backgroundColor }}
     >
       <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-lg w-full">
         {/* Timer */}
@@ -377,25 +461,25 @@ export default function UpsellPage() {
 
         {/* Headline */}
         <h1 className="text-xl md:text-2xl font-bold text-center text-gray-800 mb-4">
-          {upsell.headline || "Espera! Temos uma oferta exclusiva para você"}
+          {currentStep.headline || "Espera! Temos uma oferta exclusiva para você"}
         </h1>
 
         {/* Product Image */}
-        {(upsell.image_url || upsell.upsell_product?.image_url) && (
+        {(currentStep.image_url || currentStep.offer_product?.image_url) && (
           <div className="flex justify-center mb-4">
             <img
-              src={upsell.image_url || upsell.upsell_product?.image_url || ""}
-              alt={upsell.upsell_product?.name}
+              src={currentStep.image_url || currentStep.offer_product?.image_url || ""}
+              alt={currentStep.offer_product?.name}
               className="w-40 h-40 object-cover rounded-lg shadow-md"
             />
           </div>
         )}
 
         {/* Video */}
-        {upsell.video_url && (
+        {currentStep.video_url && (
           <div className="mb-4 aspect-video rounded-lg overflow-hidden">
             <iframe
-              src={upsell.video_url.replace("watch?v=", "embed/")}
+              src={currentStep.video_url.replace("watch?v=", "embed/")}
               className="w-full h-full"
               allowFullScreen
             />
@@ -404,30 +488,30 @@ export default function UpsellPage() {
 
         {/* Title */}
         <h2 className="text-2xl font-bold text-center mb-2">
-          {upsell.title}
+          {currentStep.title || "Oferta Especial"}
         </h2>
 
         {/* Product Name */}
         <p className="text-center text-gray-600 mb-4">
-          {upsell.upsell_product?.name}
+          {currentStep.offer_product?.name}
         </p>
 
         {/* Description */}
-        {upsell.description && (
+        {currentStep.description && (
           <p className="text-gray-600 text-center mb-4">
-            {upsell.description}
+            {currentStep.description}
           </p>
         )}
 
         {/* Price */}
         <div className="text-center mb-6">
-          {upsell.original_price && upsell.original_price > upsell.upsell_price && (
+          {currentStep.original_price && currentStep.original_price > offerPrice && (
             <p className="text-gray-400 line-through">
-              De {formatPrice(upsell.original_price)}
+              De {formatPrice(currentStep.original_price)}
             </p>
           )}
           <p className="text-3xl font-bold text-green-600">
-            Por apenas {formatPrice(upsell.upsell_price)}
+            Por apenas {formatPrice(offerPrice)}
           </p>
         </div>
 
@@ -436,9 +520,9 @@ export default function UpsellPage() {
           onClick={handleAccept}
           disabled={isAccepting}
           className="w-full text-white font-bold py-4 text-lg mb-3 transition-transform hover:scale-[1.02]"
-          style={{ backgroundColor: upsell.button_color }}
+          style={{ backgroundColor: buttonColor }}
         >
-          {isAccepting ? "Processando..." : upsell.button_text}
+          {isAccepting ? "Processando..." : (currentStep.button_accept_text || "SIM! Quero aproveitar")}
         </Button>
 
         {/* Decline Button */}
@@ -446,7 +530,7 @@ export default function UpsellPage() {
           onClick={handleDecline}
           className="w-full text-center text-gray-500 text-sm underline hover:text-gray-700"
         >
-          {upsell.decline_text}
+          {currentStep.button_decline_text || "Não, obrigado"}
         </button>
 
         {/* Security Badges */}
