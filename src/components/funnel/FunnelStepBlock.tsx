@@ -92,33 +92,33 @@ export function FunnelStepBlock({
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
 
+        {/* Badge posicionado absoluto no canto */}
+        <Badge 
+          variant="outline"
+          className={cn(
+            "absolute top-3 right-3 cursor-pointer text-[10px] px-1.5 py-0.5 transition-colors",
+            step.is_active 
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20" 
+              : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleActive(!step.is_active);
+          }}
+        >
+          {step.is_active ? "Ativo" : "Inativo"}
+        </Badge>
+
         <div className="p-4 pl-10">
           {/* Header */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2">
-              <div className={cn('p-1.5 rounded-md', config.color)}>
-                <Icon className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">{step.title || config.label}</p>
-                <p className="text-xs text-muted-foreground">{config.description}</p>
-              </div>
+          <div className="flex items-start gap-2 mb-3 pr-12">
+            <div className={cn('p-1.5 rounded-md shrink-0', config.color)}>
+              <Icon className="h-4 w-4 text-white" />
             </div>
-            <Badge 
-              variant="outline"
-              className={cn(
-                "cursor-pointer text-xs transition-colors",
-                step.is_active 
-                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20" 
-                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleActive(!step.is_active);
-              }}
-            >
-              {step.is_active ? "Ativo" : "Inativo"}
-            </Badge>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm truncate">{step.title || config.label}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{config.description}</p>
+            </div>
           </div>
 
           {/* Product info */}
