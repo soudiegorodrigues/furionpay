@@ -11,9 +11,16 @@ import {
 } from '@dnd-kit/core';
 import { FunnelStepBlock } from './FunnelStepBlock';
 import { FunnelConnections } from './FunnelConnections';
-import { FunnelStep, StepMetrics } from './types';
+import { FunnelStep, StepMetrics, STEP_CONFIG } from './types';
 import { Package, Plus, Move, ZoomIn, ZoomOut, Link2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface Product {
@@ -237,7 +244,7 @@ export function FunnelCanvas({
               className="absolute"
               style={{ left: PRODUCT_POSITION.x, top: PRODUCT_POSITION.y }}
             >
-              <div className="w-44 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-3 text-center shadow-lg relative">
+              <div className="w-52 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-3 text-center shadow-lg relative">
                 <div className="w-12 h-12 mx-auto rounded-lg bg-primary/20 flex items-center justify-center mb-2 overflow-hidden">
                   {productImage ? (
                     <img src={productImage} alt={productName} className="w-full h-full object-cover" />
@@ -246,7 +253,43 @@ export function FunnelCanvas({
                   )}
                 </div>
                 <p className="font-semibold text-sm text-foreground truncate">{productName}</p>
-                <p className="text-[10px] text-muted-foreground">Produto Principal</p>
+                <p className="text-[10px] text-muted-foreground mb-2">Produto Principal</p>
+                
+                {/* First Step Selector */}
+                {steps.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-primary/20">
+                    <p className="text-[10px] text-muted-foreground mb-1.5">Primeira etapa:</p>
+                    <Select
+                      value={steps.find(s => s.position === 0)?.id || 'none'}
+                      onValueChange={(stepId) => {
+                        if (stepId === 'none') return;
+                        // Reorder steps to make selected step position 0
+                        const targetStep = steps.find(s => s.id === stepId);
+                        if (!targetStep) return;
+                        const currentFirst = steps.find(s => s.position === 0);
+                        if (currentFirst && currentFirst.id !== stepId) {
+                          const updatedSteps = steps.map(s => {
+                            if (s.id === stepId) return { ...s, position: 0 };
+                            if (s.id === currentFirst.id) return { ...s, position: targetStep.position };
+                            return s;
+                          });
+                          onReorderSteps(updatedSteps);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-7 text-xs bg-background/80">
+                        <SelectValue placeholder="Selecionar" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {steps.map((s) => (
+                          <SelectItem key={s.id} value={s.id} className="text-xs">
+                            {s.title || STEP_CONFIG[s.step_type]?.label || s.step_type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 
                 {/* Output handle for product */}
                 {steps.length > 0 && (
