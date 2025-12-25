@@ -388,7 +388,13 @@ export function FunnelCanvas({
             {/* Drag Overlay */}
             <DragOverlay dropAnimation={null}>
               {activeStep && (
-                <div className="w-[280px] opacity-80 pointer-events-none">
+                <div 
+                  className="w-[280px] opacity-80 pointer-events-none"
+                  style={{ 
+                    transform: `scale(${zoom})`, 
+                    transformOrigin: 'top left' 
+                  }}
+                >
                   <FunnelStepBlock
                     step={activeStep}
                     isSelected={false}
