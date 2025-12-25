@@ -255,80 +255,9 @@ export function FunnelStepBlock({
 
           <CollapsibleContent>
             <div className="border-t px-4 py-4 sm:px-5 space-y-4 bg-muted/30">
-              {step.step_type !== 'thankyou' && (
+              {step.step_type !== 'thankyou' ? (
                 <>
-                  {/* Product Selection */}
-                  <div className="space-y-2">
-                    <Label className="text-xs">Produto da Oferta</Label>
-                    <Select
-                      value={formData.offer_product_id || ''}
-                      onValueChange={handleProductChange}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Selecione um produto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} - R$ {product.price.toFixed(2)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Pricing */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs">Preço Original</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="h-9 text-sm"
-                        value={formData.original_price || ''}
-                        onChange={(e) => handleChange('original_price', parseFloat(e.target.value))}
-                        placeholder="R$ 0,00"
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onFocus={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">Preço da Oferta</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="h-9 text-sm"
-                        value={formData.offer_price || ''}
-                        onChange={(e) => handleChange('offer_price', parseFloat(e.target.value))}
-                        placeholder="R$ 0,00"
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onFocus={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Timer */}
-                  <div className="space-y-2">
-                    <Label className="text-xs">Timer (segundos)</Label>
-                    <Input
-                      type="number"
-                      className="h-9 text-sm"
-                      value={formData.timer_seconds || 300}
-                      onChange={(e) => handleChange('timer_seconds', parseInt(e.target.value))}
-                      placeholder="300"
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onFocus={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Redirect - Accept */}
-              {step.step_type !== 'thankyou' && (
-                <>
+                  {/* Redirect - Accept */}
                   <div className="space-y-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-900">
                     <Label className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Se ACEITAR → Ir para</Label>
                     <Select
@@ -370,9 +299,7 @@ export function FunnelStepBlock({
                     </Select>
                   </div>
                 </>
-              )}
-
-              {step.step_type === 'thankyou' && (
+              ) : (
                 <div className="text-center py-4 text-muted-foreground">
                   <p className="text-sm">Página de obrigado é o fim do funil</p>
                   <p className="text-xs mt-1">
