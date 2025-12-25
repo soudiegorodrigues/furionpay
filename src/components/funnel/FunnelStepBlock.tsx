@@ -109,50 +109,50 @@ export function FunnelStepBlock({
           {step.is_active ? "Ativo" : "Inativo"}
         </Badge>
 
-        <div className="p-4 pl-10">
+        <div className="p-4 pl-10 sm:p-5 sm:pl-11">
           {/* Header */}
-          <div className="flex items-start gap-2 mb-3 pr-12">
-            <div className={cn('p-1.5 rounded-md shrink-0', config.color)}>
-              <Icon className="h-4 w-4 text-white" />
+          <div className="flex items-start gap-3 mb-3 pr-14">
+            <div className={cn('p-2 rounded-md shrink-0', config.color)}>
+              <Icon className="h-5 w-5 text-white" />
             </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm truncate">{step.title || config.label}</p>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-sm sm:text-base truncate">{step.title || config.label}</p>
               <p className="text-xs text-muted-foreground line-clamp-2">{config.description}</p>
             </div>
           </div>
 
           {/* Product info */}
           {step.step_type !== 'thankyou' && (
-            <div className="bg-muted/50 rounded-lg p-2 mb-3">
+            <div className="bg-muted/50 rounded-lg p-2.5 sm:p-3 mb-3">
               {step.offer_product ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {step.offer_product.image_url ? (
                     <img 
                       src={step.offer_product.image_url} 
                       alt={step.offer_product.name}
-                      className="w-8 h-8 rounded object-cover"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
-                      <Settings className="h-4 w-4 text-muted-foreground" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-muted flex items-center justify-center">
+                      <Settings className="h-5 w-5 text-muted-foreground" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{step.offer_product.name}</p>
-                    <div className="flex items-center gap-2">
+                    <p className="text-xs sm:text-sm font-medium truncate">{step.offer_product.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
                       {step.original_price && step.original_price > (step.offer_price || 0) && (
                         <span className="text-xs text-muted-foreground line-through">
                           {formatPrice(step.original_price)}
                         </span>
                       )}
-                      <span className={cn('text-xs font-bold', config.textColor)}>
+                      <span className={cn('text-sm font-bold', config.textColor)}>
                         {formatPrice(step.offer_price)}
                       </span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground text-center py-1">
+                <p className="text-xs text-muted-foreground text-center py-2">
                   Nenhum produto selecionado
                 </p>
               )}
