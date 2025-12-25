@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useSidebar } from '@/components/ui/sidebar';
 import { Loader2, Settings, Menu, PanelRightOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -25,9 +26,15 @@ interface FunnelBuilderSectionProps {
 export function FunnelBuilderSection({ productId, userId, productName, productImage }: FunnelBuilderSectionProps) {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { setOpen: setSidebarMainOpen } = useSidebar();
   const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Collapse main sidebar when entering funnel builder
+  useEffect(() => {
+    setSidebarMainOpen(false);
+  }, [setSidebarMainOpen]);
 
   // Fetch funnels
   const { data: funnels = [], isLoading } = useQuery({
