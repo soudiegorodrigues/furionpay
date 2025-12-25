@@ -54,7 +54,7 @@ export function FunnelStepConfig({
   if (!step) {
     return (
       <Card className="h-full">
-        <CardContent className="flex items-center justify-center h-full text-muted-foreground">
+        <CardContent className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
           <p className="text-sm">Selecione uma etapa para configurar</p>
         </CardContent>
       </Card>
@@ -93,56 +93,56 @@ export function FunnelStepConfig({
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3 shrink-0 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-md ${config.color}`}>
-              <Settings className="h-4 w-4 text-white" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`p-1.5 rounded-md shrink-0 ${config.color}`}>
+              <Settings className="h-3.5 w-3.5 text-white" />
             </div>
-            <CardTitle className="text-base">Configurar {config.label}</CardTitle>
+            <CardTitle className="text-sm truncate">Configurar {config.label}</CardTitle>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {hasChanges && (
-              <Button size="sm" onClick={handleSave}>
-                <Save className="h-4 w-4 mr-1" />
+              <Button size="sm" onClick={handleSave} className="h-7 text-xs">
+                <Save className="h-3.5 w-3.5 mr-1" />
                 Salvar
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-7 w-7 p-0">
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 p-0">
-        <Tabs defaultValue="general" className="h-full">
-          <TabsList className="w-full justify-start rounded-none border-b px-4 pt-2">
-            <TabsTrigger value="general" className="gap-2">
-              <Settings className="h-4 w-4" />
+      <CardContent className="flex-1 p-0 overflow-hidden">
+        <Tabs defaultValue="general" className="h-full flex flex-col">
+          <TabsList className="w-full justify-start rounded-none border-b px-2 pt-1 shrink-0 h-auto flex-wrap">
+            <TabsTrigger value="general" className="gap-1.5 text-xs h-8">
+              <Settings className="h-3.5 w-3.5" />
               Geral
             </TabsTrigger>
-            <TabsTrigger value="visual" className="gap-2">
-              <Palette className="h-4 w-4" />
+            <TabsTrigger value="visual" className="gap-1.5 text-xs h-8">
+              <Palette className="h-3.5 w-3.5" />
               Visual
             </TabsTrigger>
-            <TabsTrigger value="redirect" className="gap-2">
-              <Link2 className="h-4 w-4" />
-              Redirecionamento
+            <TabsTrigger value="redirect" className="gap-1.5 text-xs h-8">
+              <Link2 className="h-3.5 w-3.5" />
+              Redirecionar
             </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="h-[calc(100%-48px)]">
+          <ScrollArea className="flex-1">
             <div className="p-4">
               <TabsContent value="general" className="m-0 space-y-4">
                 {step.step_type !== 'thankyou' && (
                   <>
                     {/* Product Selection */}
                     <div className="space-y-2">
-                      <Label>Produto da Oferta</Label>
+                      <Label className="text-xs">Produto da Oferta</Label>
                       <Select
                         value={formData.offer_product_id || ''}
                         onValueChange={handleProductChange}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9 text-sm">
                           <SelectValue placeholder="Selecione um produto" />
                         </SelectTrigger>
                         <SelectContent>
@@ -156,22 +156,24 @@ export function FunnelStepConfig({
                     </div>
 
                     {/* Pricing */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <Label>Preço Original</Label>
+                        <Label className="text-xs">Preço Original</Label>
                         <Input
                           type="number"
                           step="0.01"
+                          className="h-9 text-sm"
                           value={formData.original_price || ''}
                           onChange={(e) => handleChange('original_price', parseFloat(e.target.value))}
                           placeholder="R$ 0,00"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Preço da Oferta</Label>
+                        <Label className="text-xs">Preço da Oferta</Label>
                         <Input
                           type="number"
                           step="0.01"
+                          className="h-9 text-sm"
                           value={formData.offer_price || ''}
                           onChange={(e) => handleChange('offer_price', parseFloat(e.target.value))}
                           placeholder="R$ 0,00"
@@ -181,14 +183,15 @@ export function FunnelStepConfig({
 
                     {/* Timer */}
                     <div className="space-y-2">
-                      <Label>Timer (segundos)</Label>
+                      <Label className="text-xs">Timer (segundos)</Label>
                       <Input
                         type="number"
+                        className="h-9 text-sm"
                         value={formData.timer_seconds || 300}
                         onChange={(e) => handleChange('timer_seconds', parseInt(e.target.value))}
                         placeholder="300"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[10px] text-muted-foreground">
                         Tempo em segundos (300 = 5 minutos)
                       </p>
                     </div>
@@ -198,9 +201,9 @@ export function FunnelStepConfig({
                 {/* Active Toggle */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>Etapa Ativa</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Desative para pular esta etapa no funil
+                    <Label className="text-xs">Etapa Ativa</Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Desative para pular esta etapa
                     </p>
                   </div>
                   <Switch
@@ -213,8 +216,9 @@ export function FunnelStepConfig({
               <TabsContent value="visual" className="m-0 space-y-4">
                 {/* Title */}
                 <div className="space-y-2">
-                  <Label>Título</Label>
+                  <Label className="text-xs">Título</Label>
                   <Input
+                    className="h-9 text-sm"
                     value={formData.title || ''}
                     onChange={(e) => handleChange('title', e.target.value)}
                     placeholder="Oferta Especial"
@@ -223,8 +227,9 @@ export function FunnelStepConfig({
 
                 {/* Headline */}
                 <div className="space-y-2">
-                  <Label>Headline</Label>
+                  <Label className="text-xs">Headline</Label>
                   <Input
+                    className="h-9 text-sm"
                     value={formData.headline || ''}
                     onChange={(e) => handleChange('headline', e.target.value)}
                     placeholder="Uma oportunidade única!"
@@ -233,30 +238,33 @@ export function FunnelStepConfig({
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label>Descrição</Label>
+                  <Label className="text-xs">Descrição</Label>
                   <Textarea
+                    className="text-sm resize-none"
                     value={formData.description || ''}
                     onChange={(e) => handleChange('description', e.target.value)}
                     placeholder="Descreva sua oferta..."
-                    rows={3}
+                    rows={2}
                   />
                 </div>
 
                 {step.step_type !== 'thankyou' && (
                   <>
                     {/* Button Texts */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <Label>Texto do Botão Aceitar</Label>
+                        <Label className="text-xs">Botão Aceitar</Label>
                         <Input
+                          className="h-9 text-sm"
                           value={formData.button_accept_text || ''}
                           onChange={(e) => handleChange('button_accept_text', e.target.value)}
-                          placeholder="SIM! Quero aproveitar"
+                          placeholder="SIM! Quero"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Texto do Botão Recusar</Label>
+                        <Label className="text-xs">Botão Recusar</Label>
                         <Input
+                          className="h-9 text-sm"
                           value={formData.button_decline_text || ''}
                           onChange={(e) => handleChange('button_decline_text', e.target.value)}
                           placeholder="Não, obrigado"
@@ -265,36 +273,36 @@ export function FunnelStepConfig({
                     </div>
 
                     {/* Colors */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <Label>Cor de Fundo</Label>
+                        <Label className="text-xs">Cor de Fundo</Label>
                         <div className="flex gap-2">
                           <Input
                             type="color"
                             value={formData.background_color || '#ffffff'}
                             onChange={(e) => handleChange('background_color', e.target.value)}
-                            className="w-12 h-9 p-1 cursor-pointer"
+                            className="w-10 h-9 p-1 cursor-pointer shrink-0"
                           />
                           <Input
                             value={formData.background_color || '#ffffff'}
                             onChange={(e) => handleChange('background_color', e.target.value)}
-                            className="flex-1"
+                            className="flex-1 h-9 text-sm"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label>Cor do Botão</Label>
+                        <Label className="text-xs">Cor do Botão</Label>
                         <div className="flex gap-2">
                           <Input
                             type="color"
                             value={formData.button_color || '#22c55e'}
                             onChange={(e) => handleChange('button_color', e.target.value)}
-                            className="w-12 h-9 p-1 cursor-pointer"
+                            className="w-10 h-9 p-1 cursor-pointer shrink-0"
                           />
                           <Input
                             value={formData.button_color || '#22c55e'}
                             onChange={(e) => handleChange('button_color', e.target.value)}
-                            className="flex-1"
+                            className="flex-1 h-9 text-sm"
                           />
                         </div>
                       </div>
@@ -302,16 +310,18 @@ export function FunnelStepConfig({
 
                     {/* Media */}
                     <div className="space-y-2">
-                      <Label>URL da Imagem</Label>
+                      <Label className="text-xs">URL da Imagem</Label>
                       <Input
+                        className="h-9 text-sm"
                         value={formData.image_url || ''}
                         onChange={(e) => handleChange('image_url', e.target.value)}
                         placeholder="https://..."
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>URL do Vídeo (opcional)</Label>
+                      <Label className="text-xs">URL do Vídeo (opcional)</Label>
                       <Input
+                        className="h-9 text-sm"
                         value={formData.video_url || ''}
                         onChange={(e) => handleChange('video_url', e.target.value)}
                         placeholder="https://youtube.com/..."
@@ -325,32 +335,33 @@ export function FunnelStepConfig({
                 {step.step_type !== 'thankyou' ? (
                   <>
                     {/* Accept Redirect */}
-                    <div className="space-y-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-900">
-                      <h4 className="font-medium text-emerald-700 dark:text-emerald-400">
+                    <div className="space-y-3 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-900">
+                      <h4 className="font-medium text-xs text-emerald-700 dark:text-emerald-400">
                         Se ACEITAR a oferta
                       </h4>
                       <div className="space-y-2">
-                        <Label>Próxima etapa do funil</Label>
+                        <Label className="text-xs">Próxima etapa</Label>
                         <Select
                           value={formData.next_step_on_accept || 'none'}
                           onValueChange={(value) => handleChange('next_step_on_accept', value === 'none' ? null : value)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="h-9 text-sm">
                             <SelectValue placeholder="Continuar para..." />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">Usar URL abaixo</SelectItem>
                             {otherSteps.map((s) => (
                               <SelectItem key={s.id} value={s.id}>
-                                {STEP_CONFIG[s.step_type].label}: {s.title}
+                                {STEP_CONFIG[s.step_type].label}: {s.title || 'Sem título'}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Ou URL de redirecionamento</Label>
+                        <Label className="text-xs">Ou URL</Label>
                         <Input
+                          className="h-9 text-sm"
                           value={formData.accept_url || ''}
                           onChange={(e) => handleChange('accept_url', e.target.value)}
                           placeholder="https://..."
@@ -360,32 +371,33 @@ export function FunnelStepConfig({
                     </div>
 
                     {/* Decline Redirect */}
-                    <div className="space-y-4 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
-                      <h4 className="font-medium text-red-700 dark:text-red-400">
+                    <div className="space-y-3 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
+                      <h4 className="font-medium text-xs text-red-700 dark:text-red-400">
                         Se RECUSAR a oferta
                       </h4>
                       <div className="space-y-2">
-                        <Label>Próxima etapa do funil</Label>
+                        <Label className="text-xs">Próxima etapa</Label>
                         <Select
                           value={formData.next_step_on_decline || 'none'}
                           onValueChange={(value) => handleChange('next_step_on_decline', value === 'none' ? null : value)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="h-9 text-sm">
                             <SelectValue placeholder="Continuar para..." />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">Usar URL abaixo</SelectItem>
                             {otherSteps.map((s) => (
                               <SelectItem key={s.id} value={s.id}>
-                                {STEP_CONFIG[s.step_type].label}: {s.title}
+                                {STEP_CONFIG[s.step_type].label}: {s.title || 'Sem título'}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Ou URL de redirecionamento</Label>
+                        <Label className="text-xs">Ou URL</Label>
                         <Input
+                          className="h-9 text-sm"
                           value={formData.decline_url || ''}
                           onChange={(e) => handleChange('decline_url', e.target.value)}
                           placeholder="https://..."
@@ -395,10 +407,10 @@ export function FunnelStepConfig({
                     </div>
                   </>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-6 text-muted-foreground">
                     <p className="text-sm">Página de obrigado é o fim do funil</p>
-                    <p className="text-xs mt-2">
-                      Configure a URL de obrigado nas configurações do funil
+                    <p className="text-xs mt-1">
+                      Configure a URL nas configurações do funil
                     </p>
                   </div>
                 )}

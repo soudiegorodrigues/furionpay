@@ -60,31 +60,31 @@ export function FunnelSidebar({
   );
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4">
       {/* Funnels List */}
-      <Card className="flex-1">
+      <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Funis Salvos</CardTitle>
-            <Button size="sm" onClick={onCreateFunnel}>
-              <Plus className="h-4 w-4 mr-1" />
+            <CardTitle className="text-sm">Funis Salvos</CardTitle>
+            <Button size="sm" variant="outline" onClick={onCreateFunnel} className="h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
               Novo
             </Button>
           </div>
           <div className="relative mt-2">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar funis..."
-              className="pl-8 h-9"
+              placeholder="Buscar..."
+              className="pl-8 h-9 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </CardHeader>
         <CardContent className="p-2">
-          <ScrollArea className="h-[200px]">
+          <ScrollArea className="h-[180px]">
             {filteredFunnels.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="text-center py-6 text-muted-foreground text-sm">
                 {searchTerm ? 'Nenhum funil encontrado' : 'Nenhum funil criado'}
               </div>
             ) : (
@@ -113,7 +113,7 @@ export function FunnelSidebar({
                     </div>
                     <Badge 
                       variant={funnel.is_active ? 'default' : 'secondary'}
-                      className="text-xs shrink-0"
+                      className="text-[10px] px-1.5 py-0 shrink-0"
                     >
                       {funnel.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
@@ -123,12 +123,12 @@ export function FunnelSidebar({
                           variant="ghost"
                           size="sm"
                           className={cn(
-                            'h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity',
+                            'h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity',
                             selectedFunnelId === funnel.id && 'text-primary-foreground hover:text-primary-foreground'
                           )}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <MoreVertical className="h-4 w-4" />
+                          <MoreVertical className="h-3.5 w-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -159,29 +159,29 @@ export function FunnelSidebar({
 
       {/* Block Palette */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Adicionar Bloco</CardTitle>
+        <CardHeader className="pb-2 pt-3">
+          <CardTitle className="text-sm">Adicionar Bloco</CardTitle>
         </CardHeader>
-        <CardContent className="p-2">
-          <div className="grid grid-cols-2 gap-2">
+        <CardContent className="p-2 pt-0">
+          <div className="grid grid-cols-2 gap-1.5">
             {STEP_PALETTE.map((item) => (
               <Button
                 key={item.type}
                 variant="outline"
-                className="flex flex-col h-auto py-3 px-2 hover:border-primary hover:bg-primary/5"
+                className="flex flex-col h-auto py-2 px-2 hover:border-primary hover:bg-primary/5 text-xs"
                 onClick={() => onAddStep(item.type)}
                 disabled={!selectedFunnelId}
               >
-                <div className={cn('p-1.5 rounded-md mb-1', item.color)}>
-                  <item.Icon className="h-4 w-4 text-white" />
+                <div className={cn('p-1 rounded-md mb-1', item.color)}>
+                  <item.Icon className="h-3.5 w-3.5 text-white" />
                 </div>
-                <span className="text-xs font-medium">{item.label}</span>
+                <span className="font-medium">{item.label}</span>
               </Button>
             ))}
           </div>
           {!selectedFunnelId && (
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              Selecione um funil para adicionar blocos
+            <p className="text-[11px] text-muted-foreground text-center mt-2">
+              Selecione um funil primeiro
             </p>
           )}
         </CardContent>
