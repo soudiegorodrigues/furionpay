@@ -1,9 +1,9 @@
 import { FunnelStep, STEP_CONFIG } from './types';
 
 // Dimensões reais dos elementos
-const PRODUCT_CARD_WIDTH = 176;  // w-44
-const PRODUCT_CARD_HEIGHT = 112; // Altura real do card do produto
-const HANDLE_OFFSET = 12;        // Offset do handle vermelho
+const PRODUCT_CARD_WIDTH = 208;  // w-52
+const PRODUCT_CARD_HEIGHT = 160; // Altura real do card do produto com conteúdo
+const HANDLE_OFFSET = 12;        // Offset do handle amarelo
 
 interface FunnelConnectionsProps {
   steps: FunnelStep[];
@@ -110,7 +110,7 @@ export function FunnelConnections({
   return (
     <svg
       className="absolute inset-0 pointer-events-none overflow-visible"
-      style={{ width: maxX, height: maxY }}
+      style={{ width: maxX, height: maxY, zIndex: -1 }}
     >
       <defs>
         {/* Arrow markers */}
