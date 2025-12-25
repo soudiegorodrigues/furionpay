@@ -337,6 +337,12 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
                     toast.success('Etapa atualizada!');
                   }}
                   onUpdatePosition={(stepId, x, y) => updatePositionMutation.mutate({ stepId, x, y })}
+                  onUpdateConnection={(stepId, field, targetId) => {
+                    const step = steps.find(s => s.id === stepId);
+                    if (step) {
+                      updateStepMutation.mutate({ ...step, [field]: targetId });
+                    }
+                  }}
                   products={products}
                   stepMetrics={stepMetrics}
                 />
