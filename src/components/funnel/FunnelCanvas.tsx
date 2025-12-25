@@ -25,7 +25,7 @@ interface Product {
 
 interface ConnectionMode {
   sourceId: string;
-  type: 'accept' | 'decline' | 'entry';
+  type: 'next' | 'entry';
 }
 
 interface FunnelCanvasProps {
@@ -120,7 +120,7 @@ export function FunnelCanvas({
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
 
-  const handleStartConnection = (sourceId: string, type: 'accept' | 'decline') => {
+  const handleStartConnection = (sourceId: string, type: 'next') => {
     setConnectionMode({ sourceId, type });
   };
 
@@ -160,11 +160,12 @@ export function FunnelCanvas({
       return;
     }
 
-    // Etapa -> Etapa (Aceite/Recusa)
+    // Etapa -> Etapa (linear mode: save to both accept and decline)
     if (targetId === connectionMode.sourceId) return; // Can't connect to self
 
-    const field = connectionMode.type === 'accept' ? 'next_step_on_accept' : 'next_step_on_decline';
-    onUpdateConnection(connectionMode.sourceId, field, targetId);
+    // Save to BOTH fields for compatibility (linear funnel)
+    onUpdateConnection(connectionMode.sourceId, 'next_step_on_accept', targetId);
+    onUpdateConnection(connectionMode.sourceId, 'next_step_on_decline', targetId);
     setConnectionMode(null);
   };
 
@@ -184,7 +185,7 @@ export function FunnelCanvas({
             <span className="text-sm font-medium">
               {connectionMode.type === 'entry'
                 ? 'Clique em uma etapa para definir como "Primeira etapa"'
-                : `Clique em outro card para conectar como "${connectionMode.type === 'accept' ? 'Aceite' : 'Recusa'}"`}
+                : 'Clique em outro card para conectar como próxima etapa'}
             </span>
           </div>
           <Button

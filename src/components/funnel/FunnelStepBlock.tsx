@@ -42,7 +42,7 @@ interface FunnelStepBlockProps {
   onDelete: () => void;
   onSave: (step: FunnelStep) => void;
   onUpdateConnection: (field: 'next_step_on_accept' | 'next_step_on_decline', targetId: string | null) => void;
-  onStartConnection: (sourceId: string, type: 'accept' | 'decline') => void;
+  onStartConnection: (sourceId: string, type: 'next') => void;
   products: Product[];
   allSteps: FunnelStep[];
   metrics?: StepMetrics;
@@ -136,11 +136,11 @@ export function FunnelStepBlock({
     }
   };
 
-  const handleStartConnectionClick = (e: React.MouseEvent, type: 'accept' | 'decline') => {
+  const handleStartConnectionClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isInConnectionMode) return;
-    onStartConnection(step.id, type);
+    onStartConnection(step.id, 'next');
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -151,12 +151,13 @@ export function FunnelStepBlock({
     }
   };
 
-  const handleRemoveConnection = (e: React.MouseEvent, type: 'accept' | 'decline') => {
+  const handleRemoveConnection = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isInConnectionMode) return;
-    const field = type === 'accept' ? 'next_step_on_accept' : 'next_step_on_decline';
-    onUpdateConnection(field, null);
+    // Remove both connections (linear mode)
+    onUpdateConnection('next_step_on_accept', null);
+    onUpdateConnection('next_step_on_decline', null);
   };
 
   return (
@@ -269,109 +270,55 @@ export function FunnelStepBlock({
             </div>
           </div>
 
-          {/* Conexões (botão "Ligar" + clicar no card destino) */}
+          {/* Conexão linear simplificada - apenas "Próxima etapa" */}
           {step.step_type !== 'thankyou' && (
-            <div className="flex flex-col gap-2 mb-3 text-xs">
-              {/* Accept */}
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span className="text-muted-foreground shrink-0 w-14">Aceite:</span>
-                <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
-                  <span className={cn("truncate", !step.next_step_on_accept && "text-muted-foreground")}>
-                    {step.next_step_on_accept
-                      ? (acceptStep?.title || (acceptStep ? STEP_CONFIG[acceptStep.step_type]?.label : 'Etapa'))
-                      : 'Nenhum'}
-                  </span>
+            <div className="flex items-center gap-2 text-xs">
+              <Link2 className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="text-muted-foreground shrink-0">Próxima etapa:</span>
+              <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                <span className={cn("truncate", !step.next_step_on_accept && "text-muted-foreground")}>
+                  {step.next_step_on_accept
+                    ? (acceptStep?.title || (acceptStep ? STEP_CONFIG[acceptStep.step_type]?.label : 'Etapa'))
+                    : 'Nenhum'}
+                </span>
 
-                  {step.next_step_on_accept ? (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={(e) => handleStartConnectionClick(e, 'accept')}
-                        disabled={isInConnectionMode}
-                      >
-                        Trocar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={(e) => handleRemoveConnection(e, 'accept')}
-                        disabled={isInConnectionMode}
-                        aria-label="Remover conexão de aceite"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
+                {step.next_step_on_accept ? (
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       className="h-7 px-2 text-xs"
-                      onClick={(e) => handleStartConnectionClick(e, 'accept')}
+                      onClick={handleStartConnectionClick}
                       disabled={isInConnectionMode}
                     >
-                      <Link2 className="h-3 w-3 mr-1" />
-                      Ligar
+                      Trocar
                     </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Decline */}
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                <span className="text-muted-foreground shrink-0 w-14">Recusa:</span>
-                <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
-                  <span className={cn("truncate", !step.next_step_on_decline && "text-muted-foreground")}>
-                    {step.next_step_on_decline
-                      ? (declineStep?.title || (declineStep ? STEP_CONFIG[declineStep.step_type]?.label : 'Etapa'))
-                      : 'Nenhum'}
-                  </span>
-
-                  {step.next_step_on_decline ? (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={(e) => handleStartConnectionClick(e, 'decline')}
-                        disabled={isInConnectionMode}
-                      >
-                        Trocar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={(e) => handleRemoveConnection(e, 'decline')}
-                        disabled={isInConnectionMode}
-                        aria-label="Remover conexão de recusa"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={(e) => handleStartConnectionClick(e, 'decline')}
+                      className="h-7 w-7 p-0"
+                      onClick={handleRemoveConnection}
                       disabled={isInConnectionMode}
+                      aria-label="Remover conexão"
                     >
-                      <Link2 className="h-3 w-3 mr-1" />
-                      Ligar
+                      <X className="h-3.5 w-3.5" />
                     </Button>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={handleStartConnectionClick}
+                    disabled={isInConnectionMode}
+                  >
+                    <Link2 className="h-3 w-3 mr-1" />
+                    Ligar
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -446,20 +393,15 @@ export function FunnelStepBlock({
                     <p className="text-xs text-muted-foreground">Para onde o cliente vai após esta etapa</p>
                   </div>
 
-                  {/* Conectar Próximas Etapas (botão "Ligar" + clicar no card destino) */}
-                  <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border/50">
-                    <div className="text-xs font-medium text-muted-foreground">
-                      Conectar Próximas Etapas
-                    </div>
-
-                    {/* Accept */}
+                  {/* Conectar Próxima Etapa - simplificado (linear) */}
+                  <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
                     <div className="flex items-center justify-between gap-3">
-                      <Label className="text-xs font-medium flex items-center gap-1.5 shrink-0">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        Ao Aceitar
-                      </Label>
+                      <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                        <Link2 className="h-4 w-4" />
+                        Próxima etapa:
+                      </span>
 
-                      <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1 flex items-center justify-end gap-2">
                         <span className={cn("truncate text-xs", !step.next_step_on_accept && "text-muted-foreground")}>
                           {step.next_step_on_accept
                             ? (acceptStep?.title || (acceptStep ? STEP_CONFIG[acceptStep.step_type]?.label : 'Etapa'))
@@ -473,7 +415,7 @@ export function FunnelStepBlock({
                               variant="ghost"
                               size="sm"
                               className="h-7 px-2 text-xs"
-                              onClick={(e) => handleStartConnectionClick(e, 'accept')}
+                              onClick={handleStartConnectionClick}
                               disabled={isInConnectionMode}
                             >
                               Trocar
@@ -483,9 +425,9 @@ export function FunnelStepBlock({
                               variant="ghost"
                               size="sm"
                               className="h-7 w-7 p-0"
-                              onClick={(e) => handleRemoveConnection(e, 'accept')}
+                              onClick={handleRemoveConnection}
                               disabled={isInConnectionMode}
-                              aria-label="Remover conexão de aceite"
+                              aria-label="Remover conexão"
                             >
                               <X className="h-3.5 w-3.5" />
                             </Button>
@@ -496,61 +438,7 @@ export function FunnelStepBlock({
                             variant="outline"
                             size="sm"
                             className="h-7 px-2 text-xs"
-                            onClick={(e) => handleStartConnectionClick(e, 'accept')}
-                            disabled={isInConnectionMode}
-                          >
-                            <Link2 className="h-3 w-3 mr-1" />
-                            Ligar
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Decline */}
-                    <div className="flex items-center justify-between gap-3">
-                      <Label className="text-xs font-medium flex items-center gap-1.5 shrink-0">
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        Ao Recusar
-                      </Label>
-
-                      <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
-                        <span className={cn("truncate text-xs", !step.next_step_on_decline && "text-muted-foreground")}>
-                          {step.next_step_on_decline
-                            ? (declineStep?.title || (declineStep ? STEP_CONFIG[declineStep.step_type]?.label : 'Etapa'))
-                            : 'Nenhum'}
-                        </span>
-
-                        {step.next_step_on_decline ? (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={(e) => handleStartConnectionClick(e, 'decline')}
-                              disabled={isInConnectionMode}
-                            >
-                              Trocar
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0"
-                              onClick={(e) => handleRemoveConnection(e, 'decline')}
-                              disabled={isInConnectionMode}
-                              aria-label="Remover conexão de recusa"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={(e) => handleStartConnectionClick(e, 'decline')}
+                            onClick={handleStartConnectionClick}
                             disabled={isInConnectionMode}
                           >
                             <Link2 className="h-3 w-3 mr-1" />
