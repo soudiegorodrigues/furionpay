@@ -31,7 +31,7 @@ export const navigationItems: { id: Section; label: string; description: string;
   { id: "offers", label: "Ofertas", description: "Gerenciar links e ofertas", icon: Tag },
   { id: "domains", label: "Domínios", description: "Adicione o seu próprio domínio no checkout", icon: Globe },
   { id: "order-bump", label: "Order Bump", description: "Configurar ofertas adicionais", icon: ShoppingCart },
-  { id: "upsell", label: "Upsell um clique", description: "Configurar ofertas adicionais", icon: Zap },
+  { id: "upsell", label: "Funil de Vendas", description: "Construtor visual de upsell, downsell e cross-sell", icon: Zap },
   { id: "pixels", label: "Pixels", description: "Configurar pixels de rastreamento", icon: Target },
   { id: "coproduction", label: "Co produção", description: "Adicione coprodutores ao seu produto", icon: Handshake },
   { id: "affiliation", label: "Afiliação e marketplace", description: "Configurações de afiliação e marketplace", icon: Store },

@@ -939,6 +939,165 @@ export type Database = {
           },
         ]
       }
+      funnel_conversions: {
+        Row: {
+          action: string
+          created_at: string | null
+          funnel_id: string
+          id: string
+          step_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          funnel_id: string
+          id?: string
+          step_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          funnel_id?: string
+          id?: string
+          step_id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_conversions_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_conversions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_conversions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pix_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_steps: {
+        Row: {
+          accept_url: string | null
+          background_color: string | null
+          button_accept_text: string | null
+          button_color: string | null
+          button_decline_text: string | null
+          created_at: string | null
+          decline_url: string | null
+          description: string | null
+          funnel_id: string
+          headline: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          next_step_on_accept: string | null
+          next_step_on_decline: string | null
+          offer_price: number | null
+          offer_product_id: string | null
+          original_price: number | null
+          position: number
+          step_type: string
+          timer_seconds: number | null
+          title: string | null
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          accept_url?: string | null
+          background_color?: string | null
+          button_accept_text?: string | null
+          button_color?: string | null
+          button_decline_text?: string | null
+          created_at?: string | null
+          decline_url?: string | null
+          description?: string | null
+          funnel_id: string
+          headline?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          next_step_on_accept?: string | null
+          next_step_on_decline?: string | null
+          offer_price?: number | null
+          offer_product_id?: string | null
+          original_price?: number | null
+          position?: number
+          step_type: string
+          timer_seconds?: number | null
+          title?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          accept_url?: string | null
+          background_color?: string | null
+          button_accept_text?: string | null
+          button_color?: string | null
+          button_decline_text?: string | null
+          created_at?: string | null
+          decline_url?: string | null
+          description?: string | null
+          funnel_id?: string
+          headline?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          next_step_on_accept?: string | null
+          next_step_on_decline?: string | null
+          offer_price?: number | null
+          offer_product_id?: string | null
+          original_price?: number | null
+          position?: number
+          step_type?: string
+          timer_seconds?: number | null
+          title?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_steps_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_steps_next_accept_fkey"
+            columns: ["next_step_on_accept"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_steps_next_decline_fkey"
+            columns: ["next_step_on_decline"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_steps_offer_product_id_fkey"
+            columns: ["offer_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           attempt_count: number
@@ -2008,6 +2167,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sales_funnels: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          origin_url: string | null
+          product_id: string
+          thank_you_url: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          origin_url?: string | null
+          product_id: string
+          thank_you_url?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          origin_url?: string | null
+          product_id?: string
+          thank_you_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_funnels_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_backups: {
         Row: {
