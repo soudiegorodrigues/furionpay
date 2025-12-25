@@ -599,14 +599,14 @@ export const ReceitaPlataformaSection = () => {
         </CardContent>
       </Card>
 
-      {/* Card Detalhado: Custos por Adquirente */}
+      {/* Card Detalhado: Faturamento por Adquirente */}
       {hasAcquirerData && (
         <Card className="border-primary/20">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
                 <PieChartIcon className="h-4 w-4 text-primary" />
-                Custos por Adquirente ({getAcquirerPeriodLabel()})
+                Faturamento por Adquirente ({getAcquirerPeriodLabel()})
               </CardTitle>
               
               <div className="flex items-center bg-muted rounded-full p-1">
@@ -745,6 +745,197 @@ export const ReceitaPlataformaSection = () => {
                     });
                   })()}
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* NOVA SEÇÃO: Custos por Adquirente (focado apenas nos custos) */}
+      {hasAcquirerData && (
+        <Card className="border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent">
+          <CardHeader className="pb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <Wallet className="h-4 w-4 text-red-500" />
+                Custos por Adquirente ({getAcquirerPeriodLabel()})
+              </CardTitle>
+              
+              <div className="flex items-center bg-muted rounded-full p-1">
+                {acquirerCostFilterOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setAcquirerCostFilter(option.value)}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-full transition-all",
+                      acquirerCostFilter === option.value
+                        ? "bg-red-500 text-white shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Lado Esquerdo - Cards de Custo */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Custo pago a cada adquirente
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(() => {
+                    const acquirers = [
+                      { 
+                        name: 'ATIVUS HUB', 
+                        data: ativusData, 
+                        color: '#10B981', 
+                        bgColor: 'bg-green-500/10', 
+                        borderColor: 'border-green-500/30',
+                        costPerTx: 0.05
+                      },
+                      { 
+                        name: 'VALORION', 
+                        data: valorionData, 
+                        color: '#3B82F6', 
+                        bgColor: 'bg-blue-500/10', 
+                        borderColor: 'border-blue-500/30',
+                        costPerTx: 0.29
+                      },
+                      { 
+                        name: 'BANCO INTER', 
+                        data: interData, 
+                        color: '#F97316', 
+                        bgColor: 'bg-orange-500/10', 
+                        borderColor: 'border-orange-500/30',
+                        costPerTx: 0.00
+                      }
+                    ].sort((a, b) => b.data.cost - a.data.cost);
+                    
+                    const totalCostValue = ativusData.cost + valorionData.cost + interData.cost;
+                    
+                    return acquirers.map((acq, index) => {
+                      const costPercentage = totalCostValue > 0 
+                        ? ((acq.data.cost / totalCostValue) * 100).toFixed(1) 
+                        : '0';
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className={`border rounded-lg p-3 ${acq.bgColor} ${acq.borderColor} transition-all hover:shadow-md`}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-xs text-foreground">{acq.name}</span>
+                            <span 
+                              className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-500"
+                            >
+                              {costPercentage}%
+                            </span>
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Custo Total</span>
+                              <span className="text-xs font-bold text-red-500">{formatCurrency(acq.data.cost)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Custo/Tx</span>
+                              <span className="text-xs font-medium text-foreground">{formatCurrency(acq.costPerTx)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Transações</span>
+                              <span className="text-xs font-medium text-foreground">{acq.data.count}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">Volume</span>
+                              <span className="text-xs font-medium text-foreground">{formatCurrency(acq.data.volume)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+                
+                {/* Resumo de Custos */}
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <div className="text-center p-2 bg-red-500/10 rounded-lg border border-red-500/20">
+                    <div className="text-sm font-bold text-red-500">{formatCurrency(totalCost)}</div>
+                    <p className="text-[10px] text-muted-foreground">Custo Total</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-sm font-bold text-foreground">{totalCount}</div>
+                    <p className="text-[10px] text-muted-foreground">Transações</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <div className="text-sm font-bold text-foreground">{formatCurrency(avgCost)}</div>
+                    <p className="text-[10px] text-muted-foreground">Custo Médio/Tx</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Lado Direito - Barras de Custo */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Distribuição percentual dos custos
+                </p>
+                <div className="space-y-4">
+                  {(() => {
+                    const totalCostValue = ativusData.cost + valorionData.cost + interData.cost;
+                    const acquirers = [
+                      { name: 'Ativus Hub', data: ativusData, color: '#10B981', costPerTx: 0.05 },
+                      { name: 'Valorion', data: valorionData, color: '#3B82F6', costPerTx: 0.29 },
+                      { name: 'Banco Inter', data: interData, color: '#F97316', costPerTx: 0.00 }
+                    ].sort((a, b) => b.data.cost - a.data.cost);
+                    
+                    return acquirers.map((acq, index) => {
+                      const percentage = totalCostValue > 0 ? (acq.data.cost / totalCostValue) * 100 : 0;
+                      
+                      return (
+                        <div key={index} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-sm" 
+                                style={{ backgroundColor: acq.color }}
+                              />
+                              <span className="text-sm font-medium text-foreground">{acq.name}</span>
+                              <span className="text-[10px] text-muted-foreground">
+                                ({formatCurrency(acq.costPerTx)}/tx)
+                              </span>
+                            </div>
+                            <span className="text-sm font-bold text-red-500">{percentage.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500 bg-red-500"
+                              style={{ 
+                                width: `${percentage}%`,
+                                opacity: 0.7 + (percentage / 100) * 0.3
+                              }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span className="text-red-500 font-medium">{formatCurrency(acq.data.cost)}</span>
+                            <span>{acq.data.count} transações</span>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+                
+                {/* Insight de economia */}
+                {totalCost > 0 && (
+                  <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    <p className="text-xs text-muted-foreground">
+                      💡 <strong>Insight:</strong> Se todas as transações fossem processadas pelo Banco Inter, 
+                      você economizaria <span className="text-green-500 font-semibold">{formatCurrency(totalCost)}</span> em custos.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
