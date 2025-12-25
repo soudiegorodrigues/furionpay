@@ -189,15 +189,18 @@ export function FunnelConnections({
 
       {lines.map((line, index) => (
         <g key={index}>
-          {/* Glow effect */}
-          <path
-            d={getPath(line.from, line.to)}
-            fill="none"
-            stroke={getGlowColor(line.type)}
-            strokeWidth="4"
-            opacity="0.3"
-            filter={`url(#glow-${line.type})`}
-          />
+          {/* Glow effect (only for step-to-step connections) */}
+          {line.type !== 'product' && (
+            <path
+              d={getPath(line.from, line.to)}
+              fill="none"
+              stroke={getGlowColor(line.type)}
+              strokeWidth="4"
+              opacity="0.3"
+              filter={`url(#glow-${line.type})`}
+            />
+          )}
+
           {/* Main line */}
           <path
             d={getPath(line.from, line.to)}

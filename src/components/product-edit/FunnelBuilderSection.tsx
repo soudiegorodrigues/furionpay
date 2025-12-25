@@ -207,7 +207,7 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
     onError: () => toast.error('Erro ao atualizar etapa'),
   });
 
-  // Update step position mutation
+  // Update step position mutation (optimistic UI to avoid snap-back)
   const updatePositionMutation = useMutation({
     mutationFn: async ({ stepId, x, y }: { stepId: string; x: number; y: number }) => {
       const { error } = await supabase
@@ -216,7 +216,27 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
         .eq('id', stepId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async ({ stepId, x, y }) => {
+      if (!selectedFunnelId) return { previousSteps: undefined as FunnelStep[] | undefined };
+
+      await queryClient.cancelQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
+
+      const previousSteps = queryClient.getQueryData<FunnelStep[]>(['funnel-steps', selectedFunnelId]);
+
+      queryClient.setQueryData<FunnelStep[]>(['funnel-steps', selectedFunnelId], (old) => {
+        if (!old) return old;
+        return old.map((s) => (s.id === stepId ? { ...s, position_x: x, position_y: y } : s));
+      });
+
+      return { previousSteps };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (selectedFunnelId && ctx?.previousSteps) {
+        queryClient.setQueryData(['funnel-steps', selectedFunnelId], ctx.previousSteps);
+      }
+      toast.error('Erro ao mover etapa');
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
     },
   });
