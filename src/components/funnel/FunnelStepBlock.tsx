@@ -199,139 +199,146 @@ export function FunnelStepBlock({
           {step.is_active ? "Ativo" : "Inativo"}
         </Badge>
 
+        {/* Content area - NOT inside trigger */}
+        <div className="p-4 pl-10 sm:p-5 sm:pl-11">
+          {/* Header */}
+          <div className="flex items-start gap-3 mb-3 pr-14">
+            <div className={cn('p-2 rounded-md shrink-0', config.color)}>
+              <Icon className="h-5 w-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-sm sm:text-base truncate">{step.title || config.label}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{config.description}</p>
+            </div>
+          </div>
+
+          {/* Metrics Row */}
+          <div className="flex items-center gap-3 mb-3 px-2 py-1.5 bg-muted/50 rounded-lg text-xs">
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              <span>{metrics?.views ?? 0}</span>
+            </div>
+            <div className="flex items-center gap-1 text-emerald-600">
+              <Check className="h-3 w-3" />
+              <span>{metrics?.accepted ?? 0}</span>
+            </div>
+            <div className="flex items-center gap-1 text-emerald-600 font-medium">
+              <DollarSign className="h-3 w-3" />
+              <span>
+                {(metrics?.revenue ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 text-blue-600 ml-auto">
+              <Percent className="h-3 w-3" />
+              <span>
+                {metrics?.views && metrics.views > 0 
+                  ? ((metrics.accepted / metrics.views) * 100).toFixed(1) 
+                  : '0.0'}%
+              </span>
+            </div>
+          </div>
+
+          {/* Current Connections Display with Quick Actions - OUTSIDE trigger */}
+          {step.step_type !== 'thankyou' && (
+            <div className="flex flex-col gap-1.5 mb-3 text-xs">
+              {/* Accept Connection */}
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span className="text-muted-foreground shrink-0">Aceite:</span>
+                <span className="font-medium truncate flex-1">
+                  {acceptStep ? (acceptStep.title || STEP_CONFIG[acceptStep.step_type].label) : 'Não conectado'}
+                </span>
+                {acceptStep ? (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                      onClick={handleStartAcceptConnection}
+                      disabled={isInConnectionMode}
+                    >
+                      <Link2 className="h-3 w-3 mr-0.5" />
+                      Trocar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={(e) => handleRemoveConnection(e, 'accept')}
+                      disabled={isInConnectionMode}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 shrink-0"
+                    onClick={handleStartAcceptConnection}
+                    disabled={otherSteps.length === 0 || isInConnectionMode}
+                  >
+                    <Link2 className="h-3 w-3 mr-0.5" />
+                    Ligar
+                  </Button>
+                )}
+              </div>
+              
+              {/* Decline Connection */}
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-muted-foreground shrink-0">Recusa:</span>
+                <span className="font-medium truncate flex-1">
+                  {declineStep ? (declineStep.title || STEP_CONFIG[declineStep.step_type].label) : 'Não conectado'}
+                </span>
+                {declineStep ? (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                      onClick={handleStartDeclineConnection}
+                      disabled={isInConnectionMode}
+                    >
+                      <Link2 className="h-3 w-3 mr-0.5" />
+                      Trocar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={(e) => handleRemoveConnection(e, 'decline')}
+                      disabled={isInConnectionMode}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 shrink-0"
+                    onClick={handleStartDeclineConnection}
+                    disabled={otherSteps.length === 0 || isInConnectionMode}
+                  >
+                    <Link2 className="h-3 w-3 mr-0.5" />
+                    Ligar
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Collapsible - only footer is trigger */}
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
           <CollapsibleTrigger asChild>
-            <div className="p-4 pl-10 sm:p-5 sm:pl-11 cursor-pointer" onClick={handleExpand}>
-              {/* Header */}
-              <div className="flex items-start gap-3 mb-3 pr-14">
-                <div className={cn('p-2 rounded-md shrink-0', config.color)}>
-                  <Icon className="h-5 w-5 text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm sm:text-base truncate">{step.title || config.label}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{config.description}</p>
-                </div>
-              </div>
-
-              {/* Metrics Row */}
-              <div className="flex items-center gap-3 mb-3 px-2 py-1.5 bg-muted/50 rounded-lg text-xs">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Eye className="h-3 w-3" />
-                  <span>{metrics?.views ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600">
-                  <Check className="h-3 w-3" />
-                  <span>{metrics?.accepted ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 font-medium">
-                  <DollarSign className="h-3 w-3" />
-                  <span>
-                    {(metrics?.revenue ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 text-blue-600 ml-auto">
-                  <Percent className="h-3 w-3" />
-                  <span>
-                    {metrics?.views && metrics.views > 0 
-                      ? ((metrics.accepted / metrics.views) * 100).toFixed(1) 
-                      : '0.0'}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Current Connections Display with Quick Actions */}
-              {step.step_type !== 'thankyou' && (
-                <div className="flex flex-col gap-1.5 mb-3 text-xs">
-                  {/* Accept Connection */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="text-muted-foreground shrink-0">Aceite:</span>
-                    <span className="font-medium truncate flex-1">
-                      {acceptStep ? (acceptStep.title || STEP_CONFIG[acceptStep.step_type].label) : 'Não conectado'}
-                    </span>
-                    {acceptStep ? (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
-                          onClick={handleStartAcceptConnection}
-                          disabled={isInConnectionMode}
-                        >
-                          <Link2 className="h-3 w-3 mr-0.5" />
-                          Trocar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => handleRemoveConnection(e, 'accept')}
-                          disabled={isInConnectionMode}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 shrink-0"
-                        onClick={handleStartAcceptConnection}
-                        disabled={otherSteps.length === 0 || isInConnectionMode}
-                      >
-                        <Link2 className="h-3 w-3 mr-0.5" />
-                        Ligar
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {/* Decline Connection */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                    <span className="text-muted-foreground shrink-0">Recusa:</span>
-                    <span className="font-medium truncate flex-1">
-                      {declineStep ? (declineStep.title || STEP_CONFIG[declineStep.step_type].label) : 'Não conectado'}
-                    </span>
-                    {declineStep ? (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
-                          onClick={handleStartDeclineConnection}
-                          disabled={isInConnectionMode}
-                        >
-                          <Link2 className="h-3 w-3 mr-0.5" />
-                          Trocar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => handleRemoveConnection(e, 'decline')}
-                          disabled={isInConnectionMode}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 shrink-0"
-                        onClick={handleStartDeclineConnection}
-                        disabled={otherSteps.length === 0 || isInConnectionMode}
-                      >
-                        <Link2 className="h-3 w-3 mr-0.5" />
-                        Ligar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Footer */}
-              <div className="flex items-center justify-between">
+            <div 
+              className="px-4 pb-4 sm:px-5 sm:pb-5 pt-0 cursor-pointer" 
+              onClick={handleExpand}
+            >
+              {/* Footer - This is the trigger */}
+              <div className="flex items-center justify-between border-t pt-3">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">
                   {isExpanded ? (
                     <ChevronUp className="h-4 w-4" />
