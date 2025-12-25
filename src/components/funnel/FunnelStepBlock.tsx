@@ -249,11 +249,52 @@ export function FunnelStepBlock({
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p className="text-sm">Página de obrigado é o fim do funil</p>
-                  <p className="text-xs mt-1">
-                    Configure a URL nas configurações do funil
-                  </p>
+                <div className="space-y-4">
+                  {/* Step Name */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Nome da Etapa</Label>
+                    <Input
+                      type="text"
+                      className="h-9 text-sm"
+                      value={formData.title || ''}
+                      onChange={(e) => handleChange('title', e.target.value)}
+                      placeholder="Ex: Obrigado pela compra!"
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  {/* Redirect URL */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">URL de Redirecionamento</Label>
+                    <Input
+                      type="url"
+                      className="h-9 text-sm"
+                      value={formData.accept_url || ''}
+                      onChange={(e) => handleChange('accept_url', e.target.value)}
+                      placeholder="https://..."
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      URL final para onde o cliente será direcionado
+                    </p>
+                  </div>
+
+                  {/* Active Toggle */}
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium">Etapa Ativa</Label>
+                      <p className="text-xs text-muted-foreground">Ativar esta página de obrigado</p>
+                    </div>
+                    <Switch
+                      checked={formData.is_active}
+                      onCheckedChange={(checked) => handleChange('is_active', checked)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
                 </div>
               )}
 
