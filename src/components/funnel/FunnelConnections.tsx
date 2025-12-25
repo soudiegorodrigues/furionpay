@@ -107,19 +107,13 @@ export function FunnelConnections({
   };
 
   const getColor = (type: 'accept' | 'decline' | 'product') => {
-    switch (type) {
-      case 'accept': return 'hsl(var(--chart-2))'; // green
-      case 'decline': return 'hsl(var(--chart-4))'; // orange
-      case 'product': return 'hsl(var(--primary))';
-    }
+    // Padrão único: mesma cor da linha do produto (tema/primary)
+    return 'hsl(var(--primary))';
   };
 
   const getGlowColor = (type: 'accept' | 'decline' | 'product') => {
-    switch (type) {
-      case 'accept': return '#10b981';
-      case 'decline': return '#f59e0b';
-      case 'product': return 'hsl(var(--primary))';
-    }
+    // Mantido por compatibilidade (caso o glow volte), mas seguindo o mesmo padrão
+    return 'hsl(var(--primary))';
   };
 
   if (lines.length === 0) return null;
@@ -145,7 +139,7 @@ export function FunnelConnections({
           orient="auto"
           markerUnits="strokeWidth"
         >
-          <path d="M0,0 L0,6 L9,3 z" fill="#10b981" />
+          <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--primary))" />
         </marker>
         <marker
           id="arrow-decline"
@@ -156,7 +150,7 @@ export function FunnelConnections({
           orient="auto"
           markerUnits="strokeWidth"
         >
-          <path d="M0,0 L0,6 L9,3 z" fill="#f59e0b" />
+          <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--primary))" />
         </marker>
         <marker
           id="arrow-product"
