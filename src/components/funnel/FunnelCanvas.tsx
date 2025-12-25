@@ -12,7 +12,7 @@ import {
 import { FunnelStepBlock } from './FunnelStepBlock';
 import { FunnelConnections } from './FunnelConnections';
 import { FunnelStep, StepMetrics } from './types';
-import { Package, Plus, Move, ZoomIn, ZoomOut } from 'lucide-react';
+import { Package, Plus, Move, ZoomIn, ZoomOut, Link2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,11 @@ interface Product {
   name: string;
   price: number;
   image_url: string | null;
+}
+
+interface ConnectionMode {
+  sourceId: string;
+  type: 'accept' | 'decline';
 }
 
 interface FunnelCanvasProps {
@@ -67,6 +72,7 @@ export function FunnelCanvas({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [connectionMode, setConnectionMode] = useState<ConnectionMode | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -78,11 +84,13 @@ export function FunnelCanvas({
   );
 
   const handleDragStart = (event: DragStartEvent) => {
+    if (connectionMode) return; // Disable drag in connection mode
     setActiveId(event.active.id as string);
     setDragOffset({ x: 0, y: 0 });
   };
 
   const handleDragMove = (event: DragMoveEvent) => {
+    if (connectionMode) return;
     if (event.delta) {
       setDragOffset({
         x: event.delta.x / zoom,
@@ -92,6 +100,7 @@ export function FunnelCanvas({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (connectionMode) return;
     const { active, delta } = event;
     const stepId = active.id as string;
     const step = steps.find(s => s.id === stepId);
@@ -110,6 +119,23 @@ export function FunnelCanvas({
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
 
+  const handleStartConnection = (sourceId: string, type: 'accept' | 'decline') => {
+    setConnectionMode({ sourceId, type });
+  };
+
+  const handleCancelConnection = () => {
+    setConnectionMode(null);
+  };
+
+  const handleCompleteConnection = (targetId: string) => {
+    if (!connectionMode) return;
+    if (targetId === connectionMode.sourceId) return; // Can't connect to self
+    
+    const field = connectionMode.type === 'accept' ? 'next_step_on_accept' : 'next_step_on_decline';
+    onUpdateConnection(connectionMode.sourceId, field, targetId);
+    setConnectionMode(null);
+  };
+
   const activeStep = steps.find(s => s.id === activeId);
 
   // Calculate canvas dimensions based on step positions
@@ -118,8 +144,32 @@ export function FunnelCanvas({
 
   return (
     <div className="relative flex flex-col h-[600px]">
+      {/* Connection Mode Banner */}
+      {connectionMode && (
+        <div className="absolute top-0 left-0 right-0 z-30 bg-primary text-primary-foreground py-2 px-4 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              Clique em outro card para conectar como "{connectionMode.type === 'accept' ? 'Aceite' : 'Recusa'}"
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 hover:bg-primary-foreground/20 text-primary-foreground"
+            onClick={handleCancelConnection}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Cancelar
+          </Button>
+        </div>
+      )}
+
       {/* Toolbar */}
-      <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-lg border shadow-sm p-1">
+      <div className={cn(
+        "absolute right-2 z-20 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-lg border shadow-sm p-1",
+        connectionMode ? "top-12" : "top-2"
+      )}>
         <Button
           variant="ghost"
           size="sm"
@@ -144,13 +194,17 @@ export function FunnelCanvas({
       {/* Canvas Container */}
       <div 
         ref={canvasRef}
-        className="flex-1 overflow-auto bg-muted/30 relative"
+        className={cn(
+          "flex-1 overflow-auto bg-muted/30 relative",
+          connectionMode && "cursor-crosshair"
+        )}
         style={{ 
           backgroundImage: `
             linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
             linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px)
           `,
           backgroundSize: `${GRID_SIZE * zoom}px ${GRID_SIZE * zoom}px`,
+          marginTop: connectionMode ? '40px' : '0',
         }}
       >
         <div 
@@ -206,30 +260,43 @@ export function FunnelCanvas({
               const isActive = step.id === activeId;
               const displayX = isActive ? step.position_x + dragOffset.x : step.position_x;
               const displayY = isActive ? step.position_y + dragOffset.y : step.position_y;
+              const isConnectionSource = connectionMode?.sourceId === step.id;
+              const isConnectionTarget = connectionMode && connectionMode.sourceId !== step.id;
               
               return (
                 <div
                   key={step.id}
-                  className="absolute"
+                  className={cn(
+                    "absolute transition-all",
+                    isConnectionSource && "ring-2 ring-primary ring-offset-2 rounded-lg",
+                    isConnectionTarget && "cursor-pointer hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 rounded-lg"
+                  )}
                   style={{
                     left: displayX,
                     top: displayY,
                     width: 280,
-                    zIndex: isActive ? 100 : 1,
+                    zIndex: isActive ? 100 : isConnectionSource ? 50 : 1,
+                  }}
+                  onClick={() => {
+                    if (isConnectionTarget) {
+                      handleCompleteConnection(step.id);
+                    }
                   }}
                 >
                   <FunnelStepBlock
                     step={step}
                     isSelected={selectedStepId === step.id}
-                    onSelect={() => onSelectStep(step.id)}
+                    onSelect={() => !connectionMode && onSelectStep(step.id)}
                     onToggleActive={(active) => onToggleStepActive(step.id, active)}
                     onDelete={() => onDeleteStep(step.id)}
                     onSave={onSaveStep}
                     onUpdateConnection={(field, targetId) => onUpdateConnection(step.id, field, targetId)}
+                    onStartConnection={handleStartConnection}
                     products={products}
                     allSteps={steps}
                     metrics={stepMetrics?.[step.id]}
-                    isDraggable
+                    isDraggable={!connectionMode}
+                    isInConnectionMode={!!connectionMode}
                   />
                 </div>
               );
@@ -247,10 +314,12 @@ export function FunnelCanvas({
                     onDelete={() => {}}
                     onSave={() => {}}
                     onUpdateConnection={() => {}}
+                    onStartConnection={() => {}}
                     products={products}
                     allSteps={steps}
                     metrics={stepMetrics?.[activeStep.id]}
                     isDraggable={false}
+                    isInConnectionMode={false}
                   />
                 </div>
               )}
@@ -282,6 +351,7 @@ export function FunnelCanvas({
           size="sm"
           className="border-dashed border-2 hover:border-primary hover:bg-primary/5 text-xs shadow-md bg-background"
           onClick={onAddStep}
+          disabled={!!connectionMode}
         >
           <Plus className="h-3.5 w-3.5 mr-1.5" />
           Adicionar Etapa
