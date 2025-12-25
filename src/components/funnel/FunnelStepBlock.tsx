@@ -223,9 +223,6 @@ export function FunnelStepBlock({
               {/* Footer */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {step.timer_seconds ? `${Math.floor(step.timer_seconds / 60)}min` : 'Sem timer'}
-                  </Badge>
                   {isExpanded ? (
                     <ChevronUp className="h-4 w-4 text-muted-foreground" />
                   ) : (
