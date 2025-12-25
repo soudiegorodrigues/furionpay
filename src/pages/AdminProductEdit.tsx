@@ -18,7 +18,7 @@ import {
   Section
 } from "@/components/product-edit";
 import { OrderBumpSection } from "@/components/product-edit/OrderBumpSection";
-import { UpsellSection } from "@/components/product-edit/UpsellSection";
+import { FunnelBuilderSection } from "@/components/product-edit/FunnelBuilderSection";
 import { Package, ArrowLeft, Save, CheckCircle } from "lucide-react";
 
 interface Product {
@@ -211,7 +211,7 @@ export default function AdminProductEdit() {
       case "order-bump":
         return <OrderBumpSection productId={product.id} userId={product.user_id} />;
       case "upsell":
-        return <UpsellSection productId={product.id} userId={product.user_id} />;
+        return <FunnelBuilderSection productId={product.id} userId={product.user_id} productName={product.name} productImage={product.image_url} />;
       case "pixels":
         return <ComingSoonSection title="Pixels" description="Configure pixels de rastreamento como Meta Pixel, Google Analytics, etc." />;
       case "coproduction":
