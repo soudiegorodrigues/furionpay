@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FunnelCanvas } from '@/components/funnel/FunnelCanvas';
 import { FunnelSidebar } from '@/components/funnel/FunnelSidebar';
-import { FunnelStepConfig } from '@/components/funnel/FunnelStepConfig';
 import { SalesFunnel, FunnelStep, StepType } from '@/components/funnel/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Loader2, Settings, Menu, PanelRightOpen } from 'lucide-react';
+import { Loader2, Settings, Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FunnelBuilderSectionProps {
@@ -26,7 +25,6 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
-  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Fetch funnels
@@ -77,7 +75,6 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
   });
 
   const selectedFunnel = funnels.find(f => f.id === selectedFunnelId);
-  const selectedStep = steps.find(s => s.id === selectedStepId);
 
   // Create funnel mutation
   const createFunnelMutation = useMutation({
@@ -139,9 +136,8 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
-      if (data) setSelectedStepId(data.id);
       toast.success('Etapa adicionada!');
     },
     onError: () => toast.error('Erro ao adicionar etapa'),
@@ -172,7 +168,6 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
-      setSelectedStepId(null);
       toast.success('Etapa excluída!');
     },
   });
@@ -215,8 +210,8 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
     />
   );
 
-  const funnelConfigContent = selectedFunnel && !selectedStepId ? (
-    <Card className="h-full">
+  const funnelConfigContent = selectedFunnel && (
+    <Card>
       <CardHeader className="pb-3 border-b">
         <CardTitle className="text-base">Configurações do Funil</CardTitle>
       </CardHeader>
@@ -253,16 +248,6 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
         </div>
       </CardContent>
     </Card>
-  ) : null;
-
-  const stepConfigContent = (
-    <FunnelStepConfig
-      step={selectedStep || null}
-      products={products}
-      allSteps={steps}
-      onSave={(step) => updateStepMutation.mutate(step)}
-      onClose={() => setSelectedStepId(null)}
-    />
   );
 
   return (
@@ -316,8 +301,8 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
                   productName={productName}
                   productImage={productImage}
                   steps={steps}
-                  selectedStepId={selectedStepId}
-                  onSelectStep={setSelectedStepId}
+                  selectedStepId={null}
+                  onSelectStep={() => {}}
                   onReorderSteps={(reordered) => reorderStepsMutation.mutate(reordered)}
                   onToggleStepActive={(id, active) => {
                     const step = steps.find(s => s.id === id);
@@ -325,6 +310,8 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
                   }}
                   onDeleteStep={(id) => deleteStepMutation.mutate(id)}
                   onAddStep={() => createStepMutation.mutate('upsell')}
+                  onSaveStep={(step) => updateStepMutation.mutate(step)}
+                  products={products}
                 />
               ) : (
                 <div className="flex items-center justify-center h-[300px] text-muted-foreground text-center p-4">
@@ -344,12 +331,8 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
             </CardContent>
           </Card>
 
-          {/* Config Panel - Below canvas on all screens */}
-          {(selectedFunnel || selectedStep) && (
-            <div className="min-h-[300px]">
-              {funnelConfigContent || stepConfigContent}
-            </div>
-          )}
+          {/* Funnel Config Panel - Always visible when funnel selected */}
+          {funnelConfigContent}
         </div>
       </div>
     </div>
