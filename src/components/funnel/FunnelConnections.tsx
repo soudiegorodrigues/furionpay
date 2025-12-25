@@ -207,7 +207,7 @@ export function FunnelConnections({
             fill="none"
             stroke={getColor(line.type)}
             strokeWidth="2"
-            strokeDasharray={line.type === 'product' ? '8 4' : 'none'}
+            strokeDasharray="8 4"
             markerEnd={`url(#arrow-${line.type})`}
           />
         </g>
