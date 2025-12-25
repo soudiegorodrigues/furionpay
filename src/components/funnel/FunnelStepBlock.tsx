@@ -17,8 +17,7 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  Save,
-  Settings
+  Save
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FunnelStep, STEP_CONFIG } from './types';
@@ -85,13 +84,6 @@ export function FunnelStepBlock({
     setHasChanges(false);
   }, [step.id]);
 
-  const formatPrice = (value: number | null) => {
-    if (!value) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const handleChange = (field: keyof FunnelStep, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -182,43 +174,6 @@ export function FunnelStepBlock({
                 </div>
               </div>
 
-              {/* Product info */}
-              {step.step_type !== 'thankyou' && (
-                <div className="bg-muted/50 rounded-lg p-2.5 sm:p-3 mb-3">
-                  {step.offer_product ? (
-                    <div className="flex items-center gap-3">
-                      {step.offer_product.image_url ? (
-                        <img 
-                          src={step.offer_product.image_url} 
-                          alt={step.offer_product.name}
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-muted flex items-center justify-center">
-                          <Settings className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium truncate">{step.offer_product.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {step.original_price && step.original_price > (step.offer_price || 0) && (
-                            <span className="text-xs text-muted-foreground line-through">
-                              {formatPrice(step.original_price)}
-                            </span>
-                          )}
-                          <span className={cn('text-sm font-bold', config.textColor)}>
-                            {formatPrice(step.offer_price)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center py-2">
-                      Nenhum produto selecionado
-                    </p>
-                  )}
-                </div>
-              )}
 
               {/* Footer */}
               <div className="flex items-center justify-between">
