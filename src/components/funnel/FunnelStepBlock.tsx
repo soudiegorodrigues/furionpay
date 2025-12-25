@@ -89,7 +89,7 @@ export function FunnelStepBlock({
   useEffect(() => {
     setFormData({ ...step });
     setHasChanges(false);
-  }, [step]);
+  }, [step.id]);
 
   const formatPrice = (value: number | null) => {
     if (!value) return 'R$ 0,00';
@@ -289,6 +289,8 @@ export function FunnelStepBlock({
                         onChange={(e) => handleChange('original_price', parseFloat(e.target.value))}
                         placeholder="R$ 0,00"
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
                       />
                     </div>
                     <div className="space-y-2">
@@ -301,6 +303,8 @@ export function FunnelStepBlock({
                         onChange={(e) => handleChange('offer_price', parseFloat(e.target.value))}
                         placeholder="R$ 0,00"
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
                       />
                     </div>
                   </div>
@@ -315,6 +319,8 @@ export function FunnelStepBlock({
                       onChange={(e) => handleChange('timer_seconds', parseInt(e.target.value))}
                       placeholder="300"
                       onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
                     />
                   </div>
                 </>
