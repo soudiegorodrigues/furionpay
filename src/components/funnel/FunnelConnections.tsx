@@ -10,6 +10,8 @@ interface FunnelConnectionsProps {
   productPosition: { x: number; y: number };
   cardWidth: number;
   cardHeight: number;
+  draggedStepId?: string | null;
+  dragDelta?: { x: number; y: number };
 }
 
 interface ConnectionLine {
@@ -20,25 +22,43 @@ interface ConnectionLine {
   toStepId: string;
 }
 
+// Helper to get visual position of a step (considering drag offset)
+const getVisualPosition = (
+  step: FunnelStep, 
+  draggedStepId: string | null | undefined, 
+  dragDelta: { x: number; y: number }
+) => {
+  if (step.id === draggedStepId) {
+    return {
+      x: step.position_x + dragDelta.x,
+      y: step.position_y + dragDelta.y,
+    };
+  }
+  return { x: step.position_x, y: step.position_y };
+};
+
 export function FunnelConnections({ 
   steps, 
   productPosition,
   cardWidth,
-  cardHeight 
+  cardHeight,
+  draggedStepId = null,
+  dragDelta = { x: 0, y: 0 },
 }: FunnelConnectionsProps) {
   const lines: ConnectionLine[] = [];
 
   // Find first step to connect from product
   const firstStep = steps.find(s => s.position === 0);
   if (firstStep) {
+    const firstStepPos = getVisualPosition(firstStep, draggedStepId, dragDelta);
     lines.push({
       from: { 
         x: productPosition.x + PRODUCT_CARD_WIDTH / 2, // Centro do card produto
         y: productPosition.y + PRODUCT_CARD_HEIGHT + HANDLE_OFFSET // Sai do handle vermelho
       },
       to: { 
-        x: firstStep.position_x + cardWidth / 2, 
-        y: firstStep.position_y - 4 // Entra pelo topo do card
+        x: firstStepPos.x + cardWidth / 2, 
+        y: firstStepPos.y - 4 // Entra pelo topo do card
       },
       type: 'product',
       toStepId: firstStep.id,
@@ -51,14 +71,16 @@ export function FunnelConnections({
     if (step.next_step_on_accept) {
       const targetStep = steps.find(s => s.id === step.next_step_on_accept);
       if (targetStep) {
+        const fromPos = getVisualPosition(step, draggedStepId, dragDelta);
+        const toPos = getVisualPosition(targetStep, draggedStepId, dragDelta);
         lines.push({
           from: { 
-            x: step.position_x + cardWidth, 
-            y: step.position_y + cardHeight / 2 
+            x: fromPos.x + cardWidth, 
+            y: fromPos.y + cardHeight / 2 
           },
           to: { 
-            x: targetStep.position_x, 
-            y: targetStep.position_y + cardHeight / 2 
+            x: toPos.x, 
+            y: toPos.y + cardHeight / 2 
           },
           type: 'accept', // Use 'accept' color (blue/green) for the single line
           fromStepId: step.id,
