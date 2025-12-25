@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FunnelCanvas } from '@/components/funnel/FunnelCanvas';
 import { FunnelSidebar } from '@/components/funnel/FunnelSidebar';
-import { SalesFunnel, FunnelStep, StepType } from '@/components/funnel/types';
+import { SalesFunnel, FunnelStep, StepType, StepMetrics } from '@/components/funnel/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -69,6 +69,57 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch step metrics
+  const { data: stepMetrics = {} } = useQuery({
+    queryKey: ['funnel-step-metrics', selectedFunnelId],
+    queryFn: async () => {
+      if (!selectedFunnelId) return {};
+      
+      // Get conversions
+      const { data: conversions, error: convError } = await supabase
+        .from('funnel_conversions')
+        .select('step_id, action, transaction_id')
+        .eq('funnel_id', selectedFunnelId);
+      if (convError) throw convError;
+
+      // Get transaction amounts for paid conversions
+      const transactionIds = conversions
+        ?.filter(c => c.action === 'paid' && c.transaction_id)
+        .map(c => c.transaction_id) || [];
+      
+      let transactionAmounts: Record<string, number> = {};
+      if (transactionIds.length > 0) {
+        const { data: transactions } = await supabase
+          .from('pix_transactions')
+          .select('id, amount')
+          .in('id', transactionIds);
+        
+        transactions?.forEach(t => {
+          transactionAmounts[t.id] = Number(t.amount);
+        });
+      }
+
+      // Aggregate metrics by step_id
+      const metrics: Record<string, StepMetrics> = {};
+      conversions?.forEach((row) => {
+        if (!metrics[row.step_id]) {
+          metrics[row.step_id] = { views: 0, accepted: 0, declined: 0, paid: 0, revenue: 0 };
+        }
+        if (row.action === 'viewed') metrics[row.step_id].views++;
+        else if (row.action === 'accepted') metrics[row.step_id].accepted++;
+        else if (row.action === 'declined') metrics[row.step_id].declined++;
+        else if (row.action === 'paid') {
+          metrics[row.step_id].paid++;
+          if (row.transaction_id && transactionAmounts[row.transaction_id]) {
+            metrics[row.step_id].revenue += transactionAmounts[row.transaction_id];
+          }
+        }
+      });
+      return metrics;
+    },
+    enabled: !!selectedFunnelId,
   });
 
   const selectedFunnel = funnels.find(f => f.id === selectedFunnelId);
@@ -270,6 +321,7 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
                   onAddStep={() => createStepMutation.mutate('upsell')}
                   onSaveStep={(step) => updateStepMutation.mutate(step)}
                   products={products}
+                  stepMetrics={stepMetrics}
                 />
               ) : (
                 <div className="flex items-center justify-center h-[300px] text-muted-foreground text-center p-4">
