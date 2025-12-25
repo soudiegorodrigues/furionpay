@@ -31,6 +31,7 @@ const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
 const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 const Setup2FA = lazy(() => import("./pages/Setup2FA"));
+const UpsellPage = lazy(() => import("./pages/UpsellPage"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -167,6 +168,13 @@ const App = () => (
                   </Suspense>
                 } />
               </Route>
+              
+              {/* Upsell page - after payment */}
+              <Route path="/upsell/:transactionId" element={
+                <Suspense fallback={<PageSkeleton />}>
+                  <UpsellPage />
+                </Suspense>
+              } />
               
               {/* Public checkout route - simplified URL without /checkout prefix - MUST be before catch-all */}
               <Route path="/:offerCode" element={

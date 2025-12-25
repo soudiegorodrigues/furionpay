@@ -1663,6 +1663,90 @@ export type Database = {
           },
         ]
       }
+      product_upsells: {
+        Row: {
+          background_color: string | null
+          button_color: string | null
+          button_text: string | null
+          created_at: string | null
+          decline_text: string | null
+          description: string | null
+          headline: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          original_price: number | null
+          position: number | null
+          product_id: string
+          timer_seconds: number | null
+          title: string
+          updated_at: string | null
+          upsell_price: number
+          upsell_product_id: string
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          button_color?: string | null
+          button_text?: string | null
+          created_at?: string | null
+          decline_text?: string | null
+          description?: string | null
+          headline?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          original_price?: number | null
+          position?: number | null
+          product_id: string
+          timer_seconds?: number | null
+          title?: string
+          updated_at?: string | null
+          upsell_price: number
+          upsell_product_id: string
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          button_color?: string | null
+          button_text?: string | null
+          created_at?: string | null
+          decline_text?: string | null
+          description?: string | null
+          headline?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          original_price?: number | null
+          position?: number | null
+          product_id?: string
+          timer_seconds?: number | null
+          title?: string
+          updated_at?: string | null
+          upsell_price?: number
+          upsell_product_id?: string
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_upsells_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_upsells_upsell_product_id_fkey"
+            columns: ["upsell_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string
@@ -2005,6 +2089,67 @@ export type Database = {
           withdrawal_requests_data?: Json | null
         }
         Relationships: []
+      }
+      upsell_transactions: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          declined_at: string | null
+          id: string
+          original_transaction_id: string
+          paid_at: string | null
+          status: string | null
+          updated_at: string | null
+          upsell_id: string
+          upsell_transaction_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          declined_at?: string | null
+          id?: string
+          original_transaction_id: string
+          paid_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          upsell_id: string
+          upsell_transaction_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          declined_at?: string | null
+          id?: string
+          original_transaction_id?: string
+          paid_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          upsell_id?: string
+          upsell_transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upsell_transactions_original_transaction_id_fkey"
+            columns: ["original_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pix_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_transactions_upsell_id_fkey"
+            columns: ["upsell_id"]
+            isOneToOne: false
+            referencedRelation: "product_upsells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_transactions_upsell_transaction_id_fkey"
+            columns: ["upsell_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pix_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_documents: {
         Row: {
