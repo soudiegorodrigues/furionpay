@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useDraggable } from '@dnd-kit/core';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +42,7 @@ interface FunnelStepBlockProps {
   products: Product[];
   allSteps: FunnelStep[];
   metrics?: StepMetrics;
+  isDraggable?: boolean;
 }
 
 const ICONS = {
@@ -61,7 +61,8 @@ export function FunnelStepBlock({
   onSave,
   products,
   allSteps,
-  metrics
+  metrics,
+  isDraggable = true
 }: FunnelStepBlockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState<Partial<FunnelStep>>({});
@@ -71,15 +72,11 @@ export function FunnelStepBlock({
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
     isDragging,
-  } = useSortable({ id: step.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  } = useDraggable({ 
+    id: step.id,
+    disabled: !isDraggable || isExpanded,
+  });
 
   const config = STEP_CONFIG[step.step_type];
   const Icon = ICONS[config.icon as keyof typeof ICONS];
@@ -124,10 +121,10 @@ export function FunnelStepBlock({
   return (
     <div
       ref={setNodeRef}
-      style={style}
       className={cn(
         'relative group',
-        isDragging && 'z-50 opacity-90'
+        isDragging && 'z-50 opacity-90',
+        isDraggable && !isExpanded && 'cursor-grab active:cursor-grabbing'
       )}
     >
       <Card
@@ -142,9 +139,13 @@ export function FunnelStepBlock({
       >
         {/* Drag handle */}
         <div
-          {...attributes}
-          {...listeners}
-          className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center cursor-grab active:cursor-grabbing bg-muted/50 rounded-l-lg opacity-0 group-hover:opacity-100 transition-opacity"
+          {...(isDraggable && !isExpanded ? { ...attributes, ...listeners } : {})}
+          className={cn(
+            "absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center bg-muted/50 rounded-l-lg transition-opacity",
+            isDraggable && !isExpanded 
+              ? "cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100" 
+              : "opacity-50"
+          )}
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -340,9 +341,12 @@ export function FunnelStepBlock({
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Position indicator */}
-        <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
-          {step.position + 1}
+        {/* Step type indicator */}
+        <div className={cn(
+          "absolute -top-2 -left-2 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md",
+          config.color
+        )}>
+          <Icon className="h-3 w-3" />
         </div>
       </Card>
     </div>

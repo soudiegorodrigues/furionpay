@@ -1009,6 +1009,8 @@ export type Database = {
           offer_product_id: string | null
           original_price: number | null
           position: number
+          position_x: number | null
+          position_y: number | null
           step_type: string
           timer_seconds: number | null
           title: string | null
@@ -1035,6 +1037,8 @@ export type Database = {
           offer_product_id?: string | null
           original_price?: number | null
           position?: number
+          position_x?: number | null
+          position_y?: number | null
           step_type: string
           timer_seconds?: number | null
           title?: string | null
@@ -1061,6 +1065,8 @@ export type Database = {
           offer_product_id?: string | null
           original_price?: number | null
           position?: number
+          position_x?: number | null
+          position_y?: number | null
           step_type?: string
           timer_seconds?: number | null
           title?: string | null

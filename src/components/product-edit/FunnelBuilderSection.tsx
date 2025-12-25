@@ -203,9 +203,22 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
-      toast.success('Etapa atualizada!');
     },
     onError: () => toast.error('Erro ao atualizar etapa'),
+  });
+
+  // Update step position mutation
+  const updatePositionMutation = useMutation({
+    mutationFn: async ({ stepId, x, y }: { stepId: string; x: number; y: number }) => {
+      const { error } = await supabase
+        .from('funnel_steps')
+        .update({ position_x: x, position_y: y, updated_at: new Date().toISOString() })
+        .eq('id', stepId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
+    },
   });
 
   // Delete step mutation
@@ -319,7 +332,11 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
                   }}
                   onDeleteStep={(id) => deleteStepMutation.mutate(id)}
                   onAddStep={() => createStepMutation.mutate('upsell')}
-                  onSaveStep={(step) => updateStepMutation.mutate(step)}
+                  onSaveStep={(step) => {
+                    updateStepMutation.mutate(step);
+                    toast.success('Etapa atualizada!');
+                  }}
+                  onUpdatePosition={(stepId, x, y) => updatePositionMutation.mutate({ stepId, x, y })}
                   products={products}
                   stepMetrics={stepMetrics}
                 />

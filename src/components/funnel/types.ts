@@ -6,6 +6,8 @@ export interface FunnelStep {
   step_type: StepType;
   offer_product_id: string | null;
   position: number;
+  position_x: number;
+  position_y: number;
   title: string;
   headline: string | null;
   description: string | null;
