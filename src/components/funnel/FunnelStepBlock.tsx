@@ -6,13 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   TrendingUp, 
@@ -256,49 +250,51 @@ export function FunnelStepBlock({
           <CollapsibleContent>
             <div className="border-t px-4 py-4 sm:px-5 space-y-4 bg-muted/30">
               {step.step_type !== 'thankyou' ? (
-                <>
-                  {/* Redirect - Accept */}
-                  <div className="space-y-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-900">
-                    <Label className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Se ACEITAR → Ir para</Label>
-                    <Select
-                      value={formData.next_step_on_accept || 'none'}
-                      onValueChange={(value) => handleChange('next_step_on_accept', value === 'none' ? null : value)}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Próxima etapa..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Página de Obrigado</SelectItem>
-                        {otherSteps.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {STEP_CONFIG[s.step_type].label}: {s.title || 'Sem título'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-4">
+                  {/* Step Name */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Nome da Etapa</Label>
+                    <Input
+                      type="text"
+                      className="h-9 text-sm"
+                      value={formData.title || ''}
+                      onChange={(e) => handleChange('title', e.target.value)}
+                      placeholder="Ex: Oferta Especial VIP"
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
+                    />
                   </div>
 
-                  {/* Redirect - Decline */}
-                  <div className="space-y-2 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
-                    <Label className="text-xs font-medium text-red-700 dark:text-red-400">Se RECUSAR → Ir para</Label>
-                    <Select
-                      value={formData.next_step_on_decline || 'none'}
-                      onValueChange={(value) => handleChange('next_step_on_decline', value === 'none' ? null : value)}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Próxima etapa..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Página de Obrigado</SelectItem>
-                        {otherSteps.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {STEP_CONFIG[s.step_type].label}: {s.title || 'Sem título'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Destination URL */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">URL de Destino</Label>
+                    <Input
+                      type="url"
+                      className="h-9 text-sm"
+                      value={formData.accept_url || ''}
+                      onChange={(e) => handleChange('accept_url', e.target.value)}
+                      placeholder="https://..."
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
+                    />
+                    <p className="text-xs text-muted-foreground">Para onde o cliente vai após esta etapa</p>
                   </div>
-                </>
+
+                  {/* Active Toggle */}
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium">Etapa Ativa</Label>
+                      <p className="text-xs text-muted-foreground">Ativar ou desativar esta etapa do funil</p>
+                    </div>
+                    <Switch
+                      checked={formData.is_active}
+                      onCheckedChange={(checked) => handleChange('is_active', checked)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
                   <p className="text-sm">Página de obrigado é o fim do funil</p>
