@@ -165,7 +165,7 @@ export function FunnelStepBlock({
       ref={setNodeRef}
       className={cn(
         'relative group',
-        isDragging && 'z-50 opacity-90',
+        isDragging && 'z-50 opacity-0',
         isDraggable && !isExpanded && !isInConnectionMode && 'cursor-grab active:cursor-grabbing'
       )}
     >
