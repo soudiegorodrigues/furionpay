@@ -1,0 +1,297 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { FunnelCanvas } from '@/components/funnel/FunnelCanvas';
+import { FunnelSidebar } from '@/components/funnel/FunnelSidebar';
+import { FunnelStepConfig } from '@/components/funnel/FunnelStepConfig';
+import { SalesFunnel, FunnelStep, StepType } from '@/components/funnel/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Settings } from 'lucide-react';
+
+interface FunnelBuilderSectionProps {
+  productId: string;
+  userId: string;
+  productName: string;
+  productImage?: string | null;
+}
+
+export function FunnelBuilderSection({ productId, userId, productName, productImage }: FunnelBuilderSectionProps) {
+  const queryClient = useQueryClient();
+  const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+
+  // Fetch funnels
+  const { data: funnels = [], isLoading } = useQuery({
+    queryKey: ['sales-funnels', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales_funnels')
+        .select('*')
+        .eq('product_id', productId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as SalesFunnel[];
+    },
+  });
+
+  // Fetch steps for selected funnel
+  const { data: steps = [] } = useQuery({
+    queryKey: ['funnel-steps', selectedFunnelId],
+    queryFn: async () => {
+      if (!selectedFunnelId) return [];
+      const { data, error } = await supabase
+        .from('funnel_steps')
+        .select('*, offer_product:products!funnel_steps_offer_product_id_fkey(id, name, price, image_url)')
+        .eq('funnel_id', selectedFunnelId)
+        .order('position', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(step => ({
+        ...step,
+        offer_product: step.offer_product || undefined
+      })) as FunnelStep[];
+    },
+    enabled: !!selectedFunnelId,
+  });
+
+  // Fetch products for step config
+  const { data: products = [] } = useQuery({
+    queryKey: ['products-for-funnel', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price, image_url')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const selectedFunnel = funnels.find(f => f.id === selectedFunnelId);
+  const selectedStep = steps.find(s => s.id === selectedStepId);
+
+  // Create funnel mutation
+  const createFunnelMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from('sales_funnels')
+        .insert({ user_id: userId, product_id: productId, name: 'Novo Funil' })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['sales-funnels', productId] });
+      setSelectedFunnelId(data.id);
+      toast.success('Funil criado!');
+    },
+    onError: () => toast.error('Erro ao criar funil'),
+  });
+
+  // Update funnel mutation
+  const updateFunnelMutation = useMutation({
+    mutationFn: async (updates: Partial<SalesFunnel>) => {
+      if (!selectedFunnelId) return;
+      const { error } = await supabase
+        .from('sales_funnels')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', selectedFunnelId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sales-funnels', productId] }),
+  });
+
+  // Delete funnel mutation
+  const deleteFunnelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('sales_funnels').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales-funnels', productId] });
+      setSelectedFunnelId(null);
+      toast.success('Funil excluído!');
+    },
+    onError: () => toast.error('Erro ao excluir funil'),
+  });
+
+  // Create step mutation
+  const createStepMutation = useMutation({
+    mutationFn: async (type: StepType) => {
+      if (!selectedFunnelId) return;
+      const position = steps.length;
+      const { data, error } = await supabase
+        .from('funnel_steps')
+        .insert({ funnel_id: selectedFunnelId, step_type: type, position })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
+      if (data) setSelectedStepId(data.id);
+      toast.success('Etapa adicionada!');
+    },
+    onError: () => toast.error('Erro ao adicionar etapa'),
+  });
+
+  // Update step mutation
+  const updateStepMutation = useMutation({
+    mutationFn: async (step: FunnelStep) => {
+      const { offer_product, ...updateData } = step;
+      const { error } = await supabase
+        .from('funnel_steps')
+        .update({ ...updateData, updated_at: new Date().toISOString() })
+        .eq('id', step.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
+      toast.success('Etapa atualizada!');
+    },
+    onError: () => toast.error('Erro ao atualizar etapa'),
+  });
+
+  // Delete step mutation
+  const deleteStepMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('funnel_steps').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] });
+      setSelectedStepId(null);
+      toast.success('Etapa excluída!');
+    },
+  });
+
+  // Reorder steps mutation
+  const reorderStepsMutation = useMutation({
+    mutationFn: async (reorderedSteps: FunnelStep[]) => {
+      const updates = reorderedSteps.map((step, index) => 
+        supabase.from('funnel_steps').update({ position: index }).eq('id', step.id)
+      );
+      await Promise.all(updates);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['funnel-steps', selectedFunnelId] }),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
+        {/* Sidebar */}
+        <div className="lg:col-span-3">
+          <FunnelSidebar
+            funnels={funnels.map(f => ({ ...f, steps }))}
+            selectedFunnelId={selectedFunnelId}
+            onSelectFunnel={setSelectedFunnelId}
+            onCreateFunnel={() => createFunnelMutation.mutate()}
+            onDuplicateFunnel={() => toast.info('Em breve')}
+            onDeleteFunnel={(id) => deleteFunnelMutation.mutate(id)}
+            onRenameFunnel={() => toast.info('Edite o nome abaixo')}
+            onAddStep={(type) => createStepMutation.mutate(type)}
+          />
+        </div>
+
+        {/* Canvas */}
+        <div className="lg:col-span-5">
+          <Card className="h-full">
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Canvas do Funil
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {selectedFunnelId ? (
+                <FunnelCanvas
+                  productName={productName}
+                  productImage={productImage}
+                  steps={steps}
+                  selectedStepId={selectedStepId}
+                  onSelectStep={setSelectedStepId}
+                  onReorderSteps={(reordered) => reorderStepsMutation.mutate(reordered)}
+                  onToggleStepActive={(id, active) => {
+                    const step = steps.find(s => s.id === id);
+                    if (step) updateStepMutation.mutate({ ...step, is_active: active });
+                  }}
+                  onDeleteStep={(id) => deleteStepMutation.mutate(id)}
+                  onAddStep={() => createStepMutation.mutate('upsell')}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+                  <p>Selecione ou crie um funil para começar</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Config Panel */}
+        <div className="lg:col-span-4">
+          {selectedFunnel && !selectedStepId ? (
+            <Card className="h-full">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-base">Configurações do Funil</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Nome do Funil</Label>
+                  <Input
+                    value={selectedFunnel.name}
+                    onChange={(e) => updateFunnelMutation.mutate({ name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>URL de Origem</Label>
+                  <Input
+                    value={selectedFunnel.origin_url || ''}
+                    onChange={(e) => updateFunnelMutation.mutate({ origin_url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>URL Página de Obrigado</Label>
+                  <Input
+                    value={selectedFunnel.thank_you_url || ''}
+                    onChange={(e) => updateFunnelMutation.mutate({ thank_you_url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Funil Ativo</Label>
+                  <Switch
+                    checked={selectedFunnel.is_active}
+                    onCheckedChange={(checked) => updateFunnelMutation.mutate({ is_active: checked })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <FunnelStepConfig
+              step={selectedStep || null}
+              products={products}
+              allSteps={steps}
+              onSave={(step) => updateStepMutation.mutate(step)}
+              onClose={() => setSelectedStepId(null)}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
