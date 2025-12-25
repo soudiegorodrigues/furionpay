@@ -628,7 +628,7 @@ export const ReceitaPlataformaSection = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Layout SpedPay Style - Cards + Barras Horizontais */}
+            {/* Cards + Horizontal Bars Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Lado Esquerdo - Cards em Grid */}
               <div>

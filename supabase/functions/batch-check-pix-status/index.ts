@@ -841,7 +841,7 @@ serve(async (req) => {
             results.push({ id: transaction.id, txid: transaction.txid, status: 'still_pending', valorion_status: valorionResult.status, acquirer: 'valorion' });
           }
         } else {
-          // Unknown acquirer - skip (SpedPay removed)
+          // Unknown acquirer - skip
           console.log(`Skipping transaction ${transaction.id} - unsupported acquirer: ${acquirer}`);
           results.push({ id: transaction.id, txid: transaction.txid, status: 'skipped', reason: 'unsupported_acquirer', acquirer });
         }

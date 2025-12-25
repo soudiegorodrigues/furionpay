@@ -47,13 +47,13 @@ export const PixQRCode = ({
     });
   }, [amount, transactionId, trackCustomEvent]);
 
-  // Poll for payment status using active SpedPay polling
+  // Poll for payment status
   useEffect(() => {
     if (!transactionId || isPaid) return;
 
     const pollInterval = setInterval(async () => {
       try {
-        // Use the new check-pix-status edge function that queries SpedPay directly
+        // Use the check-pix-status edge function to query acquirer directly
         const { data, error } = await supabase.functions.invoke('check-pix-status', {
           body: { transactionId }
         });
