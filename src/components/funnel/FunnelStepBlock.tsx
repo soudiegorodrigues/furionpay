@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   TrendingUp, 
@@ -20,7 +21,9 @@ import {
   Eye,
   Check,
   DollarSign,
-  Percent
+  Percent,
+  ArrowRight,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FunnelStep, STEP_CONFIG, StepMetrics } from './types';
@@ -39,6 +42,7 @@ interface FunnelStepBlockProps {
   onToggleActive: (active: boolean) => void;
   onDelete: () => void;
   onSave: (step: FunnelStep) => void;
+  onUpdateConnection: (field: 'next_step_on_accept' | 'next_step_on_decline', targetId: string | null) => void;
   products: Product[];
   allSteps: FunnelStep[];
   metrics?: StepMetrics;
@@ -59,6 +63,7 @@ export function FunnelStepBlock({
   onToggleActive,
   onDelete,
   onSave,
+  onUpdateConnection,
   products,
   allSteps,
   metrics,
@@ -267,6 +272,72 @@ export function FunnelStepBlock({
                     <p className="text-xs text-muted-foreground">Para onde o cliente vai após esta etapa</p>
                   </div>
 
+                  {/* Next Step Connections */}
+                  <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <ArrowRight className="h-3.5 w-3.5" />
+                      <span>Próximas Etapas</span>
+                    </div>
+                    
+                    {/* Next on Accept */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        Ao Aceitar
+                      </Label>
+                      <Select
+                        value={step.next_step_on_accept || 'none'}
+                        onValueChange={(value) => onUpdateConnection('next_step_on_accept', value === 'none' ? null : value)}
+                      >
+                        <SelectTrigger className="h-8 text-xs" onClick={(e) => e.stopPropagation()}>
+                          <SelectValue placeholder="Selecione a próxima etapa" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">
+                            <span className="flex items-center gap-2">
+                              <X className="h-3 w-3 text-muted-foreground" />
+                              Nenhuma
+                            </span>
+                          </SelectItem>
+                          {otherSteps.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.title || STEP_CONFIG[s.step_type].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Next on Decline */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                        Ao Recusar
+                      </Label>
+                      <Select
+                        value={step.next_step_on_decline || 'none'}
+                        onValueChange={(value) => onUpdateConnection('next_step_on_decline', value === 'none' ? null : value)}
+                      >
+                        <SelectTrigger className="h-8 text-xs" onClick={(e) => e.stopPropagation()}>
+                          <SelectValue placeholder="Selecione a próxima etapa" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">
+                            <span className="flex items-center gap-2">
+                              <X className="h-3 w-3 text-muted-foreground" />
+                              Nenhuma
+                            </span>
+                          </SelectItem>
+                          {otherSteps.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.title || STEP_CONFIG[s.step_type].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
                   {/* Active Toggle */}
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="space-y-0.5">
@@ -348,6 +419,34 @@ export function FunnelStepBlock({
         )}>
           <Icon className="h-3 w-3" />
         </div>
+
+        {/* Connection handles */}
+        {step.step_type !== 'thankyou' && (
+          <>
+            {/* Accept output handle (green) */}
+            <div 
+              className={cn(
+                "absolute right-0 top-[35%] -translate-y-1/2 translate-x-1/2 w-3 h-3 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125",
+                step.next_step_on_accept ? "bg-emerald-500" : "bg-muted-foreground/30"
+              )}
+              title="Próxima etapa ao aceitar"
+            />
+            {/* Decline output handle (orange) */}
+            <div 
+              className={cn(
+                "absolute right-0 top-[65%] -translate-y-1/2 translate-x-1/2 w-3 h-3 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125",
+                step.next_step_on_decline ? "bg-amber-500" : "bg-muted-foreground/30"
+              )}
+              title="Próxima etapa ao recusar"
+            />
+          </>
+        )}
+        
+        {/* Input handle (left side) */}
+        <div 
+          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary/50 border-2 border-background shadow-sm"
+          title="Entrada"
+        />
       </Card>
     </div>
   );

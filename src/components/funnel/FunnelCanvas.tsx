@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -10,6 +10,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { FunnelStepBlock } from './FunnelStepBlock';
+import { FunnelConnections } from './FunnelConnections';
 import { FunnelStep, StepMetrics } from './types';
 import { Package, Plus, Move, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ interface FunnelCanvasProps {
   onAddStep: () => void;
   onSaveStep: (step: FunnelStep) => void;
   onUpdatePosition: (stepId: string, x: number, y: number) => void;
+  onUpdateConnection: (stepId: string, field: 'next_step_on_accept' | 'next_step_on_decline', targetId: string | null) => void;
   products: Product[];
   stepMetrics?: Record<string, StepMetrics>;
 }
@@ -41,6 +43,10 @@ interface FunnelCanvasProps {
 const CANVAS_MIN_WIDTH = 1200;
 const CANVAS_MIN_HEIGHT = 800;
 const GRID_SIZE = 20;
+
+const CARD_WIDTH = 280;
+const CARD_HEIGHT = 180;
+const PRODUCT_POSITION = { x: 40, y: 40 };
 
 export function FunnelCanvas({
   productName,
@@ -54,6 +60,7 @@ export function FunnelCanvas({
   onAddStep,
   onSaveStep,
   onUpdatePosition,
+  onUpdateConnection,
   products,
   stepMetrics,
 }: FunnelCanvasProps) {
@@ -157,6 +164,14 @@ export function FunnelCanvas({
             minHeight: '100%',
           }}
         >
+          {/* Connection Lines - render behind cards */}
+          <FunnelConnections
+            steps={steps}
+            productPosition={PRODUCT_POSITION}
+            cardWidth={CARD_WIDTH}
+            cardHeight={CARD_HEIGHT}
+          />
+
           <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
@@ -166,9 +181,9 @@ export function FunnelCanvas({
             {/* Product Principal - Fixed at top */}
             <div 
               className="absolute"
-              style={{ left: 40, top: 40 }}
+              style={{ left: PRODUCT_POSITION.x, top: PRODUCT_POSITION.y }}
             >
-              <div className="w-44 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-3 text-center shadow-lg">
+              <div className="w-44 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-3 text-center shadow-lg relative">
                 <div className="w-12 h-12 mx-auto rounded-lg bg-primary/20 flex items-center justify-center mb-2 overflow-hidden">
                   {productImage ? (
                     <img src={productImage} alt={productName} className="w-full h-full object-cover" />
@@ -178,6 +193,11 @@ export function FunnelCanvas({
                 </div>
                 <p className="font-semibold text-sm text-foreground truncate">{productName}</p>
                 <p className="text-[10px] text-muted-foreground">Produto Principal</p>
+                
+                {/* Output handle for product */}
+                {steps.length > 0 && (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary rounded-full border-2 border-background shadow-md" />
+                )}
               </div>
             </div>
 
@@ -205,6 +225,7 @@ export function FunnelCanvas({
                     onToggleActive={(active) => onToggleStepActive(step.id, active)}
                     onDelete={() => onDeleteStep(step.id)}
                     onSave={onSaveStep}
+                    onUpdateConnection={(field, targetId) => onUpdateConnection(step.id, field, targetId)}
                     products={products}
                     allSteps={steps}
                     metrics={stepMetrics?.[step.id]}
@@ -225,6 +246,7 @@ export function FunnelCanvas({
                     onToggleActive={() => {}}
                     onDelete={() => {}}
                     onSave={() => {}}
+                    onUpdateConnection={() => {}}
                     products={products}
                     allSteps={steps}
                     metrics={stepMetrics?.[activeStep.id]}
