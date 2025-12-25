@@ -337,8 +337,9 @@ export function FunnelCanvas({
             {/* Funnel Steps */}
             {steps.map((step) => {
               const isActive = step.id === activeId;
-              const displayX = isActive ? step.position_x + dragOffset.x : step.position_x;
-              const displayY = isActive ? step.position_y + dragOffset.y : step.position_y;
+              // Don't move wrapper during drag - DragOverlay handles visual movement
+              const displayX = step.position_x;
+              const displayY = step.position_y;
               const isConnectionSource = connectionMode?.sourceId === step.id;
               const isConnectionTarget = connectionMode && connectionMode.sourceId !== step.id;
               
@@ -346,7 +347,8 @@ export function FunnelCanvas({
                 <div
                   key={step.id}
                   className={cn(
-                    "absolute transition-all",
+                    "absolute",
+                    !isActive && "transition-all",
                     isConnectionSource && "ring-2 ring-primary ring-offset-2 rounded-lg",
                     isConnectionTarget && "cursor-pointer hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 rounded-lg"
                   )}
@@ -384,7 +386,7 @@ export function FunnelCanvas({
             })}
 
             {/* Drag Overlay */}
-            <DragOverlay>
+            <DragOverlay dropAnimation={null}>
               {activeStep && (
                 <div className="w-[280px] opacity-80 pointer-events-none">
                   <FunnelStepBlock
