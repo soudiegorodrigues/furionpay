@@ -169,8 +169,8 @@ const App = () => (
                 } />
               </Route>
               
-              {/* Upsell page - after payment */}
-              <Route path="/upsell/:transactionId" element={
+              {/* Upsell/Funnel step page - with stepId and transactionId */}
+              <Route path="/upsell/:stepId/:transactionId" element={
                 <Suspense fallback={<PageSkeleton />}>
                   <UpsellPage />
                 </Suspense>
