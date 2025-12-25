@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
+  DragMoveEvent,
   DragStartEvent,
   PointerSensor,
   useSensor,
@@ -70,6 +71,8 @@ export function FunnelCanvas({
 }: FunnelCanvasProps) {
   const [zoom, setZoom] = useState(1);
   const [connectionMode, setConnectionMode] = useState<ConnectionMode | null>(null);
+  const [draggedStepId, setDraggedStepId] = useState<string | null>(null);
+  const [dragDelta, setDragDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -82,7 +85,16 @@ export function FunnelCanvas({
 
   const handleDragStart = (event: DragStartEvent) => {
     if (connectionMode) return;
-    // Drag started - FunnelStepBlock will handle visual movement via transform
+    setDraggedStepId(event.active.id as string);
+    setDragDelta({ x: 0, y: 0 });
+  };
+
+  const handleDragMove = (event: DragMoveEvent) => {
+    if (connectionMode || !event.delta) return;
+    setDragDelta({
+      x: event.delta.x / zoom,
+      y: event.delta.y / zoom,
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -97,6 +109,9 @@ export function FunnelCanvas({
       
       onUpdatePosition(stepId, newX, newY);
     }
+    
+    setDraggedStepId(null);
+    setDragDelta({ x: 0, y: 0 });
   };
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
@@ -240,11 +255,14 @@ export function FunnelCanvas({
             productPosition={PRODUCT_POSITION}
             cardWidth={CARD_WIDTH}
             cardHeight={CARD_HEIGHT}
+            draggedStepId={draggedStepId}
+            dragDelta={dragDelta}
           />
 
           <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
+            onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
           >
             {/* Product Principal - Fixed at top */}
