@@ -6,9 +6,6 @@ import { FunnelCanvas } from '@/components/funnel/FunnelCanvas';
 import { FunnelSidebar } from '@/components/funnel/FunnelSidebar';
 import { SalesFunnel, FunnelStep, StepType } from '@/components/funnel/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Loader2, Settings, Menu } from 'lucide-react';
@@ -210,45 +207,6 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
     />
   );
 
-  const funnelConfigContent = selectedFunnel && (
-    <Card>
-      <CardHeader className="pb-3 border-b">
-        <CardTitle className="text-base">Configurações do Funil</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-4">
-        <div className="space-y-2">
-          <Label>Nome do Funil</Label>
-          <Input
-            value={selectedFunnel.name}
-            onChange={(e) => updateFunnelMutation.mutate({ name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>URL de Origem</Label>
-          <Input
-            value={selectedFunnel.origin_url || ''}
-            onChange={(e) => updateFunnelMutation.mutate({ origin_url: e.target.value })}
-            placeholder="https://..."
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>URL Página de Obrigado</Label>
-          <Input
-            value={selectedFunnel.thank_you_url || ''}
-            onChange={(e) => updateFunnelMutation.mutate({ thank_you_url: e.target.value })}
-            placeholder="https://..."
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <Label>Funil Ativo</Label>
-          <Switch
-            checked={selectedFunnel.is_active}
-            onCheckedChange={(checked) => updateFunnelMutation.mutate({ is_active: checked })}
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div className="space-y-4">
@@ -330,9 +288,6 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
               )}
             </CardContent>
           </Card>
-
-          {/* Funnel Config Panel - Always visible when funnel selected */}
-          {funnelConfigContent}
         </div>
       </div>
     </div>
