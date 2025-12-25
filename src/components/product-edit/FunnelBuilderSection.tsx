@@ -10,7 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Loader2, Settings, Menu, PanelRightOpen } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FunnelBuilderSectionProps {
   productId: string;
@@ -21,8 +24,10 @@ interface FunnelBuilderSectionProps {
 
 export function FunnelBuilderSection({ productId, userId, productName, productImage }: FunnelBuilderSectionProps) {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Fetch funnels
   const { data: funnels = [], isLoading } = useQuery({
@@ -88,6 +93,7 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['sales-funnels', productId] });
       setSelectedFunnelId(data.id);
+      setSidebarOpen(false);
       toast.success('Funil criado!');
     },
     onError: () => toast.error('Erro ao criar funil'),
@@ -190,26 +196,114 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
-        {/* Sidebar */}
-        <div className="lg:col-span-3">
-          <FunnelSidebar
-            funnels={funnels.map(f => ({ ...f, steps }))}
-            selectedFunnelId={selectedFunnelId}
-            onSelectFunnel={setSelectedFunnelId}
-            onCreateFunnel={() => createFunnelMutation.mutate()}
-            onDuplicateFunnel={() => toast.info('Em breve')}
-            onDeleteFunnel={(id) => deleteFunnelMutation.mutate(id)}
-            onRenameFunnel={() => toast.info('Edite o nome abaixo')}
-            onAddStep={(type) => createStepMutation.mutate(type)}
+  const sidebarContent = (
+    <FunnelSidebar
+      funnels={funnels.map(f => ({ ...f, steps }))}
+      selectedFunnelId={selectedFunnelId}
+      onSelectFunnel={(id) => {
+        setSelectedFunnelId(id);
+        setSidebarOpen(false);
+      }}
+      onCreateFunnel={() => createFunnelMutation.mutate()}
+      onDuplicateFunnel={() => toast.info('Em breve')}
+      onDeleteFunnel={(id) => deleteFunnelMutation.mutate(id)}
+      onRenameFunnel={() => toast.info('Edite o nome abaixo')}
+      onAddStep={(type) => {
+        createStepMutation.mutate(type);
+        setSidebarOpen(false);
+      }}
+    />
+  );
+
+  const funnelConfigContent = selectedFunnel && !selectedStepId ? (
+    <Card className="h-full">
+      <CardHeader className="pb-3 border-b">
+        <CardTitle className="text-base">Configurações do Funil</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 pt-4">
+        <div className="space-y-2">
+          <Label>Nome do Funil</Label>
+          <Input
+            value={selectedFunnel.name}
+            onChange={(e) => updateFunnelMutation.mutate({ name: e.target.value })}
           />
         </div>
+        <div className="space-y-2">
+          <Label>URL de Origem</Label>
+          <Input
+            value={selectedFunnel.origin_url || ''}
+            onChange={(e) => updateFunnelMutation.mutate({ origin_url: e.target.value })}
+            placeholder="https://..."
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>URL Página de Obrigado</Label>
+          <Input
+            value={selectedFunnel.thank_you_url || ''}
+            onChange={(e) => updateFunnelMutation.mutate({ thank_you_url: e.target.value })}
+            placeholder="https://..."
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>Funil Ativo</Label>
+          <Switch
+            checked={selectedFunnel.is_active}
+            onCheckedChange={(checked) => updateFunnelMutation.mutate({ is_active: checked })}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  ) : null;
 
-        {/* Canvas */}
-        <div className="lg:col-span-5">
-          <Card className="h-full">
+  const stepConfigContent = (
+    <FunnelStepConfig
+      step={selectedStep || null}
+      products={products}
+      allSteps={steps}
+      onSave={(step) => updateStepMutation.mutate(step)}
+      onClose={() => setSelectedStepId(null)}
+    />
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Mobile Header */}
+      <div className="flex items-center gap-2 lg:hidden">
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Menu className="h-4 w-4 mr-2" />
+              Funis
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80 p-0">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle>Gerenciar Funis</SheetTitle>
+            </SheetHeader>
+            <div className="p-4 h-[calc(100vh-64px)] overflow-auto">
+              {sidebarContent}
+            </div>
+          </SheetContent>
+        </Sheet>
+        
+        {selectedFunnel && (
+          <div className="flex-1 text-sm font-medium truncate">
+            {selectedFunnel.name}
+          </div>
+        )}
+      </div>
+
+      {/* Main Layout */}
+      <div className="flex flex-col lg:flex-row gap-4 min-h-[500px]">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block w-72 shrink-0">
+          {sidebarContent}
+        </div>
+
+        {/* Canvas + Config Area */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
+          {/* Canvas */}
+          <Card className="flex-1">
             <CardHeader className="pb-3 border-b">
               <CardTitle className="text-base flex items-center gap-2">
                 <Settings className="h-4 w-4" />
@@ -233,62 +327,28 @@ export function FunnelBuilderSection({ productId, userId, productName, productIm
                   onAddStep={() => createStepMutation.mutate('upsell')}
                 />
               ) : (
-                <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-                  <p>Selecione ou crie um funil para começar</p>
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground text-center p-4">
+                  <div>
+                    <p>Selecione ou crie um funil para começar</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3"
+                      onClick={() => isMobile ? setSidebarOpen(true) : createFunnelMutation.mutate()}
+                    >
+                      {isMobile ? 'Ver Funis' : 'Criar Funil'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Config Panel */}
-        <div className="lg:col-span-4">
-          {selectedFunnel && !selectedStepId ? (
-            <Card className="h-full">
-              <CardHeader className="pb-3 border-b">
-                <CardTitle className="text-base">Configurações do Funil</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label>Nome do Funil</Label>
-                  <Input
-                    value={selectedFunnel.name}
-                    onChange={(e) => updateFunnelMutation.mutate({ name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>URL de Origem</Label>
-                  <Input
-                    value={selectedFunnel.origin_url || ''}
-                    onChange={(e) => updateFunnelMutation.mutate({ origin_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>URL Página de Obrigado</Label>
-                  <Input
-                    value={selectedFunnel.thank_you_url || ''}
-                    onChange={(e) => updateFunnelMutation.mutate({ thank_you_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Funil Ativo</Label>
-                  <Switch
-                    checked={selectedFunnel.is_active}
-                    onCheckedChange={(checked) => updateFunnelMutation.mutate({ is_active: checked })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <FunnelStepConfig
-              step={selectedStep || null}
-              products={products}
-              allSteps={steps}
-              onSave={(step) => updateStepMutation.mutate(step)}
-              onClose={() => setSelectedStepId(null)}
-            />
+          {/* Config Panel - Below canvas on all screens */}
+          {(selectedFunnel || selectedStep) && (
+            <div className="min-h-[300px]">
+              {funnelConfigContent || stepConfigContent}
+            </div>
           )}
         </div>
       </div>

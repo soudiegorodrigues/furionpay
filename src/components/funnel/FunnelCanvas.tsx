@@ -70,23 +70,23 @@ export function FunnelCanvas({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 py-6 px-4 min-h-[400px]">
+    <div className="flex flex-col items-center gap-3 py-4 px-3 min-h-[280px]">
       {/* Product Principal */}
       <div className="relative">
-        <div className="w-48 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-4 text-center shadow-lg">
-          <div className="w-12 h-12 mx-auto rounded-lg bg-primary/20 flex items-center justify-center mb-2 overflow-hidden">
+        <div className="w-36 sm:w-40 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-3 text-center shadow-lg">
+          <div className="w-10 h-10 mx-auto rounded-lg bg-primary/20 flex items-center justify-center mb-1.5 overflow-hidden">
             {productImage ? (
               <img src={productImage} alt={productName} className="w-full h-full object-cover" />
             ) : (
-              <Package className="h-6 w-6 text-primary" />
+              <Package className="h-5 w-5 text-primary" />
             )}
           </div>
-          <p className="font-semibold text-sm text-foreground truncate">{productName}</p>
-          <p className="text-xs text-muted-foreground">Produto Principal</p>
+          <p className="font-semibold text-xs text-foreground truncate">{productName}</p>
+          <p className="text-[10px] text-muted-foreground">Produto Principal</p>
         </div>
         {/* Connection line */}
         {steps.length > 0 && (
-          <div className="absolute left-1/2 -bottom-4 -translate-x-1/2 w-0.5 h-4 bg-border" />
+          <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-0.5 h-3 bg-border" />
         )}
       </div>
 
@@ -101,15 +101,15 @@ export function FunnelCanvas({
             items={steps.map((s) => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+            <div className="flex flex-col items-center gap-1.5 w-full max-w-[180px]">
               {steps.map((step, index) => (
                 <div key={step.id} className="w-full">
                   {/* Connection arrow */}
                   {index > 0 && (
-                    <div className="flex justify-center mb-2">
+                    <div className="flex justify-center mb-1.5">
                       <div className="flex flex-col items-center">
-                        <div className="w-0.5 h-4 bg-border" />
-                        <ArrowDown className="h-4 w-4 text-muted-foreground -mt-1" />
+                        <div className="w-0.5 h-3 bg-border" />
+                        <ArrowDown className="h-3.5 w-3.5 text-muted-foreground -mt-0.5" />
                       </div>
                     </div>
                   )}
@@ -127,13 +127,13 @@ export function FunnelCanvas({
           </SortableContext>
         </DndContext>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Plus className="h-8 w-8 text-muted-foreground" />
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+            <Plus className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="text-muted-foreground mb-2">Nenhuma etapa no funil</p>
-          <p className="text-xs text-muted-foreground mb-4">
-            Adicione blocos para criar seu funil de vendas
+          <p className="text-muted-foreground text-sm mb-1">Nenhuma etapa no funil</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Adicione blocos para criar seu funil
           </p>
         </div>
       )}
@@ -141,13 +141,14 @@ export function FunnelCanvas({
       {/* Add Step Button */}
       <Button
         variant="outline"
+        size="sm"
         className={cn(
-          'border-dashed border-2 hover:border-primary hover:bg-primary/5',
+          'border-dashed border-2 hover:border-primary hover:bg-primary/5 text-xs',
           steps.length === 0 && 'mt-0'
         )}
         onClick={onAddStep}
       >
-        <Plus className="h-4 w-4 mr-2" />
+        <Plus className="h-3.5 w-3.5 mr-1.5" />
         Adicionar Etapa
       </Button>
     </div>
