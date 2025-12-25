@@ -104,11 +104,21 @@ export function FunnelStepBlock({
                 <p className="text-xs text-muted-foreground">{config.description}</p>
               </div>
             </div>
-            <Switch
-              checked={step.is_active}
-              onCheckedChange={onToggleActive}
-              onClick={(e) => e.stopPropagation()}
-            />
+            <Badge 
+              variant="outline"
+              className={cn(
+                "cursor-pointer text-xs transition-colors",
+                step.is_active 
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20" 
+                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleActive(!step.is_active);
+              }}
+            >
+              {step.is_active ? "Ativo" : "Inativo"}
+            </Badge>
           </div>
 
           {/* Product info */}
