@@ -19,6 +19,13 @@ import { Package, ArrowDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+}
+
 interface FunnelCanvasProps {
   productName: string;
   productImage?: string | null;
@@ -29,6 +36,8 @@ interface FunnelCanvasProps {
   onToggleStepActive: (stepId: string, active: boolean) => void;
   onDeleteStep: (stepId: string) => void;
   onAddStep: () => void;
+  onSaveStep: (step: FunnelStep) => void;
+  products: Product[];
 }
 
 export function FunnelCanvas({
@@ -41,6 +50,8 @@ export function FunnelCanvas({
   onToggleStepActive,
   onDeleteStep,
   onAddStep,
+  onSaveStep,
+  products,
 }: FunnelCanvasProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -120,6 +131,9 @@ export function FunnelCanvas({
                     onSelect={() => onSelectStep(step.id)}
                     onToggleActive={(active) => onToggleStepActive(step.id, active)}
                     onDelete={() => onDeleteStep(step.id)}
+                    onSave={onSaveStep}
+                    products={products}
+                    allSteps={steps}
                   />
                 </div>
               ))}
