@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   TrendingUp, 
@@ -22,7 +21,7 @@ import {
   Check,
   DollarSign,
   Percent,
-  ArrowRight,
+  Link2,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -43,10 +42,12 @@ interface FunnelStepBlockProps {
   onDelete: () => void;
   onSave: (step: FunnelStep) => void;
   onUpdateConnection: (field: 'next_step_on_accept' | 'next_step_on_decline', targetId: string | null) => void;
+  onStartConnection: (sourceId: string, type: 'accept' | 'decline') => void;
   products: Product[];
   allSteps: FunnelStep[];
   metrics?: StepMetrics;
   isDraggable?: boolean;
+  isInConnectionMode?: boolean;
 }
 
 const ICONS = {
@@ -64,10 +65,12 @@ export function FunnelStepBlock({
   onDelete,
   onSave,
   onUpdateConnection,
+  onStartConnection,
   products,
   allSteps,
   metrics,
-  isDraggable = true
+  isDraggable = true,
+  isInConnectionMode = false
 }: FunnelStepBlockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState<Partial<FunnelStep>>({});
@@ -80,12 +83,16 @@ export function FunnelStepBlock({
     isDragging,
   } = useDraggable({ 
     id: step.id,
-    disabled: !isDraggable || isExpanded,
+    disabled: !isDraggable || isExpanded || isInConnectionMode,
   });
 
   const config = STEP_CONFIG[step.step_type];
   const Icon = ICONS[config.icon as keyof typeof ICONS];
   const otherSteps = allSteps.filter((s) => s.id !== step.id);
+
+  // Get connected step names
+  const acceptStep = allSteps.find(s => s.id === step.next_step_on_accept);
+  const declineStep = allSteps.find(s => s.id === step.next_step_on_decline);
 
   useEffect(() => {
     setFormData({ ...step });
@@ -120,7 +127,25 @@ export function FunnelStepBlock({
 
   const handleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsExpanded(!isExpanded);
+    if (!isInConnectionMode) {
+      setIsExpanded(!isExpanded);
+    }
+  };
+
+  const handleStartAcceptConnection = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onStartConnection(step.id, 'accept');
+  };
+
+  const handleStartDeclineConnection = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onStartConnection(step.id, 'decline');
+  };
+
+  const handleRemoveConnection = (e: React.MouseEvent, type: 'accept' | 'decline') => {
+    e.stopPropagation();
+    const field = type === 'accept' ? 'next_step_on_accept' : 'next_step_on_decline';
+    onUpdateConnection(field, null);
   };
 
   return (
@@ -129,7 +154,7 @@ export function FunnelStepBlock({
       className={cn(
         'relative group',
         isDragging && 'z-50 opacity-90',
-        isDraggable && !isExpanded && 'cursor-grab active:cursor-grabbing'
+        isDraggable && !isExpanded && !isInConnectionMode && 'cursor-grab active:cursor-grabbing'
       )}
     >
       <Card
@@ -144,10 +169,10 @@ export function FunnelStepBlock({
       >
         {/* Drag handle */}
         <div
-          {...(isDraggable && !isExpanded ? { ...attributes, ...listeners } : {})}
+          {...(isDraggable && !isExpanded && !isInConnectionMode ? { ...attributes, ...listeners } : {})}
           className={cn(
             "absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center bg-muted/50 rounded-l-lg transition-opacity",
-            isDraggable && !isExpanded 
+            isDraggable && !isExpanded && !isInConnectionMode
               ? "cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100" 
               : "opacity-50"
           )}
@@ -166,7 +191,9 @@ export function FunnelStepBlock({
           )}
           onClick={(e) => {
             e.stopPropagation();
-            onToggleActive(!step.is_active);
+            if (!isInConnectionMode) {
+              onToggleActive(!step.is_active);
+            }
           }}
         >
           {step.is_active ? "Ativo" : "Inativo"}
@@ -212,6 +239,26 @@ export function FunnelStepBlock({
                 </div>
               </div>
 
+              {/* Current Connections Display */}
+              {step.step_type !== 'thankyou' && (
+                <div className="flex flex-col gap-1 mb-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-muted-foreground">Aceite:</span>
+                    <span className="font-medium truncate flex-1">
+                      {acceptStep ? (acceptStep.title || STEP_CONFIG[acceptStep.step_type].label) : 'Não conectado'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span className="text-muted-foreground">Recusa:</span>
+                    <span className="font-medium truncate flex-1">
+                      {declineStep ? (declineStep.title || STEP_CONFIG[declineStep.step_type].label) : 'Não conectado'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Footer */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -228,7 +275,9 @@ export function FunnelStepBlock({
                   className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDelete();
+                    if (!isInConnectionMode) {
+                      onDelete();
+                    }
                   }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -272,69 +321,89 @@ export function FunnelStepBlock({
                     <p className="text-xs text-muted-foreground">Para onde o cliente vai após esta etapa</p>
                   </div>
 
-                  {/* Next Step Connections */}
+                  {/* Connection Buttons */}
                   <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border/50">
                     <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                      <ArrowRight className="h-3.5 w-3.5" />
-                      <span>Próximas Etapas</span>
+                      <Link2 className="h-3.5 w-3.5" />
+                      <span>Conectar Próximas Etapas</span>
                     </div>
                     
-                    {/* Next on Accept */}
+                    {/* Accept Connection */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        Ao Aceitar
-                      </Label>
-                      <Select
-                        value={step.next_step_on_accept || 'none'}
-                        onValueChange={(value) => onUpdateConnection('next_step_on_accept', value === 'none' ? null : value)}
-                      >
-                        <SelectTrigger className="h-8 text-xs" onClick={(e) => e.stopPropagation()}>
-                          <SelectValue placeholder="Selecione a próxima etapa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="flex items-center gap-2">
-                              <X className="h-3 w-3 text-muted-foreground" />
-                              Nenhuma
-                            </span>
-                          </SelectItem>
-                          {otherSteps.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.title || STEP_CONFIG[s.step_type].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-medium flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                          Ao Aceitar
+                        </Label>
+                        {acceptStep && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => handleRemoveConnection(e, 'accept')}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                      {acceptStep ? (
+                        <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-md text-xs">
+                          <Check className="h-3 w-3 text-emerald-600" />
+                          <span className="text-emerald-700 font-medium">
+                            {acceptStep.title || STEP_CONFIG[acceptStep.step_type].label}
+                          </span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-8 text-xs border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700"
+                          onClick={handleStartAcceptConnection}
+                          disabled={otherSteps.length === 0}
+                        >
+                          <Link2 className="h-3 w-3 mr-1.5" />
+                          Conectar Aceite
+                        </Button>
+                      )}
                     </div>
 
-                    {/* Next on Decline */}
+                    {/* Decline Connection */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        Ao Recusar
-                      </Label>
-                      <Select
-                        value={step.next_step_on_decline || 'none'}
-                        onValueChange={(value) => onUpdateConnection('next_step_on_decline', value === 'none' ? null : value)}
-                      >
-                        <SelectTrigger className="h-8 text-xs" onClick={(e) => e.stopPropagation()}>
-                          <SelectValue placeholder="Selecione a próxima etapa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="flex items-center gap-2">
-                              <X className="h-3 w-3 text-muted-foreground" />
-                              Nenhuma
-                            </span>
-                          </SelectItem>
-                          {otherSteps.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.title || STEP_CONFIG[s.step_type].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-medium flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-amber-500" />
+                          Ao Recusar
+                        </Label>
+                        {declineStep && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => handleRemoveConnection(e, 'decline')}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                      {declineStep ? (
+                        <div className="flex items-center gap-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs">
+                          <Check className="h-3 w-3 text-amber-600" />
+                          <span className="text-amber-700 font-medium">
+                            {declineStep.title || STEP_CONFIG[declineStep.step_type].label}
+                          </span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-8 text-xs border-amber-500/50 text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
+                          onClick={handleStartDeclineConnection}
+                          disabled={otherSteps.length === 0}
+                        >
+                          <Link2 className="h-3 w-3 mr-1.5" />
+                          Conectar Recusa
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -419,34 +488,6 @@ export function FunnelStepBlock({
         )}>
           <Icon className="h-3 w-3" />
         </div>
-
-        {/* Connection handles */}
-        {step.step_type !== 'thankyou' && (
-          <>
-            {/* Accept output handle (green) */}
-            <div 
-              className={cn(
-                "absolute right-0 top-[35%] -translate-y-1/2 translate-x-1/2 w-3 h-3 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125",
-                step.next_step_on_accept ? "bg-emerald-500" : "bg-muted-foreground/30"
-              )}
-              title="Próxima etapa ao aceitar"
-            />
-            {/* Decline output handle (orange) */}
-            <div 
-              className={cn(
-                "absolute right-0 top-[65%] -translate-y-1/2 translate-x-1/2 w-3 h-3 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125",
-                step.next_step_on_decline ? "bg-amber-500" : "bg-muted-foreground/30"
-              )}
-              title="Próxima etapa ao recusar"
-            />
-          </>
-        )}
-        
-        {/* Input handle (left side) */}
-        <div 
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary/50 border-2 border-background shadow-sm"
-          title="Entrada"
-        />
       </Card>
     </div>
   );
