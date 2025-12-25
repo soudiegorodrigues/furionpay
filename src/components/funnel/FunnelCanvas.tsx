@@ -297,6 +297,8 @@ export function FunnelCanvas({
                     metrics={stepMetrics?.[step.id]}
                     isDraggable={!connectionMode}
                     isInConnectionMode={!!connectionMode}
+                    isConnectionTarget={!!isConnectionTarget}
+                    onClickToConnect={isConnectionTarget ? () => handleCompleteConnection(step.id) : undefined}
                   />
                 </div>
               );
