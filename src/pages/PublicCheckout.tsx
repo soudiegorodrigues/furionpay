@@ -597,7 +597,6 @@ export default function PublicCheckout() {
           productName={offer?.name || product?.name}
           pixelId={pixelConfig?.pixelId}
           accessToken={pixelConfig?.accessToken}
-          productId={product?.id}
         />
       </Suspense>
     );

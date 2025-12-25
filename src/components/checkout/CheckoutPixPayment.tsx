@@ -19,7 +19,6 @@ interface CheckoutPixPaymentProps {
   productName?: string;
   pixelId?: string;
   accessToken?: string;
-  productId?: string; // Add productId to find funnel
 }
 
 export const CheckoutPixPayment = ({
@@ -34,12 +33,10 @@ export const CheckoutPixPayment = ({
   productName,
   pixelId,
   accessToken,
-  productId,
 }: CheckoutPixPaymentProps) => {
   const [copied, setCopied] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const { trackEvent, setAdvancedMatching, isLoaded } = usePixel();
 
   // Generate unique event_id for deduplication
@@ -132,52 +129,6 @@ export const CheckoutPixPayment = ({
     }
   };
 
-  // Check if product has a funnel and redirect to first step
-  const checkAndRedirectToFunnel = async () => {
-    if (!productId || !transactionId) return false;
-
-    try {
-      // Find active funnel for this product
-      const { data: funnel, error: funnelError } = await supabase
-        .from("sales_funnels")
-        .select("id")
-        .eq("product_id", productId)
-        .eq("is_active", true)
-        .single();
-
-      if (funnelError || !funnel) {
-        console.log("[Funnel] No active funnel found for product");
-        return false;
-      }
-
-      // Find first active step (position = 0 or lowest)
-      const { data: firstStep, error: stepError } = await supabase
-        .from("funnel_steps")
-        .select("id, step_type")
-        .eq("funnel_id", funnel.id)
-        .eq("is_active", true)
-        .neq("step_type", "thankyou") // Don't redirect to thankyou as first step
-        .order("position", { ascending: true })
-        .limit(1)
-        .single();
-
-      if (stepError || !firstStep) {
-        console.log("[Funnel] No active steps found in funnel");
-        return false;
-      }
-
-      console.log(`[Funnel] Redirecting to step ${firstStep.id}`);
-      setIsRedirecting(true);
-      
-      // Redirect to upsell page with stepId and transactionId
-      window.location.href = `/upsell/${firstStep.id}/${transactionId}`;
-      return true;
-    } catch (err) {
-      console.error("[Funnel] Error checking funnel:", err);
-      return false;
-    }
-  };
-
   const formattedAmount = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -198,13 +149,7 @@ export const CheckoutPixPayment = ({
           setIsPaid(true);
           trackPurchaseEvent(); // Fire Meta Pixel Purchase event
           toast.success("Pagamento confirmado!");
-          
-          // Check for funnel and redirect, or call onPaymentConfirmed
-          const redirected = await checkAndRedirectToFunnel();
-          if (!redirected) {
-            onPaymentConfirmed?.();
-          }
-          
+          onPaymentConfirmed?.();
           clearInterval(pollInterval);
         }
       } catch (err) {
@@ -213,7 +158,7 @@ export const CheckoutPixPayment = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [transactionId, isPaid, productId]);
+  }, [transactionId, isPaid, onPaymentConfirmed]);
 
   const handleCopyCode = async () => {
     try {
@@ -239,12 +184,7 @@ export const CheckoutPixPayment = ({
         setIsPaid(true);
         trackPurchaseEvent(); // Fire Meta Pixel Purchase event
         toast.success("Pagamento confirmado!");
-        
-        // Check for funnel and redirect, or call onPaymentConfirmed
-        const redirected = await checkAndRedirectToFunnel();
-        if (!redirected) {
-          onPaymentConfirmed?.();
-        }
+        onPaymentConfirmed?.();
       } else {
         toast.info("Pagamento ainda não identificado. Aguarde alguns segundos.");
       }
@@ -268,16 +208,9 @@ export const CheckoutPixPayment = ({
           <p className="text-gray-600 mb-4">
             Obrigado pela sua compra de {formattedAmount}.
           </p>
-          {isRedirecting ? (
-            <div className="flex items-center justify-center gap-2 text-primary">
-              <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
-              <span>Redirecionando...</span>
-            </div>
-          ) : (
-            <div className="bg-green-50 text-green-700 px-4 py-2 rounded-lg text-sm font-medium">
-              Compra realizada com sucesso
-            </div>
-          )}
+          <div className="bg-green-50 text-green-700 px-4 py-2 rounded-lg text-sm font-medium">
+            Compra realizada com sucesso
+          </div>
         </div>
       </div>
     );

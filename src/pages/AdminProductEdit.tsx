@@ -18,8 +18,7 @@ import {
   Section
 } from "@/components/product-edit";
 import { OrderBumpSection } from "@/components/product-edit/OrderBumpSection";
-import { FunnelBuilderSection } from "@/components/product-edit/FunnelBuilderSection";
-import { Package, ArrowLeft, Save, CheckCircle, Menu, X } from "lucide-react";
+import { Package, ArrowLeft, Save, CheckCircle } from "lucide-react";
 
 interface Product {
   id: string;
@@ -94,7 +93,6 @@ export default function AdminProductEdit() {
   const queryClient = useQueryClient();
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const [activeSection, setActiveSection] = useState<Section>("details");
-  const [navCollapsed, setNavCollapsed] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -104,15 +102,6 @@ export default function AdminProductEdit() {
     delivery_link: "",
     delivery_file_url: "",
   });
-
-  // Auto-collapse navigation when entering funnel section
-  useEffect(() => {
-    if (activeSection === "upsell") {
-      setNavCollapsed(true);
-    } else {
-      setNavCollapsed(false);
-    }
-  }, [activeSection]);
 
   // Permission check
   if (!permissionsLoading && !isOwner && !hasPermission('can_manage_products')) {
@@ -220,8 +209,9 @@ export default function AdminProductEdit() {
         return <ComingSoonSection title="Domínios" description="Adicione seu próprio domínio personalizado no checkout." />;
       case "order-bump":
         return <OrderBumpSection productId={product.id} userId={product.user_id} />;
+        return <ComingSoonSection title="Order Bump" description="Configure ofertas adicionais que aparecem no checkout." />;
       case "upsell":
-        return <FunnelBuilderSection productId={product.id} userId={product.user_id} productName={product.name} productImage={product.image_url} />;
+        return <ComingSoonSection title="Upsell um clique" description="Configure ofertas de upsell após a compra." />;
       case "pixels":
         return <ComingSoonSection title="Pixels" description="Configure pixels de rastreamento como Meta Pixel, Google Analytics, etc." />;
       case "coproduction":
@@ -289,33 +279,9 @@ export default function AdminProductEdit() {
             {renderSectionContent()}
           </div>
 
-          {/* Product Navigation - collapsible on funnel section */}
-          {navCollapsed ? (
-            <div className="fixed bottom-6 right-6 z-50 lg:static lg:bottom-auto lg:right-auto">
-              <Button 
-                onClick={() => setNavCollapsed(false)} 
-                size="icon" 
-                variant="outline"
-                className="h-12 w-12 rounded-full shadow-lg bg-background hover:bg-muted"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </div>
-          ) : (
-            <div className="lg:w-80 shrink-0 order-1 lg:order-2 relative">
-              {activeSection === "upsell" && (
-                <Button 
-                  onClick={() => setNavCollapsed(true)} 
-                  size="icon"
-                  variant="ghost"
-                  className="absolute -top-1 -right-1 h-7 w-7 z-10 hidden lg:flex"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-              <ProductNavigation activeSection={activeSection} setActiveSection={setActiveSection} />
-            </div>
-          )}
+          <div className="lg:w-80 shrink-0 order-1 lg:order-2">
+            <ProductNavigation activeSection={activeSection} setActiveSection={setActiveSection} />
+          </div>
         </div>
       </main>
     </div>

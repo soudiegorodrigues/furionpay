@@ -104,6 +104,3 @@ verify_jwt = false
 
 [functions.send-product-delivery]
 verify_jwt = false
-
-[functions.generate-upsell-pix]
-verify_jwt = false
