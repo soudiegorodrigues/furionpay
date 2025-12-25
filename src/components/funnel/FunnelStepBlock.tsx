@@ -49,7 +49,9 @@ interface FunnelStepBlockProps {
   isDraggable?: boolean;
   isInConnectionMode?: boolean;
   isConnectionTarget?: boolean;
+  isConnectionSource?: boolean;
   onClickToConnect?: () => void;
+  zoom?: number;
 }
 
 const ICONS = {
@@ -74,7 +76,9 @@ export function FunnelStepBlock({
   isDraggable = true,
   isInConnectionMode = false,
   isConnectionTarget = false,
-  onClickToConnect
+  isConnectionSource = false,
+  onClickToConnect,
+  zoom = 1,
 }: FunnelStepBlockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState<Partial<FunnelStep>>({});
@@ -86,10 +90,24 @@ export function FunnelStepBlock({
     setNodeRef,
     setActivatorNodeRef,
     isDragging,
+    transform,
   } = useDraggable({ 
     id: step.id,
     disabled: !isDraggable || isExpanded || isInConnectionMode,
   });
+
+  // Calculate the visual position with drag transform
+  const dragStyle: React.CSSProperties = {
+    position: 'absolute',
+    left: step.position_x,
+    top: step.position_y,
+    width: 280,
+    zIndex: isDragging ? 100 : isConnectionSource ? 50 : 1,
+    // Apply transform during drag - divide by zoom to compensate for canvas scale
+    transform: transform 
+      ? `translate3d(${transform.x / zoom}px, ${transform.y / zoom}px, 0)` 
+      : undefined,
+  };
 
   const config = STEP_CONFIG[step.step_type];
   const Icon = ICONS[config.icon as keyof typeof ICONS];
@@ -164,10 +182,13 @@ export function FunnelStepBlock({
   return (
     <div
       ref={setNodeRef}
+      style={dragStyle}
       className={cn(
         'relative group',
-        isDragging && 'z-50 opacity-0',
-        isDraggable && !isExpanded && !isInConnectionMode && 'cursor-grab active:cursor-grabbing'
+        isDragging && 'z-50 cursor-grabbing',
+        !isDragging && isDraggable && !isExpanded && !isInConnectionMode && 'cursor-grab',
+        isConnectionSource && 'ring-2 ring-primary ring-offset-2 rounded-lg',
+        isConnectionTarget && 'cursor-pointer hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 rounded-lg'
       )}
     >
       <Card
