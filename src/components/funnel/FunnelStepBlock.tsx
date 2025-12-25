@@ -84,6 +84,7 @@ export function FunnelStepBlock({
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     isDragging,
   } = useDraggable({ 
     id: step.id,
@@ -201,6 +202,7 @@ export function FunnelStepBlock({
 
         {/* Drag handle */}
         <div
+          ref={isDraggable && !isExpanded && !isInConnectionMode ? setActivatorNodeRef : undefined}
           {...(isDraggable && !isExpanded && !isInConnectionMode ? { ...attributes, ...listeners } : {})}
           className={cn(
             "absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center bg-muted/50 rounded-l-lg transition-opacity",

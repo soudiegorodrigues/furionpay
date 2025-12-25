@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -8,17 +8,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  Modifier,
 } from '@dnd-kit/core';
-
-// Modifier to adjust DragOverlay position when canvas has zoom
-const createZoomModifier = (zoom: number): Modifier => {
-  return ({ transform }) => ({
-    ...transform,
-    x: transform.x / zoom,
-    y: transform.y / zoom,
-  });
-};
 import { FunnelStepBlock } from './FunnelStepBlock';
 import { FunnelConnections } from './FunnelConnections';
 import { FunnelStep, StepMetrics, STEP_CONFIG } from './types';
@@ -94,8 +84,6 @@ export function FunnelCanvas({
     })
   );
 
-  // Memoize zoom modifier to avoid recreating on every render
-  const zoomModifier = useMemo(() => createZoomModifier(zoom), [zoom]);
 
   const handleDragStart = (event: DragStartEvent) => {
     if (connectionMode) return; // Disable drag in connection mode
@@ -279,7 +267,6 @@ export function FunnelCanvas({
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
-            modifiers={[zoomModifier]}
           >
             {/* Product Principal - Fixed at top */}
             <div 
@@ -400,7 +387,7 @@ export function FunnelCanvas({
             })}
 
             {/* Drag Overlay */}
-            <DragOverlay dropAnimation={null}>
+            <DragOverlay dropAnimation={null} adjustScale>
               {activeStep && (
                 <div className="w-[280px] opacity-80 pointer-events-none">
                   <FunnelStepBlock
