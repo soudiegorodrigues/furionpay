@@ -1,5 +1,10 @@
 import { FunnelStep, STEP_CONFIG } from './types';
 
+// Dimensões reais dos elementos
+const PRODUCT_CARD_WIDTH = 176;  // w-44
+const PRODUCT_CARD_HEIGHT = 112; // Altura real do card do produto
+const HANDLE_OFFSET = 12;        // Offset do handle vermelho
+
 interface FunnelConnectionsProps {
   steps: FunnelStep[];
   productPosition: { x: number; y: number };
@@ -28,12 +33,12 @@ export function FunnelConnections({
   if (firstStep) {
     lines.push({
       from: { 
-        x: productPosition.x + 176 / 2, // Product card width / 2
-        y: productPosition.y + 100 // Product card height
+        x: productPosition.x + PRODUCT_CARD_WIDTH / 2, // Centro do card produto
+        y: productPosition.y + PRODUCT_CARD_HEIGHT + HANDLE_OFFSET // Sai do handle vermelho
       },
       to: { 
         x: firstStep.position_x + cardWidth / 2, 
-        y: firstStep.position_y 
+        y: firstStep.position_y - 4 // Entra pelo topo do card
       },
       type: 'product',
       toStepId: firstStep.id,
@@ -83,13 +88,19 @@ export function FunnelConnections({
     }
   });
 
-  // Calculate path with curves
+  // Calculate path with curves - responsive to direction
   const getPath = (from: { x: number; y: number }, to: { x: number; y: number }) => {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
-    const controlOffset = Math.min(Math.abs(dx) * 0.5, 80);
     
-    // Curved bezier path
+    // Se a diferença Y for maior que X, usa curva vertical (conexão mais vertical)
+    if (Math.abs(dy) > Math.abs(dx) * 0.8) {
+      const controlY = Math.min(Math.abs(dy) * 0.4, 60);
+      return `M ${from.x} ${from.y} C ${from.x} ${from.y + controlY}, ${to.x} ${to.y - controlY}, ${to.x} ${to.y}`;
+    }
+    
+    // Senão, curva horizontal padrão
+    const controlOffset = Math.min(Math.abs(dx) * 0.5, 80);
     return `M ${from.x} ${from.y} C ${from.x + controlOffset} ${from.y}, ${to.x - controlOffset} ${to.y}, ${to.x} ${to.y}`;
   };
 
