@@ -237,18 +237,32 @@ export const ReceitaPlataformaSection = () => {
         
         // Process acquirer breakdown - map to expected structure
         if (rpcData.acquirer_breakdown) {
-          const rawBreakdown = rpcData.acquirer_breakdown as unknown as {
-            [key: string]: { today: number; sevenDays: number; thisMonth: number; total: number };
-          };
           const breakdown: ProfitStats['acquirerBreakdown'] = {};
-          for (const [acq, costs] of Object.entries(rawBreakdown)) {
+
+          for (const [acq, rawValue] of Object.entries(rpcData.acquirer_breakdown)) {
+            // Backend pode retornar:
+            // A) { today: {count,cost,volume}, sevenDays: {...}, thisMonth: {...}, total: {...} }
+            // B) { today: number, sevenDays: number, thisMonth: number, total: number } (apenas custo)
+            const vAny = rawValue as any;
+
+            const normalize = (key: 'today' | 'sevenDays' | 'thisMonth' | 'total') => {
+              const val = vAny?.[key];
+              if (typeof val === 'number') return { count: 0, cost: Number(val) || 0, volume: 0 };
+              return {
+                count: Number(val?.count) || 0,
+                cost: Number(val?.cost) || 0,
+                volume: Number(val?.volume) || 0,
+              };
+            };
+
             breakdown[acq] = {
-              today: { count: 0, cost: Number(costs.today) || 0, volume: 0 },
-              sevenDays: { count: 0, cost: Number(costs.sevenDays) || 0, volume: 0 },
-              thisMonth: { count: 0, cost: Number(costs.thisMonth) || 0, volume: 0 },
-              total: { count: 0, cost: Number(costs.total) || 0, volume: 0 }
+              today: normalize('today'),
+              sevenDays: normalize('sevenDays'),
+              thisMonth: normalize('thisMonth'),
+              total: normalize('total'),
             };
           }
+
           stats.acquirerBreakdown = breakdown;
         }
         
@@ -398,11 +412,11 @@ export const ReceitaPlataformaSection = () => {
   const valorionData = breakdown.valorion?.[periodKey] || { count: 0, cost: 0, volume: 0 };
   const totalCost = interData.cost + ativusData.cost + valorionData.cost;
   const totalCount = interData.count + ativusData.count + valorionData.count;
+  const totalVolume = interData.volume + ativusData.volume + valorionData.volume;
   const avgCost = totalCount > 0 ? totalCost / totalCount : 0;
 
-  const hasAcquirerData = (breakdown.inter?.total?.count || 0) > 0 || 
-    (breakdown.ativus?.total?.count || 0) > 0 ||
-    (breakdown.valorion?.total?.count || 0) > 0;
+  // Mostrar seções de adquirentes quando houver dados no período selecionado
+  const hasAcquirerData = totalCount > 0 || totalCost > 0 || totalVolume > 0;
 
   return (
     <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
