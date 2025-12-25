@@ -8,17 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Shuffle, 
-  CheckCircle, 
+  TrendingUp,
+  TrendingDown,
+  Shuffle,
+  CheckCircle,
   GripVertical,
   Trash2,
   ChevronDown,
@@ -28,7 +21,8 @@ import {
   Check,
   DollarSign,
   Percent,
-  X
+  Link2,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FunnelStep, STEP_CONFIG, StepMetrics } from './types';
@@ -98,7 +92,7 @@ export function FunnelStepBlock({
 
   const config = STEP_CONFIG[step.step_type];
   const Icon = ICONS[config.icon as keyof typeof ICONS];
-  const otherSteps = allSteps.filter((s) => s.id !== step.id);
+  
 
   // Get connected step names
   const acceptStep = allSteps.find(s => s.id === step.next_step_on_accept);
@@ -142,9 +136,11 @@ export function FunnelStepBlock({
     }
   };
 
-  const handleSelectConnection = (type: 'accept' | 'decline', targetId: string) => {
-    const field = type === 'accept' ? 'next_step_on_accept' : 'next_step_on_decline';
-    onUpdateConnection(field, targetId === 'none' ? null : targetId);
+  const handleStartConnectionClick = (e: React.MouseEvent, type: 'accept' | 'decline') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isInConnectionMode) return;
+    onStartConnection(step.id, type);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -156,7 +152,9 @@ export function FunnelStepBlock({
   };
 
   const handleRemoveConnection = (e: React.MouseEvent, type: 'accept' | 'decline') => {
+    e.preventDefault();
     e.stopPropagation();
+    if (isInConnectionMode) return;
     const field = type === 'accept' ? 'next_step_on_accept' : 'next_step_on_decline';
     onUpdateConnection(field, null);
   };
@@ -182,6 +180,24 @@ export function FunnelStepBlock({
         )}
         onClick={handleCardClick}
       >
+        {isInConnectionMode && isConnectionTarget && (
+          <button
+            type="button"
+            className="absolute inset-0 z-20 rounded-lg bg-transparent"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClickToConnect?.();
+            }}
+            aria-label="Clique para conectar"
+          >
+            <span className="sr-only">Clique para conectar</span>
+            <span className="absolute top-2 left-2 rounded-md border bg-background/80 px-2 py-1 text-[10px] text-foreground shadow-sm">
+              Clique para conectar
+            </span>
+          </button>
+        )}
+
         {/* Drag handle */}
         <div
           {...(isDraggable && !isExpanded && !isInConnectionMode ? { ...attributes, ...listeners } : {})}
@@ -253,63 +269,109 @@ export function FunnelStepBlock({
             </div>
           </div>
 
-          {/* Current Connections Display with Dropdown Selectors */}
+          {/* Conexões (botão "Ligar" + clicar no card destino) */}
           {step.step_type !== 'thankyou' && (
             <div className="flex flex-col gap-2 mb-3 text-xs">
-              {/* Accept Connection */}
+              {/* Accept */}
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <span className="text-muted-foreground shrink-0 w-14">Aceite:</span>
-                <Select
-                  value={step.next_step_on_accept || 'none'}
-                  onValueChange={(value) => handleSelectConnection('accept', value)}
-                  disabled={isInConnectionMode}
-                >
-                  <SelectTrigger 
-                    className="h-7 text-xs flex-1 bg-background border-emerald-500/30 focus:ring-emerald-500"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <SelectValue placeholder="Selecionar destino" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="none" className="text-xs">
-                      Nenhum (usar URL)
-                    </SelectItem>
-                    {otherSteps.map((s) => (
-                      <SelectItem key={s.id} value={s.id} className="text-xs">
-                        {s.title || STEP_CONFIG[s.step_type].label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                  <span className={cn("truncate", !step.next_step_on_accept && "text-muted-foreground")}>
+                    {step.next_step_on_accept
+                      ? (acceptStep?.title || (acceptStep ? STEP_CONFIG[acceptStep.step_type]?.label : 'Etapa'))
+                      : 'Nenhum'}
+                  </span>
+
+                  {step.next_step_on_accept ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={(e) => handleStartConnectionClick(e, 'accept')}
+                        disabled={isInConnectionMode}
+                      >
+                        Trocar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={(e) => handleRemoveConnection(e, 'accept')}
+                        disabled={isInConnectionMode}
+                        aria-label="Remover conexão de aceite"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={(e) => handleStartConnectionClick(e, 'accept')}
+                      disabled={isInConnectionMode}
+                    >
+                      <Link2 className="h-3 w-3 mr-1" />
+                      Ligar
+                    </Button>
+                  )}
+                </div>
               </div>
-              
-              {/* Decline Connection */}
+
+              {/* Decline */}
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                 <span className="text-muted-foreground shrink-0 w-14">Recusa:</span>
-                <Select
-                  value={step.next_step_on_decline || 'none'}
-                  onValueChange={(value) => handleSelectConnection('decline', value)}
-                  disabled={isInConnectionMode}
-                >
-                  <SelectTrigger 
-                    className="h-7 text-xs flex-1 bg-background border-amber-500/30 focus:ring-amber-500"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <SelectValue placeholder="Selecionar destino" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="none" className="text-xs">
-                      Nenhum (usar URL)
-                    </SelectItem>
-                    {otherSteps.map((s) => (
-                      <SelectItem key={s.id} value={s.id} className="text-xs">
-                        {s.title || STEP_CONFIG[s.step_type].label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                  <span className={cn("truncate", !step.next_step_on_decline && "text-muted-foreground")}>
+                    {step.next_step_on_decline
+                      ? (declineStep?.title || (declineStep ? STEP_CONFIG[declineStep.step_type]?.label : 'Etapa'))
+                      : 'Nenhum'}
+                  </span>
+
+                  {step.next_step_on_decline ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={(e) => handleStartConnectionClick(e, 'decline')}
+                        disabled={isInConnectionMode}
+                      >
+                        Trocar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={(e) => handleRemoveConnection(e, 'decline')}
+                        disabled={isInConnectionMode}
+                        aria-label="Remover conexão de recusa"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={(e) => handleStartConnectionClick(e, 'decline')}
+                      disabled={isInConnectionMode}
+                    >
+                      <Link2 className="h-3 w-3 mr-1" />
+                      Ligar
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -384,68 +446,118 @@ export function FunnelStepBlock({
                     <p className="text-xs text-muted-foreground">Para onde o cliente vai após esta etapa</p>
                   </div>
 
-                  {/* Connection Selectors */}
+                  {/* Conectar Próximas Etapas (botão "Ligar" + clicar no card destino) */}
                   <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border/50">
                     <div className="text-xs font-medium text-muted-foreground">
                       Conectar Próximas Etapas
                     </div>
-                    
-                    {/* Accept Connection */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium flex items-center gap-1.5">
+
+                    {/* Accept */}
+                    <div className="flex items-center justify-between gap-3">
+                      <Label className="text-xs font-medium flex items-center gap-1.5 shrink-0">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
                         Ao Aceitar
                       </Label>
-                      <Select
-                        value={step.next_step_on_accept || 'none'}
-                        onValueChange={(value) => handleSelectConnection('accept', value)}
-                      >
-                        <SelectTrigger 
-                          className="h-8 text-xs bg-background border-emerald-500/30"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <SelectValue placeholder="Selecionar destino" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="none" className="text-xs">
-                            Nenhum (usar URL)
-                          </SelectItem>
-                          {otherSteps.map((s) => (
-                            <SelectItem key={s.id} value={s.id} className="text-xs">
-                              {s.title || STEP_CONFIG[s.step_type].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+
+                      <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                        <span className={cn("truncate text-xs", !step.next_step_on_accept && "text-muted-foreground")}>
+                          {step.next_step_on_accept
+                            ? (acceptStep?.title || (acceptStep ? STEP_CONFIG[acceptStep.step_type]?.label : 'Etapa'))
+                            : 'Nenhum'}
+                        </span>
+
+                        {step.next_step_on_accept ? (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={(e) => handleStartConnectionClick(e, 'accept')}
+                              disabled={isInConnectionMode}
+                            >
+                              Trocar
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={(e) => handleRemoveConnection(e, 'accept')}
+                              disabled={isInConnectionMode}
+                              aria-label="Remover conexão de aceite"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={(e) => handleStartConnectionClick(e, 'accept')}
+                            disabled={isInConnectionMode}
+                          >
+                            <Link2 className="h-3 w-3 mr-1" />
+                            Ligar
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Decline Connection */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                    {/* Decline */}
+                    <div className="flex items-center justify-between gap-3">
+                      <Label className="text-xs font-medium flex items-center gap-1.5 shrink-0">
                         <div className="w-2 h-2 rounded-full bg-amber-500" />
                         Ao Recusar
                       </Label>
-                      <Select
-                        value={step.next_step_on_decline || 'none'}
-                        onValueChange={(value) => handleSelectConnection('decline', value)}
-                      >
-                        <SelectTrigger 
-                          className="h-8 text-xs bg-background border-amber-500/30"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <SelectValue placeholder="Selecionar destino" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="none" className="text-xs">
-                            Nenhum (usar URL)
-                          </SelectItem>
-                          {otherSteps.map((s) => (
-                            <SelectItem key={s.id} value={s.id} className="text-xs">
-                              {s.title || STEP_CONFIG[s.step_type].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+
+                      <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                        <span className={cn("truncate text-xs", !step.next_step_on_decline && "text-muted-foreground")}>
+                          {step.next_step_on_decline
+                            ? (declineStep?.title || (declineStep ? STEP_CONFIG[declineStep.step_type]?.label : 'Etapa'))
+                            : 'Nenhum'}
+                        </span>
+
+                        {step.next_step_on_decline ? (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={(e) => handleStartConnectionClick(e, 'decline')}
+                              disabled={isInConnectionMode}
+                            >
+                              Trocar
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={(e) => handleRemoveConnection(e, 'decline')}
+                              disabled={isInConnectionMode}
+                              aria-label="Remover conexão de recusa"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={(e) => handleStartConnectionClick(e, 'decline')}
+                            disabled={isInConnectionMode}
+                          >
+                            <Link2 className="h-3 w-3 mr-1" />
+                            Ligar
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
 

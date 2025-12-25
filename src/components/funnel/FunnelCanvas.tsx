@@ -14,13 +14,6 @@ import { FunnelConnections } from './FunnelConnections';
 import { FunnelStep, StepMetrics, STEP_CONFIG } from './types';
 import { Package, Plus, Move, ZoomIn, ZoomOut, Link2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface Product {
@@ -32,7 +25,7 @@ interface Product {
 
 interface ConnectionMode {
   sourceId: string;
-  type: 'accept' | 'decline';
+  type: 'accept' | 'decline' | 'entry';
 }
 
 interface FunnelCanvasProps {
@@ -59,6 +52,7 @@ const GRID_SIZE = 20;
 const CARD_WIDTH = 280;
 const CARD_HEIGHT = 180;
 const PRODUCT_POSITION = { x: 40, y: 40 };
+const PRODUCT_SOURCE_ID = '__product__';
 
 export function FunnelCanvas({
   productName,
@@ -130,21 +124,52 @@ export function FunnelCanvas({
     setConnectionMode({ sourceId, type });
   };
 
+  const handleStartEntryConnection = () => {
+    setConnectionMode({ sourceId: PRODUCT_SOURCE_ID, type: 'entry' });
+  };
+
   const handleCancelConnection = () => {
     setConnectionMode(null);
   };
 
   const handleCompleteConnection = (targetId: string) => {
     if (!connectionMode) return;
+
+    // Produto Principal -> Primeira etapa (define position = 0)
+    if (connectionMode.type === 'entry') {
+      const targetStep = steps.find((s) => s.id === targetId);
+      if (!targetStep) {
+        setConnectionMode(null);
+        return;
+      }
+
+      const currentFirst = steps.find((s) => s.position === 0);
+      if (currentFirst?.id === targetId) {
+        setConnectionMode(null);
+        return;
+      }
+
+      const updatedSteps = steps.map((s) => {
+        if (s.id === targetId) return { ...s, position: 0 };
+        if (currentFirst && s.id === currentFirst.id) return { ...s, position: targetStep.position };
+        return s;
+      });
+
+      onReorderSteps(updatedSteps);
+      setConnectionMode(null);
+      return;
+    }
+
+    // Etapa -> Etapa (Aceite/Recusa)
     if (targetId === connectionMode.sourceId) return; // Can't connect to self
-    
+
     const field = connectionMode.type === 'accept' ? 'next_step_on_accept' : 'next_step_on_decline';
     onUpdateConnection(connectionMode.sourceId, field, targetId);
     setConnectionMode(null);
   };
 
   const activeStep = steps.find(s => s.id === activeId);
-
+  const firstStep = steps.find((s) => s.position === 0);
   // Calculate canvas dimensions based on step positions
   const maxX = Math.max(CANVAS_MIN_WIDTH, ...steps.map(s => s.position_x + 320));
   const maxY = Math.max(CANVAS_MIN_HEIGHT, ...steps.map(s => s.position_y + 250));
@@ -157,7 +182,9 @@ export function FunnelCanvas({
           <div className="flex items-center gap-2">
             <Link2 className="h-4 w-4" />
             <span className="text-sm font-medium">
-              Clique em outro card para conectar como "{connectionMode.type === 'accept' ? 'Aceite' : 'Recusa'}"
+              {connectionMode.type === 'entry'
+                ? 'Clique em uma etapa para definir como "Primeira etapa"'
+                : `Clique em outro card para conectar como "${connectionMode.type === 'accept' ? 'Aceite' : 'Recusa'}"`}
             </span>
           </div>
           <Button
@@ -244,7 +271,12 @@ export function FunnelCanvas({
               className="absolute"
               style={{ left: PRODUCT_POSITION.x, top: PRODUCT_POSITION.y }}
             >
-              <div className="w-52 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-3 text-center shadow-lg relative">
+              <div 
+                className={cn(
+                  "w-52 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-xl p-3 text-center shadow-lg relative",
+                  connectionMode?.type === 'entry' && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                )}
+              >
                 <div className="w-12 h-12 mx-auto rounded-lg bg-primary/20 flex items-center justify-center mb-2 overflow-hidden">
                   {productImage ? (
                     <img src={productImage} alt={productName} className="w-full h-full object-cover" />
@@ -255,39 +287,42 @@ export function FunnelCanvas({
                 <p className="font-semibold text-sm text-foreground truncate">{productName}</p>
                 <p className="text-[10px] text-muted-foreground mb-2">Produto Principal</p>
                 
-                {/* First Step Selector */}
+                {/* Primeira etapa (botão "Ligar" + clicar no card destino) */}
                 {steps.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-primary/20">
                     <p className="text-[10px] text-muted-foreground mb-1.5">Primeira etapa:</p>
-                    <Select
-                      value={steps.find(s => s.position === 0)?.id || 'none'}
-                      onValueChange={(stepId) => {
-                        if (stepId === 'none') return;
-                        // Reorder steps to make selected step position 0
-                        const targetStep = steps.find(s => s.id === stepId);
-                        if (!targetStep) return;
-                        const currentFirst = steps.find(s => s.position === 0);
-                        if (currentFirst && currentFirst.id !== stepId) {
-                          const updatedSteps = steps.map(s => {
-                            if (s.id === stepId) return { ...s, position: 0 };
-                            if (s.id === currentFirst.id) return { ...s, position: targetStep.position };
-                            return s;
-                          });
-                          onReorderSteps(updatedSteps);
+                    <div className="flex items-center justify-between gap-2">
+                      <p
+                        className={cn(
+                          "text-xs font-medium truncate",
+                          !firstStep && "text-muted-foreground"
+                        )}
+                        title={
+                          firstStep
+                            ? (firstStep.title || STEP_CONFIG[firstStep.step_type]?.label || firstStep.step_type)
+                            : 'Não definido'
                         }
-                      }}
-                    >
-                      <SelectTrigger className="h-7 text-xs bg-background/80">
-                        <SelectValue placeholder="Selecionar" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50">
-                        {steps.map((s) => (
-                          <SelectItem key={s.id} value={s.id} className="text-xs">
-                            {s.title || STEP_CONFIG[s.step_type]?.label || s.step_type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      >
+                        {firstStep
+                          ? (firstStep.title || STEP_CONFIG[firstStep.step_type]?.label || firstStep.step_type)
+                          : 'Não definido'}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs bg-background/80"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleStartEntryConnection();
+                        }}
+                        disabled={!!connectionMode}
+                      >
+                        <Link2 className="h-3 w-3 mr-1" />
+                        {firstStep ? 'Trocar' : 'Ligar'}
+                      </Button>
+                    </div>
                   </div>
                 )}
                 
