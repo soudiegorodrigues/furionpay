@@ -206,7 +206,6 @@ export function FunnelConnections({
             strokeWidth="2"
             strokeDasharray={line.type === 'product' ? '8 4' : 'none'}
             markerEnd={`url(#arrow-${line.type})`}
-            className="transition-all duration-300"
           />
         </g>
       ))}
