@@ -3122,28 +3122,17 @@ export type Database = {
         Args: { _collaborator_id: string }
         Returns: boolean
       }
-      request_withdrawal:
-        | {
-            Args: {
-              p_amount: number
-              p_bank_code: string
-              p_bank_name: string
-              p_pix_key: string
-              p_pix_key_type: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_acquirer?: string
-              p_amount: number
-              p_bank_code: string
-              p_bank_name: string
-              p_pix_key: string
-              p_pix_key_type: string
-            }
-            Returns: Json
-          }
+      request_withdrawal: {
+        Args: {
+          p_acquirer?: string
+          p_amount: number
+          p_bank_code: string
+          p_bank_name: string
+          p_pix_key: string
+          p_pix_key_type: string
+        }
+        Returns: Json
+      }
       reset_login_attempts: { Args: { p_email: string }; Returns: boolean }
       reset_pix_transactions: {
         Args: { input_token: string }
