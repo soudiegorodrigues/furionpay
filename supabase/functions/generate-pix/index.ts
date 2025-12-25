@@ -762,7 +762,7 @@ async function logPixGenerated(
   popupModel?: string,
   feePercentage?: number,
   feeFixed?: number,
-  acquirer: string = 'spedpay',
+  acquirer: string = 'ativus',
   fingerprintHash?: string,
   clientIp?: string,
   donorEmail?: string,

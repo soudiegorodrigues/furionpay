@@ -909,9 +909,9 @@ serve(async (req) => {
       acquirer = await getUserAcquirer(supabase, transaction.user_id);
     }
     
-    // Default to spedpay if not detected
+    // Default to ativus if not detected
     if (!acquirer) {
-      acquirer = 'spedpay';
+      acquirer = 'ativus';
     }
 
     console.log('Using acquirer:', acquirer, '(from transaction:', !!transaction.acquirer, ', detected by txid:', detectAcquirerByTxid(txid) !== null, ')');
