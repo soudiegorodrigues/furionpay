@@ -181,32 +181,30 @@ export function FunnelStepBlock({
               </div>
 
               {/* Metrics Row */}
-              {metrics && (metrics.views > 0 || metrics.accepted > 0 || metrics.paid > 0) && (
-                <div className="flex items-center gap-3 mb-3 px-2 py-1.5 bg-muted/50 rounded-lg text-xs">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Eye className="h-3 w-3" />
-                    <span>{metrics.views}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-emerald-600">
-                    <Check className="h-3 w-3" />
-                    <span>{metrics.accepted}</span>
-                  </div>
-                  {metrics.revenue > 0 && (
-                    <div className="flex items-center gap-1 text-emerald-600 font-medium">
-                      <DollarSign className="h-3 w-3" />
-                      <span>
-                        {metrics.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </span>
-                    </div>
-                  )}
-                  {metrics.views > 0 && (
-                    <div className="flex items-center gap-1 text-blue-600 ml-auto">
-                      <Percent className="h-3 w-3" />
-                      <span>{((metrics.accepted / metrics.views) * 100).toFixed(1)}%</span>
-                    </div>
-                  )}
+              <div className="flex items-center gap-3 mb-3 px-2 py-1.5 bg-muted/50 rounded-lg text-xs">
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Eye className="h-3 w-3" />
+                  <span>{metrics?.views ?? 0}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-1 text-emerald-600">
+                  <Check className="h-3 w-3" />
+                  <span>{metrics?.accepted ?? 0}</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 font-medium">
+                  <DollarSign className="h-3 w-3" />
+                  <span>
+                    {(metrics?.revenue ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-blue-600 ml-auto">
+                  <Percent className="h-3 w-3" />
+                  <span>
+                    {metrics?.views && metrics.views > 0 
+                      ? ((metrics.accepted / metrics.views) * 100).toFixed(1) 
+                      : '0.0'}%
+                  </span>
+                </div>
+              </div>
 
               {/* Footer */}
               <div className="flex items-center justify-between">
