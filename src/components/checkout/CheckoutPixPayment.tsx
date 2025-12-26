@@ -19,7 +19,9 @@ interface CheckoutPixPaymentProps {
   productName?: string;
   pixelId?: string;
   accessToken?: string;
-  redirectUrl?: string;
+  upsellUrl?: string;
+  downsellUrl?: string;
+  crosssellUrl?: string;
   thankYouUrl?: string;
 }
 
@@ -35,7 +37,9 @@ export const CheckoutPixPayment = ({
   productName,
   pixelId,
   accessToken,
-  redirectUrl,
+  upsellUrl,
+  downsellUrl,
+  crosssellUrl,
   thankYouUrl,
 }: CheckoutPixPaymentProps) => {
   const [copied, setCopied] = useState(false);
@@ -140,16 +144,24 @@ export const CheckoutPixPayment = ({
   }).format(amount);
 
   // Handle redirect after payment confirmed
+  // Priority: upsell_url → downsell_url → crosssell_url → thank_you_url → success screen
   const handlePaymentSuccess = () => {
     trackPurchaseEvent(); // Fire Meta Pixel Purchase event
     toast.success("Pagamento confirmado!");
     onPaymentConfirmed?.();
     
     // Redirect to configured URL after a short delay
+    // The funnel works: main offer → upsell → downsell → crosssell
     setTimeout(() => {
-      if (redirectUrl) {
-        // Redirect to upsell/downsell/cross-sell page
-        window.location.href = redirectUrl;
+      if (upsellUrl) {
+        // Redirect to upsell page (after main offer purchase)
+        window.location.href = upsellUrl;
+      } else if (downsellUrl) {
+        // Redirect to downsell page (if no upsell configured)
+        window.location.href = downsellUrl;
+      } else if (crosssellUrl) {
+        // Redirect to cross-sell page (if no downsell configured)
+        window.location.href = crosssellUrl;
       } else if (thankYouUrl) {
         // Redirect to thank you page
         window.location.href = thankYouUrl;
@@ -179,7 +191,7 @@ export const CheckoutPixPayment = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [transactionId, isPaid, onPaymentConfirmed, redirectUrl, thankYouUrl]);
+  }, [transactionId, isPaid, onPaymentConfirmed, upsellUrl, downsellUrl, crosssellUrl, thankYouUrl]);
 
   const handleCopyCode = async () => {
     try {

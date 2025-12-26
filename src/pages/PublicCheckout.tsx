@@ -150,7 +150,9 @@ export default function PublicCheckout() {
         product_image_url: string | null;
         product_price: number;
         product_code: string | null;
-        redirect_url: string | null;
+        upsell_url: string | null;
+        downsell_url: string | null;
+        crosssell_url: string | null;
       };
       
       // Map RPC result to ProductOffer format
@@ -164,7 +166,9 @@ export default function PublicCheckout() {
         offer_code: offerRow.offer_code,
         is_active: true,
         user_id: "", // Not exposed for security
-        redirect_url: offerRow.redirect_url,
+        upsell_url: offerRow.upsell_url,
+        downsell_url: offerRow.downsell_url,
+        crosssell_url: offerRow.crosssell_url,
       };
       
       // Map to Product format
@@ -612,7 +616,9 @@ export default function PublicCheckout() {
           productName={offer?.name || product?.name}
           pixelId={pixelConfig?.pixelId}
           accessToken={pixelConfig?.accessToken}
-          redirectUrl={offer?.redirect_url || undefined}
+          upsellUrl={offer?.upsell_url || undefined}
+          downsellUrl={offer?.downsell_url || undefined}
+          crosssellUrl={offer?.crosssell_url || undefined}
           thankYouUrl={config?.thank_you_url || undefined}
         />
       </Suspense>

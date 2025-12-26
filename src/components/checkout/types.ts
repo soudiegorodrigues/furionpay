@@ -8,7 +8,9 @@ export interface ProductOffer {
   domain: string | null;
   offer_code: string | null;
   is_active: boolean;
-  redirect_url?: string | null;
+  upsell_url?: string | null;
+  downsell_url?: string | null;
+  crosssell_url?: string | null;
 }
 
 export interface Product {
