@@ -2733,6 +2733,7 @@ export type Database = {
           last_sign_in_at: string
         }[]
       }
+      get_all_users_available_balance: { Args: never; Returns: number }
       get_all_withdrawals_admin: {
         Args: { p_limit?: number }
         Returns: {
