@@ -330,6 +330,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
                       <option value="checkout">Checkout</option>
                       <option value="upsell">Upsell</option>
                       <option value="downsell">Downsell</option>
+                      <option value="crosssell">Cross-sell</option>
                     </select>
                   </div>
                 </div>
