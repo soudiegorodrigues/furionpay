@@ -334,44 +334,46 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
                     </select>
                   </div>
                 </div>
-                <div className="space-y-4 border-t pt-4 mt-2">
-                  <h5 className="text-sm font-medium text-muted-foreground">Links do Funil de Vendas</h5>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <span className="text-green-600">📈</span> Link Upsell (após compra desta oferta)
-                      </Label>
-                      <Input
-                        value={formData.upsell_url}
-                        onChange={(e) => setFormData({ ...formData, upsell_url: e.target.value })}
-                        placeholder="https://seusite.com/upsell"
-                      />
+                {formData.type === 'checkout' && (
+                  <div className="space-y-4 border-t pt-4 mt-2">
+                    <h5 className="text-sm font-medium text-muted-foreground">Links do Funil de Vendas</h5>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <span className="text-green-600">📈</span> Link Upsell (após compra desta oferta)
+                        </Label>
+                        <Input
+                          value={formData.upsell_url}
+                          onChange={(e) => setFormData({ ...formData, upsell_url: e.target.value })}
+                          placeholder="https://seusite.com/upsell"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <span className="text-orange-600">📉</span> Link Downsell (após compra do upsell)
+                        </Label>
+                        <Input
+                          value={formData.downsell_url}
+                          onChange={(e) => setFormData({ ...formData, downsell_url: e.target.value })}
+                          placeholder="https://seusite.com/downsell"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <span className="text-blue-600">🔄</span> Link Cross-sell (após compra do downsell)
+                        </Label>
+                        <Input
+                          value={formData.crosssell_url}
+                          onChange={(e) => setFormData({ ...formData, crosssell_url: e.target.value })}
+                          placeholder="https://seusite.com/crosssell"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <span className="text-orange-600">📉</span> Link Downsell (após compra do upsell)
-                      </Label>
-                      <Input
-                        value={formData.downsell_url}
-                        onChange={(e) => setFormData({ ...formData, downsell_url: e.target.value })}
-                        placeholder="https://seusite.com/downsell"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <span className="text-blue-600">🔄</span> Link Cross-sell (após compra do downsell)
-                      </Label>
-                      <Input
-                        value={formData.crosssell_url}
-                        onChange={(e) => setFormData({ ...formData, crosssell_url: e.target.value })}
-                        placeholder="https://seusite.com/crosssell"
-                      />
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Configure os links do seu funil de vendas. Deixe vazio para mostrar a tela de sucesso padrão.
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Configure os links do seu funil de vendas. Deixe vazio para mostrar a tela de sucesso padrão.
-                  </p>
-                </div>
+                )}
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={cancelEditing}>
                     Cancelar
