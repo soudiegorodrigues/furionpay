@@ -1671,44 +1671,50 @@ export type Database = {
       product_offers: {
         Row: {
           created_at: string
+          crosssell_url: string | null
           domain: string | null
+          downsell_url: string | null
           id: string
           is_active: boolean
           name: string
           offer_code: string | null
           price: number
           product_id: string
-          redirect_url: string | null
           type: string
           updated_at: string
+          upsell_url: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          crosssell_url?: string | null
           domain?: string | null
+          downsell_url?: string | null
           id?: string
           is_active?: boolean
           name: string
           offer_code?: string | null
           price?: number
           product_id: string
-          redirect_url?: string | null
           type?: string
           updated_at?: string
+          upsell_url?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          crosssell_url?: string | null
           domain?: string | null
+          downsell_url?: string | null
           id?: string
           is_active?: boolean
           name?: string
           offer_code?: string | null
           price?: number
           product_id?: string
-          redirect_url?: string | null
           type?: string
           updated_at?: string
+          upsell_url?: string | null
           user_id?: string
         }
         Relationships: [
@@ -3055,7 +3061,9 @@ export type Database = {
       get_public_offer_by_code: {
         Args: { p_offer_code: string }
         Returns: {
+          crosssell_url: string
           domain: string
+          downsell_url: string
           id: string
           name: string
           offer_code: string
@@ -3066,8 +3074,8 @@ export type Database = {
           product_image_url: string
           product_name: string
           product_price: number
-          redirect_url: string
           type: string
+          upsell_url: string
         }[]
       }
       get_public_product_by_code: {
