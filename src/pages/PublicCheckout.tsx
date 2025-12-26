@@ -137,7 +137,21 @@ export default function PublicCheckout() {
       if (offerError) throw offerError;
       if (!offerData || offerData.length === 0) return null;
       
-      const offerRow = offerData[0];
+      const offerRow = offerData[0] as {
+        id: string;
+        product_id: string;
+        name: string;
+        type: string;
+        domain: string | null;
+        price: number;
+        offer_code: string | null;
+        product_name: string;
+        product_description: string | null;
+        product_image_url: string | null;
+        product_price: number;
+        product_code: string | null;
+        redirect_url: string | null;
+      };
       
       // Map RPC result to ProductOffer format
       const offer: ProductOffer = {
@@ -150,7 +164,7 @@ export default function PublicCheckout() {
         offer_code: offerRow.offer_code,
         is_active: true,
         user_id: "", // Not exposed for security
-        redirect_url: offerRow.redirect_url || null,
+        redirect_url: offerRow.redirect_url,
       };
       
       // Map to Product format
