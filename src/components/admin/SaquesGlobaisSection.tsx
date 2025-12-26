@@ -56,20 +56,24 @@ export function SaquesGlobaisSection() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending');
   const [currentPage, setCurrentPage] = useState(1);
   const [userBalances, setUserBalances] = useState<Record<string, UserBalance>>({});
+  const [totalAvailableBalance, setTotalAvailableBalance] = useState(0);
   const itemsPerPage = 10;
   const { toast } = useToast();
 
   const loadWithdrawals = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_all_withdrawals_admin', {
-        p_limit: 500
-      });
-      if (error) throw error;
-      setWithdrawals(data || []);
+      const [withdrawalsResult, balanceResult] = await Promise.all([
+        supabase.rpc('get_all_withdrawals_admin', { p_limit: 500 }),
+        supabase.rpc('get_all_users_available_balance')
+      ]);
+      
+      if (withdrawalsResult.error) throw withdrawalsResult.error;
+      setWithdrawals(withdrawalsResult.data || []);
+      setTotalAvailableBalance(balanceResult.data || 0);
       
       // Carregar saldos dos usuários com saques pendentes
-      const pendingWithdrawals = (data || []).filter((w: Withdrawal) => w.status === 'pending');
+      const pendingWithdrawals = (withdrawalsResult.data || []).filter((w: Withdrawal) => w.status === 'pending');
       const uniqueUserIds = [...new Set(pendingWithdrawals.map((w: Withdrawal) => w.user_id))];
       
       for (const userId of uniqueUserIds) {
@@ -380,7 +384,7 @@ export function SaquesGlobaisSection() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="p-3 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
                 <div>
@@ -399,6 +403,16 @@ export function SaquesGlobaisSection() {
                   <p className="text-[10px] text-muted-foreground">{stats.totalApproved} saques processados</p>
                 </div>
                 <DollarSign className="h-4 w-4 text-[#ef4343]" />
+              </div>
+            </div>
+            <div className="p-3 rounded-lg border bg-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm text-black">Saldo Disponível Total</p>
+                  <p className="text-lg font-bold text-[#22c55e]">{formatCurrency(totalAvailableBalance)}</p>
+                  <p className="text-[10px] text-muted-foreground">Saldo de todos os usuários</p>
+                </div>
+                <Wallet className="h-4 w-4 text-[#22c55e]" />
               </div>
             </div>
           </div>
