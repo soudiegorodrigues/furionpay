@@ -111,26 +111,76 @@ export function getAllUtmValues(utmData: UTMData | null | undefined): Record<UTM
 }
 
 /**
- * Determines traffic source type from UTM data
+ * Cleans corrupted UTM source values from tracking systems like Utmify
+ * Patterns detected:
+ * - "FBjLj694..." -> "facebook"
+ * - "tiktokjLj694..." -> "tiktok"
+ * - "googlejLj694..." -> "google"
+ * - "instagramjLj694..." -> "instagram"
  */
-export function getTrafficSource(utmData: UTMData | null | undefined): 'facebook' | 'google' | 'tiktok' | 'other' | null {
-  const source = getUtmValue(utmData, 'utm_source')?.toLowerCase();
-  
+export function cleanUtmSource(source: string | undefined | null): string | null {
   if (!source) return null;
   
-  if (source.includes('facebook') || source.includes('fb') || source.includes('instagram') || source.includes('ig')) {
+  const sourceLower = source.toLowerCase();
+  
+  // Pattern: starts with known platform name followed by "jLj" (Utmify lead ID pattern)
+  const utmifyPattern = /^(tiktok|facebook|fb|google|instagram|ig|twitter|youtube|pinterest|linkedin|whatsapp|telegram|kwai|snapchat)jlj/i;
+  const match = sourceLower.match(utmifyPattern);
+  
+  if (match) {
+    const platform = match[1].toLowerCase();
+    // Normalize platform names
+    if (platform === 'fb') return 'facebook';
+    if (platform === 'ig') return 'instagram';
+    return platform;
+  }
+  
+  // Pattern: starts with "FBjLj" (Facebook specific pattern from Utmify)
+  if (/^fbjlj/i.test(sourceLower)) {
     return 'facebook';
   }
   
-  if (source.includes('google') || source.includes('gads') || source.includes('youtube')) {
+  // Pattern: just "jLj" followed by hex (corrupted source that lost the platform name)
+  if (/^jlj[a-f0-9]/i.test(sourceLower)) {
+    // Cannot determine source, return as unknown
+    return 'unknown';
+  }
+  
+  // No corruption detected, return original
+  return source;
+}
+
+/**
+ * Determines traffic source type from UTM data
+ * Now includes automatic cleaning of corrupted UTM sources
+ */
+export function getTrafficSource(utmData: UTMData | null | undefined): 'facebook' | 'google' | 'tiktok' | 'other' | null {
+  const rawSource = getUtmValue(utmData, 'utm_source');
+  const source = cleanUtmSource(rawSource)?.toLowerCase();
+  
+  if (!source) return null;
+  
+  if (source === 'facebook' || source === 'instagram' || source.includes('facebook') || source.includes('fb') || source.includes('instagram') || source.includes('ig')) {
+    return 'facebook';
+  }
+  
+  if (source === 'google' || source.includes('google') || source.includes('gads') || source.includes('youtube')) {
     return 'google';
   }
   
-  if (source.includes('tiktok') || source.includes('bytedance')) {
+  if (source === 'tiktok' || source.includes('tiktok') || source.includes('bytedance')) {
     return 'tiktok';
   }
   
   return 'other';
+}
+
+/**
+ * Gets the cleaned UTM source value for display purposes
+ */
+export function getCleanedUtmSource(utmData: UTMData | null | undefined): string | null {
+  const rawSource = getUtmValue(utmData, 'utm_source');
+  return cleanUtmSource(rawSource);
 }
 
 /**
