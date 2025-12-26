@@ -8,6 +8,7 @@ export interface ProductOffer {
   domain: string | null;
   offer_code: string | null;
   is_active: boolean;
+  redirect_url?: string | null;
 }
 
 export interface Product {

@@ -150,6 +150,7 @@ export default function PublicCheckout() {
         offer_code: offerRow.offer_code,
         is_active: true,
         user_id: "", // Not exposed for security
+        redirect_url: offerRow.redirect_url || null,
       };
       
       // Map to Product format
@@ -597,6 +598,8 @@ export default function PublicCheckout() {
           productName={offer?.name || product?.name}
           pixelId={pixelConfig?.pixelId}
           accessToken={pixelConfig?.accessToken}
+          redirectUrl={offer?.redirect_url || undefined}
+          thankYouUrl={config?.thank_you_url || undefined}
         />
       </Suspense>
     );
