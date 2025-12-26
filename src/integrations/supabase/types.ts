@@ -3066,6 +3066,7 @@ export type Database = {
           product_image_url: string
           product_name: string
           product_price: number
+          redirect_url: string
           type: string
         }[]
       }
