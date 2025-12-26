@@ -19,6 +19,8 @@ interface CheckoutPixPaymentProps {
   productName?: string;
   pixelId?: string;
   accessToken?: string;
+  redirectUrl?: string;
+  thankYouUrl?: string;
 }
 
 export const CheckoutPixPayment = ({
@@ -33,6 +35,8 @@ export const CheckoutPixPayment = ({
   productName,
   pixelId,
   accessToken,
+  redirectUrl,
+  thankYouUrl,
 }: CheckoutPixPaymentProps) => {
   const [copied, setCopied] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
@@ -135,6 +139,25 @@ export const CheckoutPixPayment = ({
     minimumFractionDigits: 2,
   }).format(amount);
 
+  // Handle redirect after payment confirmed
+  const handlePaymentSuccess = () => {
+    trackPurchaseEvent(); // Fire Meta Pixel Purchase event
+    toast.success("Pagamento confirmado!");
+    onPaymentConfirmed?.();
+    
+    // Redirect to configured URL after a short delay
+    setTimeout(() => {
+      if (redirectUrl) {
+        // Redirect to upsell/downsell/cross-sell page
+        window.location.href = redirectUrl;
+      } else if (thankYouUrl) {
+        // Redirect to thank you page
+        window.location.href = thankYouUrl;
+      }
+      // If no URL configured, stay on success screen (isPaid = true)
+    }, 1500);
+  };
+
   // Poll for payment status
   useEffect(() => {
     if (!transactionId || isPaid) return;
@@ -147,9 +170,7 @@ export const CheckoutPixPayment = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
-          trackPurchaseEvent(); // Fire Meta Pixel Purchase event
-          toast.success("Pagamento confirmado!");
-          onPaymentConfirmed?.();
+          handlePaymentSuccess();
           clearInterval(pollInterval);
         }
       } catch (err) {
@@ -158,7 +179,7 @@ export const CheckoutPixPayment = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [transactionId, isPaid, onPaymentConfirmed]);
+  }, [transactionId, isPaid, onPaymentConfirmed, redirectUrl, thankYouUrl]);
 
   const handleCopyCode = async () => {
     try {
@@ -182,9 +203,7 @@ export const CheckoutPixPayment = ({
 
       if (!error && data && data.status === "paid") {
         setIsPaid(true);
-        trackPurchaseEvent(); // Fire Meta Pixel Purchase event
-        toast.success("Pagamento confirmado!");
-        onPaymentConfirmed?.();
+        handlePaymentSuccess();
       } else {
         toast.info("Pagamento ainda não identificado. Aguarde alguns segundos.");
       }

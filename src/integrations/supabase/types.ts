@@ -1678,6 +1678,7 @@ export type Database = {
           offer_code: string | null
           price: number
           product_id: string
+          redirect_url: string | null
           type: string
           updated_at: string
           user_id: string
@@ -1691,6 +1692,7 @@ export type Database = {
           offer_code?: string | null
           price?: number
           product_id: string
+          redirect_url?: string | null
           type?: string
           updated_at?: string
           user_id: string
@@ -1704,6 +1706,7 @@ export type Database = {
           offer_code?: string | null
           price?: number
           product_id?: string
+          redirect_url?: string | null
           type?: string
           updated_at?: string
           user_id?: string

@@ -20,6 +20,7 @@ interface ProductOffer {
   domain: string | null;
   offer_code: string | null;
   is_active: boolean;
+  redirect_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +45,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
     name: "",
     price: 0,
     type: "checkout",
+    redirect_url: "",
   });
 
   const { data: offers = [], isLoading: offersLoading } = useQuery({
@@ -93,6 +95,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
           price: data.price,
           type: data.type,
           domain: selectedDomain,
+          redirect_url: data.redirect_url || null,
         });
       
       if (error) throw error;
@@ -101,7 +104,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
       toast.success("Oferta criada com sucesso");
       queryClient.invalidateQueries({ queryKey: ["product-offers", productId] });
       setIsCreating(false);
-      setFormData({ name: "", price: 0, type: "checkout" });
+      setFormData({ name: "", price: 0, type: "checkout", redirect_url: "" });
     },
     onError: () => {
       toast.error("Erro ao criar oferta");
@@ -117,6 +120,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
           price: data.price,
           type: data.type,
           domain: selectedDomain,
+          redirect_url: data.redirect_url || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id);
@@ -127,7 +131,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
       toast.success("Oferta atualizada com sucesso");
       queryClient.invalidateQueries({ queryKey: ["product-offers", productId] });
       setEditingOffer(null);
-      setFormData({ name: "", price: 0, type: "checkout" });
+      setFormData({ name: "", price: 0, type: "checkout", redirect_url: "" });
     },
     onError: () => {
       toast.error("Erro ao atualizar oferta");
@@ -212,6 +216,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
       name: offer.name,
       price: offer.price,
       type: offer.type,
+      redirect_url: offer.redirect_url || "",
     });
     setSelectedDomain(offer.domain || domains[0]?.domain || "");
     setIsCreating(false);
@@ -220,7 +225,7 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
   const cancelEditing = () => {
     setEditingOffer(null);
     setIsCreating(false);
-    setFormData({ name: "", price: 0, type: "checkout" });
+    setFormData({ name: "", price: 0, type: "checkout", redirect_url: "" });
   };
 
   const formatPrice = (price: number) => {
@@ -317,6 +322,17 @@ export function OffersSection({ productId, userId }: OffersSectionProps) {
                       <option value="downsell">Downsell</option>
                     </select>
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Link de Redirecionamento (Upsell/Downsell/Cross-sell)</Label>
+                  <Input
+                    value={formData.redirect_url}
+                    onChange={(e) => setFormData({ ...formData, redirect_url: e.target.value })}
+                    placeholder="https://seusite.com/upsell ou deixe vazio para tela padrão"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O cliente será redirecionado para este link após o pagamento. Deixe vazio para mostrar a tela de sucesso padrão.
+                  </p>
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={cancelEditing}>
