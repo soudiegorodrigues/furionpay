@@ -84,6 +84,41 @@ function parseReferrer(): { source: string; medium: string } | null {
 }
 
 /**
+ * Limpa UTM source corrompido por sistemas como Utmify
+ * Patterns detectados:
+ * - "FBjLj694..." -> "facebook"
+ * - "tiktokjLj694..." -> "tiktok"
+ * - "googlejLj694..." -> "google"
+ */
+function cleanUtmSource(source: string | null | undefined): string | null {
+  if (!source) return null;
+  
+  const sourceLower = source.toLowerCase();
+  
+  // Pattern: starts with known platform name followed by "jLj" (Utmify lead ID pattern)
+  const utmifyPattern = /^(tiktok|facebook|fb|google|instagram|ig|twitter|youtube|pinterest|linkedin|whatsapp|telegram|kwai|snapchat)jlj/i;
+  const match = sourceLower.match(utmifyPattern);
+  
+  if (match) {
+    const platform = match[1].toLowerCase();
+    console.log('[UTM DEBUG] UTM source corrompido detectado:', source, '-> limpo para:', platform);
+    // Normalize platform names
+    if (platform === 'fb') return 'facebook';
+    if (platform === 'ig') return 'instagram';
+    return platform;
+  }
+  
+  // Pattern: starts with "FBjLj" (Facebook specific pattern from Utmify)
+  if (/^fbjlj/i.test(sourceLower)) {
+    console.log('[UTM DEBUG] UTM source Facebook corrompido detectado:', source, '-> limpo para: facebook');
+    return 'facebook';
+  }
+  
+  // No corruption detected, return original
+  return source;
+}
+
+/**
  * Captura os parâmetros UTM da URL atual
  */
 export function captureUTMParams(): UTMParams {
@@ -98,9 +133,13 @@ export function captureUTMParams(): UTMParams {
   
   if (fbclid) {
     console.log('[UTM DEBUG] fbclid encontrado na URL:', fbclid.substring(0, 20) + '...');
+    // Limpar utm_source se estiver corrompido
+    const rawUtmSource = params.get("utm_source");
+    const cleanedSource = cleanUtmSource(rawUtmSource) || "facebook";
+    
     const facebookUtms: UTMParams = {
       fbclid: fbclid,
-      utm_source: params.get("utm_source") || "facebook",
+      utm_source: cleanedSource,
       utm_medium: params.get("utm_medium") || "paid",
       utm_campaign: params.get("utm_campaign") || undefined,
       utm_content: params.get("utm_content") || undefined,
@@ -115,13 +154,17 @@ export function captureUTMParams(): UTMParams {
       }
     });
     
-    console.log('[UTM DEBUG] UTMs do Facebook capturados:', facebookUtms);
+    console.log('[UTM DEBUG] UTMs do Facebook capturados (limpos):', facebookUtms);
     return facebookUtms;
   }
 
+  // Capturar e limpar utm_source
+  const rawUtmSource = params.get("utm_source");
+  const cleanedUtmSource = cleanUtmSource(rawUtmSource);
+
   // Se não tem fbclid, continuar com lógica normal
   const utmParams: UTMParams = {
-    utm_source: params.get("utm_source") || undefined,
+    utm_source: cleanedUtmSource || undefined,
     utm_medium: params.get("utm_medium") || undefined,
     utm_campaign: params.get("utm_campaign") || undefined,
     utm_content: params.get("utm_content") || undefined,
