@@ -76,6 +76,7 @@ const AdminUserDetail = () => {
   const [userTotalPaid, setUserTotalPaid] = useState(0);
   const [userTotalLiquid, setUserTotalLiquid] = useState(0);
   const [userTotalWithdrawn, setUserTotalWithdrawn] = useState(0);
+  const [userTotalPending, setUserTotalPending] = useState(0);
   const [verification, setVerification] = useState<VerificationStatus | null>(null);
   const [user2FAStatus, setUser2FAStatus] = useState<User2FAStatus | null>(null);
   const [reset2FADialogOpen, setReset2FADialogOpen] = useState(false);
@@ -196,7 +197,8 @@ const AdminUserDetail = () => {
         { data: totalPaid },
         { data: verificationData },
         { data: transactionsData },
-        { data: withdrawalsData }
+        { data: withdrawalsData },
+        { data: pendingWithdrawalsData }
       ] = await Promise.all([
         supabase.from('admin_settings').select('value').eq('user_id', id).eq('key', 'user_acquirer').maybeSingle(),
         supabase.from('admin_settings').select('value').eq('user_id', id).eq('key', 'user_fee_config').maybeSingle(),
@@ -204,7 +206,8 @@ const AdminUserDetail = () => {
         supabase.rpc('get_user_total_paid', { p_user_id: id }),
         supabase.from('user_verification').select('status, person_type, document_type_selected').eq('user_id', id).maybeSingle(),
         supabase.from('pix_transactions').select('amount, fee_fixed, fee_percentage').eq('user_id', id).eq('status', 'paid'),
-        supabase.from('withdrawal_requests').select('gross_amount').eq('user_id', id).eq('status', 'approved')
+        supabase.from('withdrawal_requests').select('gross_amount').eq('user_id', id).eq('status', 'approved'),
+        supabase.from('withdrawal_requests').select('gross_amount').eq('user_id', id).eq('status', 'pending')
       ]);
 
       setSelectedAcquirer(acquirerData?.value || '');
@@ -224,6 +227,10 @@ const AdminUserDetail = () => {
       // Calculate total withdrawn
       const totalWithdrawn = (withdrawalsData || []).reduce((sum, w) => sum + (w.gross_amount || 0), 0);
       setUserTotalWithdrawn(totalWithdrawn);
+      
+      // Calculate total pending withdrawals
+      const totalPending = (pendingWithdrawalsData || []).reduce((sum, w) => sum + (w.gross_amount || 0), 0);
+      setUserTotalPending(totalPending);
       
       setVerification(verificationData ? {
         status: verificationData.status,
@@ -600,6 +607,7 @@ const AdminUserDetail = () => {
                     { name: 'Líquido', value: userTotalLiquid, color: '#10b981' },
                     { name: 'Disponível', value: user.available_balance || 0, color: '#22c55e' },
                     { name: 'Sacado', value: userTotalWithdrawn, color: '#f59e0b' },
+                    ...(userTotalPending > 0 ? [{ name: 'Pendente', value: userTotalPending, color: '#ef4444' }] : []),
                   ]}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
@@ -624,6 +632,7 @@ const AdminUserDetail = () => {
                       { name: 'Líquido', value: userTotalLiquid, color: '#10b981' },
                       { name: 'Disponível', value: user.available_balance || 0, color: '#22c55e' },
                       { name: 'Sacado', value: userTotalWithdrawn, color: '#f59e0b' },
+                      ...(userTotalPending > 0 ? [{ name: 'Pendente', value: userTotalPending, color: '#ef4444' }] : []),
                     ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -631,7 +640,7 @@ const AdminUserDetail = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+            <div className={`grid grid-cols-2 ${userTotalPending > 0 ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4 mt-4 pt-4 border-t`}>
               <div className="text-center">
                 <div className="w-3 h-3 rounded-full bg-blue-500 mx-auto mb-1"></div>
                 <p className="text-xs text-muted-foreground">Faturado</p>
@@ -652,6 +661,13 @@ const AdminUserDetail = () => {
                 <p className="text-xs text-muted-foreground">Sacado</p>
                 <p className="font-semibold text-sm">R$ {userTotalWithdrawn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
+              {userTotalPending > 0 && (
+                <div className="text-center">
+                  <div className="w-3 h-3 rounded-full bg-red-500 mx-auto mb-1"></div>
+                  <p className="text-xs text-muted-foreground">Pendente</p>
+                  <p className="font-semibold text-sm text-red-500">R$ {userTotalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
