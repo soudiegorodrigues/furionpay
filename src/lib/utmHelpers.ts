@@ -113,7 +113,7 @@ export function getAllUtmValues(utmData: UTMData | null | undefined): Record<UTM
 /**
  * Determines traffic source type from UTM data
  */
-export function getTrafficSource(utmData: UTMData | null | undefined): 'facebook' | 'google' | 'other' | null {
+export function getTrafficSource(utmData: UTMData | null | undefined): 'facebook' | 'google' | 'tiktok' | 'other' | null {
   const source = getUtmValue(utmData, 'utm_source')?.toLowerCase();
   
   if (!source) return null;
@@ -124,6 +124,10 @@ export function getTrafficSource(utmData: UTMData | null | undefined): 'facebook
   
   if (source.includes('google') || source.includes('gads') || source.includes('youtube')) {
     return 'google';
+  }
+  
+  if (source.includes('tiktok') || source.includes('bytedance')) {
+    return 'tiktok';
   }
   
   return 'other';
