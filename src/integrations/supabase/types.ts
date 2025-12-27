@@ -3021,9 +3021,10 @@ export type Database = {
           conversion_rate: number
           performance_score: number
           product_id: string
+          product_name: string
+          revenue: number
           total_generated: number
           total_paid: number
-          total_revenue: number
         }[]
       }
       get_public_checkout_config: {
