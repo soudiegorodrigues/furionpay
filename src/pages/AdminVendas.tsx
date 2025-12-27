@@ -189,12 +189,14 @@ const AdminVendas = () => {
   }, []);
 
   // Load period stats
-  const loadPeriodStats = useCallback(async (period: DateFilter) => {
+  const loadPeriodStats = useCallback(async (period: DateFilter, status: StatusFilter, platform: PlatformFilter) => {
     try {
       const { data, error } = await supabase.rpc('get_user_stats_by_period', {
         p_period: period,
         p_start_date: null,
-        p_end_date: null
+        p_end_date: null,
+        p_status: status,
+        p_platform: platform
       });
       if (error) throw error;
       if (data) {
@@ -267,12 +269,12 @@ const AdminVendas = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
-  // Load stats when date filter changes
+  // Load stats when filters change
   useEffect(() => {
     if (isAuthenticated) {
-      loadPeriodStats(dateFilter);
+      loadPeriodStats(dateFilter, statusFilter, platformFilter);
     }
-  }, [dateFilter, isAuthenticated, loadPeriodStats]);
+  }, [dateFilter, statusFilter, platformFilter, isAuthenticated, loadPeriodStats]);
 
   // Reset page when filters change (except page itself)
   useEffect(() => {
@@ -322,7 +324,7 @@ const AdminVendas = () => {
             size="sm" 
             onClick={() => {
               loadTransactions(false);
-              loadPeriodStats(dateFilter);
+              loadPeriodStats(dateFilter, statusFilter, platformFilter);
               toast({ title: "Atualizado", description: "Dados atualizados com sucesso" });
             }}
           >
