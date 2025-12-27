@@ -159,12 +159,12 @@ export const TwoFactorVerify = ({ factorId, onSuccess, onCancel, onRecovery }: T
               onChange={setCode}
             >
               <InputOTPGroup>
-                <InputOTPSlot index={0} className="w-12 h-14 text-xl" />
-                <InputOTPSlot index={1} className="w-12 h-14 text-xl" />
-                <InputOTPSlot index={2} className="w-12 h-14 text-xl" />
-                <InputOTPSlot index={3} className="w-12 h-14 text-xl" />
-                <InputOTPSlot index={4} className="w-12 h-14 text-xl" />
-                <InputOTPSlot index={5} className="w-12 h-14 text-xl" />
+                <InputOTPSlot index={0} className="w-12 h-14 text-xl text-white bg-white/5 border-white/20" />
+                <InputOTPSlot index={1} className="w-12 h-14 text-xl text-white bg-white/5 border-white/20" />
+                <InputOTPSlot index={2} className="w-12 h-14 text-xl text-white bg-white/5 border-white/20" />
+                <InputOTPSlot index={3} className="w-12 h-14 text-xl text-white bg-white/5 border-white/20" />
+                <InputOTPSlot index={4} className="w-12 h-14 text-xl text-white bg-white/5 border-white/20" />
+                <InputOTPSlot index={5} className="w-12 h-14 text-xl text-white bg-white/5 border-white/20" />
               </InputOTPGroup>
             </InputOTP>
           </div>
