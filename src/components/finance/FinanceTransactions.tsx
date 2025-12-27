@@ -893,12 +893,15 @@ export const FinanceTransactions = ({ userId }: { userId?: string }) => {
             <div className="space-y-2">
               <Label>Valor (R$)</Label>
               <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="0,00"
+                type="text"
+                inputMode="numeric"
+                value={formData.amount ? parseFloat(formData.amount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, '');
+                  const numericValue = rawValue ? (parseInt(rawValue, 10) / 100).toFixed(2) : '';
+                  setFormData({ ...formData, amount: numericValue });
+                }}
+                placeholder="R$ 0,00"
               />
             </div>
 
