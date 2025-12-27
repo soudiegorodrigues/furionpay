@@ -3276,6 +3276,23 @@ export type Database = {
         | {
             Args: {
               p_end_date?: string
+              p_period?: string
+              p_platform?: string
+              p_start_date?: string
+              p_status?: string
+            }
+            Returns: {
+              conversion_rate: number
+              generated_amount: number
+              paid_amount: number
+              total_expired: number
+              total_generated: number
+              total_paid: number
+            }[]
+          }
+        | {
+            Args: {
+              p_end_date?: string
               p_period: string
               p_start_date?: string
             }
