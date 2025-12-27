@@ -58,6 +58,7 @@ interface PeriodStats {
 
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
+type PlatformFilter = 'all' | 'facebook' | 'google' | 'tiktok' | 'other';
 type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
 
 const AdminVendas = () => {
@@ -73,6 +74,7 @@ const AdminVendas = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
@@ -220,7 +222,8 @@ const AdminVendas = () => {
         p_start_date: null,
         p_end_date: null,
         p_status: statusFilter,
-        p_search: debouncedSearch
+        p_search: debouncedSearch,
+        p_platform: platformFilter
       });
 
       if (error) throw error;
@@ -239,7 +242,7 @@ const AdminVendas = () => {
       setIsInitialLoading(false);
       setIsPaginating(false);
     }
-  }, [currentPage, dateFilter, statusFilter, debouncedSearch, toast, transactions.length]);
+  }, [currentPage, dateFilter, statusFilter, platformFilter, debouncedSearch, toast, transactions.length]);
 
   // Initial load
   useEffect(() => {
@@ -254,7 +257,7 @@ const AdminVendas = () => {
       loadTransactions(false); // false = não é paginação
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, dateFilter, statusFilter, debouncedSearch]);
+  }, [isAuthenticated, dateFilter, statusFilter, platformFilter, debouncedSearch]);
 
   // Load transactions when page changes (pagination)
   useEffect(() => {
@@ -274,7 +277,7 @@ const AdminVendas = () => {
   // Reset page when filters change (except page itself)
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, statusFilter, debouncedSearch]);
+  }, [dateFilter, statusFilter, platformFilter, debouncedSearch]);
 
   // Pagination
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -386,16 +389,15 @@ const AdminVendas = () => {
 
             {/* Date Filter */}
             <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-              <SelectTrigger className="w-full lg:w-[160px]">
-                <CalendarIcon className="h-4 w-4 mr-2" />
+              <SelectTrigger className="w-full lg:w-[130px]">
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="today">Hoje</SelectItem>
                 <SelectItem value="yesterday">Ontem</SelectItem>
-                <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                <SelectItem value="15days">Últimos 15 dias</SelectItem>
+                <SelectItem value="7days">7 dias</SelectItem>
+                <SelectItem value="15days">15 dias</SelectItem>
                 <SelectItem value="month">Este mês</SelectItem>
                 <SelectItem value="year">Este ano</SelectItem>
               </SelectContent>
@@ -403,8 +405,7 @@ const AdminVendas = () => {
 
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-              <SelectTrigger className="w-full lg:w-[140px]">
-                <Filter className="h-4 w-4 mr-2" />
+              <SelectTrigger className="w-full lg:w-[110px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -412,6 +413,20 @@ const AdminVendas = () => {
                 <SelectItem value="paid">Pago</SelectItem>
                 <SelectItem value="generated">Gerado</SelectItem>
                 <SelectItem value="expired">Expirado</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Platform Filter */}
+            <Select value={platformFilter} onValueChange={(v) => setPlatformFilter(v as PlatformFilter)}>
+              <SelectTrigger className="w-full lg:w-[130px]">
+                <SelectValue placeholder="Plataforma" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="facebook">Facebook/IG</SelectItem>
+                <SelectItem value="google">Google/YT</SelectItem>
+                <SelectItem value="tiktok">TikTok</SelectItem>
+                <SelectItem value="other">Outras</SelectItem>
               </SelectContent>
             </Select>
 
