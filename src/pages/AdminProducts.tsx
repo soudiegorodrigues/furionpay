@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Package, Plus, FolderPlus, Search, Settings, Image, Folder, X, FolderInput, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { PerformanceIndicator } from "@/components/product/PerformanceIndicator";
 
 interface Product {
   id: string;
@@ -30,6 +31,9 @@ interface Product {
   website_url: string | null;
   created_at: string;
   updated_at: string;
+  performance_score?: number;
+  total_paid?: number;
+  conversion_rate?: number;
 }
 
 interface ProductFolder {
@@ -140,6 +144,13 @@ const ProductCard = memo(({ product, folders, onNavigate, onMoveToFolder }: Prod
           R$ {product.price.toFixed(2).replace(".", ",")}
         </p>
       </div>
+      
+      {/* Performance Indicator */}
+      <PerformanceIndicator 
+        score={product.performance_score || 0} 
+        totalPaid={product.total_paid || 0}
+      />
+      
       <div className="flex flex-wrap gap-2 mt-2">
         <Popover>
           <PopoverTrigger asChild>
@@ -307,6 +318,30 @@ export default function AdminProducts() {
     staleTime: 30 * 1000,
   });
 
+  // Fetch products performance scores
+  interface ProductPerformance {
+    product_id: string;
+    total_paid: number;
+    total_generated: number;
+    conversion_rate: number;
+    total_revenue: number;
+    performance_score: number;
+  }
+
+  const { data: performanceData = [] } = useQuery({
+    queryKey: ["products_performance", userId],
+    queryFn: async (): Promise<ProductPerformance[]> => {
+      if (!userId) return [];
+      const { data, error } = await supabase.rpc('get_products_performance', {
+        p_user_id: userId
+      });
+      if (error) throw error;
+      return (data as unknown as ProductPerformance[]) || [];
+    },
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+  });
+
   // Memoized folder count lookup
   const getFolderCount = useCallback((folderId: string) => {
     const found = folderCounts.find(fc => fc.folder_id === folderId);
@@ -318,8 +353,20 @@ export default function AdminProducts() {
     return selectedFolder ? folders.find(f => f.id === selectedFolder) : null;
   }, [selectedFolder, folders]);
 
-  // Extracted data
-  const products = paginatedData?.products || [];
+  // Merge products with performance data
+  const products = useMemo(() => {
+    const baseProducts = paginatedData?.products || [];
+    return baseProducts.map(product => {
+      const perf = performanceData.find(p => p.product_id === product.id);
+      return {
+        ...product,
+        performance_score: perf?.performance_score || 0,
+        total_paid: perf?.total_paid || 0,
+        conversion_rate: perf?.conversion_rate || 0
+      };
+    });
+  }, [paginatedData?.products, performanceData]);
+
   const totalCount = paginatedData?.total_count || 0;
   const totalPages = paginatedData?.total_pages || 0;
 

@@ -3015,6 +3015,17 @@ export type Database = {
         }
         Returns: Json
       }
+      get_products_performance: {
+        Args: { p_user_id: string }
+        Returns: {
+          conversion_rate: number
+          performance_score: number
+          product_id: string
+          total_generated: number
+          total_paid: number
+          total_revenue: number
+        }[]
+      }
       get_public_checkout_config: {
         Args: { p_product_id: string }
         Returns: {
