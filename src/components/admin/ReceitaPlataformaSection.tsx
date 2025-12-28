@@ -635,16 +635,16 @@ export const ReceitaPlataformaSection = () => {
                 <>
                   {/* Total do Mês */}
                   <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
-                    <div className="text-2xl sm:text-3xl font-bold text-green-500">
-                      {formatCurrency(absoluteStats.monthNet)}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Lucro Líquido em {MONTH_NAMES[selectedMonth - 1]}
-                    </p>
-                    <div className="flex justify-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span>Bruto: {formatCurrency(absoluteStats.monthGross)}</span>
-                      <span>Taxas: {formatCurrency(absoluteStats.monthFees)}</span>
-                    </div>
+                <div className="text-2xl sm:text-3xl font-bold text-green-500">
+                  {formatCurrency(absoluteStats.monthGross)}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Faturamento Bruto em {MONTH_NAMES[selectedMonth - 1]}
+                </p>
+                <div className="flex justify-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <span>Líquido: {formatCurrency(absoluteStats.monthNet)}</span>
+                  <span>Taxas: {formatCurrency(absoluteStats.monthFees)}</span>
+                </div>
                   </div>
                   
                   {/* Breakdown Semanal */}
