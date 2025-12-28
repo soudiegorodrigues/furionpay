@@ -557,38 +557,8 @@ export const ReceitaPlataformaSection = () => {
           
           {/* Seletores de Período e Usuário */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Toggle Período Relativo / Personalizado */}
-            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-              <Button
-                variant={periodMode === 'relative' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => setPeriodMode('relative')}
-              >
-                Período Atual
-              </Button>
-              <Button
-                variant={periodMode === 'custom' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => setPeriodMode('custom')}
-              >
-                <CalendarRange className="h-3 w-3 mr-1" />
-                Personalizado
-              </Button>
-            </div>
             
-            
-            {/* DateRangePicker (modo custom) */}
-            {periodMode === 'custom' && (
-              <DateRangePicker
-                dateRange={customDateRange}
-                onDateRangeChange={setCustomDateRange}
-                className="h-8"
-                placeholder="Selecione o período"
-              />
-            )}
-            
+
           </div>
         </CardHeader>
         <CardContent>
