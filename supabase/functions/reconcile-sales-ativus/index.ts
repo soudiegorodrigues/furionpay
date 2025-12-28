@@ -168,10 +168,11 @@ async function fetchSingleTransaction(transactionId: string, apiKey: string): Pr
   const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
   const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
 
+  // Try first as id_transaction (Ativus format)
   const statusUrl = `${ATIVUS_STATUS_URL}?id_transaction=${encodeURIComponent(transactionId)}`;
   
   try {
-    console.log('[RECONCILE] Fetching single transaction:', transactionId);
+    console.log('[RECONCILE] Fetching transaction by id_transaction:', transactionId);
     
     const response = await fetch(statusUrl, {
       method: 'GET',
@@ -181,30 +182,60 @@ async function fetchSingleTransaction(transactionId: string, apiKey: string): Pr
       },
     });
 
-    if (!response.ok) {
-      console.log('[RECONCILE] Transaction not found:', transactionId, response.status);
-      return null;
+    if (response.ok) {
+      const data = await response.json();
+      console.log('[RECONCILE] Ativus response for', transactionId, ':', JSON.stringify(data).substring(0, 500));
+      
+      if (data.id_transaction && !data.erro && !data.error) {
+        return {
+          id_transaction: data.id_transaction || transactionId,
+          nome: data.nome || data.customer_name || 'Não informado',
+          valor: parseFloat(data.valor || data.amount || '0'),
+          situacao: (data.situacao || data.status || 'AGUARDANDO_PAGAMENTO').toString().toUpperCase(),
+          data_transacao: data.data_transacao || data.created_at || new Date().toISOString(),
+          cpf: data.cpf || data.documento || null,
+          email: data.email || null,
+          id_seller: data.id_seller || null,
+          metadata: data.metadata || null,
+          externaRef: data.externaRef || data.externa_ref || data.external_ref || null,
+        };
+      }
     }
-
-    const data = await response.json();
-    console.log('[RECONCILE] Ativus response for', transactionId, ':', JSON.stringify(data).substring(0, 500));
     
-    if (data.erro || data.error || !data.id_transaction) {
-      console.log('[RECONCILE] Transaction error or not found:', data.erro || data.error);
-      return null;
-    }
+    // If not found by id_transaction, try as externaRef (TXID from FurionPay)
+    console.log('[RECONCILE] Not found by id_transaction, trying as externaRef:', transactionId);
+    const externaRefUrl = `${ATIVUS_STATUS_URL}?externaRef=${encodeURIComponent(transactionId)}`;
+    
+    const response2 = await fetch(externaRefUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${authHeader}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-    return {
-      id_transaction: data.id_transaction || transactionId,
-      nome: data.nome || data.customer_name || 'Não informado',
-      valor: parseFloat(data.valor || data.amount || '0'),
-      situacao: (data.situacao || data.status || 'AGUARDANDO_PAGAMENTO').toString().toUpperCase(),
-      data_transacao: data.data_transacao || data.created_at || new Date().toISOString(),
-      cpf: data.cpf || data.documento || null,
-      email: data.email || null,
-      id_seller: data.id_seller || null,
-      metadata: data.metadata || null,
-    };
+    if (response2.ok) {
+      const data = await response2.json();
+      console.log('[RECONCILE] Ativus response by externaRef:', JSON.stringify(data).substring(0, 500));
+      
+      if (data.id_transaction && !data.erro && !data.error) {
+        return {
+          id_transaction: data.id_transaction,
+          nome: data.nome || data.customer_name || 'Não informado',
+          valor: parseFloat(data.valor || data.amount || '0'),
+          situacao: (data.situacao || data.status || 'AGUARDANDO_PAGAMENTO').toString().toUpperCase(),
+          data_transacao: data.data_transacao || data.created_at || new Date().toISOString(),
+          cpf: data.cpf || data.documento || null,
+          email: data.email || null,
+          id_seller: data.id_seller || null,
+          metadata: data.metadata || null,
+          externaRef: data.externaRef || data.externa_ref || data.external_ref || transactionId,
+        };
+      }
+    }
+    
+    console.log('[RECONCILE] Transaction not found:', transactionId);
+    return null;
   } catch (error) {
     console.error('[RECONCILE] Error fetching transaction:', transactionId, error);
     return null;
@@ -470,21 +501,40 @@ serve(async (req) => {
         }
       }
 
-      // Check if transaction already exists
-      const { data: existingTx } = await supabase
+      // Check if transaction already exists (by txid or externaRef)
+      const { data: existingByTxid } = await supabase
         .from('pix_transactions')
         .select('id, status, user_id')
         .eq('txid', txId)
         .maybeSingle();
 
-      if (existingTx) {
+      if (existingByTxid) {
         results.push({
           transactionId: txId,
           status: 'already_exists',
-          message: `Já existe no sistema (status: ${existingTx.status})`,
-          data: { id: existingTx.id, status: existingTx.status }
+          message: `Já existe no sistema (status: ${existingByTxid.status})`,
+          data: { id: existingByTxid.id, status: existingByTxid.status }
         });
         continue;
+      }
+
+      // Also check by externaRef if available
+      if (tx.externaRef) {
+        const { data: existingByRef } = await supabase
+          .from('pix_transactions')
+          .select('id, status, user_id')
+          .eq('txid', tx.externaRef)
+          .maybeSingle();
+
+        if (existingByRef) {
+          results.push({
+            transactionId: txId,
+            status: 'already_exists',
+            message: `Já existe no sistema pelo TXID (status: ${existingByRef.status})`,
+            data: { id: existingByRef.id, status: existingByRef.status }
+          });
+          continue;
+        }
       }
 
       // Skip if amount is 0 or invalid
