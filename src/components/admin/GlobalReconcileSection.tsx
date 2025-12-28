@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Search, CheckCircle, XCircle, AlertCircle, FileWarning, UserSearch } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Loader2, Search, CheckCircle, XCircle, AlertCircle, FileWarning, UserSearch, Wand2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 interface ReconcileResult {
   transactionId: string;
-  status: 'imported' | 'already_exists' | 'not_found' | 'error' | 'user_not_found';
+  status: 'imported' | 'already_exists' | 'not_found' | 'error' | 'user_not_found' | 'skipped';
   message: string;
   data?: {
     id?: string;
@@ -18,6 +20,8 @@ interface ReconcileResult {
     donor_name?: string;
     status?: string;
     matched_user_email?: string;
+    matched_user_name?: string;
+    matched_user_id?: string;
   };
 }
 
@@ -34,6 +38,7 @@ interface GlobalReconcileSectionProps {
 export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileSectionProps) => {
   const [transactionIds, setTransactionIds] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [autoIdentify, setAutoIdentify] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +48,8 @@ export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileS
     imported: number;
     already_exists: number;
     not_found: number;
+    user_not_found: number;
+    skipped: number;
     errors: number;
   } | null>(null);
 
@@ -83,10 +90,10 @@ export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileS
       return;
     }
 
-    if (!selectedUserId) {
+    if (!autoIdentify && !selectedUserId) {
       toast({
         title: "Erro",
-        description: "Selecione o usuário dono das transações",
+        description: "Selecione o usuário ou ative a identificação automática",
         variant: "destructive"
       });
       return;
@@ -104,8 +111,9 @@ export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileS
 
       const { data, error } = await supabase.functions.invoke('reconcile-sales-ativus', {
         body: {
-          targetUserId: selectedUserId,
-          transactionIds: ids
+          targetUserId: autoIdentify ? null : selectedUserId,
+          transactionIds: ids,
+          autoIdentify: autoIdentify
         }
       });
 
@@ -158,6 +166,8 @@ export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileS
       case 'not_found':
       case 'user_not_found':
         return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'skipped':
+        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
     }
@@ -172,7 +182,9 @@ export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileS
       case 'not_found':
         return <Badge className="bg-red-500/20 text-red-600 border-red-500/30">Não encontrado</Badge>;
       case 'user_not_found':
-        return <Badge className="bg-orange-500/20 text-orange-600 border-orange-500/30">Usuário não encontrado</Badge>;
+        return <Badge className="bg-orange-500/20 text-orange-600 border-orange-500/30">Usuário não identificado</Badge>;
+      case 'skipped':
+        return <Badge variant="secondary">Ignorado</Badge>;
       case 'error':
         return <Badge variant="destructive">Erro</Badge>;
     }
@@ -188,41 +200,66 @@ export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileS
           Recuperação Global de Vendas
         </CardTitle>
         <CardDescription>
-          Recupere transações da Ativus quando não souber de qual usuário é a venda
+          Recupere transações da Ativus com identificação automática do usuário
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* User selection */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Selecione o Usuário (dono da venda)</label>
-          <Select 
-            value={selectedUserId} 
-            onValueChange={setSelectedUserId}
-            onOpenChange={(open) => open && loadUsers()}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Clique para selecionar o usuário..." />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoadingUsers ? (
-                <div className="p-2 text-center">
-                  <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                </div>
-              ) : (
-                users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.full_name || user.email.split('@')[0]} - {user.email}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-          {selectedUser && (
-            <p className="text-xs text-muted-foreground">
-              Selecionado: <strong>{selectedUser.email}</strong>
-            </p>
-          )}
+        {/* Auto-identify toggle */}
+        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+          <div className="flex items-center gap-3">
+            <Wand2 className="h-5 w-5 text-primary" />
+            <div>
+              <Label htmlFor="auto-identify" className="font-medium">
+                Identificação Automática
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                O sistema identifica automaticamente o usuário dono da venda
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="auto-identify"
+            checked={autoIdentify}
+            onCheckedChange={setAutoIdentify}
+          />
         </div>
+
+        {/* User selection (only shown when auto-identify is off) */}
+        {!autoIdentify && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Selecione o Usuário (dono da venda)
+            </label>
+            <Select 
+              value={selectedUserId} 
+              onValueChange={setSelectedUserId}
+              onOpenChange={(open) => open && loadUsers()}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Clique para selecionar o usuário..." />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingUsers ? (
+                  <div className="p-2 text-center">
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                  </div>
+                ) : (
+                  users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name || user.email.split('@')[0]} - {user.email}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            {selectedUser && (
+              <p className="text-xs text-muted-foreground">
+                Selecionado: <strong>{selectedUser.email}</strong>
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Transaction IDs */}
         <div className="space-y-2">
@@ -230,7 +267,7 @@ export const GlobalReconcileSection = ({ onReconcileComplete }: GlobalReconcileS
           <Textarea
             placeholder="Cole os IDs das transações aqui, um por linha...
 Exemplo:
-a4f32c009dd0454088d2e29dd6
+a4f32c009dd0454088d2e29dd6igorlimamarquesgmailcom66681947107
 TX987654321"
             value={transactionIds}
             onChange={(e) => setTransactionIds(e.target.value)}
@@ -238,13 +275,16 @@ TX987654321"
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Use o ID da transação (txid) retornado pela Ativus
+            {autoIdentify 
+              ? "O sistema vai identificar automaticamente o usuário dono de cada transação"
+              : "Use o ID da transação (txid) retornado pela Ativus"
+            }
           </p>
         </div>
 
         <Button 
           onClick={handleReconcile} 
-          disabled={isLoading || !transactionIds.trim() || !selectedUserId}
+          disabled={isLoading || !transactionIds.trim() || (!autoIdentify && !selectedUserId)}
           className="w-full sm:w-auto"
         >
           {isLoading ? (
@@ -255,14 +295,14 @@ TX987654321"
           ) : (
             <>
               <Search className="h-4 w-4 mr-2" />
-              Buscar e Importar
+              {autoIdentify ? "Identificar e Importar" : "Buscar e Importar"}
             </>
           )}
         </Button>
 
         {/* Summary */}
         {summary && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-4 bg-muted/50 rounded-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 p-4 bg-muted/50 rounded-lg">
             <div className="text-center">
               <p className="text-2xl font-bold">{summary.total}</p>
               <p className="text-xs text-muted-foreground">Total</p>
@@ -280,6 +320,14 @@ TX987654321"
               <p className="text-xs text-muted-foreground">Não encontrados</p>
             </div>
             <div className="text-center">
+              <p className="text-2xl font-bold text-orange-600">{summary.user_not_found}</p>
+              <p className="text-xs text-muted-foreground">Sem usuário</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-muted-foreground">{summary.skipped}</p>
+              <p className="text-xs text-muted-foreground">Ignorados</p>
+            </div>
+            <div className="text-center">
               <p className="text-2xl font-bold text-red-600">{summary.errors}</p>
               <p className="text-xs text-muted-foreground">Erros</p>
             </div>
@@ -288,7 +336,7 @@ TX987654321"
 
         {/* Results list */}
         {results.length > 0 && (
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-2 max-h-80 overflow-y-auto">
             {results.map((result, index) => (
               <div 
                 key={index} 
@@ -301,6 +349,12 @@ TX987654321"
                   {result.data?.amount && (
                     <p className="text-xs text-green-600">
                       R$ {result.data.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - {result.data.donor_name}
+                    </p>
+                  )}
+                  {result.data?.matched_user_email && (
+                    <p className="text-xs text-primary flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      {result.data.matched_user_name || result.data.matched_user_email}
                     </p>
                   )}
                 </div>
