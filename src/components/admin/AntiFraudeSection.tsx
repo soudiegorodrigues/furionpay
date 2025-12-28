@@ -47,6 +47,10 @@ export function AntiFraudeSection() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ email: string } | null>(null);
 
+  // Disable confirmation dialog
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+  const [disableConfirmText, setDisableConfirmText] = useState("");
+
   useEffect(() => {
     loadConfig();
     loadStats();
@@ -340,16 +344,43 @@ export function AntiFraudeSection() {
               {/* Enable/Disable Switch */}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Rate Limiting Ativo</Label>
+                  <Label className="flex items-center gap-2">
+                    Rate Limiting Ativo
+                    {config.enabled ? (
+                      <ShieldCheck className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <ShieldX className="h-4 w-4 text-red-500" />
+                    )}
+                  </Label>
                   <p className="text-xs text-muted-foreground">
                     Ativa a proteção contra gerações excessivas
                   </p>
                 </div>
                 <Switch 
                   checked={config.enabled} 
-                  onCheckedChange={checked => setConfig({ ...config, enabled: checked })} 
+                  onCheckedChange={checked => {
+                    if (!checked) {
+                      // Show confirmation dialog when trying to disable
+                      setShowDisableConfirm(true);
+                    } else {
+                      setConfig({ ...config, enabled: true });
+                    }
+                  }} 
                 />
               </div>
+
+              {/* Warning when disabled */}
+              {!config.enabled && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+                  <ShieldX className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-500">ATENÇÃO: Proteção desativada!</p>
+                    <p className="text-xs text-red-400 mt-1">
+                      Fraudadores podem gerar PIX ilimitados sem bloqueio. Ative a proteção imediatamente.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Max Unpaid PIX */}
               <div className="space-y-2">
@@ -548,6 +579,70 @@ export function AntiFraudeSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Disable Confirmation Dialog */}
+      <Dialog open={showDisableConfirm} onOpenChange={setShowDisableConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <ShieldX className="h-5 w-5" />
+              Desativar Proteção Anti-Fraude?
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                <p className="text-sm font-medium text-red-500">⚠️ AÇÃO CRÍTICA DE SEGURANÇA</p>
+                <p className="text-xs text-red-400 mt-1">
+                  Ao desativar, fraudadores poderão gerar PIX ilimitados sem nenhum bloqueio.
+                </p>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Para confirmar que você entende os riscos, digite <span className="font-mono font-bold text-foreground">DESATIVAR</span> abaixo:
+              </p>
+              
+              <Input
+                value={disableConfirmText}
+                onChange={(e) => setDisableConfirmText(e.target.value.toUpperCase())}
+                placeholder="Digite DESATIVAR"
+                className="font-mono"
+              />
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex gap-3 mt-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDisableConfirm(false);
+                setDisableConfirmText("");
+              }}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (disableConfirmText === "DESATIVAR") {
+                  setConfig({ ...config, enabled: false });
+                  setShowDisableConfirm(false);
+                  setDisableConfirmText("");
+                  toast({
+                    title: "Proteção desativada",
+                    description: "Anti-fraude foi desativado. Clique em Salvar para confirmar.",
+                    variant: "destructive"
+                  });
+                }
+              }}
+              disabled={disableConfirmText !== "DESATIVAR"}
+              className="flex-1"
+            >
+              <ShieldX className="h-4 w-4 mr-2" />
+              Confirmar Desativação
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
