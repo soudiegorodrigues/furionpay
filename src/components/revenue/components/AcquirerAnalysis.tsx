@@ -76,13 +76,13 @@ export const AcquirerAnalysis = memo(({ stats, isLoading, globalFilter }: Acquir
         {isLoading ? (
           <AcquirerSkeleton />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Left - Acquirer Cards */}
             <div>
               <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 font-medium">
                 Volume por adquirente
               </p>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-3 gap-1.5 sm:gap-3">
                 {acquirerData.acquirers.map((acq) => {
                   const percentage = acquirerData.totalVolume > 0 
                     ? ((acq.data.volume / acquirerData.totalVolume) * 100).toFixed(1) 
@@ -93,42 +93,42 @@ export const AcquirerAnalysis = memo(({ stats, isLoading, globalFilter }: Acquir
                     <div 
                       key={acq.key}
                       className={cn(
-                        "border rounded-xl p-2.5 sm:p-4 transition-all duration-200 hover:shadow-md",
+                        "border rounded-lg sm:rounded-xl p-2 sm:p-3 transition-all duration-200 hover:shadow-md",
                         acq.bgColor,
                         acq.borderColor
                       )}
                     >
-                      <div className="flex justify-between items-center mb-2 sm:mb-3">
-                        <span className="font-bold text-[10px] sm:text-xs text-foreground">{acq.name}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0 mb-1.5 sm:mb-3">
+                        <span className="font-bold text-[8px] sm:text-xs text-foreground truncate">{acq.name}</span>
                         <span 
-                          className="text-[9px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full"
+                          className="text-[8px] sm:text-xs font-semibold px-1 sm:px-2 py-0.5 rounded-full w-fit"
                           style={{ backgroundColor: `${acq.color}20`, color: acq.color }}
                         >
                           {percentage}%
                         </span>
                       </div>
-                      <div className="space-y-1 sm:space-y-2">
+                      <div className="space-y-0.5 sm:space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] sm:text-xs text-muted-foreground">Volume</span>
-                          <span className="text-[10px] sm:text-xs font-bold text-foreground">
+                          <span className="text-[8px] sm:text-xs text-muted-foreground">Vol</span>
+                          <span className="text-[9px] sm:text-xs font-bold text-foreground">
                             {formatCurrency(acq.data.volume)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] sm:text-xs text-muted-foreground">Líquido</span>
-                          <span className="text-[10px] sm:text-xs font-bold text-emerald-500">
+                          <span className="text-[8px] sm:text-xs text-muted-foreground">Líq</span>
+                          <span className="text-[9px] sm:text-xs font-bold text-emerald-500">
                             {formatCurrency(netRevenue)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] sm:text-xs text-muted-foreground">Custo</span>
-                          <span className="text-[10px] sm:text-xs font-medium text-red-500">
+                          <span className="text-[8px] sm:text-xs text-muted-foreground">Cst</span>
+                          <span className="text-[9px] sm:text-xs font-medium text-red-500">
                             -{formatCurrency(acq.data.cost)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] sm:text-xs text-muted-foreground">Tx</span>
-                          <span className="text-[10px] sm:text-xs font-medium text-foreground">
+                          <span className="text-[8px] sm:text-xs text-muted-foreground">Tx</span>
+                          <span className="text-[9px] sm:text-xs font-medium text-foreground">
                             {acq.data.count}
                           </span>
                         </div>
@@ -166,7 +166,7 @@ export const AcquirerAnalysis = memo(({ stats, isLoading, globalFilter }: Acquir
               <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 font-medium">
                 Distribuição de custos
               </p>
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-2 sm:space-y-4">
                 {acquirerData.acquirers
                   .sort((a, b) => b.data.cost - a.data.cost)
                   .map((acq) => {
@@ -175,25 +175,25 @@ export const AcquirerAnalysis = memo(({ stats, isLoading, globalFilter }: Acquir
                       : 0;
                     
                     return (
-                      <div key={acq.key} className="space-y-1 sm:space-y-1.5">
+                      <div key={acq.key} className="space-y-0.5 sm:space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 sm:gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             <div 
-                              className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" 
+                              className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm flex-shrink-0" 
                               style={{ backgroundColor: acq.color }}
                             />
-                            <span className="text-xs sm:text-sm font-medium text-foreground">
+                            <span className="text-[10px] sm:text-sm font-medium text-foreground truncate">
                               {acq.name}
                             </span>
-                            <span className="text-[8px] sm:text-[10px] text-muted-foreground hidden sm:inline">
+                            <span className="text-[8px] sm:text-[10px] text-muted-foreground hidden md:inline">
                               ({formatCurrency(acq.costPerTx)}/tx)
                             </span>
                           </div>
-                          <span className="text-xs sm:text-sm font-bold text-red-500">
+                          <span className="text-[10px] sm:text-sm font-bold text-red-500 flex-shrink-0">
                             {percentage.toFixed(1)}%
                           </span>
                         </div>
-                        <div className="w-full h-2 sm:h-3 bg-muted rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 sm:h-3 bg-muted rounded-full overflow-hidden">
                           <div 
                             className="h-full rounded-full transition-all duration-500 bg-red-500"
                             style={{ 
@@ -202,7 +202,7 @@ export const AcquirerAnalysis = memo(({ stats, isLoading, globalFilter }: Acquir
                             }}
                           />
                         </div>
-                        <div className="flex justify-between text-[9px] sm:text-[10px] text-muted-foreground">
+                        <div className="flex justify-between text-[8px] sm:text-[10px] text-muted-foreground">
                           <span className="text-red-500 font-medium">
                             {formatCurrency(acq.data.cost)}
                           </span>

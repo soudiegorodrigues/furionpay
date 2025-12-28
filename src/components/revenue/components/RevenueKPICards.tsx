@@ -220,18 +220,19 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh, globalFilter
             {/* Revenue Composition Chart */}
             {revenueBreakdownData.length > 0 && (
               <div className="pt-3 sm:pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
-                  <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">
-                    Composição da Receita ({periodLabel})
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-4">
+                  <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                  <h4 className="text-[10px] sm:text-sm font-medium text-muted-foreground">
+                    <span className="hidden sm:inline">Composição da Receita ({periodLabel})</span>
+                    <span className="sm:hidden">Composição ({periodLabel})</span>
                   </h4>
                 </div>
-                <div className="h-32 sm:h-40">
+                <div className="h-24 sm:h-32 md:h-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={revenueBreakdownData}
                       layout="vertical"
-                      margin={{ top: 0, right: 60, left: 55, bottom: 0 }}
+                      margin={{ top: 0, right: 50, left: 0, bottom: 0 }}
                     >
                       <XAxis 
                         type="number" 
@@ -243,14 +244,14 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh, globalFilter
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                        width={50}
+                        tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+                        width={55}
                       />
                       <RechartsTooltip content={<CustomTooltip />} cursor={false} />
                       <Bar 
                         dataKey="value" 
                         radius={[0, 4, 4, 0]}
-                        barSize={20}
+                        barSize={14}
                         background={false}
                       >
                         {revenueBreakdownData.map((entry, index) => (
@@ -260,7 +261,7 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh, globalFilter
                           dataKey="value" 
                           position="right" 
                           formatter={(value: number) => formatCurrency(value)}
-                          style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                          style={{ fontSize: 9, fill: 'hsl(var(--foreground))' }}
                         />
                       </Bar>
                     </BarChart>
