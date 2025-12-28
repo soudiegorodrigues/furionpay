@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense, memo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   TrendingUp, 
@@ -10,55 +10,42 @@ import {
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/AccessDenied";
-import { FinanceDashboard } from "@/components/finance/FinanceDashboard";
-import { FinanceCategories } from "@/components/finance/FinanceCategories";
-import { FinanceTransactions } from "@/components/finance/FinanceTransactions";
-import { FinanceGoals } from "@/components/finance/FinanceGoals";
-import { FinanceAccounts } from "@/components/finance/FinanceAccounts";
-import { FinanceReportGenerator } from "@/components/finance/FinanceReportGenerator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
-const LoadingSkeleton = () => (
-  <div className="p-4 md:p-8 lg:p-10 space-y-6 animate-fade-in max-w-7xl mx-auto">
-    {/* Header skeleton */}
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-72 mt-2" />
-      </div>
-      <Skeleton className="h-10 w-32" />
-    </div>
-    
-    {/* Tabs skeleton */}
-    <Skeleton className="h-12 w-full" />
-    
-    {/* Cards skeleton */}
+// Lazy load all tab components for faster initial render
+const FinanceDashboard = lazy(() => import("@/components/finance/FinanceDashboard").then(m => ({ default: m.FinanceDashboard })));
+const FinanceCategories = lazy(() => import("@/components/finance/FinanceCategories").then(m => ({ default: m.FinanceCategories })));
+const FinanceTransactions = lazy(() => import("@/components/finance/FinanceTransactions").then(m => ({ default: m.FinanceTransactions })));
+const FinanceGoals = lazy(() => import("@/components/finance/FinanceGoals").then(m => ({ default: m.FinanceGoals })));
+const FinanceAccounts = lazy(() => import("@/components/finance/FinanceAccounts").then(m => ({ default: m.FinanceAccounts })));
+const FinanceReportGenerator = lazy(() => import("@/components/finance/FinanceReportGenerator").then(m => ({ default: m.FinanceReportGenerator })));
+
+// Lightweight tab skeleton for instant feedback
+const TabSkeleton = memo(() => (
+  <div className="space-y-4">
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {[...Array(4)].map((_, i) => (
         <Card key={i}>
           <CardContent className="p-6">
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-24 w-full" />
           </CardContent>
         </Card>
       ))}
     </div>
-    
-    {/* Charts skeleton */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card>
-        <CardContent className="p-6">
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-6">
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
+      {[...Array(2)].map((_, i) => (
+        <Card key={i}>
+          <CardContent className="p-6">
+            <Skeleton className="h-48 w-full" />
+          </CardContent>
+        </Card>
+      ))}
     </div>
   </div>
-);
+));
+
+TabSkeleton.displayName = 'TabSkeleton';
 
 const AdminGestaoFinanceira = () => {
   const { user, loading: authLoading } = useAdminAuth();
@@ -66,11 +53,14 @@ const AdminGestaoFinanceira = () => {
   const effectiveUserId = permissions?.owner_id ?? user?.id;
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Show skeleton while initializing
-  const isInitializing = authLoading || permissionsLoading || !effectiveUserId;
-
-  if (isInitializing) {
-    return <LoadingSkeleton />;
+  // Show minimal skeleton only during auth check
+  if (authLoading || permissionsLoading) {
+    return (
+      <div className="p-4 md:p-8 lg:p-10 space-y-6 max-w-7xl mx-auto">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
   }
 
   // Permission check (only after loading is complete)
@@ -79,7 +69,7 @@ const AdminGestaoFinanceira = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 lg:p-10 space-y-6 animate-fade-in max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 lg:p-10 space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Gestão Financeira</h1>
@@ -87,7 +77,9 @@ const AdminGestaoFinanceira = () => {
             Controle suas receitas, despesas, investimentos e metas financeiras
           </p>
         </div>
-        <FinanceReportGenerator userId={effectiveUserId} />
+        <Suspense fallback={<Skeleton className="h-10 w-32" />}>
+          <FinanceReportGenerator userId={effectiveUserId} />
+        </Suspense>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -115,23 +107,33 @@ const AdminGestaoFinanceira = () => {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <FinanceDashboard userId={effectiveUserId} />
+          <Suspense fallback={<TabSkeleton />}>
+            <FinanceDashboard userId={effectiveUserId} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="accounts" className="space-y-6">
-          <FinanceAccounts userId={effectiveUserId} />
+          <Suspense fallback={<TabSkeleton />}>
+            <FinanceAccounts userId={effectiveUserId} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-6">
-          <FinanceTransactions userId={effectiveUserId} />
+          <Suspense fallback={<TabSkeleton />}>
+            <FinanceTransactions userId={effectiveUserId} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="categories" className="space-y-6">
-          <FinanceCategories userId={effectiveUserId} />
+          <Suspense fallback={<TabSkeleton />}>
+            <FinanceCategories userId={effectiveUserId} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="goals" className="space-y-6">
-          <FinanceGoals userId={effectiveUserId} />
+          <Suspense fallback={<TabSkeleton />}>
+            <FinanceGoals userId={effectiveUserId} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
