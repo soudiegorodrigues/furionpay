@@ -17,6 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "@/components/AdminSidebar";
 import { RecoverSalesSection } from "@/components/admin/RecoverSalesSection";
+import { ReconcileSalesSection } from "@/components/admin/ReconcileSalesSection";
 
 interface User2FAStatus {
   hasTOTP: boolean;
@@ -840,6 +841,12 @@ const AdminUserDetail = () => {
         <RecoverSalesSection 
           targetUserId={user.id} 
           onRecoveryComplete={loadUserDetails}
+        />
+
+        {/* Reconcile Sales Section */}
+        <ReconcileSalesSection 
+          targetUserId={user.id} 
+          onReconcileComplete={loadUserDetails}
         />
       </div>
 
