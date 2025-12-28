@@ -136,12 +136,6 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
         color: REVENUE_COLORS.taxaSaque,
         description: 'Taxas cobradas sobre saques'
       },
-      { 
-        name: 'Custo PIX', 
-        value: stats.pixCosts?.thisMonth || 0, 
-        color: REVENUE_COLORS.custoPix,
-        description: 'Custo pago aos adquirentes'
-      },
     ].filter(item => item.value !== 0);
   }, [stats]);
 
