@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "@/components/AdminSidebar";
+import { RecoverSalesSection } from "@/components/admin/RecoverSalesSection";
 
 interface User2FAStatus {
   hasTOTP: boolean;
@@ -834,6 +835,12 @@ const AdminUserDetail = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Recover Sales Section */}
+        <RecoverSalesSection 
+          targetUserId={user.id} 
+          onRecoveryComplete={loadUserDetails}
+        />
       </div>
 
       {/* Delete Dialog */}

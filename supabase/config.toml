@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.send-product-delivery]
 verify_jwt = false
+
+[functions.recover-sales-ativus]
+verify_jwt = false

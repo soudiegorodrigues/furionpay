@@ -253,14 +253,17 @@ async function logPixGenerated(
     });
 
     if (error) {
-      console.error('Erro ao registrar PIX:', error);
+      console.error('[ATIVUS] ❌ FALHA AO REGISTRAR PIX NO BANCO:', error);
+      console.error('[ATIVUS] Detalhes: txid=', txid, 'amount=', amount, 'userId=', userId);
+      return { success: false, error: error.message };
     } else {
-      console.log('PIX registrado com sucesso, ID:', data);
+      console.log('[ATIVUS] ✅ PIX registrado com sucesso, ID:', data);
+      return { success: true, id: data };
     }
-    return data;
   } catch (err) {
-    console.error('Exceção ao registrar PIX:', err);
-    return null;
+    console.error('[ATIVUS] ❌ EXCEÇÃO AO REGISTRAR PIX:', err);
+    console.error('[ATIVUS] Detalhes: txid=', txid, 'amount=', amount, 'userId=', userId);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
 
@@ -466,8 +469,11 @@ serve(async (req) => {
     // Registrar transação (skip for health checks)
     console.log('Using donor name:', finalDonorName);
     
+    let logged = true;
+    let logError: string | null = null;
+    
     if (!healthCheck) {
-      await logPixGenerated(
+      const logResult = await logPixGenerated(
         supabase,
         amount,
         transactionId,
@@ -488,6 +494,12 @@ serve(async (req) => {
         donorBirthdate,
         donorAddress
       );
+      
+      if (!logResult.success) {
+        logged = false;
+        logError = logResult.error || 'Failed to log transaction';
+        console.error('[ATIVUS] ⚠️ PIX gerado mas NÃO registrado no banco! txid:', transactionId);
+      }
     } else {
       console.log('Health check mode - skipping transaction log');
     }
@@ -500,6 +512,8 @@ serve(async (req) => {
         qrCodeUrl,
         txid: transactionId,
         transactionId: transactionId,
+        logged,
+        logError: logError || undefined,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
