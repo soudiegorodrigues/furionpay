@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check, Search, ChevronDown, X } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check, Search, ChevronDown, X, Calendar } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +72,12 @@ interface ProfitStats {
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
 type RankingFilter = 'all' | 'today' | '7days' | '30days' | 'thisMonth';
 type AcquirerCostFilter = 'today' | '7days' | 'thisMonth';
+type PeriodMode = 'relative' | 'absolute';
+
+const MONTH_NAMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
 
 const acquirerCostFilterOptions: { value: AcquirerCostFilter; label: string }[] = [
   { value: 'today', label: 'Hoje' },
@@ -132,17 +139,39 @@ export const ReceitaPlataformaSection = () => {
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
+  
+  // Filtros de período absoluto (mês/ano específico)
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('relative');
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
+  
+  // Stats do período absoluto
+  const [absoluteStats, setAbsoluteStats] = useState<{
+    monthGross: number;
+    monthFees: number;
+    monthNet: number;
+    week1: { gross: number; fees: number };
+    week2: { gross: number; fees: number };
+    week3: { gross: number; fees: number };
+    week4: { gross: number; fees: number };
+  } | null>(null);
 
   useEffect(() => {
     loadAllData();
     loadMonthlyGoal();
+    loadAvailableYears();
   }, []);
 
   // Recarregar stats quando usuário mudar
   useEffect(() => {
-    loadStats();
+    if (periodMode === 'relative') {
+      loadStats();
+    } else {
+      loadAbsoluteStats();
+    }
     loadChartData();
-  }, [selectedUser]);
+  }, [selectedUser, periodMode, selectedMonth, selectedYear]);
 
   // Recarregar gráfico quando filtro mudar
   useEffect(() => {
@@ -284,6 +313,77 @@ export const ReceitaPlataformaSection = () => {
     }
   };
 
+  const loadAbsoluteStats = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_platform_revenue_stats', {
+        p_user_id: selectedUser === 'all' ? null : null, // TODO: resolver user_id do email se necessário
+        p_month: selectedMonth,
+        p_year: selectedYear
+      });
+      if (error) throw error;
+      
+      if (data) {
+        const rpcData = data as {
+          month_gross?: number;
+          month_fees?: number;
+          month_paid_count?: number;
+          week1_gross?: number;
+          week1_fees?: number;
+          week2_gross?: number;
+          week2_fees?: number;
+          week3_gross?: number;
+          week3_fees?: number;
+          week4_gross?: number;
+          week4_fees?: number;
+        };
+        
+        setAbsoluteStats({
+          monthGross: Number(rpcData.month_gross) || 0,
+          monthFees: Number(rpcData.month_fees) || 0,
+          monthNet: (Number(rpcData.month_gross) || 0) - (Number(rpcData.month_fees) || 0),
+          week1: { 
+            gross: Number(rpcData.week1_gross) || 0, 
+            fees: Number(rpcData.week1_fees) || 0 
+          },
+          week2: { 
+            gross: Number(rpcData.week2_gross) || 0, 
+            fees: Number(rpcData.week2_fees) || 0 
+          },
+          week3: { 
+            gross: Number(rpcData.week3_gross) || 0, 
+            fees: Number(rpcData.week3_fees) || 0 
+          },
+          week4: { 
+            gross: Number(rpcData.week4_gross) || 0, 
+            fees: Number(rpcData.week4_fees) || 0 
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error loading absolute stats:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadAvailableYears = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_available_transaction_years');
+      if (error) throw error;
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        const years = (data as (number | null)[]).filter((y): y is number => typeof y === 'number');
+        setAvailableYears(years.length > 0 ? years : [new Date().getFullYear()]);
+      } else {
+        setAvailableYears([new Date().getFullYear()]);
+      }
+    } catch (error) {
+      console.error('Error loading available years:', error);
+      setAvailableYears([new Date().getFullYear()]);
+    }
+  };
+
   const loadChartData = async () => {
     setIsChartLoading(true);
     try {
@@ -422,32 +522,104 @@ export const ReceitaPlataformaSection = () => {
     <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
       {/* Cards de Lucro por Período */}
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            Receita da Plataforma
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {/* Filtro por usuário com busca */}
+        <CardHeader className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Receita da Plataforma
+            </CardTitle>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadAllData} 
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="ml-2 hidden sm:inline">Atualizar</span>
+              </Button>
+            </div>
+          </div>
+          
+          {/* Seletores de Período e Usuário */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Toggle Período Relativo / Absoluto */}
+            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+              <Button
+                variant={periodMode === 'relative' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setPeriodMode('relative')}
+              >
+                Período Atual
+              </Button>
+              <Button
+                variant={periodMode === 'absolute' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setPeriodMode('absolute')}
+              >
+                <Calendar className="h-3 w-3 mr-1" />
+                Mês/Ano
+              </Button>
+            </div>
+            
+            {/* Seletores de Mês e Ano (modo absoluto) */}
+            {periodMode === 'absolute' && (
+              <div className="flex items-center gap-2">
+                <Select
+                  value={selectedMonth.toString()}
+                  onValueChange={(v) => setSelectedMonth(parseInt(v))}
+                >
+                  <SelectTrigger className="w-[130px] h-8 text-xs">
+                    <SelectValue placeholder="Mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTH_NAMES.map((name, idx) => (
+                      <SelectItem key={idx + 1} value={(idx + 1).toString()}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={selectedYear.toString()}
+                  onValueChange={(v) => setSelectedYear(parseInt(v))}
+                >
+                  <SelectTrigger className="w-[90px] h-8 text-xs">
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {/* Filtro por usuário */}
+            <div className="flex items-center gap-2 ml-auto">
               <Users className="h-4 w-4 text-muted-foreground hidden sm:block" />
               <Popover open={isUserPopoverOpen} onOpenChange={setIsUserPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button 
                     variant="outline" 
-                    className="w-[180px] sm:w-[220px] h-9 text-xs sm:text-sm justify-between"
+                    className="w-[160px] sm:w-[200px] h-8 text-xs justify-between"
                   >
                     <span className="truncate">
                       {selectedUser === 'all' 
                         ? 'Todos os usuários' 
-                        : selectedUser.length > 20 
-                          ? `${selectedUser.slice(0, 20)}...` 
+                        : selectedUser.length > 18 
+                          ? `${selectedUser.slice(0, 18)}...` 
                           : selectedUser}
                     </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[280px] p-0" align="start">
+                <PopoverContent className="w-[280px] p-0" align="end">
                   <div className="p-2 border-b">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -505,15 +677,6 @@ export const ReceitaPlataformaSection = () => {
                 </PopoverContent>
               </Popover>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadAllData} 
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="ml-2 hidden sm:inline">Atualizar</span>
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -521,7 +684,8 @@ export const ReceitaPlataformaSection = () => {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : (
+          ) : periodMode === 'relative' ? (
+            /* Modo Relativo - Exibição Original */
             <>
               {selectedUser !== 'all' && (
                 <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
@@ -562,6 +726,72 @@ export const ReceitaPlataformaSection = () => {
                   <p className="text-xs text-muted-foreground">Este Ano</p>
                 </div>
               </div>
+            </>
+          ) : (
+            /* Modo Absoluto - Mês/Ano Específico */
+            <>
+              <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Período: <span className="font-medium text-foreground">{MONTH_NAMES[selectedMonth - 1]} de {selectedYear}</span>
+                  {selectedUser !== 'all' && (
+                    <span className="ml-2">• Usuário: <span className="font-medium text-foreground">{selectedUser}</span></span>
+                  )}
+                </p>
+              </div>
+              
+              {absoluteStats ? (
+                <>
+                  {/* Total do Mês */}
+                  <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
+                    <div className="text-2xl sm:text-3xl font-bold text-green-500">
+                      {formatCurrency(absoluteStats.monthNet)}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Lucro Líquido em {MONTH_NAMES[selectedMonth - 1]}
+                    </p>
+                    <div className="flex justify-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <span>Bruto: {formatCurrency(absoluteStats.monthGross)}</span>
+                      <span>Taxas: {formatCurrency(absoluteStats.monthFees)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Breakdown Semanal */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                    <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                      <div className="text-sm sm:text-base font-semibold text-foreground">
+                        {formatCurrency(absoluteStats.week1.gross - absoluteStats.week1.fees)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Semana 1</p>
+                      <p className="text-[10px] text-muted-foreground">(Dias 1-7)</p>
+                    </div>
+                    <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                      <div className="text-sm sm:text-base font-semibold text-foreground">
+                        {formatCurrency(absoluteStats.week2.gross - absoluteStats.week2.fees)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Semana 2</p>
+                      <p className="text-[10px] text-muted-foreground">(Dias 8-14)</p>
+                    </div>
+                    <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                      <div className="text-sm sm:text-base font-semibold text-foreground">
+                        {formatCurrency(absoluteStats.week3.gross - absoluteStats.week3.fees)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Semana 3</p>
+                      <p className="text-[10px] text-muted-foreground">(Dias 15-21)</p>
+                    </div>
+                    <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                      <div className="text-sm sm:text-base font-semibold text-foreground">
+                        {formatCurrency(absoluteStats.week4.gross - absoluteStats.week4.fees)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Semana 4+</p>
+                      <p className="text-[10px] text-muted-foreground">(Dias 22+)</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum dado disponível para este período
+                </div>
+              )}
             </>
           )}
         </CardContent>
