@@ -119,7 +119,7 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
   const revenueBreakdownData = useMemo(() => {
     return [
       { 
-        name: 'Taxa Percentual', 
+        name: 'Valor taxas', 
         value: stats.percentageRevenue?.thisMonth || 0, 
         color: REVENUE_COLORS.taxaPercentual,
         description: 'Receita de taxas percentuais (ex: 4.99%)'
