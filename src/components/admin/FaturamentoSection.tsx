@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { DollarSign, TrendingUp, Loader2, RefreshCw, CheckCircle } from "lucide-react";
+import { GlobalReconcileSection } from "./GlobalReconcileSection";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -436,6 +437,9 @@ export const FaturamentoSection = () => {
 
       {/* Transações Globais */}
       <TransacoesGlobaisSection />
+
+      {/* Reconciliação Global */}
+      <GlobalReconcileSection onReconcileComplete={handleRefresh} />
     </div>
   );
 };
