@@ -84,13 +84,6 @@ const popupModels = [
     hasDynamicAmount: false,
     hasPreview: false
   },
-  {
-    id: "unknown",
-    name: "Desconhecido",
-    description: "Transações sem modelo definido",
-    hasDynamicAmount: false,
-    hasPreview: false
-  }
 ];
 
 export const CheckoutGlobalSection = () => {
