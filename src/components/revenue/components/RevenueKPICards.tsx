@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Wallet, RefreshCw, TrendingUp, TrendingDown, HelpCircle, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Cell, ResponsiveContainer, LabelList } from 'recharts';
-import { ProfitStats } from '../types';
+import { ProfitStats, GlobalPeriodFilter, getGlobalPeriodLabel } from '../types';
 import { formatCurrency, formatPercent } from '../utils';
 import { KPICardSkeleton } from '../skeletons/KPICardSkeleton';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ interface RevenueKPICardsProps {
   stats: ProfitStats;
   isLoading: boolean;
   onRefresh: () => void;
+  globalFilter: GlobalPeriodFilter;
 }
 
 interface KPICardProps {
@@ -115,33 +116,67 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPICardsProps) => {
+// Helper to get the profit value for a given period
+const getProfitForPeriod = (stats: ProfitStats, period: GlobalPeriodFilter): number => {
+  const map: Record<GlobalPeriodFilter, number> = {
+    today: stats.today,
+    sevenDays: stats.sevenDays,
+    fifteenDays: stats.fifteenDays,
+    thisMonth: stats.thisMonth,
+    thisYear: stats.thisYear,
+    total: stats.total,
+  };
+  return map[period];
+};
+
+// Helper to get percentage revenue for a given period
+const getPercentageRevenueForPeriod = (stats: ProfitStats, period: GlobalPeriodFilter): number => {
+  return stats.percentageRevenue[period] || 0;
+};
+
+// Helper to get fixed revenue for a given period
+const getFixedRevenueForPeriod = (stats: ProfitStats, period: GlobalPeriodFilter): number => {
+  return stats.fixedRevenue[period] || 0;
+};
+
+// Helper to get withdrawal fees for a given period
+const getWithdrawalFeesForPeriod = (stats: ProfitStats, period: GlobalPeriodFilter): number => {
+  return stats.withdrawalFees[period] || 0;
+};
+
+export const RevenueKPICards = memo(({ stats, isLoading, onRefresh, globalFilter }: RevenueKPICardsProps) => {
+  const periodLabel = getGlobalPeriodLabel(globalFilter);
+  const currentProfit = getProfitForPeriod(stats, globalFilter);
+  
   const revenueBreakdownData = useMemo(() => {
     return [
       { 
         name: 'Valor taxas', 
-        value: stats.percentageRevenue?.thisMonth || 0, 
+        value: getPercentageRevenueForPeriod(stats, globalFilter), 
         color: REVENUE_COLORS.taxaPercentual,
         description: 'Receita de taxas percentuais (ex: 4.99%)'
       },
       { 
         name: 'Valor Fixo', 
-        value: stats.fixedRevenue?.thisMonth || 0, 
+        value: getFixedRevenueForPeriod(stats, globalFilter), 
         color: REVENUE_COLORS.valorFixo,
         description: 'Receita de valores fixos por transação'
       },
       { 
         name: 'Taxa Saque', 
-        value: stats.withdrawalFees?.thisMonth || 0, 
+        value: getWithdrawalFeesForPeriod(stats, globalFilter), 
         color: REVENUE_COLORS.taxaSaque,
         description: 'Taxas cobradas sobre saques'
       },
     ].filter(item => item.value !== 0);
-  }, [stats]);
+  }, [stats, globalFilter]);
 
   const maxValue = useMemo(() => {
     return Math.max(...revenueBreakdownData.map(d => d.value), 1);
   }, [revenueBreakdownData]);
+
+  // Determine trend based on period
+  const showTrend = globalFilter === 'thisMonth' && stats.monthOverMonthChange !== 0;
 
   return (
     <Card className="border-border/50 shadow-sm">
@@ -165,38 +200,20 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
       </CardHeader>
       <CardContent className="space-y-6">
         {isLoading ? (
-          <KPICardSkeleton count={5} />
+          <KPICardSkeleton count={1} />
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              <KPICard 
-                value={stats.today} 
-                label="Hoje" 
-                variant="primary"
-                tooltip="Lucro líquido gerado hoje (Taxas PIX + Taxa Saques - Custo PIX)"
-              />
-              <KPICard 
-                value={stats.sevenDays} 
-                label="7 Dias"
-                tooltip="Lucro líquido dos últimos 7 dias"
-              />
-              <KPICard 
-                value={stats.fifteenDays} 
-                label="15 Dias"
-                tooltip="Lucro líquido dos últimos 15 dias"
-              />
-              <KPICard 
-                value={stats.thisMonth} 
-                label="Este Mês"
-                trend={stats.monthOverMonthChange}
-                tooltip={`Lucro do mês atual. ${stats.monthOverMonthChange > 0 ? 'Alta' : stats.monthOverMonthChange < 0 ? 'Queda' : 'Estável'} comparado ao mês anterior.`}
-              />
-              <KPICard 
-                value={stats.thisYear} 
-                label="Este Ano"
-                variant="highlight"
-                tooltip="Lucro líquido acumulado do ano"
-              />
+            {/* Single KPI Card for selected period */}
+            <div className="flex justify-center">
+              <div className="w-full max-w-sm">
+                <KPICard 
+                  value={currentProfit} 
+                  label={`Lucro Líquido - ${periodLabel}`}
+                  variant="highlight"
+                  tooltip={`Lucro líquido para o período: ${periodLabel}`}
+                  trend={showTrend ? stats.monthOverMonthChange : undefined}
+                />
+              </div>
             </div>
 
             {/* Revenue Composition Chart */}
@@ -205,7 +222,7 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   <h4 className="text-sm font-medium text-muted-foreground">
-                    Composição da Receita (Este Mês)
+                    Composição da Receita ({periodLabel})
                   </h4>
                 </div>
                 <div className="h-40">

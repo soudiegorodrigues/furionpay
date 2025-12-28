@@ -1,7 +1,7 @@
-import { memo, useState, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart as PieChartIcon } from "lucide-react";
-import { ProfitStats, AcquirerCostFilter, ACQUIRER_COST_FILTER_OPTIONS, ACQUIRER_COLORS, ACQUIRER_COSTS_PER_TX } from '../types';
+import { ProfitStats, AcquirerCostFilter, ACQUIRER_COLORS, ACQUIRER_COSTS_PER_TX } from '../types';
 import { formatCurrency, getAcquirerPeriodKey, getAcquirerPeriodLabel } from '../utils';
 import { AcquirerSkeleton } from '../skeletons/KPICardSkeleton';
 import { cn } from '@/lib/utils';
@@ -9,12 +9,11 @@ import { cn } from '@/lib/utils';
 interface AcquirerAnalysisProps {
   stats: ProfitStats;
   isLoading: boolean;
+  globalFilter: AcquirerCostFilter;
 }
 
-export const AcquirerAnalysis = memo(({ stats, isLoading }: AcquirerAnalysisProps) => {
-  const [filter, setFilter] = useState<AcquirerCostFilter>('thisMonth');
-
-  const periodKey = getAcquirerPeriodKey(filter);
+export const AcquirerAnalysis = memo(({ stats, isLoading, globalFilter }: AcquirerAnalysisProps) => {
+  const periodKey = getAcquirerPeriodKey(globalFilter);
   const breakdown = stats.acquirerBreakdown || {};
   
   const acquirerData = useMemo(() => {
@@ -67,26 +66,9 @@ export const AcquirerAnalysis = memo(({ stats, isLoading }: AcquirerAnalysisProp
             </div>
             Faturamento por Adquirente
             <span className="text-xs font-normal text-muted-foreground">
-              ({getAcquirerPeriodLabel(filter)})
+              ({getAcquirerPeriodLabel(globalFilter)})
             </span>
           </CardTitle>
-          
-          <div className="flex items-center bg-muted rounded-full p-1">
-            {ACQUIRER_COST_FILTER_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setFilter(option.value)}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
-                  filter === option.value
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
         </div>
       </CardHeader>
       <CardContent>

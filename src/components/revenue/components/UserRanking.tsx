@@ -2,16 +2,15 @@ import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trophy, Medal, Award } from "lucide-react";
-import { UserProfitRanking, RankingFilter, RANKING_FILTER_OPTIONS } from '../types';
+import { UserProfitRanking, GlobalPeriodFilter, getGlobalPeriodLabel } from '../types';
 import { formatCurrency } from '../utils';
 import { RankingSkeleton } from '../skeletons/KPICardSkeleton';
 import { cn } from '@/lib/utils';
 
 interface UserRankingProps {
   ranking: UserProfitRanking[];
-  filter: RankingFilter;
-  onFilterChange: (filter: RankingFilter) => void;
   isLoading: boolean;
+  globalFilter: GlobalPeriodFilter;
 }
 
 const RankIcon = ({ position }: { position: number }) => {
@@ -21,7 +20,9 @@ const RankIcon = ({ position }: { position: number }) => {
   return <span className="text-xs text-muted-foreground font-medium">{position}º</span>;
 };
 
-export const UserRanking = memo(({ ranking, filter, onFilterChange, isLoading }: UserRankingProps) => {
+export const UserRanking = memo(({ ranking, isLoading, globalFilter }: UserRankingProps) => {
+  const periodLabel = getGlobalPeriodLabel(globalFilter);
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
@@ -30,23 +31,8 @@ export const UserRanking = memo(({ ranking, filter, onFilterChange, isLoading }:
             <Trophy className="h-4 w-4 text-amber-500" />
           </div>
           Ranking de Lucro por Usuário
+          <span className="text-xs font-normal text-muted-foreground ml-1">({periodLabel})</span>
         </CardTitle>
-        <div className="flex items-center bg-muted rounded-full p-1">
-          {RANKING_FILTER_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => onFilterChange(option.value)}
-              className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
-                filter === option.value
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (

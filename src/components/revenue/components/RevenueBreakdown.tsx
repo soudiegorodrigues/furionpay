@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calculator, TrendingUp, TrendingDown, Minus, HelpCircle } from "lucide-react";
-import { ProfitStats } from '../types';
+import { ProfitStats, GlobalPeriodFilter, getGlobalPeriodLabel } from '../types';
 import { formatCurrency, getMarginPercentage } from '../utils';
 import { BreakdownSkeleton } from '../skeletons/KPICardSkeleton';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface RevenueBreakdownProps {
   stats: ProfitStats;
   isLoading: boolean;
+  globalFilter: GlobalPeriodFilter;
 }
 
 interface BreakdownItemProps {
@@ -91,8 +92,26 @@ const BreakdownItem = memo(({ value, label, sublabel, type, tooltip }: Breakdown
 
 BreakdownItem.displayName = 'BreakdownItem';
 
-export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProps) => {
-  const margin = getMarginPercentage(stats.thisMonth, stats.gross.thisMonth);
+// Helper to get values for a given period
+const getStatsForPeriod = (stats: ProfitStats, period: GlobalPeriodFilter) => {
+  return {
+    gross: stats.gross[period] || 0,
+    acquirerCosts: stats.acquirerCosts[period] || 0,
+    withdrawalFees: stats.withdrawalFees[period] || 0,
+    netProfit: period === 'today' ? stats.today :
+               period === 'sevenDays' ? stats.sevenDays :
+               period === 'fifteenDays' ? stats.fifteenDays :
+               period === 'thisMonth' ? stats.thisMonth :
+               period === 'thisYear' ? stats.thisYear :
+               stats.total,
+  };
+};
+
+export const RevenueBreakdown = memo(({ stats, isLoading, globalFilter }: RevenueBreakdownProps) => {
+  const periodLabel = getGlobalPeriodLabel(globalFilter);
+  const periodStats = getStatsForPeriod(stats, globalFilter);
+  
+  const margin = getMarginPercentage(periodStats.netProfit, periodStats.gross);
   const marginTrend = margin >= 70 ? 'good' : margin >= 50 ? 'medium' : 'low';
 
   return (
@@ -103,7 +122,7 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
             <Calculator className="h-4 w-4 text-amber-500" />
           </div>
           Breakdown: Receita vs Custos
-          <span className="text-xs font-normal text-muted-foreground ml-1">(Este Mês)</span>
+          <span className="text-xs font-normal text-muted-foreground ml-1">({periodLabel})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -113,28 +132,28 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <BreakdownItem 
-                value={stats.gross.thisMonth}
+                value={periodStats.gross}
                 label="Receita Bruta"
                 sublabel="Taxas cobradas"
                 type="revenue"
                 tooltip="Total de taxas PIX cobradas dos usuários pelas transações aprovadas"
               />
               <BreakdownItem 
-                value={stats.acquirerCosts.thisMonth}
+                value={periodStats.acquirerCosts}
                 label="Custo PIX"
                 sublabel="Pago aos adquirentes"
                 type="cost"
                 tooltip="Custo pago aos adquirentes (Valorion R$0.29/tx, Ativus R$0.05/tx, Inter R$0.00/tx)"
               />
               <BreakdownItem 
-                value={stats.withdrawalFees.thisMonth}
+                value={periodStats.withdrawalFees}
                 label="Receita Saques"
                 sublabel="R$ 5,00/saque"
                 type="neutral"
                 tooltip="Taxa de R$ 5,00 cobrada por cada saque realizado pelos usuários"
               />
               <BreakdownItem 
-                value={stats.thisMonth}
+                value={periodStats.netProfit}
                 label="Lucro Líquido"
                 sublabel="Taxas + Saques - Custos"
                 type="profit"
@@ -143,7 +162,7 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
             </div>
             
             {/* Margin indicator */}
-            {stats.gross.thisMonth > 0 && (
+            {periodStats.gross > 0 && (
               <div className="flex items-center justify-center gap-3 p-3 bg-muted/30 rounded-lg">
                 <span className="text-sm text-muted-foreground">Margem de Lucro:</span>
                 <div className={cn(
