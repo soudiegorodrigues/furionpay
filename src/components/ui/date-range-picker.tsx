@@ -89,8 +89,8 @@ export function DateRangePicker({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
         {/* Preset Buttons */}
-        <div className="flex items-center justify-between gap-2 p-3 border-b">
-          <div className="flex gap-2">
+        <div className="flex flex-col items-center gap-2 p-3 border-b">
+          <div className="flex gap-2 justify-center">
             <Button
               variant="outline"
               size="sm"
