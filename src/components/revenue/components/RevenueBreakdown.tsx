@@ -100,9 +100,9 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
   const acquirerCostData = useMemo(() => {
     const breakdown = stats.acquirerBreakdown || {};
     return [
-      { name: 'Valorion', cost: breakdown.valorion?.thisMonth?.cost || 0, color: ACQUIRER_COLORS.valorion.color },
-      { name: 'Ativus', cost: breakdown.ativus?.thisMonth?.cost || 0, color: ACQUIRER_COLORS.ativus.color },
-      { name: 'Inter', cost: breakdown.inter?.thisMonth?.cost || 0, color: ACQUIRER_COLORS.inter.color },
+      { name: 'Valorion', cost: breakdown.valorion?.total?.cost || 0, color: ACQUIRER_COLORS.valorion.color },
+      { name: 'Ativus', cost: breakdown.ativus?.total?.cost || 0, color: ACQUIRER_COLORS.ativus.color },
+      { name: 'Inter', cost: breakdown.inter?.total?.cost || 0, color: ACQUIRER_COLORS.inter.color },
     ].sort((a, b) => b.cost - a.cost);
   }, [stats.acquirerBreakdown]);
 
