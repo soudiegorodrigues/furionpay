@@ -2993,9 +2993,10 @@ export type Database = {
             Args: { p_month?: number; p_user_id?: string; p_year?: number }
             Returns: Json
           }
-      get_platform_revenue_stats_custom_range:
-        | { Args: { p_end_date: string; p_start_date: string }; Returns: Json }
-        | { Args: { p_end_date: string; p_start_date: string }; Returns: Json }
+      get_platform_revenue_stats_custom_range: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: Json
+      }
       get_platform_unique_users: { Args: never; Returns: Json }
       get_platform_user_profit_ranking: {
         Args: { p_filter?: string; p_limit?: number }
