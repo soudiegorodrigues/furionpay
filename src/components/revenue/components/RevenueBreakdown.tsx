@@ -196,7 +196,7 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
                         width={55}
                       />
                       <RechartsTooltip
-                        cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+                        cursor={false}
                         contentStyle={{
                           backgroundColor: 'hsl(var(--background))',
                           border: '1px solid hsl(var(--border))',

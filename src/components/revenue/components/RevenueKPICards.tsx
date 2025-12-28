@@ -227,7 +227,7 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
                         tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                         width={65}
                       />
-                      <RechartsTooltip content={<CustomTooltip />} />
+                      <RechartsTooltip content={<CustomTooltip />} cursor={false} />
                       <Bar 
                         dataKey="value" 
                         radius={[0, 4, 4, 0]}
