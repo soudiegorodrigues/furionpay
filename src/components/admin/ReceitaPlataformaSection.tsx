@@ -776,6 +776,119 @@ export const ReceitaPlataformaSection = () => {
         </CardContent>
       </Card>
 
+      {/* Gráfico de Barras Horizontais - Distribuição de Custos */}
+      <Card className="border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Receipt className="h-4 w-4 text-red-500" />
+            Distribuição de Custos (Este Mês)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const costData = [
+              { 
+                name: 'Custo PIX (Taxa %)', 
+                value: profitStats.pixCosts.thisMonth * 0.7, 
+                fill: 'hsl(0, 84%, 60%)' // red-500
+              },
+              { 
+                name: 'Custo PIX (Fixo)', 
+                value: profitStats.pixCosts.thisMonth * 0.3, 
+                fill: 'hsl(25, 95%, 53%)' // orange-500
+              },
+              { 
+                name: 'Custo de Saque', 
+                value: profitStats.withdrawalCosts.thisMonth, 
+                fill: 'hsl(263, 70%, 50%)' // purple-500
+              }
+            ].filter(item => item.value > 0);
+            
+            const totalCost = costData.reduce((acc, item) => acc + item.value, 0);
+            
+            if (totalCost === 0) {
+              return (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Nenhum custo registrado este mês</p>
+                </div>
+              );
+            }
+            
+            return (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={150}>
+                  <BarChart 
+                    data={costData} 
+                    layout="vertical"
+                    margin={{ top: 5, right: 80, left: 100, bottom: 5 }}
+                  >
+                    <XAxis 
+                      type="number" 
+                      tickFormatter={(v) => formatCurrency(v)}
+                      tick={{ fontSize: 10 }}
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      width={95}
+                      tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
+                      tickLine={false}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), 'Valor']}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--popover))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--popover-foreground))'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      radius={[0, 4, 4, 0]}
+                    >
+                      {costData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                      <LabelList 
+                        dataKey="value" 
+                        position="right" 
+                        formatter={(v: number) => formatCurrency(v)}
+                        style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                
+                {/* Legenda e Total */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
+                  <div className="flex flex-wrap gap-3">
+                    {costData.map((item, index) => (
+                      <div key={index} className="flex items-center gap-1.5">
+                        <div 
+                          className="w-2.5 h-2.5 rounded-sm" 
+                          style={{ backgroundColor: item.fill }}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {item.name}: {((item.value / totalCost) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-sm font-semibold text-red-500">
+                    Total: {formatCurrency(totalCost)}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
       {/* Card Detalhado: Faturamento por Adquirente */}
       {hasAcquirerData && (
         <Card className="border-primary/20">
