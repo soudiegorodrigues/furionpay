@@ -356,9 +356,17 @@ export const ReceitaPlataformaSection = () => {
     
     setIsCustomLoading(true);
     try {
+      // Formatar datas como YYYY-MM-DD para evitar problemas de timezone
+      const formatDate = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
       const { data, error } = await supabase.rpc('get_platform_revenue_stats_custom_range', {
-        p_start_date: customDateRange.from.toISOString(),
-        p_end_date: customDateRange.to.toISOString()
+        p_start_date: formatDate(customDateRange.from),
+        p_end_date: formatDate(customDateRange.to)
       });
       if (error) throw error;
       
@@ -397,6 +405,7 @@ export const ReceitaPlataformaSection = () => {
       }
     } catch (error) {
       console.error('Error loading custom range stats:', error);
+      setCustomStats(null);
       toast.error('Erro ao carregar dados do período personalizado');
     } finally {
       setIsCustomLoading(false);
