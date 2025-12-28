@@ -52,6 +52,26 @@ interface ProfitStats {
     thisYear: number;
     total: number;
   };
+  pixCosts: {
+    today: number;
+    sevenDays: number;
+    fifteenDays: number;
+    thirtyDays: number;
+    thisMonth: number;
+    lastMonth: number;
+    thisYear: number;
+    total: number;
+  };
+  withdrawalCosts: {
+    today: number;
+    sevenDays: number;
+    fifteenDays: number;
+    thirtyDays: number;
+    thisMonth: number;
+    lastMonth: number;
+    thisYear: number;
+    total: number;
+  };
   acquirerBreakdown: {
     [key: string]: {
       today: { count: number; cost: number; volume: number };
@@ -110,6 +130,8 @@ const defaultProfitStats: ProfitStats = {
   total: 0,
   gross: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
   acquirerCosts: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
+  pixCosts: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
+  withdrawalCosts: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
   acquirerBreakdown: null,
   transactionCount: 0,
   averageProfit: 0,
@@ -204,13 +226,13 @@ export const ReceitaPlataformaSection = () => {
         
         // Cast to expected structure
         const rpcData = data as {
-          today?: { net_profit: number; gross_revenue: number; acquirer_cost: number; transaction_count: number };
-          week?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
-          fortnight?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
-          month?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
-          last_month?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
-          year?: { net_profit: number; gross_revenue: number; acquirer_cost: number };
-          all_time?: { net_profit: number; gross_revenue: number; acquirer_cost: number; transaction_count: number };
+          today?: { net_profit: number; gross_revenue: number; acquirer_cost: number; pix_cost?: number; withdrawal_cost?: number; transaction_count: number };
+          week?: { net_profit: number; gross_revenue: number; acquirer_cost: number; pix_cost?: number; withdrawal_cost?: number };
+          fortnight?: { net_profit: number; gross_revenue: number; acquirer_cost: number; pix_cost?: number; withdrawal_cost?: number };
+          month?: { net_profit: number; gross_revenue: number; acquirer_cost: number; pix_cost?: number; withdrawal_cost?: number };
+          last_month?: { net_profit: number; gross_revenue: number; acquirer_cost: number; pix_cost?: number; withdrawal_cost?: number };
+          year?: { net_profit: number; gross_revenue: number; acquirer_cost: number; pix_cost?: number; withdrawal_cost?: number };
+          all_time?: { net_profit: number; gross_revenue: number; acquirer_cost: number; pix_cost?: number; withdrawal_cost?: number; transaction_count: number };
           acquirer_breakdown?: {
             [key: string]: {
               today: { count: number; cost: number; volume: number };
@@ -226,36 +248,50 @@ export const ReceitaPlataformaSection = () => {
           stats.today = Number(rpcData.today.net_profit) || 0;
           stats.gross.today = Number(rpcData.today.gross_revenue) || 0;
           stats.acquirerCosts.today = Number(rpcData.today.acquirer_cost) || 0;
+          stats.pixCosts.today = Number(rpcData.today.pix_cost) || 0;
+          stats.withdrawalCosts.today = Number(rpcData.today.withdrawal_cost) || 0;
         }
         if (rpcData.week) {
           stats.sevenDays = Number(rpcData.week.net_profit) || 0;
           stats.gross.sevenDays = Number(rpcData.week.gross_revenue) || 0;
           stats.acquirerCosts.sevenDays = Number(rpcData.week.acquirer_cost) || 0;
+          stats.pixCosts.sevenDays = Number(rpcData.week.pix_cost) || 0;
+          stats.withdrawalCosts.sevenDays = Number(rpcData.week.withdrawal_cost) || 0;
         }
         if (rpcData.fortnight) {
           stats.fifteenDays = Number(rpcData.fortnight.net_profit) || 0;
           stats.gross.fifteenDays = Number(rpcData.fortnight.gross_revenue) || 0;
           stats.acquirerCosts.fifteenDays = Number(rpcData.fortnight.acquirer_cost) || 0;
+          stats.pixCosts.fifteenDays = Number(rpcData.fortnight.pix_cost) || 0;
+          stats.withdrawalCosts.fifteenDays = Number(rpcData.fortnight.withdrawal_cost) || 0;
         }
         if (rpcData.month) {
           stats.thisMonth = Number(rpcData.month.net_profit) || 0;
           stats.gross.thisMonth = Number(rpcData.month.gross_revenue) || 0;
           stats.acquirerCosts.thisMonth = Number(rpcData.month.acquirer_cost) || 0;
+          stats.pixCosts.thisMonth = Number(rpcData.month.pix_cost) || 0;
+          stats.withdrawalCosts.thisMonth = Number(rpcData.month.withdrawal_cost) || 0;
         }
         if (rpcData.last_month) {
           stats.lastMonth = Number(rpcData.last_month.net_profit) || 0;
           stats.gross.lastMonth = Number(rpcData.last_month.gross_revenue) || 0;
           stats.acquirerCosts.lastMonth = Number(rpcData.last_month.acquirer_cost) || 0;
+          stats.pixCosts.lastMonth = Number(rpcData.last_month.pix_cost) || 0;
+          stats.withdrawalCosts.lastMonth = Number(rpcData.last_month.withdrawal_cost) || 0;
         }
         if (rpcData.year) {
           stats.thisYear = Number(rpcData.year.net_profit) || 0;
           stats.gross.thisYear = Number(rpcData.year.gross_revenue) || 0;
           stats.acquirerCosts.thisYear = Number(rpcData.year.acquirer_cost) || 0;
+          stats.pixCosts.thisYear = Number(rpcData.year.pix_cost) || 0;
+          stats.withdrawalCosts.thisYear = Number(rpcData.year.withdrawal_cost) || 0;
         }
         if (rpcData.all_time) {
           stats.total = Number(rpcData.all_time.net_profit) || 0;
           stats.gross.total = Number(rpcData.all_time.gross_revenue) || 0;
           stats.acquirerCosts.total = Number(rpcData.all_time.acquirer_cost) || 0;
+          stats.pixCosts.total = Number(rpcData.all_time.pix_cost) || 0;
+          stats.withdrawalCosts.total = Number(rpcData.all_time.withdrawal_cost) || 0;
           stats.transactionCount = Number(rpcData.all_time.transaction_count) || 0;
         }
         
@@ -689,7 +725,7 @@ export const ReceitaPlataformaSection = () => {
         </CardContent>
       </Card>
 
-      {/* Breakdown: Receita Bruta vs Custo Adquirentes vs Lucro Líquido */}
+      {/* Breakdown: Receita Bruta vs Custos Totais vs Lucro Líquido */}
       <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
@@ -710,8 +746,15 @@ export const ReceitaPlataformaSection = () => {
               <div className="text-sm sm:text-base font-semibold text-red-500">
                 -{formatCurrency(profitStats.acquirerCosts.thisMonth)}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Custo Adquirentes</p>
-              <p className="text-[10px] text-muted-foreground">(VALORION, Inter, Ativus, Valorion)</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Custo Total</p>
+              <div className="flex flex-col gap-0.5 mt-1">
+                <p className="text-[10px] text-muted-foreground">
+                  PIX: {formatCurrency(profitStats.pixCosts.thisMonth)}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Saques: {formatCurrency(profitStats.withdrawalCosts.thisMonth)}
+                </p>
+              </div>
             </div>
             <div className="text-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
               <div className="text-sm sm:text-base font-semibold text-green-500">
