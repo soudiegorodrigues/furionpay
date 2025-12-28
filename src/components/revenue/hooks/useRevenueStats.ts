@@ -198,12 +198,29 @@ export function useRevenueStats() {
 export function useRevenueChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [userFilter, setUserFilter] = useState<string>('all');
+  const [users, setUsers] = useState<string[]>([]);
 
-  const loadChartData = useCallback(async () => {
+  const loadUsers = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_platform_user_profit_ranking', {
+        p_filter: 'all',
+        p_limit: 100
+      });
+      if (error) throw error;
+      const rawData = data as unknown as Array<{ user_email: string }> | null;
+      const emails = rawData?.map(row => row.user_email).filter(Boolean) || [];
+      setUsers(emails);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  }, []);
+
+  const loadChartData = useCallback(async (email: string | null = null) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('get_platform_revenue_chart_monthly', {
-        p_user_email: null
+        p_user_email: email
       });
       if (error) throw error;
       const rawData = data as unknown as Array<{ month_name: string; month_number: number; lucro: number }> | null;
@@ -220,13 +237,21 @@ export function useRevenueChart() {
   }, []);
 
   useEffect(() => {
-    loadChartData();
-  }, [loadChartData]);
+    loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    const email = userFilter === 'all' ? null : userFilter;
+    loadChartData(email);
+  }, [userFilter, loadChartData]);
 
   return {
     chartData,
     isLoading,
-    refresh: loadChartData,
+    userFilter,
+    setUserFilter,
+    users,
+    refresh: () => loadChartData(userFilter === 'all' ? null : userFilter),
   };
 }
 
