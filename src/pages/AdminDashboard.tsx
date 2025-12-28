@@ -822,8 +822,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
               <QrCode className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary" />
             </div>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{hideData ? "•••" : filteredStats.generated}</p>
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{maskValue(filteredStats.amountGenerated)}</p>
-            <p className="text-[8px] sm:text-[9px] md:text-[10px] text-green-500 mt-0.5">~{maskValue(filteredStats.estimatedNetGenerated)} líquido est.</p>
+                      <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{maskValue(filteredStats.estimatedNetGenerated)}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm hover:shadow-md transition-shadow">
