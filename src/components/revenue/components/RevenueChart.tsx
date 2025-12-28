@@ -2,44 +2,25 @@ import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
 import { TrendingUp } from "lucide-react";
-import { ChartData, ChartFilter, CHART_FILTER_OPTIONS } from '../types';
+import { ChartData } from '../types';
 import { formatCurrency } from '../utils';
 import { ChartSkeleton } from '../skeletons/KPICardSkeleton';
-import { cn } from '@/lib/utils';
 
 interface RevenueChartProps {
   data: ChartData[];
-  filter: ChartFilter;
-  onFilterChange: (filter: ChartFilter) => void;
   isLoading: boolean;
 }
 
-export const RevenueChart = memo(({ data, filter, onFilterChange, isLoading }: RevenueChartProps) => {
+export const RevenueChart = memo(({ data, isLoading }: RevenueChartProps) => {
   return (
     <Card className="shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <div className="p-1.5 rounded-lg bg-emerald-500/10">
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </div>
-          Evolução do Lucro
+          Evolução Mensal do Lucro
         </CardTitle>
-        <div className="flex items-center bg-muted rounded-full p-1">
-          {CHART_FILTER_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => onFilterChange(option.value)}
-              className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
-                filter === option.value
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -64,12 +45,12 @@ export const RevenueChart = memo(({ data, filter, onFilterChange, isLoading }: R
                     opacity={0.3}
                     vertical={false}
                   />
-                  <XAxis 
+                <XAxis 
                     dataKey="date" 
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
                     tickLine={false}
                     axisLine={false}
-                    interval={filter === 'today' ? 0 : 'preserveStartEnd'}
+                    interval={0}
                   />
                   <YAxis 
                     tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 

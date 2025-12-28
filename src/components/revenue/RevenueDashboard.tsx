@@ -8,7 +8,7 @@ import { UserRanking } from './components/UserRanking';
 
 export function RevenueDashboard() {
   const { profitStats, isLoading, loadAllData } = useRevenueStats();
-  const { chartData, chartFilter, setChartFilter, isLoading: isChartLoading } = useRevenueChart();
+  const { chartData, isLoading: isChartLoading } = useRevenueChart();
   const { ranking, filter: rankingFilter, setFilter: setRankingFilter, isLoading: isRankingLoading } = useUserRanking();
 
   return (
@@ -35,8 +35,6 @@ export function RevenueDashboard() {
       {/* Chart */}
       <RevenueChart 
         data={chartData}
-        filter={chartFilter}
-        onFilterChange={setChartFilter}
         isLoading={isChartLoading}
       />
 

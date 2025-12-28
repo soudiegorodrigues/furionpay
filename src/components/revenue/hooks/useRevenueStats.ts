@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ProfitStats, DEFAULT_PROFIT_STATS, ChartFilter, RankingFilter, ChartData, UserProfitRanking } from '../types';
+import { ProfitStats, DEFAULT_PROFIT_STATS, RankingFilter, ChartData, UserProfitRanking } from '../types';
 import { toast } from 'sonner';
 
 export function useRevenueStats() {
@@ -195,23 +195,21 @@ export function useRevenueStats() {
   };
 }
 
-export function useRevenueChart(initialFilter: ChartFilter = 'today') {
+export function useRevenueChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [chartFilter, setChartFilter] = useState<ChartFilter>(initialFilter);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadChartData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_platform_revenue_chart', {
-        p_filter: chartFilter,
+      const { data, error } = await supabase.rpc('get_platform_revenue_chart_monthly', {
         p_user_email: null
       });
       if (error) throw error;
-      const rawData = data as unknown as Array<{ date: string; net_profit: number }> | null;
+      const rawData = data as unknown as Array<{ month_name: string; month_number: number; lucro: number }> | null;
       const transformed: ChartData[] = rawData?.map(row => ({
-        date: row.date,
-        lucro: Number(row.net_profit) || 0
+        date: row.month_name,
+        lucro: Number(row.lucro) || 0
       })) || [];
       setChartData(transformed);
     } catch (error) {
@@ -219,7 +217,7 @@ export function useRevenueChart(initialFilter: ChartFilter = 'today') {
     } finally {
       setIsLoading(false);
     }
-  }, [chartFilter]);
+  }, []);
 
   useEffect(() => {
     loadChartData();
@@ -227,8 +225,6 @@ export function useRevenueChart(initialFilter: ChartFilter = 'today') {
 
   return {
     chartData,
-    chartFilter,
-    setChartFilter,
     isLoading,
     refresh: loadChartData,
   };

@@ -2986,6 +2986,14 @@ export type Database = {
           transaction_count: number
         }[]
       }
+      get_platform_revenue_chart_monthly: {
+        Args: { p_user_email?: string }
+        Returns: {
+          lucro: number
+          month_name: string
+          month_number: number
+        }[]
+      }
       get_platform_revenue_stats:
         | { Args: never; Returns: Json }
         | { Args: { p_user_email?: string }; Returns: Json }
