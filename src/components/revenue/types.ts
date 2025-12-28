@@ -66,6 +66,18 @@ export type ChartFilter = 'today' | '7days' | '14days' | '30days';
 export type RankingFilter = 'all' | 'today' | '7days' | '30days' | 'thisMonth';
 export type AcquirerCostFilter = 'today' | '7days' | 'thisMonth';
 
+// Global period filter used across all dashboard components
+export type GlobalPeriodFilter = 'today' | 'sevenDays' | 'fifteenDays' | 'thisMonth' | 'thisYear' | 'total';
+
+export const GLOBAL_PERIOD_FILTER_OPTIONS: { value: GlobalPeriodFilter; label: string }[] = [
+  { value: 'today', label: 'Hoje' },
+  { value: 'sevenDays', label: '7 dias' },
+  { value: 'fifteenDays', label: '15 dias' },
+  { value: 'thisMonth', label: 'Este mês' },
+  { value: 'thisYear', label: 'Este ano' },
+  { value: 'total', label: 'Total' },
+];
+
 export const ACQUIRER_COST_FILTER_OPTIONS: { value: AcquirerCostFilter; label: string }[] = [
   { value: 'today', label: 'Hoje' },
   { value: '7days', label: '7 dias' },
@@ -86,6 +98,37 @@ export const RANKING_FILTER_OPTIONS: { value: RankingFilter; label: string }[] =
   { value: '30days', label: '30 dias' },
   { value: 'thisMonth', label: 'Este mês' },
 ];
+
+// Helper to convert GlobalPeriodFilter to RankingFilter
+export const globalToRankingFilter = (global: GlobalPeriodFilter): RankingFilter => {
+  const map: Record<GlobalPeriodFilter, RankingFilter> = {
+    today: 'today',
+    sevenDays: '7days',
+    fifteenDays: '30days',
+    thisMonth: 'thisMonth',
+    thisYear: 'all',
+    total: 'all',
+  };
+  return map[global];
+};
+
+// Helper to convert GlobalPeriodFilter to AcquirerCostFilter
+export const globalToAcquirerFilter = (global: GlobalPeriodFilter): AcquirerCostFilter => {
+  const map: Record<GlobalPeriodFilter, AcquirerCostFilter> = {
+    today: 'today',
+    sevenDays: '7days',
+    fifteenDays: '7days',
+    thisMonth: 'thisMonth',
+    thisYear: 'thisMonth',
+    total: 'thisMonth',
+  };
+  return map[global];
+};
+
+// Helper to get period label for display
+export const getGlobalPeriodLabel = (filter: GlobalPeriodFilter): string => {
+  return GLOBAL_PERIOD_FILTER_OPTIONS.find(o => o.value === filter)?.label || '';
+};
 
 const DEFAULT_PERIOD_BREAKDOWN: PeriodBreakdown = { 
   today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, 
