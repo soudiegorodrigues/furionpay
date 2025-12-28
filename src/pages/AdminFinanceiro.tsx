@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle, Lock, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Transaction {
   id: string;
@@ -54,6 +55,24 @@ interface FeeConfig {
   saque_percentage: number;
   saque_fixed: number;
 }
+
+// Lightweight skeleton for instant feedback
+const QuickSkeleton = memo(() => (
+  <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="flex justify-between items-center">
+      <Skeleton className="h-8 w-40" />
+      <Skeleton className="h-10 w-10 rounded-full" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
+      <Card><CardContent className="p-6"><Skeleton className="h-24 w-full" /></CardContent></Card>
+    </div>
+    <Skeleton className="h-12 w-full" />
+    <Card><CardContent className="p-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
+  </div>
+));
+
+QuickSkeleton.displayName = 'QuickSkeleton';
 
 const AdminFinanceiro = () => {
   const { user, isAdmin } = useAdminAuth();
@@ -579,23 +598,29 @@ const AdminFinanceiro = () => {
     }
   };
 
+  // Parallel data loading for maximum speed
   useEffect(() => {
-    loadTransactions();
-    loadAvailableBalance();
-    loadBankAccountData();
-    loadUserFeeConfig();
-    const interval = setInterval(() => {
-      loadTransactions();
-      loadAvailableBalance();
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
+    const loadAllData = async () => {
+      if (!user?.id) return;
+      
+      // Load all data in parallel for faster initial render
+      await Promise.all([
+        loadTransactions(),
+        loadAvailableBalance(),
+        loadBankAccountData(),
+        loadUserFeeConfig(),
+        loadWithdrawalHistory()
+      ]);
+    };
 
-  // Load withdrawal history for the logged-in user
-  useEffect(() => {
-    if (user?.id) {
-      loadWithdrawalHistory();
-    }
+    loadAllData();
+    
+    // Refresh interval for transactions and balance only
+    const interval = setInterval(() => {
+      Promise.all([loadTransactions(), loadAvailableBalance()]);
+    }, 60000);
+    
+    return () => clearInterval(interval);
   }, [user?.id]);
 
   const stats = useMemo(() => {
@@ -799,8 +824,13 @@ const AdminFinanceiro = () => {
     }
   };
 
+  // Show instant skeleton during auth/permissions loading
+  if (permissionsLoading) {
+    return <QuickSkeleton />;
+  }
+
   // Permission check - AFTER all hooks
-  if (!permissionsLoading && !isOwner && !hasPermission('can_view_financeiro')) {
+  if (!isOwner && !hasPermission('can_view_financeiro')) {
     return <AccessDenied message="Você não tem permissão para acessar o Painel Financeiro." />;
   }
 
