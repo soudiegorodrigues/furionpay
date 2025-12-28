@@ -63,6 +63,7 @@ export interface ProfitStats {
 }
 
 export type ChartFilter = 'today' | '7days' | '14days' | '30days';
+export type ChartUserFilter = 'all' | string;
 export type RankingFilter = 'all' | 'today' | '7days' | '30days' | 'thisMonth';
 export type AcquirerCostFilter = 'today' | '7days' | 'thisMonth';
 
