@@ -16,17 +16,7 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-async function getAtivusApiKey(supabase: any, userId?: string): Promise<string | null> {
-  if (userId) {
-    const { data } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('user_id', userId)
-      .eq('key', 'ativus_api_key')
-      .maybeSingle();
-    if (data?.value) return data.value;
-  }
-  
+async function getGlobalAtivusApiKey(supabase: any): Promise<string | null> {
   const { data: globalData } = await supabase
     .from('admin_settings')
     .select('value')
@@ -38,6 +28,20 @@ async function getAtivusApiKey(supabase: any, userId?: string): Promise<string |
   return Deno.env.get('ATIVUS_API_KEY') || null;
 }
 
+async function getAtivusApiKey(supabase: any, userId?: string): Promise<string | null> {
+  if (userId) {
+    const { data } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('user_id', userId)
+      .eq('key', 'ativus_api_key')
+      .maybeSingle();
+    if (data?.value) return data.value;
+  }
+  
+  return getGlobalAtivusApiKey(supabase);
+}
+
 function mapAtivusStatus(situacao: string): 'generated' | 'paid' | 'expired' {
   const paidStatuses = ['CONCLUIDO', 'CONCLUÍDA', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'];
   const expiredStatuses = ['EXPIRADO', 'EXPIRED', 'CANCELADO', 'REFUSED', 'CANCELLED'];
@@ -45,6 +49,39 @@ function mapAtivusStatus(situacao: string): 'generated' | 'paid' | 'expired' {
   if (paidStatuses.includes(situacao.toUpperCase())) return 'paid';
   if (expiredStatuses.includes(situacao.toUpperCase())) return 'expired';
   return 'generated';
+}
+
+// Extract user_id from id_seller field (format: "seller_uuid")
+function extractUserIdFromSeller(idSeller: string | undefined | null): string | null {
+  if (!idSeller) return null;
+  
+  // Format: seller_27a41ae8-35bc-4fb1-b57d-d7bee2856c0c
+  if (idSeller.startsWith('seller_')) {
+    const uuid = idSeller.replace('seller_', '');
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(uuid)) {
+      return uuid;
+    }
+  }
+  
+  return null;
+}
+
+// Extract user_id from metadata
+function extractUserIdFromMetadata(metadata: any): string | null {
+  if (!metadata) return null;
+  
+  // Try different possible field names
+  const userId = metadata.user_id || metadata.userId || metadata.seller_id || metadata.sellerId;
+  if (userId) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(userId)) {
+      return userId;
+    }
+  }
+  
+  return null;
 }
 
 async function fetchAtivusTransactionsByPeriod(
@@ -57,7 +94,6 @@ async function fetchAtivusTransactionsByPeriod(
   const isAlreadyBase64 = /^[A-Za-z0-9+/]+=*$/.test(apiKey) && apiKey.length > 50;
   const authHeader = isAlreadyBase64 ? apiKey : btoa(apiKey);
 
-  // Try the list endpoint with date filters
   const listUrl = `${ATIVUS_LIST_URL}?data_inicio=${encodeURIComponent(startDate)}&data_fim=${encodeURIComponent(endDate)}`;
   
   try {
@@ -76,7 +112,6 @@ async function fetchAtivusTransactionsByPeriod(
     console.log('[RECONCILE] Ativus list response body:', responseText.substring(0, 500));
 
     if (!response.ok) {
-      // If list endpoint doesn't exist, return error with guidance
       if (response.status === 404) {
         return { 
           success: false, 
@@ -93,7 +128,6 @@ async function fetchAtivusTransactionsByPeriod(
       return { success: false, error: 'Failed to parse Ativus response' };
     }
 
-    // Handle different response formats from Ativus
     let transactions = [];
     
     if (Array.isArray(data)) {
@@ -120,6 +154,8 @@ async function fetchAtivusTransactionsByPeriod(
         data_transacao: tx.data_transacao || tx.created_at || tx.data_criacao || new Date().toISOString(),
         cpf: tx.cpf || tx.documento || null,
         email: tx.email || null,
+        id_seller: tx.id_seller || null,
+        metadata: tx.metadata || null,
       }))
     };
   } catch (error) {
@@ -135,6 +171,8 @@ async function fetchSingleTransaction(transactionId: string, apiKey: string): Pr
   const statusUrl = `${ATIVUS_STATUS_URL}?id_transaction=${encodeURIComponent(transactionId)}`;
   
   try {
+    console.log('[RECONCILE] Fetching single transaction:', transactionId);
+    
     const response = await fetch(statusUrl, {
       method: 'GET',
       headers: {
@@ -143,11 +181,18 @@ async function fetchSingleTransaction(transactionId: string, apiKey: string): Pr
       },
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log('[RECONCILE] Transaction not found:', transactionId, response.status);
+      return null;
+    }
 
     const data = await response.json();
+    console.log('[RECONCILE] Ativus response for', transactionId, ':', JSON.stringify(data).substring(0, 500));
     
-    if (data.erro || data.error || !data.id_transaction) return null;
+    if (data.erro || data.error || !data.id_transaction) {
+      console.log('[RECONCILE] Transaction error or not found:', data.erro || data.error);
+      return null;
+    }
 
     return {
       id_transaction: data.id_transaction || transactionId,
@@ -157,10 +202,62 @@ async function fetchSingleTransaction(transactionId: string, apiKey: string): Pr
       data_transacao: data.data_transacao || data.created_at || new Date().toISOString(),
       cpf: data.cpf || data.documento || null,
       email: data.email || null,
+      id_seller: data.id_seller || null,
+      metadata: data.metadata || null,
     };
-  } catch {
+  } catch (error) {
+    console.error('[RECONCILE] Error fetching transaction:', transactionId, error);
     return null;
   }
+}
+
+async function getUserInfo(supabase: any, userId: string): Promise<{ email: string; full_name: string | null } | null> {
+  try {
+    const { data } = await supabase.rpc('get_all_users_auth');
+    const user = (data || []).find((u: any) => u.id === userId);
+    if (user) {
+      return { email: user.email, full_name: user.full_name };
+    }
+  } catch (error) {
+    console.error('[RECONCILE] Error getting user info:', error);
+  }
+  return null;
+}
+
+async function getFeeConfig(supabase: any, userId: string): Promise<{ feePercentage: number; feeFixed: number }> {
+  const { data: feeConfigData } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('user_id', userId)
+    .eq('key', 'user_fee_config')
+    .maybeSingle();
+
+  let feePercentage = 6.99;
+  let feeFixed = 2.49;
+
+  if (feeConfigData?.value) {
+    const { data: feeConfig } = await supabase
+      .from('fee_configs')
+      .select('pix_percentage, pix_fixed')
+      .eq('id', feeConfigData.value)
+      .maybeSingle();
+    if (feeConfig) {
+      feePercentage = feeConfig.pix_percentage;
+      feeFixed = feeConfig.pix_fixed;
+    }
+  } else {
+    const { data: defaultFee } = await supabase
+      .from('fee_configs')
+      .select('pix_percentage, pix_fixed')
+      .eq('is_default', true)
+      .maybeSingle();
+    if (defaultFee) {
+      feePercentage = defaultFee.pix_percentage;
+      feeFixed = defaultFee.pix_fixed;
+    }
+  }
+
+  return { feePercentage, feeFixed };
 }
 
 serve(async (req) => {
@@ -199,14 +296,7 @@ serve(async (req) => {
       );
     }
 
-    const { targetUserId, startDate, endDate, transactionIds } = await req.json();
-
-    if (!targetUserId) {
-      return new Response(
-        JSON.stringify({ error: 'targetUserId is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { targetUserId, startDate, endDate, transactionIds, autoIdentify } = await req.json();
 
     // Either period or transactionIds must be provided
     const hasPeriod = startDate && endDate;
@@ -219,50 +309,32 @@ serve(async (req) => {
       );
     }
 
-    console.log('[RECONCILE] Processing reconciliation for user:', targetUserId);
-    console.log('[RECONCILE] Period:', startDate, 'to', endDate);
-    console.log('[RECONCILE] Transaction IDs provided:', hasIds ? transactionIds.length : 0);
-
-    // Get Ativus API key for the target user
-    const apiKey = await getAtivusApiKey(supabase, targetUserId);
-    if (!apiKey) {
+    // If autoIdentify is enabled, targetUserId is optional
+    const shouldAutoIdentify = autoIdentify === true || !targetUserId;
+    
+    if (!targetUserId && !shouldAutoIdentify) {
       return new Response(
-        JSON.stringify({ error: 'Ativus API key not configured for this user' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'targetUserId is required when autoIdentify is false' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get user's fee config
-    const { data: feeConfigData } = await supabase
-      .from('admin_settings')
-      .select('value')
-      .eq('user_id', targetUserId)
-      .eq('key', 'user_fee_config')
-      .maybeSingle();
+    console.log('[RECONCILE] Processing reconciliation');
+    console.log('[RECONCILE] Target user:', targetUserId || 'AUTO-IDENTIFY');
+    console.log('[RECONCILE] Auto-identify:', shouldAutoIdentify);
+    console.log('[RECONCILE] Period:', startDate, 'to', endDate);
+    console.log('[RECONCILE] Transaction IDs provided:', hasIds ? transactionIds.length : 0);
 
-    let feePercentage = 6.99;
-    let feeFixed = 2.49;
-
-    if (feeConfigData?.value) {
-      const { data: feeConfig } = await supabase
-        .from('fee_configs')
-        .select('pix_percentage, pix_fixed')
-        .eq('id', feeConfigData.value)
-        .maybeSingle();
-      if (feeConfig) {
-        feePercentage = feeConfig.pix_percentage;
-        feeFixed = feeConfig.pix_fixed;
-      }
-    } else {
-      const { data: defaultFee } = await supabase
-        .from('fee_configs')
-        .select('pix_percentage, pix_fixed')
-        .eq('is_default', true)
-        .maybeSingle();
-      if (defaultFee) {
-        feePercentage = defaultFee.pix_percentage;
-        feeFixed = defaultFee.pix_fixed;
-      }
+    // Get global Ativus API key for auto-identify mode
+    const apiKey = shouldAutoIdentify 
+      ? await getGlobalAtivusApiKey(supabase)
+      : await getAtivusApiKey(supabase, targetUserId);
+      
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Ativus API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     let ativusTransactions: any[] = [];
@@ -281,7 +353,7 @@ serve(async (req) => {
       }
     }
 
-    // If we have transaction IDs (either provided or list endpoint failed), fetch individually
+    // If we have transaction IDs, fetch individually
     if (hasIds) {
       console.log('[RECONCILE] Fetching', transactionIds.length, 'transactions by ID');
       for (const txId of transactionIds) {
@@ -295,6 +367,12 @@ serve(async (req) => {
         const tx = await fetchSingleTransaction(trimmedId, apiKey);
         if (tx) {
           ativusTransactions.push(tx);
+        } else {
+          // Add as not found so we can report it
+          ativusTransactions.push({
+            id_transaction: trimmedId,
+            not_found: true
+          });
         }
       }
     }
@@ -310,26 +388,15 @@ serve(async (req) => {
             : 'Endpoint de listagem não disponível. Forneça os IDs das transações manualmente.',
           listEndpointAvailable,
           results: [],
-          summary: { total: 0, imported: 0, already_exists: 0, skipped: 0, errors: 0 }
+          summary: { total: 0, imported: 0, already_exists: 0, skipped: 0, errors: 0, user_not_found: 0 }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get existing transactions from our database for comparison
-    const txIds = ativusTransactions.map(tx => tx.id_transaction).filter(Boolean);
-    
-    const { data: existingTxs } = await supabase
-      .from('pix_transactions')
-      .select('txid, id, status')
-      .eq('user_id', targetUserId)
-      .in('txid', txIds);
-
-    const existingTxMap = new Map((existingTxs || []).map(tx => [tx.txid, tx]));
-
     const results: {
       transactionId: string;
-      status: 'imported' | 'already_exists' | 'skipped' | 'error';
+      status: 'imported' | 'already_exists' | 'skipped' | 'error' | 'not_found' | 'user_not_found';
       message: string;
       data?: any;
     }[] = [];
@@ -337,6 +404,7 @@ serve(async (req) => {
     // Process each transaction
     for (const tx of ativusTransactions) {
       const txId = tx.id_transaction;
+      
       if (!txId) {
         results.push({
           transactionId: 'unknown',
@@ -346,14 +414,75 @@ serve(async (req) => {
         continue;
       }
 
-      // Check if already exists
-      const existing = existingTxMap.get(txId);
-      if (existing) {
+      // Handle not found transactions
+      if (tx.not_found) {
+        results.push({
+          transactionId: txId,
+          status: 'not_found',
+          message: 'Transação não encontrada na Ativus'
+        });
+        continue;
+      }
+
+      // Determine the user_id for this transaction
+      let resolvedUserId = targetUserId;
+      let identifiedUserEmail: string | null = null;
+      let identifiedUserName: string | null = null;
+
+      if (shouldAutoIdentify) {
+        // Try to extract user_id from id_seller or metadata
+        const userIdFromSeller = extractUserIdFromSeller(tx.id_seller);
+        const userIdFromMetadata = extractUserIdFromMetadata(tx.metadata);
+        
+        resolvedUserId = userIdFromSeller || userIdFromMetadata;
+        
+        console.log('[RECONCILE] Auto-identify for', txId);
+        console.log('[RECONCILE] id_seller:', tx.id_seller, '-> userId:', userIdFromSeller);
+        console.log('[RECONCILE] metadata:', JSON.stringify(tx.metadata), '-> userId:', userIdFromMetadata);
+        console.log('[RECONCILE] Resolved userId:', resolvedUserId);
+
+        if (!resolvedUserId) {
+          results.push({
+            transactionId: txId,
+            status: 'user_not_found',
+            message: 'Não foi possível identificar o usuário automaticamente. Verifique se a transação foi gerada pelo sistema.',
+            data: {
+              id_seller: tx.id_seller,
+              metadata: tx.metadata
+            }
+          });
+          continue;
+        }
+
+        // Get user info for display
+        const userInfo = await getUserInfo(supabase, resolvedUserId);
+        if (userInfo) {
+          identifiedUserEmail = userInfo.email;
+          identifiedUserName = userInfo.full_name;
+        } else {
+          results.push({
+            transactionId: txId,
+            status: 'user_not_found',
+            message: `Usuário ${resolvedUserId} não existe no sistema`,
+            data: { resolved_user_id: resolvedUserId }
+          });
+          continue;
+        }
+      }
+
+      // Check if transaction already exists
+      const { data: existingTx } = await supabase
+        .from('pix_transactions')
+        .select('id, status, user_id')
+        .eq('txid', txId)
+        .maybeSingle();
+
+      if (existingTx) {
         results.push({
           transactionId: txId,
           status: 'already_exists',
-          message: `Já existe no sistema (status: ${existing.status})`,
-          data: { id: existing.id, status: existing.status }
+          message: `Já existe no sistema (status: ${existingTx.status})`,
+          data: { id: existingTx.id, status: existingTx.status }
         });
         continue;
       }
@@ -367,6 +496,9 @@ serve(async (req) => {
         });
         continue;
       }
+
+      // Get fee config for the resolved user
+      const { feePercentage, feeFixed } = await getFeeConfig(supabase, resolvedUserId);
 
       const mappedStatus = mapAtivusStatus(tx.situacao);
       
@@ -387,7 +519,7 @@ serve(async (req) => {
       const { data: inserted, error: insertError } = await supabase
         .from('pix_transactions')
         .insert({
-          user_id: targetUserId,
+          user_id: resolvedUserId,
           txid: txId,
           amount: tx.valor,
           donor_name: tx.nome,
@@ -420,12 +552,17 @@ serve(async (req) => {
       results.push({
         transactionId: txId,
         status: 'imported',
-        message: `Importado com sucesso (${mappedStatus})`,
+        message: shouldAutoIdentify 
+          ? `Importado para ${identifiedUserName || identifiedUserEmail} (${mappedStatus})`
+          : `Importado com sucesso (${mappedStatus})`,
         data: {
           id: inserted.id,
           amount: tx.valor,
           donor_name: tx.nome,
-          status: mappedStatus
+          status: mappedStatus,
+          matched_user_id: resolvedUserId,
+          matched_user_email: identifiedUserEmail,
+          matched_user_name: identifiedUserName
         }
       });
     }
@@ -435,6 +572,8 @@ serve(async (req) => {
       imported: results.filter(r => r.status === 'imported').length,
       already_exists: results.filter(r => r.status === 'already_exists').length,
       skipped: results.filter(r => r.status === 'skipped').length,
+      not_found: results.filter(r => r.status === 'not_found').length,
+      user_not_found: results.filter(r => r.status === 'user_not_found').length,
       errors: results.filter(r => r.status === 'error').length
     };
 
@@ -444,6 +583,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         listEndpointAvailable,
+        autoIdentifyMode: shouldAutoIdentify,
         results, 
         summary 
       }),
