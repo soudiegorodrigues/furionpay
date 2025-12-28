@@ -54,17 +54,17 @@ const BreakdownItem = memo(({ value, label, sublabel, type, tooltip }: Breakdown
   const content = (
     <div 
       className={cn(
-        "text-center p-4 rounded-xl border transition-all duration-200 hover:shadow-md",
+        "text-center p-2.5 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-md",
         config.bg,
         config.border
       )}
     >
-      <div className={cn("text-lg font-bold", config.text)}>
+      <div className={cn("text-sm sm:text-lg font-bold", config.text)}>
         {config.prefix}{formatCurrency(value)}
       </div>
-      <p className="text-sm font-medium text-muted-foreground mt-1">{label}</p>
+      <p className="text-[10px] sm:text-sm font-medium text-muted-foreground mt-0.5 sm:mt-1">{label}</p>
       {sublabel && (
-        <p className="text-xs text-muted-foreground/70 mt-0.5">{sublabel}</p>
+        <p className="text-[9px] sm:text-xs text-muted-foreground/70 mt-0.5 hidden sm:block">{sublabel}</p>
       )}
     </div>
   );
@@ -116,21 +116,22 @@ export const RevenueBreakdown = memo(({ stats, isLoading, globalFilter }: Revenu
 
   return (
     <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <div className="p-1.5 rounded-lg bg-amber-500/10">
-            <Calculator className="h-4 w-4 text-amber-500" />
+      <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
+        <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
+          <div className="p-1 sm:p-1.5 rounded-lg bg-amber-500/10">
+            <Calculator className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" />
           </div>
-          Breakdown: Receita vs Custos
-          <span className="text-xs font-normal text-muted-foreground ml-1">({periodLabel})</span>
+          <span className="hidden sm:inline">Breakdown: Receita vs Custos</span>
+          <span className="sm:hidden">Receita vs Custos</span>
+          <span className="text-[10px] sm:text-xs font-normal text-muted-foreground ml-1">({periodLabel})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6">
         {isLoading ? (
           <BreakdownSkeleton />
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
               <BreakdownItem 
                 value={periodStats.gross}
                 label="Receita Bruta"
@@ -163,16 +164,16 @@ export const RevenueBreakdown = memo(({ stats, isLoading, globalFilter }: Revenu
             
             {/* Margin indicator */}
             {periodStats.gross > 0 && (
-              <div className="flex items-center justify-center gap-3 p-3 bg-muted/30 rounded-lg">
-                <span className="text-sm text-muted-foreground">Margem de Lucro:</span>
+              <div className="flex items-center justify-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted/30 rounded-lg">
+                <span className="text-xs sm:text-sm text-muted-foreground">Margem:</span>
                 <div className={cn(
-                  "flex items-center gap-1.5 font-semibold",
+                  "flex items-center gap-1 sm:gap-1.5 font-semibold text-sm sm:text-base",
                   marginTrend === 'good' ? 'text-emerald-500' : 
                   marginTrend === 'medium' ? 'text-amber-500' : 'text-red-500'
                 )}>
-                  {marginTrend === 'good' ? <TrendingUp className="h-4 w-4" /> : 
-                   marginTrend === 'low' ? <TrendingDown className="h-4 w-4" /> : 
-                   <Minus className="h-4 w-4" />}
+                  {marginTrend === 'good' ? <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : 
+                   marginTrend === 'low' ? <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : 
+                   <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                   {margin.toFixed(1)}%
                 </div>
               </div>

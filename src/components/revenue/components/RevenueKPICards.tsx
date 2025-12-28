@@ -43,27 +43,27 @@ const KPICard = memo(({ value, label, sublabel, variant = 'default', tooltip, tr
   const content = (
     <div 
       className={cn(
-        "text-center p-4 rounded-xl border transition-all duration-200 hover:shadow-md hover:scale-[1.02]",
+        "text-center p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-md hover:scale-[1.02]",
         variantClasses[variant]
       )}
     >
-      <div className="flex items-center justify-center gap-1.5 mb-1">
-        <div className={cn("text-lg sm:text-xl font-bold", valueClasses[variant])}>
+      <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-1">
+        <div className={cn("text-base sm:text-xl font-bold", valueClasses[variant])}>
           {formatCurrency(value)}
         </div>
         {trend !== undefined && trend !== 0 && (
           <div className={cn(
-            "flex items-center text-xs font-medium",
+            "flex items-center text-[10px] sm:text-xs font-medium",
             trend > 0 ? "text-emerald-500" : "text-red-500"
           )}>
-            {trend > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {trend > 0 ? <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> : <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
             <span className="ml-0.5">{formatPercent(Math.abs(trend), false)}</span>
           </div>
         )}
       </div>
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="text-xs sm:text-sm font-medium text-muted-foreground">{label}</p>
       {sublabel && (
-        <p className="text-xs text-muted-foreground/70 mt-0.5">{sublabel}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground/70 mt-0.5">{sublabel}</p>
       )}
     </div>
   );
@@ -180,25 +180,26 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh, globalFilter
 
   return (
     <Card className="border-border/50 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Wallet className="h-5 w-5 text-primary" />
+      <CardHeader className="flex flex-row items-center justify-between pb-3 sm:pb-4 px-3 sm:px-6">
+        <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-lg">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+            <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          Receita da Plataforma
+          <span className="hidden xs:inline">Receita da Plataforma</span>
+          <span className="xs:hidden">Receita</span>
         </CardTitle>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={onRefresh} 
           disabled={isLoading}
-          className="h-9"
+          className="h-8 sm:h-9 px-2 sm:px-3"
         >
-          <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-          Atualizar
+          <RefreshCw className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2", isLoading && "animate-spin")} />
+          <span className="hidden sm:inline">Atualizar</span>
         </Button>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
         {isLoading ? (
           <KPICardSkeleton count={1} />
         ) : (
@@ -218,19 +219,19 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh, globalFilter
 
             {/* Revenue Composition Chart */}
             {revenueBreakdownData.length > 0 && (
-              <div className="pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm font-medium text-muted-foreground">
+              <div className="pt-3 sm:pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                  <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">
                     Composição da Receita ({periodLabel})
                   </h4>
                 </div>
-                <div className="h-40">
+                <div className="h-32 sm:h-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={revenueBreakdownData}
                       layout="vertical"
-                      margin={{ top: 0, right: 80, left: 70, bottom: 0 }}
+                      margin={{ top: 0, right: 60, left: 55, bottom: 0 }}
                     >
                       <XAxis 
                         type="number" 
@@ -242,8 +243,8 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh, globalFilter
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                        width={65}
+                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                        width={50}
                       />
                       <RechartsTooltip content={<CustomTooltip />} cursor={false} />
                       <Bar 
