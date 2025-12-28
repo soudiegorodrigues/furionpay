@@ -2,7 +2,6 @@ import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
 import { TrendingUp } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartData } from '../types';
 import { formatCurrency } from '../utils';
 import { ChartSkeleton } from '../skeletons/KPICardSkeleton';
@@ -10,36 +9,18 @@ import { ChartSkeleton } from '../skeletons/KPICardSkeleton';
 interface RevenueChartProps {
   data: ChartData[];
   isLoading: boolean;
-  userFilter: string;
-  onUserFilterChange: (value: string) => void;
-  users: string[];
 }
 
-export const RevenueChart = memo(({ data, isLoading, userFilter, onUserFilterChange, users }: RevenueChartProps) => {
+export const RevenueChart = memo(({ data, isLoading }: RevenueChartProps) => {
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10">
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-            </div>
-            Evolução Mensal do Lucro
-          </CardTitle>
-          <Select value={userFilter} onValueChange={onUserFilterChange}>
-            <SelectTrigger className="w-[180px] h-8 text-xs">
-              <SelectValue placeholder="Selecionar usuário" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {users.map((email) => (
-                <SelectItem key={email} value={email} className="text-xs">
-                  {email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <div className="p-1.5 rounded-lg bg-emerald-500/10">
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+          </div>
+          Evolução Mensal do Lucro
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
