@@ -3,13 +3,12 @@ import { RevenueKPICards } from './components/RevenueKPICards';
 import { RevenueBreakdown } from './components/RevenueBreakdown';
 import { AcquirerAnalysis } from './components/AcquirerAnalysis';
 import { RevenueChart } from './components/RevenueChart';
-import { MonthlyGoalTracker } from './components/MonthlyGoalTracker';
 import { MonthlyComparison } from './components/MonthlyComparison';
 import { GeneralStats } from './components/GeneralStats';
 import { UserRanking } from './components/UserRanking';
 
 export function RevenueDashboard() {
-  const { profitStats, isLoading, monthlyGoal, loadAllData, saveMonthlyGoal } = useRevenueStats();
+  const { profitStats, isLoading, loadAllData } = useRevenueStats();
   const { chartData, chartFilter, setChartFilter, isLoading: isChartLoading } = useRevenueChart();
   const { ranking, filter: rankingFilter, setFilter: setRankingFilter, isLoading: isRankingLoading } = useUserRanking();
 
@@ -40,13 +39,6 @@ export function RevenueDashboard() {
         filter={chartFilter}
         onFilterChange={setChartFilter}
         isLoading={isChartLoading}
-      />
-
-      {/* Goal & Projection */}
-      <MonthlyGoalTracker 
-        stats={profitStats}
-        monthlyGoal={monthlyGoal}
-        onSaveGoal={saveMonthlyGoal}
       />
 
       {/* Monthly Comparison */}
