@@ -89,88 +89,56 @@ async function logApiRequest(
   }
 }
 
-async function generatePixViaAcquirer(
-  supabase: any,
+async function generatePixViaMainFunction(
   userId: string,
   amount: number,
   customerName: string,
   productName: string,
-  utmData?: UTMData
+  utmData?: UTMData,
+  ipAddress?: string
 ) {
-  // Buscar adquirente do usuário
-  const { data: userAcquirerData } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('user_id', userId)
-    .eq('key', 'user_acquirer')
-    .single();
-  
-  const acquirer = userAcquirerData?.value || 'ativus';
-  
-  // Buscar configurações de taxa
-  const { data: feeConfigIdData } = await supabase
-    .from('admin_settings')
-    .select('value')
-    .eq('user_id', userId)
-    .eq('key', 'user_fee_config')
-    .single();
-  
-  let feePercentage = 6.99;
-  let feeFixed = 2.49;
-  
-  if (feeConfigIdData?.value) {
-    const { data: feeConfig } = await supabase
-      .from('fee_configs')
-      .select('pix_percentage, pix_fixed')
-      .eq('id', feeConfigIdData.value)
-      .single();
-    
-    if (feeConfig) {
-      feePercentage = feeConfig.pix_percentage;
-      feeFixed = feeConfig.pix_fixed;
-    }
-  }
-  
-  // Chamar edge function do adquirente
+  // Chamar a função PRINCIPAL generate-pix que já tem rate-limit e antifraude
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
-  let generateUrl = `${supabaseUrl}/functions/v1/generate-pix-ativus`;
-  if (acquirer === 'inter') {
-    generateUrl = `${supabaseUrl}/functions/v1/generate-pix-inter`;
-  } else if (acquirer === 'valorion') {
-    generateUrl = `${supabaseUrl}/functions/v1/generate-pix-valorion`;
-  }
+  const generateUrl = `${supabaseUrl}/functions/v1/generate-pix`;
+  
+  console.log(`[API-PIX-CREATE] Calling main generate-pix function with rate-limit for user ${userId}`);
   
   const response = await fetch(generateUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${anonKey}`
+      'Authorization': `Bearer ${serviceKey}`,
+      'x-forwarded-for': ipAddress || 'api-client',
+      'x-real-ip': ipAddress || 'api-client'
     },
     body: JSON.stringify({
       amount,
-      donorName: customerName || 'Cliente API',
+      customerName: customerName || 'Cliente API',
       userId,
       productName,
       popupModel: 'api',
-      utmData: utmData || undefined
+      utmParams: utmData || undefined,
+      // Não enviamos fingerprint, mas o IP será usado para rate-limit
     })
   });
   
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Acquirer error: ${errorText}`);
-  }
-  
   const result = await response.json();
   
-  return {
-    ...result,
-    acquirer,
-    feePercentage,
-    feeFixed
-  };
+  if (!response.ok) {
+    // Se for rate-limit, propagar o erro corretamente
+    if (response.status === 429) {
+      return {
+        error: result.message || 'Rate limit exceeded',
+        rateLimited: true,
+        retryAfter: result.retryAfter
+      };
+    }
+    throw new Error(result.error || 'Failed to generate PIX');
+  }
+  
+  return result;
 }
 
 Deno.serve(async (req) => {
@@ -274,15 +242,38 @@ Deno.serve(async (req) => {
   }
   
   try {
-    // Gerar PIX via adquirente (passando UTMs)
-    const pixResult = await generatePixViaAcquirer(
-      supabase,
+    // Gerar PIX via função PRINCIPAL (com rate-limit e antifraude)
+    const pixResult = await generatePixViaMainFunction(
       client.user_id,
       requestBody.amount,
       requestBody.customer?.name || 'Cliente API',
       requestBody.description || 'Pagamento via API',
-      requestBody.utm
+      requestBody.utm,
+      ipAddress
     );
+    
+    // Verificar se foi bloqueado por rate-limit
+    if (pixResult.rateLimited) {
+      const responseTime = Date.now() - startTime;
+      const rateLimitResponse = {
+        success: false,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: pixResult.error,
+          retry_after: pixResult.retryAfter
+        }
+      };
+      await logApiRequest(supabase, client.client_id, '/api/v1/pix/create', 'POST', 429, requestBody, rateLimitResponse, ipAddress, userAgent, responseTime, 'Rate limit exceeded');
+      
+      return new Response(JSON.stringify(rateLimitResponse), {
+        status: 429,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': String(pixResult.retryAfter || 60)
+        }
+      });
+    }
     
     if (pixResult.error) {
       throw new Error(pixResult.error);
@@ -309,18 +300,23 @@ Deno.serve(async (req) => {
     if (requestBody.metadata) utmDataToSave.metadata = requestBody.metadata;
     if (requestBody.customer) utmDataToSave.customer = requestBody.customer;
     
-    await supabase
-      .from('pix_transactions')
-      .update({ utm_data: utmDataToSave })
-      .eq('txid', pixResult.txid);
+    // Buscar txid da transação criada
+    const txid = pixResult.txid || pixResult.transactionId;
     
-    console.log(`[API-PIX-CREATE] UTM data saved for txid=${pixResult.txid}:`, utmDataToSave);
+    if (txid) {
+      await supabase
+        .from('pix_transactions')
+        .update({ utm_data: utmDataToSave })
+        .eq('txid', txid);
+      
+      console.log(`[API-PIX-CREATE] UTM data saved for txid=${txid}:`, utmDataToSave);
+    }
     
     const responseTime = Date.now() - startTime;
     const successResponse = {
       success: true,
       data: {
-        txid: pixResult.txid,
+        txid: txid,
         pix_code: pixResult.pixCode,
         qr_code_url: pixResult.qrCodeUrl || null,
         amount: requestBody.amount,
@@ -333,7 +329,7 @@ Deno.serve(async (req) => {
     
     await logApiRequest(supabase, client.client_id, '/api/v1/pix/create', 'POST', 200, requestBody, successResponse, ipAddress, userAgent, responseTime);
     
-    console.log(`[API-PIX-CREATE] Success: txid=${pixResult.txid}, amount=${requestBody.amount}, client=${client.client_name}`);
+    console.log(`[API-PIX-CREATE] Success: txid=${txid}, amount=${requestBody.amount}, client=${client.client_name}`);
     
     return new Response(JSON.stringify(successResponse), {
       status: 200,
