@@ -1,8 +1,9 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Wallet, RefreshCw, TrendingUp, TrendingDown, HelpCircle } from "lucide-react";
+import { Wallet, RefreshCw, TrendingUp, TrendingDown, HelpCircle, BarChart3 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Cell, ResponsiveContainer, LabelList } from 'recharts';
 import { ProfitStats } from '../types';
 import { formatCurrency, formatPercent } from '../utils';
 import { KPICardSkeleton } from '../skeletons/KPICardSkeleton';
@@ -89,7 +90,58 @@ const KPICard = memo(({ value, label, sublabel, variant = 'default', tooltip, tr
 
 KPICard.displayName = 'KPICard';
 
+const REVENUE_COLORS = {
+  taxaPix: '#10B981',
+  taxaSaque: '#3B82F6',
+  custoPix: '#EF4444',
+};
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+        <p className="font-medium text-sm">{data.name}</p>
+        <p className="text-sm" style={{ color: data.color }}>
+          {formatCurrency(data.value)}
+        </p>
+        {data.description && (
+          <p className="text-xs text-muted-foreground mt-1">{data.description}</p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
 export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPICardsProps) => {
+  const revenueBreakdownData = useMemo(() => {
+    return [
+      { 
+        name: 'Taxa PIX', 
+        value: stats.gross?.thisMonth || 0, 
+        color: REVENUE_COLORS.taxaPix,
+        description: 'Receita bruta de taxas PIX (% + fixo)'
+      },
+      { 
+        name: 'Taxa Saque', 
+        value: stats.withdrawalFees?.thisMonth || 0, 
+        color: REVENUE_COLORS.taxaSaque,
+        description: 'Taxas cobradas sobre saques'
+      },
+      { 
+        name: 'Custo PIX', 
+        value: stats.pixCosts?.thisMonth || 0, 
+        color: REVENUE_COLORS.custoPix,
+        description: 'Custo pago aos adquirentes'
+      },
+    ].filter(item => item.value !== 0);
+  }, [stats]);
+
+  const maxValue = useMemo(() => {
+    return Math.max(...revenueBreakdownData.map(d => d.value), 1);
+  }, [revenueBreakdownData]);
+
   return (
     <Card className="border-border/50 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -110,40 +162,93 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
           Atualizar
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         {isLoading ? (
           <KPICardSkeleton count={5} />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <KPICard 
-              value={stats.today} 
-              label="Hoje" 
-              variant="primary"
-              tooltip="Lucro líquido gerado hoje (Taxas PIX + Taxa Saques - Custo PIX)"
-            />
-            <KPICard 
-              value={stats.sevenDays} 
-              label="7 Dias"
-              tooltip="Lucro líquido dos últimos 7 dias"
-            />
-            <KPICard 
-              value={stats.fifteenDays} 
-              label="15 Dias"
-              tooltip="Lucro líquido dos últimos 15 dias"
-            />
-            <KPICard 
-              value={stats.thisMonth} 
-              label="Este Mês"
-              trend={stats.monthOverMonthChange}
-              tooltip={`Lucro do mês atual. ${stats.monthOverMonthChange > 0 ? 'Alta' : stats.monthOverMonthChange < 0 ? 'Queda' : 'Estável'} comparado ao mês anterior.`}
-            />
-            <KPICard 
-              value={stats.thisYear} 
-              label="Este Ano"
-              variant="highlight"
-              tooltip="Lucro líquido acumulado do ano"
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <KPICard 
+                value={stats.today} 
+                label="Hoje" 
+                variant="primary"
+                tooltip="Lucro líquido gerado hoje (Taxas PIX + Taxa Saques - Custo PIX)"
+              />
+              <KPICard 
+                value={stats.sevenDays} 
+                label="7 Dias"
+                tooltip="Lucro líquido dos últimos 7 dias"
+              />
+              <KPICard 
+                value={stats.fifteenDays} 
+                label="15 Dias"
+                tooltip="Lucro líquido dos últimos 15 dias"
+              />
+              <KPICard 
+                value={stats.thisMonth} 
+                label="Este Mês"
+                trend={stats.monthOverMonthChange}
+                tooltip={`Lucro do mês atual. ${stats.monthOverMonthChange > 0 ? 'Alta' : stats.monthOverMonthChange < 0 ? 'Queda' : 'Estável'} comparado ao mês anterior.`}
+              />
+              <KPICard 
+                value={stats.thisYear} 
+                label="Este Ano"
+                variant="highlight"
+                tooltip="Lucro líquido acumulado do ano"
+              />
+            </div>
+
+            {/* Revenue Composition Chart */}
+            {revenueBreakdownData.length > 0 && (
+              <div className="pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm font-medium text-muted-foreground">
+                    Composição da Receita (Este Mês)
+                  </h4>
+                </div>
+                <div className="h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={revenueBreakdownData}
+                      layout="vertical"
+                      margin={{ top: 0, right: 80, left: 70, bottom: 0 }}
+                    >
+                      <XAxis 
+                        type="number" 
+                        hide 
+                        domain={[0, maxValue * 1.1]}
+                      />
+                      <YAxis 
+                        type="category" 
+                        dataKey="name" 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                        width={65}
+                      />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Bar 
+                        dataKey="value" 
+                        radius={[0, 4, 4, 0]}
+                        barSize={20}
+                      >
+                        {revenueBreakdownData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                        <LabelList 
+                          dataKey="value" 
+                          position="right" 
+                          formatter={(value: number) => formatCurrency(value)}
+                          style={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
