@@ -17,7 +17,7 @@ import { DocumentosSection } from "@/components/admin/DocumentosSection";
 import { UTMDebugSection } from "@/components/admin/UTMDebugSection";
 import { PremiacoesSection } from "@/components/admin/PremiacoesSection";
 import { ApiMonitoringSection } from "@/components/admin/ApiMonitoringSection";
-import { ReceitaPlataformaSection } from "@/components/admin/ReceitaPlataformaSection";
+import { RevenueDashboard as ReceitaPlataformaSection } from "@/components/revenue";
 import { NotificacoesSection } from "@/components/admin/NotificacoesSection";
 import { BackupsSection } from "@/components/admin/BackupsSection";
 import { AntiFraudeSection } from "@/components/admin/AntiFraudeSection";

@@ -1,69 +1,21 @@
-import { useRevenueStats, useRevenueChart, useUserRanking } from './hooks/useRevenueStats';
-import { RevenueKPICards } from './components/RevenueKPICards';
-import { RevenueBreakdown } from './components/RevenueBreakdown';
-import { AcquirerAnalysis } from './components/AcquirerAnalysis';
-import { RevenueChart } from './components/RevenueChart';
-import { MonthlyGoalTracker } from './components/MonthlyGoalTracker';
-import { MonthlyComparison } from './components/MonthlyComparison';
-import { GeneralStats } from './components/GeneralStats';
-import { UserRanking } from './components/UserRanking';
+// Revenue Dashboard - Professional Modular Architecture
+export { RevenueDashboard } from './RevenueDashboard';
 
-export function RevenueDashboard() {
-  const { profitStats, isLoading, monthlyGoal, loadAllData, saveMonthlyGoal } = useRevenueStats();
-  const { chartData, chartFilter, setChartFilter, isLoading: isChartLoading } = useRevenueChart();
-  const { ranking, filter: rankingFilter, setFilter: setRankingFilter, isLoading: isRankingLoading } = useUserRanking();
+// Components
+export { RevenueKPICards } from './components/RevenueKPICards';
+export { RevenueBreakdown } from './components/RevenueBreakdown';
+export { AcquirerAnalysis } from './components/AcquirerAnalysis';
+export { RevenueChart } from './components/RevenueChart';
+export { MonthlyGoalTracker } from './components/MonthlyGoalTracker';
+export { MonthlyComparison } from './components/MonthlyComparison';
+export { GeneralStats } from './components/GeneralStats';
+export { UserRanking } from './components/UserRanking';
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* KPI Cards */}
-      <RevenueKPICards 
-        stats={profitStats} 
-        isLoading={isLoading} 
-        onRefresh={loadAllData} 
-      />
+// Hooks
+export { useRevenueStats, useRevenueChart, useUserRanking } from './hooks/useRevenueStats';
 
-      {/* Breakdown: Receita vs Custos */}
-      <RevenueBreakdown 
-        stats={profitStats} 
-        isLoading={isLoading} 
-      />
+// Types
+export * from './types';
 
-      {/* Acquirer Analysis */}
-      <AcquirerAnalysis 
-        stats={profitStats} 
-        isLoading={isLoading} 
-      />
-
-      {/* Chart */}
-      <RevenueChart 
-        data={chartData}
-        filter={chartFilter}
-        onFilterChange={setChartFilter}
-        isLoading={isChartLoading}
-      />
-
-      {/* Goal & Projection */}
-      <MonthlyGoalTracker 
-        stats={profitStats}
-        monthlyGoal={monthlyGoal}
-        onSaveGoal={saveMonthlyGoal}
-      />
-
-      {/* Monthly Comparison */}
-      <MonthlyComparison stats={profitStats} />
-
-      {/* General Stats */}
-      <GeneralStats stats={profitStats} />
-
-      {/* User Ranking */}
-      <UserRanking 
-        ranking={ranking}
-        filter={rankingFilter}
-        onFilterChange={setRankingFilter}
-        isLoading={isRankingLoading}
-      />
-    </div>
-  );
-}
-
-export { ReceitaPlataformaSection } from './ReceitaPlataformaSectionLegacy';
+// Utils
+export * from './utils';
