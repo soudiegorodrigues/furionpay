@@ -3,7 +3,6 @@ import { RevenueKPICards } from './components/RevenueKPICards';
 import { RevenueBreakdown } from './components/RevenueBreakdown';
 import { AcquirerAnalysis } from './components/AcquirerAnalysis';
 import { RevenueChart } from './components/RevenueChart';
-import { MonthlyComparison } from './components/MonthlyComparison';
 import { GeneralStats } from './components/GeneralStats';
 import { UserRanking } from './components/UserRanking';
 
@@ -40,9 +39,6 @@ export function RevenueDashboard() {
         onFilterChange={setChartFilter}
         isLoading={isChartLoading}
       />
-
-      {/* Monthly Comparison */}
-      <MonthlyComparison stats={profitStats} />
 
       {/* General Stats */}
       <GeneralStats stats={profitStats} />
