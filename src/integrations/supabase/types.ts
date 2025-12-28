@@ -2987,6 +2987,7 @@ export type Database = {
         }[]
       }
       get_platform_revenue_stats:
+        | { Args: never; Returns: Json }
         | { Args: { p_user_email?: string }; Returns: Json }
         | {
             Args: { p_month?: number; p_user_id?: string; p_year?: number }
