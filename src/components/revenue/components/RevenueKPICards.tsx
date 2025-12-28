@@ -232,6 +232,7 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
                         dataKey="value" 
                         radius={[0, 4, 4, 0]}
                         barSize={20}
+                        background={false}
                       >
                         {revenueBreakdownData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />

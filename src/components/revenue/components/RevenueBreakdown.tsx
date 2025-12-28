@@ -209,6 +209,7 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
                         dataKey="cost" 
                         radius={[0, 4, 4, 0]}
                         maxBarSize={20}
+                        background={false}
                       >
                         {acquirerCostData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
