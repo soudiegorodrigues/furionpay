@@ -91,7 +91,8 @@ const KPICard = memo(({ value, label, sublabel, variant = 'default', tooltip, tr
 KPICard.displayName = 'KPICard';
 
 const REVENUE_COLORS = {
-  taxaPix: '#10B981',
+  taxaPercentual: '#10B981',
+  valorFixo: '#06B6D4',
   taxaSaque: '#3B82F6',
   custoPix: '#EF4444',
 };
@@ -118,10 +119,16 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
   const revenueBreakdownData = useMemo(() => {
     return [
       { 
-        name: 'Taxa PIX', 
-        value: stats.gross?.thisMonth || 0, 
-        color: REVENUE_COLORS.taxaPix,
-        description: 'Receita bruta de taxas PIX (% + fixo)'
+        name: 'Taxa Percentual', 
+        value: stats.percentageRevenue?.thisMonth || 0, 
+        color: REVENUE_COLORS.taxaPercentual,
+        description: 'Receita de taxas percentuais (ex: 4.99%)'
+      },
+      { 
+        name: 'Valor Fixo', 
+        value: stats.fixedRevenue?.thisMonth || 0, 
+        color: REVENUE_COLORS.valorFixo,
+        description: 'Receita de valores fixos por transação'
       },
       { 
         name: 'Taxa Saque', 
@@ -207,7 +214,7 @@ export const RevenueKPICards = memo(({ stats, isLoading, onRefresh }: RevenueKPI
                     Composição da Receita (Este Mês)
                   </h4>
                 </div>
-                <div className="h-32">
+                <div className="h-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={revenueBreakdownData}

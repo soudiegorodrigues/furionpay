@@ -19,13 +19,13 @@ export function useRevenueStats() {
         const stats: ProfitStats = { ...DEFAULT_PROFIT_STATS };
         
         const rpcData = data as {
-          today?: { net_profit: number; gross_revenue: number; pix_cost?: number; withdrawal_fees?: number; transaction_count: number };
-          week?: { net_profit: number; gross_revenue: number; pix_cost?: number; withdrawal_fees?: number };
-          fortnight?: { net_profit: number; gross_revenue: number; pix_cost?: number; withdrawal_fees?: number };
-          month?: { net_profit: number; gross_revenue: number; pix_cost?: number; withdrawal_fees?: number };
-          last_month?: { net_profit: number; gross_revenue: number; pix_cost?: number; withdrawal_fees?: number };
-          year?: { net_profit: number; gross_revenue: number; pix_cost?: number; withdrawal_fees?: number };
-          all_time?: { net_profit: number; gross_revenue: number; pix_cost?: number; withdrawal_fees?: number; transaction_count: number };
+          today?: { net_profit: number; gross_revenue: number; percentage_revenue?: number; fixed_revenue?: number; pix_cost?: number; withdrawal_fees?: number; transaction_count: number };
+          week?: { net_profit: number; gross_revenue: number; percentage_revenue?: number; fixed_revenue?: number; pix_cost?: number; withdrawal_fees?: number };
+          fortnight?: { net_profit: number; gross_revenue: number; percentage_revenue?: number; fixed_revenue?: number; pix_cost?: number; withdrawal_fees?: number };
+          month?: { net_profit: number; gross_revenue: number; percentage_revenue?: number; fixed_revenue?: number; pix_cost?: number; withdrawal_fees?: number };
+          last_month?: { net_profit: number; gross_revenue: number; percentage_revenue?: number; fixed_revenue?: number; pix_cost?: number; withdrawal_fees?: number };
+          year?: { net_profit: number; gross_revenue: number; percentage_revenue?: number; fixed_revenue?: number; pix_cost?: number; withdrawal_fees?: number };
+          all_time?: { net_profit: number; gross_revenue: number; percentage_revenue?: number; fixed_revenue?: number; pix_cost?: number; withdrawal_fees?: number; transaction_count: number };
           acquirer_breakdown?: {
             [key: string]: {
               today: { count: number; cost: number; volume: number };
@@ -40,6 +40,8 @@ export function useRevenueStats() {
         if (rpcData.today) {
           stats.today = Number(rpcData.today.net_profit) || 0;
           stats.gross.today = Number(rpcData.today.gross_revenue) || 0;
+          stats.percentageRevenue.today = Number(rpcData.today.percentage_revenue) || 0;
+          stats.fixedRevenue.today = Number(rpcData.today.fixed_revenue) || 0;
           stats.pixCosts.today = Number(rpcData.today.pix_cost) || 0;
           stats.withdrawalFees.today = Number(rpcData.today.withdrawal_fees) || 0;
           stats.acquirerCosts.today = stats.pixCosts.today;
@@ -47,6 +49,8 @@ export function useRevenueStats() {
         if (rpcData.week) {
           stats.sevenDays = Number(rpcData.week.net_profit) || 0;
           stats.gross.sevenDays = Number(rpcData.week.gross_revenue) || 0;
+          stats.percentageRevenue.sevenDays = Number(rpcData.week.percentage_revenue) || 0;
+          stats.fixedRevenue.sevenDays = Number(rpcData.week.fixed_revenue) || 0;
           stats.pixCosts.sevenDays = Number(rpcData.week.pix_cost) || 0;
           stats.withdrawalFees.sevenDays = Number(rpcData.week.withdrawal_fees) || 0;
           stats.acquirerCosts.sevenDays = stats.pixCosts.sevenDays;
@@ -54,6 +58,8 @@ export function useRevenueStats() {
         if (rpcData.fortnight) {
           stats.fifteenDays = Number(rpcData.fortnight.net_profit) || 0;
           stats.gross.fifteenDays = Number(rpcData.fortnight.gross_revenue) || 0;
+          stats.percentageRevenue.fifteenDays = Number(rpcData.fortnight.percentage_revenue) || 0;
+          stats.fixedRevenue.fifteenDays = Number(rpcData.fortnight.fixed_revenue) || 0;
           stats.pixCosts.fifteenDays = Number(rpcData.fortnight.pix_cost) || 0;
           stats.withdrawalFees.fifteenDays = Number(rpcData.fortnight.withdrawal_fees) || 0;
           stats.acquirerCosts.fifteenDays = stats.pixCosts.fifteenDays;
@@ -61,6 +67,8 @@ export function useRevenueStats() {
         if (rpcData.month) {
           stats.thisMonth = Number(rpcData.month.net_profit) || 0;
           stats.gross.thisMonth = Number(rpcData.month.gross_revenue) || 0;
+          stats.percentageRevenue.thisMonth = Number(rpcData.month.percentage_revenue) || 0;
+          stats.fixedRevenue.thisMonth = Number(rpcData.month.fixed_revenue) || 0;
           stats.pixCosts.thisMonth = Number(rpcData.month.pix_cost) || 0;
           stats.withdrawalFees.thisMonth = Number(rpcData.month.withdrawal_fees) || 0;
           stats.acquirerCosts.thisMonth = stats.pixCosts.thisMonth;
@@ -68,6 +76,8 @@ export function useRevenueStats() {
         if (rpcData.last_month) {
           stats.lastMonth = Number(rpcData.last_month.net_profit) || 0;
           stats.gross.lastMonth = Number(rpcData.last_month.gross_revenue) || 0;
+          stats.percentageRevenue.lastMonth = Number(rpcData.last_month.percentage_revenue) || 0;
+          stats.fixedRevenue.lastMonth = Number(rpcData.last_month.fixed_revenue) || 0;
           stats.pixCosts.lastMonth = Number(rpcData.last_month.pix_cost) || 0;
           stats.withdrawalFees.lastMonth = Number(rpcData.last_month.withdrawal_fees) || 0;
           stats.acquirerCosts.lastMonth = stats.pixCosts.lastMonth;
@@ -75,6 +85,8 @@ export function useRevenueStats() {
         if (rpcData.year) {
           stats.thisYear = Number(rpcData.year.net_profit) || 0;
           stats.gross.thisYear = Number(rpcData.year.gross_revenue) || 0;
+          stats.percentageRevenue.thisYear = Number(rpcData.year.percentage_revenue) || 0;
+          stats.fixedRevenue.thisYear = Number(rpcData.year.fixed_revenue) || 0;
           stats.pixCosts.thisYear = Number(rpcData.year.pix_cost) || 0;
           stats.withdrawalFees.thisYear = Number(rpcData.year.withdrawal_fees) || 0;
           stats.acquirerCosts.thisYear = stats.pixCosts.thisYear;
@@ -82,6 +94,8 @@ export function useRevenueStats() {
         if (rpcData.all_time) {
           stats.total = Number(rpcData.all_time.net_profit) || 0;
           stats.gross.total = Number(rpcData.all_time.gross_revenue) || 0;
+          stats.percentageRevenue.total = Number(rpcData.all_time.percentage_revenue) || 0;
+          stats.fixedRevenue.total = Number(rpcData.all_time.fixed_revenue) || 0;
           stats.pixCosts.total = Number(rpcData.all_time.pix_cost) || 0;
           stats.withdrawalFees.total = Number(rpcData.all_time.withdrawal_fees) || 0;
           stats.acquirerCosts.total = stats.pixCosts.total;

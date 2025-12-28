@@ -25,6 +25,17 @@ export interface AcquirerPeriodData {
   total: PeriodData;
 }
 
+export interface PeriodBreakdown {
+  today: number;
+  sevenDays: number;
+  fifteenDays: number;
+  thirtyDays: number;
+  thisMonth: number;
+  lastMonth: number;
+  thisYear: number;
+  total: number;
+}
+
 export interface ProfitStats {
   today: number;
   sevenDays: number;
@@ -34,46 +45,12 @@ export interface ProfitStats {
   lastMonth: number;
   thisYear: number;
   total: number;
-  gross: {
-    today: number;
-    sevenDays: number;
-    fifteenDays: number;
-    thirtyDays: number;
-    thisMonth: number;
-    lastMonth: number;
-    thisYear: number;
-    total: number;
-  };
-  acquirerCosts: {
-    today: number;
-    sevenDays: number;
-    fifteenDays: number;
-    thirtyDays: number;
-    thisMonth: number;
-    lastMonth: number;
-    thisYear: number;
-    total: number;
-  };
-  pixCosts: {
-    today: number;
-    sevenDays: number;
-    fifteenDays: number;
-    thirtyDays: number;
-    thisMonth: number;
-    lastMonth: number;
-    thisYear: number;
-    total: number;
-  };
-  withdrawalFees: {
-    today: number;
-    sevenDays: number;
-    fifteenDays: number;
-    thirtyDays: number;
-    thisMonth: number;
-    lastMonth: number;
-    thisYear: number;
-    total: number;
-  };
+  gross: PeriodBreakdown;
+  percentageRevenue: PeriodBreakdown;
+  fixedRevenue: PeriodBreakdown;
+  acquirerCosts: PeriodBreakdown;
+  pixCosts: PeriodBreakdown;
+  withdrawalFees: PeriodBreakdown;
   acquirerBreakdown: {
     [key: string]: AcquirerPeriodData;
   } | null;
@@ -110,6 +87,11 @@ export const RANKING_FILTER_OPTIONS: { value: RankingFilter; label: string }[] =
   { value: 'thisMonth', label: 'Este mês' },
 ];
 
+const DEFAULT_PERIOD_BREAKDOWN: PeriodBreakdown = { 
+  today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, 
+  thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 
+};
+
 export const DEFAULT_PROFIT_STATS: ProfitStats = {
   today: 0,
   sevenDays: 0,
@@ -119,10 +101,12 @@ export const DEFAULT_PROFIT_STATS: ProfitStats = {
   lastMonth: 0,
   thisYear: 0,
   total: 0,
-  gross: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
-  acquirerCosts: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
-  pixCosts: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
-  withdrawalFees: { today: 0, sevenDays: 0, fifteenDays: 0, thirtyDays: 0, thisMonth: 0, lastMonth: 0, thisYear: 0, total: 0 },
+  gross: { ...DEFAULT_PERIOD_BREAKDOWN },
+  percentageRevenue: { ...DEFAULT_PERIOD_BREAKDOWN },
+  fixedRevenue: { ...DEFAULT_PERIOD_BREAKDOWN },
+  acquirerCosts: { ...DEFAULT_PERIOD_BREAKDOWN },
+  pixCosts: { ...DEFAULT_PERIOD_BREAKDOWN },
+  withdrawalFees: { ...DEFAULT_PERIOD_BREAKDOWN },
   acquirerBreakdown: null,
   transactionCount: 0,
   averageProfit: 0,
