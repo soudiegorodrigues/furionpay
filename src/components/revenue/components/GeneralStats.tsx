@@ -65,7 +65,7 @@ export const GeneralStats = memo(({ stats }: GeneralStatsProps) => {
               {formatCurrency(stats.gross.total)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Volume Total
+              Receita Bruta
             </p>
           </div>
         </div>
