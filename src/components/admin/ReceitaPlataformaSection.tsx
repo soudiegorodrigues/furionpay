@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Users, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check, Search, ChevronDown, X, Calendar } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check, Calendar } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -124,21 +123,18 @@ export const ReceitaPlataformaSection = () => {
   const [profitStats, setProfitStats] = useState<ProfitStats>(defaultProfitStats);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [userProfitRanking, setUserProfitRanking] = useState<UserProfitRanking[]>([]);
-  const [uniqueUsers, setUniqueUsers] = useState<string[]>([]);
+  
   
   const [isLoading, setIsLoading] = useState(false);
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [isRankingLoading, setIsRankingLoading] = useState(false);
   
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
-  const [selectedUser, setSelectedUser] = useState<string>('all');
   const [rankingFilter, setRankingFilter] = useState<RankingFilter>('all');
   const [acquirerCostFilter, setAcquirerCostFilter] = useState<AcquirerCostFilter>('thisMonth');
   const [monthlyGoal, setMonthlyGoal] = useState<number>(0);
   const [goalInput, setGoalInput] = useState<string>('');
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
-  const [userSearchQuery, setUserSearchQuery] = useState<string>('');
-  const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   
   // Filtros de período absoluto (mês/ano específico)
   const [periodMode, setPeriodMode] = useState<PeriodMode>('relative');
@@ -163,7 +159,7 @@ export const ReceitaPlataformaSection = () => {
     loadAvailableYears();
   }, []);
 
-  // Recarregar stats quando usuário mudar
+  // Recarregar stats quando período mudar
   useEffect(() => {
     if (periodMode === 'relative') {
       loadStats();
@@ -171,7 +167,7 @@ export const ReceitaPlataformaSection = () => {
       loadAbsoluteStats();
     }
     loadChartData();
-  }, [selectedUser, periodMode, selectedMonth, selectedYear]);
+  }, [periodMode, selectedMonth, selectedYear]);
 
   // Recarregar gráfico quando filtro mudar
   useEffect(() => {
@@ -189,8 +185,7 @@ export const ReceitaPlataformaSection = () => {
       await Promise.all([
         loadStats(),
         loadChartData(),
-        loadRanking(),
-        loadUniqueUsers()
+        loadRanking()
       ]);
     } finally {
       setIsLoading(false);
@@ -200,7 +195,7 @@ export const ReceitaPlataformaSection = () => {
   const loadStats = async () => {
     try {
       const { data, error } = await supabase.rpc('get_platform_revenue_stats', {
-        p_user_email: selectedUser === 'all' ? null : selectedUser
+        p_user_email: null
       });
       if (error) throw error;
       
@@ -317,7 +312,7 @@ export const ReceitaPlataformaSection = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('get_platform_revenue_stats', {
-        p_user_id: selectedUser === 'all' ? null : null, // TODO: resolver user_id do email se necessário
+        p_user_id: null,
         p_month: selectedMonth,
         p_year: selectedYear
       });
@@ -389,7 +384,7 @@ export const ReceitaPlataformaSection = () => {
     try {
       const { data, error } = await supabase.rpc('get_platform_revenue_chart', {
         p_filter: chartFilter,
-        p_user_email: selectedUser === 'all' ? null : selectedUser
+        p_user_email: null
       });
       if (error) throw error;
       // Transform RPC response: date -> date, net_profit -> lucro
@@ -436,18 +431,6 @@ export const ReceitaPlataformaSection = () => {
     }
   };
 
-  const loadUniqueUsers = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_platform_unique_users');
-      if (error) throw error;
-      // RPC returns [{user_email: "..."}], extract email strings
-      const rawData = data as unknown as Array<{ user_email: string }> | null;
-      const emails = rawData?.map((row) => row.user_email).filter(Boolean) || [];
-      setUniqueUsers(emails);
-    } catch (error) {
-      console.error('Error loading users:', error);
-    }
-  };
 
   const loadMonthlyGoal = async () => {
     try {
@@ -486,10 +469,6 @@ export const ReceitaPlataformaSection = () => {
     }).format(value);
   };
 
-  // Filtrar usuários baseado na busca
-  const filteredUsers = userSearchQuery.trim()
-    ? uniqueUsers.filter(email => email.toLowerCase().includes(userSearchQuery.toLowerCase()))
-    : uniqueUsers;
 
   // Helper para obter dados do período selecionado do acquirerBreakdown
   const getAcquirerPeriodKey = () => {
@@ -600,83 +579,6 @@ export const ReceitaPlataformaSection = () => {
               </div>
             )}
             
-            {/* Filtro por usuário */}
-            <div className="flex items-center gap-2 ml-auto">
-              <Users className="h-4 w-4 text-muted-foreground hidden sm:block" />
-              <Popover open={isUserPopoverOpen} onOpenChange={setIsUserPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-[160px] sm:w-[200px] h-8 text-xs justify-between"
-                  >
-                    <span className="truncate">
-                      {selectedUser === 'all' 
-                        ? 'Todos os usuários' 
-                        : selectedUser.length > 18 
-                          ? `${selectedUser.slice(0, 18)}...` 
-                          : selectedUser}
-                    </span>
-                    <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[280px] p-0" align="end">
-                  <div className="p-2 border-b">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar por email..."
-                        value={userSearchQuery}
-                        onChange={(e) => setUserSearchQuery(e.target.value)}
-                        className="pl-8 h-9"
-                      />
-                      {userSearchQuery && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-1 top-1 h-7 w-7 p-0"
-                          onClick={() => setUserSearchQuery('')}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="max-h-[250px] overflow-y-auto p-1">
-                    <Button
-                      variant={selectedUser === 'all' ? 'secondary' : 'ghost'}
-                      className="w-full justify-start text-sm h-8"
-                      onClick={() => {
-                        setSelectedUser('all');
-                        setUserSearchQuery('');
-                        setIsUserPopoverOpen(false);
-                      }}
-                    >
-                      Todos os usuários
-                    </Button>
-                    {filteredUsers.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Nenhum usuário encontrado
-                      </p>
-                    ) : (
-                      filteredUsers.map(email => (
-                        <Button
-                          key={email}
-                          variant={selectedUser === email ? 'secondary' : 'ghost'}
-                          className="w-full justify-start text-sm h-8 truncate"
-                          onClick={() => {
-                            setSelectedUser(email);
-                            setUserSearchQuery('');
-                            setIsUserPopoverOpen(false);
-                          }}
-                        >
-                          {email}
-                        </Button>
-                      ))
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -687,13 +589,6 @@ export const ReceitaPlataformaSection = () => {
           ) : periodMode === 'relative' ? (
             /* Modo Relativo - Exibição Original */
             <>
-              {selectedUser !== 'all' && (
-                <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Filtrando por: <span className="font-medium text-foreground">{selectedUser}</span>
-                  </p>
-                </div>
-              )}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
                 <div className="text-center p-2 sm:p-3 bg-primary/10 rounded-lg">
                   <div className="text-sm sm:text-base font-semibold text-primary">
@@ -733,9 +628,6 @@ export const ReceitaPlataformaSection = () => {
               <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">
                   Período: <span className="font-medium text-foreground">{MONTH_NAMES[selectedMonth - 1]} de {selectedYear}</span>
-                  {selectedUser !== 'all' && (
-                    <span className="ml-2">• Usuário: <span className="font-medium text-foreground">{selectedUser}</span></span>
-                  )}
                 </p>
               </div>
               
