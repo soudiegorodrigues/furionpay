@@ -1,9 +1,7 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calculator, TrendingUp, TrendingDown, Minus, HelpCircle, BarChart3 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Cell, ResponsiveContainer, LabelList } from 'recharts';
-import { ACQUIRER_COLORS } from '../types';
+import { Calculator, TrendingUp, TrendingDown, Minus, HelpCircle } from "lucide-react";
 import { ProfitStats } from '../types';
 import { formatCurrency, getMarginPercentage } from '../utils';
 import { BreakdownSkeleton } from '../skeletons/KPICardSkeleton';
@@ -97,17 +95,6 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
   const margin = getMarginPercentage(stats.thisMonth, stats.gross.thisMonth);
   const marginTrend = margin >= 70 ? 'good' : margin >= 50 ? 'medium' : 'low';
 
-  const acquirerCostData = useMemo(() => {
-    const breakdown = stats.acquirerBreakdown || {};
-    return [
-      { name: 'Valorion', cost: breakdown.valorion?.total?.cost || 0, color: ACQUIRER_COLORS.valorion.color },
-      { name: 'Ativus', cost: breakdown.ativus?.total?.cost || 0, color: ACQUIRER_COLORS.ativus.color },
-      { name: 'Inter', cost: breakdown.inter?.total?.cost || 0, color: ACQUIRER_COLORS.inter.color },
-    ].sort((a, b) => b.cost - a.cost);
-  }, [stats.acquirerBreakdown]);
-
-  const maxCost = Math.max(...acquirerCostData.map(d => d.cost), 1);
-
   return (
     <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent shadow-sm">
       <CardHeader className="pb-3">
@@ -168,61 +155,6 @@ export const RevenueBreakdown = memo(({ stats, isLoading }: RevenueBreakdownProp
                    marginTrend === 'low' ? <TrendingDown className="h-4 w-4" /> : 
                    <Minus className="h-4 w-4" />}
                   {margin.toFixed(1)}%
-                </div>
-              </div>
-            )}
-
-            {/* Acquirer Cost Chart */}
-            {maxCost > 0 && (
-              <div className="mt-4 pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2 mb-3">
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Custo por Adquirente</span>
-                </div>
-                <div className="h-[100px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={acquirerCostData}
-                      layout="vertical"
-                      margin={{ top: 0, right: 60, left: 60, bottom: 0 }}
-                    >
-                      <XAxis type="number" hide domain={[0, maxCost * 1.1]} />
-                      <YAxis 
-                        type="category" 
-                        dataKey="name" 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                        width={55}
-                      />
-                      <RechartsTooltip
-                        cursor={false}
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}
-                        formatter={(value: number) => [formatCurrency(value), 'Custo']}
-                      />
-                      <Bar 
-                        dataKey="cost" 
-                        radius={[0, 4, 4, 0]}
-                        maxBarSize={20}
-                        background={false}
-                      >
-                        {acquirerCostData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                        <LabelList 
-                          dataKey="cost" 
-                          position="right" 
-                          formatter={(value: number) => formatCurrency(value)}
-                          style={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                        />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
                 </div>
               </div>
             )}
