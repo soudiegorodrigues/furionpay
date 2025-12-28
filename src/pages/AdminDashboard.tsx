@@ -77,6 +77,7 @@ interface PeriodStats {
   total_amount_generated: number;
   total_amount_paid: number;
   total_fees: number;
+  estimated_fees_generated: number;
 }
 
 const AdminDashboard = () => {
@@ -135,7 +136,8 @@ const AdminDashboard = () => {
     total_expired: 0,
     total_amount_generated: 0,
     total_amount_paid: 0,
-    total_fees: 0
+    total_fees: 0,
+    estimated_fees_generated: 0
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
@@ -666,12 +668,15 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
     // Net amounts already calculated in RPC (total_amount_paid - total_fees)
     const amountPaid = periodStats.total_amount_paid - periodStats.total_fees;
     const amountGenerated = periodStats.total_amount_generated;
+    // Estimated net for pending transactions
+    const estimatedNetGenerated = periodStats.total_amount_generated - periodStats.estimated_fees_generated;
     const ticketMedio = paid > 0 ? amountPaid / paid : 0;
     return {
       generated: totalTransactions,
       paid,
       amountGenerated,
       amountPaid,
+      estimatedNetGenerated,
       // Conversão = pagos / total de transações geradas
       conversionRate: totalTransactions > 0 ? (paid / totalTransactions * 100).toFixed(1) : '0',
       ticketMedio
@@ -818,6 +823,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
             </div>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{hideData ? "•••" : filteredStats.generated}</p>
             <p className="text-[9px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5">{maskValue(filteredStats.amountGenerated)}</p>
+            <p className="text-[8px] sm:text-[9px] md:text-[10px] text-green-500 mt-0.5">~{maskValue(filteredStats.estimatedNetGenerated)} líquido est.</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm hover:shadow-md transition-shadow">
