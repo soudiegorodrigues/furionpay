@@ -2777,6 +2777,7 @@ export type Database = {
         }[]
       }
       get_api_health_summary: { Args: never; Returns: Json }
+      get_available_transaction_years: { Args: never; Returns: Json }
       get_chart_data_by_day: {
         Args: { p_days?: number }
         Returns: {
@@ -2985,10 +2986,12 @@ export type Database = {
           transaction_count: number
         }[]
       }
-      get_platform_revenue_stats: {
-        Args: { p_user_email?: string }
-        Returns: Json
-      }
+      get_platform_revenue_stats:
+        | { Args: { p_user_email?: string }; Returns: Json }
+        | {
+            Args: { p_month?: number; p_user_id?: string; p_year?: number }
+            Returns: Json
+          }
       get_platform_unique_users: { Args: never; Returns: Json }
       get_platform_user_profit_ranking: {
         Args: { p_filter?: string; p_limit?: number }
