@@ -5,7 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check, Calendar } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Wallet, Receipt, DollarSign, Calculator, Target, ArrowUpRight, ArrowDownRight, Trophy, PieChartIcon, GitCompare, Goal, Pencil, Check, Calendar, CalendarRange } from "lucide-react";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import type { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -91,7 +93,7 @@ interface ProfitStats {
 type ChartFilter = 'today' | '7days' | '14days' | '30days';
 type RankingFilter = 'all' | 'today' | '7days' | '30days' | 'thisMonth';
 type AcquirerCostFilter = 'today' | '7days' | 'thisMonth';
-type PeriodMode = 'relative' | 'absolute';
+type PeriodMode = 'relative' | 'absolute' | 'custom';
 
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -164,6 +166,19 @@ export const ReceitaPlataformaSection = () => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
   
+  // Custom date range
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  const [customStats, setCustomStats] = useState<{
+    gross: number;
+    userFees: number;
+    pixCost: number;
+    withdrawalCost: number;
+    net: number;
+    count: number;
+    dailyBreakdown: Array<{ date: string; gross: number; net: number; count: number }>;
+  } | null>(null);
+  const [isCustomLoading, setIsCustomLoading] = useState(false);
+  
   // Stats do período absoluto
   const [absoluteStats, setAbsoluteStats] = useState<{
     monthGross: number;
@@ -185,11 +200,21 @@ export const ReceitaPlataformaSection = () => {
   useEffect(() => {
     if (periodMode === 'relative') {
       loadStats();
-    } else {
+    } else if (periodMode === 'absolute') {
       loadAbsoluteStats();
     }
-    loadChartData();
+    // custom mode is handled by its own useEffect
+    if (periodMode !== 'custom') {
+      loadChartData();
+    }
   }, [periodMode, selectedMonth, selectedYear]);
+
+  // Recarregar custom stats quando date range mudar
+  useEffect(() => {
+    if (periodMode === 'custom' && customDateRange?.from && customDateRange?.to) {
+      loadCustomRangeStats();
+    }
+  }, [periodMode, customDateRange]);
 
   // Recarregar gráfico quando filtro mudar
   useEffect(() => {
@@ -398,6 +423,58 @@ export const ReceitaPlataformaSection = () => {
     }
   };
 
+  const loadCustomRangeStats = async () => {
+    if (!customDateRange?.from || !customDateRange?.to) return;
+    
+    setIsCustomLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_platform_revenue_stats_custom_range', {
+        p_start_date: customDateRange.from.toISOString(),
+        p_end_date: customDateRange.to.toISOString()
+      });
+      if (error) throw error;
+      
+      if (data) {
+        const rpcData = data as {
+          totals?: {
+            gross_revenue: number;
+            user_fees: number;
+            pix_cost: number;
+            withdrawal_cost: number;
+            net_profit: number;
+            transaction_count: number;
+          };
+          daily_breakdown?: Array<{
+            date: string;
+            gross: number;
+            net: number;
+            count: number;
+          }>;
+        };
+        
+        setCustomStats({
+          gross: Number(rpcData.totals?.gross_revenue) || 0,
+          userFees: Number(rpcData.totals?.user_fees) || 0,
+          pixCost: Number(rpcData.totals?.pix_cost) || 0,
+          withdrawalCost: Number(rpcData.totals?.withdrawal_cost) || 0,
+          net: Number(rpcData.totals?.net_profit) || 0,
+          count: Number(rpcData.totals?.transaction_count) || 0,
+          dailyBreakdown: rpcData.daily_breakdown?.map(d => ({
+            date: d.date,
+            gross: Number(d.gross) || 0,
+            net: Number(d.net) || 0,
+            count: Number(d.count) || 0
+          })) || []
+        });
+      }
+    } catch (error) {
+      console.error('Error loading custom range stats:', error);
+      toast.error('Erro ao carregar dados do período personalizado');
+    } finally {
+      setIsCustomLoading(false);
+    }
+  };
+
   const loadAvailableYears = async () => {
     try {
       const { data, error } = await supabase.rpc('get_available_transaction_years');
@@ -577,6 +654,15 @@ export const ReceitaPlataformaSection = () => {
                 <Calendar className="h-3 w-3 mr-1" />
                 Mês/Ano
               </Button>
+              <Button
+                variant={periodMode === 'custom' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setPeriodMode('custom')}
+              >
+                <CalendarRange className="h-3 w-3 mr-1" />
+                Personalizado
+              </Button>
             </div>
             
             {/* Seletores de Mês e Ano (modo absoluto) */}
@@ -615,10 +701,20 @@ export const ReceitaPlataformaSection = () => {
               </div>
             )}
             
+            {/* DateRangePicker (modo custom) */}
+            {periodMode === 'custom' && (
+              <DateRangePicker
+                dateRange={customDateRange}
+                onDateRangeChange={setCustomDateRange}
+                className="h-8"
+                placeholder="Selecione o período"
+              />
+            )}
+            
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isLoading || isCustomLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
@@ -658,7 +754,7 @@ export const ReceitaPlataformaSection = () => {
                 </div>
               </div>
             </>
-          ) : (
+          ) : periodMode === 'absolute' ? (
             /* Modo Absoluto - Mês/Ano Específico */
             <>
               <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
@@ -714,6 +810,96 @@ export const ReceitaPlataformaSection = () => {
                       <p className="text-[10px] text-muted-foreground">(Dias 22+)</p>
                     </div>
                   </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum dado disponível para este período
+                </div>
+              )}
+            </>
+          ) : (
+            /* Modo Custom - Date Range Personalizado */
+            <>
+              {!customDateRange?.from || !customDateRange?.to ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CalendarRange className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Selecione um período no calendário acima</p>
+                </div>
+              ) : customStats ? (
+                <>
+                  {/* Período selecionado */}
+                  <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      Período: <span className="font-medium text-foreground">
+                        {customDateRange.from.toLocaleDateString('pt-BR')} - {customDateRange.to.toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className="ml-2 text-xs">({customStats.count} transações)</span>
+                    </p>
+                  </div>
+                  
+                  {/* Total do Período */}
+                  <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
+                    <div className="text-2xl sm:text-3xl font-bold text-green-500">
+                      {formatCurrency(customStats.net)}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Lucro Líquido do Período
+                    </p>
+                    <div className="flex justify-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <span>Receita Bruta: {formatCurrency(customStats.userFees)}</span>
+                      <span>Custos: {formatCurrency(customStats.pixCost + customStats.withdrawalCost)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Breakdown Diário (se período <= 14 dias) */}
+                  {customStats.dailyBreakdown.length > 0 && customStats.dailyBreakdown.length <= 14 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-muted-foreground">Breakdown Diário</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                        {customStats.dailyBreakdown.map((day) => (
+                          <div key={day.date} className="text-center p-2 bg-muted/30 rounded-lg">
+                            <div className="text-xs sm:text-sm font-semibold text-foreground">
+                              {formatCurrency(day.net)}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">({day.count})</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Summary se período > 14 dias */}
+                  {customStats.dailyBreakdown.length > 14 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                      <div className="text-center p-2 sm:p-3 bg-blue-500/10 rounded-lg">
+                        <div className="text-sm sm:text-base font-semibold text-blue-500">
+                          {formatCurrency(customStats.gross)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Volume Total</p>
+                      </div>
+                      <div className="text-center p-2 sm:p-3 bg-primary/10 rounded-lg">
+                        <div className="text-sm sm:text-base font-semibold text-primary">
+                          {formatCurrency(customStats.userFees)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Taxas Coletadas</p>
+                      </div>
+                      <div className="text-center p-2 sm:p-3 bg-red-500/10 rounded-lg">
+                        <div className="text-sm sm:text-base font-semibold text-red-500">
+                          -{formatCurrency(customStats.pixCost + customStats.withdrawalCost)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Custos Totais</p>
+                      </div>
+                      <div className="text-center p-2 sm:p-3 bg-green-500/10 rounded-lg">
+                        <div className="text-sm sm:text-base font-semibold text-green-500">
+                          {formatCurrency(customStats.net)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Lucro Líquido</p>
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
