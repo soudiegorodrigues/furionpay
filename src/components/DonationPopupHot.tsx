@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Mail, QrCode, Copy, Check, X } from "lucide-react";
+import { User, QrCode, Copy, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
-import { cn } from "@/lib/utils";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
 
 interface DonationPopupHotProps {
@@ -30,7 +29,6 @@ export const DonationPopupHot = ({
 }: DonationPopupHotProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [step, setStep] = useState<Step>("email");
   const [pixData, setPixData] = useState<{
     code: string;
@@ -39,12 +37,11 @@ export const DonationPopupHot = ({
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(15 * 60);
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams, setAdvancedMatching } = usePixel();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
-  // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) {
       return propUtmParams;
@@ -52,7 +49,6 @@ export const DonationPopupHot = ({
     if (contextUtmParams && Object.keys(contextUtmParams).length > 0) {
       return contextUtmParams;
     }
-    // Fallback: recupera diretamente do storage
     const savedParams = getSavedUTMParams();
     console.log('[UTM DEBUG] DonationPopupHot - Usando UTMs do storage:', savedParams);
     return savedParams;
@@ -66,7 +62,6 @@ export const DonationPopupHot = ({
       setPixData(null);
       setName("");
       setEmail("");
-      setPhone("");
       setIsPaid(false);
       setTimeLeft(15 * 60);
     } else {
@@ -77,7 +72,6 @@ export const DonationPopupHot = ({
     }
   }, [isOpen, trackEvent]);
 
-  // Timer countdown
   useEffect(() => {
     if (step !== "pix" || isPaid || timeLeft <= 0) return;
 
@@ -94,13 +88,11 @@ export const DonationPopupHot = ({
     return () => clearInterval(timer);
   }, [step, isPaid, timeLeft]);
 
-  // Poll for payment status using active SpedPay polling
   useEffect(() => {
     if (step !== "pix" || !pixData?.transactionId || isPaid) return;
 
     const pollInterval = setInterval(async () => {
       try {
-        // Use the new check-pix-status edge function that queries SpedPay directly
         const { data, error } = await supabase.functions.invoke('check-pix-status', {
           body: { transactionId: pixData.transactionId }
         });
@@ -157,15 +149,6 @@ export const DonationPopupHot = ({
       return;
     }
 
-    if (!phone || phone.length < 10) {
-      toast({
-        title: "Telefone inválido",
-        description: "Por favor, insira um telefone válido.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setStep("loading");
 
     try {
@@ -178,7 +161,6 @@ export const DonationPopupHot = ({
           userId: userId,
           customerName: name,
           customerEmail: email,
-          customerPhone: phone,
           popupModel: 'hot',
           fingerprint,
         },
@@ -201,7 +183,6 @@ export const DonationPopupHot = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event with advanced matching
       trackEvent('PixGenerated', {
         value: fixedAmount,
         currency: 'BRL',
@@ -210,7 +191,6 @@ export const DonationPopupHot = ({
         fn: name.split(' ')[0]?.toLowerCase(),
         ln: name.split(' ').slice(1).join(' ')?.toLowerCase(),
         em: email?.toLowerCase(),
-        ph: phone?.replace(/\D/g, ''),
         external_id: data.transactionId,
         country: 'br',
       });
@@ -253,14 +233,14 @@ export const DonationPopupHot = ({
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
         {/* Header */}
         <div className="bg-gradient-to-r from-rose-400 to-orange-300 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-white">
             {step === "email" ? (
               <>
-                <Mail className="w-5 h-5" />
-                <span className="font-medium">Informações de Acesso</span>
+                <User className="w-5 h-5" />
+                <span className="font-medium">Seus Dados</span>
               </>
             ) : (
               <>
@@ -269,14 +249,12 @@ export const DonationPopupHot = ({
               </>
             )}
           </div>
-          {showCloseButton && (
-            <button
-              onClick={onClose}
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+          <button
+            onClick={onClose}
+            className="text-white/80 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Content */}
@@ -285,50 +263,61 @@ export const DonationPopupHot = ({
             <div className="space-y-5">
               {/* Icon */}
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-orange-300 rounded-full flex items-center justify-center">
-                  <Mail className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-[#f4a574] rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-white" />
                 </div>
               </div>
 
               {/* Title */}
               <div className="text-center">
-                <h2 className="text-xl font-bold text-slate-800">Preencha seus dados</h2>
+                <h2 className="text-xl font-bold text-slate-800">Quase lá!</h2>
                 <p className="text-sm text-slate-500 mt-1">
-                  Insira suas informações para receber acesso aos conteúdos exclusivos.
+                  Preencha seus dados para gerar o QR Code de pagamento.
                 </p>
+              </div>
+
+              {/* Plan/Value Card */}
+              <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 text-sm">Plano</span>
+                  <span className="font-semibold text-slate-800">1 Mês</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 text-sm">Valor</span>
+                  <span className="font-semibold text-orange-500">{formatCurrency(fixedAmount)}</span>
+                </div>
               </div>
 
               {/* Form Inputs */}
               <div className="space-y-3">
-                <Input
-                  type="text"
-                  placeholder="Seu nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="py-5 text-base border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-xl"
-                />
-                <Input
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="py-5 text-base border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-xl"
-                />
-                <Input
-                  type="tel"
-                  placeholder="(00) 00000-0000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="py-5 text-base border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-xl"
-                />
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Nome ou Apelido</label>
+                  <Input
+                    type="text"
+                    placeholder="Como posso te chamar bb?"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="py-5 text-base border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-2xl"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email</label>
+                  <Input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="py-5 text-base border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-2xl"
+                  />
+                </div>
               </div>
 
               {/* Submit Button */}
               <Button
                 onClick={handleContinue}
-                className="w-full py-6 text-base font-semibold bg-gradient-to-r from-rose-400 to-orange-300 hover:from-rose-500 hover:to-orange-400 rounded-xl border-0"
+                className="w-full py-6 text-base font-semibold bg-gradient-to-r from-rose-400 to-orange-300 hover:from-rose-500 hover:to-orange-400 rounded-2xl border-0"
               >
-                Continuar para Pagamento
+                Finalizar assinatura
               </Button>
             </div>
           )}
