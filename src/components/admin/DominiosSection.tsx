@@ -99,9 +99,10 @@ export const DominiosSection = () => {
 
       if (error) {
         if (error.code === '23505') {
+          const tipoLabel = domainType === 'popup' ? 'Popup' : 'Checkout';
           toast({
             title: "Erro",
-            description: "Este domínio já existe",
+            description: `Este domínio já existe para ${tipoLabel}`,
             variant: "destructive"
           });
         } else {
@@ -162,7 +163,7 @@ export const DominiosSection = () => {
         if (error.code === '23505') {
           toast({
             title: "Erro",
-            description: "Este domínio já existe",
+            description: "Este domínio já existe para este tipo",
             variant: "destructive"
           });
         } else {
