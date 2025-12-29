@@ -44,7 +44,7 @@ export function DangerZoneSection({ productId, productName }: DangerZoneSectionP
   });
 
   const handleDelete = () => {
-    if (confirmName !== productName) {
+    if (confirmName.trim() !== productName.trim()) {
       toast.error("Nome do produto não corresponde");
       return;
     }
@@ -85,7 +85,7 @@ export function DangerZoneSection({ productId, productName }: DangerZoneSectionP
             <Button 
               variant="destructive" 
               onClick={handleDelete}
-              disabled={confirmName !== productName || deleteMutation.isPending}
+              disabled={confirmName.trim() !== productName.trim() || deleteMutation.isPending}
               className="w-full"
             >
               {deleteMutation.isPending ? "Excluindo..." : "Excluir produto permanentemente"}
