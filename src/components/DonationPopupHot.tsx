@@ -280,7 +280,7 @@ export const DonationPopupHot = ({
               <div className="bg-gray-50 rounded-2xl p-3 sm:p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600 text-xs sm:text-sm">Plano</span>
-                  <span className="font-semibold text-slate-800 text-sm sm:text-base">1 Mês</span>
+                  <span className="font-semibold text-slate-800 text-sm sm:text-base">Assinatura</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600 text-xs sm:text-sm">Valor</span>
