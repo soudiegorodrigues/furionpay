@@ -16,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "@/components/AdminSidebar";
-import { RecoverSalesSection } from "@/components/admin/RecoverSalesSection";
 import { ReconcileSalesSection } from "@/components/admin/ReconcileSalesSection";
 
 interface User2FAStatus {
@@ -836,12 +835,6 @@ const AdminUserDetail = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Recover Sales Section */}
-        <RecoverSalesSection 
-          targetUserId={user.id} 
-          onRecoveryComplete={loadUserDetails}
-        />
 
         {/* Reconcile Sales Section */}
         <ReconcileSalesSection 
