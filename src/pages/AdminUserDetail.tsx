@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "@/components/AdminSidebar";
-import { ReconcileSalesSection } from "@/components/admin/ReconcileSalesSection";
+
 
 interface User2FAStatus {
   hasTOTP: boolean;
@@ -835,12 +835,6 @@ const AdminUserDetail = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Reconcile Sales Section */}
-        <ReconcileSalesSection 
-          targetUserId={user.id} 
-          onReconcileComplete={loadUserDetails}
-        />
       </div>
 
       {/* Delete Dialog */}
