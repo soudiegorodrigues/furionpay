@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -193,6 +193,17 @@ export const CheckoutOfferCard = ({
       return;
     }
 
+    // Validação de domínio - deve ser um domínio de Popup válido
+    const isValidDomain = !domain || availableDomains.some(d => d.domain === domain);
+    if (!isValidDomain && availableDomains.length > 0) {
+      toast({
+        title: "Domínio inválido",
+        description: "Selecione um domínio cadastrado em Domínios (Popup).",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       await onSave({
@@ -298,24 +309,56 @@ export const CheckoutOfferCard = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {availableDomains.length > 0 && (
+            {(availableDomains.length > 0 || domain) && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Globe className="w-4 h-4" />
                   Domínio
                 </Label>
-                <Select value={domain} onValueChange={setDomain} disabled={!isEditing}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um domínio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableDomains.map(d => (
-                      <SelectItem key={d.id} value={d.domain}>
-                        {d.name ? `${d.name} (${d.domain})` : d.domain}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {(() => {
+                  const isDomainInList = availableDomains.some(d => d.domain === domain);
+                  const showLegacyWarning = domain && !isDomainInList && availableDomains.length > 0;
+                  
+                  return (
+                    <>
+                      <Select value={domain} onValueChange={setDomain} disabled={!isEditing}>
+                        <SelectTrigger className={showLegacyWarning ? 'border-amber-500' : ''}>
+                          <SelectValue placeholder="Selecione um domínio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* Mostrar domínio atual se não estiver na lista */}
+                          {showLegacyWarning && (
+                            <SelectItem value={domain} disabled className="text-muted-foreground">
+                              {domain} (não cadastrado)
+                            </SelectItem>
+                          )}
+                          {availableDomains.map(d => (
+                            <SelectItem key={d.id} value={d.domain}>
+                              {d.name ? `${d.name} (${d.domain})` : d.domain}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {showLegacyWarning && isEditing && (
+                        <div className="flex items-start gap-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-md">
+                          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <div className="text-xs text-amber-600 dark:text-amber-400">
+                            <p>Este domínio não está cadastrado como Domínio de Popup.</p>
+                            {availableDomains.length > 0 && (
+                              <button 
+                                type="button"
+                                className="underline font-medium mt-1"
+                                onClick={() => setDomain(availableDomains[0].domain)}
+                              >
+                                Usar {availableDomains[0].domain}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
 
