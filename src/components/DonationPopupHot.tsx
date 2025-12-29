@@ -229,11 +229,11 @@ export const DonationPopupHot = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
+      <div className="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-slide-up-mobile sm:animate-scale-in max-h-[95vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-rose-400 to-orange-300 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-white">
@@ -258,56 +258,56 @@ export const DonationPopupHot = ({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {step === "email" && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               {/* Icon */}
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-[#f4a574] rounded-full flex items-center justify-center">
-                  <User className="w-8 h-8 text-white" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#f4a574] rounded-full flex items-center justify-center">
+                  <User className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                 </div>
               </div>
 
               {/* Title */}
               <div className="text-center">
-                <h2 className="text-xl font-bold text-slate-800">Quase lá!</h2>
-                <p className="text-sm text-slate-500 mt-1">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-800">Quase lá!</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
                   Preencha seus dados para gerar o QR Code de pagamento.
                 </p>
               </div>
 
               {/* Plan/Value Card */}
-              <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
+              <div className="bg-gray-50 rounded-2xl p-3 sm:p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 text-sm">Plano</span>
-                  <span className="font-semibold text-slate-800">1 Mês</span>
+                  <span className="text-slate-600 text-xs sm:text-sm">Plano</span>
+                  <span className="font-semibold text-slate-800 text-sm sm:text-base">1 Mês</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 text-sm">Valor</span>
-                  <span className="font-semibold text-orange-500">{formatCurrency(fixedAmount)}</span>
+                  <span className="text-slate-600 text-xs sm:text-sm">Valor</span>
+                  <span className="font-semibold text-orange-500 text-sm sm:text-base">{formatCurrency(fixedAmount)}</span>
                 </div>
               </div>
 
               {/* Form Inputs */}
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Nome ou Apelido</label>
+                  <label className="text-xs sm:text-sm font-medium text-slate-700 mb-1.5 block">Nome ou Apelido</label>
                   <Input
                     type="text"
                     placeholder="Como posso te chamar bb?"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="py-5 text-base border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-2xl"
+                    className="py-4 sm:py-5 text-sm sm:text-base border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-2xl"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email</label>
+                  <label className="text-xs sm:text-sm font-medium text-slate-700 mb-1.5 block">Email</label>
                   <Input
                     type="email"
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="py-5 text-base border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-2xl"
+                    className="py-4 sm:py-5 text-sm sm:text-base border-gray-200 focus:border-orange-400 focus:ring-orange-400 rounded-2xl"
                   />
                 </div>
               </div>
@@ -315,7 +315,7 @@ export const DonationPopupHot = ({
               {/* Submit Button */}
               <Button
                 onClick={handleContinue}
-                className="w-full py-6 text-base font-semibold bg-gradient-to-r from-rose-400 to-orange-300 hover:from-rose-500 hover:to-orange-400 rounded-2xl border-0"
+                className="w-full py-5 sm:py-6 text-sm sm:text-base font-semibold bg-gradient-to-r from-rose-400 to-orange-300 hover:from-rose-500 hover:to-orange-400 rounded-2xl border-0"
               >
                 Finalizar assinatura
               </Button>
@@ -323,74 +323,74 @@ export const DonationPopupHot = ({
           )}
 
           {step === "loading" && (
-            <div className="py-8 space-y-6">
-              <h2 className="text-xl font-bold text-slate-800 text-center">
+            <div className="py-6 sm:py-8 space-y-4 sm:space-y-6">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-800 text-center">
                 Finalize o pagamento para acessar tudo.
               </h2>
               
               <div className="flex justify-center">
-                <div className="w-12 h-12 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
               </div>
               
-              <p className="text-slate-500 text-center">Gerando código PIX...</p>
+              <p className="text-slate-500 text-center text-sm sm:text-base">Gerando código PIX...</p>
             </div>
           )}
 
           {step === "pix" && pixData && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {isPaid ? (
-                <div className="py-8 text-center space-y-4">
-                  <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
-                    <Check className="w-10 h-10 text-green-600" />
+                <div className="py-6 sm:py-8 text-center space-y-3 sm:space-y-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                    <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-slate-800">Pagamento confirmado!</h2>
-                  <p className="text-slate-500">Obrigado! Você receberá o acesso por email.</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-800">Pagamento confirmado!</h2>
+                  <p className="text-slate-500 text-sm sm:text-base">Obrigado! Você receberá o acesso por email.</p>
                 </div>
               ) : (
                 <>
                   {/* Title */}
-                  <h2 className="text-lg font-bold text-slate-800 text-center">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-800 text-center">
                     Finalize o pagamento para acessar tudo.
                   </h2>
 
                   {/* QR Code */}
                   <div className="flex justify-center">
-                    <div className="p-3 bg-white border-2 border-slate-100 rounded-xl">
+                    <div className="p-2 sm:p-3 bg-white border-2 border-slate-100 rounded-xl">
                       {pixData.qrCodeUrl && pixData.qrCodeUrl.startsWith('http') ? (
                         <img
                           src={pixData.qrCodeUrl}
                           alt="QR Code PIX"
-                          className="w-40 h-40"
+                          className="w-32 h-32 sm:w-40 sm:h-40"
                         />
                       ) : (
                         <img
                           src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(pixData.code)}`}
                           alt="QR Code PIX"
-                          className="w-40 h-40"
+                          className="w-32 h-32 sm:w-40 sm:h-40"
                         />
                       )}
                     </div>
                   </div>
 
                   {/* Timer */}
-                  <p className="text-center text-sm text-slate-500">
+                  <p className="text-center text-xs sm:text-sm text-slate-500">
                     Expira em: <span className="text-rose-500 font-medium">{formatTime(timeLeft)}</span>
                   </p>
 
                   {/* PIX Code */}
                   <div>
-                    <p className="text-sm text-slate-600 mb-2">Código PIX Copia e Cola:</p>
+                    <p className="text-xs sm:text-sm text-slate-600 mb-2">Código PIX Copia e Cola:</p>
                     <div className="flex items-center gap-2">
                       <Input
                         value={pixData.code}
                         readOnly
-                        className="font-mono text-xs bg-slate-50 border-slate-200 flex-1"
+                        className="font-mono text-[10px] sm:text-xs bg-slate-50 border-slate-200 flex-1"
                       />
                       <button
                         onClick={handleCopy}
                         className="p-2 text-slate-400 hover:text-slate-600"
                       >
-                        <Copy className="w-5 h-5" />
+                        <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </div>
                   </div>
@@ -398,25 +398,25 @@ export const DonationPopupHot = ({
                   {/* Copy Button */}
                   <Button
                     onClick={handleCopy}
-                    className="w-full py-5 text-base font-semibold bg-gradient-to-r from-rose-400 to-orange-300 hover:from-rose-500 hover:to-orange-400 rounded-xl border-0"
+                    className="w-full py-4 sm:py-5 text-sm sm:text-base font-semibold bg-gradient-to-r from-rose-400 to-orange-300 hover:from-rose-500 hover:to-orange-400 rounded-xl border-0"
                   >
                     {copied ? (
                       <>
-                        <Check className="w-5 h-5 mr-2" />
+                        <Check className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Copiado!
                       </>
                     ) : (
                       <>
-                        <Copy className="w-5 h-5 mr-2" />
+                        <Copy className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Copiar Código PIX
                       </>
                     )}
                   </Button>
 
                   {/* Instructions */}
-                  <div className="bg-orange-50 rounded-xl p-4 space-y-2">
-                    <p className="font-semibold text-slate-800">Como pagar:</p>
-                    <ol className="text-sm text-slate-600 space-y-1">
+                  <div className="bg-orange-50 rounded-xl p-3 sm:p-4 space-y-2">
+                    <p className="font-semibold text-slate-800 text-sm sm:text-base">Como pagar:</p>
+                    <ol className="text-xs sm:text-sm text-slate-600 space-y-1">
                       <li>1. Abra o app do seu banco</li>
                       <li>2. Escolha pagar via PIX</li>
                       <li>3. Escaneie o QR Code ou cole o código</li>
