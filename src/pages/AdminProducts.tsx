@@ -262,6 +262,7 @@ export default function AdminProducts() {
     isLoading: isLoadingProducts,
     isPending: isPendingProducts,
     isFetching: isFetchingProducts,
+    isPlaceholderData,
     refetch: refetchProducts
   } = useQuery({
     queryKey: ["products-paginated", userId, currentPage, debouncedSearch, activeTab, selectedFolder],
@@ -615,8 +616,8 @@ export default function AdminProducts() {
           </div>
         )}
 
-        {/* Loading state - mostra skeleton durante carregamento inicial completo */}
-        {(isPendingProducts || isLoadingProducts || !userId) ? (
+        {/* Loading state - mostra skeleton durante carregamento inicial ou troca de pasta */}
+        {(isPendingProducts || isLoadingProducts || !userId || (isFetchingProducts && isPlaceholderData)) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
             {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
               <ProductSkeleton key={i} />
