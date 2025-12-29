@@ -45,6 +45,8 @@ import {
   ExternalLink,
   Eye,
   Zap,
+  Link,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -87,8 +89,10 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingPopupImage, setIsUploadingPopupImage] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const popupImageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [configTab, setConfigTab] = useState("templates");
 
   // States
@@ -112,6 +116,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     countdownMinutes: 15,
     showVideo: false,
     videoUrl: "",
+    videoType: "url" as "url" | "upload",
     showTestimonials: false,
     showDiscountPopup: false,
     discountPopupTitle: "Que tal um desconto para comprar agora?",
@@ -217,6 +222,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         countdownMinutes: config.countdown_minutes || 15,
         showVideo: (config as any).show_video || false,
         videoUrl: (config as any).video_url || "",
+        videoType: ((config as any).video_url?.includes('checkout-videos') ? 'upload' : 'url') as "url" | "upload",
         showTestimonials: config.show_notifications || false,
         showDiscountPopup: config.show_discount_popup || false,
         discountPopupTitle: config.discount_popup_title || "Que tal um desconto para comprar agora?",
@@ -344,7 +350,47 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     }
   };
 
-  // Save config
+  // Handle video upload
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Formato inválido. Use MP4, WebM ou MOV");
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Vídeo deve ter no máximo 100MB");
+      return;
+    }
+
+    setIsUploadingVideo(true);
+    try {
+      const extension = file.name.split('.').pop();
+      const fileName = `${userId}/${productId}-video-${Date.now()}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("checkout-videos")
+        .upload(fileName, file, { upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("checkout-videos")
+        .getPublicUrl(fileName);
+
+      setCustomizations(p => ({ ...p, videoUrl: publicUrl, videoType: 'upload' }));
+      toast.success("Vídeo enviado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao enviar vídeo:", error);
+      toast.error("Erro ao enviar vídeo");
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
   const saveConfig = async () => {
     setIsSaving(true);
     try {
@@ -753,13 +799,85 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       />
                     </div>
                     {customizations.showVideo && (
-                      <div className="mt-2 pt-2 border-t">
-                        <Input
-                          placeholder="https://youtube.com/watch?v=..."
-                          value={customizations.videoUrl}
-                          onChange={(e) => setCustomizations(p => ({ ...p, videoUrl: e.target.value }))}
-                          className="h-8 text-xs"
-                        />
+                      <div className="mt-2 pt-2 border-t space-y-3">
+                        {/* Tabs para escolher entre URL e Upload */}
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant={customizations.videoType === 'url' ? 'default' : 'outline'}
+                            size="sm"
+                            className="flex-1 h-7 text-xs"
+                            onClick={() => setCustomizations(p => ({ ...p, videoType: 'url' }))}
+                          >
+                            <Link className="h-3 w-3 mr-1" />
+                            URL
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={customizations.videoType === 'upload' ? 'default' : 'outline'}
+                            size="sm"
+                            className="flex-1 h-7 text-xs"
+                            onClick={() => setCustomizations(p => ({ ...p, videoType: 'upload' }))}
+                          >
+                            <Upload className="h-3 w-3 mr-1" />
+                            Upload
+                          </Button>
+                        </div>
+
+                        {/* Input de URL */}
+                        {customizations.videoType === 'url' && (
+                          <Input
+                            placeholder="https://youtube.com/watch?v=..."
+                            value={customizations.videoUrl}
+                            onChange={(e) => setCustomizations(p => ({ ...p, videoUrl: e.target.value }))}
+                            className="h-8 text-xs"
+                          />
+                        )}
+
+                        {/* Upload de vídeo */}
+                        {customizations.videoType === 'upload' && (
+                          <div className="space-y-2">
+                            <input
+                              ref={videoInputRef}
+                              type="file"
+                              accept="video/mp4,video/webm,video/quicktime"
+                              onChange={handleVideoUpload}
+                              className="hidden"
+                            />
+                            
+                            {customizations.videoUrl && customizations.videoUrl.includes('checkout-videos') ? (
+                              <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                                <Video className="h-4 w-4 text-green-500" />
+                                <span className="text-xs truncate flex-1">Vídeo enviado</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => setCustomizations(p => ({ ...p, videoUrl: '' }))}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="w-full h-8 text-xs"
+                                onClick={() => videoInputRef.current?.click()}
+                                disabled={isUploadingVideo}
+                              >
+                                {isUploadingVideo ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                ) : (
+                                  <Upload className="h-4 w-4 mr-2" />
+                                )}
+                                {isUploadingVideo ? "Enviando..." : "Enviar vídeo (máx. 100MB)"}
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
