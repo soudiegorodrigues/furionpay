@@ -51,7 +51,21 @@ function mapAtivusStatus(situacao: string): 'generated' | 'paid' | 'expired' {
   return 'generated';
 }
 
-// Extract user_id from id_seller field (format: "seller_uuid")
+// Find user_id by txid in local database (primary identification method)
+async function findUserIdByTxid(supabase: any, txid: string): Promise<{ userId: string; status: string } | null> {
+  const { data } = await supabase
+    .from('pix_transactions')
+    .select('user_id, status')
+    .eq('txid', txid)
+    .maybeSingle();
+  
+  if (data?.user_id) {
+    return { userId: data.user_id, status: data.status };
+  }
+  return null;
+}
+
+// Extract user_id from id_seller field (format: "seller_uuid") - fallback
 function extractUserIdFromSeller(idSeller: string | undefined | null): string | null {
   if (!idSeller) return null;
   
@@ -469,25 +483,47 @@ serve(async (req) => {
       let identifiedUserName: string | null = null;
 
       if (shouldAutoIdentify) {
-        // Try to extract user_id from id_seller or metadata
-        const userIdFromSeller = extractUserIdFromSeller(tx.id_seller);
-        const userIdFromMetadata = extractUserIdFromMetadata(tx.metadata);
-        
-        resolvedUserId = userIdFromSeller || userIdFromMetadata;
-        
         console.log('[RECONCILE] Auto-identify for', txId);
-        console.log('[RECONCILE] id_seller:', tx.id_seller, '-> userId:', userIdFromSeller);
-        console.log('[RECONCILE] metadata:', JSON.stringify(tx.metadata), '-> userId:', userIdFromMetadata);
-        console.log('[RECONCILE] Resolved userId:', resolvedUserId);
+        
+        // STRATEGY 1: Search in local database by the provided ID as txid
+        const localByTxid = await findUserIdByTxid(supabase, txId);
+        if (localByTxid) {
+          console.log('[RECONCILE] Found user in local DB by txid:', txId, '-> userId:', localByTxid.userId);
+          resolvedUserId = localByTxid.userId;
+        }
+        
+        // STRATEGY 2: If not found, use externaRef from Ativus response to search locally
+        if (!resolvedUserId && tx.externaRef) {
+          console.log('[RECONCILE] Trying externaRef from Ativus:', tx.externaRef);
+          const localByExternaRef = await findUserIdByTxid(supabase, tx.externaRef);
+          if (localByExternaRef) {
+            console.log('[RECONCILE] Found user in local DB by externaRef:', tx.externaRef, '-> userId:', localByExternaRef.userId);
+            resolvedUserId = localByExternaRef.userId;
+          }
+        }
+        
+        // STRATEGY 3: Fallback to id_seller or metadata (in case Ativus changes in the future)
+        if (!resolvedUserId) {
+          const userIdFromSeller = extractUserIdFromSeller(tx.id_seller);
+          const userIdFromMetadata = extractUserIdFromMetadata(tx.metadata);
+          resolvedUserId = userIdFromSeller || userIdFromMetadata;
+          
+          if (resolvedUserId) {
+            console.log('[RECONCILE] Found user via id_seller/metadata:', resolvedUserId);
+          }
+        }
+        
+        console.log('[RECONCILE] Final resolved userId:', resolvedUserId);
 
         if (!resolvedUserId) {
           results.push({
             transactionId: txId,
             status: 'user_not_found',
-            message: 'Não foi possível identificar o usuário automaticamente. Verifique se a transação foi gerada pelo sistema.',
+            message: 'Não foi possível identificar o usuário. Transação não encontrada no sistema local.',
             data: {
               id_seller: tx.id_seller,
-              metadata: tx.metadata
+              metadata: tx.metadata,
+              externaRef: tx.externaRef
             }
           });
           continue;
