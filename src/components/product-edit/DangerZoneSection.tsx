@@ -28,9 +28,14 @@ export function DangerZoneSection({ productId, productName }: DangerZoneSectionP
       
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Produto excluído com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["products-paginated"] }),
+        queryClient.invalidateQueries({ queryKey: ["product_folder_counts"] }),
+        queryClient.invalidateQueries({ queryKey: ["products_performance"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+      ]);
       navigate("/admin/products");
     },
     onError: () => {
