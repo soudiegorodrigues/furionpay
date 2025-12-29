@@ -122,18 +122,25 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         // Get userId and pixel from URL params
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('u') || urlParams.get('user');
-        const urlPixelId = urlParams.get('pixel');
+        const urlPixelParam = urlParams.get('pixel');
         
         console.log('%c[PIXEL DEBUG] userId:', 'color: green;', userId);
-        console.log('%c[PIXEL DEBUG] urlPixelId:', 'color: green;', urlPixelId);
+        console.log('%c[PIXEL DEBUG] urlPixelParam:', 'color: green;', urlPixelParam);
 
-        // PRIORIDADE 1: Se pixel ID foi passado na URL, usar SEMPRE (mesmo se fbq já existe)
-        if (urlPixelId && /^\d+$/.test(urlPixelId)) {
-          console.log('%c[PIXEL DEBUG] ✅ PRIORITY: Initializing pixel from URL: ' + urlPixelId, 'background: green; color: white; font-size: 14px;');
-          initializePixels([{ pixelId: urlPixelId }], true); // força inicialização
-          return;
+        // PRIORIDADE 1: Se pixel ID(s) foi passado na URL, usar SEMPRE (suporta múltiplos separados por vírgula)
+        if (urlPixelParam) {
+          const pixelIds = urlPixelParam.split(',').map(id => id.trim()).filter(id => /^\d+$/.test(id));
+          
+          if (pixelIds.length > 0) {
+            console.log('%c[PIXEL DEBUG] ✅ PRIORITY: Initializing pixels from URL: ' + pixelIds.join(', '), 'background: green; color: white; font-size: 14px;');
+            const pixelConfigs = pixelIds.map(pixelId => ({ pixelId }));
+            initializePixels(pixelConfigs, true); // força inicialização
+            return;
+          } else {
+            console.log('%c[PIXEL DEBUG] ❌ No valid pixel IDs in URL param', 'background: red; color: white;');
+          }
         } else {
-          console.log('%c[PIXEL DEBUG] ❌ No valid pixel in URL', 'background: red; color: white;');
+          console.log('%c[PIXEL DEBUG] ❌ No pixel param in URL', 'background: red; color: white;');
         }
 
         // PRIORIDADE 2: Se o pixel já existe no window (site do usuário), usar ele
