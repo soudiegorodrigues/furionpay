@@ -109,7 +109,7 @@ const AdminCheckout = () => {
       // Load all data in parallel for faster loading
       const [offersResult, statsResult, domainsResult, settingsResult] = await Promise.all([supabase.from('checkout_offers').select('*').order('created_at', {
         ascending: false
-      }), supabase.rpc('get_user_popup_model_stats'), supabase.from('available_domains').select('id, domain, name').eq('is_active', true).eq('domain_type', 'checkout').order('domain'), supabase.rpc('get_user_settings')]);
+      }), supabase.rpc('get_user_popup_model_stats'), supabase.from('available_domains').select('id, domain, name').eq('is_active', true).eq('domain_type', 'popup').order('domain'), supabase.rpc('get_user_settings')]);
 
       // Parse meta pixels first
       let parsedPixels: MetaPixel[] = [];
