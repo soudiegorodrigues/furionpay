@@ -144,6 +144,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       if (error) throw error;
       return data as GlobalTemplate[];
     },
+    staleTime: 60000, // 1 minute - templates rarely change
   });
 
   // Fetch testimonials for preview
@@ -160,6 +161,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       if (error) throw error;
       return data;
     },
+    staleTime: 30000, // 30 seconds
   });
 
   // Fetch existing config
@@ -175,6 +177,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       if (error) throw error;
       return data;
     },
+    staleTime: 30000, // 30 seconds
   });
 
   // Fetch first offer for preview link
@@ -192,6 +195,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
       if (error) throw error;
       return data;
     },
+    staleTime: 30000, // 30 seconds
   });
 
   // Load config into state
