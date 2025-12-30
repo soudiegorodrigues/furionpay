@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
 import { DomainGuard } from "@/components/DomainGuard";
 import Index from "./pages/Index";
@@ -59,9 +60,10 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+        <MetaPixelProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<DomainGuard><AdminAuth /></DomainGuard>} />
@@ -177,6 +179,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+        </MetaPixelProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

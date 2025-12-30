@@ -6,7 +6,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
+import { usePixel } from "./MetaPixelProvider";
 import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 
@@ -56,11 +56,13 @@ export const DonationPopupSimple = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
-  // Prioriza UTMs passados via prop, depois recupera do storage como fallback
+  // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) return propUtmParams;
+    if (contextUtmParams && Object.keys(contextUtmParams).length > 0) return contextUtmParams;
     return getSavedUTMParams();
   };
   const utmParams = getEffectiveUtmParams();
@@ -70,8 +72,13 @@ export const DonationPopupSimple = ({
       setStep("select");
       setPixData(null);
       setSelectedAmount(100);
+    } else {
+      trackEvent('InitiateCheckout', {
+        content_name: 'Donation Popup Simple',
+        currency: 'BRL',
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, trackEvent]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {

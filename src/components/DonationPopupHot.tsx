@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
+import { usePixel } from "./MetaPixelProvider";
 import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
 
@@ -39,11 +39,15 @@ export const DonationPopupHot = ({
   const [isPaid, setIsPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const { toast } = useToast();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) {
       return propUtmParams;
+    }
+    if (contextUtmParams && Object.keys(contextUtmParams).length > 0) {
+      return contextUtmParams;
     }
     const savedParams = getSavedUTMParams();
     console.log('[UTM DEBUG] DonationPopupHot - Usando UTMs do storage:', savedParams);
@@ -60,8 +64,13 @@ export const DonationPopupHot = ({
       setEmail("");
       setIsPaid(false);
       setTimeLeft(15 * 60);
+    } else {
+      trackEvent('InitiateCheckout', {
+        content_name: 'Donation Popup Hot',
+        currency: 'BRL',
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, trackEvent]);
 
   useEffect(() => {
     if (step !== "pix" || isPaid || timeLeft <= 0) return;
@@ -92,6 +101,11 @@ export const DonationPopupHot = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
+          trackEvent("Purchase", {
+            value: fixedAmount,
+            currency: "BRL",
+            content_name: "Donation Hot",
+          });
           clearInterval(pollInterval);
         }
       } catch (err) {
@@ -100,7 +114,7 @@ export const DonationPopupHot = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [step, pixData?.transactionId, isPaid, fixedAmount]);
+  }, [step, pixData?.transactionId, isPaid, fixedAmount, trackEvent]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -167,6 +181,18 @@ export const DonationPopupHot = ({
         code: data.pixCode,
         qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
+      });
+      
+      trackEvent('PixGenerated', {
+        value: fixedAmount,
+        currency: 'BRL',
+        content_name: 'Donation Hot',
+      }, {
+        fn: name.split(' ')[0]?.toLowerCase(),
+        ln: name.split(' ').slice(1).join(' ')?.toLowerCase(),
+        em: email?.toLowerCase(),
+        external_id: data.transactionId,
+        country: 'br',
       });
       
       setStep("pix");

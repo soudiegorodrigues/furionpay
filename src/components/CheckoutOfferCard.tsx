@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Link, Copy, Check, Globe, Save, Package, Trash2, Edit2, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -18,6 +18,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // Lista de palavras bloqueadas para nomes de produtos
 const BLOCKED_PRODUCT_KEYWORDS = [
@@ -61,26 +66,26 @@ const containsBlockedKeyword = (text: string): string | null => {
   return null;
 };
 
-interface MetaPixel {
-  id: string;
-  name: string;
-  pixelId: string;
-  accessToken?: string;
-}
-
 interface CheckoutOffer {
   id: string;
   name: string;
   domain: string;
   popup_model: string;
   product_name: string;
-  meta_pixel_ids?: string[];
+  meta_pixel_ids: string[];
 }
 
 interface AvailableDomain {
   id: string;
   domain: string;
   name: string | null;
+}
+
+interface MetaPixel {
+  id: string;
+  name: string;
+  pixelId: string;
+  accessToken: string;
 }
 
 interface PopupModel {
@@ -94,20 +99,19 @@ interface CheckoutOfferCardProps {
   offer: CheckoutOffer;
   userId: string;
   availableDomains: AvailableDomain[];
+  metaPixels: MetaPixel[];
   popupModels: PopupModel[];
-  metaPixels?: MetaPixel[];
   onSave: (offer: CheckoutOffer) => Promise<void>;
   onDelete: (offerId: string) => Promise<void>;
   isNew?: boolean;
 }
 
-
 export const CheckoutOfferCard = ({
   offer,
   userId,
   availableDomains,
+  metaPixels,
   popupModels,
-  metaPixels = [],
   onSave,
   onDelete,
   isNew = false,
@@ -127,7 +131,7 @@ export const CheckoutOfferCard = ({
   const togglePixel = (pixelId: string) => {
     setMetaPixelIds(prev => 
       prev.includes(pixelId) 
-        ? prev.filter(id => id !== pixelId) 
+        ? prev.filter(id => id !== pixelId)
         : [...prev, pixelId]
     );
   };
@@ -137,12 +141,15 @@ export const CheckoutOfferCard = ({
       ? `https://www.${domain}/?u=${userId}&m=${popupModel}` 
       : `${window.location.origin}/?u=${userId}&m=${popupModel}`;
     
-    // Adicionar pixels selecionados ao link
     if (metaPixelIds.length > 0) {
-      const pixelIdsString = metaPixelIds.join(',');
-      link += `&pixel=${pixelIdsString}`;
+      const pixelValues = metaPixelIds
+        .map(id => metaPixels.find(p => p.id === id)?.pixelId)
+        .filter(Boolean)
+        .join(',');
+      if (pixelValues) {
+        link += `&pixel=${pixelValues}`;
+      }
     }
-    
     return link;
   };
 
@@ -377,6 +384,75 @@ export const CheckoutOfferCard = ({
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Meta Pixels
+            </Label>
+            <Popover>
+              <PopoverTrigger asChild disabled={!isEditing}>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between font-normal"
+                  disabled={!isEditing}
+                >
+                  {metaPixelIds.length === 0 
+                    ? "Selecione pixels..." 
+                    : `${metaPixelIds.length} pixel${metaPixelIds.length > 1 ? 's' : ''} selecionado${metaPixelIds.length > 1 ? 's' : ''}`}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-2" align="start">
+                {metaPixels.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-2">Nenhum pixel configurado</p>
+                ) : (
+                  <div className="space-y-2">
+                    {metaPixels.filter(pixel => pixel.id).map(pixel => (
+                      <div key={pixel.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={pixel.id}
+                          checked={metaPixelIds.includes(pixel.id)}
+                          onCheckedChange={() => togglePixel(pixel.id)}
+                        />
+                        <label 
+                          htmlFor={pixel.id}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+            {metaPixelIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {metaPixelIds.map(id => {
+                  const pixel = metaPixels.find(p => p.id === id);
+                  if (!pixel) return null;
+                  return (
+                    <span 
+                      key={id} 
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs"
+                    >
+                      {pixel.name || `Pixel ${pixel.pixelId.slice(0, 8)}...`}
+                      {isEditing && (
+                        <button 
+                          onClick={() => togglePixel(id)}
+                          className="hover:text-destructive"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
               <Package className="w-4 h-4" />
               Nome do Produto <span className="text-destructive">*</span>
             </Label>
@@ -391,34 +467,6 @@ export const CheckoutOfferCard = ({
               Nome que aparecerá no gateway de pagamento (obrigatório)
             </p>
           </div>
-
-          {/* Meta Pixels Section */}
-          {metaPixels.length > 0 && (
-            <div className="space-y-2">
-              <Label>Meta Pixels</Label>
-              <div className="space-y-2">
-                {metaPixels.map(pixel => (
-                  <div key={pixel.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`pixel-${pixel.id}`}
-                      checked={metaPixelIds.includes(pixel.id)}
-                      onCheckedChange={() => togglePixel(pixel.id)}
-                      disabled={!isEditing}
-                    />
-                    <label
-                      htmlFor={`pixel-${pixel.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {pixel.name} <span className="text-muted-foreground">({pixel.pixelId})</span>
-                    </label>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Selecione os pixels que serão incluídos no link desta oferta
-              </p>
-            </div>
-          )}
 
           {!isEditing && (
             <div className="space-y-2">

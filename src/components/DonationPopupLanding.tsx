@@ -7,7 +7,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
+import { usePixel } from "./MetaPixelProvider";
 import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 import pixLogo from "@/assets/pix-logo.png";
@@ -62,12 +62,16 @@ export const DonationPopupLanding = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
-  // Prioriza UTMs passados via prop, depois recupera do storage como fallback
+  // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) {
       return propUtmParams;
+    }
+    if (contextUtmParams && Object.keys(contextUtmParams).length > 0) {
+      return contextUtmParams;
     }
     // Fallback: recupera diretamente do storage
     const savedParams = getSavedUTMParams();
@@ -84,8 +88,13 @@ export const DonationPopupLanding = ({
       setSelectedAmount(null);
       setCustomAmount("0,00");
       setSelectedBoosts([]);
+    } else {
+      trackEvent('InitiateCheckout', {
+        content_name: 'Donation Popup Landing',
+        currency: 'BRL',
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, trackEvent]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -197,6 +206,15 @@ export const DonationPopupLanding = ({
         setStep("select");
         return;
       }
+
+      trackEvent('PixGenerated', {
+        value: total,
+        currency: 'BRL',
+        content_name: 'Donation Landing',
+      }, {
+        external_id: data.transactionId,
+        country: 'br',
+      });
 
       setPixData({
         code: data.pixCode,

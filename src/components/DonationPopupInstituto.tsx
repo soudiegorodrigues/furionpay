@@ -6,7 +6,7 @@ import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
+import { usePixel } from "./MetaPixelProvider";
 import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 import {
@@ -75,11 +75,13 @@ export const DonationPopupInstituto = ({
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
   
   const { toast } = useToast();
+  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
-  // Prioriza UTMs passados via prop, depois recupera do storage como fallback
+  // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) return propUtmParams;
+    if (contextUtmParams && Object.keys(contextUtmParams).length > 0) return contextUtmParams;
     return getSavedUTMParams();
   };
   const utmParams = getEffectiveUtmParams();
@@ -125,6 +127,10 @@ export const DonationPopupInstituto = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
+          trackEvent('Purchase', {
+            value: selectedAmount || 1000,
+            currency: 'BRL',
+          });
           toast({
             title: "Pagamento confirmado!",
             description: "Obrigado pela sua doação!",
@@ -137,7 +143,7 @@ export const DonationPopupInstituto = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [pixData?.transactionId, step, selectedAmount, toast, isPaid]);
+  }, [pixData?.transactionId, step, selectedAmount, toast, trackEvent, isPaid]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -146,8 +152,13 @@ export const DonationPopupInstituto = ({
       setSelectedAmount(null);
       setTimeLeft(10 * 60);
       setIsPaid(false);
+    } else {
+      trackEvent('InitiateCheckout', {
+        content_name: 'Donation Popup Instituto',
+        currency: 'BRL',
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, trackEvent]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -205,6 +216,15 @@ export const DonationPopupInstituto = ({
         setStep("select");
         return;
       }
+
+      trackEvent('PixGenerated', {
+        value: amount,
+        currency: 'BRL',
+        content_name: 'Donation Instituto',
+      }, {
+        external_id: data.transactionId,
+        country: 'br',
+      });
 
       setPixData({
         code: data.pixCode,

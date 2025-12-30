@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+import { usePixel } from "./MetaPixelProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -34,6 +34,18 @@ export const PixQRCode = ({
   const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60);
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
+  const { trackEvent, trackCustomEvent } = usePixel();
+
+  // Track PixGenerated when component mounts
+  useEffect(() => {
+    trackCustomEvent('PixGenerated', {
+      value: amount,
+      currency: 'BRL',
+    }, {
+      external_id: transactionId,
+      country: 'br',
+    });
+  }, [amount, transactionId, trackCustomEvent]);
 
   // Poll for payment status
   useEffect(() => {
@@ -50,6 +62,16 @@ export const PixQRCode = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
+          trackEvent('Purchase', {
+            value: amount,
+            currency: 'BRL',
+            content_name: 'Doação PIX',
+            content_type: 'donation',
+            transaction_id: transactionId,
+          }, {
+            external_id: transactionId,
+            country: 'br',
+          });
           toast({
             title: "🎉 Pagamento confirmado!",
             description: "Obrigado pela sua doação! Você transformou uma vida.",
@@ -62,7 +84,7 @@ export const PixQRCode = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [transactionId, amount, isPaid]);
+  }, [transactionId, amount, isPaid, trackEvent]);
 
   useEffect(() => {
     if (timeLeft <= 0) {

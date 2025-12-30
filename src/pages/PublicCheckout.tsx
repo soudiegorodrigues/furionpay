@@ -209,7 +209,25 @@ export default function PublicCheckout() {
         bump_product: bump.bump_product?.[0] || bump.bump_product || null,
       }));
       
-      return { offer, product, config, testimonials, orderBumps };
+      // Fetch pixel config using config's user_id (separate call to avoid circular reference)
+      let pixelConfig: { pixelId?: string; accessToken?: string } = {};
+      if (config?.user_id) {
+        const { data: pixelData } = await supabase.functions.invoke('get-pixel-config', {
+          body: { userId: config.user_id }
+        });
+        if (pixelData?.pixels && pixelData.pixels.length > 0) {
+          const firstPixel = pixelData.pixels[0];
+          pixelConfig = {
+            pixelId: firstPixel.pixelId,
+            accessToken: firstPixel.accessToken || undefined
+          };
+          console.log('[CHECKOUT] Pixel config loaded:', { 
+            pixelId: pixelConfig.pixelId, 
+            hasToken: !!pixelConfig.accessToken 
+          });
+        }
+      }
+
       // Handle template mapping if needed (rare case)
       if (config?.template_id) {
         const { data: templateData } = await supabase
@@ -225,18 +243,19 @@ export default function PublicCheckout() {
         }
       }
 
-      return { offer, product, config, testimonials, orderBumps };
+      return { offer, product, config, testimonials, pixelConfig, orderBumps };
     },
     enabled: !!offerCode,
-    staleTime: 60000, // 60 segundos - config não muda frequentemente
+    staleTime: 0, // Always fetch fresh data
     gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
-    refetchOnMount: false, // Não refetch em navegações repetidas
+    refetchOnMount: "always", // Force refetch on every mount
   });
 
   const offer = checkoutData?.offer;
   const product = checkoutData?.product;
   const config = checkoutData?.config;
   const testimonials = checkoutData?.testimonials || [];
+  const pixelConfig = checkoutData?.pixelConfig;
   const orderBumps = checkoutData?.orderBumps || [];
 
   // Preload critical resources as soon as data is available
@@ -249,6 +268,45 @@ export default function PublicCheckout() {
       });
     }
   }, [product, config]);
+
+  // Initialize Meta Pixel dynamically when pixelConfig is loaded
+  useEffect(() => {
+    if (pixelConfig?.pixelId && typeof window !== 'undefined') {
+      const pixelId = pixelConfig.pixelId;
+      
+      // Check if this pixel is already initialized
+      if (window.fbq && window.fbq.getState && window.fbq.getState().pixels?.some((p: any) => p.id === pixelId)) {
+        return;
+      }
+      
+      // Create fbq function if it doesn't exist
+      if (!window.fbq) {
+        const n = window.fbq = function() {
+          // @ts-ignore
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        };
+        if (!window._fbq) window._fbq = n;
+        // @ts-ignore
+        n.push = n;
+        // @ts-ignore
+        n.loaded = true;
+        // @ts-ignore
+        n.version = '2.0';
+        // @ts-ignore
+        n.queue = [];
+        
+        // Load the Facebook script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+        document.head.appendChild(script);
+      }
+      
+      // Initialize this pixel
+      window.fbq('init', pixelId);
+      window.fbq('track', 'PageView');
+    }
+  }, [pixelConfig]);
 
   // Back redirect handler
   useEffect(() => {
@@ -539,6 +597,8 @@ export default function PublicCheckout() {
           customerEmail={formData.email}
           customerName={formData.name}
           productName={offer?.name || product?.name}
+          pixelId={pixelConfig?.pixelId}
+          accessToken={pixelConfig?.accessToken}
           upsellUrl={offer?.upsell_url || undefined}
           downsellUrl={offer?.downsell_url || undefined}
           crosssellUrl={offer?.crosssell_url || undefined}
