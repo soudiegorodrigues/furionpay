@@ -176,66 +176,115 @@ export const DonationPopupVakinha2 = ({
       return;
     }
     setStep("loading");
-    try {
-      // Get device fingerprint for anti-abuse
-      const fingerprint = await getFingerprint();
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('generate-pix', {
-        body: {
-          amount: total,
-          utmParams: utmParams,
-          userId: userId,
-          popupModel: 'vakinha2',
-          fingerprint
+    
+    const maxRetries = 2;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[PIX] Tentativa ${attempt + 1} de ${maxRetries + 1} para gerar PIX`);
+        
+        // Get device fingerprint for anti-abuse
+        const fingerprint = await getFingerprint();
+        const { data, error } = await supabase.functions.invoke('generate-pix', {
+          body: {
+            amount: total,
+            utmParams: utmParams,
+            userId: userId,
+            popupModel: 'vakinha2',
+            fingerprint
+          }
+        });
+        
+        if (error) {
+          console.error(`[PIX] Erro na tentativa ${attempt + 1}:`, error);
+          lastError = error;
+          
+          // Se não é a última tentativa, aguarda e tenta novamente
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          
+          toast({
+            title: "Erro ao gerar PIX",
+            description: "Tente novamente em alguns instantes.",
+            variant: "destructive"
+          });
+          setStep("select");
+          return;
         }
-      });
-      if (error) {
-        console.error('Error generating PIX:', error);
-        toast({
-          title: "Erro ao gerar PIX",
-          description: "Tente novamente em alguns instantes.",
-          variant: "destructive"
-        });
-        setStep("select");
-        return;
-      }
 
-      // Check for rate limit error
-      if (data?.error === 'RATE_LIMIT') {
-        toast({
-          title: "Limite atingido",
-          description: data.message || "Você atingiu o limite de PIX. Tente novamente mais tarde.",
-          variant: "destructive",
-          duration: 6000
+        // Check for rate limit error (não faz retry para rate limit)
+        if (data?.error === 'RATE_LIMIT') {
+          toast({
+            title: "Limite atingido",
+            description: data.message || "Você atingiu o limite de PIX. Tente novamente mais tarde.",
+            variant: "destructive",
+            duration: 6000
+          });
+          setStep("select");
+          return;
+        }
+        
+        // Verifica se os dados do PIX são válidos
+        if (!data?.pixCode) {
+          console.error(`[PIX] Resposta inválida na tentativa ${attempt + 1}:`, data);
+          lastError = new Error('Resposta inválida do servidor');
+          
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          
+          toast({
+            title: "Erro ao gerar PIX",
+            description: "Resposta inválida do servidor. Tente novamente.",
+            variant: "destructive"
+          });
+          setStep("select");
+          return;
+        }
+        
+        console.log(`[PIX] PIX gerado com sucesso na tentativa ${attempt + 1}`);
+        
+        trackEvent('PixGenerated', {
+          value: total,
+          currency: 'BRL',
+          content_name: 'Donation Vakinha2'
+        }, {
+          external_id: data.transactionId,
+          country: 'br'
         });
-        setStep("select");
-        return;
+        
+        setPixData({
+          code: data.pixCode,
+          qrCodeUrl: data.qrCodeUrl,
+          transactionId: data.transactionId
+        });
+        setStep("pix");
+        return; // Sucesso, sai da função
+        
+      } catch (err) {
+        console.error(`[PIX] Exceção na tentativa ${attempt + 1}:`, err);
+        lastError = err instanceof Error ? err : new Error(String(err));
+        
+        // Se não é a última tentativa, aguarda e tenta novamente
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
       }
-      trackEvent('PixGenerated', {
-        value: total,
-        currency: 'BRL',
-        content_name: 'Donation Vakinha2'
-      }, {
-        external_id: data.transactionId,
-        country: 'br'
-      });
-      setPixData({
-        code: data.pixCode,
-        qrCodeUrl: data.qrCodeUrl,
-        transactionId: data.transactionId
-      });
-      setStep("pix");
-    } catch (err) {
-      console.error('Error:', err);
-      toast({
-        title: "Erro ao gerar PIX",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive"
-      });
-      setStep("select");
     }
+    
+    // Se chegou aqui, todas as tentativas falharam
+    console.error('[PIX] Todas as tentativas falharam:', lastError);
+    toast({
+      title: "Erro ao gerar PIX",
+      description: "Não foi possível gerar o PIX após várias tentativas. Verifique sua conexão.",
+      variant: "destructive"
+    });
+    setStep("select");
   };
   const handleUpsellAccept = (boostId: string) => {
     setSelectedBoosts([boostId]);
