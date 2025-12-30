@@ -422,6 +422,8 @@ export function CheckoutTemplatePadrao({
                             alt={product.name || "Produto"} 
                             className="w-24 h-24 object-cover rounded-lg" 
                             loading="eager"
+                            fetchPriority="high"
+                            decoding="async"
                           />
                         ) : (
                           <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
