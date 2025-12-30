@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { FileText, Globe, Copy, Upload, X, Package, Link, FileArchive, Loader2 } from "lucide-react";
+import { FileText, Globe, Copy, Upload, X, Package, Link, FileArchive, Loader2, ChevronDown } from "lucide-react";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
+import { cn } from "@/lib/utils";
 
 // Formata número para Real brasileiro (ex: 19.90 → "19,90" ou 1990.00 → "1.990,00")
 const formatCurrency = (value: number): string => {
@@ -253,8 +255,22 @@ export function ProductDetailsSection({
     return cleanName || fileName;
   };
 
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(["general"]));
+
+  const toggleSection = (sectionId: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <input
         ref={fileInputRef}
         type="file"
@@ -263,311 +279,312 @@ export function ProductDetailsSection({
         className="hidden"
       />
 
-      {/* Product Overview Card */}
+      {/* Product Overview Card - Always visible */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Product Image with Upload */}
-              <div className="shrink-0">
-                <div 
-                  className="relative w-48 h-48 bg-muted rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group border-2 border-dashed border-transparent hover:border-primary/50 transition-colors"
-                  onClick={() => !isUploading && fileInputRef.current?.click()}
-                >
-                  {formData.image_url ? (
-                    <>
-                      <img
-                        src={formData.image_url}
-                        alt={formData.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Upload className="h-8 w-8 text-white" />
-                      </div>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveImage();
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="text-center">
-                      {isUploading ? (
-                        <div className="animate-pulse text-muted-foreground text-sm">Enviando...</div>
-                      ) : (
-                        <>
-                          <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-2 group-hover:text-primary transition-colors" />
-                          <p className="text-xs text-muted-foreground">Clique para enviar</p>
-                        </>
-                      )}
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            {/* Product Image with Upload */}
+            <div className="shrink-0">
+              <div 
+                className="relative w-16 h-16 bg-muted rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group border-2 border-dashed border-transparent hover:border-primary/50 transition-colors"
+                onClick={() => !isUploading && fileInputRef.current?.click()}
+              >
+                {formData.image_url ? (
+                  <>
+                    <img
+                      src={formData.image_url}
+                      alt={formData.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Upload className="h-4 w-4 text-white" />
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Product ID and Status */}
-              <div className="flex-1">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">ID do Produto</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono text-sm">{product.product_code || product.id.substring(0, 8)}</p>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 shrink-0"
-                        onClick={() => copyToClipboard(product.product_code || product.id)}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Status</p>
-                    <Badge variant={product.is_active ? "default" : "secondary"}>
-                      {product.is_active ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </div>
-                  {formData.website_url && (
-                    <div className="p-4 bg-muted/50 rounded-lg md:col-span-2">
-                      <p className="text-xs text-muted-foreground mb-1">Site do produto</p>
-                      <a 
-                        href={formData.website_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                      >
-                        <Globe className="h-3 w-3 shrink-0" />
-                        {formData.website_url}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {formData.description && (
-              <div className="p-4 border rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Descrição</p>
-                <p className="text-sm whitespace-pre-wrap">{formData.description}</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* General Information Form */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            <CardTitle>Informações Gerais</CardTitle>
-          </div>
-          <CardDescription>Atualize as informações básicas do seu produto</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome do produto</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Nome do produto"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="description">Descrição do produto</Label>
-              <span className="text-xs text-muted-foreground">
-                {formData.description.length}/500
-              </span>
-            </div>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
-              placeholder="Descreva seu produto..."
-              className="min-h-[120px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="price">Preço (R$)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                R$
-              </span>
-              <Input
-                id="price"
-                type="text"
-                inputMode="decimal"
-                value={priceDisplay}
-                onChange={handlePriceChange}
-                onFocus={handlePriceFocus}
-                onBlur={handlePriceBlur}
-                placeholder="0,00"
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="website_url">Site do produto</Label>
-            <Input
-              id="website_url"
-              type="url"
-              value={formData.website_url}
-              onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
-              placeholder="https://seuproduto.com"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Digital Delivery Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            <CardTitle>Entrega Digital</CardTitle>
-          </div>
-          <CardDescription>
-            Configure o conteúdo que será enviado automaticamente por email após a compra ser aprovada
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* External Link (Drive, Dropbox, etc.) */}
-          <div className="space-y-2">
-            <Label htmlFor="delivery_link" className="flex items-center gap-2">
-              <Link className="h-4 w-4" />
-              Link do Drive / URL Externa
-            </Label>
-            <Input
-              id="delivery_link"
-              type="url"
-              value={formData.delivery_link}
-              onChange={(e) => setFormData({ ...formData, delivery_link: e.target.value })}
-              placeholder="https://drive.google.com/file/d/..."
-            />
-            <p className="text-xs text-muted-foreground">
-              Link do Google Drive, Dropbox, OneDrive ou qualquer URL de download
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">ou</span>
-            </div>
-          </div>
-
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <FileArchive className="h-4 w-4" />
-              Arquivo para Download
-            </Label>
-            
-            <input
-              ref={deliveryFileInputRef}
-              type="file"
-              accept=".pdf,.zip,.rar,.mp4,.webm,.mp3,.epub,.docx,.xlsx"
-              onChange={handleDeliveryFileUpload}
-              className="hidden"
-            />
-            
-            <div 
-              className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-                formData.delivery_file_url 
-                  ? "border-primary/30 bg-primary/5" 
-                  : "border-muted-foreground/25 hover:border-primary/50 cursor-pointer"
-              }`}
-              onClick={() => !formData.delivery_file_url && !isUploadingDelivery && deliveryFileInputRef.current?.click()}
-            >
-              {isUploadingDelivery ? (
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Enviando arquivo...</p>
-                </div>
-              ) : formData.delivery_file_url ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileArchive className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium truncate max-w-[200px]">
-                        {getFileName(formData.delivery_file_url)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Arquivo anexado</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deliveryFileInputRef.current?.click();
-                      }}
-                    >
-                      Trocar
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveDeliveryFile();
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
+                  </>
+                ) : (
                   <div className="text-center">
-                    <p className="text-sm font-medium">Clique para enviar</p>
-                    <p className="text-xs text-muted-foreground">PDF, ZIP, RAR, MP4, MP3 até 50MB</p>
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Upload className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Info box */}
-          {(formData.delivery_link || formData.delivery_file_url) && (
-            <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
-              <div className="flex items-start gap-3">
-                <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <Package className="h-3 w-3 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                    Entrega automática configurada
-                  </p>
-                  <p className="text-xs text-green-600/80 dark:text-green-400/80 mt-1">
-                    Quando uma venda for aprovada, o cliente receberá automaticamente um email com o link de acesso ao produto.
-                  </p>
+            {/* Product Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="font-semibold text-lg truncate">{product.name}</h2>
+                <Badge variant={product.is_active ? "default" : "secondary"} className="shrink-0">
+                  {product.is_active ? "Ativo" : "Inativo"}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {formData.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </span>
+                <div className="flex items-center gap-1">
+                  <span>ID: {product.product_code || product.id.substring(0, 8)}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => copyToClipboard(product.product_code || product.id)}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* General Information - Collapsible */}
+      <Collapsible open={openSections.has("general")} onOpenChange={() => toggleSection("general")}>
+        <Card className="overflow-hidden">
+          <CollapsibleTrigger asChild>
+            <div className="cursor-pointer hover:bg-muted/50 transition-colors p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-base">Informações Gerais</h3>
+                    <p className="text-sm text-muted-foreground">Atualize as informações básicas do seu produto</p>
+                  </div>
+                </div>
+                <ChevronDown 
+                  className={cn(
+                    "h-5 w-5 text-muted-foreground transition-transform duration-200",
+                    openSections.has("general") && "rotate-180"
+                  )} 
+                />
+              </div>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0 pb-6">
+              <div className="border-t pt-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome do produto</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Nome do produto"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="description">Descrição do produto</Label>
+                    <span className="text-xs text-muted-foreground">
+                      {formData.description.length}/500
+                    </span>
+                  </div>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
+                    placeholder="Descreva seu produto..."
+                    className="min-h-[120px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="price">Preço (R$)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                      R$
+                    </span>
+                    <Input
+                      id="price"
+                      type="text"
+                      inputMode="decimal"
+                      value={priceDisplay}
+                      onChange={handlePriceChange}
+                      onFocus={handlePriceFocus}
+                      onBlur={handlePriceBlur}
+                      placeholder="0,00"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website_url">Site do produto</Label>
+                  <Input
+                    id="website_url"
+                    type="url"
+                    value={formData.website_url}
+                    onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                    placeholder="https://seuproduto.com"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* Digital Delivery - Collapsible */}
+      <Collapsible open={openSections.has("delivery")} onOpenChange={() => toggleSection("delivery")}>
+        <Card className="overflow-hidden">
+          <CollapsibleTrigger asChild>
+            <div className="cursor-pointer hover:bg-muted/50 transition-colors p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Package className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-base">Entrega Digital</h3>
+                    <p className="text-sm text-muted-foreground">Configure o conteúdo enviado após a compra</p>
+                  </div>
+                </div>
+                <ChevronDown 
+                  className={cn(
+                    "h-5 w-5 text-muted-foreground transition-transform duration-200",
+                    openSections.has("delivery") && "rotate-180"
+                  )} 
+                />
+              </div>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0 pb-6">
+              <div className="border-t pt-6 space-y-6">
+                {/* External Link (Drive, Dropbox, etc.) */}
+                <div className="space-y-2">
+                  <Label htmlFor="delivery_link" className="flex items-center gap-2">
+                    <Link className="h-4 w-4" />
+                    Link do Drive / URL Externa
+                  </Label>
+                  <Input
+                    id="delivery_link"
+                    type="url"
+                    value={formData.delivery_link}
+                    onChange={(e) => setFormData({ ...formData, delivery_link: e.target.value })}
+                    placeholder="https://drive.google.com/file/d/..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Link do Google Drive, Dropbox, OneDrive ou qualquer URL de download
+                  </p>
+                </div>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">ou</span>
+                  </div>
+                </div>
+
+                {/* File Upload */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <FileArchive className="h-4 w-4" />
+                    Arquivo para Download
+                  </Label>
+                  
+                  <input
+                    ref={deliveryFileInputRef}
+                    type="file"
+                    accept=".pdf,.zip,.rar,.mp4,.webm,.mp3,.epub,.docx,.xlsx"
+                    onChange={handleDeliveryFileUpload}
+                    className="hidden"
+                  />
+                  
+                  <div 
+                    className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                      formData.delivery_file_url 
+                        ? "border-primary/30 bg-primary/5" 
+                        : "border-muted-foreground/25 hover:border-primary/50 cursor-pointer"
+                    }`}
+                    onClick={() => !formData.delivery_file_url && !isUploadingDelivery && deliveryFileInputRef.current?.click()}
+                  >
+                    {isUploadingDelivery ? (
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">Enviando arquivo...</p>
+                      </div>
+                    ) : formData.delivery_file_url ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <FileArchive className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium truncate max-w-[200px]">
+                              {getFileName(formData.delivery_file_url)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Arquivo anexado</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deliveryFileInputRef.current?.click();
+                            }}
+                          >
+                            Trocar
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveDeliveryFile();
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <div className="text-center">
+                          <p className="text-sm font-medium">Clique para enviar</p>
+                          <p className="text-xs text-muted-foreground">PDF, ZIP, RAR, MP4, MP3 até 50MB</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info box */}
+                {(formData.delivery_link || formData.delivery_file_url) && (
+                  <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <Package className="h-3 w-3 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                          Entrega automática configurada
+                        </p>
+                        <p className="text-xs text-green-600/80 dark:text-green-400/80 mt-1">
+                          Quando uma venda for aprovada, o cliente receberá automaticamente um email com o link de acesso ao produto.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }
