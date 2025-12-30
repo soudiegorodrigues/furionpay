@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { usePixel } from "./MetaPixelProvider";
+
 import { cn } from "@/lib/utils";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
 
@@ -57,12 +57,10 @@ export const DonationPopupClean = ({
   const [copied, setCopied] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   
-  // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
+  // Prioriza UTMs passados via prop, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) return propUtmParams;
-    if (contextUtmParams && Object.keys(contextUtmParams).length > 0) return contextUtmParams;
     return getSavedUTMParams();
   };
   const utmParams = getEffectiveUtmParams();
@@ -87,13 +85,8 @@ export const DonationPopupClean = ({
       setSelectedAmount(30);
       setSelectedBoosts([]);
       setIsPaid(false);
-    } else {
-      trackEvent('InitiateCheckout', {
-        content_name: 'Donation Popup Clean',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEvent]);
+  }, [isOpen]);
 
   // Poll for payment status
   useEffect(() => {
@@ -110,11 +103,6 @@ export const DonationPopupClean = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
-          trackEvent("Purchase", {
-            value: totalAmount,
-            currency: "BRL",
-            content_name: "Donation Clean",
-          });
           clearInterval(pollInterval);
         }
       } catch (err) {
@@ -123,7 +111,7 @@ export const DonationPopupClean = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [step, pixData?.transactionId, isPaid, selectedAmount, trackEvent]);
+  }, [step, pixData?.transactionId, isPaid, selectedAmount]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -161,16 +149,6 @@ export const DonationPopupClean = ({
         code: data.pixCode,
         qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
-      });
-      
-      // Fire PixGenerated event with advanced matching
-      trackEvent('PixGenerated', {
-        value: totalAmount,
-        currency: 'BRL',
-        content_name: 'Donation Clean',
-      }, {
-        external_id: data.transactionId,
-        country: 'br',
       });
       
       setStep("pix");
