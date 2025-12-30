@@ -18,6 +18,7 @@ interface BannersCarouselProps {
  * - Demais banners usam lazy loading nativo
  * - Placeholder blur enquanto carrega
  * - Imagens otimizadas via Supabase Transform (WebP + resize)
+ * - Aspect ratio fixo para evitar CLS
  */
 export const BannersCarousel = memo(function BannersCarousel({ banners }: BannersCarouselProps) {
   const sortedBanners = [...banners].sort((a, b) => a.display_order - b.display_order);
@@ -39,7 +40,7 @@ export const BannersCarousel = memo(function BannersCarousel({ banners }: Banner
 });
 
 /**
- * Imagem de banner otimizada com placeholder e fadeIn
+ * Imagem de banner otimizada com placeholder, fadeIn e aspect ratio fixo
  */
 const OptimizedBannerImage = memo(function OptimizedBannerImage({
   src,
@@ -53,7 +54,10 @@ const OptimizedBannerImage = memo(function OptimizedBannerImage({
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
-    <div className="relative w-full rounded-lg overflow-hidden shadow-sm bg-gray-100">
+    <div 
+      className="relative w-full rounded-lg overflow-hidden shadow-sm bg-gray-100"
+      style={{ aspectRatio: '16 / 6' }} // Fixed aspect ratio to prevent CLS
+    >
       {/* Placeholder skeleton */}
       {!isLoaded && (
         <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
@@ -62,15 +66,15 @@ const OptimizedBannerImage = memo(function OptimizedBannerImage({
       <img
         src={src}
         alt={alt}
-        className={`w-full rounded-lg object-cover transition-opacity duration-300 ${
+        width={800}
+        height={300}
+        className={`w-full h-full rounded-lg object-cover transition-opacity duration-300 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
         fetchPriority={priority ? 'high' : 'auto'}
         onLoad={() => setIsLoaded(true)}
-        // Dimensões mínimas para evitar CLS
-        style={{ minHeight: '100px' }}
       />
     </div>
   );

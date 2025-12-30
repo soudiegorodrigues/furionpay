@@ -1,7 +1,8 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Gift, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getOptimizedImageUrl } from "@/lib/performanceUtils";
 
 export interface OrderBump {
   id: string;
@@ -31,6 +32,14 @@ export const OrderBumpCard = memo(function OrderBumpCard({
   formatPrice,
   primaryColor = "#22C55E",
 }: OrderBumpCardProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Get optimized image URL
+  const imageUrl = bump.image_url || bump.bump_product?.image_url;
+  const optimizedImageUrl = imageUrl 
+    ? getOptimizedImageUrl(imageUrl, { width: 128, quality: 80 }) 
+    : null;
+
   return (
     <div
       onClick={() => onToggle(bump.id)}
@@ -66,13 +75,27 @@ export const OrderBumpCard = memo(function OrderBumpCard({
           />
         </div>
 
-        {/* Image - prioritize custom image_url over product image */}
-        {(bump.image_url || bump.bump_product?.image_url) && (
-          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+        {/* Image - optimized with explicit dimensions */}
+        {optimizedImageUrl && (
+          <div 
+            className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0"
+            style={{ aspectRatio: '1 / 1' }}
+          >
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
+            )}
             <img
-              src={bump.image_url || bump.bump_product?.image_url || ""}
+              src={optimizedImageUrl}
               alt={bump.bump_product?.name || "Order Bump"}
-              className="w-full h-full object-cover"
+              width={64}
+              height={64}
+              className={cn(
+                "w-full h-full object-cover transition-opacity duration-200",
+                imageLoaded ? "opacity-100" : "opacity-0"
+              )}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImageLoaded(true)}
             />
           </div>
         )}

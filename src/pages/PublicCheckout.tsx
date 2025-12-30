@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
 import { preloadCheckoutResources, preloadImage, getOptimizedImageUrl, trackPerformanceMetrics } from "@/lib/performanceUtils";
-import {
+import type {
   ProductOffer,
   Product,
   CheckoutConfig,
@@ -13,7 +13,7 @@ import {
   PixData,
   Testimonial,
   OrderBumpData,
-} from "@/components/checkout";
+} from "@/components/checkout/types";
 
 // Lazy load ALL templates for maximum code splitting
 const CheckoutTemplatePadrao = lazy(() => import("@/components/checkout/CheckoutTemplatePadrao").then(m => ({ default: m.CheckoutTemplatePadrao })));
