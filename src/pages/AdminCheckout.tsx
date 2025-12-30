@@ -433,7 +433,7 @@ const AdminCheckout = () => {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
           <DialogTitle className="sr-only">Preview Modelo Vakinha 2</DialogTitle>
           <div className="relative">
-            <DonationPopupVakinha2 isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={false} />
+            <DonationPopupVakinha2 isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={false} isPreview={true} />
           </div>
         </DialogContent>
       </Dialog>
