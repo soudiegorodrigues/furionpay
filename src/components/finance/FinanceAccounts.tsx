@@ -175,6 +175,14 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
         : 0;
       const bank = BRAZILIAN_BANKS.find(b => b.value === formData.bank_name);
       
+      // Calcular novo current_balance quando editando
+      let newCurrentBalance = initialBalance;
+      if (editingAccount) {
+        // Ajustar current_balance proporcionalmente à mudança do saldo inicial
+        const initialBalanceDiff = initialBalance - editingAccount.initial_balance;
+        newCurrentBalance = editingAccount.current_balance + initialBalanceDiff;
+      }
+      
       const payload = {
         user_id: effectiveUserId!,
         name: formData.name.trim(),
@@ -183,7 +191,7 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
         icon: bank?.logo || null,
         color: formData.color,
         initial_balance: initialBalance,
-        current_balance: editingAccount ? editingAccount.current_balance : initialBalance,
+        current_balance: newCurrentBalance,
         is_active: true
       };
 
