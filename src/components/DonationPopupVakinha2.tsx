@@ -354,6 +354,7 @@ export const DonationPopupVakinha2 = ({
           amount={calculateTotal()} 
           selectedAmount={selectedAmount}
           trackEvent={trackEvent}
+          isPreview={isPreview}
         />}
       </div>
     </div>;
@@ -366,9 +367,10 @@ interface PixScreenVakinha2Props {
   amount: number;
   selectedAmount: number | null;
   trackEvent: (event: string, params?: Record<string, unknown>, userData?: Record<string, unknown>) => void;
+  isPreview?: boolean;
 }
 
-const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, trackEvent }: PixScreenVakinha2Props) => {
+const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, trackEvent, isPreview }: PixScreenVakinha2Props) => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutos
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
@@ -410,7 +412,8 @@ const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, tra
 
   // Polling para verificar status do pagamento
   useEffect(() => {
-    if (!transactionId || paymentConfirmed) return;
+    // Não fazer polling em modo preview
+    if (!transactionId || paymentConfirmed || isPreview) return;
 
     const checkStatus = async () => {
       try {
@@ -442,7 +445,7 @@ const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, tra
         clearInterval(pollingRef.current);
       }
     };
-  }, [transactionId, paymentConfirmed, amount, trackEvent]);
+  }, [transactionId, paymentConfirmed, amount, trackEvent, isPreview]);
 
   // Timer de expiração
   useEffect(() => {
