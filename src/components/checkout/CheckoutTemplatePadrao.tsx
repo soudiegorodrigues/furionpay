@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,14 +15,7 @@ import { AddressFields } from "./AddressFields";
 import { BannersCarousel } from "./BannersCarousel";
 import { OrderBumpCard } from "./OrderBumpCard";
 import { CustomVideoPlayer } from "./CustomVideoPlayer";
-import { supabase } from "@/integrations/supabase/client";
 import { getOptimizedImageUrl } from "@/lib/performanceUtils";
-
-interface Banner {
-  id: string;
-  image_url: string;
-  display_order: number;
-}
 
 // Memoized star rating component
 const StarRating = memo(({ rating }: { rating: number }) => (
@@ -61,28 +54,9 @@ export function CheckoutTemplatePadrao({
   orderBumps = [],
   selectedBumps = [],
   onToggleBump,
+  banners = [],
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#22C55E";
-  const [banners, setBanners] = useState<Banner[]>([]);
-
-  // Fetch banners from checkout_banners table
-  useEffect(() => {
-    if (!config?.show_banners || !product?.id) return;
-
-    const fetchBanners = async () => {
-      const { data, error } = await supabase
-        .from("checkout_banners")
-        .select("id, image_url, display_order")
-        .eq("product_id", product.id)
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-
-      if (error) return;
-      if (data) setBanners(data);
-    };
-
-    fetchBanners();
-  }, [config?.show_banners, product?.id]);
 
   const getInitials = useCallback((name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -102,35 +76,52 @@ export function CheckoutTemplatePadrao({
       className="min-h-screen"
       style={{ backgroundColor: config?.background_color || '#f8fafc' }}
     >
-      {/* Urgency Banner */}
-      {config?.show_countdown && countdown !== null && countdown > 0 && (
-        <div 
-          className="py-3 text-center text-white font-semibold"
-          style={{ backgroundColor: config?.primary_color || '#dc2626' }}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>🔥 OFERTA EXPIRA EM: {formatCountdown(countdown)}</span>
-            <Clock className="h-4 w-4" />
-          </div>
+      {/* Urgency Banner - ALWAYS reserve space to prevent CLS */}
+      <div 
+        className="py-3 text-center text-white font-semibold transition-opacity duration-200"
+        style={{ 
+          backgroundColor: config?.primary_color || '#dc2626',
+          minHeight: '48px',
+          opacity: (config?.show_countdown && countdown !== null && countdown > 0) ? 1 : 0,
+          visibility: (config?.show_countdown && countdown !== null && countdown > 0) ? 'visible' : 'hidden',
+        }}
+      >
+        <div className="flex items-center justify-center gap-2">
+          <Clock className="h-4 w-4" />
+          <span>🔥 OFERTA EXPIRA EM: {formatCountdown(countdown || 0)}</span>
+          <Clock className="h-4 w-4" />
         </div>
-      )}
+      </div>
 
-      {/* Banner Images Carousel */}
-      {config?.show_banners && banners.length > 0 && (
+      {/* Banner Images Carousel - Reserve space to prevent CLS */}
+      {config?.show_banners && (
         <div className="container max-w-4xl mx-auto px-4 pt-4">
-          <BannersCarousel banners={banners} />
+          {banners.length > 0 ? (
+            <BannersCarousel banners={banners} />
+          ) : (
+            <div 
+              className="w-full rounded-lg bg-gray-100 animate-pulse"
+              style={{ aspectRatio: '16 / 6' }}
+            />
+          )}
         </div>
       )}
 
-      {/* Video Section */}
-      {config?.show_video && config?.video_url && (
+      {/* Video Section - Reserve space to prevent CLS */}
+      {config?.show_video && (
         <div className="container max-w-4xl mx-auto px-4 pt-4 pb-4">
-          <CustomVideoPlayer 
-            videoUrl={config.video_url}
-            posterUrl={product?.image_url || undefined}
-            className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
-          />
+          {config?.video_url ? (
+            <CustomVideoPlayer 
+              videoUrl={config.video_url}
+              posterUrl={product?.image_url || undefined}
+              className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
+            />
+          ) : (
+            <div 
+              className="w-full rounded-lg bg-gray-100 animate-pulse"
+              style={{ aspectRatio: '16 / 9' }}
+            />
+          )}
         </div>
       )}
 

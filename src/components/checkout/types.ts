@@ -115,6 +115,12 @@ export interface OrderBumpData {
   } | null;
 }
 
+export interface Banner {
+  id: string;
+  image_url: string;
+  display_order: number;
+}
+
 export interface CheckoutTemplateProps {
   offer: ProductOffer;
   product: Product | null;
@@ -136,4 +142,6 @@ export interface CheckoutTemplateProps {
   orderBumps?: OrderBumpData[];
   selectedBumps?: string[];
   onToggleBump?: (bumpId: string) => void;
+  // Banners prop to eliminate internal fetch and CLS
+  banners?: Banner[];
 }

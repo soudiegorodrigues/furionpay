@@ -208,6 +208,16 @@ export default function PublicCheckout() {
         image_url: bump.image_url,
         bump_product: bump.bump_product?.[0] || bump.bump_product || null,
       }));
+
+      // Fetch banners in parallel to avoid CLS from internal template fetch
+      const { data: bannersData } = await supabase
+        .from("checkout_banners")
+        .select("id, image_url, display_order")
+        .eq("product_id", offer.product_id)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      
+      const banners = bannersData || [];
       
       // Fetch pixel config using config's user_id and product_id for product-specific pixels
       let pixelConfig: { pixelId?: string; accessToken?: string } = {};
@@ -242,7 +252,7 @@ export default function PublicCheckout() {
         }
       }
 
-      return { offer, product, config, testimonials, pixelConfig, orderBumps };
+      return { offer, product, config, testimonials, pixelConfig, orderBumps, banners };
     },
     enabled: !!offerCode,
     staleTime: 0, // Always fetch fresh data
@@ -256,6 +266,7 @@ export default function PublicCheckout() {
   const testimonials = checkoutData?.testimonials || [];
   const pixelConfig = checkoutData?.pixelConfig;
   const orderBumps = checkoutData?.orderBumps || [];
+  const banners = checkoutData?.banners || [];
 
   // Preload critical resources as soon as data is available
   useEffect(() => {
@@ -627,6 +638,8 @@ export default function PublicCheckout() {
     orderBumps,
     selectedBumps,
     onToggleBump: handleToggleBump,
+    // Banners prop to eliminate CLS
+    banners,
   };
 
   // If PIX is generated, show the payment page
