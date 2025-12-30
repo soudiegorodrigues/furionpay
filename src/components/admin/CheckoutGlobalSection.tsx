@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TrendingUp, Eye, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DonationPopup } from "@/components/DonationPopup";
@@ -272,6 +272,10 @@ export const CheckoutGlobalSection = () => {
       )}
       <Dialog open={previewModel === "landing"} onOpenChange={(open) => !open && setPreviewModel(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Preview Modelo Vakinha</DialogTitle>
+            <DialogDescription>Visualização do modelo de checkout Vakinha</DialogDescription>
+          </DialogHeader>
           <div className="relative">
             <DonationPopupLanding
               isOpen={true}
@@ -286,6 +290,10 @@ export const CheckoutGlobalSection = () => {
 
       <Dialog open={previewModel === "instituto"} onOpenChange={(open) => !open && setPreviewModel(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Preview Modelo Instituto</DialogTitle>
+            <DialogDescription>Visualização do modelo de checkout Instituto</DialogDescription>
+          </DialogHeader>
           <div className="relative">
             <DonationPopupInstituto
               isOpen={true}
@@ -300,6 +308,10 @@ export const CheckoutGlobalSection = () => {
 
       <Dialog open={previewModel === "vakinha2"} onOpenChange={(open) => !open && setPreviewModel(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Preview Modelo Vakinha 2</DialogTitle>
+            <DialogDescription>Visualização do modelo de checkout Vakinha 2</DialogDescription>
+          </DialogHeader>
           <div className="relative">
             <DonationPopupVakinha2
               isOpen={true}
