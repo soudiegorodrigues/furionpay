@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
-import { Heart, Sparkles, Gift, X, Check, Users, Shield, Zap } from "lucide-react";
+import { Heart, Sprout, ShoppingBasket, Lock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PixQRCode } from "./PixQRCode";
+import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
+
 import { supabase } from "@/integrations/supabase/client";
-import { PixQRCode } from "@/components/PixQRCode";
-import { PixLoadingSkeleton } from "@/components/PixLoadingSkeleton";
-import { usePixel } from "@/components/MetaPixelProvider";
-import { UTMParams } from "@/lib/utm";
+import { useToast } from "@/hooks/use-toast";
+import { usePixel } from "./MetaPixelProvider";
 import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
+import { UTMParams, getSavedUTMParams } from "@/lib/utm";
 
 interface DonationPopupVakinha2Props {
   isOpen: boolean;
@@ -21,78 +24,48 @@ interface DonationPopupVakinha2Props {
   utmParams?: UTMParams;
 }
 
-interface PixData {
-  qrCode: string;
-  pixCode: string;
-  transactionId: string;
-  expirationMinutes: number;
-}
-
-interface BoostOption {
-  id: string;
-  label: string;
-  price: number;
-  icon: typeof Heart;
-  description: string;
-  color: string;
-}
-
-const DONATION_AMOUNTS = [
-  { amount: 25, badge: "Popular" },
+const DONATION_AMOUNTS: { amount: number; badge?: string }[] = [
+  { amount: 30 },
   { amount: 50 },
   { amount: 75 },
-  { amount: 100, badge: "Recomendado" },
-  { amount: 150 },
+  { amount: 100, badge: "Doe com Amor 💚" },
   { amount: 200 },
-  { amount: 300 },
   { amount: 500 },
+  { amount: 750 },
+  { amount: 1000 },
 ];
 
-const BOOST_OPTIONS: BoostOption[] = [
-  { 
-    id: "sparkles", 
-    label: "Brilho extra", 
-    price: 9.99, 
-    icon: Sparkles,
-    description: "Destaque sua contribuição",
-    color: "from-amber-400 to-orange-500"
-  },
-  { 
-    id: "gift", 
-    label: "Presente surpresa", 
-    price: 19.99, 
-    icon: Gift,
-    description: "Envie um mimo especial",
-    color: "from-pink-400 to-rose-500"
-  },
-  { 
-    id: "zap", 
-    label: "Super apoio", 
-    price: 29.99, 
-    icon: Zap,
-    description: "Máximo impacto",
-    color: "from-violet-400 to-purple-500"
-  },
+const BOOST_OPTIONS = [
+  { id: "hearts", label: "10 corações", price: 10.99, icon: Heart, color: "text-emerald-500", bgColor: "bg-emerald-100" },
+  { id: "impact", label: "Ajudar Uma Vida a Florescer", price: 25, icon: Sprout, color: "text-amber-600", bgColor: "bg-amber-100" },
+  { id: "basket", label: "Doar cesta básica", price: 65, icon: ShoppingBasket, color: "text-orange-500", bgColor: "bg-orange-100" },
 ];
+
+type Step = "select" | "upsell" | "loading" | "pix";
 
 export const DonationPopupVakinha2 = ({
   isOpen,
   onClose,
-  recipientName = "Vakinha",
+  recipientName = "Campanha Solidária",
   userId,
-  showCloseButton = true,
+  showCloseButton = false,
   isPreview = false,
   utmParams: propUtmParams,
 }: DonationPopupVakinha2Props) => {
-  const [customAmount, setCustomAmount] = useState("");
+  const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedBoosts, setSelectedBoosts] = useState<string[]>([]);
-  const [step, setStep] = useState<"select" | "upsell" | "loading" | "pix">("select");
-  const [pixData, setPixData] = useState<PixData | null>(null);
+  const [step, setStep] = useState<Step>("select");
+  const [pixData, setPixData] = useState<{
+    code: string;
+    qrCodeUrl?: string;
+    transactionId?: string;
+  } | null>(null);
+  const { toast } = useToast();
   const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
-
-  // Prioridade: props > context > localStorage
+  
+  // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) {
       return propUtmParams;
@@ -100,256 +73,269 @@ export const DonationPopupVakinha2 = ({
     if (contextUtmParams && Object.keys(contextUtmParams).length > 0) {
       return contextUtmParams;
     }
-    try {
-      const stored = localStorage.getItem('utm_params');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.error('Error reading UTM params from localStorage:', e);
-    }
-    return {};
+    // Fallback: recupera diretamente do storage
+    const savedParams = getSavedUTMParams();
+    console.log('[UTM DEBUG] DonationPopupVakinha2 - Usando UTMs do storage:', savedParams);
+    return savedParams;
   };
+  
+  const utmParams = getEffectiveUtmParams();
 
   useEffect(() => {
-    if (isOpen && step === "select") {
-      trackEvent("InitiateCheckout", {
-        content_name: recipientName,
-        content_category: "donation_vakinha2",
+    if (!isOpen) {
+      setStep("select");
+      setPixData(null);
+      setSelectedAmount(null);
+      setCustomAmount("0,00");
+      setSelectedBoosts([]);
+    } else {
+      trackEvent('InitiateCheckout', {
+        content_name: 'Donation Popup Vakinha2',
+        currency: 'BRL',
       });
     }
-  }, [isOpen, step]);
-
-  if (!isOpen) return null;
+  }, [isOpen, trackEvent]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
+      minimumFractionDigits: 2,
     }).format(value);
   };
 
   const parseCustomAmount = (value: string): number => {
-    const cleaned = value.replace(/[^\d,]/g, "").replace(",", ".");
+    const cleaned = value.replace(/[^\d,]/g, '').replace(',', '.');
     return parseFloat(cleaned) || 0;
   };
 
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d]/g, "");
-    if (value) {
-      const numValue = parseInt(value, 10) / 100;
-      value = numValue.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
-    setCustomAmount(value);
+    let value = e.target.value.replace(/[^\d]/g, '');
+    if (value.length === 0) value = '0';
+    const numValue = parseInt(value, 10);
+    const formatted = (numValue / 100).toFixed(2).replace('.', ',');
+    setCustomAmount(formatted);
     setSelectedAmount(null);
   };
 
   const handleSelectAmount = (amount: number) => {
     setSelectedAmount(amount);
-    setCustomAmount("");
+    setCustomAmount("0,00");
   };
 
   const toggleBoost = (boostId: string) => {
-    setSelectedBoosts(prev =>
-      prev.includes(boostId)
+    setSelectedBoosts(prev => 
+      prev.includes(boostId) 
         ? prev.filter(id => id !== boostId)
         : [...prev, boostId]
     );
   };
 
-  const getBoostsTotal = () => {
-    return selectedBoosts.reduce((total, boostId) => {
-      const boost = BOOST_OPTIONS.find(b => b.id === boostId);
-      return total + (boost?.price || 0);
-    }, 0);
-  };
-
-  const getFinalAmount = () => {
+  const calculateTotal = () => {
     const baseAmount = selectedAmount || parseCustomAmount(customAmount);
-    return baseAmount + getBoostsTotal();
+    const boostTotal = selectedBoosts.reduce((sum, boostId) => {
+      const boost = BOOST_OPTIONS.find(b => b.id === boostId);
+      return sum + (boost?.price || 0);
+    }, 0);
+    return baseAmount + boostTotal;
   };
 
-  const handleContinue = () => {
-    const amount = getFinalAmount();
-    if (amount < 1) {
-      toast.error("Selecione um valor mínimo de R$ 1,00");
-      return;
-    }
-
-    // Se não selecionou nenhum boost, mostrar upsell
-    if (selectedBoosts.length === 0) {
-      setStep("upsell");
-    } else {
-      generatePix();
-    }
+  const getContributionAmount = () => {
+    return selectedAmount || parseCustomAmount(customAmount);
   };
 
-  const handleSkipUpsell = () => {
-    generatePix();
-  };
-
-  const handleAcceptUpsell = (boostId: string) => {
-    setSelectedBoosts([boostId]);
-    generatePix();
-  };
-
-  const generatePix = async () => {
-    if (isPreview) {
-      setStep("pix");
-      setPixData({
-        qrCode: "preview-qr-code",
-        pixCode: "00020126580014br.gov.bcb.pix0136preview-pix-code",
-        transactionId: "preview-transaction",
-        expirationMinutes: 15,
+  const handleContributeClick = () => {
+    const baseAmount = selectedAmount || parseCustomAmount(customAmount);
+    if (baseAmount < 10) {
+      toast({
+        title: "Valor mínimo",
+        description: "O valor mínimo para contribuição é R$ 10,00",
+        variant: "destructive",
+        duration: 2000,
       });
       return;
     }
 
+    // Se não selecionou nenhum boost, mostra upsell
+    if (selectedBoosts.length === 0) {
+      setStep("upsell");
+      return;
+    }
+
+    // Se já tem boost, vai direto pro PIX
+    handleGeneratePix();
+  };
+
+  const handleGeneratePix = async () => {
+    const total = calculateTotal();
+    
+    // Preview mode: fake PIX data
+    if (isPreview) {
+      setStep("pix");
+      setPixData({
+        code: "00020126580014br.gov.bcb.pix0136preview-pix-code-vakinha2",
+        qrCodeUrl: undefined,
+        transactionId: "preview-transaction-vakinha2",
+      });
+      return;
+    }
+    
     setStep("loading");
 
     try {
-      const amount = getFinalAmount();
-      const effectiveUtmParams = getEffectiveUtmParams();
+      // Get device fingerprint for anti-abuse
       const fingerprint = await getFingerprint();
-
-      const { data, error } = await supabase.functions.invoke("generate-pix", {
+      
+      const { data, error } = await supabase.functions.invoke('generate-pix', {
         body: {
-          amount,
-          userId,
-          productName: recipientName,
-          popupModel: "vakinha2",
-          utmData: effectiveUtmParams,
+          amount: total,
+          utmParams: utmParams,
+          userId: userId,
+          popupModel: 'vakinha2',
           fingerprint,
         },
       });
 
-      if (error) throw error;
-
-      if (data.blocked) {
-        toast.error(data.message || "Geração de PIX bloqueada temporariamente");
+      if (error) {
+        console.error('Error generating PIX:', error);
+        toast({
+          title: "Erro ao gerar PIX",
+          description: "Tente novamente em alguns instantes.",
+          variant: "destructive",
+        });
         setStep("select");
         return;
       }
 
+      // Check for rate limit error
+      if (data?.error === 'RATE_LIMIT') {
+        toast({
+          title: "Limite atingido",
+          description: data.message || "Você atingiu o limite de PIX. Tente novamente mais tarde.",
+          variant: "destructive",
+          duration: 6000,
+        });
+        setStep("select");
+        return;
+      }
+
+      trackEvent('PixGenerated', {
+        value: total,
+        currency: 'BRL',
+        content_name: 'Donation Vakinha2',
+      }, {
+        external_id: data.transactionId,
+        country: 'br',
+      });
+
       setPixData({
-        qrCode: data.qrCode,
-        pixCode: data.pixCode,
+        code: data.pixCode,
+        qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
-        expirationMinutes: data.expirationMinutes || 15,
       });
       setStep("pix");
-    } catch (error) {
-      console.error("Error generating PIX:", error);
-      toast.error("Erro ao gerar PIX. Tente novamente.");
+    } catch (err) {
+      console.error('Error:', err);
+      toast({
+        title: "Erro ao gerar PIX",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
       setStep("select");
     }
   };
 
-  const handlePaymentConfirmed = () => {
-    toast.success("Pagamento confirmado! Obrigado pelo apoio! 🎉");
-    onClose();
+  const handleUpsellAccept = (boostId: string) => {
+    setSelectedBoosts([boostId]);
+    handleGeneratePix();
   };
 
-  const handlePaymentExpired = () => {
-    setStep("select");
-    setPixData(null);
+  const handleUpsellDecline = () => {
+    handleGeneratePix();
   };
 
-  const baseAmount = selectedAmount || parseCustomAmount(customAmount);
-  const isValidAmount = baseAmount >= 1;
+  if (!isOpen) return null;
 
-  // Step: Select
-  if (step === "select") {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div className="relative w-full max-w-lg max-h-[95vh] overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-slate-700/50">
-          {showCloseButton && (
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 transition-colors"
-            >
-              <X className="w-5 h-5 text-slate-300" />
-            </button>
-          )}
-
-          <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="text-center space-y-3">
-              <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 p-0.5 shadow-lg shadow-emerald-500/30">
-                <div className="w-full h-full rounded-2xl bg-slate-900 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={vakinhaLogo}
-                    alt="Vakinha"
-                    className="w-14 h-14 object-contain"
-                  />
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">
-                  Apoie {recipientName}
-                </h2>
-                <p className="text-slate-400 text-sm mt-1">
-                  Escolha o valor da sua contribuição
-                </p>
-              </div>
+  return (
+    <div className={isPreview ? "bg-white overflow-auto" : "fixed inset-0 z-50 bg-white overflow-auto"}>
+      {/* Close Button */}
+      {showCloseButton && (
+        <button
+          onClick={onClose}
+          className="fixed top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          aria-label="Fechar"
+        >
+          <X className="w-5 h-5 text-gray-600" />
+        </button>
+      )}
+      
+      <div className="w-full max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-10">
+        {step === "select" && (
+          <div className="space-y-5 sm:space-y-6">
+            {/* Logo */}
+            <div className="flex items-center">
+              <img src={vakinhaLogo} alt="Vakinha" className="h-10 sm:h-14" />
             </div>
 
-            {/* Amount Grid */}
-            <div className="grid grid-cols-4 gap-2">
-              {DONATION_AMOUNTS.map(({ amount, badge }) => (
-                <button
-                  key={amount}
-                  onClick={() => handleSelectAmount(amount)}
-                  className={`relative py-3 px-2 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                    selectedAmount === amount
-                      ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 scale-105"
-                      : "bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700/50"
-                  }`}
-                >
-                  {badge && (
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-[10px] font-bold text-white rounded-full whitespace-nowrap">
-                      {badge}
-                    </span>
-                  )}
-                  R$ {amount}
-                </button>
-              ))}
-            </div>
+            {/* Contribution Value Section */}
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3">Valor da contribuição</h2>
+              
+              {/* Custom Amount Input */}
+              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden mb-3 sm:mb-4">
+                <span className="px-3 sm:px-4 py-3 bg-white text-gray-500 font-medium border-r border-gray-300 text-sm sm:text-base">
+                  R$
+                </span>
+                <Input
+                  type="text"
+                  value={customAmount}
+                  onChange={handleCustomAmountChange}
+                  className="border-0 text-base sm:text-lg font-medium h-11 sm:h-12 focus-visible:ring-0 bg-white text-gray-900"
+                  placeholder="0,00"
+                />
+              </div>
 
-            {/* Custom Amount */}
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                R$
-              </span>
-              <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="Outro valor"
-                value={customAmount}
-                onChange={handleCustomAmountChange}
-                className="pl-12 h-12 bg-slate-800/80 border-slate-700/50 text-white placeholder:text-slate-500 rounded-xl text-center text-lg font-semibold focus:ring-2 focus:ring-emerald-500/50"
-              />
+              {/* Amount Grid */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {DONATION_AMOUNTS.map((item) => (
+                  <button
+                    key={item.amount}
+                    onClick={() => handleSelectAmount(item.amount)}
+                    className={cn(
+                      "relative py-3 px-3 sm:py-3.5 sm:px-4 rounded-lg border transition-all font-medium text-sm sm:text-base",
+                      selectedAmount === item.amount
+                        ? "border-[#00A651] bg-[#00A651]/5 text-[#00A651]"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-[#00A651]/50"
+                    )}
+                  >
+                    {item.badge && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00A651] text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+                        {item.badge}
+                      </span>
+                    )}
+                    {formatCurrency(item.amount)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Payment Method */}
-            <div className="flex items-center justify-center gap-2 py-2">
-              <div className="px-3 py-1.5 bg-emerald-500/20 rounded-lg flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-emerald-400 text-sm font-medium">
-                  Pagamento via PIX
-                </span>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3">Forma de pagamento</h2>
+              <div className="inline-flex items-center gap-1.5 bg-[#E8F5F0] text-[#00A651] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg">
+                <img src={pixLogo} alt="PIX" className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="font-semibold text-xs sm:text-sm">PIX</span>
               </div>
             </div>
 
-            {/* Boost Options */}
-            <div className="space-y-2">
-              <p className="text-slate-400 text-sm font-medium text-center">
-                ✨ Turbine sua contribuição
+            {/* Boost Section */}
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-1">Turbine sua doação</h2>
+              <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">
+                Ajude MUITO MAIS turbinando sua doação 💚
               </p>
-              <div className="space-y-2">
+              
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {BOOST_OPTIONS.map((boost) => {
                   const Icon = boost.icon;
                   const isSelected = selectedBoosts.includes(boost.id);
@@ -357,31 +343,25 @@ export const DonationPopupVakinha2 = ({
                     <button
                       key={boost.id}
                       onClick={() => toggleBoost(boost.id)}
-                      className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all duration-200 ${
-                        isSelected
-                          ? "bg-gradient-to-r " + boost.color + " shadow-lg scale-[1.02]"
-                          : "bg-slate-800/60 border border-slate-700/50 hover:border-slate-600"
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        isSelected ? "bg-white/20" : "bg-gradient-to-br " + boost.color
-                      }`}>
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-white font-medium text-sm">{boost.label}</p>
-                        <p className="text-slate-300 text-xs">{boost.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-white font-bold text-sm">
-                          +{formatCurrency(boost.price)}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white" />
-                        </div>
+                      className={cn(
+                        "flex flex-col items-center p-2 sm:p-4 rounded-lg transition-all border border-dashed",
+                        isSelected 
+                          ? "border-[#00A651] bg-[#00A651]/5" 
+                          : "border-gray-300 hover:border-gray-400"
                       )}
+                    >
+                      <div className={cn(
+                        "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2",
+                        boost.bgColor
+                      )}>
+                        <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", boost.color)} />
+                      </div>
+                      <span className="text-[10px] sm:text-sm font-medium text-center text-gray-800 leading-tight">
+                        {boost.label}
+                      </span>
+                      <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">
+                        {formatCurrency(boost.price)}
+                      </span>
                     </button>
                   );
                 })}
@@ -389,185 +369,147 @@ export const DonationPopupVakinha2 = ({
             </div>
 
             {/* Summary */}
-            {isValidAmount && (
-              <div className="bg-slate-800/60 rounded-xl p-4 space-y-2 border border-slate-700/50">
-                <div className="flex justify-between text-slate-400 text-sm">
-                  <span>Contribuição</span>
-                  <span>{formatCurrency(baseAmount)}</span>
-                </div>
-                {getBoostsTotal() > 0 && (
-                  <div className="flex justify-between text-slate-400 text-sm">
-                    <span>Turbos selecionados</span>
-                    <span>+{formatCurrency(getBoostsTotal())}</span>
-                  </div>
-                )}
-                <div className="border-t border-slate-700/50 pt-2 flex justify-between">
-                  <span className="text-white font-semibold">Total</span>
-                  <span className="text-emerald-400 font-bold text-lg">
-                    {formatCurrency(getFinalAmount())}
-                  </span>
-                </div>
+            <div className="space-y-1.5 sm:space-y-2 text-sm sm:text-base">
+              <div className="flex justify-between text-gray-700">
+                <span>Contribuição:</span>
+                <span>{formatCurrency(getContributionAmount())}</span>
               </div>
-            )}
+              <div className="flex justify-between text-gray-900 font-semibold">
+                <span>Total:</span>
+                <span>{formatCurrency(calculateTotal())}</span>
+              </div>
+            </div>
 
             {/* CTA Button */}
-            <Button
-              onClick={handleContinue}
-              disabled={!isValidAmount}
-              className="w-full h-14 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            <Button 
+              onClick={handleContributeClick}
+              className="w-full bg-[#00A651] hover:bg-[#008a44] text-white font-bold text-base sm:text-lg py-6 sm:py-7 rounded-lg"
             >
-              Contribuir agora
+              CONTRIBUIR
             </Button>
 
-            {/* Social Proof */}
+            {/* Social Proof - Supporters */}
             <div className="flex items-center justify-center gap-3">
               <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
+                {[
+                  "https://randomuser.me/api/portraits/women/1.jpg",
+                  "https://randomuser.me/api/portraits/men/2.jpg",
+                  "https://randomuser.me/api/portraits/women/3.jpg",
+                  "https://randomuser.me/api/portraits/men/4.jpg",
+                  "https://randomuser.me/api/portraits/women/5.jpg",
+                  "https://randomuser.me/api/portraits/men/6.jpg",
+                ].map((src, i) => (
+                  <img
                     key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 border-2 border-slate-900 flex items-center justify-center"
-                  >
-                    <Users className="w-4 h-4 text-slate-400" />
-                  </div>
+                    src={src}
+                    alt=""
+                    className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                  />
                 ))}
               </div>
-              <p className="text-slate-400 text-sm">
-                <span className="text-emerald-400 font-semibold">847</span> pessoas já apoiaram
+              <span className="text-sm text-gray-600">
+                <span className="font-semibold text-gray-900">+1.542</span> apoiadores
+              </span>
+            </div>
+
+            {/* Footer */}
+              <p className="text-[10px] sm:text-xs text-gray-600">
+              Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os{" "}
+              <span className="font-bold text-gray-900">Termos, Taxas e Prazos</span>.
+            </p>
+
+            {/* Security Badge */}
+            <div className="bg-[#E8F5E9] rounded-2xl p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-4">
+              {/* Badge pill */}
+              <div className="inline-flex items-center bg-[#1a3a2a] rounded-full pl-0.5 pr-2 py-0.5 sm:pl-1 sm:pr-3 sm:py-1 gap-1.5 sm:gap-2 shrink-0">
+                {/* Green circle with lock icon */}
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-400 border-2 border-[#00A651] flex items-center justify-center">
+                  <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-[#00A651]" />
+                </div>
+                {/* Badge text */}
+                <div className="text-white text-[8px] sm:text-[10px] font-bold leading-tight">
+                  <div>SELO DE</div>
+                  <div>SEGURANÇA</div>
+                </div>
+              </div>
+              {/* Description text */}
+              <p className="text-[10px] sm:text-sm text-gray-700">
+                Garantimos uma <span className="font-bold text-gray-900">experiência segura</span> para todos os nossos doadores.
               </p>
             </div>
 
-            {/* Security Badge */}
-            <div className="flex items-center justify-center gap-2 text-slate-500 text-xs">
-              <Shield className="w-4 h-4" />
-              <span>Pagamento 100% seguro e criptografado</span>
-            </div>
+            {/* Additional Info */}
+            <p className="text-[10px] sm:text-xs text-gray-500 leading-relaxed">
+              Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação.
+            </p>
           </div>
-        </div>
-      </div>
-    );
-  }
+        )}
 
-  // Step: Upsell
-  if (step === "upsell") {
-    const featuredBoost = BOOST_OPTIONS[1]; // Gift option
-    const Icon = featuredBoost.icon;
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div className="relative w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-pink-500/20 to-rose-500/20 blur-3xl" />
-          
-          <div className="relative p-6 space-y-6">
-            {/* Header */}
-            <div className="text-center space-y-4">
-              <div className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${featuredBoost.color} p-4 shadow-lg`}>
-                <Icon className="w-full h-full text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">
-                  Que tal turbinar?
-                </h2>
-                <p className="text-slate-400 text-sm mt-2">
-                  Adicione um toque especial à sua contribuição
-                </p>
-              </div>
+        {step === "upsell" && (
+          <div className="space-y-5 sm:space-y-6">
+            {/* Logo */}
+            <div className="flex items-center">
+              <img src={vakinhaLogo} alt="Vakinha" className="h-10 sm:h-14" />
             </div>
 
-            {/* Featured Boost */}
-            <div className={`p-4 rounded-2xl bg-gradient-to-br ${featuredBoost.color} shadow-lg`}>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Icon className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-white font-bold text-lg">{featuredBoost.label}</p>
-                  <p className="text-white/80 text-sm">{featuredBoost.description}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white/60 text-xs line-through">R$ 39,99</p>
-                  <p className="text-white font-bold text-xl">
-                    {formatCurrency(featuredBoost.price)}
-                  </p>
-                </div>
+            <div className="bg-[#E8F5E9] rounded-2xl p-4 sm:p-6 text-center">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
+                Turbine sua doação! 💚
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base mb-4">
+                Você pode ajudar MUITO MAIS adicionando um dos itens abaixo:
+              </p>
+              
+              <div className="space-y-3 mb-5">
+                {BOOST_OPTIONS.map((boost) => {
+                  const Icon = boost.icon;
+                  return (
+                    <button
+                      key={boost.id}
+                      onClick={() => handleUpsellAccept(boost.id)}
+                      className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-white border-2 border-[#00A651]/30 hover:border-[#00A651] transition-all"
+                    >
+                      <div className={cn(
+                        "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0",
+                        boost.bgColor
+                      )}>
+                        <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", boost.color)} />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="font-semibold text-gray-900 text-sm sm:text-base">{boost.label}</p>
+                        <p className="text-gray-500 text-xs sm:text-sm">+{formatCurrency(boost.price)}</p>
+                      </div>
+                      <div className="text-[#00A651] font-bold text-sm sm:text-base">
+                        Adicionar
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-            </div>
 
-            {/* New Total */}
-            <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400">Novo total</span>
-                <span className="text-emerald-400 font-bold text-xl">
-                  {formatCurrency(getFinalAmount() + featuredBoost.price)}
-                </span>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="space-y-3">
-              <Button
-                onClick={() => handleAcceptUpsell(featuredBoost.id)}
-                className={`w-full h-14 bg-gradient-to-r ${featuredBoost.color} hover:opacity-90 text-white font-bold text-lg rounded-xl shadow-lg transition-all duration-200`}
+              <button 
+                onClick={handleUpsellDecline}
+                className="text-gray-500 text-sm underline hover:text-gray-700"
               >
-                Sim, quero turbinar! 🎁
-              </Button>
-              <button
-                onClick={handleSkipUpsell}
-                className="w-full py-3 text-slate-400 hover:text-slate-300 text-sm transition-colors"
-              >
-                Não, continuar sem turbo
+                Não, obrigado. Continuar sem turbinar.
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    );
-  }
+        )}
 
-  // Step: Loading
-  if (step === "loading") {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div className="w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-slate-700/50 p-6">
+        {step === "loading" && (
           <PixLoadingSkeleton />
-        </div>
+        )}
+
+        {step === "pix" && pixData && (
+          <PixQRCode
+            pixCode={pixData.code}
+            qrCodeUrl={pixData.qrCodeUrl}
+            transactionId={pixData.transactionId}
+            amount={calculateTotal()}
+          />
+        )}
       </div>
-    );
-  }
-
-  // Step: PIX
-  if (step === "pix" && pixData) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div className="relative w-full max-w-md max-h-[95vh] overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-slate-700/50">
-          {showCloseButton && (
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 transition-colors"
-            >
-              <X className="w-5 h-5 text-slate-300" />
-            </button>
-          )}
-
-          <div className="p-6">
-            <PixQRCode
-              amount={getFinalAmount()}
-              pixCode={pixData.pixCode}
-              qrCodeUrl={pixData.qrCode}
-              transactionId={pixData.transactionId}
-              expirationMinutes={pixData.expirationMinutes}
-              onRegenerate={() => {
-                setStep("select");
-                setPixData(null);
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 };
-
-export default DonationPopupVakinha2;
