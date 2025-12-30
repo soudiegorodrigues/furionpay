@@ -144,7 +144,8 @@ export function CheckoutTemplatePadrao({
       {config?.show_video && config?.video_url && (
         <div className="container max-w-4xl mx-auto px-4 pt-4 pb-4">
           <CustomVideoPlayer 
-            videoUrl={config.video_url} 
+            videoUrl={config.video_url}
+            posterUrl={product?.image_url || undefined}
             className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
           />
         </div>
