@@ -10,24 +10,39 @@
     <meta name="author" content="Doar com Amor" />
     <meta name="theme-color" content="#dc2626" />
 
-    <!-- Preconnect to critical domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Critical CSS inline for instant FCP -->
+    <style>
+      *,*::before,*::after{box-sizing:border-box}
+      body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;-webkit-font-smoothing:antialiased}
+      #root{min-height:100vh}
+      .ck-sk{min-height:100vh;background:#f8fafc}
+      .ck-sk-h{height:48px;background:#fff;border-bottom:1px solid #e5e7eb}
+      .ck-sk-c{max-width:64rem;margin:0 auto;padding:1rem}
+      .ck-sk-g{display:grid;gap:1rem}
+      @media(min-width:768px){.ck-sk-g{grid-template-columns:3fr 2fr}}
+      .ck-sk-b{background:#fff;border-radius:8px;padding:1.5rem}
+      .ck-sk-p{animation:sk-p 1.5s ease-in-out infinite}
+      .ck-sk-l{height:24px;background:#e5e7eb;border-radius:4px}
+      .ck-sk-i{height:48px;background:#f3f4f6;border-radius:4px;margin-top:12px}
+      .ck-sk-btn{height:40px;background:#bbf7d0;border-radius:4px;margin-top:12px}
+      @keyframes sk-p{0%,100%{opacity:1}50%{opacity:.5}}
+    </style>
+
+    <!-- Preconnect to critical domains - order matters! -->
     <link rel="preconnect" href="https://qtlhwjotfkyyqzgxlmkg.supabase.co" crossorigin />
     <link rel="dns-prefetch" href="https://qtlhwjotfkyyqzgxlmkg.supabase.co" />
-    
-    <!-- Preconnect to common image/video CDNs for faster checkout -->
     <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
     <link rel="dns-prefetch" href="https://storage.googleapis.com" />
-    <link rel="preconnect" href="https://www.youtube.com" />
+    
+    <!-- Font preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Video CDNs preconnect (lazy) -->
     <link rel="dns-prefetch" href="https://www.youtube.com" />
-    <link rel="preconnect" href="https://i.ytimg.com" crossorigin />
     <link rel="dns-prefetch" href="https://i.ytimg.com" />
     
-    <!-- Preload PIX icon for checkout pages -->
-    <link rel="preload" href="/pix-icon.png" as="image" type="image/png" />
-    
-    <!-- Load font with display=swap and media=print for non-blocking -->
+    <!-- Load font with display=swap - non-blocking -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -38,50 +53,42 @@
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     </noscript>
 
-    
-    
+    <!-- OG/Twitter meta -->
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/palut3B1z0dXkwTiJTfTIky28E02/social-images/social-1765240878567-Gold and White Real Estate Agency Logo Template.png">
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/palut3B1z0dXkwTiJTfTIky28E02/social-images/social-1765240878567-Gold and White Real Estate Agency Logo Template.png">
-    
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  <meta property="og:title" content="checkout Seguro">
-  <meta name="twitter:title" content="checkout Seguro">
-  <meta property="og:description" content="Pagamento online">
-  <meta name="twitter:description" content="Pagamento online">
-</head>
-
+    <meta property="og:title" content="checkout Seguro">
+    <meta name="twitter:title" content="checkout Seguro">
+    <meta property="og:description" content="Pagamento online">
+    <meta name="twitter:description" content="Pagamento online">
+  </head>
   <body>
-    <div id="root"></div>
+    <!-- Inline skeleton for instant visual (before JS loads) -->
+    <div id="root">
+      <div class="ck-sk">
+        <div class="ck-sk-h"></div>
+        <div class="ck-sk-c">
+          <div class="ck-sk-g">
+            <div>
+              <div class="ck-sk-b ck-sk-p">
+                <div class="ck-sk-l" style="width:33%"></div>
+                <div class="ck-sk-i"></div>
+                <div class="ck-sk-i"></div>
+              </div>
+            </div>
+            <div>
+              <div class="ck-sk-b ck-sk-p">
+                <div class="ck-sk-l" style="width:50%"></div>
+                <div class="ck-sk-i" style="height:64px"></div>
+                <div class="ck-sk-btn"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

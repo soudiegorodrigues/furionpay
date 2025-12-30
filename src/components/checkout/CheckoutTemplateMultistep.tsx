@@ -171,7 +171,14 @@ export function CheckoutTemplateMultistep({
           <CardContent className="p-4">
             <div className="flex gap-4 items-center">
               {product?.image_url ? (
-                <img src={product.image_url} alt={product.name} className="w-20 h-20 object-cover rounded-xl shadow-md" />
+                <img 
+                  src={product.image_url} 
+                  alt={product.name} 
+                  className="w-20 h-20 object-cover rounded-xl shadow-md"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                />
               ) : (
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl flex items-center justify-center">
                   <ShoppingCart className="h-8 w-8 text-purple-400" />

@@ -87,11 +87,6 @@ export default function PublicCheckout() {
 
   // Capture and save UTM params IMMEDIATELY on component mount
   useEffect(() => {
-    console.log('[UTM DEBUG] ========= CHECKOUT MOUNT =========');
-    console.log('[UTM DEBUG] URL completa:', window.location.href);
-    console.log('[UTM DEBUG] Search params:', window.location.search);
-    console.log('[UTM DEBUG] Referrer:', document.referrer);
-    
     // PRIORIDADE: Verificar fbclid diretamente na URL
     const urlParams = new URLSearchParams(window.location.search);
     const fbclid = urlParams.get("fbclid");
@@ -106,22 +101,14 @@ export default function PublicCheckout() {
         traffic_type: "ad" as const,
       };
       saveUTMParams(facebookUtms);
-      console.log('[UTM DEBUG] fbclid DETECTADO e SALVO:', facebookUtms);
     } else {
       // Sem fbclid - usar lógica normal
       const currentUtms = captureUTMParams();
-      console.log('[UTM DEBUG] UTMs capturados:', currentUtms);
       
       if (currentUtms.utm_source && currentUtms.utm_source !== "direct") {
         saveUTMParams(currentUtms);
-        console.log('[UTM DEBUG] UTMs salvos (source relevante)');
-      } else {
-        const savedUtms = getUTMParams();
-        console.log('[UTM DEBUG] UTMs salvos recuperados:', savedUtms);
       }
     }
-    
-    console.log('[UTM DEBUG] ====================================');
   }, []);
 
   // Fetch ALL checkout data using secure RPC function (no user_id exposure)
@@ -289,11 +276,8 @@ export default function PublicCheckout() {
       
       // Check if this pixel is already initialized
       if (window.fbq && window.fbq.getState && window.fbq.getState().pixels?.some((p: any) => p.id === pixelId)) {
-        console.log('[PIXEL] Pixel already initialized:', pixelId);
         return;
       }
-      
-      console.log('[PIXEL] Initializing pixel from checkout config:', pixelId);
       
       // Create fbq function if it doesn't exist
       if (!window.fbq) {
@@ -321,7 +305,6 @@ export default function PublicCheckout() {
       // Initialize this pixel
       window.fbq('init', pixelId);
       window.fbq('track', 'PageView');
-      console.log('[PIXEL] ✅ Pixel initialized and PageView tracked:', pixelId);
     }
   }, [pixelConfig]);
 
