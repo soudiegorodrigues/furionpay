@@ -55,19 +55,22 @@ export function ProductNavigation({ activeSection, setActiveSection }: ProductNa
               className={cn(
                 "w-full flex items-start gap-3 p-3 rounded-lg text-left transition-colors",
                 activeSection === item.id
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
+                  ? "bg-primary/10 border-l-4 border-primary"
+                  : "hover:bg-muted border-l-4 border-transparent"
               )}
             >
               <item.icon className={cn(
                 "h-5 w-5 mt-0.5 shrink-0",
-                activeSection === item.id ? "text-primary-foreground" : "text-muted-foreground"
+                activeSection === item.id ? "text-primary" : "text-muted-foreground"
               )} />
               <div>
-                <p className="font-medium text-sm">{item.label}</p>
+                <p className={cn(
+                  "font-medium text-sm",
+                  activeSection === item.id && "text-primary"
+                )}>{item.label}</p>
                 <p className={cn(
                   "text-xs",
-                  activeSection === item.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                  activeSection === item.id ? "text-primary/70" : "text-muted-foreground"
                 )}>
                   {item.description}
                 </p>
