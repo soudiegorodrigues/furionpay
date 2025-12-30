@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Heart, Sprout, ShoppingBasket, Lock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 
@@ -27,12 +26,14 @@ interface DonationPopupVakinha2Props {
 const DONATION_AMOUNTS: { amount: number; badge?: string }[] = [
   { amount: 30 },
   { amount: 50 },
-  { amount: 75 },
   { amount: 100, badge: "Doe com Amor 💚" },
-  { amount: 200 },
+  { amount: 300 },
   { amount: 500 },
-  { amount: 750 },
   { amount: 1000 },
+  { amount: 2500 },
+  { amount: 5000 },
+  { amount: 7000 },
+  { amount: 10000 },
 ];
 
 const BOOST_OPTIONS = [
@@ -52,7 +53,6 @@ export const DonationPopupVakinha2 = ({
   isPreview = false,
   utmParams: propUtmParams,
 }: DonationPopupVakinha2Props) => {
-  const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedBoosts, setSelectedBoosts] = useState<string[]>([]);
   const [step, setStep] = useState<Step>("select");
@@ -86,7 +86,6 @@ export const DonationPopupVakinha2 = ({
       setStep("select");
       setPixData(null);
       setSelectedAmount(null);
-      setCustomAmount("0,00");
       setSelectedBoosts([]);
     } else {
       trackEvent('InitiateCheckout', {
@@ -104,23 +103,8 @@ export const DonationPopupVakinha2 = ({
     }).format(value);
   };
 
-  const parseCustomAmount = (value: string): number => {
-    const cleaned = value.replace(/[^\d,]/g, '').replace(',', '.');
-    return parseFloat(cleaned) || 0;
-  };
-
-  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d]/g, '');
-    if (value.length === 0) value = '0';
-    const numValue = parseInt(value, 10);
-    const formatted = (numValue / 100).toFixed(2).replace('.', ',');
-    setCustomAmount(formatted);
-    setSelectedAmount(null);
-  };
-
   const handleSelectAmount = (amount: number) => {
     setSelectedAmount(amount);
-    setCustomAmount("0,00");
   };
 
   const toggleBoost = (boostId: string) => {
@@ -132,7 +116,7 @@ export const DonationPopupVakinha2 = ({
   };
 
   const calculateTotal = () => {
-    const baseAmount = selectedAmount || parseCustomAmount(customAmount);
+    const baseAmount = selectedAmount || 0;
     const boostTotal = selectedBoosts.reduce((sum, boostId) => {
       const boost = BOOST_OPTIONS.find(b => b.id === boostId);
       return sum + (boost?.price || 0);
@@ -141,15 +125,14 @@ export const DonationPopupVakinha2 = ({
   };
 
   const getContributionAmount = () => {
-    return selectedAmount || parseCustomAmount(customAmount);
+    return selectedAmount || 0;
   };
 
   const handleContributeClick = () => {
-    const baseAmount = selectedAmount || parseCustomAmount(customAmount);
-    if (baseAmount < 10) {
+    if (!selectedAmount) {
       toast({
-        title: "Valor mínimo",
-        description: "O valor mínimo para contribuição é R$ 10,00",
+        title: "Selecione um valor",
+        description: "Por favor, selecione um valor para contribuir",
         variant: "destructive",
         duration: 2000,
       });
@@ -281,20 +264,6 @@ export const DonationPopupVakinha2 = ({
             <div>
               <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3">Valor da contribuição</h2>
               
-              {/* Custom Amount Input */}
-              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden mb-3 sm:mb-4">
-                <span className="px-3 sm:px-4 py-3 bg-white text-gray-500 font-medium border-r border-gray-300 text-sm sm:text-base">
-                  R$
-                </span>
-                <Input
-                  type="text"
-                  value={customAmount}
-                  onChange={handleCustomAmountChange}
-                  className="border-0 text-base sm:text-lg font-medium h-11 sm:h-12 focus-visible:ring-0 bg-white text-gray-900"
-                  placeholder="0,00"
-                />
-              </div>
-
               {/* Amount Grid */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {DONATION_AMOUNTS.map((item) => (
