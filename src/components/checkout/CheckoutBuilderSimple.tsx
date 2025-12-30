@@ -1106,6 +1106,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 previewMode={previewMode}
                 testimonials={testimonials}
                 deliveryDescription={customizations.deliveryDescription}
+                requiredFields={requiredFields}
               />
             </ScrollArea>
           </div>
@@ -1134,6 +1135,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   bannerImageUrl={bannerImageUrl}
                   previewMode="desktop"
                   deliveryDescription={customizations.deliveryDescription}
+                  requiredFields={requiredFields}
                 />
               )}
             </div>

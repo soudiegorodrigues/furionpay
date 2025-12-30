@@ -35,6 +35,13 @@ interface CheckoutPreviewMiniProps {
   previewMode?: "desktop" | "mobile";
   testimonials?: Testimonial[];
   deliveryDescription?: string;
+  requiredFields?: {
+    address: boolean;
+    phone: boolean;
+    birthdate: boolean;
+    cpf: boolean;
+    emailConfirmation: boolean;
+  };
 }
 
 export function CheckoutPreviewMini({
@@ -50,6 +57,13 @@ export function CheckoutPreviewMini({
   previewMode = "desktop",
   testimonials = [],
   deliveryDescription = "Acesso imediato",
+  requiredFields = {
+    address: false,
+    phone: false,
+    birthdate: false,
+    cpf: false,
+    emailConfirmation: false,
+  },
 }: CheckoutPreviewMiniProps) {
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -394,9 +408,49 @@ export function CheckoutPreviewMini({
           <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
             seu@email.com
           </div>
-          <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
-            (00) 00000-0000
-          </div>
+          {requiredFields.emailConfirmation && (
+            <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+              Confirme seu email
+            </div>
+          )}
+          {requiredFields.phone && (
+            <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+              (00) 00000-0000
+            </div>
+          )}
+          {requiredFields.cpf && (
+            <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+              000.000.000-00
+            </div>
+          )}
+          {requiredFields.birthdate && (
+            <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+              Data de nascimento
+            </div>
+          )}
+          {requiredFields.address && (
+            <>
+              <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+                CEP
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2 h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+                  Endereço
+                </div>
+                <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+                  Nº
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+                  Cidade
+                </div>
+                <div className="h-10 bg-gray-50 rounded border px-3 flex items-center text-sm text-gray-400">
+                  Estado
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
