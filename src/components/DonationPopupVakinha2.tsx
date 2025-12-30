@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { Heart, Sprout, ShoppingBasket, Lock, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Heart, Sprout, ShoppingBasket, Lock, X, Copy, Check, QrCode, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PixQRCode } from "./PixQRCode";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
+import { QRCodeSVG } from "qrcode.react";
 import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
 import vakinhaBanner from "@/assets/vakinha-banner.jpg";
@@ -348,7 +348,263 @@ export const DonationPopupVakinha2 = ({
 
         {step === "loading" && <PixLoadingSkeleton />}
 
-        {step === "pix" && pixData && <PixQRCode pixCode={pixData.code} qrCodeUrl={pixData.qrCodeUrl} transactionId={pixData.transactionId} amount={calculateTotal()} />}
+        {step === "pix" && pixData && <PixScreenVakinha2 
+          pixCode={pixData.code} 
+          transactionId={pixData.transactionId} 
+          amount={calculateTotal()} 
+          selectedAmount={selectedAmount}
+          trackEvent={trackEvent}
+        />}
       </div>
     </div>;
+};
+
+// Componente customizado da tela de PIX para Vakinha2
+interface PixScreenVakinha2Props {
+  pixCode: string;
+  transactionId?: string;
+  amount: number;
+  selectedAmount: number | null;
+  trackEvent: (event: string, params?: Record<string, unknown>, userData?: Record<string, unknown>) => void;
+}
+
+const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, trackEvent }: PixScreenVakinha2Props) => {
+  const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutos
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const { toast } = useToast();
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2
+    }).format(value);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(pixCode);
+      setCopied(true);
+      toast({
+        title: "Código copiado!",
+        description: "Cole no seu app de pagamento",
+        duration: 2000
+      });
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      toast({
+        title: "Erro ao copiar",
+        description: "Tente selecionar e copiar manualmente",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Polling para verificar status do pagamento
+  useEffect(() => {
+    if (!transactionId || paymentConfirmed) return;
+
+    const checkStatus = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('check-pix-status', {
+          body: { transactionId }
+        });
+
+        if (!error && data?.status === 'paid') {
+          setPaymentConfirmed(true);
+          trackEvent('Purchase', {
+            value: amount,
+            currency: 'BRL',
+            content_name: 'Donation Vakinha2'
+          });
+          
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao verificar status:', err);
+      }
+    };
+
+    pollingRef.current = setInterval(checkStatus, 5000);
+    
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
+  }, [transactionId, paymentConfirmed, amount, trackEvent]);
+
+  // Timer de expiração
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Tela de pagamento confirmado
+  if (paymentConfirmed) {
+    return (
+      <div className="space-y-6 text-center py-8">
+        <div className="w-20 h-20 bg-[#00A651] rounded-full flex items-center justify-center mx-auto">
+          <Check className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-[#00A651]">Pagamento Confirmado!</h2>
+        <p className="text-gray-600">Obrigado por sua doação de {formatCurrency(amount)}</p>
+        <p className="text-gray-500 text-sm">Sua contribuição faz a diferença! 💚</p>
+      </div>
+    );
+  }
+
+  // Encontra o badge do valor selecionado
+  const selectedDonation = DONATION_AMOUNTS.find(d => d.amount === selectedAmount);
+
+  return (
+    <div className="space-y-0">
+      {/* Barra verde no topo */}
+      <div className="bg-[#00A651] text-white text-center py-3 px-4 rounded-t-lg -mx-3 sm:-mx-4 -mt-4 sm:-mt-10">
+        <p className="text-sm sm:text-base font-medium">
+          Parabéns por esse lindo gesto de solidariedade!
+        </p>
+      </div>
+
+      {/* Banner */}
+      <div className="pt-4 pb-3">
+        <img 
+          src={vakinhaBanner} 
+          alt="Salvando Vidas - Vakinha" 
+          className="w-full h-auto object-cover rounded-lg shadow-md" 
+        />
+      </div>
+
+      {/* Logo centralizado */}
+      <div className="flex justify-center -mt-6 mb-2 relative z-10">
+        <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-[#00A651]">
+          <span className="text-[#00A651] font-bold text-xl">V</span>
+        </div>
+      </div>
+
+      {/* Informações da doação */}
+      <div className="text-center space-y-1 pb-4">
+        <p className="text-gray-500 text-sm">Opção Selecionada</p>
+        {selectedDonation?.badge ? (
+          <p className="text-[#00A651] font-semibold">{selectedDonation.badge}</p>
+        ) : (
+          <p className="text-[#00A651] font-semibold">Doação</p>
+        )}
+        <p className="text-lg">
+          Valor total: <span className="text-[#00A651] font-bold text-xl">{formatCurrency(amount)}</span>
+        </p>
+      </div>
+
+      {/* Área do QR Code */}
+      <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+        <p className="text-center text-gray-600 text-sm">
+          Escaneie o QR Code ou copie e cole o código Pix abaixo para finalizar o pagamento.
+        </p>
+
+        {/* QR Code */}
+        <div className="flex justify-center">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <QRCodeSVG value={pixCode} size={180} level="M" />
+          </div>
+        </div>
+
+        {/* Timer */}
+        <div className="text-center">
+          <span className="text-gray-500 text-sm">Expira em </span>
+          <span className={cn(
+            "font-mono font-bold",
+            timeLeft < 60 ? "text-red-500" : "text-gray-700"
+          )}>
+            {formatTime(timeLeft)}
+          </span>
+        </div>
+
+        {/* Separador "ou" */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-gray-300"></div>
+          <span className="text-gray-400 text-sm">ou</span>
+          <div className="flex-1 h-px bg-gray-300"></div>
+        </div>
+
+        {/* Campo do código PIX */}
+        <div className="bg-white border border-gray-200 rounded-lg p-3">
+          <p className="text-xs text-gray-400 mb-1">Código Pix</p>
+          <p className="text-xs text-gray-600 break-all font-mono leading-relaxed">
+            {pixCode.slice(0, 60)}...
+          </p>
+        </div>
+
+        {/* Botão Copiar */}
+        <Button 
+          onClick={handleCopyCode}
+          className={cn(
+            "w-full py-6 text-lg font-bold rounded-lg transition-all",
+            copied 
+              ? "bg-[#00A651] hover:bg-[#008a44]" 
+              : "bg-[#00A651] hover:bg-[#008a44]"
+          )}
+        >
+          {copied ? (
+            <>
+              <Check className="w-5 h-5 mr-2" />
+              COPIADO!
+            </>
+          ) : (
+            <>
+              <Copy className="w-5 h-5 mr-2" />
+              COPIAR
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Seção "Como pagar?" */}
+      <div className="bg-[#F5F5F5] rounded-xl p-4 mt-4 space-y-3">
+        <h3 className="font-bold text-gray-800 text-center">Como pagar?</h3>
+        
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-[#00A651]/10 rounded-full flex items-center justify-center shrink-0">
+            <QrCode className="w-5 h-5 text-[#00A651]" />
+          </div>
+          <p className="text-sm text-gray-600">
+            Escaneie o QR Code ou copie e cole o código Pix em seu app bancário ou carteira digital.
+          </p>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-[#00A651]/10 rounded-full flex items-center justify-center shrink-0">
+            <Smartphone className="w-5 h-5 text-[#00A651]" />
+          </div>
+          <p className="text-sm text-gray-600">
+            Seu pagamento será aprovado em alguns instantes.
+          </p>
+        </div>
+      </div>
+
+      {/* Selo de segurança */}
+      <div className="flex items-center justify-center gap-2 mt-4 text-gray-500 text-xs">
+        <Lock className="w-4 h-4" />
+        <span>Pagamento 100% seguro</span>
+      </div>
+    </div>
+  );
 };
