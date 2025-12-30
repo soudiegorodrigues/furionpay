@@ -228,9 +228,9 @@ export default function PublicCheckout() {
       return { offer, product, config, testimonials, orderBumps };
     },
     enabled: !!offerCode,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 60000, // 60 segundos - config não muda frequentemente
     gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
-    refetchOnMount: "always", // Force refetch on every mount
+    refetchOnMount: false, // Não refetch em navegações repetidas
   });
 
   const offer = checkoutData?.offer;
