@@ -302,6 +302,9 @@ export function CheckoutTemplateAfilia({
                         src={product.image_url} 
                         alt={product.name}
                         className="w-20 h-20 object-cover rounded-lg"
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority="high"
                       />
                     ) : (
                       <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">

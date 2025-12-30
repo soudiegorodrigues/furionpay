@@ -162,6 +162,9 @@ export function getOptimizedImageUrl(src: string, options?: {
 export function trackPerformanceMetrics(): void {
   if (typeof window === 'undefined' || !('PerformanceObserver' in window)) return;
   
+  // Only track in development, skip in production to reduce overhead
+  if (process.env.NODE_ENV === 'production') return;
+  
   try {
     // Largest Contentful Paint
     const lcpObserver = new PerformanceObserver((entryList) => {
