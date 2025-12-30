@@ -62,11 +62,13 @@ const AdminAuth = () => {
   // Check if MFA verification is needed after login
   useEffect(() => {
     const checkMFA = async () => {
+      // Só verifica se está autenticado, não está carregando e não está em modo de 2FA ou recuperação
       if (isAuthenticated && !loading && mode !== 'reset-password' && mode !== '2fa-verify' && mode !== '2fa-recovery') {
         console.log('[2FA] Checking MFA status after login...');
         const mfaStatus = await checkMFAStatus();
         console.log('[2FA] MFA Status:', mfaStatus);
         
+        // Verifica se precisa do 2FA (tem fator mas está em aal1)
         if (mfaStatus?.hasTOTPFactor && mfaStatus.currentLevel === 'aal1' && mfaStatus.nextLevel === 'aal2') {
           console.log('[2FA] User needs to verify TOTP');
           const factorId = mfaStatus.verifiedFactors?.[0]?.id;
@@ -77,8 +79,11 @@ const AdminAuth = () => {
           }
         }
         
-        console.log('[2FA] No 2FA required, redirecting to dashboard');
-        navigate('/admin/dashboard');
+        // Só redireciona se já está em aal2 ou se não tem 2FA configurado
+        if (mfaStatus?.currentLevel === 'aal2' || !mfaStatus?.hasTOTPFactor) {
+          console.log('[2FA] No 2FA required or already verified, redirecting to dashboard');
+          navigate('/admin/dashboard');
+        }
       }
     };
     checkMFA();
