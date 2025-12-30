@@ -1,7 +1,6 @@
 import { memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";
 
@@ -68,15 +67,7 @@ export const OrderBumpListItem = memo(function OrderBumpListItem({
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className="font-medium truncate">{bump.title}</h4>
-          <Badge 
-            variant={bump.is_active ? "default" : "secondary"}
-            className="flex-shrink-0 transition-colors duration-200"
-          >
-            {bump.is_active ? "Ativo" : "Inativo"}
-          </Badge>
-        </div>
+        <h4 className="font-medium truncate">{bump.title}</h4>
         <p className="text-sm text-muted-foreground truncate">
           {bump.bump_product?.name} • {formatPrice(bump.bump_price)}
         </p>
