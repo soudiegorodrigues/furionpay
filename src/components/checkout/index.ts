@@ -1,16 +1,16 @@
-// Types only for tree-shaking optimization
-export * from "./types";
+// Types only - use type-only imports for tree-shaking
+export type {
+  ProductOffer,
+  Product,
+  CheckoutConfig,
+  FormData,
+  PixData,
+  Testimonial,
+  OrderBumpData,
+  CheckoutTemplateProps,
+} from "./types";
 
-// Individual exports for lazy loading support
-export { CheckoutTemplatePadrao } from "./CheckoutTemplatePadrao";
-export { CheckoutTemplateVega } from "./CheckoutTemplateVega";
-export { CheckoutTemplateAfilia } from "./CheckoutTemplateAfilia";
-export { CheckoutTemplateMultistep } from "./CheckoutTemplateMultistep";
-export { CheckoutPixPayment } from "./CheckoutPixPayment";
-export { CheckoutBuilderSimple } from "./CheckoutBuilderSimple";
-export { CheckoutPreviewMini } from "./CheckoutPreviewMini";
-export { ExitIntentPopup } from "./ExitIntentPopup";
-export { AddressFields } from "./AddressFields";
-export { BannersCarousel } from "./BannersCarousel";
-export { OptimizedImage, OptimizedVideo } from "./OptimizedImage";
-export { OrderBumpCard } from "./OrderBumpCard";
+// NOTE: Components should be imported directly from their files
+// or using lazy() for code splitting. This barrel export is kept
+// for backwards compatibility but should be avoided in new code.
+// Example: import { CheckoutTemplatePadrao } from "@/components/checkout/CheckoutTemplatePadrao";
