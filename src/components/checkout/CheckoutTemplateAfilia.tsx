@@ -40,16 +40,22 @@ export function CheckoutTemplateAfilia({
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#3B82F6";
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [bannersLoading, setBannersLoading] = useState(true);
 
   // Fetch banners
   useEffect(() => {
+    console.log('[BANNERS DEBUG - Afilia] Verificando condições:', {
+      show_banners: config?.show_banners,
+      product_id: product?.id,
+    });
+    
     if (!config?.show_banners || !product?.id) {
-      setBannersLoading(false);
+      console.log('[BANNERS DEBUG - Afilia] Condições não atendidas, pulando fetch');
       return;
     }
 
     const fetchBanners = async () => {
+      console.log('[BANNERS DEBUG - Afilia] Buscando banners para product_id:', product.id);
+      
       const { data, error } = await supabase
         .from("checkout_banners")
         .select("id, image_url, display_order")
@@ -57,8 +63,16 @@ export function CheckoutTemplateAfilia({
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
-      if (!error && data) setBanners(data);
-      setBannersLoading(false);
+      if (error) {
+        console.error('[BANNERS DEBUG - Afilia] Erro ao buscar banners:', error);
+        return;
+      }
+      
+      console.log('[BANNERS DEBUG - Afilia] Banners encontrados:', data?.length || 0, data);
+      
+      if (data) {
+        setBanners(data);
+      }
     };
 
     fetchBanners();
@@ -109,13 +123,9 @@ export function CheckoutTemplateAfilia({
       </header>
 
       {/* Banner Images Carousel */}
-      {config?.show_banners && (
+      {config?.show_banners && banners.length > 0 && (
         <div className="container max-w-6xl mx-auto px-4 pt-4">
-          {bannersLoading ? (
-            <div className="w-full rounded-lg bg-gray-200 animate-pulse" style={{ aspectRatio: '16/9' }} />
-          ) : banners.length > 0 ? (
-            <BannersCarousel banners={banners} />
-          ) : null}
+          <BannersCarousel banners={banners} />
         </div>
       )}
 

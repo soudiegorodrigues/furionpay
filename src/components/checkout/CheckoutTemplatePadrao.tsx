@@ -63,14 +63,10 @@ export function CheckoutTemplatePadrao({
 }: CheckoutTemplateProps) {
   const primaryColor = config?.primary_color || "#22C55E";
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [bannersLoading, setBannersLoading] = useState(true);
 
   // Fetch banners from checkout_banners table
   useEffect(() => {
-    if (!config?.show_banners || !product?.id) {
-      setBannersLoading(false);
-      return;
-    }
+    if (!config?.show_banners || !product?.id) return;
 
     const fetchBanners = async () => {
       const { data, error } = await supabase
@@ -80,8 +76,8 @@ export function CheckoutTemplatePadrao({
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
-      if (!error && data) setBanners(data);
-      setBannersLoading(false);
+      if (error) return;
+      if (data) setBanners(data);
     };
 
     fetchBanners();
@@ -120,13 +116,9 @@ export function CheckoutTemplatePadrao({
       )}
 
       {/* Banner Images Carousel */}
-      {config?.show_banners && (
+      {config?.show_banners && banners.length > 0 && (
         <div className="container max-w-4xl mx-auto px-4 pt-4">
-          {bannersLoading ? (
-            <div className="w-full rounded-lg bg-gray-100 animate-pulse" style={{ aspectRatio: '16/9' }} />
-          ) : banners.length > 0 ? (
-            <BannersCarousel banners={banners} />
-          ) : null}
+          <BannersCarousel banners={banners} />
         </div>
       )}
 
