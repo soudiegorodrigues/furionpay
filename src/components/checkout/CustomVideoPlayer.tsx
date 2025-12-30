@@ -92,15 +92,15 @@ export function CustomVideoPlayer({ videoUrl, className }: CustomVideoPlayerProp
         onPlay={() => setIsPlaying(true)}
       />
       
-      {/* Central Play Button */}
+      {/* Central Play Button - YouTube Style */}
       {!isPlaying && (
         <button
           onClick={handlePlayClick}
-          className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
+          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
           aria-label="Play video"
         >
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-            <Play className="h-8 w-8 sm:h-10 sm:w-10 text-gray-900 ml-1" />
+          <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-700 hover:scale-105 transition-all">
+            <Play className="h-8 w-8 sm:h-10 sm:w-10 text-white fill-white ml-1" />
           </div>
         </button>
       )}
