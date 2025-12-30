@@ -279,67 +279,63 @@ export function ProductDetailsSection({
         className="hidden"
       />
 
-      {/* Product Overview Card - Always visible */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            {/* Product Image with Upload */}
-            <div className="shrink-0">
-              <div 
-                className="relative w-16 h-16 bg-muted rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group border-2 border-dashed border-transparent hover:border-primary/50 transition-colors"
-                onClick={() => !isUploading && fileInputRef.current?.click()}
-              >
-                {formData.image_url ? (
-                  <>
-                    <img
-                      src={formData.image_url}
-                      alt={formData.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Upload className="h-4 w-4 text-white" />
-                    </div>
-                  </>
+      {/* Product Overview - Simple display */}
+      <div className="flex items-center gap-4 pb-4">
+        {/* Product Image with Upload */}
+        <div className="shrink-0">
+          <div 
+            className="relative w-16 h-16 bg-muted rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group border-2 border-dashed border-transparent hover:border-primary/50 transition-colors"
+            onClick={() => !isUploading && fileInputRef.current?.click()}
+          >
+            {formData.image_url ? (
+              <>
+                <img
+                  src={formData.image_url}
+                  alt={formData.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Upload className="h-4 w-4 text-white" />
+                </div>
+              </>
+            ) : (
+              <div className="text-center">
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 ) : (
-                  <div className="text-center">
-                    {isUploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    ) : (
-                      <Upload className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    )}
-                  </div>
+                  <Upload className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 )}
               </div>
-            </div>
+            )}
+          </div>
+        </div>
 
-            {/* Product Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="font-semibold text-lg truncate">{product.name}</h2>
-                <Badge variant={product.is_active ? "default" : "secondary"} className="shrink-0">
-                  {product.is_active ? "Ativo" : "Inativo"}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {formData.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </span>
-                <div className="flex items-center gap-1">
-                  <span>ID: {product.product_code || product.id.substring(0, 8)}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => copyToClipboard(product.product_code || product.id)}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
+        {/* Product Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="font-semibold text-lg truncate">{product.name}</h2>
+            <Badge variant={product.is_active ? "default" : "secondary"} className="shrink-0">
+              {product.is_active ? "Ativo" : "Inativo"}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {formData.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
+            <div className="flex items-center gap-1">
+              <span>ID: {product.product_code || product.id.substring(0, 8)}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={() => copyToClipboard(product.product_code || product.id)}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* General Information - Collapsible */}
       <Collapsible open={openSections.has("general")} onOpenChange={() => toggleSection("general")}>
