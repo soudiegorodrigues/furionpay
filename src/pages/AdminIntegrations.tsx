@@ -53,15 +53,7 @@ const AdminIntegrations = () => {
   const [apiKeysCount, setApiKeysCount] = useState<number | null>(() => getCachedApiKeysCount());
   const [loadingApiKeys, setLoadingApiKeys] = useState(false);
 
-  // Preload images for instant rendering
-  useEffect(() => {
-    const preloadImage = (src: string) => {
-      const img = new Image();
-      img.src = src;
-    };
-    preloadImage(utmifyLogo);
-    preloadImage(apiLogo);
-  }, []);
+  // Images are imported via ES6 modules, no need for manual preload
 
   useEffect(() => {
     loadUtmifyStatus();
@@ -219,16 +211,15 @@ const AdminIntegrations = () => {
           </div>
 
           <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center min-h-[180px] sm:min-h-[220px]">
-            {/* Logo container */}
+            {/* Logo container with fixed dimensions */}
             <div className="relative mt-2 sm:mt-4 mb-4 sm:mb-6">
               <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg" />
-              <div className="relative w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center">
+              <div className="relative w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center bg-muted/30 rounded-xl">
                 <img 
                   src={utmifyLogo} 
                   alt="Utmify" 
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
+                  width={80}
+                  height={80}
                   className="w-full h-full object-contain drop-shadow-lg" 
                 />
               </div>
@@ -290,16 +281,15 @@ const AdminIntegrations = () => {
           </div>
 
           <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center min-h-[180px] sm:min-h-[220px]">
-            {/* Logo container */}
+            {/* Logo container with fixed dimensions */}
             <div className="relative mt-2 sm:mt-4 mb-4 sm:mb-6">
               <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg" />
-              <div className="relative w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center">
+              <div className="relative w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center bg-muted/30 rounded-xl">
                 <img 
                   src={apiLogo} 
                   alt="API de Pagamentos" 
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
+                  width={80}
+                  height={80}
                   className="w-full h-full object-contain drop-shadow-lg" 
                 />
               </div>
