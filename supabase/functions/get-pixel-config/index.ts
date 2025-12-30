@@ -30,65 +30,47 @@ serve(async (req) => {
 
     console.log('Received userId:', userId, 'productId:', productId);
 
-    // Step 1: Get all global pixels for the user
-    let globalPixels: any[] = [];
-    
-    let query = supabase
-      .from('admin_settings')
-      .select('key, value')
-      .eq('key', 'meta_pixels');
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    } else {
-      query = query.is('user_id', null);
-    }
-
-    const { data: multiplePixels, error: multiError } = await query.single();
-
-    if (!multiError && multiplePixels?.value) {
-      try {
-        const parsed = JSON.parse(multiplePixels.value);
-        if (Array.isArray(parsed)) {
-          globalPixels = parsed.map((pixel: any) => ({
-            id: pixel.id || pixel.pixelId,
-            pixelId: pixel.pixelId,
-            name: pixel.name,
-            accessToken: pixel.accessToken || null,
-          }));
-        }
-      } catch (parseError) {
-        console.error('Error parsing meta_pixels JSON:', parseError);
-      }
-    }
-
-    // Step 2: If productId is provided, check for product-specific pixel selection
-    if (productId && globalPixels.length > 0) {
+    // Step 1: If productId is provided, check for product-specific pixels (product_pixels JSONB)
+    if (productId) {
       const { data: productConfig, error: configError } = await supabase
         .from('product_checkout_configs')
-        .select('selected_pixel_ids')
+        .select('product_pixels, selected_pixel_ids')
         .eq('product_id', productId)
         .single();
 
-      if (!configError && productConfig?.selected_pixel_ids && productConfig.selected_pixel_ids.length > 0) {
-        // Filter to only selected pixels
-        const selectedIds = productConfig.selected_pixel_ids;
-        const filteredPixels = globalPixels.filter(p => 
-          selectedIds.includes(p.id) || selectedIds.includes(p.pixelId)
-        );
-        
-        console.log('Using product-specific pixels:', filteredPixels.length);
-        
-        if (filteredPixels.length > 0) {
+      if (!configError && productConfig) {
+        // Priority 1: product_pixels (new JSONB field with full pixel config)
+        if (productConfig.product_pixels && Array.isArray(productConfig.product_pixels) && productConfig.product_pixels.length > 0) {
+          console.log('Using product-specific pixels (product_pixels):', productConfig.product_pixels.length);
           return new Response(
-            JSON.stringify({ pixels: filteredPixels }),
+            JSON.stringify({ pixels: productConfig.product_pixels }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
+        }
+
+        // Priority 2: selected_pixel_ids (filter from global pixels)
+        if (productConfig.selected_pixel_ids && productConfig.selected_pixel_ids.length > 0) {
+          // Get global pixels and filter
+          const globalPixels = await getGlobalPixels(supabase, userId);
+          const selectedIds = productConfig.selected_pixel_ids;
+          const filteredPixels = globalPixels.filter((p: any) => 
+            selectedIds.includes(p.id) || selectedIds.includes(p.pixelId)
+          );
+          
+          if (filteredPixels.length > 0) {
+            console.log('Using selected global pixels:', filteredPixels.length);
+            return new Response(
+              JSON.stringify({ pixels: filteredPixels }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
       }
     }
 
-    // Step 3: Return all global pixels (fallback)
+    // Step 2: Fallback to all global pixels
+    const globalPixels = await getGlobalPixels(supabase, userId);
+    
     if (globalPixels.length > 0) {
       console.log('Returning all global pixels:', globalPixels.length);
       return new Response(
@@ -97,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // Fallback to legacy single pixel format
+    // Step 3: Fallback to legacy single pixel format
     let legacyQuery = supabase
       .from('admin_settings')
       .select('key, value')
@@ -133,3 +115,36 @@ serve(async (req) => {
     );
   }
 });
+
+async function getGlobalPixels(supabase: any, userId: string | null): Promise<any[]> {
+  let query = supabase
+    .from('admin_settings')
+    .select('key, value')
+    .eq('key', 'meta_pixels');
+
+  if (userId) {
+    query = query.eq('user_id', userId);
+  } else {
+    query = query.is('user_id', null);
+  }
+
+  const { data: multiplePixels, error: multiError } = await query.single();
+
+  if (!multiError && multiplePixels?.value) {
+    try {
+      const parsed = JSON.parse(multiplePixels.value);
+      if (Array.isArray(parsed)) {
+        return parsed.map((pixel: any) => ({
+          id: pixel.id || pixel.pixelId,
+          pixelId: pixel.pixelId,
+          name: pixel.name,
+          accessToken: pixel.accessToken || null,
+        }));
+      }
+    } catch (parseError) {
+      console.error('Error parsing meta_pixels JSON:', parseError);
+    }
+  }
+
+  return [];
+}
