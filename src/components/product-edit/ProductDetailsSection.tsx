@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { FileText, Globe, Copy, Upload, X, Package, Link, FileArchive, Loader2 } from "lucide-react";
+import { FileText, Globe, Copy, Upload, X, Package, Link, FileArchive, Loader2, ChevronDown } from "lucide-react";
 import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 // Formata número para Real brasileiro (ex: 19.90 → "19,90" ou 1990.00 → "1.990,00")
@@ -70,6 +71,8 @@ export function ProductDetailsSection({
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingDelivery, setIsUploadingDelivery] = useState(false);
   const [isPriceFocused, setIsPriceFocused] = useState(false);
+  const [isGeneralInfoOpen, setIsGeneralInfoOpen] = useState(false);
+  const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
   const [priceDisplay, setPriceDisplay] = useState(() => 
     formData.price > 0 ? formatCurrency(formData.price) : ''
   );
@@ -363,211 +366,229 @@ export function ProductDetailsSection({
       </Card>
 
       {/* General Information Form */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            <CardTitle>Informações Gerais</CardTitle>
-          </div>
-          <CardDescription>Atualize as informações básicas do seu produto</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome do produto</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Nome do produto"
-            />
-          </div>
+      <Collapsible open={isGeneralInfoOpen} onOpenChange={setIsGeneralInfoOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <CardTitle>Informações Gerais</CardTitle>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isGeneralInfoOpen ? 'rotate-180' : ''}`} />
+              </div>
+              <CardDescription>Atualize as informações básicas do seu produto</CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome do produto</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Nome do produto"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="description">Descrição do produto</Label>
-              <span className="text-xs text-muted-foreground">
-                {formData.description.length}/500
-              </span>
-            </div>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
-              placeholder="Descreva seu produto..."
-              className="min-h-[120px]"
-            />
-          </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="description">Descrição do produto</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {formData.description.length}/500
+                  </span>
+                </div>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 500) })}
+                  placeholder="Descreva seu produto..."
+                  className="min-h-[120px]"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="price">Preço (R$)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                R$
-              </span>
-              <Input
-                id="price"
-                type="text"
-                inputMode="decimal"
-                value={priceDisplay}
-                onChange={handlePriceChange}
-                onFocus={handlePriceFocus}
-                onBlur={handlePriceBlur}
-                placeholder="0,00"
-                className="pl-10"
-              />
-            </div>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="price">Preço (R$)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                    R$
+                  </span>
+                  <Input
+                    id="price"
+                    type="text"
+                    inputMode="decimal"
+                    value={priceDisplay}
+                    onChange={handlePriceChange}
+                    onFocus={handlePriceFocus}
+                    onBlur={handlePriceBlur}
+                    placeholder="0,00"
+                    className="pl-10"
+                  />
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="website_url">Site do produto</Label>
-            <Input
-              id="website_url"
-              type="url"
-              value={formData.website_url}
-              onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
-              placeholder="https://seuproduto.com"
-            />
-          </div>
-        </CardContent>
-      </Card>
+              <div className="space-y-2">
+                <Label htmlFor="website_url">Site do produto</Label>
+                <Input
+                  id="website_url"
+                  type="url"
+                  value={formData.website_url}
+                  onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                  placeholder="https://seuproduto.com"
+                />
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Digital Delivery Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            <CardTitle>Entrega Digital</CardTitle>
-          </div>
-          <CardDescription>
-            Configure o conteúdo que será enviado automaticamente por email após a compra ser aprovada
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* External Link (Drive, Dropbox, etc.) */}
-          <div className="space-y-2">
-            <Label htmlFor="delivery_link" className="flex items-center gap-2">
-              <Link className="h-4 w-4" />
-              Link do Drive / URL Externa
-            </Label>
-            <Input
-              id="delivery_link"
-              type="url"
-              value={formData.delivery_link}
-              onChange={(e) => setFormData({ ...formData, delivery_link: e.target.value })}
-              placeholder="https://drive.google.com/file/d/..."
-            />
-            <p className="text-xs text-muted-foreground">
-              Link do Google Drive, Dropbox, OneDrive ou qualquer URL de download
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">ou</span>
-            </div>
-          </div>
-
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <FileArchive className="h-4 w-4" />
-              Arquivo para Download
-            </Label>
-            
-            <input
-              ref={deliveryFileInputRef}
-              type="file"
-              accept=".pdf,.zip,.rar,.mp4,.webm,.mp3,.epub,.docx,.xlsx"
-              onChange={handleDeliveryFileUpload}
-              className="hidden"
-            />
-            
-            <div 
-              className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-                formData.delivery_file_url 
-                  ? "border-primary/30 bg-primary/5" 
-                  : "border-muted-foreground/25 hover:border-primary/50 cursor-pointer"
-              }`}
-              onClick={() => !formData.delivery_file_url && !isUploadingDelivery && deliveryFileInputRef.current?.click()}
-            >
-              {isUploadingDelivery ? (
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Enviando arquivo...</p>
+      <Collapsible open={isDeliveryOpen} onOpenChange={setIsDeliveryOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" />
+                  <CardTitle>Entrega Digital</CardTitle>
                 </div>
-              ) : formData.delivery_file_url ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileArchive className="h-5 w-5 text-primary" />
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isDeliveryOpen ? 'rotate-180' : ''}`} />
+              </div>
+              <CardDescription>
+                Configure o conteúdo que será enviado automaticamente por email após a compra ser aprovada
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-6">
+              {/* External Link (Drive, Dropbox, etc.) */}
+              <div className="space-y-2">
+                <Label htmlFor="delivery_link" className="flex items-center gap-2">
+                  <Link className="h-4 w-4" />
+                  Link do Drive / URL Externa
+                </Label>
+                <Input
+                  id="delivery_link"
+                  type="url"
+                  value={formData.delivery_link}
+                  onChange={(e) => setFormData({ ...formData, delivery_link: e.target.value })}
+                  placeholder="https://drive.google.com/file/d/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Link do Google Drive, Dropbox, OneDrive ou qualquer URL de download
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">ou</span>
+                </div>
+              </div>
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <FileArchive className="h-4 w-4" />
+                  Arquivo para Download
+                </Label>
+                
+                <input
+                  ref={deliveryFileInputRef}
+                  type="file"
+                  accept=".pdf,.zip,.rar,.mp4,.webm,.mp3,.epub,.docx,.xlsx"
+                  onChange={handleDeliveryFileUpload}
+                  className="hidden"
+                />
+                
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                    formData.delivery_file_url 
+                      ? "border-primary/30 bg-primary/5" 
+                      : "border-muted-foreground/25 hover:border-primary/50 cursor-pointer"
+                  }`}
+                  onClick={() => !formData.delivery_file_url && !isUploadingDelivery && deliveryFileInputRef.current?.click()}
+                >
+                  {isUploadingDelivery ? (
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Enviando arquivo...</p>
+                    </div>
+                  ) : formData.delivery_file_url ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <FileArchive className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium truncate max-w-[200px]">
+                            {getFileName(formData.delivery_file_url)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Arquivo anexado</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deliveryFileInputRef.current?.click();
+                          }}
+                        >
+                          Trocar
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveDeliveryFile();
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                      <div className="text-center">
+                        <p className="text-sm font-medium">Clique para enviar</p>
+                        <p className="text-xs text-muted-foreground">PDF, ZIP, RAR, MP4, MP3 até 50MB</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Info box */}
+              {(formData.delivery_link || formData.delivery_file_url) && (
+                <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <Package className="h-3 w-3 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium truncate max-w-[200px]">
-                        {getFileName(formData.delivery_file_url)}
+                      <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                        Entrega automática configurada
                       </p>
-                      <p className="text-xs text-muted-foreground">Arquivo anexado</p>
+                      <p className="text-xs text-green-600/80 dark:text-green-400/80 mt-1">
+                        Quando uma venda for aprovada, o cliente receberá automaticamente um email com o link de acesso ao produto.
+                      </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deliveryFileInputRef.current?.click();
-                      }}
-                    >
-                      Trocar
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveDeliveryFile();
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  <div className="text-center">
-                    <p className="text-sm font-medium">Clique para enviar</p>
-                    <p className="text-xs text-muted-foreground">PDF, ZIP, RAR, MP4, MP3 até 50MB</p>
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Info box */}
-          {(formData.delivery_link || formData.delivery_file_url) && (
-            <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
-              <div className="flex items-start gap-3">
-                <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <Package className="h-3 w-3 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                    Entrega automática configurada
-                  </p>
-                  <p className="text-xs text-green-600/80 dark:text-green-400/80 mt-1">
-                    Quando uma venda for aprovada, o cliente receberá automaticamente um email com o link de acesso ao produto.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }
