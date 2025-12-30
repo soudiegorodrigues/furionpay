@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/AccessDenied";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CheckoutBuilderSimple } from "@/components/checkout/CheckoutBuilderSimple";
 import { 
@@ -15,11 +15,23 @@ import {
   DangerZoneSection,
   ComingSoonSection,
   PixelsSection,
-  ProductNavigation,
-  Section
 } from "@/components/product-edit";
 import { OrderBumpSection } from "@/components/product-edit/OrderBumpSection";
-import { Package, ArrowLeft, Save, CheckCircle } from "lucide-react";
+import { CollapsibleSectionCard } from "@/components/product-edit/CollapsibleSectionCard";
+import { ProductSummaryCard } from "@/components/product-edit/ProductSummaryCard";
+import { 
+  ArrowLeft, 
+  Save, 
+  FileText, 
+  CreditCard, 
+  Tag, 
+  ShoppingCart, 
+  Globe, 
+  Target, 
+  Handshake, 
+  Store, 
+  AlertTriangle 
+} from "lucide-react";
 
 interface Product {
   id: string;
@@ -38,53 +50,33 @@ interface Product {
   delivery_file_url: string | null;
 }
 
-// Skeleton for main content
-const ContentSkeleton = () => (
-  <div className="space-y-6">
+// Skeleton for loading state
+const LoadingSkeleton = () => (
+  <div className="space-y-4 max-w-4xl mx-auto">
     <Card>
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="w-48 h-48 bg-muted animate-pulse rounded-lg shrink-0" />
-          <div className="flex-1 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="h-20 bg-muted animate-pulse rounded-lg" />
-              <div className="h-20 bg-muted animate-pulse rounded-lg" />
-            </div>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="w-16 h-16 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
           </div>
         </div>
       </CardContent>
     </Card>
-    <Card>
-      <CardHeader>
-        <div className="h-6 w-40 bg-muted animate-pulse rounded" />
-        <div className="h-4 w-64 bg-muted animate-pulse rounded mt-2" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="h-10 bg-muted animate-pulse rounded" />
-        <div className="h-24 bg-muted animate-pulse rounded" />
-        <div className="h-10 bg-muted animate-pulse rounded" />
-      </CardContent>
-    </Card>
-  </div>
-);
-
-// Header skeleton
-const HeaderSkeleton = () => (
-  <div className="mb-6">
-    <Button variant="ghost" size="sm" className="mb-4 opacity-50" disabled>
-      <ArrowLeft className="h-4 w-4 mr-2" />
-      Voltar para produtos
-    </Button>
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-          <div className="h-6 w-20 bg-muted animate-pulse rounded-full" />
-        </div>
-        <div className="h-4 w-72 bg-muted animate-pulse rounded mt-2" />
-      </div>
-      <div className="h-10 w-36 bg-muted animate-pulse rounded" />
-    </div>
+    {[1, 2, 3, 4].map((i) => (
+      <Card key={i}>
+        <CardHeader className="py-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    ))}
   </div>
 );
 
@@ -93,7 +85,10 @@ export default function AdminProductEdit() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
-  const [activeSection, setActiveSection] = useState<Section>("details");
+  
+  // Collapsible sections state - tracks which sections are open
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(["details"]));
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -124,7 +119,7 @@ export default function AdminProductEdit() {
       return data as Product;
     },
     enabled: !!id,
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 30000,
   });
 
   useEffect(() => {
@@ -172,14 +167,30 @@ export default function AdminProductEdit() {
     },
   });
 
+  const toggleSection = useCallback((sectionId: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  }, []);
+
   const handleSave = async () => {
-    if (activeSection === "details") {
+    // Save details
+    if (openSections.has("details")) {
       if (!formData.name.trim()) {
         toast.error("Nome do produto é obrigatório");
         return;
       }
       updateMutation.mutate(formData);
-    } else if (activeSection === "checkout") {
+    }
+    
+    // Save checkout if open
+    if (openSections.has("checkout")) {
       if ((window as any).__checkoutSaveConfig) {
         await (window as any).__checkoutSaveConfig();
       }
@@ -189,39 +200,6 @@ export default function AdminProductEdit() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copiado para a área de transferência");
-  };
-
-  // Render page immediately - no blocking loading state
-  // Navigation is always visible, content shows skeleton if loading
-
-  const renderSectionContent = () => {
-    // Show skeleton while loading
-    if (isLoading || !product) {
-      return <ContentSkeleton />;
-    }
-
-    switch (activeSection) {
-      case "details":
-        return <ProductDetailsSection formData={formData} setFormData={setFormData} product={product} copyToClipboard={copyToClipboard} />;
-      case "checkout":
-        return <CheckoutBuilderSimple productId={product.id} userId={product.user_id} productName={product.name} productPrice={product.price} onNavigate={setActiveSection} />;
-      case "offers":
-        return <OffersSection productId={product.id} userId={product.user_id} />;
-      case "domains":
-        return <ComingSoonSection title="Domínios" description="Adicione seu próprio domínio personalizado no checkout." />;
-      case "order-bump":
-        return <OrderBumpSection productId={product.id} userId={product.user_id} />;
-      case "pixels":
-        return <PixelsSection productId={product.id} userId={product.user_id} />;
-      case "coproduction":
-        return <ComingSoonSection title="Co produção" description="Adicione coprodutores e configure divisão de receita." />;
-      case "affiliation":
-        return <ComingSoonSection title="Afiliação e marketplace" description="Configure programa de afiliados e listagem no marketplace." />;
-      case "danger-zone":
-        return <DangerZoneSection productId={product.id} productName={product.name} />;
-      default:
-        return null;
-    }
   };
 
   // Product not found (after loading completes)
@@ -239,49 +217,152 @@ export default function AdminProductEdit() {
     );
   }
 
+  // Define sections configuration
+  const sections = [
+    {
+      id: "details",
+      icon: FileText,
+      title: "Informações Gerais",
+      description: "Atualize as informações básicas do seu produto",
+      content: product && (
+        <ProductDetailsSection 
+          formData={formData} 
+          setFormData={setFormData} 
+          product={product} 
+          copyToClipboard={copyToClipboard} 
+        />
+      ),
+    },
+    {
+      id: "checkout",
+      icon: CreditCard,
+      title: "Checkout",
+      description: "Configurações de pagamento e personalização",
+      content: product && (
+        <CheckoutBuilderSimple 
+          productId={product.id} 
+          userId={product.user_id} 
+          productName={product.name} 
+          productPrice={product.price}
+        />
+      ),
+    },
+    {
+      id: "offers",
+      icon: Tag,
+      title: "Ofertas",
+      description: "Gerenciar links e ofertas",
+      content: product && <OffersSection productId={product.id} userId={product.user_id} />,
+    },
+    {
+      id: "order-bump",
+      icon: ShoppingCart,
+      title: "Order Bump",
+      description: "Configurar ofertas adicionais",
+      content: product && <OrderBumpSection productId={product.id} userId={product.user_id} />,
+    },
+    {
+      id: "domains",
+      icon: Globe,
+      title: "Domínios",
+      description: "Adicione o seu próprio domínio no checkout",
+      content: <ComingSoonSection title="Domínios" description="Adicione seu próprio domínio personalizado no checkout." />,
+    },
+    {
+      id: "pixels",
+      icon: Target,
+      title: "Pixels",
+      description: "Configurar pixels de rastreamento",
+      content: product && <PixelsSection productId={product.id} userId={product.user_id} />,
+    },
+    {
+      id: "coproduction",
+      icon: Handshake,
+      title: "Co produção",
+      description: "Adicione coprodutores ao seu produto",
+      content: <ComingSoonSection title="Co produção" description="Adicione coprodutores e configure divisão de receita." />,
+    },
+    {
+      id: "affiliation",
+      icon: Store,
+      title: "Afiliação e marketplace",
+      description: "Configure programa de afiliados",
+      content: <ComingSoonSection title="Afiliação e marketplace" description="Configure programa de afiliados e listagem no marketplace." />,
+    },
+    {
+      id: "danger-zone",
+      icon: AlertTriangle,
+      title: "Zona de Perigo",
+      description: "Ações irreversíveis",
+      content: product && <DangerZoneSection productId={product.id} productName={product.name} />,
+    },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen">
-      
       <main className="flex-1 p-4 md:p-6">
-        {isLoading ? (
-          <HeaderSkeleton />
-        ) : (
-          <div className="mb-6">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate("/admin/products")}
-              className="mb-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar para produtos
-            </Button>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold">{product?.name}</h1>
-                <p className="text-muted-foreground">Gerencie os detalhes e configurações do seu produto</p>
-              </div>
-              
-              {(activeSection === "details" || activeSection === "checkout") && (
-                <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2 lg:mr-16">
-                  <Save className="h-4 w-4" />
-                  {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
-                </Button>
+        {/* Header */}
+        <div className="mb-6 max-w-4xl mx-auto">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate("/admin/products")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para produtos
+          </Button>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-8 w-48 mb-2" />
+                  <Skeleton className="h-4 w-64" />
+                </>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold">{product?.name}</h1>
+                  <p className="text-muted-foreground">Gerencie os detalhes e configurações do seu produto</p>
+                </>
               )}
             </div>
-          </div>
-        )}
-
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1 min-w-0 order-2 lg:order-1">
-            {renderSectionContent()}
-          </div>
-
-          <div className="lg:w-80 shrink-0 order-1 lg:order-2">
-            <ProductNavigation activeSection={activeSection} setActiveSection={setActiveSection} />
+            
+            <Button 
+              onClick={handleSave} 
+              disabled={updateMutation.isPending || isLoading} 
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
+            </Button>
           </div>
         </div>
+
+        {/* Content */}
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : product ? (
+          <div className="space-y-4 max-w-4xl mx-auto">
+            {/* Product Summary Card */}
+            <ProductSummaryCard product={product} />
+
+            {/* Collapsible Sections */}
+            {sections.map((section) => (
+              <CollapsibleSectionCard
+                key={section.id}
+                id={section.id}
+                icon={section.icon}
+                title={section.title}
+                description={section.description}
+                isOpen={openSections.has(section.id)}
+                onToggle={() => toggleSection(section.id)}
+              >
+                {section.content}
+              </CollapsibleSectionCard>
+            ))}
+          </div>
+        ) : null}
       </main>
     </div>
   );
