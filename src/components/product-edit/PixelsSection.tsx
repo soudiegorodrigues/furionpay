@@ -34,8 +34,9 @@ interface ProductPixel {
   network: "meta" | "tiktok" | "google";
   pixelId: string;
   name: string;
-  domain: string;
-  accessToken: string;
+  domain?: string;
+  accessToken?: string;
+  conversionLabel?: string;
   events: PixelEvents;
 }
 
@@ -66,6 +67,7 @@ const emptyPixel: Omit<ProductPixel, "id"> = {
   name: "",
   domain: "",
   accessToken: "",
+  conversionLabel: "",
   events: defaultEvents,
 };
 
@@ -147,8 +149,9 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
       network: pixel.network,
       pixelId: pixel.pixelId,
       name: pixel.name,
-      domain: pixel.domain,
-      accessToken: pixel.accessToken,
+      domain: pixel.domain || "",
+      accessToken: pixel.accessToken || "",
+      conversionLabel: pixel.conversionLabel || "",
       events: pixel.events,
     });
     setIsDialogOpen(true);
@@ -333,7 +336,16 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
                 <Label>Rede Social</Label>
                 <Select
                   value={formData.network}
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, network: v as any }))}
+                  onValueChange={(v) => {
+                    const network = v as "meta" | "tiktok" | "google";
+                    setFormData(prev => ({
+                      ...prev,
+                      network,
+                      domain: network === "google" ? "" : prev.domain,
+                      accessToken: network === "google" ? "" : prev.accessToken,
+                      conversionLabel: network !== "google" ? "" : prev.conversionLabel,
+                    }));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -341,17 +353,17 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
                   <SelectContent>
                     <SelectItem value="meta">Meta / Facebook</SelectItem>
                     <SelectItem value="tiktok">TikTok</SelectItem>
-                    <SelectItem value="google">Google</SelectItem>
+                    <SelectItem value="google">Google Ads</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>ID do Pixel *</Label>
+                <Label>{formData.network === "google" ? "Conversion ID *" : "ID do Pixel *"}</Label>
                 <Input
                   value={formData.pixelId}
                   onChange={(e) => setFormData(prev => ({ ...prev, pixelId: e.target.value }))}
-                  placeholder="1234567890"
+                  placeholder={formData.network === "google" ? "AW-1234567890" : "1234567890"}
                 />
               </div>
 
@@ -364,27 +376,52 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Domínio</Label>
-                <Input
-                  value={formData.domain}
-                  onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
-                  placeholder="meusite.com"
-                />
-              </div>
+              {/* Google Ads: Conversion Label */}
+              {formData.network === "google" && (
+                <div className="space-y-2">
+                  <Label>Conversion Label *</Label>
+                  <Input
+                    value={formData.conversionLabel || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, conversionLabel: e.target.value }))}
+                    placeholder="AbCdEfGhIjK"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Label de conversão do Google Ads
+                  </p>
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <Label>Token da API de Conversão</Label>
-                <Input
-                  value={formData.accessToken}
-                  onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
-                  placeholder="EAAG..."
-                  type="password"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Token para envio de eventos via Conversions API (server-side)
-                </p>
-              </div>
+              {/* Meta/TikTok: Domínio */}
+              {(formData.network === "meta" || formData.network === "tiktok") && (
+                <div className="space-y-2">
+                  <Label>Domínio</Label>
+                  <Input
+                    value={formData.domain || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
+                    placeholder="meusite.com"
+                  />
+                </div>
+              )}
+
+              {/* Meta/TikTok: Token de Acesso */}
+              {(formData.network === "meta" || formData.network === "tiktok") && (
+                <div className="space-y-2">
+                  <Label>
+                    {formData.network === "meta" ? "Token da API de Conversão" : "Token de Acesso"}
+                  </Label>
+                  <Input
+                    value={formData.accessToken || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
+                    placeholder={formData.network === "meta" ? "EAAG..." : "Token..."}
+                    type="password"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.network === "meta"
+                      ? "Token para envio de eventos via Conversions API (server-side)"
+                      : "Token para TikTok Events API"}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Coluna Direita - Configuração de Eventos */}
