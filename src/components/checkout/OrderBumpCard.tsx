@@ -102,13 +102,13 @@ export const OrderBumpCard = memo(function OrderBumpCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-gray-900 text-sm sm:text-base flex items-center gap-2">
+          <h4 className="font-bold text-sm sm:text-base flex items-center gap-2" style={{ color: '#111827' }}>
             <Gift className="h-4 w-4 text-orange-500 shrink-0" />
             {bump.title}
           </h4>
           
           {bump.description && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm mt-1" style={{ color: '#4B5563' }}>
               {bump.description}
             </p>
           )}
@@ -117,7 +117,7 @@ export const OrderBumpCard = memo(function OrderBumpCard({
             <span className="text-lg font-bold" style={{ color: primaryColor }}>
               + {formatPrice(bump.bump_price)}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs" style={{ color: '#6B7280' }}>
               ao seu pedido
             </span>
           </div>
