@@ -255,9 +255,8 @@ export default function PublicCheckout() {
       return { offer, product, config, testimonials, pixelConfig, orderBumps, banners };
     },
     enabled: !!offerCode,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes (reduces duplicate requests)
     gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
-    refetchOnMount: "always", // Force refetch on every mount
   });
 
   const offer = checkoutData?.offer;
@@ -279,21 +278,15 @@ export default function PublicCheckout() {
     }
   }, [product, config]);
 
-  // PERFORMANCE: Preload product image IMMEDIATELY before data loads
+  // PERFORMANCE: Preload product image when checkoutData is available (avoid duplicate RPC call)
   const preloadedRef = useRef(false);
   useEffect(() => {
-    if (offerCode && !preloadedRef.current) {
+    if (checkoutData?.product?.image_url && !preloadedRef.current) {
       preloadedRef.current = true;
-      // Preload crítico imediato - busca imagem antes dos dados principais
-      supabase.rpc("get_public_offer_by_code", { p_offer_code: offerCode })
-        .then(({ data }) => {
-          if (data?.[0]?.product_image_url) {
-            const optimizedUrl = getOptimizedImageUrl(data[0].product_image_url, { width: 400, quality: 85 });
-            preloadImage(optimizedUrl, 'high');
-          }
-        });
+      const optimizedUrl = getOptimizedImageUrl(checkoutData.product.image_url, { width: 400, quality: 85 });
+      preloadImage(optimizedUrl, 'high');
     }
-  }, [offerCode]);
+  }, [checkoutData?.product?.image_url]);
 
   // Initialize Meta Pixel DEFERRED - não bloqueia LCP
   useEffect(() => {

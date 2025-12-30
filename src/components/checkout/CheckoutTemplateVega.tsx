@@ -12,6 +12,7 @@ import { CheckoutTemplateProps } from "./types";
 import { AddressFields } from "./AddressFields";
 import { BannersCarousel } from "./BannersCarousel";
 import { supabase } from "@/integrations/supabase/client";
+import { getOptimizedImageUrl } from "@/lib/performanceUtils";
 
 interface Banner {
   id: string;
@@ -129,9 +130,11 @@ export function CheckoutTemplateVega({
                 <div className="relative">
                   {product?.image_url ? (
                     <img 
-                      src={product.image_url} 
+                      src={getOptimizedImageUrl(product.image_url, { width: 800, quality: 80 })} 
                       alt={product.name}
                       className="w-full h-56 object-cover"
+                      width={800}
+                      height={224}
                       loading="eager"
                       decoding="async"
                       fetchPriority="high"
