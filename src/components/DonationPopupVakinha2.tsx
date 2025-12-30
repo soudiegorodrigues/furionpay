@@ -260,8 +260,8 @@ export const DonationPopupVakinha2 = ({
       <div className="w-full max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-10">
         {step === "select" && <div className="space-y-5 sm:space-y-6">
             {/* Banner */}
-            <div className="w-full -mx-3 sm:-mx-4 -mt-4 sm:-mt-10 mb-4">
-              <img src={vakinhaBanner} alt="Salvando Vidas - Vakinha" className="w-full h-auto object-cover rounded-t-lg" />
+            <div className="w-full flex justify-center mb-4">
+              <img src={vakinhaBanner} alt="Salvando Vidas - Vakinha" className="w-full max-w-md h-auto object-cover rounded-lg" />
             </div>
 
             {/* Contribution Value Section */}
