@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Link, Copy, Check, Globe, Save, Package, Trash2, Edit2, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -60,12 +61,20 @@ const containsBlockedKeyword = (text: string): string | null => {
   return null;
 };
 
+interface MetaPixel {
+  id: string;
+  name: string;
+  pixelId: string;
+  accessToken?: string;
+}
+
 interface CheckoutOffer {
   id: string;
   name: string;
   domain: string;
   popup_model: string;
   product_name: string;
+  meta_pixel_ids?: string[];
 }
 
 interface AvailableDomain {
@@ -86,6 +95,17 @@ interface CheckoutOfferCardProps {
   userId: string;
   availableDomains: AvailableDomain[];
   popupModels: PopupModel[];
+  metaPixels?: MetaPixel[];
+  onSave: (offer: CheckoutOffer) => Promise<void>;
+  onDelete: (offerId: string) => Promise<void>;
+  isNew?: boolean;
+}
+
+interface CheckoutOfferCardProps {
+  offer: CheckoutOffer;
+  userId: string;
+  availableDomains: AvailableDomain[];
+  popupModels: PopupModel[];
   onSave: (offer: CheckoutOffer) => Promise<void>;
   onDelete: (offerId: string) => Promise<void>;
   isNew?: boolean;
@@ -96,6 +116,7 @@ export const CheckoutOfferCard = ({
   userId,
   availableDomains,
   popupModels,
+  metaPixels = [],
   onSave,
   onDelete,
   isNew = false,
@@ -110,11 +131,28 @@ export const CheckoutOfferCard = ({
   const [domain, setDomain] = useState(offer.domain);
   const [popupModel, setPopupModel] = useState(offer.popup_model);
   const [productName, setProductName] = useState(offer.product_name);
+  const [metaPixelIds, setMetaPixelIds] = useState<string[]>(offer.meta_pixel_ids || []);
+
+  const togglePixel = (pixelId: string) => {
+    setMetaPixelIds(prev => 
+      prev.includes(pixelId) 
+        ? prev.filter(id => id !== pixelId) 
+        : [...prev, pixelId]
+    );
+  };
 
   const generateLink = () => {
-    return domain 
+    let link = domain 
       ? `https://www.${domain}/?u=${userId}&m=${popupModel}` 
       : `${window.location.origin}/?u=${userId}&m=${popupModel}`;
+    
+    // Adicionar pixels selecionados ao link
+    if (metaPixelIds.length > 0) {
+      const pixelIdsString = metaPixelIds.join(',');
+      link += `&pixel=${pixelIdsString}`;
+    }
+    
+    return link;
   };
 
   const copyLink = () => {
@@ -176,6 +214,7 @@ export const CheckoutOfferCard = ({
         domain,
         popup_model: popupModel,
         product_name: productName,
+        meta_pixel_ids: metaPixelIds,
       });
       setIsEditing(false);
     } finally {
@@ -197,6 +236,7 @@ export const CheckoutOfferCard = ({
     setDomain(offer.domain);
     setPopupModel(offer.popup_model);
     setProductName(offer.product_name);
+    setMetaPixelIds(offer.meta_pixel_ids || []);
     setIsEditing(false);
     if (isNew) {
       onDelete(offer.id);
@@ -360,6 +400,34 @@ export const CheckoutOfferCard = ({
               Nome que aparecerá no gateway de pagamento (obrigatório)
             </p>
           </div>
+
+          {/* Meta Pixels Section */}
+          {metaPixels.length > 0 && (
+            <div className="space-y-2">
+              <Label>Meta Pixels</Label>
+              <div className="space-y-2">
+                {metaPixels.map(pixel => (
+                  <div key={pixel.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`pixel-${pixel.id}`}
+                      checked={metaPixelIds.includes(pixel.id)}
+                      onCheckedChange={() => togglePixel(pixel.id)}
+                      disabled={!isEditing}
+                    />
+                    <label
+                      htmlFor={`pixel-${pixel.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {pixel.name} <span className="text-muted-foreground">({pixel.pixelId})</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecione os pixels que serão incluídos no link desta oferta
+              </p>
+            </div>
+          )}
 
           {!isEditing && (
             <div className="space-y-2">

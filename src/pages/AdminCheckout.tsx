@@ -38,6 +38,14 @@ interface CheckoutOffer {
   domain: string;
   popup_model: string;
   product_name: string;
+  meta_pixel_ids?: string[];
+}
+
+interface MetaPixel {
+  id: string;
+  name: string;
+  pixelId: string;
+  accessToken?: string;
 }
 
 const popupModels = [{
@@ -90,6 +98,7 @@ const AdminCheckout = () => {
   const [selectedModel, setSelectedModel] = useState<string>("boost");
   const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
   const [offers, setOffers] = useState<CheckoutOffer[]>([]);
+  const [metaPixels, setMetaPixels] = useState<MetaPixel[]>([]);
   const {
     isAuthenticated,
     user
@@ -105,10 +114,11 @@ const AdminCheckout = () => {
     setIsLoading(false);
 
     try {
-      const [offersResult, statsResult, domainsResult] = await Promise.all([
+      const [offersResult, statsResult, domainsResult, pixelsResult] = await Promise.all([
         supabase.from('checkout_offers').select('*').order('created_at', { ascending: false }),
         supabase.rpc('get_user_popup_model_stats'),
-        supabase.from('available_domains').select('id, domain, name').eq('is_active', true).eq('domain_type', 'popup').order('domain')
+        supabase.from('available_domains').select('id, domain, name').eq('is_active', true).eq('domain_type', 'popup').order('domain'),
+        supabase.from('admin_settings').select('value').eq('key', 'meta_pixels').single()
       ]);
 
       if (!offersResult.error && offersResult.data) {
@@ -117,9 +127,20 @@ const AdminCheckout = () => {
           name: o.name,
           domain: o.domain || '',
           popup_model: o.popup_model || 'landing',
-          product_name: o.product_name || ''
+          product_name: o.product_name || '',
+          meta_pixel_ids: o.meta_pixel_ids || []
         }));
         setOffers(processedOffers);
+      }
+
+      // Parse meta pixels
+      if (!pixelsResult.error && pixelsResult.data?.value) {
+        try {
+          const parsedPixels = JSON.parse(pixelsResult.data.value);
+          setMetaPixels(Array.isArray(parsedPixels) ? parsedPixels : []);
+        } catch {
+          setMetaPixels([]);
+        }
       }
 
       setPopupStats(statsResult.data || []);
@@ -151,7 +172,8 @@ const AdminCheckout = () => {
           name: offer.name,
           domain: offer.domain || null,
           popup_model: offer.popup_model,
-          product_name: offer.product_name || null
+          product_name: offer.product_name || null,
+          meta_pixel_ids: offer.meta_pixel_ids || []
         }).select().single();
         if (error) throw error;
         setOffers(offers.map(o => o.id === offer.id ? { ...offer, id: data.id } : o));
@@ -164,7 +186,8 @@ const AdminCheckout = () => {
           name: offer.name,
           domain: offer.domain || null,
           popup_model: offer.popup_model,
-          product_name: offer.product_name || null
+          product_name: offer.product_name || null,
+          meta_pixel_ids: offer.meta_pixel_ids || []
         }).eq('id', offer.id);
         if (error) throw error;
         setOffers(offers.map(o => o.id === offer.id ? offer : o));
@@ -272,7 +295,7 @@ const AdminCheckout = () => {
               </Card>}
 
             <div className="space-y-4">
-              {offers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} popupModels={popupModels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
+              {offers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} popupModels={popupModels} metaPixels={metaPixels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
             </div>
           </TabsContent>
 
