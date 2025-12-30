@@ -82,7 +82,7 @@ export const OrderBumpCard = memo(function OrderBumpCard({
           </h4>
           
           {bump.description && (
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+            <p className="text-sm text-gray-600 mt-1">
               {bump.description}
             </p>
           )}
