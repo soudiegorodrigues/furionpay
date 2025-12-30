@@ -51,8 +51,11 @@ export const OrderBumpCard = memo(function OrderBumpCard({
       </div>
 
       <div className="flex items-start gap-4 mt-2">
-        {/* Checkbox */}
-        <div className="pt-1">
+      {/* Checkbox */}
+        <div 
+          className="pt-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onToggle(bump.id)}
