@@ -118,7 +118,7 @@ const AdminCheckout = () => {
         supabase.from('checkout_offers').select('*').order('created_at', { ascending: false }),
         supabase.rpc('get_user_popup_model_stats'),
         supabase.from('available_domains').select('id, domain, name').eq('is_active', true).eq('domain_type', 'popup').order('domain'),
-        supabase.from('admin_settings').select('value').eq('key', 'meta_pixels').single()
+        supabase.from('admin_settings').select('value').eq('key', 'meta_pixels').eq('user_id', user?.id).single()
       ]);
 
       if (!offersResult.error && offersResult.data) {

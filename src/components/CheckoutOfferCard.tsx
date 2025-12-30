@@ -101,15 +101,6 @@ interface CheckoutOfferCardProps {
   isNew?: boolean;
 }
 
-interface CheckoutOfferCardProps {
-  offer: CheckoutOffer;
-  userId: string;
-  availableDomains: AvailableDomain[];
-  popupModels: PopupModel[];
-  onSave: (offer: CheckoutOffer) => Promise<void>;
-  onDelete: (offerId: string) => Promise<void>;
-  isNew?: boolean;
-}
 
 export const CheckoutOfferCard = ({
   offer,
