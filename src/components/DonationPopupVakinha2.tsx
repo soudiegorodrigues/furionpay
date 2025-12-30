@@ -10,6 +10,7 @@ import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
+import vakinhaBanner from "@/assets/vakinha-banner.jpg";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
 interface DonationPopupVakinha2Props {
   isOpen: boolean;
@@ -258,9 +259,9 @@ export const DonationPopupVakinha2 = ({
       
       <div className="w-full max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-10">
         {step === "select" && <div className="space-y-5 sm:space-y-6">
-            {/* Logo */}
-            <div className="flex items-center">
-              <img src={vakinhaLogo} alt="Vakinha" className="h-10 sm:h-14" />
+            {/* Banner */}
+            <div className="w-full -mx-3 sm:-mx-4 -mt-4 sm:-mt-10 mb-4">
+              <img src={vakinhaBanner} alt="Salvando Vidas - Vakinha" className="w-full h-auto object-cover rounded-t-lg" />
             </div>
 
             {/* Contribution Value Section */}
