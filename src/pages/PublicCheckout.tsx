@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
-import { preloadCheckoutResources, preloadImage, getOptimizedImageUrl, trackPerformanceMetrics } from "@/lib/performanceUtils";
+import { preloadCheckoutResources, preloadImage } from "@/lib/performanceUtils";
 import type {
   ProductOffer,
   Product,
@@ -23,10 +23,6 @@ const CheckoutTemplateMultistep = lazy(() => import("@/components/checkout/Check
 const CheckoutPixPayment = lazy(() => import("@/components/checkout/CheckoutPixPayment").then(m => ({ default: m.CheckoutPixPayment })));
 const ExitIntentPopup = lazy(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })));
 
-// Track performance metrics in production
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
-  trackPerformanceMetrics();
-}
 
 // Minimal skeleton for instant render - CSS-only, no JS
 const CheckoutSkeleton = memo(() => (
@@ -278,25 +274,24 @@ export default function PublicCheckout() {
     }
   }, [product, config]);
 
-  // PERFORMANCE: Preload product image with <link rel="preload"> for faster LCP
+  // PERFORMANCE: Preload product image for faster LCP
   const preloadedRef = useRef(false);
   useEffect(() => {
     if (checkoutData?.product?.image_url && !preloadedRef.current) {
       preloadedRef.current = true;
-      const optimizedUrl = getOptimizedImageUrl(checkoutData.product.image_url, { width: 400, quality: 85 });
+      const imageUrl = checkoutData.product.image_url;
       
       // Inject link preload into head for browser prioritization
-      const existingPreload = document.querySelector(`link[rel="preload"][href="${optimizedUrl}"]`);
+      const existingPreload = document.querySelector(`link[rel="preload"][href="${imageUrl}"]`);
       if (!existingPreload) {
         const link = document.createElement('link');
         link.rel = 'preload';
         link.as = 'image';
-        link.href = optimizedUrl;
-        link.fetchPriority = 'high';
+        link.href = imageUrl;
         document.head.appendChild(link);
       }
       
-      preloadImage(optimizedUrl, 'high');
+      preloadImage(imageUrl, 'high');
     }
   }, [checkoutData?.product?.image_url]);
 

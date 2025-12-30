@@ -1,5 +1,4 @@
 import { memo, useState } from 'react';
-import { getOptimizedImageUrl } from '@/lib/performanceUtils';
 
 interface Banner {
   id: string;
@@ -9,15 +8,13 @@ interface Banner {
 
 interface BannersCarouselProps {
   banners: Banner[];
-  autoPlayInterval?: number; // kept for backward compatibility, but unused
+  autoPlayInterval?: number;
 }
 
 /**
- * Galeria vertical de banners otimizada para performance
+ * Galeria vertical de banners
  * - Primeiro banner carrega com alta prioridade
  * - Demais banners usam lazy loading nativo
- * - Placeholder blur enquanto carrega
- * - Imagens otimizadas via Supabase Transform (WebP + resize)
  * - Aspect ratio fixo para evitar CLS
  */
 export const BannersCarousel = memo(function BannersCarousel({ banners }: BannersCarouselProps) {
@@ -28,9 +25,9 @@ export const BannersCarousel = memo(function BannersCarousel({ banners }: Banner
   return (
     <div className="flex flex-col gap-4">
       {sortedBanners.map((banner, index) => (
-        <OptimizedBannerImage
+        <BannerImage
           key={banner.id}
-          src={getOptimizedImageUrl(banner.image_url, { width: 800, quality: 80 })}
+          src={banner.image_url}
           alt={`Banner ${index + 1}`}
           priority={index === 0}
         />
@@ -40,9 +37,9 @@ export const BannersCarousel = memo(function BannersCarousel({ banners }: Banner
 });
 
 /**
- * Imagem de banner otimizada com placeholder, fadeIn e aspect ratio fixo
+ * Imagem de banner com loading state
  */
-const OptimizedBannerImage = memo(function OptimizedBannerImage({
+const BannerImage = memo(function BannerImage({
   src,
   alt,
   priority,
@@ -56,9 +53,8 @@ const OptimizedBannerImage = memo(function OptimizedBannerImage({
   return (
     <div 
       className="relative w-full rounded-lg overflow-hidden shadow-sm bg-gray-100"
-      style={{ aspectRatio: '16 / 6' }} // Fixed aspect ratio to prevent CLS
+      style={{ aspectRatio: '16 / 6' }}
     >
-      {/* Placeholder skeleton */}
       {!isLoaded && (
         <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
       )}
@@ -66,14 +62,10 @@ const OptimizedBannerImage = memo(function OptimizedBannerImage({
       <img
         src={src}
         alt={alt}
-        width={800}
-        height={300}
         className={`w-full h-full rounded-lg object-cover transition-opacity duration-300 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
         loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
-        fetchPriority={priority ? 'high' : 'auto'}
         onLoad={() => setIsLoaded(true)}
       />
     </div>
