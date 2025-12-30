@@ -298,42 +298,74 @@ export const DonationPopupVakinha2 = ({
             </div>
 
             {/* Boost Section */}
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-gray-900 mb-1">Turbine sua doação</h2>
-              <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">
-                Ajude MUITO MAIS turbinando sua doação 💚
-              </p>
+            <div className="relative">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                ⚡ TURBINE SUA DOAÇÃO
+              </div>
               
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                {BOOST_OPTIONS.map((boost) => {
-                  const Icon = boost.icon;
-                  const isSelected = selectedBoosts.includes(boost.id);
-                  return (
-                    <button
-                      key={boost.id}
-                      onClick={() => toggleBoost(boost.id)}
-                      className={cn(
-                        "flex flex-col items-center p-2 sm:p-4 rounded-lg transition-all border border-dashed",
-                        isSelected 
-                          ? "border-[#00A651] bg-[#00A651]/5" 
-                          : "border-gray-300 hover:border-gray-400"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2",
-                        boost.bgColor
-                      )}>
-                        <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", boost.color)} />
-                      </div>
-                      <span className="text-[10px] sm:text-sm font-medium text-center text-gray-800 leading-tight">
-                        {boost.label}
-                      </span>
-                      <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">
-                        {formatCurrency(boost.price)}
-                      </span>
-                    </button>
-                  );
-                })}
+              <div className="bg-gradient-to-br from-emerald-50 via-white to-green-50 rounded-2xl p-4 sm:p-5 border border-emerald-200/50 shadow-sm mt-4">
+                <p className="text-gray-600 text-xs sm:text-sm text-center mb-4">
+                  Ajude <span className="font-bold text-emerald-600">MUITO MAIS</span> turbinando sua doação 💚
+                </p>
+                
+                <div className="space-y-2.5 sm:space-y-3">
+                  {BOOST_OPTIONS.map((boost) => {
+                    const Icon = boost.icon;
+                    const isSelected = selectedBoosts.includes(boost.id);
+                    return (
+                      <button
+                        key={boost.id}
+                        onClick={() => toggleBoost(boost.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl transition-all duration-200 group",
+                          isSelected 
+                            ? "bg-gradient-to-r from-emerald-500 to-green-600 shadow-lg shadow-emerald-200 scale-[1.02]" 
+                            : "bg-white border border-gray-200 hover:border-emerald-300 hover:shadow-md hover:scale-[1.01]"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200",
+                          isSelected 
+                            ? "bg-white/20" 
+                            : boost.bgColor
+                        )}>
+                          <Icon className={cn(
+                            "w-6 h-6 sm:w-7 sm:h-7 transition-all duration-200",
+                            isSelected ? "text-white" : boost.color
+                          )} />
+                        </div>
+                        
+                        <div className="flex-1 text-left">
+                          <p className={cn(
+                            "font-semibold text-sm sm:text-base transition-colors",
+                            isSelected ? "text-white" : "text-gray-800"
+                          )}>
+                            {boost.label}
+                          </p>
+                          <p className={cn(
+                            "text-xs sm:text-sm transition-colors",
+                            isSelected ? "text-white/80" : "text-gray-500"
+                          )}>
+                            +{formatCurrency(boost.price)}
+                          </p>
+                        </div>
+                        
+                        <div className={cn(
+                          "w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                          isSelected 
+                            ? "border-white bg-white" 
+                            : "border-gray-300 group-hover:border-emerald-400"
+                        )}>
+                          {isSelected && (
+                            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
