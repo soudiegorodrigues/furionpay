@@ -144,15 +144,45 @@ export function isSlowConnection(): boolean {
 }
 
 /**
- * Retorna URL otimizada para imagem baseado na conexão
- * Pode ser expandido para usar CDN com redimensionamento
+ * Retorna URL otimizada para imagem usando Supabase Image Transform
+ * - Redimensiona imagens para o tamanho necessário
+ * - Converte para WebP automaticamente
+ * - Ajusta qualidade baseado na conexão
  */
 export function getOptimizedImageUrl(src: string, options?: {
   width?: number;
+  height?: number;
   quality?: number;
 }): string {
-  // Por enquanto retorna a URL original
-  // Pode ser expandido para usar serviço de otimização de imagens
+  if (!src) return src;
+  
+  // Detectar imagens do Supabase Storage
+  if (src.includes('supabase.co/storage/v1/object/public/')) {
+    const params = new URLSearchParams();
+    
+    // Largura
+    if (options?.width) {
+      params.set('width', options.width.toString());
+    }
+    
+    // Altura
+    if (options?.height) {
+      params.set('height', options.height.toString());
+    }
+    
+    // Qualidade adaptativa baseada na conexão
+    const baseQuality = options?.quality || 80;
+    const quality = isSlowConnection() ? Math.min(baseQuality, 60) : baseQuality;
+    params.set('quality', quality.toString());
+    
+    // Usar WebP para browsers modernos
+    params.set('format', 'webp');
+    
+    // Supabase Transform URL
+    const transformUrl = src.replace('/object/public/', '/render/image/public/');
+    return `${transformUrl}?${params.toString()}`;
+  }
+  
   return src;
 }
 
