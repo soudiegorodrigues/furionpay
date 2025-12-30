@@ -31,13 +31,19 @@ export function AdminLayoutWrapper() {
   // Check MFA status and redirect if not configured
   useEffect(() => {
     const checkMFA = async () => {
+      console.log('[AdminLayout] Checking MFA - loading:', loading, 'isAuthenticated:', isAuthenticated, 'isApproved:', isApproved, 'mfaChecked:', mfaChecked);
+      
       if (!loading && isAuthenticated && isApproved && !mfaChecked) {
         const info = await checkMFAStatus();
+        console.log('[AdminLayout] MFA Info:', info);
         setMfaChecked(true);
         
-        // If user doesn't have 2FA configured, redirect to setup page
-        if (info && !info.hasTOTPFactor) {
-          navigate('/setup-2fa', { replace: true });
+        // Só redireciona para configurar 2FA se:
+        // 1. Não tem fator TOTP configurado
+        // 2. E não está em aal2 (já verificou o 2FA nesta sessão)
+        if (info && !info.hasTOTPFactor && info.currentLevel !== 'aal2') {
+          console.log('[AdminLayout] Redirecting to 2FA setup');
+          navigate('/autenticador', { replace: true });
         }
       }
     };
