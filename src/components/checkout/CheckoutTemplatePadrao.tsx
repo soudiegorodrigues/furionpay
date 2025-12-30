@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { AddressFields } from "./AddressFields";
 import { BannersCarousel } from "./BannersCarousel";
 import { OrderBumpCard } from "./OrderBumpCard";
+import { CustomVideoPlayer } from "./CustomVideoPlayer";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Banner {
@@ -141,35 +142,11 @@ export function CheckoutTemplatePadrao({
 
       {/* Video Section */}
       {config?.show_video && config?.video_url && (
-        <div className="w-full flex justify-center pt-1 pb-4 md:pt-2 md:pb-6 px-4">
-          <div className="w-full md:max-w-4xl aspect-video rounded-lg overflow-hidden shadow-lg">
-            {config.video_url.includes('youtube.com') || config.video_url.includes('youtu.be') ? (
-              <iframe
-                src={config.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title="Video"
-                loading="lazy"
-              />
-            ) : config.video_url.includes('vimeo.com') ? (
-              <iframe
-                src={config.video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
-                className="w-full h-full"
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-                title="Video"
-                loading="lazy"
-              />
-            ) : (
-              <video
-                src={config.video_url}
-                className="w-full h-full object-cover"
-                controls
-                playsInline
-              />
-            )}
-          </div>
+        <div className="container max-w-4xl mx-auto px-4 pt-4 pb-4">
+          <CustomVideoPlayer 
+            videoUrl={config.video_url} 
+            className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
+          />
         </div>
       )}
 
