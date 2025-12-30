@@ -17,18 +17,22 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get userId from request body
+    // Get userId and productId from request body
     let userId: string | null = null;
+    let productId: string | null = null;
     try {
       const body = await req.json();
       userId = body?.userId || null;
+      productId = body?.productId || null;
     } catch {
       // No body or invalid JSON
     }
 
-    console.log('Received userId:', userId);
+    console.log('Received userId:', userId, 'productId:', productId);
 
-    // Query based on whether we have a userId
+    // Step 1: Get all global pixels for the user
+    let globalPixels: any[] = [];
+    
     let query = supabase
       .from('admin_settings')
       .select('key, value')
@@ -42,30 +46,55 @@ serve(async (req) => {
 
     const { data: multiplePixels, error: multiError } = await query.single();
 
-    console.log('Pixel config query result:', multiplePixels, multiError);
-
     if (!multiError && multiplePixels?.value) {
       try {
-        const pixelsArray = JSON.parse(multiplePixels.value);
-        if (Array.isArray(pixelsArray) && pixelsArray.length > 0) {
-          // Ensure accessToken is included for CAPI support
-          const pixelsWithTokens = pixelsArray.map((pixel: any) => ({
+        const parsed = JSON.parse(multiplePixels.value);
+        if (Array.isArray(parsed)) {
+          globalPixels = parsed.map((pixel: any) => ({
+            id: pixel.id || pixel.pixelId,
             pixelId: pixel.pixelId,
             name: pixel.name,
-            accessToken: pixel.accessToken || null, // Include token for CAPI
+            accessToken: pixel.accessToken || null,
           }));
-          console.log('Returning multiple pixels with tokens:', pixelsWithTokens.map((p: any) => ({
-            ...p,
-            accessToken: p.accessToken ? '***MASKED***' : null
-          })));
-          return new Response(
-            JSON.stringify({ pixels: pixelsWithTokens }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
         }
       } catch (parseError) {
         console.error('Error parsing meta_pixels JSON:', parseError);
       }
+    }
+
+    // Step 2: If productId is provided, check for product-specific pixel selection
+    if (productId && globalPixels.length > 0) {
+      const { data: productConfig, error: configError } = await supabase
+        .from('product_checkout_configs')
+        .select('selected_pixel_ids')
+        .eq('product_id', productId)
+        .single();
+
+      if (!configError && productConfig?.selected_pixel_ids && productConfig.selected_pixel_ids.length > 0) {
+        // Filter to only selected pixels
+        const selectedIds = productConfig.selected_pixel_ids;
+        const filteredPixels = globalPixels.filter(p => 
+          selectedIds.includes(p.id) || selectedIds.includes(p.pixelId)
+        );
+        
+        console.log('Using product-specific pixels:', filteredPixels.length);
+        
+        if (filteredPixels.length > 0) {
+          return new Response(
+            JSON.stringify({ pixels: filteredPixels }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
+    // Step 3: Return all global pixels (fallback)
+    if (globalPixels.length > 0) {
+      console.log('Returning all global pixels:', globalPixels.length);
+      return new Response(
+        JSON.stringify({ pixels: globalPixels }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Fallback to legacy single pixel format

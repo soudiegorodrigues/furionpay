@@ -1520,6 +1520,7 @@ export type Database = {
           require_email_confirmation: boolean | null
           require_phone: boolean | null
           security_badge_text: string | null
+          selected_pixel_ids: string[] | null
           show_banners: boolean | null
           show_countdown: boolean | null
           show_discount_popup: boolean | null
@@ -1564,6 +1565,7 @@ export type Database = {
           require_email_confirmation?: boolean | null
           require_phone?: boolean | null
           security_badge_text?: string | null
+          selected_pixel_ids?: string[] | null
           show_banners?: boolean | null
           show_countdown?: boolean | null
           show_discount_popup?: boolean | null
@@ -1608,6 +1610,7 @@ export type Database = {
           require_email_confirmation?: boolean | null
           require_phone?: boolean | null
           security_badge_text?: string | null
+          selected_pixel_ids?: string[] | null
           show_banners?: boolean | null
           show_countdown?: boolean | null
           show_discount_popup?: boolean | null

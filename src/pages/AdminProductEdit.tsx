@@ -14,6 +14,7 @@ import {
   OffersSection,
   DangerZoneSection,
   ComingSoonSection,
+  PixelsSection,
   ProductNavigation,
   Section
 } from "@/components/product-edit";
@@ -214,7 +215,7 @@ export default function AdminProductEdit() {
       case "upsell":
         return <ComingSoonSection title="Upsell um clique" description="Configure ofertas de upsell após a compra." />;
       case "pixels":
-        return <ComingSoonSection title="Pixels" description="Configure pixels de rastreamento como Meta Pixel, Google Analytics, etc." />;
+        return <PixelsSection productId={product.id} userId={product.user_id} />;
       case "coproduction":
         return <ComingSoonSection title="Co produção" description="Adicione coprodutores e configure divisão de receita." />;
       case "affiliation":

@@ -209,11 +209,14 @@ export default function PublicCheckout() {
         bump_product: bump.bump_product?.[0] || bump.bump_product || null,
       }));
       
-      // Fetch pixel config using config's user_id (separate call to avoid circular reference)
+      // Fetch pixel config using config's user_id and product_id for product-specific pixels
       let pixelConfig: { pixelId?: string; accessToken?: string } = {};
       if (config?.user_id) {
         const { data: pixelData } = await supabase.functions.invoke('get-pixel-config', {
-          body: { userId: config.user_id }
+          body: { 
+            userId: config.user_id,
+            productId: offer.product_id 
+          }
         });
         if (pixelData?.pixels && pixelData.pixels.length > 0) {
           const firstPixel = pixelData.pixels[0];
@@ -221,10 +224,6 @@ export default function PublicCheckout() {
             pixelId: firstPixel.pixelId,
             accessToken: firstPixel.accessToken || undefined
           };
-          console.log('[CHECKOUT] Pixel config loaded:', { 
-            pixelId: pixelConfig.pixelId, 
-            hasToken: !!pixelConfig.accessToken 
-          });
         }
       }
 
