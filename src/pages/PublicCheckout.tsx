@@ -278,12 +278,24 @@ export default function PublicCheckout() {
     }
   }, [product, config]);
 
-  // PERFORMANCE: Preload product image when checkoutData is available (avoid duplicate RPC call)
+  // PERFORMANCE: Preload product image with <link rel="preload"> for faster LCP
   const preloadedRef = useRef(false);
   useEffect(() => {
     if (checkoutData?.product?.image_url && !preloadedRef.current) {
       preloadedRef.current = true;
       const optimizedUrl = getOptimizedImageUrl(checkoutData.product.image_url, { width: 400, quality: 85 });
+      
+      // Inject link preload into head for browser prioritization
+      const existingPreload = document.querySelector(`link[rel="preload"][href="${optimizedUrl}"]`);
+      if (!existingPreload) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = optimizedUrl;
+        link.fetchPriority = 'high';
+        document.head.appendChild(link);
+      }
+      
       preloadImage(optimizedUrl, 'high');
     }
   }, [checkoutData?.product?.image_url]);
