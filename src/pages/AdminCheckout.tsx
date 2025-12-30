@@ -5,7 +5,7 @@ import { AccessDenied } from "@/components/AccessDenied";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, CreditCard, TrendingUp, Plus, LayoutGrid, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -409,9 +409,26 @@ const AdminCheckout = () => {
       {previewModel === 'direct' && <DonationPopupDirect isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={true} />}
       {previewModel === 'hot' && <DonationPopupHot isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={true} />}
 
-      {/* Full-page popups rendered directly (they have their own modal structure) */}
-      {previewModel === 'landing' && <DonationPopupLanding isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={true} isPreview={true} />}
-      {previewModel === 'instituto' && <DonationPopupInstituto isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={true} isPreview={true} />}
+      {/* Full-page popups wrapped in Dialog for preview */}
+      <Dialog open={previewModel === 'landing'} onOpenChange={open => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <DialogTitle className="sr-only">Preview Modelo Vakinha</DialogTitle>
+          <div className="relative">
+            <DonationPopupLanding isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={false} isPreview={true} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewModel === 'instituto'} onOpenChange={open => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <DialogTitle className="sr-only">Preview Modelo Instituto</DialogTitle>
+          <div className="relative">
+            <DonationPopupInstituto isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={false} isPreview={true} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vakinha2 has its own overlay system */}
       {previewModel === 'vakinha2' && <DonationPopupVakinha2 isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={true} isPreview={true} />}
     </>;
 };
