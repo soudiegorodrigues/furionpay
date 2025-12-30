@@ -164,17 +164,6 @@ export const DonationPopupVakinha2 = ({
   };
   const handleGeneratePix = async () => {
     const total = calculateTotal();
-
-    // Preview mode: fake PIX data
-    if (isPreview) {
-      setStep("pix");
-      setPixData({
-        code: "00020126580014br.gov.bcb.pix0136preview-pix-code-vakinha2",
-        qrCodeUrl: undefined,
-        transactionId: "preview-transaction-vakinha2"
-      });
-      return;
-    }
     setStep("loading");
     
     const maxRetries = 2;
@@ -461,8 +450,7 @@ const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, tra
 
   // Polling para verificar status do pagamento
   useEffect(() => {
-    // Não fazer polling em modo preview
-    if (!transactionId || paymentConfirmed || isPreview) return;
+    if (!transactionId || paymentConfirmed) return;
 
     const checkStatus = async () => {
       try {
@@ -494,7 +482,7 @@ const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, tra
         clearInterval(pollingRef.current);
       }
     };
-  }, [transactionId, paymentConfirmed, amount, trackEvent, isPreview]);
+  }, [transactionId, paymentConfirmed, amount, trackEvent]);
 
   // Timer de expiração
   useEffect(() => {
