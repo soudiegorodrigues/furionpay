@@ -26,10 +26,10 @@ interface DonationPopupVakinha2Props {
 const DONATION_AMOUNTS: { amount: number; badge?: string }[] = [
   { amount: 30 },
   { amount: 50 },
-  { amount: 100, badge: "Doe com Amor 💚" },
+  { amount: 100 },
   { amount: 300 },
   { amount: 500 },
-  { amount: 1000 },
+  { amount: 1000, badge: "Doe com Amor 💚" },
   { amount: 2500 },
   { amount: 5000 },
   { amount: 7000 },
