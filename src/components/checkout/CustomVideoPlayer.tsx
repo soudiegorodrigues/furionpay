@@ -4,9 +4,10 @@ import { Play } from "lucide-react";
 interface CustomVideoPlayerProps {
   videoUrl: string;
   className?: string;
+  posterUrl?: string;
 }
 
-export function CustomVideoPlayer({ videoUrl, className }: CustomVideoPlayerProps) {
+export function CustomVideoPlayer({ videoUrl, className, posterUrl }: CustomVideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -84,6 +85,8 @@ export function CustomVideoPlayer({ videoUrl, className }: CustomVideoPlayerProp
       <video
         ref={videoRef}
         src={videoUrl}
+        poster={posterUrl}
+        preload="metadata"
         className="w-full h-full object-cover cursor-pointer"
         playsInline
         onClick={handleVideoClick}
