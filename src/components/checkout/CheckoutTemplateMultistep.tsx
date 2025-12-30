@@ -177,6 +177,8 @@ export function CheckoutTemplateMultistep({
                   alt={product.name} 
                   className="w-20 h-20 object-cover rounded-xl shadow-md"
                   loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               ) : (
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl flex items-center justify-center">
