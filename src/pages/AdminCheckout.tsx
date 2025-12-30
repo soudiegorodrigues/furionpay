@@ -428,8 +428,15 @@ const AdminCheckout = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Vakinha2 has its own overlay system */}
-      {previewModel === 'vakinha2' && <DonationPopupVakinha2 isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={true} isPreview={true} />}
+      {/* Vakinha2 - com Dialog igual aos outros */}
+      <Dialog open={previewModel === 'vakinha2'} onOpenChange={open => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <DialogTitle className="sr-only">Preview Modelo Vakinha 2</DialogTitle>
+          <div className="relative">
+            <DonationPopupVakinha2 isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={false} isPreview={true} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>;
 };
 export default AdminCheckout;
