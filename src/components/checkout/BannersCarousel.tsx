@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { getOptimizedImageUrl } from '@/lib/performanceUtils';
 
 interface Banner {
   id: string;
@@ -16,7 +17,7 @@ interface BannersCarouselProps {
  * - Primeiro banner carrega com alta prioridade
  * - Demais banners usam lazy loading nativo
  * - Placeholder blur enquanto carrega
- * - Suporte a conexões lentas
+ * - Imagens otimizadas via Supabase Transform (WebP + resize)
  */
 export const BannersCarousel = memo(function BannersCarousel({ banners }: BannersCarouselProps) {
   const sortedBanners = [...banners].sort((a, b) => a.display_order - b.display_order);
@@ -28,7 +29,7 @@ export const BannersCarousel = memo(function BannersCarousel({ banners }: Banner
       {sortedBanners.map((banner, index) => (
         <OptimizedBannerImage
           key={banner.id}
-          src={banner.image_url}
+          src={getOptimizedImageUrl(banner.image_url, { width: 800, quality: 80 })}
           alt={`Banner ${index + 1}`}
           priority={index === 0}
         />

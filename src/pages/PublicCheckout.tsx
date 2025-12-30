@@ -1,10 +1,10 @@
-import { useState, useEffect, lazy, Suspense, memo } from "react";
+import { useState, useEffect, lazy, Suspense, memo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
-import { preloadCheckoutResources, trackPerformanceMetrics } from "@/lib/performanceUtils";
+import { preloadCheckoutResources, preloadImage, getOptimizedImageUrl, trackPerformanceMetrics } from "@/lib/performanceUtils";
 import {
   ProductOffer,
   Product,
@@ -268,10 +268,32 @@ export default function PublicCheckout() {
     }
   }, [product, config]);
 
-  // Initialize Meta Pixel dynamically when pixelConfig is loaded
+  // PERFORMANCE: Preload product image IMMEDIATELY before data loads
+  const preloadedRef = useRef(false);
   useEffect(() => {
-    if (pixelConfig?.pixelId && typeof window !== 'undefined') {
-      const pixelId = pixelConfig.pixelId;
+    if (offerCode && !preloadedRef.current) {
+      preloadedRef.current = true;
+      // Preload crítico imediato - busca imagem antes dos dados principais
+      supabase.rpc("get_public_offer_by_code", { p_offer_code: offerCode })
+        .then(({ data }) => {
+          if (data?.[0]?.product_image_url) {
+            const optimizedUrl = getOptimizedImageUrl(data[0].product_image_url, { width: 400, quality: 85 });
+            preloadImage(optimizedUrl, 'high');
+          }
+        });
+    }
+  }, [offerCode]);
+
+  // Initialize Meta Pixel DEFERRED - não bloqueia LCP
+  useEffect(() => {
+    if (!pixelConfig?.pixelId || typeof window === 'undefined') return;
+    
+    const pixelId = pixelConfig.pixelId;
+    let loaded = false;
+    
+    const loadPixel = () => {
+      if (loaded) return;
+      loaded = true;
       
       // Check if this pixel is already initialized
       if (window.fbq && window.fbq.getState && window.fbq.getState().pixels?.some((p: any) => p.id === pixelId)) {
@@ -304,7 +326,31 @@ export default function PublicCheckout() {
       // Initialize this pixel
       window.fbq('init', pixelId);
       window.fbq('track', 'PageView');
-    }
+    };
+    
+    // PERFORMANCE: Defer pixel loading to after LCP
+    // Use requestIdleCallback if available, otherwise setTimeout
+    const scheduleLoad = () => {
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(loadPixel, { timeout: 3000 });
+      } else {
+        setTimeout(loadPixel, 2000);
+      }
+    };
+    
+    // Load after 2 seconds or first user interaction
+    const timer = setTimeout(scheduleLoad, 2000);
+    const events = ['scroll', 'click', 'touchstart', 'mousemove'];
+    events.forEach(event => {
+      document.addEventListener(event, loadPixel, { once: true, passive: true });
+    });
+    
+    return () => {
+      clearTimeout(timer);
+      events.forEach(event => {
+        document.removeEventListener(event, loadPixel);
+      });
+    };
   }, [pixelConfig]);
 
   // Back redirect handler

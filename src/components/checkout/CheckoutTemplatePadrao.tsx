@@ -16,6 +16,7 @@ import { BannersCarousel } from "./BannersCarousel";
 import { OrderBumpCard } from "./OrderBumpCard";
 import { CustomVideoPlayer } from "./CustomVideoPlayer";
 import { supabase } from "@/integrations/supabase/client";
+import { getOptimizedImageUrl } from "@/lib/performanceUtils";
 
 interface Banner {
   id: string;
@@ -423,10 +424,10 @@ export function CheckoutTemplatePadrao({
 
                   {config?.show_product_image !== false && (
                     <div className="flex gap-3 p-3 bg-gray-50 rounded-xl">
-                      <div className="w-24 h-24 shrink-0">
+                      <div className="w-24 h-24 shrink-0" style={{ aspectRatio: '1/1' }}>
                         {product?.image_url ? (
                           <img 
-                            src={product.image_url} 
+                            src={getOptimizedImageUrl(product.image_url, { width: 192, quality: 85 })} 
                             alt={product.name || "Produto"} 
                             className="w-24 h-24 object-cover rounded-lg" 
                             loading="eager" 
@@ -434,6 +435,7 @@ export function CheckoutTemplatePadrao({
                             fetchPriority="high"
                             width={96}
                             height={96}
+                            style={{ aspectRatio: '1/1' }}
                           />
                         ) : (
                           <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -495,13 +497,14 @@ export function CheckoutTemplatePadrao({
                             <div key={testimonial.id} className="flex items-start gap-4 sm:gap-3 p-4 sm:p-3 bg-gray-50 rounded-lg">
                               {testimonial.author_photo_url ? (
                                 <img
-                                  src={testimonial.author_photo_url}
+                                  src={getOptimizedImageUrl(testimonial.author_photo_url, { width: 96, quality: 75 })}
                                   alt={testimonial.author_name}
                                   className="w-12 h-12 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
                                   loading="lazy"
                                   decoding="async"
                                   width={48}
                                   height={48}
+                                  style={{ aspectRatio: '1/1' }}
                                 />
                               ) : (
                                 <div 
