@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { usePixel } from "./MetaPixelProvider";
+
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
 
 
@@ -38,13 +38,11 @@ export const DonationPopupDirect = ({
   const [isPaid, setIsPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
   const hasGenerated = useRef(false);
   
-  // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
+  // Prioriza UTMs passados via prop, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
     if (propUtmParams && Object.keys(propUtmParams).length > 0) return propUtmParams;
-    if (contextUtmParams && Object.keys(contextUtmParams).length > 0) return contextUtmParams;
     return getSavedUTMParams();
   };
   const utmParams = getEffectiveUtmParams();
@@ -54,11 +52,6 @@ export const DonationPopupDirect = ({
     if (isOpen && !hasGenerated.current) {
       hasGenerated.current = true;
       generatePix();
-      trackEvent('InitiateCheckout', {
-        content_name: 'Donation Popup Direct',
-        currency: 'BRL',
-        value: fixedAmount,
-      });
     }
     
     if (!isOpen) {
@@ -103,11 +96,6 @@ export const DonationPopupDirect = ({
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
           setStep("success");
-          trackEvent("Purchase", {
-            value: fixedAmount,
-            currency: "BRL",
-            content_name: "Donation Direct",
-          });
           clearInterval(pollInterval);
         }
       } catch (err) {
@@ -116,7 +104,7 @@ export const DonationPopupDirect = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [step, pixData?.transactionId, isPaid, fixedAmount, trackEvent]);
+  }, [step, pixData?.transactionId, isPaid, fixedAmount]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -159,16 +147,6 @@ export const DonationPopupDirect = ({
         code: data.pixCode,
         qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
-      });
-      
-      // Fire PixGenerated event with advanced matching
-      trackEvent('PixGenerated', {
-        value: fixedAmount,
-        currency: 'BRL',
-        content_name: 'Donation Direct',
-      }, {
-        external_id: data.transactionId,
-        country: 'br',
       });
       
       setStep("pix");
