@@ -319,15 +319,16 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {editingPixel ? "Editar Pixel" : "Adicionar Pixel"}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            {/* Coluna Esquerda - Dados do Pixel */}
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Rede Social</Label>
                 <Select
@@ -353,9 +354,7 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
                   placeholder="1234567890"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Título</Label>
                 <Input
@@ -373,109 +372,108 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
                   placeholder="meusite.com"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>Token da API de Conversão</Label>
+                <Input
+                  value={formData.accessToken}
+                  onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
+                  placeholder="EAAG..."
+                  type="password"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Token para envio de eventos via Conversions API (server-side)
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Token da API de Conversão</Label>
-              <Input
-                value={formData.accessToken}
-                onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
-                placeholder="EAAG..."
-                type="password"
-              />
-              <p className="text-xs text-muted-foreground">
-                Token para envio de eventos via Conversions API (server-side)
-              </p>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-4">Configuração de Eventos</h4>
+            {/* Coluna Direita - Configuração de Eventos */}
+            <div className="space-y-4">
+              <h4 className="font-medium">Configuração de Eventos</h4>
               
-              <div className="space-y-4">
-                {/* Page View */}
+              {/* Page View */}
+              <div className="flex items-center justify-between">
+                <Label className="font-normal">PageView</Label>
+                <Switch
+                  checked={formData.events.pageView}
+                  onCheckedChange={(v) => updateEvents("pageView", v)}
+                />
+              </div>
+
+              {/* Initiate Checkout */}
+              <div className="flex items-center justify-between">
+                <Label className="font-normal">InitiateCheckout</Label>
+                <Switch
+                  checked={formData.events.initiateCheckout}
+                  onCheckedChange={(v) => updateEvents("initiateCheckout", v)}
+                />
+              </div>
+
+              {/* Purchase Approved */}
+              <div className="space-y-3 p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center justify-between">
-                  <Label className="font-normal">PageView (Visualização de Página)</Label>
+                  <Label className="font-medium">Compra Aprovada (Purchase)</Label>
                   <Switch
-                    checked={formData.events.pageView}
-                    onCheckedChange={(v) => updateEvents("pageView", v)}
+                    checked={formData.events.purchaseApproved.enabled}
+                    onCheckedChange={(v) => updateEvents("purchaseApproved.enabled", v)}
                   />
                 </div>
+                
+                {formData.events.purchaseApproved.enabled && (
+                  <div className="pl-4 space-y-2 border-l-2 border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal text-sm">Ao comprar com Pix</Label>
+                      <Switch
+                        checked={formData.events.purchaseApproved.pix}
+                        onCheckedChange={(v) => updateEvents("purchaseApproved.pix", v)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal text-sm">Ao comprar com Boleto</Label>
+                      <Switch
+                        checked={formData.events.purchaseApproved.boleto}
+                        onCheckedChange={(v) => updateEvents("purchaseApproved.boleto", v)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal text-sm">Ao comprar com Cartão</Label>
+                      <Switch
+                        checked={formData.events.purchaseApproved.card}
+                        onCheckedChange={(v) => updateEvents("purchaseApproved.card", v)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                {/* Initiate Checkout */}
+              {/* Pending */}
+              <div className="space-y-3 p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center justify-between">
-                  <Label className="font-normal">InitiateCheckout (Início do Checkout)</Label>
+                  <Label className="font-medium">Pagamento Pendente</Label>
                   <Switch
-                    checked={formData.events.initiateCheckout}
-                    onCheckedChange={(v) => updateEvents("initiateCheckout", v)}
+                    checked={formData.events.pending.enabled}
+                    onCheckedChange={(v) => updateEvents("pending.enabled", v)}
                   />
                 </div>
-
-                {/* Purchase Approved */}
-                <div className="space-y-3 p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center justify-between">
-                    <Label className="font-medium">Compra Aprovada (Purchase)</Label>
-                    <Switch
-                      checked={formData.events.purchaseApproved.enabled}
-                      onCheckedChange={(v) => updateEvents("purchaseApproved.enabled", v)}
-                    />
-                  </div>
-                  
-                  {formData.events.purchaseApproved.enabled && (
-                    <div className="pl-4 space-y-2 border-l-2 border-primary/20">
-                      <div className="flex items-center justify-between">
-                        <Label className="font-normal text-sm">Ao comprar com Pix</Label>
-                        <Switch
-                          checked={formData.events.purchaseApproved.pix}
-                          onCheckedChange={(v) => updateEvents("purchaseApproved.pix", v)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="font-normal text-sm">Ao comprar com Boleto</Label>
-                        <Switch
-                          checked={formData.events.purchaseApproved.boleto}
-                          onCheckedChange={(v) => updateEvents("purchaseApproved.boleto", v)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="font-normal text-sm">Ao comprar com Cartão</Label>
-                        <Switch
-                          checked={formData.events.purchaseApproved.card}
-                          onCheckedChange={(v) => updateEvents("purchaseApproved.card", v)}
-                        />
-                      </div>
+                
+                {formData.events.pending.enabled && (
+                  <div className="pl-4 space-y-2 border-l-2 border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal text-sm">Pagamento Pix gerado</Label>
+                      <Switch
+                        checked={formData.events.pending.pix}
+                        onCheckedChange={(v) => updateEvents("pending.pix", v)}
+                      />
                     </div>
-                  )}
-                </div>
-
-                {/* Pending */}
-                <div className="space-y-3 p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center justify-between">
-                    <Label className="font-medium">Pagamento Pendente</Label>
-                    <Switch
-                      checked={formData.events.pending.enabled}
-                      onCheckedChange={(v) => updateEvents("pending.enabled", v)}
-                    />
-                  </div>
-                  
-                  {formData.events.pending.enabled && (
-                    <div className="pl-4 space-y-2 border-l-2 border-primary/20">
-                      <div className="flex items-center justify-between">
-                        <Label className="font-normal text-sm">Pagamento Pix gerado</Label>
-                        <Switch
-                          checked={formData.events.pending.pix}
-                          onCheckedChange={(v) => updateEvents("pending.pix", v)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="font-normal text-sm">Boleto gerado</Label>
-                        <Switch
-                          checked={formData.events.pending.boleto}
-                          onCheckedChange={(v) => updateEvents("pending.boleto", v)}
-                        />
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal text-sm">Boleto gerado</Label>
+                      <Switch
+                        checked={formData.events.pending.boleto}
+                        onCheckedChange={(v) => updateEvents("pending.boleto", v)}
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
