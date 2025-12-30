@@ -11,7 +11,7 @@ import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { cn } from "@/lib/utils";
 import { AddressFields } from "./AddressFields";
-import { getOptimizedImageUrl } from "@/lib/performanceUtils";
+
 
 type MultiStep = "info" | "contact" | "payment";
 
@@ -173,14 +173,10 @@ export function CheckoutTemplateMultistep({
             <div className="flex gap-4 items-center">
               {product?.image_url ? (
                 <img 
-                  src={getOptimizedImageUrl(product.image_url, { width: 160, quality: 80 })} 
+                  src={product.image_url} 
                   alt={product.name} 
                   className="w-20 h-20 object-cover rounded-xl shadow-md"
-                  width={80}
-                  height={80}
                   loading="eager"
-                  decoding="async"
-                  fetchPriority="high"
                 />
               ) : (
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl flex items-center justify-center">

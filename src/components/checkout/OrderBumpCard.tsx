@@ -1,8 +1,7 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Gift, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getOptimizedImageUrl } from "@/lib/performanceUtils";
 
 export interface OrderBump {
   id: string;
@@ -32,13 +31,8 @@ export const OrderBumpCard = memo(function OrderBumpCard({
   formatPrice,
   primaryColor = "#22C55E",
 }: OrderBumpCardProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
-  // Get optimized image URL
+  // Use direct image URL without transformation
   const imageUrl = bump.image_url || bump.bump_product?.image_url;
-  const optimizedImageUrl = imageUrl 
-    ? getOptimizedImageUrl(imageUrl, { width: 128, quality: 80 }) 
-    : null;
 
   return (
     <div
@@ -60,7 +54,7 @@ export const OrderBumpCard = memo(function OrderBumpCard({
       </div>
 
       <div className="flex items-start gap-4 mt-2">
-      {/* Checkbox */}
+        {/* Checkbox */}
         <div 
           className="pt-1"
           onClick={(e) => e.stopPropagation()}
@@ -75,40 +69,27 @@ export const OrderBumpCard = memo(function OrderBumpCard({
           />
         </div>
 
-        {/* Image - optimized with explicit dimensions */}
-        {optimizedImageUrl && (
-          <div 
-            className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0"
-            style={{ aspectRatio: '1 / 1' }}
-          >
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
-            )}
+        {/* Image - simple without loading state */}
+        {imageUrl && (
+          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
             <img
-              src={optimizedImageUrl}
+              src={imageUrl}
               alt={bump.bump_product?.name || "Order Bump"}
-              width={64}
-              height={64}
-              className={cn(
-                "w-full h-full object-cover transition-opacity duration-200",
-                imageLoaded ? "opacity-100" : "opacity-0"
-              )}
+              className="w-full h-full object-cover"
               loading="lazy"
-              decoding="async"
-              onLoad={() => setImageLoaded(true)}
             />
           </div>
         )}
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-sm sm:text-base flex items-center gap-2" style={{ color: '#111827' }}>
+          <h4 className="font-bold text-gray-900 text-sm sm:text-base flex items-center gap-2">
             <Gift className="h-4 w-4 text-orange-500 shrink-0" />
             {bump.title}
           </h4>
           
           {bump.description && (
-            <p className="text-sm mt-1" style={{ color: '#4B5563' }}>
+            <p className="text-sm text-gray-600 mt-1">
               {bump.description}
             </p>
           )}
@@ -117,7 +98,7 @@ export const OrderBumpCard = memo(function OrderBumpCard({
             <span className="text-lg font-bold" style={{ color: primaryColor }}>
               + {formatPrice(bump.bump_price)}
             </span>
-            <span className="text-xs" style={{ color: '#6B7280' }}>
+            <span className="text-xs text-gray-500">
               ao seu pedido
             </span>
           </div>

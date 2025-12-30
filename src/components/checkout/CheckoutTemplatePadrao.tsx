@@ -15,7 +15,7 @@ import { AddressFields } from "./AddressFields";
 import { BannersCarousel } from "./BannersCarousel";
 import { OrderBumpCard } from "./OrderBumpCard";
 import { CustomVideoPlayer } from "./CustomVideoPlayer";
-import { getOptimizedImageUrl } from "@/lib/performanceUtils";
+
 
 // Memoized star rating component
 const StarRating = memo(({ rating }: { rating: number }) => (
@@ -418,15 +418,10 @@ export function CheckoutTemplatePadrao({
                       <div className="w-24 h-24 shrink-0" style={{ aspectRatio: '1/1' }}>
                         {product?.image_url ? (
                           <img 
-                            src={getOptimizedImageUrl(product.image_url, { width: 192, quality: 85 })} 
+                            src={product.image_url} 
                             alt={product.name || "Produto"} 
                             className="w-24 h-24 object-cover rounded-lg" 
-                            loading="eager" 
-                            decoding="async"
-                            fetchPriority="high"
-                            width={96}
-                            height={96}
-                            style={{ aspectRatio: '1/1' }}
+                            loading="eager"
                           />
                         ) : (
                           <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -488,14 +483,10 @@ export function CheckoutTemplatePadrao({
                             <div key={testimonial.id} className="flex items-start gap-4 sm:gap-3 p-4 sm:p-3 bg-gray-50 rounded-lg">
                               {testimonial.author_photo_url ? (
                                 <img
-                                  src={getOptimizedImageUrl(testimonial.author_photo_url, { width: 96, quality: 75 })}
+                                  src={testimonial.author_photo_url}
                                   alt={testimonial.author_name}
                                   className="w-12 h-12 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
                                   loading="lazy"
-                                  decoding="async"
-                                  width={48}
-                                  height={48}
-                                  style={{ aspectRatio: '1/1' }}
                                 />
                               ) : (
                                 <div 

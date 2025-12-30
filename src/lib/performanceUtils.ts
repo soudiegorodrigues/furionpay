@@ -144,46 +144,17 @@ export function isSlowConnection(): boolean {
 }
 
 /**
- * Retorna URL otimizada para imagem usando Supabase Image Transform
- * - Redimensiona imagens para o tamanho necessário
- * - Converte para WebP automaticamente
- * - Ajusta qualidade baseado na conexão
+ * Retorna URL da imagem (sem transformação para evitar quebrar URLs)
+ * Nota: Supabase Image Transform pode não estar habilitado em todos os projetos
  */
-export function getOptimizedImageUrl(src: string, options?: {
+export function getOptimizedImageUrl(src: string | null | undefined, options?: {
   width?: number;
   height?: number;
   quality?: number;
 }): string {
-  if (!src) return src;
-  
-  // Detectar imagens do Supabase Storage
-  if (src.includes('supabase.co/storage/v1/object/public/')) {
-    const params = new URLSearchParams();
-    
-    // Largura
-    if (options?.width) {
-      params.set('width', options.width.toString());
-    }
-    
-    // Altura
-    if (options?.height) {
-      params.set('height', options.height.toString());
-    }
-    
-    // Qualidade adaptativa baseada na conexão
-    const baseQuality = options?.quality || 80;
-    const quality = isSlowConnection() ? Math.min(baseQuality, 60) : baseQuality;
-    params.set('quality', quality.toString());
-    
-    // Usar WebP para browsers modernos
-    params.set('format', 'webp');
-    
-    // Supabase Transform URL
-    const transformUrl = src.replace('/object/public/', '/render/image/public/');
-    return `${transformUrl}?${params.toString()}`;
-  }
-  
-  return src;
+  // Simplesmente retorna a URL original sem transformação
+  // para evitar quebrar imagens quando Image Transform não está habilitado
+  return src || '';
 }
 
 /**

@@ -13,7 +13,7 @@ import { CheckoutTemplateProps } from "./types";
 import { AddressFields } from "./AddressFields";
 import { BannersCarousel } from "./BannersCarousel";
 import { supabase } from "@/integrations/supabase/client";
-import { getOptimizedImageUrl } from "@/lib/performanceUtils";
+
 
 interface Banner {
   id: string;
@@ -300,14 +300,10 @@ export function CheckoutTemplateAfilia({
                   <div className="flex gap-4 p-4 bg-gray-50 rounded-xl">
                     {product?.image_url ? (
                       <img 
-                        src={getOptimizedImageUrl(product.image_url, { width: 160, quality: 80 })} 
+                        src={product.image_url} 
                         alt={product.name}
                         className="w-20 h-20 object-cover rounded-lg"
-                        width={80}
-                        height={80}
                         loading="eager"
-                        decoding="async"
-                        fetchPriority="high"
                       />
                     ) : (
                       <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
