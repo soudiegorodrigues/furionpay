@@ -218,6 +218,9 @@ const AdminIntegrations = () => {
                 <img 
                   src={utmifyLogo} 
                   alt="Utmify" 
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   width={80}
                   height={80}
                   className="w-full h-full object-contain drop-shadow-lg" 
@@ -288,6 +291,9 @@ const AdminIntegrations = () => {
                 <img 
                   src={apiLogo} 
                   alt="API de Pagamentos" 
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   width={80}
                   height={80}
                   className="w-full h-full object-contain drop-shadow-lg" 

@@ -8,6 +8,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "next-themes";
 import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
+import utmifyLogo from "@/assets/utmify-logo.png";
+import apiLogo from "@/assets/api-logo.webp";
+import { preloadImages } from "@/lib/performanceUtils";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { InstallAppDialog } from "@/components/InstallAppDialog";
@@ -87,6 +90,10 @@ export function AdminSidebar({
 
   const logoSrc = theme === "dark" ? furionPayLogoDark : furionPayLogoLight;
 
+  const handleIntegrationsIntent = () => {
+    preloadImages([utmifyLogo, apiLogo], true);
+  };
+
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-sidebar">
       {/* Header compacto */}
@@ -111,6 +118,9 @@ export function AdminSidebar({
                     <NavLink 
                       to={item.url} 
                       end 
+                      onPointerEnter={item.url === "/admin/integrations" ? handleIntegrationsIntent : undefined}
+                      onTouchStart={item.url === "/admin/integrations" ? handleIntegrationsIntent : undefined}
+                      onFocus={item.url === "/admin/integrations" ? handleIntegrationsIntent : undefined}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02] group relative"
                       activeClassName="bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-medium shadow-sm before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-6 before:bg-primary before:rounded-r-full"
                     >
