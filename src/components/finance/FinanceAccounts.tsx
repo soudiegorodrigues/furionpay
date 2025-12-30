@@ -178,9 +178,30 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
       // Calcular novo current_balance quando editando
       let newCurrentBalance = initialBalance;
       if (editingAccount) {
-        // Ajustar current_balance proporcionalmente à mudança do saldo inicial
-        const initialBalanceDiff = initialBalance - editingAccount.initial_balance;
-        newCurrentBalance = editingAccount.current_balance + initialBalanceDiff;
+        // Verificar se existem transações vinculadas a esta conta
+        const { count: transactionCount } = await supabase
+          .from('finance_transactions')
+          .select('*', { head: true, count: 'exact' })
+          .eq('account_id', editingAccount.id);
+        
+        console.log('[FinanceAccounts] Editando conta:', {
+          accountId: editingAccount.id,
+          oldInitialBalance: editingAccount.initial_balance,
+          oldCurrentBalance: editingAccount.current_balance,
+          newInitialBalance: initialBalance,
+          transactionCount
+        });
+        
+        if (transactionCount === 0 || transactionCount === null) {
+          // Sem transações: current_balance deve ser igual ao initial_balance
+          newCurrentBalance = initialBalance;
+        } else {
+          // Com transações: ajustar proporcionalmente à mudança do saldo inicial
+          const initialBalanceDiff = initialBalance - editingAccount.initial_balance;
+          newCurrentBalance = editingAccount.current_balance + initialBalanceDiff;
+        }
+        
+        console.log('[FinanceAccounts] Novo current_balance calculado:', newCurrentBalance);
       }
       
       const payload = {
