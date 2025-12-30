@@ -1514,6 +1514,7 @@ export type Database = {
           payment_section_title: string | null
           primary_color: string | null
           product_id: string
+          product_pixels: Json | null
           require_address: boolean | null
           require_birthdate: boolean | null
           require_cpf: boolean | null
@@ -1559,6 +1560,7 @@ export type Database = {
           payment_section_title?: string | null
           primary_color?: string | null
           product_id: string
+          product_pixels?: Json | null
           require_address?: boolean | null
           require_birthdate?: boolean | null
           require_cpf?: boolean | null
@@ -1604,6 +1606,7 @@ export type Database = {
           payment_section_title?: string | null
           primary_color?: string | null
           product_id?: string
+          product_pixels?: Json | null
           require_address?: boolean | null
           require_birthdate?: boolean | null
           require_cpf?: boolean | null

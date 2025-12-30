@@ -1,18 +1,42 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Save, Target, Info, Loader2 } from "lucide-react";
+import { Plus, Target, Pencil, Trash2, Loader2, Facebook, Globe } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Json } from "@/integrations/supabase/types";
 
-interface PixelData {
-  id?: string;
+interface PixelEvents {
+  purchaseApproved: {
+    enabled: boolean;
+    pix: boolean;
+    boleto: boolean;
+    card: boolean;
+  };
+  pending: {
+    enabled: boolean;
+    pix: boolean;
+    boleto: boolean;
+  };
+  pageView: boolean;
+  initiateCheckout: boolean;
+}
+
+interface ProductPixel {
+  id: string;
+  network: "meta" | "tiktok" | "google";
   pixelId: string;
   name: string;
-  accessToken?: string;
+  domain: string;
+  accessToken: string;
+  events: PixelEvents;
 }
 
 interface PixelsSectionProps {
@@ -20,42 +44,48 @@ interface PixelsSectionProps {
   userId: string;
 }
 
+const defaultEvents: PixelEvents = {
+  purchaseApproved: {
+    enabled: true,
+    pix: true,
+    boleto: true,
+    card: true,
+  },
+  pending: {
+    enabled: true,
+    pix: true,
+    boleto: true,
+  },
+  pageView: true,
+  initiateCheckout: true,
+};
+
+const emptyPixel: Omit<ProductPixel, "id"> = {
+  network: "meta",
+  pixelId: "",
+  name: "",
+  domain: "",
+  accessToken: "",
+  events: defaultEvents,
+};
+
+function parseProductPixels(data: Json | null | undefined): ProductPixel[] {
+  if (!data || !Array.isArray(data)) return [];
+  return data as unknown as ProductPixel[];
+}
+
 export function PixelsSection({ productId, userId }: PixelsSectionProps) {
   const queryClient = useQueryClient();
-  const [selectedPixels, setSelectedPixels] = useState<string[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPixel, setEditingPixel] = useState<ProductPixel | null>(null);
+  const [formData, setFormData] = useState<Omit<ProductPixel, "id">>(emptyPixel);
 
-  // Fetch global pixels from admin_settings
-  const { data: globalPixels, isLoading: loadingPixels } = useQuery({
-    queryKey: ["global-pixels", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("admin_settings")
-        .select("value")
-        .eq("user_id", userId)
-        .eq("key", "meta_pixels")
-        .single();
-
-      if (error && error.code !== "PGRST116") throw error;
-      
-      if (data?.value) {
-        try {
-          const parsed = JSON.parse(data.value);
-          return Array.isArray(parsed) ? parsed as PixelData[] : [];
-        } catch {
-          return [];
-        }
-      }
-      return [];
-    },
-  });
-
-  // Fetch current product pixel selection
-  const { data: productConfig, isLoading: loadingConfig } = useQuery({
+  const { data: productConfig, isLoading } = useQuery({
     queryKey: ["product-pixel-config", productId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_checkout_configs")
-        .select("selected_pixel_ids")
+        .select("product_pixels")
         .eq("product_id", productId)
         .single();
 
@@ -64,16 +94,10 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
     },
   });
 
-  // Set initial selected pixels when data loads
-  useEffect(() => {
-    if (productConfig?.selected_pixel_ids) {
-      setSelectedPixels(productConfig.selected_pixel_ids);
-    }
-  }, [productConfig]);
+  const pixels: ProductPixel[] = parseProductPixels(productConfig?.product_pixels);
 
   const saveMutation = useMutation({
-    mutationFn: async (pixelIds: string[]) => {
-      // Check if config exists
+    mutationFn: async (newPixels: ProductPixel[]) => {
       const { data: existingConfig } = await supabase
         .from("product_checkout_configs")
         .select("id")
@@ -81,24 +105,22 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
         .single();
 
       if (existingConfig) {
-        // Update existing config
         const { error } = await supabase
           .from("product_checkout_configs")
           .update({ 
-            selected_pixel_ids: pixelIds,
+            product_pixels: newPixels as unknown as Json,
             updated_at: new Date().toISOString()
           })
           .eq("product_id", productId);
         
         if (error) throw error;
       } else {
-        // Create new config with pixel selection
         const { error } = await supabase
           .from("product_checkout_configs")
           .insert({
             product_id: productId,
             user_id: userId,
-            selected_pixel_ids: pixelIds,
+            product_pixels: newPixels as unknown as Json,
           });
         
         if (error) throw error;
@@ -113,19 +135,92 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
     },
   });
 
-  const handleTogglePixel = (pixelId: string) => {
-    setSelectedPixels(prev => 
-      prev.includes(pixelId)
-        ? prev.filter(id => id !== pixelId)
-        : [...prev, pixelId]
-    );
+  const handleOpenAdd = () => {
+    setEditingPixel(null);
+    setFormData(emptyPixel);
+    setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
-    saveMutation.mutate(selectedPixels);
+  const handleOpenEdit = (pixel: ProductPixel) => {
+    setEditingPixel(pixel);
+    setFormData({
+      network: pixel.network,
+      pixelId: pixel.pixelId,
+      name: pixel.name,
+      domain: pixel.domain,
+      accessToken: pixel.accessToken,
+      events: pixel.events,
+    });
+    setIsDialogOpen(true);
   };
 
-  const isLoading = loadingPixels || loadingConfig;
+  const handleDelete = (pixelId: string) => {
+    const newPixels = pixels.filter(p => p.id !== pixelId);
+    saveMutation.mutate(newPixels);
+  };
+
+  const handleSavePixel = () => {
+    if (!formData.pixelId.trim()) {
+      toast.error("ID do Pixel é obrigatório");
+      return;
+    }
+
+    let newPixels: ProductPixel[];
+    
+    if (editingPixel) {
+      newPixels = pixels.map(p => 
+        p.id === editingPixel.id 
+          ? { ...formData, id: editingPixel.id }
+          : p
+      );
+    } else {
+      const newPixel: ProductPixel = {
+        ...formData,
+        id: crypto.randomUUID(),
+      };
+      newPixels = [...pixels, newPixel];
+    }
+
+    saveMutation.mutate(newPixels);
+    setIsDialogOpen(false);
+  };
+
+  const updateEvents = (path: string, value: boolean) => {
+    setFormData(prev => {
+      const events = { ...prev.events };
+      const parts = path.split(".");
+      
+      if (parts.length === 1) {
+        (events as any)[parts[0]] = value;
+      } else if (parts.length === 2) {
+        (events as any)[parts[0]] = { ...(events as any)[parts[0]], [parts[1]]: value };
+      }
+      
+      return { ...prev, events };
+    });
+  };
+
+  const getNetworkIcon = (network: string) => {
+    switch (network) {
+      case "meta":
+        return <Facebook className="h-4 w-4" />;
+      default:
+        return <Globe className="h-4 w-4" />;
+    }
+  };
+
+  const getNetworkLabel = (network: string) => {
+    switch (network) {
+      case "meta":
+        return "Meta / Facebook";
+      case "tiktok":
+        return "TikTok";
+      case "google":
+        return "Google";
+      default:
+        return network;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -135,101 +230,267 @@ export function PixelsSection({ productId, userId }: PixelsSectionProps) {
           <Skeleton className="h-4 w-64 mt-2" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
         </CardContent>
       </Card>
     );
   }
 
-  const hasPixels = globalPixels && globalPixels.length > 0;
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5" />
-          Configurar Pixels
-        </CardTitle>
-        <CardDescription>
-          Selecione os pixels que deseja usar neste produto
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!hasPixels ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium">Nenhum pixel configurado</p>
-            <p className="text-sm mt-1">
-              Configure seus pixels em{" "}
-              <a href="/admin/settings" className="text-primary hover:underline">
-                Configurações → Integrações
-              </a>
-            </p>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Pixels do Produto
+              </CardTitle>
+              <CardDescription>
+                Configure os pixels específicos para este produto
+              </CardDescription>
+            </div>
+            <Button onClick={handleOpenAdd} size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Adicionar Pixel
+            </Button>
           </div>
-        ) : (
-          <>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {pixels.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+              <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">Nenhum pixel configurado</p>
+              <p className="text-sm mt-1">
+                Adicione pixels para rastrear conversões deste produto
+              </p>
+            </div>
+          ) : (
             <div className="space-y-3">
-              {globalPixels.map((pixel, index) => {
-                const pixelIdentifier = pixel.id || pixel.pixelId;
-                const isChecked = selectedPixels.includes(pixelIdentifier);
-                
-                return (
-                  <div
-                    key={pixelIdentifier}
-                    className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                      isChecked 
-                        ? "border-primary bg-primary/5" 
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => handleTogglePixel(pixelIdentifier)}
-                  >
-                    <Checkbox
-                      id={`pixel-${index}`}
-                      checked={isChecked}
-                      onCheckedChange={() => handleTogglePixel(pixelIdentifier)}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">
-                        {pixel.name || `Pixel ${index + 1}`}
-                      </p>
-                      <p className="text-sm text-muted-foreground font-mono">
-                        {pixel.pixelId}
-                      </p>
-                    </div>
-                    {pixel.accessToken && (
-                      <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
-                        CAPI
-                      </span>
-                    )}
+              {pixels.map((pixel) => (
+                <div
+                  key={pixel.id}
+                  className="flex items-center gap-3 p-4 rounded-lg border bg-card"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary">
+                    {getNetworkIcon(pixel.network)}
                   </div>
-                );
-              })}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">
+                      {pixel.name || `Pixel ${pixel.pixelId}`}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-mono">{pixel.pixelId}</span>
+                      <span>•</span>
+                      <span>{getNetworkLabel(pixel.network)}</span>
+                      {pixel.accessToken && (
+                        <>
+                          <span>•</span>
+                          <span className="text-xs text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                            CAPI
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenEdit(pixel)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(pixel.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingPixel ? "Editar Pixel" : "Adicionar Pixel"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Rede Social</Label>
+                <Select
+                  value={formData.network}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, network: v as any }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="meta">Meta / Facebook</SelectItem>
+                    <SelectItem value="tiktok">TikTok</SelectItem>
+                    <SelectItem value="google">Google</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>ID do Pixel *</Label>
+                <Input
+                  value={formData.pixelId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, pixelId: e.target.value }))}
+                  placeholder="1234567890"
+                />
+              </div>
             </div>
 
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-              <Info className="h-4 w-4 mt-0.5 shrink-0" />
-              <p>
-                Se nenhum pixel for selecionado, <strong>todos os pixels globais</strong> configurados em Configurações serão usados.
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Título</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Meu Pixel Principal"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Domínio</Label>
+                <Input
+                  value={formData.domain}
+                  onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
+                  placeholder="meusite.com"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Token da API de Conversão</Label>
+              <Input
+                value={formData.accessToken}
+                onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
+                placeholder="EAAG..."
+                type="password"
+              />
+              <p className="text-xs text-muted-foreground">
+                Token para envio de eventos via Conversions API (server-side)
               </p>
             </div>
 
-            <Button 
-              onClick={handleSave} 
-              disabled={saveMutation.isPending}
-              className="w-full gap-2"
-            >
-              {saveMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Salvar Pixels
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-4">Configuração de Eventos</h4>
+              
+              <div className="space-y-4">
+                {/* Page View */}
+                <div className="flex items-center justify-between">
+                  <Label className="font-normal">PageView (Visualização de Página)</Label>
+                  <Switch
+                    checked={formData.events.pageView}
+                    onCheckedChange={(v) => updateEvents("pageView", v)}
+                  />
+                </div>
+
+                {/* Initiate Checkout */}
+                <div className="flex items-center justify-between">
+                  <Label className="font-normal">InitiateCheckout (Início do Checkout)</Label>
+                  <Switch
+                    checked={formData.events.initiateCheckout}
+                    onCheckedChange={(v) => updateEvents("initiateCheckout", v)}
+                  />
+                </div>
+
+                {/* Purchase Approved */}
+                <div className="space-y-3 p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-medium">Compra Aprovada (Purchase)</Label>
+                    <Switch
+                      checked={formData.events.purchaseApproved.enabled}
+                      onCheckedChange={(v) => updateEvents("purchaseApproved.enabled", v)}
+                    />
+                  </div>
+                  
+                  {formData.events.purchaseApproved.enabled && (
+                    <div className="pl-4 space-y-2 border-l-2 border-primary/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-normal text-sm">Ao comprar com Pix</Label>
+                        <Switch
+                          checked={formData.events.purchaseApproved.pix}
+                          onCheckedChange={(v) => updateEvents("purchaseApproved.pix", v)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="font-normal text-sm">Ao comprar com Boleto</Label>
+                        <Switch
+                          checked={formData.events.purchaseApproved.boleto}
+                          onCheckedChange={(v) => updateEvents("purchaseApproved.boleto", v)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="font-normal text-sm">Ao comprar com Cartão</Label>
+                        <Switch
+                          checked={formData.events.purchaseApproved.card}
+                          onCheckedChange={(v) => updateEvents("purchaseApproved.card", v)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pending */}
+                <div className="space-y-3 p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-medium">Pagamento Pendente</Label>
+                    <Switch
+                      checked={formData.events.pending.enabled}
+                      onCheckedChange={(v) => updateEvents("pending.enabled", v)}
+                    />
+                  </div>
+                  
+                  {formData.events.pending.enabled && (
+                    <div className="pl-4 space-y-2 border-l-2 border-primary/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-normal text-sm">Pagamento Pix gerado</Label>
+                        <Switch
+                          checked={formData.events.pending.pix}
+                          onCheckedChange={(v) => updateEvents("pending.pix", v)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="font-normal text-sm">Boleto gerado</Label>
+                        <Switch
+                          checked={formData.events.pending.boleto}
+                          onCheckedChange={(v) => updateEvents("pending.boleto", v)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancelar
             </Button>
-          </>
-        )}
-      </CardContent>
-    </Card>
+            <Button onClick={handleSavePixel} disabled={saveMutation.isPending}>
+              {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingPixel ? "Salvar" : "Adicionar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
