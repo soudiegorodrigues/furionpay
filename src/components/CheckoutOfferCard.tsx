@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp, MousePointerClick } from "lucide-react";
+import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -287,11 +287,6 @@ export const CheckoutOfferCard = ({
               {/* Métricas da oferta */}
               {!isNew && (
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  {/* Cliques na URL */}
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-xs">
-                    <MousePointerClick className="w-3 h-3" />
-                    {offer.click_count || 0} cliques
-                  </span>
                   {stats && (
                     <>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-xs">
