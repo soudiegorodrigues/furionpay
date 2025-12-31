@@ -398,6 +398,7 @@ export type Database = {
       }
       checkout_offers: {
         Row: {
+          click_count: number
           created_at: string
           domain: string | null
           id: string
@@ -409,6 +410,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          click_count?: number
           created_at?: string
           domain?: string | null
           id?: string
@@ -420,6 +422,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          click_count?: number
           created_at?: string
           domain?: string | null
           id?: string
@@ -3460,6 +3463,7 @@ export type Database = {
       }
       import_full_backup: { Args: { p_backup_data: Json }; Returns: Json }
       increment_login_attempt: { Args: { p_email: string }; Returns: Json }
+      increment_offer_clicks: { Args: { offer_id: string }; Returns: undefined }
       is_active_product: { Args: { p_product_id: string }; Returns: boolean }
       is_admin_authenticated: { Args: never; Returns: boolean }
       is_any_admin: { Args: { _user_id: string }; Returns: boolean }
