@@ -184,12 +184,12 @@ const AdminCheckout = () => {
       // Set other data
       setPopupStats(statsResult.data || []);
       setAvailableDomains(domainsResult.data || []);
-      setHasLoaded(true);
     } catch (error) {
       console.error('Error loading data:', error);
-      setHasLoaded(true);
     } finally {
+      // Update both states together to prevent visual gap
       setIsLoading(false);
+      setHasLoaded(true);
     }
   };
   const handleCreateOffer = () => {
@@ -324,8 +324,8 @@ const AdminCheckout = () => {
               </Button>
             </div>
 
-            {/* Loading skeleton */}
-            {isLoading && !hasLoaded && (
+            {/* Loading skeleton - show while loading */}
+            {isLoading && (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <Card key={i} className="animate-pulse">
