@@ -3151,6 +3151,19 @@ export type Database = {
           upsell_url: string
         }[]
       }
+      get_public_order_bumps: {
+        Args: { p_product_id: string }
+        Returns: {
+          bump_price: number
+          bump_product_id: string
+          bump_product_image_url: string
+          bump_product_name: string
+          description: string
+          id: string
+          image_url: string
+          title: string
+        }[]
+      }
       get_public_product_by_code: {
         Args: { p_product_code: string }
         Returns: {
