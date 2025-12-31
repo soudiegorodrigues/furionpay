@@ -16,6 +16,7 @@ interface CheckoutOffer {
   popup_model: string;
   product_name: string;
   meta_pixel_ids: string[];
+  click_count?: number;
 }
 
 interface AvailableDomain {
@@ -78,7 +79,8 @@ async function fetchOffers(validPixelIds: Set<string>) {
       domain: o.domain || '',
       popup_model: o.popup_model || 'landing',
       product_name: o.product_name || '',
-      meta_pixel_ids: validIds
+      meta_pixel_ids: validIds,
+      click_count: o.click_count || 0
     });
   }
   

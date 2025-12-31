@@ -149,9 +149,10 @@ export const CheckoutOfferCard = ({
   };
 
   const generateLink = () => {
+    // Include offer ID for click tracking
     let link = domain 
-      ? `https://www.${domain}/?u=${userId}&m=${popupModel}` 
-      : `${window.location.origin}/?u=${userId}&m=${popupModel}`;
+      ? `https://${domain}/?o=${offer.id}&u=${userId}&m=${popupModel}` 
+      : `${window.location.origin}/?o=${offer.id}&u=${userId}&m=${popupModel}`;
     
     if (metaPixelIds.length > 0) {
       const pixelValues = metaPixelIds

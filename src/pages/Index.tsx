@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
@@ -18,9 +18,30 @@ const Index = () => {
   const urlAmount = searchParams.get('amount') || searchParams.get('valor');
   // Lê o modelo da URL para evitar flash - PRIORIDADE MÁXIMA
   const urlModel = searchParams.get('m') || searchParams.get('model');
+  // Offer ID for click tracking
+  const offerId = searchParams.get('o') || searchParams.get('offer_id');
   
   // Estado para UTMs capturados
   const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
+  
+  // Ref to prevent duplicate click tracking
+  const clickTrackedRef = React.useRef<string | null>(null);
+  
+  // Track offer click when page loads
+  useEffect(() => {
+    if (offerId && clickTrackedRef.current !== offerId) {
+      console.log('[Index] Tracking click for offer:', offerId);
+      clickTrackedRef.current = offerId;
+      supabase.rpc('increment_offer_clicks', { offer_id: offerId })
+        .then(({ error }) => {
+          if (error) {
+            console.error('[Index] Error tracking click:', error);
+          } else {
+            console.log('[Index] Click tracked successfully for offer:', offerId);
+          }
+        });
+    }
+  }, [offerId]);
   
   // Captura UTMs IMEDIATAMENTE ao carregar a página
   useEffect(() => {
