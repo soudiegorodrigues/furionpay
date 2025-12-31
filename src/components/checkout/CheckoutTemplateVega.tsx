@@ -134,6 +134,8 @@ export function CheckoutTemplateVega({
                       alt={product.name}
                       className="w-full h-56 object-cover"
                       loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
                     />
                   ) : (
                     <div className="w-full h-56 bg-gradient-to-br from-emerald-600/30 to-cyan-600/30 flex items-center justify-center">

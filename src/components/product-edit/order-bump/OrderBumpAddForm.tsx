@@ -9,6 +9,7 @@ import { Zap, Eye, Package, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderBumpCard } from "@/components/checkout/OrderBumpCard";
+import { compressImage, compressionPresets } from "@/lib/imageCompression";
 
 interface Product {
   id: string;
@@ -101,13 +102,16 @@ export const OrderBumpAddForm = memo(function OrderBumpAddForm({
 
     setUploadingImage(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `order-bump-${Date.now()}.${fileExt}`;
+      // Compress image before upload
+      const compressedBlob = await compressImage(file, compressionPresets.orderBump);
+      const fileName = `order-bump-${Date.now()}.webp`;
       const filePath = `${userId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("order-bumps")
-        .upload(filePath, file);
+        .upload(filePath, compressedBlob, {
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -116,7 +120,7 @@ export const OrderBumpAddForm = memo(function OrderBumpAddForm({
         .getPublicUrl(filePath);
 
       setFormData(prev => ({ ...prev, image_url: publicUrl }));
-      toast.success("Imagem enviada!");
+      toast.success("Imagem enviada e otimizada!");
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Erro ao enviar imagem");

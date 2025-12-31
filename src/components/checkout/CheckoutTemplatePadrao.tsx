@@ -489,6 +489,8 @@ export function CheckoutTemplatePadrao({
                                   alt={testimonial.author_name}
                                   className="w-12 h-12 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
                                   loading="lazy"
+                                  decoding="async"
+                                  fetchPriority="low"
                                 />
                               ) : (
                                 <div 

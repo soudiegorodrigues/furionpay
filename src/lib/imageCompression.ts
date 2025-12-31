@@ -148,25 +148,25 @@ function formatFileSize(bytes: number): string {
  * Preset configurations for different use cases
  */
 export const compressionPresets = {
-  // For product images, logos - high quality
+  // For product images, logos - optimized for performance
   product: {
-    maxWidth: 1200,
-    maxHeight: 1200,
-    quality: 0.85,
+    maxWidth: 800,
+    maxHeight: 800,
+    quality: 0.75,
     format: 'webp' as const,
   },
   // For thumbnails - smaller size
   thumbnail: {
     maxWidth: 400,
     maxHeight: 400,
-    quality: 0.75,
+    quality: 0.7,
     format: 'webp' as const,
   },
-  // For banners - wider images
+  // For banners - optimized width
   banner: {
-    maxWidth: 1920,
-    maxHeight: 600,
-    quality: 0.8,
+    maxWidth: 1280,
+    maxHeight: 400,
+    quality: 0.7,
     format: 'webp' as const,
   },
   // For document uploads (KYC) - preserve quality
@@ -176,11 +176,18 @@ export const compressionPresets = {
     quality: 0.9,
     format: 'jpeg' as const,
   },
-  // For avatar/profile - small but crisp
+  // For avatar/profile - small and optimized
   avatar: {
-    maxWidth: 256,
-    maxHeight: 256,
-    quality: 0.85,
+    maxWidth: 128,
+    maxHeight: 128,
+    quality: 0.75,
+    format: 'webp' as const,
+  },
+  // For order bumps - small product images
+  orderBump: {
+    maxWidth: 400,
+    maxHeight: 400,
+    quality: 0.75,
     format: 'webp' as const,
   },
 };
