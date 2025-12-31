@@ -234,7 +234,7 @@ export function useCheckoutOffers(userId: string | undefined) {
     popupStats: statsQuery.data || [],
     
     // Loading states - offers are the priority
-    isLoadingOffers: offersQuery.isLoading || settingsQuery.isLoading,
+    isLoadingOffers: settingsQuery.isLoading || !offersQuery.isFetched,
     isLoadingExtras: domainsQuery.isLoading || statsQuery.isLoading,
     
     // Actions

@@ -178,7 +178,7 @@ const AdminCheckout = () => {
             </div>
 
             {/* Loading skeleton - show only on first load */}
-            {isLoadingOffers && displayOffers.length === 0 && (
+            {isLoadingOffers && (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <Card key={i} className="animate-pulse">
