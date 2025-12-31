@@ -91,7 +91,7 @@ const AdminCheckout = () => {
     hasPermission,
     loading: permissionsLoading
   } = usePermissions();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
   const [previewModel, setPreviewModel] = useState<string | null>(null);
