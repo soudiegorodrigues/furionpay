@@ -1194,6 +1194,35 @@ export type Database = {
         }
         Relationships: []
       }
+      offer_clicks: {
+        Row: {
+          clicked_at: string
+          id: string
+          offer_id: string
+          user_id: string
+        }
+        Insert: {
+          clicked_at?: string
+          id?: string
+          offer_id: string
+          user_id: string
+        }
+        Update: {
+          clicked_at?: string
+          id?: string
+          offer_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_clicks_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_codes: {
         Row: {
           code: string
@@ -2911,6 +2940,13 @@ export type Database = {
           rejection_reason: string
           reviewed_at: string
           status: string
+        }[]
+      }
+      get_offer_clicks_chart: {
+        Args: { p_days?: number; p_user_id: string }
+        Returns: {
+          clicks: number
+          date: string
         }[]
       }
       get_pending_reward_requests: {
