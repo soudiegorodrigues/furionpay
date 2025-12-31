@@ -224,7 +224,7 @@ const AdminCheckout = () => {
             {/* Lista de ofertas - show immediately when data available */}
             {displayOffers.length > 0 && (
               <div className="space-y-4">
-                {displayOffers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} metaPixels={metaPixels} popupModels={popupModels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
+                {displayOffers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} metaPixels={metaPixels} popupModels={popupModels} popupStats={popupStats} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
               </div>
             )}
           </TabsContent>
