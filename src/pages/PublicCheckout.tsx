@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
+import { trackOfferClick, getClickTrackingDebugInfo } from "@/lib/clickTracking";
 import { preloadCheckoutResources, preloadImage } from "@/lib/performanceUtils";
 import type {
   ProductOffer,
@@ -57,6 +58,9 @@ export default function PublicCheckout() {
   const debugEnabled =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("debug") === "1";
+  const debugClickEnabled = 
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debug_click") === "1";
 
   const [step, setStep] = useState<"form" | "payment">("form");
   const [formData, setFormData] = useState<FormData>({
@@ -81,8 +85,8 @@ export default function PublicCheckout() {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [selectedBumps, setSelectedBumps] = useState<string[]>([]);
 
-  // Track click reference to prevent duplicate tracking
-  const clickTrackedRef = useRef<string | null>(null);
+  // Debug state for click tracking
+  const [clickDebugInfo, setClickDebugInfo] = useState<{ status: string; details?: any } | null>(null);
 
   // Capture and save UTM params IMMEDIATELY on component mount
   useEffect(() => {
@@ -266,21 +270,39 @@ export default function PublicCheckout() {
   const orderBumps = checkoutData?.orderBumps || [];
   const banners = checkoutData?.banners || [];
 
-  // Track offer clicks when offer is loaded
+  // Track offer clicks when offer is loaded using robust backend endpoint
   useEffect(() => {
-    if (offer?.id && clickTrackedRef.current !== offer.id) {
-      console.log('[Checkout] Tracking click for offer:', offer.id);
-      clickTrackedRef.current = offer.id;
-      supabase.rpc('increment_offer_clicks', { offer_id: offer.id })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('[Checkout] Error tracking click:', error);
-          } else {
-            console.log('[Checkout] Click tracked successfully for offer:', offer.id);
-          }
-        });
+    if (!offer?.id) return;
+    
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('[Checkout] Missing VITE_SUPABASE_URL');
+      return;
     }
-  }, [offer?.id]);
+
+    // Show debug info if enabled
+    if (debugClickEnabled) {
+      const debugInfo = getClickTrackingDebugInfo(offer.id);
+      console.log('[Checkout] Click tracking debug info:', debugInfo);
+      setClickDebugInfo({ status: 'checking', details: debugInfo });
+    }
+
+    // Track the click
+    trackOfferClick(offer.id, supabaseUrl).then((result) => {
+      if (debugClickEnabled) {
+        console.log('[Checkout] Click tracking result:', result);
+        setClickDebugInfo({ 
+          status: result.success ? 'success' : 'skipped', 
+          details: { ...result, offerId: offer.id } 
+        });
+      }
+      if (result.success) {
+        console.log('[Checkout] Click tracked successfully:', result);
+      } else {
+        console.log('[Checkout] Click not tracked:', result.error);
+      }
+    });
+  }, [offer?.id, debugClickEnabled]);
 
   // Preload critical resources as soon as data is available
   useEffect(() => {
