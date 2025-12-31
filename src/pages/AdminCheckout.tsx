@@ -109,7 +109,7 @@ const AdminCheckout = () => {
     }
   }, [isAuthenticated]);
   const loadData = async () => {
-    setIsLoading(false); // Remove loading state immediately
+    setIsLoading(true);
 
     try {
       // Load all data in parallel for faster loading
@@ -188,6 +188,8 @@ const AdminCheckout = () => {
     } catch (error) {
       console.error('Error loading data:', error);
       setHasLoaded(true);
+    } finally {
+      setIsLoading(false);
     }
   };
   const handleCreateOffer = () => {
@@ -322,7 +324,34 @@ const AdminCheckout = () => {
               </Button>
             </div>
 
-            {offers.length === 0 && hasLoaded && <Card className="border-dashed">
+            {/* Loading skeleton */}
+            {isLoading && !hasLoaded && (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-muted rounded-full" />
+                          <div className="space-y-2">
+                            <div className="h-4 w-32 bg-muted rounded" />
+                            <div className="h-3 w-48 bg-muted rounded" />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-muted rounded" />
+                          <div className="w-8 h-8 bg-muted rounded" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Estado vazio */}
+            {!isLoading && offers.length === 0 && hasLoaded && (
+              <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
                     <CreditCard className="w-6 h-6 text-muted-foreground" />
@@ -336,11 +365,15 @@ const AdminCheckout = () => {
                     Criar Primeira Oferta
                   </Button>
                 </CardContent>
-              </Card>}
+              </Card>
+            )}
 
-            <div className="space-y-4">
-              {offers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} metaPixels={metaPixels} popupModels={popupModels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
-            </div>
+            {/* Lista de ofertas */}
+            {!isLoading && (
+              <div className="space-y-4">
+                {offers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} metaPixels={metaPixels} popupModels={popupModels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
+              </div>
+            )}
           </TabsContent>
 
           {/* Tab: Models Grid */}
