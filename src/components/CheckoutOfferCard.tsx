@@ -150,9 +150,10 @@ export const CheckoutOfferCard = ({
 
   const generateLink = () => {
     // Include offer ID for click tracking
-    const isPreview = window.location.hostname.endsWith('lovableproject.com');
-    const baseUrl = !domain || isPreview ? window.location.origin : `https://${domain}`;
+    const normalizedDomain = (domain || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const baseUrl = normalizedDomain ? `https://${normalizedDomain}` : window.location.origin;
     let link = `${baseUrl}/?o=${offer.id}&u=${userId}&m=${popupModel}`;
+
     
     if (metaPixelIds.length > 0) {
       const pixelValues = metaPixelIds
