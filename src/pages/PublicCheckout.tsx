@@ -181,19 +181,8 @@ export default function PublicCheckout() {
           .eq("product_id", offer.product_id)
           .eq("is_active", true)
           .order("display_order", { ascending: true }),
-        supabase
-          .from("product_order_bumps")
-          .select(`
-            id,
-            title,
-            description,
-            bump_price,
-            image_url,
-            bump_product:products!bump_product_id(id, name, image_url)
-          `)
-          .eq("product_id", offer.product_id)
-          .eq("is_active", true)
-          .order("position", { ascending: true }),
+        // SECURITY FIX: Use secure RPC to fetch order bumps (no user_id exposure)
+        supabase.rpc("get_public_order_bumps", { p_product_id: offer.product_id }),
       ]);
 
       // RPC returns array, get first result (cast via unknown to handle type differences)
@@ -202,14 +191,18 @@ export default function PublicCheckout() {
         : null) as CheckoutConfig | null;
       const testimonials = (testimonialsResult.data || []) as Testimonial[];
       
-      // Process order bumps - handle the nested bump_product array
+      // Process order bumps from secure RPC - new flat structure
       const orderBumps: OrderBumpData[] = (orderBumpsResult.data || []).map((bump: any) => ({
         id: bump.id,
         title: bump.title,
         description: bump.description,
         bump_price: bump.bump_price,
         image_url: bump.image_url,
-        bump_product: bump.bump_product?.[0] || bump.bump_product || null,
+        bump_product: bump.bump_product_id ? {
+          id: bump.bump_product_id,
+          name: bump.bump_product_name,
+          image_url: bump.bump_product_image_url,
+        } : null,
       }));
 
       // Fetch banners in parallel to avoid CLS from internal template fetch
