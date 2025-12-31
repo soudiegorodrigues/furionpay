@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.send-product-delivery]
 verify_jwt = false
+
+[functions.track-offer-click]
+verify_jwt = false

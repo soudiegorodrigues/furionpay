@@ -10,6 +10,7 @@ import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
+import { trackOfferClick, getClickTrackingDebugInfo } from "@/lib/clickTracking";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -20,28 +21,46 @@ const Index = () => {
   const urlModel = searchParams.get('m') || searchParams.get('model');
   // Offer ID for click tracking
   const offerId = searchParams.get('o') || searchParams.get('offer_id');
+  // Debug mode
+  const debugClick = searchParams.get('debug_click') === '1';
   
   // Estado para UTMs capturados
   const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
+  // Debug state
+  const [clickDebugInfo, setClickDebugInfo] = useState<{ status: string; details?: any } | null>(null);
   
-  // Ref to prevent duplicate click tracking
-  const clickTrackedRef = React.useRef<string | null>(null);
-  
-  // Track offer click when page loads
+  // Track offer click when page loads using robust backend endpoint
   useEffect(() => {
-    if (offerId && clickTrackedRef.current !== offerId) {
-      console.log('[Index] Tracking click for offer:', offerId);
-      clickTrackedRef.current = offerId;
-      supabase.rpc('increment_offer_clicks', { offer_id: offerId })
-        .then(({ error }) => {
-          if (error) {
-            console.error('[Index] Error tracking click:', error);
-          } else {
-            console.log('[Index] Click tracked successfully for offer:', offerId);
-          }
-        });
+    if (!offerId) return;
+    
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('[Index] Missing VITE_SUPABASE_URL');
+      return;
     }
-  }, [offerId]);
+
+    // Show debug info if enabled
+    if (debugClick) {
+      const debugInfo = getClickTrackingDebugInfo(offerId);
+      console.log('[Index] Click tracking debug info:', debugInfo);
+      setClickDebugInfo({ status: 'checking', details: debugInfo });
+    }
+
+    // Track the click
+    trackOfferClick(offerId, supabaseUrl).then((result) => {
+      if (debugClick) {
+        setClickDebugInfo({ 
+          status: result.success ? 'success' : 'skipped', 
+          details: { ...result, offerId } 
+        });
+      }
+      if (result.success) {
+        console.log('[Index] Click tracked successfully:', result);
+      } else {
+        console.log('[Index] Click not tracked:', result.error);
+      }
+    });
+  }, [offerId, debugClick]);
   
   // Captura UTMs IMEDIATAMENTE ao carregar a página
   useEffect(() => {
@@ -108,6 +127,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+      {/* Debug panel for click tracking */}
+      {debugClick && clickDebugInfo && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-black/90 text-white p-4 text-sm font-mono">
+          <div className="max-w-xl mx-auto">
+            <div className="font-bold text-green-400 mb-2">🔍 Click Tracking Debug</div>
+            <div>Offer ID: <span className="text-yellow-400">{offerId}</span></div>
+            <div>Status: <span className={clickDebugInfo.status === 'success' ? 'text-green-400' : 'text-orange-400'}>{clickDebugInfo.status}</span></div>
+            {clickDebugInfo.details && (
+              <pre className="mt-2 text-xs overflow-auto max-h-32 bg-gray-800 p-2 rounded">
+                {JSON.stringify(clickDebugInfo.details, null, 2)}
+              </pre>
+            )}
+          </div>
+        </div>
+      )}
       {popupModel === 'simple' ? (
         <DonationPopupSimple
           isOpen={true}
