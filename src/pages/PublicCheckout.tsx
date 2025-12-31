@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
-import { trackOfferClick, getClickTrackingDebugInfo } from "@/lib/clickTracking";
+import { trackOfferClick } from "@/lib/clickTracking";
 import { preloadCheckoutResources, preloadImage } from "@/lib/performanceUtils";
 import type {
   ProductOffer,
@@ -270,7 +270,7 @@ export default function PublicCheckout() {
   const orderBumps = checkoutData?.orderBumps || [];
   const banners = checkoutData?.banners || [];
 
-  // Track offer clicks when offer is loaded using robust backend endpoint
+  // Track offer clicks when offer is loaded - every open = 1 click
   useEffect(() => {
     if (!offer?.id) return;
     
@@ -280,27 +280,15 @@ export default function PublicCheckout() {
       return;
     }
 
-    // Show debug info if enabled
-    if (debugClickEnabled) {
-      const debugInfo = getClickTrackingDebugInfo(offer.id);
-      console.log('[Checkout] Click tracking debug info:', debugInfo);
-      setClickDebugInfo({ status: 'checking', details: debugInfo });
-    }
-
     // Track the click
     trackOfferClick(offer.id, supabaseUrl).then((result) => {
       if (debugClickEnabled) {
-        console.log('[Checkout] Click tracking result:', result);
         setClickDebugInfo({ 
-          status: result.success ? 'success' : 'skipped', 
+          status: result.success ? 'success' : 'error', 
           details: { ...result, offerId: offer.id } 
         });
       }
-      if (result.success) {
-        console.log('[Checkout] Click tracked successfully:', result);
-      } else {
-        console.log('[Checkout] Click not tracked:', result.error);
-      }
+      console.log('[Checkout] Click tracked:', result);
     });
   }, [offer?.id, debugClickEnabled]);
 

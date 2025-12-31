@@ -10,7 +10,7 @@ import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
-import { trackOfferClick, getClickTrackingDebugInfo } from "@/lib/clickTracking";
+import { trackOfferClick } from "@/lib/clickTracking";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -29,7 +29,7 @@ const Index = () => {
   // Debug state
   const [clickDebugInfo, setClickDebugInfo] = useState<{ status: string; details?: any } | null>(null);
   
-  // Track offer click when page loads using robust backend endpoint
+  // Track offer click when page loads - every open = 1 click
   useEffect(() => {
     if (!offerId) return;
     
@@ -39,26 +39,15 @@ const Index = () => {
       return;
     }
 
-    // Show debug info if enabled
-    if (debugClick) {
-      const debugInfo = getClickTrackingDebugInfo(offerId);
-      console.log('[Index] Click tracking debug info:', debugInfo);
-      setClickDebugInfo({ status: 'checking', details: debugInfo });
-    }
-
     // Track the click
     trackOfferClick(offerId, supabaseUrl).then((result) => {
       if (debugClick) {
         setClickDebugInfo({ 
-          status: result.success ? 'success' : 'skipped', 
+          status: result.success ? 'success' : 'error', 
           details: { ...result, offerId } 
         });
       }
-      if (result.success) {
-        console.log('[Index] Click tracked successfully:', result);
-      } else {
-        console.log('[Index] Click not tracked:', result.error);
-      }
+      console.log('[Index] Click tracked:', result);
     });
   }, [offerId, debugClick]);
   
