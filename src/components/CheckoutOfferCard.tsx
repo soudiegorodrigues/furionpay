@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,6 +139,17 @@ export const CheckoutOfferCard = ({
   const [popupModel, setPopupModel] = useState(offer.popup_model);
   const [productName, setProductName] = useState(offer.product_name);
   const [metaPixelIds, setMetaPixelIds] = useState<string[]>(offer.meta_pixel_ids || []);
+
+  // Sync local state with offer from backend when not editing
+  useEffect(() => {
+    if (!isEditing) {
+      setName(offer.name);
+      setDomain(offer.domain);
+      setPopupModel(offer.popup_model);
+      setProductName(offer.product_name);
+      setMetaPixelIds(offer.meta_pixel_ids || []);
+    }
+  }, [offer, isEditing]);
 
   const togglePixel = (pixelId: string) => {
     setMetaPixelIds(prev => 

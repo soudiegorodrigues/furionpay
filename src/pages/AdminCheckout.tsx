@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, CreditCard, TrendingUp, Plus, LayoutGrid, Settings } from "lucide-react";
+import { Eye, CreditCard, TrendingUp, Plus, LayoutGrid, Settings, RefreshCw } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
@@ -82,9 +83,26 @@ const AdminCheckout = () => {
     availableDomains,
     popupStats,
     isLoadingOffers,
+    isRefetching,
+    dataUpdatedAt,
     saveOffer,
-    deleteOffer
+    deleteOffer,
+    refetchAll
   } = useCheckoutOffers(user?.id);
+
+  const handleRefresh = async () => {
+    await refetchAll();
+    toast({
+      title: "Dados atualizados",
+      description: "Os dados foram atualizados com sucesso."
+    });
+  };
+
+  const formatLastUpdate = () => {
+    if (!dataUpdatedAt) return null;
+    const date = new Date(dataUpdatedAt);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
 
   const [localOffers, setLocalOffers] = useState<CheckoutOffer[]>([]);
   const [previewModel, setPreviewModel] = useState<string | null>(null);
@@ -174,7 +192,24 @@ const AdminCheckout = () => {
             {/* Gráfico de evolução de cliques */}
             {user?.id && <ClicksEvolutionChart userId={user.id} />}
 
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRefresh}
+                  disabled={isRefetching}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+                {dataUpdatedAt && (
+                  <span className="text-xs text-muted-foreground">
+                    Atualizado às {formatLastUpdate()}
+                  </span>
+                )}
+              </div>
               <Button onClick={handleCreateOffer} className="gap-2">
                 <Plus className="w-4 h-4" />
                 Nova Oferta

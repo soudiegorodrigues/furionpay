@@ -228,6 +228,15 @@ export function useCheckoutOffers(userId: string | undefined) {
     }
   });
 
+  // Refetch all data
+  const refetchAll = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['checkout_offers', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['popup_model_stats', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['offer_clicks_chart', userId] }),
+    ]);
+  };
+
   return {
     // Data
     offers: offersQuery.data || [],
@@ -238,10 +247,15 @@ export function useCheckoutOffers(userId: string | undefined) {
     // Loading states - offers are the priority
     isLoadingOffers: settingsQuery.isLoading || !offersQuery.isFetched,
     isLoadingExtras: domainsQuery.isLoading || statsQuery.isLoading,
+    isRefetching: offersQuery.isRefetching || statsQuery.isRefetching,
+    
+    // Last fetched time
+    dataUpdatedAt: offersQuery.dataUpdatedAt,
     
     // Actions
     saveOffer: (offer: CheckoutOffer, isNew: boolean) => saveMutation.mutateAsync({ offer, isNew }),
     deleteOffer: deleteMutation.mutateAsync,
+    refetchAll,
     
     // Mutation states
     isSaving: saveMutation.isPending,
