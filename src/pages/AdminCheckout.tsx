@@ -19,7 +19,7 @@ import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
 import { CheckoutOfferCard } from "@/components/CheckoutOfferCard";
-import { ClicksEvolutionChart } from "@/components/checkout/ClicksEvolutionChart";
+
 
 interface CheckoutOffer {
   id: string;
@@ -189,8 +189,6 @@ const AdminCheckout = () => {
 
           {/* Tab: Offers */}
           <TabsContent value="offers" className="mt-4 space-y-4">
-            {/* Gráfico de evolução de cliques */}
-            {user?.id && <ClicksEvolutionChart userId={user.id} />}
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
