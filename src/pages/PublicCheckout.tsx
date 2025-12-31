@@ -81,6 +81,9 @@ export default function PublicCheckout() {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [selectedBumps, setSelectedBumps] = useState<string[]>([]);
 
+  // Track click reference to prevent duplicate tracking
+  const clickTrackedRef = useRef<string | null>(null);
+
   // Capture and save UTM params IMMEDIATELY on component mount
   useEffect(() => {
     // PRIORIDADE: Verificar fbclid diretamente na URL
@@ -262,6 +265,15 @@ export default function PublicCheckout() {
   const pixelConfig = checkoutData?.pixelConfig;
   const orderBumps = checkoutData?.orderBumps || [];
   const banners = checkoutData?.banners || [];
+
+  // Track offer clicks when offer is loaded
+  useEffect(() => {
+    if (offer?.id && clickTrackedRef.current !== offer.id) {
+      clickTrackedRef.current = offer.id;
+      supabase.rpc('increment_offer_clicks', { offer_id: offer.id })
+        .then(() => console.log('[Checkout] Click tracked for offer:', offer.id));
+    }
+  }, [offer?.id]);
 
   // Preload critical resources as soon as data is available
   useEffect(() => {
