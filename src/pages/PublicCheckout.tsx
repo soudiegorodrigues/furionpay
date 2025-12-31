@@ -269,9 +269,16 @@ export default function PublicCheckout() {
   // Track offer clicks when offer is loaded
   useEffect(() => {
     if (offer?.id && clickTrackedRef.current !== offer.id) {
+      console.log('[Checkout] Tracking click for offer:', offer.id);
       clickTrackedRef.current = offer.id;
       supabase.rpc('increment_offer_clicks', { offer_id: offer.id })
-        .then(() => console.log('[Checkout] Click tracked for offer:', offer.id));
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('[Checkout] Error tracking click:', error);
+          } else {
+            console.log('[Checkout] Click tracked successfully for offer:', offer.id);
+          }
+        });
     }
   }, [offer?.id]);
 
