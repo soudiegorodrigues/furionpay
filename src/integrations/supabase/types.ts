@@ -3543,6 +3543,7 @@ export type Database = {
         Returns: boolean
       }
       populate_daily_global_stats: { Args: never; Returns: undefined }
+      populate_daily_user_stats: { Args: never; Returns: undefined }
       process_withdrawal: {
         Args: {
           p_rejection_reason?: string
