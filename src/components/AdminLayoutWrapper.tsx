@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -13,20 +14,31 @@ import { useTheme } from "next-themes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactionNotifications } from "@/hooks/useTransactionNotifications";
 import { ChatWidgetLoader } from "@/components/ChatWidgetLoader";
+import { prefetchCheckoutData } from "@/hooks/useCheckoutData";
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
 export function AdminLayoutWrapper() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin, isApproved, mfaInfo, checkMFAStatus } = useAdminAuth();
   const { isOwner, hasPermission } = usePermissions();
   const [userName, setUserName] = useState<string | null>(null);
   const [mfaChecked, setMfaChecked] = useState(false);
   const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
+  const prefetchedRef = useRef(false);
 
   // Transaction notifications - only active for authenticated users inside admin
   useTransactionNotifications(user?.id || null);
+
+  // Prefetch checkout data in background for instant loading
+  useEffect(() => {
+    if (user?.id && isApproved && !prefetchedRef.current) {
+      prefetchedRef.current = true;
+      prefetchCheckoutData(queryClient, user.id);
+    }
+  }, [user?.id, isApproved, queryClient]);
 
   // Check MFA status and redirect if not configured
   useEffect(() => {

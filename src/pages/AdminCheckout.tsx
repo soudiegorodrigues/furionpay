@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useCheckoutOffers } from "@/hooks/useCheckoutData";
 import { AccessDenied } from "@/components/AccessDenied";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, CreditCard, TrendingUp, Plus, LayoutGrid, Settings } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
 import { DonationPopupClean } from "@/components/DonationPopupClean";
@@ -19,23 +18,7 @@ import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
 import { CheckoutOfferCard } from "@/components/CheckoutOfferCard";
-interface PopupModelStats {
-  popup_model: string;
-  total_generated: number;
-  total_paid: number;
-  conversion_rate: number;
-}
-interface AvailableDomain {
-  id: string;
-  domain: string;
-  name: string | null;
-}
-interface MetaPixel {
-  id: string;
-  name: string;
-  pixelId: string;
-  accessToken: string;
-}
+
 interface CheckoutOffer {
   id: string;
   name: string;
@@ -44,6 +27,7 @@ interface CheckoutOffer {
   product_name: string;
   meta_pixel_ids: string[];
 }
+
 const popupModels = [{
   id: "boost",
   name: "Boost",
@@ -85,113 +69,29 @@ const popupModels = [{
   description: "Novo modelo estilo vakinha",
   hasDynamicAmount: false
 }];
+
 const AdminCheckout = () => {
+  const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
+  const { user } = useAdminAuth();
+  
+  // Use React Query hook for all data - instant on second visit
   const {
-    isOwner,
-    hasPermission,
-    loading: permissionsLoading
-  } = usePermissions();
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [popupStats, setPopupStats] = useState<PopupModelStats[]>([]);
+    offers,
+    metaPixels,
+    availableDomains,
+    popupStats,
+    isLoadingOffers,
+    saveOffer,
+    deleteOffer
+  } = useCheckoutOffers(user?.id);
+
+  const [localOffers, setLocalOffers] = useState<CheckoutOffer[]>([]);
   const [previewModel, setPreviewModel] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("boost");
-  const [availableDomains, setAvailableDomains] = useState<AvailableDomain[]>([]);
-  const [metaPixels, setMetaPixels] = useState<MetaPixel[]>([]);
-  const [offers, setOffers] = useState<CheckoutOffer[]>([]);
-  const {
-    isAuthenticated,
-    user
-  } = useAdminAuth();
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
-    }
-  }, [isAuthenticated]);
-  const loadData = async () => {
-    setIsLoading(true);
 
-    try {
-      // Load all data in parallel for faster loading
-      const [offersResult, statsResult, domainsResult, settingsResult] = await Promise.all([supabase.from('checkout_offers').select('*').order('created_at', {
-        ascending: false
-      }), supabase.rpc('get_user_popup_model_stats'), supabase.from('available_domains').select('id, domain, name').eq('is_active', true).eq('domain_type', 'popup').order('domain'), supabase.rpc('get_user_settings')]);
+  // Sync offers from query to local state (for temp offers)
+  const displayOffers = [...localOffers.filter(o => o.id.startsWith('temp-')), ...offers];
 
-      // Parse meta pixels first
-      let parsedPixels: MetaPixel[] = [];
-      if (settingsResult.data) {
-        const settings = settingsResult.data as {
-          key: string;
-          value: string;
-        }[];
-        const pixelsSetting = settings.find(s => s.key === 'meta_pixels');
-        if (pixelsSetting?.value) {
-          try {
-            const parsed = JSON.parse(pixelsSetting.value);
-            parsedPixels = Array.isArray(parsed) ? parsed : [];
-          } catch {
-            parsedPixels = [];
-          }
-        }
-      }
-      setMetaPixels(parsedPixels);
-
-      // Get valid pixel IDs
-      const validPixelIds = new Set(parsedPixels.map(p => p.id));
-
-      // Process offers and clean invalid pixel IDs
-      if (!offersResult.error && offersResult.data) {
-        const processedOffers: CheckoutOffer[] = [];
-        const offersToUpdate: {
-          id: string;
-          validIds: string[];
-        }[] = [];
-        for (const o of offersResult.data) {
-          const currentPixelIds = o.meta_pixel_ids || [];
-          const validIds = currentPixelIds.filter((id: string) => validPixelIds.has(id));
-
-          // Check if any invalid pixels were removed
-          if (validIds.length !== currentPixelIds.length && !o.id.startsWith('temp-')) {
-            offersToUpdate.push({
-              id: o.id,
-              validIds
-            });
-          }
-          processedOffers.push({
-            id: o.id,
-            name: o.name,
-            domain: o.domain || '',
-            popup_model: o.popup_model || 'landing',
-            product_name: o.product_name || '',
-            meta_pixel_ids: validIds
-          });
-        }
-        setOffers(processedOffers);
-
-        // Update offers with invalid pixels in background
-        if (offersToUpdate.length > 0) {
-          Promise.all(offersToUpdate.map(({
-            id,
-            validIds
-          }) => supabase.from('checkout_offers').update({
-            meta_pixel_ids: validIds
-          }).eq('id', id))).then(() => {
-            console.log('Cleaned invalid pixel IDs from offers');
-          });
-        }
-      }
-
-      // Set other data
-      setPopupStats(statsResult.data || []);
-      setAvailableDomains(domainsResult.data || []);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      // Update both states together to prevent visual gap
-      setIsLoading(false);
-      setHasLoaded(true);
-    }
-  };
   const handleCreateOffer = () => {
     const newOffer: CheckoutOffer = {
       id: `temp-${Date.now()}`,
@@ -201,90 +101,43 @@ const AdminCheckout = () => {
       product_name: '',
       meta_pixel_ids: []
     };
-    setOffers([newOffer, ...offers]);
+    setLocalOffers([newOffer, ...localOffers]);
   };
+
   const handleSaveOffer = async (offer: CheckoutOffer) => {
     const isNew = offer.id.startsWith('temp-');
     try {
+      await saveOffer(offer, isNew);
+      // Remove from local offers after successful save
       if (isNew) {
-        const {
-          data,
-          error
-        } = await supabase.from('checkout_offers').insert({
-          user_id: user?.id,
-          name: offer.name,
-          domain: offer.domain || null,
-          popup_model: offer.popup_model,
-          product_name: offer.product_name || null,
-          meta_pixel_ids: offer.meta_pixel_ids || []
-        }).select().single();
-        if (error) throw error;
-        setOffers(offers.map(o => o.id === offer.id ? {
-          ...offer,
-          id: data.id
-        } : o));
-        toast({
-          title: "Oferta criada!",
-          description: "Sua nova oferta foi salva com sucesso."
-        });
-      } else {
-        const {
-          error
-        } = await supabase.from('checkout_offers').update({
-          name: offer.name,
-          domain: offer.domain || null,
-          popup_model: offer.popup_model,
-          product_name: offer.product_name || null,
-          meta_pixel_ids: offer.meta_pixel_ids || []
-        }).eq('id', offer.id);
-        if (error) throw error;
-        setOffers(offers.map(o => o.id === offer.id ? offer : o));
-        toast({
-          title: "Oferta atualizada!",
-          description: "As alterações foram salvas com sucesso."
-        });
+        setLocalOffers(localOffers.filter(o => o.id !== offer.id));
       }
     } catch (error) {
-      console.error('Error saving offer:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao salvar oferta",
-        variant: "destructive"
-      });
       throw error;
     }
   };
+
   const handleDeleteOffer = async (offerId: string) => {
     const isNew = offerId.startsWith('temp-');
     if (isNew) {
-      setOffers(offers.filter(o => o.id !== offerId));
+      setLocalOffers(localOffers.filter(o => o.id !== offerId));
       return;
     }
-    try {
-      const {
-        error
-      } = await supabase.from('checkout_offers').delete().eq('id', offerId);
-      if (error) throw error;
-      setOffers(offers.filter(o => o.id !== offerId));
-      toast({
-        title: "Oferta excluída",
-        description: "A oferta foi removida com sucesso."
-      });
-    } catch (error) {
-      console.error('Error deleting offer:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao excluir oferta",
-        variant: "destructive"
-      });
-    }
+    await deleteOffer(offerId);
   };
+
   const handleSelectModel = (modelId: string) => {
     setSelectedModel(modelId);
   };
+
   const getStatsForModel = (modelId: string) => {
     return popupStats.find(s => s.popup_model === modelId);
   };
+
+  // Permission check
+  if (!permissionsLoading && !isOwner && !hasPermission('can_manage_checkout')) {
+    return <AccessDenied message="Você não tem permissão para gerenciar o Checkout." />;
+  }
 
   // Permission check - AFTER all hooks
   if (!permissionsLoading && !isOwner && !hasPermission('can_manage_checkout')) {
@@ -307,7 +160,7 @@ const AdminCheckout = () => {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="offers" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              Minhas Ofertas {!isLoading && `(${offers.length})`}
+              Minhas Ofertas {!isLoadingOffers && `(${displayOffers.length})`}
             </TabsTrigger>
             <TabsTrigger value="models" className="flex items-center gap-2">
               <LayoutGrid className="w-4 h-4" />
@@ -324,8 +177,8 @@ const AdminCheckout = () => {
               </Button>
             </div>
 
-            {/* Loading skeleton - show while loading */}
-            {isLoading && (
+            {/* Loading skeleton - show only on first load */}
+            {isLoadingOffers && displayOffers.length === 0 && (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <Card key={i} className="animate-pulse">
@@ -350,7 +203,7 @@ const AdminCheckout = () => {
             )}
 
             {/* Estado vazio */}
-            {!isLoading && offers.length === 0 && hasLoaded && (
+            {!isLoadingOffers && displayOffers.length === 0 && (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
@@ -368,10 +221,10 @@ const AdminCheckout = () => {
               </Card>
             )}
 
-            {/* Lista de ofertas */}
-            {!isLoading && (
+            {/* Lista de ofertas - show immediately when data available */}
+            {displayOffers.length > 0 && (
               <div className="space-y-4">
-                {offers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} metaPixels={metaPixels} popupModels={popupModels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
+                {displayOffers.map(offer => <CheckoutOfferCard key={offer.id} offer={offer} userId={user?.id || ''} availableDomains={availableDomains} metaPixels={metaPixels} popupModels={popupModels} onSave={handleSaveOffer} onDelete={handleDeleteOffer} isNew={offer.id.startsWith('temp-')} />)}
               </div>
             )}
           </TabsContent>
