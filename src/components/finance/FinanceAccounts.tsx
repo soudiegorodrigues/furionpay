@@ -306,26 +306,58 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
 
   // Formatar número para exibição no input baseado na moeda
   const formatCurrencyInput = (value: string, currency: string = 'BRL'): string => {
-    const numericValue = value.replace(/\D/g, '');
-    const floatValue = parseFloat(numericValue) / 100;
-    if (isNaN(floatValue) || floatValue === 0) return '';
+    // Detecta se já está formatado (tem vírgula ou ponto como separador decimal)
     const currencyConfig = CURRENCIES.find(c => c.value === currency) || CURRENCIES[0];
+    
+    // Remove caracteres não numéricos exceto ponto e vírgula
+    let cleanValue = value.replace(/[^\d.,]/g, '');
+    
+    // Se vazio ou só pontos/vírgulas, retorna vazio
+    if (!cleanValue || cleanValue.replace(/[.,]/g, '') === '') return '';
+    
+    // Detecta formato brasileiro (vírgula como decimal) vs americano (ponto como decimal)
+    const lastComma = cleanValue.lastIndexOf(',');
+    const lastDot = cleanValue.lastIndexOf('.');
+    
+    let numericValue: number;
+    
+    if (lastComma > lastDot) {
+      // Formato brasileiro: 1.234,56 ou 279,79
+      numericValue = parseFloat(cleanValue.replace(/\./g, '').replace(',', '.')) || 0;
+    } else if (lastDot > lastComma) {
+      // Formato americano: 1,234.56 ou 279.79
+      numericValue = parseFloat(cleanValue.replace(/,/g, '')) || 0;
+    } else {
+      // Só números, sem separador decimal
+      numericValue = parseFloat(cleanValue) || 0;
+    }
+    
+    if (numericValue === 0) return '';
+    
     return new Intl.NumberFormat(currencyConfig.locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(floatValue);
+    }).format(numericValue);
   };
 
   // Parse de exibição para número
   const parseCurrencyInput = (value: string): number => {
-    // Handle both formats (1.234,56 for BRL and 1,234.56 for USD)
-    const hasBrazilianFormat = value.includes(',') && value.indexOf(',') > value.lastIndexOf('.');
-    if (hasBrazilianFormat) {
-      const cleanValue = value.replace(/\./g, '').replace(',', '.');
-      return parseFloat(cleanValue) || 0;
+    if (!value) return 0;
+    
+    // Remove caracteres não numéricos exceto ponto e vírgula
+    const cleanValue = value.replace(/[^\d.,]/g, '');
+    if (!cleanValue) return 0;
+    
+    const lastComma = cleanValue.lastIndexOf(',');
+    const lastDot = cleanValue.lastIndexOf('.');
+    
+    if (lastComma > lastDot) {
+      // Formato brasileiro: 1.234,56
+      return parseFloat(cleanValue.replace(/\./g, '').replace(',', '.')) || 0;
+    } else {
+      // Formato americano: 1,234.56
+      return parseFloat(cleanValue.replace(/,/g, '')) || 0;
     }
-    const cleanValue = value.replace(/,/g, '');
-    return parseFloat(cleanValue) || 0;
   };
 
   const getTotalBalanceByCurrency = (currency: string) => {
