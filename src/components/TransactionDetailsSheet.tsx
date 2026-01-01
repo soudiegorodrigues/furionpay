@@ -7,9 +7,12 @@ import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, getCu
 
 interface OrderBumpItem {
   id: string;
-  name: string;
   price: number;
+  name?: string;
+  title?: string;
+  product_name?: string;
 }
+
 
 interface Transaction {
   id: string;
@@ -232,12 +235,15 @@ const TransactionDetailsSheet = ({
                 </Badge>
               </div>
               <div className="space-y-2">
-                {transaction.order_bumps.map((bump, index) => (
-                  <div key={bump.id || index} className="flex items-center justify-between bg-background/50 rounded-md p-2">
-                    <span className="text-sm truncate flex-1 mr-2">{bump.name}</span>
-                    <span className="text-sm font-semibold text-primary shrink-0">{formatCurrency(bump.price)}</span>
-                  </div>
-                ))}
+                {transaction.order_bumps.map((bump, index) => {
+                  const label = bump.title ?? bump.name ?? bump.product_name ?? `Order bump ${index + 1}`;
+                  return (
+                    <div key={bump.id ?? String(index)} className="flex items-center justify-between bg-background/50 rounded-md p-2">
+                      <span className="text-sm truncate flex-1 mr-2">{label}</span>
+                      <span className="text-sm font-semibold text-primary shrink-0">{formatCurrency(bump.price)}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

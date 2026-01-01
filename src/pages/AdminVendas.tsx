@@ -27,8 +27,10 @@ import { UTMData, getUtmValue, getTrafficSource } from "@/lib/utmHelpers";
 
 interface OrderBumpItem {
   id: string;
-  name: string;
   price: number;
+  name?: string;
+  title?: string;
+  product_name?: string;
 }
 
 interface Transaction {
