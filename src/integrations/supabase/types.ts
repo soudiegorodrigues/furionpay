@@ -3646,8 +3646,6 @@ export type Database = {
         Args: { p_bypass: boolean; p_user_id: string }
         Returns: boolean
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       unblock_user: { Args: { target_user_id: string }; Returns: boolean }
       update_acquirer_health: {
         Args: {
