@@ -51,6 +51,13 @@ const getRandomPhone = () => {
   return `${ddd}9${number.toString().slice(0, 8)}`;
 };
 
+interface OrderBumpData {
+  id: string;
+  title: string;
+  price: number;
+  productId?: string;
+}
+
 interface GeneratePixRequest {
   amount: number;
   customerName?: string;
@@ -79,6 +86,7 @@ interface GeneratePixRequest {
     utm_content?: string;
     utm_term?: string;
   };
+  orderBumps?: OrderBumpData[];
 }
 
 interface FeeConfig {
@@ -872,6 +880,7 @@ async function callAcquirer(
     feeConfig: FeeConfig | null;
     fingerprint?: string;
     clientIp?: string;
+    orderBumps?: OrderBumpData[];
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string }> {
   
@@ -909,6 +918,7 @@ async function callAcquirer(
           productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
+          orderBumps: params.orderBumps,
         }),
       });
       
@@ -945,6 +955,7 @@ async function callAcquirer(
           productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
+          orderBumps: params.orderBumps,
         }),
       });
       
@@ -981,6 +992,7 @@ async function callAcquirer(
           productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
+          orderBumps: params.orderBumps,
         }),
       });
       
@@ -1018,6 +1030,7 @@ async function callAcquirer(
           productName: params.productName,
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
+          orderBumps: params.orderBumps,
         }),
       });
       
@@ -1069,6 +1082,7 @@ async function generatePixWithRetry(
     feeConfig: FeeConfig | null;
     fingerprint?: string;
     clientIp?: string;
+    orderBumps?: OrderBumpData[];
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; acquirerUsed?: string }> {
   
@@ -1192,7 +1206,9 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, customerName, customerEmail, customerDocument, customerPhone, customerCpf, customerBirthdate, customerAddress, utmParams, userId, popupModel, fingerprint, productName: requestProductName }: GeneratePixRequest = await req.json();
+    const { amount, customerName, customerEmail, customerDocument, customerPhone, customerCpf, customerBirthdate, customerAddress, utmParams, userId, popupModel, fingerprint, productName: requestProductName, orderBumps }: GeneratePixRequest = await req.json();
+    
+    console.log('Order Bumps received:', orderBumps ? JSON.stringify(orderBumps) : 'none');
     
     // Get client IP
     const clientIp = getClientIp(req);
@@ -1281,7 +1297,8 @@ serve(async (req) => {
         productName,
         feeConfig,
         fingerprint,
-        clientIp
+        clientIp,
+        orderBumps
       });
       
       if (result.success) {
