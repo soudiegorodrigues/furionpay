@@ -1,9 +1,15 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail } from "lucide-react";
+import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, getCustomerEmail, UTMData } from "@/lib/utmHelpers";
+
+interface OrderBumpItem {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface Transaction {
   id: string;
@@ -20,6 +26,7 @@ interface Transaction {
   utm_data: UTMData | null;
   popup_model: string | null;
   acquirer?: string;
+  order_bumps?: OrderBumpItem[] | null;
 }
 
 interface TransactionDetailsSheetProps {
@@ -214,7 +221,27 @@ const TransactionDetailsSheet = ({
               </div>
             </div>}
 
-          {/* IDs */}
+          {/* Order Bumps */}
+          {transaction.order_bumps && transaction.order_bumps.length > 0 && (
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Order Bumps</span>
+                <Badge variant="secondary" className="text-[10px] h-5 ml-auto">
+                  {transaction.order_bumps.length}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                {transaction.order_bumps.map((bump, index) => (
+                  <div key={bump.id || index} className="flex items-center justify-between bg-background/50 rounded-md p-2">
+                    <span className="text-sm truncate flex-1 mr-2">{bump.name}</span>
+                    <span className="text-sm font-semibold text-primary shrink-0">{formatCurrency(bump.price)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">IDs</span>
             
