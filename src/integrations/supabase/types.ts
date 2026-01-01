@@ -758,6 +758,7 @@ export type Database = {
           bank_name: string | null
           color: string | null
           created_at: string | null
+          currency: string
           current_balance: number
           icon: string | null
           id: string
@@ -772,6 +773,7 @@ export type Database = {
           bank_name?: string | null
           color?: string | null
           created_at?: string | null
+          currency?: string
           current_balance?: number
           icon?: string | null
           id?: string
@@ -786,6 +788,7 @@ export type Database = {
           bank_name?: string | null
           color?: string | null
           created_at?: string | null
+          currency?: string
           current_balance?: number
           icon?: string | null
           id?: string
@@ -882,6 +885,7 @@ export type Database = {
           amount: number
           category_id: string | null
           created_at: string
+          currency: string
           date: string
           description: string | null
           id: string
@@ -898,6 +902,7 @@ export type Database = {
           amount: number
           category_id?: string | null
           created_at?: string
+          currency?: string
           date?: string
           description?: string | null
           id?: string
@@ -914,6 +919,7 @@ export type Database = {
           amount?: number
           category_id?: string | null
           created_at?: string
+          currency?: string
           date?: string
           description?: string | null
           id?: string
