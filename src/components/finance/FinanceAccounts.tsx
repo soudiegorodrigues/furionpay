@@ -65,6 +65,8 @@ const BRAZILIAN_BANKS = [
   { value: 'pagbank', label: 'PagBank', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=pagbank.com.br&sz=64', defaultCurrency: 'BRL' },
   { value: 'contasimples', label: 'Conta Simples', color: '#00C853', logo: 'https://www.google.com/s2/favicons?domain=contasimples.com.br&sz=64', defaultCurrency: 'BRL' },
   { value: 'avenue', label: 'Avenue', color: '#000000', logo: 'https://www.google.com/s2/favicons?domain=avenue.us&sz=64', defaultCurrency: 'USD' },
+  { value: 'wise', label: 'Wise', color: '#00D48B', logo: 'https://www.google.com/s2/favicons?domain=wise.com&sz=64', defaultCurrency: 'USD' },
+  { value: 'nomad', label: 'Nomad', color: '#6366F1', logo: 'https://www.google.com/s2/favicons?domain=nomadglobal.com&sz=64', defaultCurrency: 'USD' },
   { value: 'outro', label: 'Outro', color: '#6b7280', logo: null, defaultCurrency: 'BRL' }
 ];
 
