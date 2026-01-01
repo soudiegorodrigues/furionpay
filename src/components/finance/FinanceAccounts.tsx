@@ -45,25 +45,32 @@ interface Account {
   initial_balance: number;
   current_balance: number;
   is_active: boolean;
+  currency: string;
 }
 
 const BRAZILIAN_BANKS = [
-  { value: 'nubank', label: 'Nubank', color: '#820AD1', logo: 'https://www.google.com/s2/favicons?domain=nubank.com.br&sz=64' },
-  { value: 'itau', label: 'Itaú', color: '#EC7000', logo: 'https://www.google.com/s2/favicons?domain=itau.com.br&sz=64' },
-  { value: 'bradesco', label: 'Bradesco', color: '#CC092F', logo: 'https://www.google.com/s2/favicons?domain=bradesco.com.br&sz=64' },
-  { value: 'caixa', label: 'Caixa Econômica', color: '#005CA9', logo: 'https://www.google.com/s2/favicons?domain=caixa.gov.br&sz=64' },
-  { value: 'bb', label: 'Banco do Brasil', color: '#FEDF00', logo: 'https://www.google.com/s2/favicons?domain=bb.com.br&sz=64' },
-  { value: 'inter', label: 'Banco Inter', color: '#FF7A00', logo: 'https://www.google.com/s2/favicons?domain=bancointer.com.br&sz=64' },
-  { value: 'santander', label: 'Santander', color: '#EC0000', logo: 'https://www.google.com/s2/favicons?domain=santander.com.br&sz=64' },
-  { value: 'picpay', label: 'PicPay', color: '#21C25E', logo: 'https://www.google.com/s2/favicons?domain=picpay.com&sz=64' },
-  { value: 'mercadopago', label: 'Mercado Pago', color: '#00B1EA', logo: 'https://www.google.com/s2/favicons?domain=mercadopago.com.br&sz=64' },
-  { value: 'c6', label: 'C6 Bank', color: '#242424', logo: 'https://www.google.com/s2/favicons?domain=c6bank.com.br&sz=64' },
-  { value: 'original', label: 'Banco Original', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=original.com.br&sz=64' },
-  { value: 'neon', label: 'Neon', color: '#00E5FF', logo: 'https://www.google.com/s2/favicons?domain=neon.com.br&sz=64' },
-  { value: 'next', label: 'Next', color: '#00FF87', logo: 'https://www.google.com/s2/favicons?domain=next.me&sz=64' },
-  { value: 'pagbank', label: 'PagBank', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=pagbank.com.br&sz=64' },
-  { value: 'contasimples', label: 'Conta Simples', color: '#00C853', logo: 'https://www.google.com/s2/favicons?domain=contasimples.com.br&sz=64' },
-  { value: 'outro', label: 'Outro', color: '#6b7280', logo: null }
+  { value: 'nubank', label: 'Nubank', color: '#820AD1', logo: 'https://www.google.com/s2/favicons?domain=nubank.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'itau', label: 'Itaú', color: '#EC7000', logo: 'https://www.google.com/s2/favicons?domain=itau.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'bradesco', label: 'Bradesco', color: '#CC092F', logo: 'https://www.google.com/s2/favicons?domain=bradesco.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'caixa', label: 'Caixa Econômica', color: '#005CA9', logo: 'https://www.google.com/s2/favicons?domain=caixa.gov.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'bb', label: 'Banco do Brasil', color: '#FEDF00', logo: 'https://www.google.com/s2/favicons?domain=bb.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'inter', label: 'Banco Inter', color: '#FF7A00', logo: 'https://www.google.com/s2/favicons?domain=bancointer.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'santander', label: 'Santander', color: '#EC0000', logo: 'https://www.google.com/s2/favicons?domain=santander.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'picpay', label: 'PicPay', color: '#21C25E', logo: 'https://www.google.com/s2/favicons?domain=picpay.com&sz=64', defaultCurrency: 'BRL' },
+  { value: 'mercadopago', label: 'Mercado Pago', color: '#00B1EA', logo: 'https://www.google.com/s2/favicons?domain=mercadopago.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'c6', label: 'C6 Bank', color: '#242424', logo: 'https://www.google.com/s2/favicons?domain=c6bank.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'original', label: 'Banco Original', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=original.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'neon', label: 'Neon', color: '#00E5FF', logo: 'https://www.google.com/s2/favicons?domain=neon.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'next', label: 'Next', color: '#00FF87', logo: 'https://www.google.com/s2/favicons?domain=next.me&sz=64', defaultCurrency: 'BRL' },
+  { value: 'pagbank', label: 'PagBank', color: '#00A86B', logo: 'https://www.google.com/s2/favicons?domain=pagbank.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'contasimples', label: 'Conta Simples', color: '#00C853', logo: 'https://www.google.com/s2/favicons?domain=contasimples.com.br&sz=64', defaultCurrency: 'BRL' },
+  { value: 'avenue', label: 'Avenue', color: '#000000', logo: 'https://www.google.com/s2/favicons?domain=avenue.us&sz=64', defaultCurrency: 'USD' },
+  { value: 'outro', label: 'Outro', color: '#6b7280', logo: null, defaultCurrency: 'BRL' }
+];
+
+const CURRENCIES = [
+  { value: 'BRL', label: 'Real (R$)', symbol: 'R$', locale: 'pt-BR' },
+  { value: 'USD', label: 'Dólar ($)', symbol: '$', locale: 'en-US' }
 ];
 
 const ACCOUNT_TYPES = [
@@ -88,7 +95,8 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
     type: 'checking',
     bank_name: '',
     color: '#6b7280',
-    initial_balance: ''
+    initial_balance: '',
+    currency: 'BRL'
   });
 
   useEffect(() => {
@@ -123,8 +131,9 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
     if (account) {
       setEditingAccount(account);
       // Formatar valor inicial para exibição no input
+      const currencyConfig = CURRENCIES.find(c => c.value === account.currency) || CURRENCIES[0];
       const formattedBalance = account.initial_balance > 0
-        ? new Intl.NumberFormat('pt-BR', {
+        ? new Intl.NumberFormat(currencyConfig.locale, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           }).format(account.initial_balance)
@@ -134,7 +143,8 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
         type: account.type,
         bank_name: account.bank_name || '',
         color: account.color || '#6b7280',
-        initial_balance: formattedBalance
+        initial_balance: formattedBalance,
+        currency: account.currency || 'BRL'
       });
     } else {
       setEditingAccount(null);
@@ -143,7 +153,8 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
         type: 'checking',
         bank_name: '',
         color: '#6b7280',
-        initial_balance: ''
+        initial_balance: '',
+        currency: 'BRL'
       });
     }
     setShowDialog(true);
@@ -154,7 +165,8 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
     setFormData(prev => ({
       ...prev,
       bank_name: bankValue,
-      color: bank?.color || prev.color
+      color: bank?.color || prev.color,
+      currency: bank?.defaultCurrency || prev.currency
     }));
   };
 
@@ -213,7 +225,8 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
         color: formData.color,
         initial_balance: initialBalance,
         current_balance: newCurrentBalance,
-        is_active: true
+        is_active: true,
+        currency: formData.currency
       };
 
       if (editingAccount) {
@@ -283,32 +296,47 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+  const formatCurrencyValue = (value: number, currency: string = 'BRL') => {
+    const currencyConfig = CURRENCIES.find(c => c.value === currency) || CURRENCIES[0];
+    return new Intl.NumberFormat(currencyConfig.locale, {
       style: 'currency',
-      currency: 'BRL'
+      currency: currency
     }).format(value);
   };
 
-  // Formatar número para exibição no input (1234.56 -> "1.234,56")
-  const formatCurrencyInput = (value: string): string => {
+  // Formatar número para exibição no input baseado na moeda
+  const formatCurrencyInput = (value: string, currency: string = 'BRL'): string => {
     const numericValue = value.replace(/\D/g, '');
     const floatValue = parseFloat(numericValue) / 100;
     if (isNaN(floatValue) || floatValue === 0) return '';
-    return new Intl.NumberFormat('pt-BR', {
+    const currencyConfig = CURRENCIES.find(c => c.value === currency) || CURRENCIES[0];
+    return new Intl.NumberFormat(currencyConfig.locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(floatValue);
   };
 
-  // Parse de exibição para número (1.234,56 -> 1234.56)
+  // Parse de exibição para número
   const parseCurrencyInput = (value: string): number => {
-    const cleanValue = value.replace(/\./g, '').replace(',', '.');
+    // Handle both formats (1.234,56 for BRL and 1,234.56 for USD)
+    const hasBrazilianFormat = value.includes(',') && value.indexOf(',') > value.lastIndexOf('.');
+    if (hasBrazilianFormat) {
+      const cleanValue = value.replace(/\./g, '').replace(',', '.');
+      return parseFloat(cleanValue) || 0;
+    }
+    const cleanValue = value.replace(/,/g, '');
     return parseFloat(cleanValue) || 0;
   };
 
-  const getTotalBalance = () => {
-    return accounts.reduce((sum, acc) => sum + acc.current_balance, 0);
+  const getTotalBalanceByCurrency = (currency: string) => {
+    return accounts
+      .filter(acc => acc.currency === currency)
+      .reduce((sum, acc) => sum + acc.current_balance, 0);
+  };
+
+  const getCurrenciesInUse = () => {
+    const currencies = new Set(accounts.map(acc => acc.currency || 'BRL'));
+    return Array.from(currencies);
   };
 
   const getAccountTypeLabel = (type: string) => {
@@ -334,11 +362,18 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">Minhas Contas</h2>
-          <p className="text-sm text-muted-foreground">
-            Saldo total: <span className={`font-semibold ${getTotalBalance() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(getTotalBalance())}
-            </span>
-          </p>
+          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+            {getCurrenciesInUse().map(currency => {
+              const total = getTotalBalanceByCurrency(currency);
+              return (
+                <span key={currency}>
+                  Saldo {currency}: <span className={`font-semibold ${total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrencyValue(total, currency)}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
         </div>
         <Button onClick={() => handleOpenDialog()} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -388,9 +423,14 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
                           )}
                         </div>
                       </div>
-                      <span className={`text-sm font-semibold ${account.current_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {formatCurrency(account.current_balance)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {account.currency || 'BRL'}
+                        </Badge>
+                        <span className={`text-sm font-semibold ${account.current_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {formatCurrencyValue(account.current_balance, account.currency || 'BRL')}
+                        </span>
+                      </div>
                     </div>
                     <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                       <div 
@@ -405,14 +445,19 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
                 );
               })}
               
-              {/* Total */}
-              <div className="pt-3 border-t mt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Total em Contas</span>
-                  <span className={`text-base font-bold ${getTotalBalance() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {formatCurrency(getTotalBalance())}
-                  </span>
-                </div>
+              {/* Totals by currency */}
+              <div className="pt-3 border-t mt-3 space-y-2">
+                {getCurrenciesInUse().map(currency => {
+                  const total = getTotalBalanceByCurrency(currency);
+                  return (
+                    <div key={currency} className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Total {currency}</span>
+                      <span className={`text-base font-bold ${total >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {formatCurrencyValue(total, currency)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
@@ -473,9 +518,14 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    {getAccountTypeLabel(account.type)}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant="outline" className="text-xs">
+                      {getAccountTypeLabel(account.type)}
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {account.currency || 'BRL'}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               
@@ -483,7 +533,7 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
                 <div className="text-center py-2">
                   <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
                   <p className={`text-2xl font-bold ${account.current_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(account.current_balance)}
+                    {formatCurrencyValue(account.current_balance, account.currency || 'BRL')}
                   </p>
                   {account.current_balance !== account.initial_balance && (
                     <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
@@ -492,7 +542,7 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
                       ) : (
                         <TrendingDown className="h-3 w-3 text-red-600" />
                       )}
-                      Inicial: {formatCurrency(account.initial_balance)}
+                      Inicial: {formatCurrencyValue(account.initial_balance, account.currency || 'BRL')}
                     </p>
                   )}
                 </div>
@@ -573,39 +623,60 @@ export const FinanceAccounts = ({ userId }: { userId?: string }) => {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Tipo de Conta</Label>
-              <Select 
-                value={formData.type} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, type: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ACCOUNT_TYPES.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tipo de Conta</Label>
+                <Select 
+                  value={formData.type} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, type: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ACCOUNT_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Moeda</Label>
+                <Select 
+                  value={formData.currency} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map(currency => (
+                      <SelectItem key={currency.value} value={currency.value}>
+                        {currency.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label>Saldo Inicial</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
-                  R$
+                  {CURRENCIES.find(c => c.value === formData.currency)?.symbol || 'R$'}
                 </span>
                 <Input
                   type="text"
                   inputMode="numeric"
-                  placeholder="0,00"
+                  placeholder={formData.currency === 'USD' ? '0.00' : '0,00'}
                   className="pl-10"
                   value={formData.initial_balance}
                   onChange={(e) => {
-                    const formatted = formatCurrencyInput(e.target.value);
+                    const formatted = formatCurrencyInput(e.target.value, formData.currency);
                     setFormData(prev => ({ ...prev, initial_balance: formatted }));
                   }}
                 />

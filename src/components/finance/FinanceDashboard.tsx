@@ -34,6 +34,8 @@ import {
 } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GaugeChart } from "./GaugeChart";
+import { CurrencyQuoteCard } from "./CurrencyQuoteCard";
+import { useCurrencyQuote, convertUsdToBrl, formatCurrencyByCode } from "@/hooks/useCurrencyQuote";
 
 interface Transaction {
   id: string;
@@ -58,6 +60,7 @@ interface Account {
   icon: string | null;
   color: string | null;
   current_balance: number;
+  currency: string;
 }
 
 interface MonthlyData {
@@ -92,6 +95,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
+  const { quote } = useCurrencyQuote();
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -114,7 +118,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
           .eq('user_id', effectiveUserId!),
         supabase
           .from('finance_accounts')
-          .select('id, name, bank_name, icon, color, current_balance')
+          .select('id, name, bank_name, icon, color, current_balance, currency')
           .eq('user_id', effectiveUserId!)
           .eq('is_active', true)
           .order('name')
@@ -376,6 +380,18 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
     return `${sign}${value.toFixed(1)}%`;
   };
 
+  // Calculate account balances by currency
+  const accountBalancesByCurrency = useMemo(() => {
+    const balances: Record<string, number> = {};
+    accounts.forEach(acc => {
+      const currency = acc.currency || 'BRL';
+      balances[currency] = (balances[currency] || 0) + acc.current_balance;
+    });
+    return balances;
+  }, [accounts]);
+
+  const hasUsdAccounts = 'USD' in accountBalancesByCurrency;
+
   // Show skeleton if no userId or still loading
   if (!effectiveUserId || isLoading) {
     return (
@@ -453,6 +469,35 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
             ))}
           </CardContent>
         </Card>
+      )}
+
+      {/* Currency Quote Card - only show if user has USD accounts */}
+      {hasUsdAccounts && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CurrencyQuoteCard />
+          <Card className="border border-border/50">
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">Saldo por Moeda</p>
+                {Object.entries(accountBalancesByCurrency).map(([currency, balance]) => (
+                  <div key={currency} className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{currency}</span>
+                    <div className="text-right">
+                      <p className={`font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrencyByCode(balance, currency)}
+                      </p>
+                      {currency === 'USD' && quote && (
+                        <p className="text-xs text-muted-foreground">
+                          ≈ {formatCurrency(convertUsdToBrl(balance, quote))}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Period Filter */}
