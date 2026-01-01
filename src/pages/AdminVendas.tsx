@@ -25,6 +25,12 @@ import TransactionDetailsSheet from "@/components/TransactionDetailsSheet";
 import { CalendarIcon } from "lucide-react";
 import { UTMData, getUtmValue, getTrafficSource } from "@/lib/utmHelpers";
 
+interface OrderBumpItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
 interface Transaction {
   id: string;
   amount: number;
@@ -40,6 +46,7 @@ interface Transaction {
   utm_data: UTMData | null;
   popup_model: string | null;
   acquirer?: string;
+  order_bumps?: OrderBumpItem[] | null;
 }
 
 interface FeeConfig {
