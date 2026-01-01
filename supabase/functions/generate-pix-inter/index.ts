@@ -24,6 +24,13 @@ const RANDOM_NAMES = [
 
 const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
 
+interface OrderBumpData {
+  id: string;
+  title: string;
+  price: number;
+  productId?: string;
+}
+
 interface GeneratePixRequest {
   amount: number;
   donorName?: string;
@@ -47,6 +54,7 @@ interface GeneratePixRequest {
   healthCheck?: boolean;
   fingerprint?: string;
   clientIp?: string;
+  orderBumps?: OrderBumpData[];
 }
 
 interface InterCredentials {

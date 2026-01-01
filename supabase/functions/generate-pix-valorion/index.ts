@@ -79,6 +79,13 @@ function generateRandomEmail(name: string): string {
   return `${cleanName}${randomNum}@email.com`;
 }
 
+interface OrderBumpData {
+  id: string;
+  title: string;
+  price: number;
+  productId?: string;
+}
+
 interface GeneratePixRequest {
   amount: number;
   donorName?: string;
@@ -102,6 +109,7 @@ interface GeneratePixRequest {
   healthCheck?: boolean;
   fingerprint?: string;
   clientIp?: string;
+  orderBumps?: OrderBumpData[];
 }
 
 interface FeeConfig {
@@ -401,7 +409,8 @@ async function logPixGenerated(
   donorPhone?: string,
   donorCpf?: string,
   donorBirthdate?: string,
-  donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; }
+  donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; },
+  orderBumps?: OrderBumpData[]
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -429,6 +438,7 @@ async function logPixGenerated(
       p_donor_neighborhood: donorAddress?.neighborhood || null,
       p_donor_city: donorAddress?.city || null,
       p_donor_state: donorAddress?.state || null,
+      p_order_bumps: orderBumps && orderBumps.length > 0 ? orderBumps : null,
     });
 
     if (error) {
@@ -530,7 +540,7 @@ serve(async (req) => {
   const requestStartTime = Date.now();
 
   try {
-    const { amount, donorName, donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp, orderBumps } = await req.json() as GeneratePixRequest;
 
     console.log('=== VALORION PIX GENERATION START ===');
     console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}, HealthCheck: ${healthCheck}, IP: ${clientIp}`);
@@ -720,7 +730,8 @@ serve(async (req) => {
         donorPhone,
         donorCpf,
         donorBirthdate,
-        donorAddress
+        donorAddress,
+        orderBumps
       );
     } else {
       console.log('[VALORION] Health check mode - skipping transaction log');
