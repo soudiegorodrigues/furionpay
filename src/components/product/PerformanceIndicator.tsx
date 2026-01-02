@@ -15,7 +15,7 @@ export const PerformanceIndicator = memo(({ score, totalPaid = 0, className }: P
     <div className={cn("space-y-1.5 py-2", className)}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <div className="p-1 rounded-md bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-lg shadow-emerald-500/30">
+          <div className="p-1 rounded-md bg-gradient-to-br from-red-600 to-red-900 shadow-lg shadow-red-500/30">
             <Zap className="h-3 w-3 text-white fill-white" />
           </div>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
@@ -23,7 +23,7 @@ export const PerformanceIndicator = memo(({ score, totalPaid = 0, className }: P
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-sm font-bold text-foreground">
+          <span className="text-sm font-bold text-red-500">
             {score}
           </span>
           <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
@@ -35,7 +35,7 @@ export const PerformanceIndicator = memo(({ score, totalPaid = 0, className }: P
       <div className="relative">
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <div 
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-red-500 to-black transition-all duration-500"
             style={{ width: `${percentage}%` }}
           />
         </div>
