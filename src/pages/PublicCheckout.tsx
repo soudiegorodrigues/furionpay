@@ -114,7 +114,16 @@ export default function PublicCheckout() {
     }
   }, []);
 
-  // Fetch ALL checkout data using secure RPC function (no user_id exposure)
+  // Debug info state for visible debugging
+  const [debugInfo, setDebugInfo] = useState<{
+    method: string;
+    status: string;
+    error?: string;
+    dataReceived?: boolean;
+    timestamp: string;
+  } | null>(null);
+
+  // Fetch ALL checkout data - PRIMARY: Edge Function, FALLBACK: RPC
   const { data: checkoutData, isLoading, error } = useQuery({
     queryKey: ["public-checkout", offerCode],
     queryFn: async () => {
@@ -124,154 +133,246 @@ export default function PublicCheckout() {
       }
       
       console.log('[Checkout Debug] Fetching offer with code:', offerCode);
-      
-      // Step 1: Get offer via secure RPC function (no user_id exposed)
-      const { data: offerData, error: offerError } = await supabase
-        .rpc("get_public_offer_by_code", { p_offer_code: offerCode });
-      
-      console.log('[Checkout Debug] RPC Response:', { 
-        offerCode,
-        offerData, 
-        offerError,
-        dataLength: offerData?.length,
-        dataType: typeof offerData
-      });
-      
-      if (offerError) {
-        console.error('[Checkout Debug] RPC Error:', offerError);
-        throw offerError;
-      }
-      if (!offerData || offerData.length === 0) {
-        console.log('[Checkout Debug] No offer found for code:', offerCode);
-        return null;
-      }
-      
-      const offerRow = offerData[0] as {
-        id: string;
-        product_id: string;
-        name: string;
-        type: string;
-        domain: string | null;
-        price: number;
-        offer_code: string | null;
-        product_name: string;
-        product_description: string | null;
-        product_image_url: string | null;
-        product_price: number;
-        product_code: string | null;
-        upsell_url: string | null;
-        downsell_url: string | null;
-        crosssell_url: string | null;
-      };
-      
-      // Map RPC result to ProductOffer format
-      const offer: ProductOffer = {
-        id: offerRow.id,
-        product_id: offerRow.product_id,
-        name: offerRow.name,
-        type: offerRow.type,
-        domain: offerRow.domain,
-        price: offerRow.price,
-        offer_code: offerRow.offer_code,
-        is_active: true,
-        user_id: "", // Not exposed for security
-        upsell_url: offerRow.upsell_url,
-        downsell_url: offerRow.downsell_url,
-        crosssell_url: offerRow.crosssell_url,
-      };
-      
-      // Map to Product format
-      const product: Product = {
-        id: offerRow.product_id,
-        name: offerRow.product_name,
-        description: offerRow.product_description,
-        image_url: offerRow.product_image_url,
-        price: offerRow.product_price,
-        product_code: offerRow.product_code,
-        is_active: true,
-      };
+      const timestamp = new Date().toISOString();
 
-      // Step 2: Fetch config, testimonials, and order bumps IN PARALLEL using secure RPC
-      const [configResult, testimonialsResult, orderBumpsResult] = await Promise.all([
-        supabase.rpc("get_public_checkout_config", { p_product_id: offer.product_id }),
-        supabase
-          .from("product_testimonials")
-          .select("id, author_name, author_photo_url, rating, content")
-          .eq("product_id", offer.product_id)
-          .eq("is_active", true)
-          .order("display_order", { ascending: true }),
-        // SECURITY FIX: Use secure RPC to fetch order bumps (no user_id exposure)
-        supabase.rpc("get_public_order_bumps", { p_product_id: offer.product_id }),
-      ]);
+      // PRIMARY METHOD: Use Edge Function (most reliable, uses service role)
+      try {
+        console.log('[Checkout Debug] Trying Edge Function...');
+        const { data: bootstrapData, error: bootstrapError } = await supabase.functions.invoke(
+          'public-checkout-bootstrap',
+          { body: { offerCode } }
+        );
 
-      // RPC returns array, get first result (cast via unknown to handle type differences)
-      let config = (configResult.data && configResult.data.length > 0 
-        ? configResult.data[0] as unknown
-        : null) as CheckoutConfig | null;
-      const testimonials = (testimonialsResult.data || []) as Testimonial[];
-      
-      // Process order bumps from secure RPC - new flat structure
-      const orderBumps: OrderBumpData[] = (orderBumpsResult.data || []).map((bump: any) => ({
-        id: bump.id,
-        title: bump.title,
-        description: bump.description,
-        bump_price: bump.bump_price,
-        image_url: bump.image_url,
-        bump_product: bump.bump_product_id ? {
-          id: bump.bump_product_id,
-          name: bump.bump_product_name,
-          image_url: bump.bump_product_image_url,
-        } : null,
-      }));
+        if (bootstrapError) {
+          console.error('[Checkout Debug] Edge Function error:', bootstrapError);
+          setDebugInfo({
+            method: 'edge-function',
+            status: 'error',
+            error: bootstrapError.message || JSON.stringify(bootstrapError),
+            timestamp,
+          });
+          throw bootstrapError;
+        }
 
-      // Fetch banners in parallel to avoid CLS from internal template fetch
-      const { data: bannersData } = await supabase
-        .from("checkout_banners")
-        .select("id, image_url, display_order")
-        .eq("product_id", offer.product_id)
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-      
-      const banners = bannersData || [];
-      
-      // Fetch pixel config using config's user_id and product_id for product-specific pixels
-      let pixelConfig: { pixelId?: string; accessToken?: string } = {};
-      if (config?.user_id) {
-        const { data: pixelData } = await supabase.functions.invoke('get-pixel-config', {
-          body: { 
-            userId: config.user_id,
-            productId: offer.product_id 
+        if (bootstrapData?.error) {
+          console.log('[Checkout Debug] Edge Function returned error:', bootstrapData.error);
+          setDebugInfo({
+            method: 'edge-function',
+            status: bootstrapData.code || 'error',
+            error: bootstrapData.error,
+            timestamp,
+          });
+          
+          if (bootstrapData.code === 'OFFER_NOT_FOUND' || bootstrapData.code === 'PRODUCT_NOT_FOUND') {
+            return null; // Offer genuinely not found
           }
+          throw new Error(bootstrapData.error);
+        }
+
+        console.log('[Checkout Debug] Edge Function success!', { 
+          hasOffer: !!bootstrapData?.offer,
+          hasProduct: !!bootstrapData?.product 
         });
-        if (pixelData?.pixels && pixelData.pixels.length > 0) {
-          const firstPixel = pixelData.pixels[0];
-          pixelConfig = {
-            pixelId: firstPixel.pixelId,
-            accessToken: firstPixel.accessToken || undefined
-          };
-        }
-      }
-
-      // Handle template mapping if needed (rare case)
-      if (config?.template_id) {
-        const { data: templateData } = await supabase
-          .from("checkout_templates")
-          .select("template_code, name")
-          .eq("id", config.template_id)
-          .eq("is_published", true)
-          .maybeSingle();
         
-        if (templateData) {
-          const templateName = templateData.name.toLowerCase();
-          config = { ...config, template: templateName === "padrão" ? "padrao" : templateName };
+        setDebugInfo({
+          method: 'edge-function',
+          status: 'success',
+          dataReceived: true,
+          timestamp,
+        });
+
+        // Map the response to expected format
+        const offer: ProductOffer = {
+          ...bootstrapData.offer,
+          is_active: true,
+          user_id: "", // Not exposed for security
+        };
+
+        const product: Product = {
+          ...bootstrapData.product,
+          is_active: true,
+        };
+
+        return {
+          offer,
+          product,
+          config: bootstrapData.config,
+          testimonials: bootstrapData.testimonials || [],
+          pixelConfig: bootstrapData.pixelConfig || {},
+          orderBumps: bootstrapData.orderBumps || [],
+          banners: bootstrapData.banners || [],
+        };
+      } catch (edgeFnError) {
+        console.warn('[Checkout Debug] Edge Function failed, trying RPC fallback...', edgeFnError);
+        
+        // FALLBACK: Use RPC (original method)
+        try {
+          const { data: offerData, error: offerError } = await supabase
+            .rpc("get_public_offer_by_code", { p_offer_code: offerCode });
+          
+          console.log('[Checkout Debug] RPC Response:', { 
+            offerCode,
+            offerData, 
+            offerError,
+            dataLength: offerData?.length,
+          });
+          
+          if (offerError) {
+            console.error('[Checkout Debug] RPC Error:', offerError);
+            setDebugInfo({
+              method: 'rpc-fallback',
+              status: 'error',
+              error: offerError.message || JSON.stringify(offerError),
+              timestamp,
+            });
+            throw offerError;
+          }
+          
+          if (!offerData || offerData.length === 0) {
+            console.log('[Checkout Debug] RPC: No offer found');
+            setDebugInfo({
+              method: 'rpc-fallback',
+              status: 'not-found',
+              dataReceived: false,
+              timestamp,
+            });
+            return null;
+          }
+
+          setDebugInfo({
+            method: 'rpc-fallback',
+            status: 'success',
+            dataReceived: true,
+            timestamp,
+          });
+          
+          const offerRow = offerData[0] as {
+            id: string;
+            product_id: string;
+            name: string;
+            type: string;
+            domain: string | null;
+            price: number;
+            offer_code: string | null;
+            product_name: string;
+            product_description: string | null;
+            product_image_url: string | null;
+            product_price: number;
+            product_code: string | null;
+            upsell_url: string | null;
+            downsell_url: string | null;
+            crosssell_url: string | null;
+          };
+          
+          const offer: ProductOffer = {
+            id: offerRow.id,
+            product_id: offerRow.product_id,
+            name: offerRow.name,
+            type: offerRow.type,
+            domain: offerRow.domain,
+            price: offerRow.price,
+            offer_code: offerRow.offer_code,
+            is_active: true,
+            user_id: "",
+            upsell_url: offerRow.upsell_url,
+            downsell_url: offerRow.downsell_url,
+            crosssell_url: offerRow.crosssell_url,
+          };
+          
+          const product: Product = {
+            id: offerRow.product_id,
+            name: offerRow.product_name,
+            description: offerRow.product_description,
+            image_url: offerRow.product_image_url,
+            price: offerRow.product_price,
+            product_code: offerRow.product_code,
+            is_active: true,
+          };
+
+          // Fetch additional data
+          const [configResult, testimonialsResult, orderBumpsResult] = await Promise.all([
+            supabase.rpc("get_public_checkout_config", { p_product_id: offer.product_id }),
+            supabase
+              .from("product_testimonials")
+              .select("id, author_name, author_photo_url, rating, content")
+              .eq("product_id", offer.product_id)
+              .eq("is_active", true)
+              .order("display_order", { ascending: true }),
+            supabase.rpc("get_public_order_bumps", { p_product_id: offer.product_id }),
+          ]);
+
+          let config = (configResult.data && configResult.data.length > 0 
+            ? configResult.data[0] as unknown
+            : null) as CheckoutConfig | null;
+          const testimonials = (testimonialsResult.data || []) as Testimonial[];
+          
+          const orderBumps: OrderBumpData[] = (orderBumpsResult.data || []).map((bump: any) => ({
+            id: bump.id,
+            title: bump.title,
+            description: bump.description,
+            bump_price: bump.bump_price,
+            image_url: bump.image_url,
+            bump_product: bump.bump_product_id ? {
+              id: bump.bump_product_id,
+              name: bump.bump_product_name,
+              image_url: bump.bump_product_image_url,
+            } : null,
+          }));
+
+          const { data: bannersData } = await supabase
+            .from("checkout_banners")
+            .select("id, image_url, display_order")
+            .eq("product_id", offer.product_id)
+            .eq("is_active", true)
+            .order("display_order", { ascending: true });
+          
+          const banners = bannersData || [];
+          
+          let pixelConfig: { pixelId?: string; accessToken?: string } = {};
+          if (config?.user_id) {
+            const { data: pixelData } = await supabase.functions.invoke('get-pixel-config', {
+              body: { userId: config.user_id, productId: offer.product_id }
+            });
+            if (pixelData?.pixels && pixelData.pixels.length > 0) {
+              const firstPixel = pixelData.pixels[0];
+              pixelConfig = {
+                pixelId: firstPixel.pixelId,
+                accessToken: firstPixel.accessToken || undefined
+              };
+            }
+          }
+
+          if (config?.template_id) {
+            const { data: templateData } = await supabase
+              .from("checkout_templates")
+              .select("template_code, name")
+              .eq("id", config.template_id)
+              .eq("is_published", true)
+              .maybeSingle();
+            
+            if (templateData) {
+              const templateName = templateData.name.toLowerCase();
+              config = { ...config, template: templateName === "padrão" ? "padrao" : templateName };
+            }
+          }
+
+          return { offer, product, config, testimonials, pixelConfig, orderBumps, banners };
+        } catch (rpcError) {
+          console.error('[Checkout Debug] Both methods failed:', rpcError);
+          setDebugInfo({
+            method: 'both-failed',
+            status: 'error',
+            error: rpcError instanceof Error ? rpcError.message : String(rpcError),
+            timestamp,
+          });
+          throw rpcError;
         }
       }
-
-      return { offer, product, config, testimonials, pixelConfig, orderBumps, banners };
     },
     enabled: !!offerCode,
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes (reduces duplicate requests)
-    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 5,
+    retry: 2, // Retry twice before giving up
   });
 
   const offer = checkoutData?.offer;
@@ -630,25 +731,93 @@ export default function PublicCheckout() {
     return <CheckoutSkeleton />;
   }
 
-  if (error || !offer) {
+  // Debug panel component
+  const DebugPanel = () => {
+    if (!debugEnabled) return null;
+    
+    const debugData = {
+      offerCode,
+      debugInfo,
+      error: error ? { message: (error as Error).message, name: (error as Error).name } : null,
+      hasOffer: !!offer,
+      hasProduct: !!product,
+      isLoading,
+      timestamp: new Date().toISOString(),
+    };
+    
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold mb-2 text-gray-900">Oferta não encontrada</h2>
-          <p className="text-gray-500 mb-4">Esta oferta não está mais disponível.</p>
+      <div className="fixed bottom-4 right-4 z-50 max-w-sm bg-black text-green-400 p-4 rounded-lg shadow-2xl font-mono text-xs overflow-auto max-h-96">
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-bold text-white">🔧 Debug Panel</span>
           <button 
-            onClick={() => navigate("/")} 
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            onClick={() => navigator.clipboard.writeText(JSON.stringify(debugData, null, 2))}
+            className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-500"
           >
-            Voltar ao início
+            Copiar
           </button>
         </div>
+        <pre className="whitespace-pre-wrap break-all">
+          {JSON.stringify(debugData, null, 2)}
+        </pre>
       </div>
+    );
+  };
+
+  // Error state (actual error occurred)
+  if (error) {
+    return (
+      <>
+        <DebugPanel />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold mb-2 text-gray-900">Erro ao carregar checkout</h2>
+            <p className="text-gray-500 mb-4">Ocorreu um erro ao carregar os dados. Tente novamente.</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mb-2 w-full"
+            >
+              Tentar novamente
+            </button>
+            <button 
+              onClick={() => navigate("/")} 
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full"
+            >
+              Voltar ao início
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Offer not found state (no error, just empty data)
+  if (!offer) {
+    return (
+      <>
+        <DebugPanel />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold mb-2 text-gray-900">Oferta não encontrada</h2>
+            <p className="text-gray-500 mb-4">Esta oferta não está mais disponível.</p>
+            <button 
+              onClick={() => navigate("/")} 
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Voltar ao início
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 
