@@ -30,81 +30,35 @@ serve(async (req) => {
 
     console.log('Received userId:', userId, 'productId:', productId);
 
-    // Step 1: If productId is provided, check for product-specific pixels (product_pixels JSONB)
+    // If productId is provided, return ONLY product-specific pixels (no fallback to global)
     if (productId) {
       const { data: productConfig, error: configError } = await supabase
         .from('product_checkout_configs')
-        .select('product_pixels, selected_pixel_ids')
+        .select('product_pixels')
         .eq('product_id', productId)
         .single();
 
-      if (!configError && productConfig) {
-        // Priority 1: product_pixels (new JSONB field with full pixel config)
-        if (productConfig.product_pixels && Array.isArray(productConfig.product_pixels) && productConfig.product_pixels.length > 0) {
-          console.log('Using product-specific pixels (product_pixels):', productConfig.product_pixels.length);
-          return new Response(
-            JSON.stringify({ pixels: productConfig.product_pixels }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        // Priority 2: selected_pixel_ids (filter from global pixels)
-        if (productConfig.selected_pixel_ids && productConfig.selected_pixel_ids.length > 0) {
-          // Get global pixels and filter
-          const globalPixels = await getGlobalPixels(supabase, userId);
-          const selectedIds = productConfig.selected_pixel_ids;
-          const filteredPixels = globalPixels.filter((p: any) => 
-            selectedIds.includes(p.id) || selectedIds.includes(p.pixelId)
-          );
-          
-          if (filteredPixels.length > 0) {
-            console.log('Using selected global pixels:', filteredPixels.length);
-            return new Response(
-              JSON.stringify({ pixels: filteredPixels }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-        }
+      if (!configError && productConfig?.product_pixels && Array.isArray(productConfig.product_pixels) && productConfig.product_pixels.length > 0) {
+        console.log('Using product-specific pixels:', productConfig.product_pixels.length);
+        return new Response(
+          JSON.stringify({ pixels: productConfig.product_pixels }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-    }
 
-    // Step 2: Fallback to all global pixels
-    const globalPixels = await getGlobalPixels(supabase, userId);
-    
-    if (globalPixels.length > 0) {
-      console.log('Returning all global pixels:', globalPixels.length);
-      return new Response(
-        JSON.stringify({ pixels: globalPixels }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Step 3: Fallback to legacy single pixel format
-    let legacyQuery = supabase
-      .from('admin_settings')
-      .select('key, value')
-      .eq('key', 'meta_pixel_id');
-
-    if (userId) {
-      legacyQuery = legacyQuery.eq('user_id', userId);
-    } else {
-      legacyQuery = legacyQuery.is('user_id', null);
-    }
-
-    const { data, error } = await legacyQuery.single();
-
-    if (error || !data?.value) {
-      console.log('No pixel config found');
+      // Product has no specific pixels configured - return empty array (no fallback)
+      console.log('Product has no specific pixels configured, returning empty');
       return new Response(
         JSON.stringify({ pixels: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Return legacy pixel in new format
-    console.log('Returning legacy pixel:', data.value);
+    // For popups (no productId), use global pixels
+    const globalPixels = await getGlobalPixels(supabase, userId);
+    console.log('Returning global pixels for popup:', globalPixels.length);
     return new Response(
-      JSON.stringify({ pixels: [{ pixelId: data.value }] }),
+      JSON.stringify({ pixels: globalPixels }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
