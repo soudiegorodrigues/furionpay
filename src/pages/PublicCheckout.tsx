@@ -118,14 +118,33 @@ export default function PublicCheckout() {
   const { data: checkoutData, isLoading, error } = useQuery({
     queryKey: ["public-checkout", offerCode],
     queryFn: async () => {
-      if (!offerCode) return null;
+      if (!offerCode) {
+        console.log('[Checkout Debug] No offerCode provided');
+        return null;
+      }
+      
+      console.log('[Checkout Debug] Fetching offer with code:', offerCode);
       
       // Step 1: Get offer via secure RPC function (no user_id exposed)
       const { data: offerData, error: offerError } = await supabase
         .rpc("get_public_offer_by_code", { p_offer_code: offerCode });
       
-      if (offerError) throw offerError;
-      if (!offerData || offerData.length === 0) return null;
+      console.log('[Checkout Debug] RPC Response:', { 
+        offerCode,
+        offerData, 
+        offerError,
+        dataLength: offerData?.length,
+        dataType: typeof offerData
+      });
+      
+      if (offerError) {
+        console.error('[Checkout Debug] RPC Error:', offerError);
+        throw offerError;
+      }
+      if (!offerData || offerData.length === 0) {
+        console.log('[Checkout Debug] No offer found for code:', offerCode);
+        return null;
+      }
       
       const offerRow = offerData[0] as {
         id: string;
