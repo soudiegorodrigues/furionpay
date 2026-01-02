@@ -80,7 +80,7 @@ export function CheckoutTemplatePadrao({
       <div 
         className="py-3 text-center text-white font-semibold transition-opacity duration-200"
         style={{ 
-          backgroundColor: config?.primary_color || '#dc2626',
+          backgroundColor: (config as any)?.countdown_color || config?.primary_color || '#dc2626',
           minHeight: '48px',
           opacity: (config?.show_countdown && countdown !== null && countdown > 0) ? 1 : 0,
           visibility: (config?.show_countdown && countdown !== null && countdown > 0) ? 'visible' : 'hidden',
@@ -88,7 +88,7 @@ export function CheckoutTemplatePadrao({
       >
         <div className="flex items-center justify-center gap-2">
           <Clock className="h-4 w-4" />
-          <span>🔥 OFERTA EXPIRA EM: {formatCountdown(countdown || 0)}</span>
+          <span>{(config as any)?.countdown_text || '🔥 OFERTA EXPIRA EM:'} {formatCountdown(countdown || 0)}</span>
           <Clock className="h-4 w-4" />
         </div>
       </div>

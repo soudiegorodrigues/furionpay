@@ -82,11 +82,14 @@ export function CheckoutTemplateVega({
     <div className="min-h-screen bg-[#0A0A0B]">
       {/* Urgency Banner with Animation */}
       {config?.show_countdown && countdown !== null && countdown > 0 && (
-        <div className="py-3 text-center font-bold bg-gradient-to-r from-red-600 via-orange-500 to-red-600 text-white relative overflow-hidden">
+        <div 
+          className="py-3 text-center font-bold text-white relative overflow-hidden"
+          style={{ backgroundColor: (config as any)?.countdown_color || '#dc2626' }}
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
           <div className="flex items-center justify-center gap-2 relative">
             <span className="text-xl">⚡</span>
-            <span>ÚLTIMAS VAGAS! Oferta expira em: {formatCountdown(countdown)}</span>
+            <span>{(config as any)?.countdown_text || 'ÚLTIMAS VAGAS! Oferta expira em:'} {formatCountdown(countdown)}</span>
             <span className="text-xl">⚡</span>
           </div>
         </div>

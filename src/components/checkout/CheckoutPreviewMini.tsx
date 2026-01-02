@@ -29,6 +29,8 @@ interface CheckoutPreviewMiniProps {
   primaryColor: string;
   showCountdown?: boolean;
   countdownMinutes?: number;
+  countdownColor?: string;
+  countdownText?: string;
   showTestimonials?: boolean;
   showBanner?: boolean;
   bannerImageUrl?: string | null;
@@ -51,6 +53,8 @@ export function CheckoutPreviewMini({
   primaryColor,
   showCountdown = false,
   countdownMinutes = 15,
+  countdownColor = "#dc2626",
+  countdownText = "🔥 OFERTA EXPIRA EM:",
   showTestimonials = false,
   showBanner = false,
   bannerImageUrl = null,
@@ -89,11 +93,13 @@ export function CheckoutPreviewMini({
       <div className="bg-zinc-900 text-white min-h-[500px]">
         {/* Urgency Banner */}
         {showCountdown && (
-          <div className="bg-gradient-to-r from-red-600 to-orange-500 py-2 px-4 text-center">
+          <div 
+            className="py-2 px-4 text-center text-white"
+            style={{ backgroundColor: countdownColor }}
+          >
             <div className="flex items-center justify-center gap-2 text-sm font-bold">
               <Zap className="h-4 w-4" />
-              <span>{countdownMinutes}:00</span>
-              <span className="text-xs opacity-90">OFERTA EXPIRA EM</span>
+              <span>{countdownText} {countdownMinutes}:00</span>
             </div>
           </div>
         )}
@@ -343,11 +349,10 @@ export function CheckoutPreviewMini({
       {showCountdown && (
         <div 
           className="py-3 px-4 text-white text-center flex items-center justify-center gap-2"
-          style={{ backgroundColor: primaryColor }}
+          style={{ backgroundColor: countdownColor }}
         >
           <Clock className="h-4 w-4" />
-          <span className="font-bold">{countdownMinutes}:00</span>
-          <span className="text-sm">Oferta por tempo limitado</span>
+          <span className="font-bold">{countdownText} {countdownMinutes}:00</span>
         </div>
       )}
 

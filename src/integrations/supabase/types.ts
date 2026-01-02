@@ -1536,7 +1536,9 @@ export type Database = {
           buyer_section_title: string | null
           checkout_subtitle: string | null
           checkout_title: string | null
+          countdown_color: string | null
           countdown_minutes: number | null
+          countdown_text: string | null
           created_at: string
           custom_button_text: string | null
           delivery_description: string | null
@@ -1582,7 +1584,9 @@ export type Database = {
           buyer_section_title?: string | null
           checkout_subtitle?: string | null
           checkout_title?: string | null
+          countdown_color?: string | null
           countdown_minutes?: number | null
+          countdown_text?: string | null
           created_at?: string
           custom_button_text?: string | null
           delivery_description?: string | null
@@ -1628,7 +1632,9 @@ export type Database = {
           buyer_section_title?: string | null
           checkout_subtitle?: string | null
           checkout_title?: string | null
+          countdown_color?: string | null
           countdown_minutes?: number | null
+          countdown_text?: string | null
           created_at?: string
           custom_button_text?: string | null
           delivery_description?: string | null
