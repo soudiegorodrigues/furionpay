@@ -114,6 +114,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     showBanner: false,
     showCountdown: false,
     countdownMinutes: 15,
+    countdownColor: "#dc2626",
+    countdownText: "🔥 OFERTA EXPIRA EM:",
     showVideo: false,
     videoUrl: "",
     videoType: "url" as "url" | "upload",
@@ -220,6 +222,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         showBanner: config.show_banners || false,
         showCountdown: config.show_countdown || false,
         countdownMinutes: config.countdown_minutes || 15,
+        countdownColor: (config as any).countdown_color || "#dc2626",
+        countdownText: (config as any).countdown_text || "🔥 OFERTA EXPIRA EM:",
         showVideo: (config as any).show_video || false,
         videoUrl: (config as any).video_url || "",
         videoType: ((config as any).video_url?.includes('checkout-videos') ? 'upload' : 'url') as "url" | "upload",
@@ -416,6 +420,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         show_banners: customizations.showBanner,
         show_countdown: customizations.showCountdown,
         countdown_minutes: customizations.countdownMinutes,
+        countdown_color: customizations.countdownColor || "#dc2626",
+        countdown_text: customizations.countdownText || "🔥 OFERTA EXPIRA EM:",
         show_video: customizations.showVideo,
         video_url: customizations.videoUrl || null,
         show_notifications: customizations.showTestimonials,
@@ -769,16 +775,39 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                       />
                     </div>
                     {customizations.showCountdown && (
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t">
-                        <Label className="text-xs text-muted-foreground">Minutos:</Label>
-                        <Input
-                          type="number"
-                          value={customizations.countdownMinutes}
-                          onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
-                          className="h-7 w-16 text-xs"
-                          min={1}
-                          max={60}
-                        />
+                      <div className="space-y-3 mt-2 pt-2 border-t">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-muted-foreground">Minutos:</Label>
+                          <Input
+                            type="number"
+                            value={customizations.countdownMinutes}
+                            onChange={(e) => setCustomizations(p => ({ ...p, countdownMinutes: Number(e.target.value) }))}
+                            className="h-7 w-16 text-xs"
+                            min={1}
+                            max={60}
+                          />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Texto do contador:</Label>
+                          <Input
+                            value={customizations.countdownText}
+                            onChange={(e) => setCustomizations(p => ({ ...p, countdownText: e.target.value }))}
+                            placeholder="🔥 OFERTA EXPIRA EM:"
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-muted-foreground">Cor:</Label>
+                          <Input
+                            type="color"
+                            value={customizations.countdownColor}
+                            onChange={(e) => setCustomizations(p => ({ ...p, countdownColor: e.target.value }))}
+                            className="h-7 w-10 p-0 cursor-pointer border-0"
+                          />
+                          <span className="text-xs text-muted-foreground">{customizations.countdownColor}</span>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1100,6 +1129,8 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 primaryColor={primaryColor}
                 showCountdown={customizations.showCountdown}
                 countdownMinutes={customizations.countdownMinutes}
+                countdownColor={customizations.countdownColor}
+                countdownText={customizations.countdownText}
                 showTestimonials={customizations.showTestimonials}
                 showBanner={customizations.showBanner}
                 bannerImageUrl={bannerImageUrl}
@@ -1130,6 +1161,9 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   productPrice={productPrice}
                   primaryColor={primaryColor}
                   showCountdown={customizations.showCountdown}
+                  countdownMinutes={customizations.countdownMinutes}
+                  countdownColor={customizations.countdownColor}
+                  countdownText={customizations.countdownText}
                   showTestimonials={customizations.showTestimonials}
                   showBanner={customizations.showBanner}
                   bannerImageUrl={bannerImageUrl}

@@ -417,7 +417,11 @@ export default function PublicCheckout() {
     if (countdown === null || countdown <= 0) return;
     
     const timer = setInterval(() => {
-      setCountdown(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
+      setCountdown(prev => {
+        if (prev !== null && prev > 1) return prev - 1;
+        clearInterval(timer); // Para o timer definitivamente em 0
+        return 0;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
