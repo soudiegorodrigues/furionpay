@@ -3108,8 +3108,11 @@ export type Database = {
           buyer_section_title: string
           checkout_subtitle: string
           checkout_title: string
+          countdown_color: string
           countdown_minutes: number
+          countdown_text: string
           custom_button_text: string
+          delivery_description: string
           discount_popup_color: string
           discount_popup_cta: string
           discount_popup_image_url: string
