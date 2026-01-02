@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.track-offer-click]
 verify_jwt = false
+
+[functions.public-checkout-bootstrap]
+verify_jwt = false
