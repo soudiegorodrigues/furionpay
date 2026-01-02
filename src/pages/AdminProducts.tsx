@@ -648,8 +648,7 @@ export default function AdminProducts() {
                   {folders.map(folder => (
                     <div 
                       key={`folder-${folder.id}`}
-                      className="aspect-square relative flex flex-col items-center justify-center group cursor-pointer rounded-2xl hover:bg-muted/30 transition-all duration-300 shadow-sm hover:shadow-md"
-                      style={{ backgroundColor: `${folder.color}10` }}
+                      className="aspect-square relative flex flex-col items-center justify-center group cursor-pointer rounded-2xl bg-card hover:bg-muted/30 transition-all duration-300 shadow-sm hover:shadow-md border"
                       onClick={() => setSelectedFolder(folder.id)}
                     >
                       <Button
