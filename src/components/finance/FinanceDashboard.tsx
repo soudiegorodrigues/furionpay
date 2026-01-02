@@ -134,6 +134,9 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
     }
   };
 
+  // Parse YYYY-MM-DD as local date (avoid timezone shifting to previous/next day)
+  const parseLocalDate = (dateStr: string) => new Date(`${dateStr}T12:00:00`);
+
   const getDateRange = (period: PeriodFilter): { start: Date; end: Date } => {
     const now = new Date();
     const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -166,7 +169,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
   const filteredTransactions = useMemo(() => {
     const { start, end } = getDateRange(periodFilter);
     return transactions.filter(t => {
-      const date = new Date(t.date);
+      const date = parseLocalDate(t.date);
       return date >= start && date <= end;
     });
   }, [transactions, periodFilter]);
@@ -228,7 +231,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
     const { start: prevStart, end: prevEnd } = getPreviousPeriodRange(periodFilter);
     
     const prevPeriodTransactions = transactions.filter(t => {
-      const date = new Date(t.date);
+      const date = parseLocalDate(t.date);
       return date >= prevStart && date <= prevEnd;
     });
 
@@ -303,7 +306,7 @@ export const FinanceDashboard = ({ userId }: { userId?: string }) => {
       const month = date.toLocaleDateString('pt-BR', { month: 'short' });
 
       const monthTransactions = transactions.filter(t => {
-        const tDate = new Date(t.date);
+        const tDate = parseLocalDate(t.date);
         return tDate.getMonth() === date.getMonth() && 
                tDate.getFullYear() === date.getFullYear();
       });
