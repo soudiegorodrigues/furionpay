@@ -80,7 +80,7 @@ export function CheckoutTemplatePadrao({
       <div 
         className="py-3 text-center text-white font-semibold transition-opacity duration-200"
         style={{ 
-          backgroundColor: (config as any)?.countdown_color || '#dc2626',
+          backgroundColor: config?.countdown_color || '#dc2626',
           minHeight: '48px',
           opacity: (config?.show_countdown && countdown !== null && countdown > 0) ? 1 : 0,
           visibility: (config?.show_countdown && countdown !== null && countdown > 0) ? 'visible' : 'hidden',

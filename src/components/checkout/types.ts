@@ -37,6 +37,8 @@ export interface CheckoutConfig {
   require_email_confirmation: boolean;
   show_countdown: boolean;
   countdown_minutes: number | null;
+  countdown_color?: string | null;
+  countdown_text?: string | null;
   show_notifications: boolean;
   custom_button_text: string | null;
   show_banners: boolean;
