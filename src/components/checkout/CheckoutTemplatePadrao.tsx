@@ -391,14 +391,14 @@ export function CheckoutTemplatePadrao({
                         <Shield className="h-4 w-4" />
                         <span>Ambiente 100% seguro</span>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded">
+                      <div className="flex items-center gap-6 text-gray-500">
+                        <div className="flex items-center gap-2">
                           <ShieldCheck className="h-4 w-4 text-green-600" />
-                          <span className="text-xs font-bold text-gray-700 leading-tight">COMPRA 100%<br/>SEGURA</span>
+                          <span className="text-xs font-medium">Compra 100% Segura</span>
                         </div>
-                        <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded">
+                        <div className="flex items-center gap-2">
                           <Lock className="h-4 w-4 text-green-600" />
-                          <span className="text-xs font-bold text-gray-700 leading-tight">DADOS PESSOAIS<br/>PROTEGIDOS</span>
+                          <span className="text-xs font-medium">Dados Protegidos</span>
                         </div>
                       </div>
                     </div>
