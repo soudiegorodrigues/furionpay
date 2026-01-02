@@ -35,7 +35,7 @@ export const PerformanceIndicator = memo(({ score, totalPaid = 0, className }: P
       <div className="relative">
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <div 
-            className="h-full rounded-full bg-gradient-to-r from-red-500 to-black transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-black to-red-500 transition-all duration-500"
             style={{ width: `${percentage}%` }}
           />
         </div>
