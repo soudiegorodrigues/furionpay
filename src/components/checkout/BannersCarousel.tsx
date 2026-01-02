@@ -37,7 +37,9 @@ export const BannersCarousel = memo(function BannersCarousel({ banners }: Banner
 });
 
 /**
- * Imagem de banner com loading state
+ * Imagem de banner sem flash/piscar
+ * - Usa opacity 0 no placeholder para transição suave
+ * - Mantém aspect ratio aproximado para evitar layout shift
  */
 const BannerImage = memo(function BannerImage({
   src,
@@ -49,24 +51,38 @@ const BannerImage = memo(function BannerImage({
   priority: boolean;
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  // Pré-carregar imagem para evitar flash
+  useState(() => {
+    if (priority && src) {
+      const img = new Image();
+      img.src = src;
+    }
+  });
+
+  if (hasError) return null;
 
   return (
-    <div 
-      className="relative w-full rounded-lg overflow-hidden shadow-sm bg-gray-100"
-      style={{ minHeight: isLoaded ? 'auto' : '120px' }}
-    >
-      {!isLoaded && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
-      )}
+    <div className="relative w-full rounded-lg overflow-hidden shadow-sm bg-muted/30">
+      {/* Placeholder com fade out suave */}
+      <div 
+        className={`absolute inset-0 bg-muted/50 transition-opacity duration-500 ${
+          isLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ minHeight: '100px' }}
+      />
       <img
         src={src}
         alt={alt}
-        className={`w-full rounded-lg transition-opacity duration-300 ${
+        className={`w-full rounded-lg transition-opacity duration-500 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
+        decoding="async"
         onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
       />
     </div>
   );
