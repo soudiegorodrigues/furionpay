@@ -161,8 +161,8 @@ export function BannersManager({
       return;
     }
 
-    if (banners.length >= 5) {
-      toast.error("Máximo de 5 banners permitidos");
+    if (banners.length >= 10) {
+      toast.error("Máximo de 10 banners permitidos");
       return;
     }
 
@@ -310,7 +310,7 @@ export function BannersManager({
         </div>
       )}
 
-      {banners.length < 5 && (
+      {banners.length < 10 && (
         <Button
           variant="outline"
           size="sm"
@@ -323,7 +323,7 @@ export function BannersManager({
           ) : (
             <>
               <Plus className="h-4 w-4" />
-              Adicionar Banner ({banners.length}/5)
+              Adicionar Banner ({banners.length}/10)
             </>
           )}
         </Button>
