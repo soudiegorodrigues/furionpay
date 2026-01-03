@@ -12,6 +12,12 @@ import {
   Check,
   Zap,
   Gift,
+  Play,
+  MessageCircle,
+  Percent,
+  Image,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface Testimonial {
@@ -22,11 +28,28 @@ interface Testimonial {
   content: string;
 }
 
+interface Banner {
+  id: string;
+  image_url: string;
+  display_order: number | null;
+  is_active: boolean | null;
+}
+
+interface OrderBump {
+  id: string;
+  title: string;
+  description: string | null;
+  bump_price: number;
+  image_url: string | null;
+  is_active: boolean | null;
+}
+
 interface CheckoutPreviewMiniProps {
   templateName: string;
   productName: string;
   productPrice: number;
   primaryColor: string;
+  backgroundColor?: string;
   showCountdown?: boolean;
   countdownMinutes?: number;
   countdownColor?: string;
@@ -44,6 +67,15 @@ interface CheckoutPreviewMiniProps {
     cpf: boolean;
     emailConfirmation: boolean;
   };
+  // New props
+  showVideo?: boolean;
+  videoUrl?: string;
+  showWhatsappButton?: boolean;
+  whatsappNumber?: string;
+  banners?: Banner[];
+  orderBumps?: OrderBump[];
+  showDiscountPopup?: boolean;
+  discountPopupPercentage?: number;
 }
 
 export function CheckoutPreviewMini({
@@ -51,6 +83,7 @@ export function CheckoutPreviewMini({
   productName,
   productPrice,
   primaryColor,
+  backgroundColor = "#f3f4f6",
   showCountdown = false,
   countdownMinutes = 15,
   countdownColor = "#dc2626",
@@ -68,6 +101,14 @@ export function CheckoutPreviewMini({
     cpf: false,
     emailConfirmation: false,
   },
+  showVideo = false,
+  videoUrl = "",
+  showWhatsappButton = false,
+  whatsappNumber = "",
+  banners = [],
+  orderBumps = [],
+  showDiscountPopup = false,
+  discountPopupPercentage = 10,
 }: CheckoutPreviewMiniProps) {
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -342,9 +383,21 @@ export function CheckoutPreviewMini({
     );
   }
 
+  // Helper to format price
+  const formatPriceBRL = (price: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(price);
+  };
+
+  // Active banners
+  const activeBanners = banners.filter(b => b.is_active !== false);
+  const activeOrderBumps = orderBumps.filter(ob => ob.is_active !== false);
+
   // Render Padrão (Default Kiwify-style)
   return (
-    <div className="bg-gray-50 min-h-[500px]">
+    <div className="min-h-[500px] relative" style={{ backgroundColor }}>
       {/* Countdown */}
       {showCountdown && (
         <div 
@@ -356,14 +409,47 @@ export function CheckoutPreviewMini({
         </div>
       )}
 
-      {/* Banner */}
-      {showBanner && bannerImageUrl && (
-        <div className="w-full">
-          <img 
-            src={bannerImageUrl} 
-            alt="Banner" 
-            className="w-full h-auto object-cover"
-          />
+      {/* Banner / Carousel */}
+      {showBanner && (activeBanners.length > 0 || bannerImageUrl) && (
+        <div className="w-full relative">
+          {activeBanners.length > 0 ? (
+            <>
+              <img 
+                src={activeBanners[0].image_url} 
+                alt="Banner" 
+                className="w-full h-auto object-cover"
+              />
+              {activeBanners.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/50 rounded-full px-3 py-1">
+                  <ChevronLeft className="h-3 w-3 text-white/70" />
+                  <span className="text-xs text-white font-medium">1/{activeBanners.length}</span>
+                  <ChevronRight className="h-3 w-3 text-white/70" />
+                </div>
+              )}
+            </>
+          ) : bannerImageUrl ? (
+            <img 
+              src={bannerImageUrl} 
+              alt="Banner" 
+              className="w-full h-auto object-cover"
+            />
+          ) : null}
+        </div>
+      )}
+
+      {/* Video Preview */}
+      {showVideo && videoUrl && (
+        <div className="mx-4 mt-4 relative rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+          <div className="relative z-10 flex flex-col items-center gap-2">
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <Play className="h-5 w-5 text-white ml-0.5" />
+            </div>
+            <span className="text-xs text-white/70">Vídeo de Vendas</span>
+          </div>
         </div>
       )}
 
@@ -458,6 +544,48 @@ export function CheckoutPreviewMini({
           )}
         </div>
       </div>
+
+      {/* Order Bumps */}
+      {activeOrderBumps.length > 0 && (
+        <div className="mx-4 mt-4 space-y-2">
+          {activeOrderBumps.map((bump) => (
+            <div 
+              key={bump.id}
+              className="p-3 rounded-lg border-2 border-dashed"
+              style={{ borderColor: primaryColor + "50", backgroundColor: primaryColor + "08" }}
+            >
+              <div className="flex items-start gap-3">
+                <div 
+                  className="w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5"
+                  style={{ borderColor: primaryColor }}
+                >
+                  <Check className="h-3 w-3" style={{ color: primaryColor }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {bump.image_url && (
+                      <img 
+                        src={bump.image_url} 
+                        alt={bump.title}
+                        className="w-10 h-10 rounded object-cover shrink-0"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold truncate">{bump.title}</p>
+                      {bump.description && (
+                        <p className="text-xs text-gray-500 line-clamp-1">{bump.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm font-bold mt-1" style={{ color: primaryColor }}>
+                    + {formatPriceBRL(bump.bump_price)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Payment */}
       <div className="p-4 space-y-3 bg-white border-t">
@@ -586,6 +714,27 @@ export function CheckoutPreviewMini({
           Pagamento processado com segurança
         </p>
       </div>
+
+      {/* WhatsApp Button */}
+      {showWhatsappButton && whatsappNumber && (
+        <div 
+          className="fixed bottom-4 right-4 w-12 h-12 rounded-full bg-green-500 flex items-center justify-center shadow-lg cursor-pointer z-10"
+          style={{ position: 'absolute' }}
+        >
+          <MessageCircle className="h-6 w-6 text-white" />
+        </div>
+      )}
+
+      {/* Discount Popup Indicator */}
+      {showDiscountPopup && (
+        <div 
+          className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white flex items-center gap-1 shadow-lg"
+          style={{ backgroundColor: primaryColor }}
+        >
+          <Percent className="h-3 w-3" />
+          -{discountPopupPercentage}%
+        </div>
+      )}
     </div>
   );
 }
