@@ -217,7 +217,140 @@ serve(async (req) => {
     const paidStatuses = ['PAID_OUT', 'CONCLUIDO', 'CONCLUÍDA', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'];
     const isPaid = paidStatuses.includes(status);
 
-    if (isPaid) {
+    // Check if status indicates chargeback/refund
+    const chargebackStatuses = ['ESTORNADA', 'ESTORNADO', 'ESTORNO', 'REFUND', 'REFUNDED', 'CHARGEBACK', 'REVERSED', 'CANCELLED', 'CANCELADO', 'CANCELADA'];
+    const isChargeback = chargebackStatuses.includes(status);
+
+    if (isChargeback) {
+      console.log('[VALORION-WEBHOOK] Transaction is CHARGEBACK/REFUND! Processing...');
+
+      // Extract amount from payload
+      const amount = parseFloat(
+        payload.valor_bruto || 
+        payload.valor || 
+        payload.amount || 
+        payload.data?.valor || 
+        payload.data?.amount || 
+        '0'
+      );
+
+      const clientName = payload.nome || payload.client_name || payload.data?.nome || null;
+      const clientDocument = payload.documento || payload.cpf || payload.document || payload.data?.documento || null;
+
+      // Try to find the original transaction
+      let transaction = null;
+
+      // Strategy 1: Search by txid
+      if (transactionId) {
+        const { data } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status, amount, donor_name, donor_cpf')
+          .eq('txid', transactionId)
+          .maybeSingle();
+        
+        if (data) {
+          console.log('[VALORION-WEBHOOK] Chargeback: Found transaction by txid:', data.id);
+          transaction = data;
+        }
+      }
+
+      // Strategy 2: Search by Valorion internal ID in txid
+      if (!transaction && valorionInternalId) {
+        const { data } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status, amount, donor_name, donor_cpf')
+          .ilike('txid', `%${valorionInternalId}%`)
+          .maybeSingle();
+        
+        if (data) {
+          console.log('[VALORION-WEBHOOK] Chargeback: Found transaction by valorion ID:', data.id);
+          transaction = data;
+        }
+      }
+
+      // Check if chargeback already exists
+      const chargebackExternalId = `vlr_${transactionId || valorionInternalId || Date.now()}`;
+      
+      const { data: existingChargeback } = await supabase
+        .from('chargebacks')
+        .select('id')
+        .eq('external_id', chargebackExternalId)
+        .maybeSingle();
+
+      if (existingChargeback) {
+        console.log('[VALORION-WEBHOOK] Chargeback already registered:', existingChargeback.id);
+        return new Response(
+          JSON.stringify({ success: true, message: 'Chargeback already registered' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Register the chargeback
+      const chargebackData = {
+        external_id: chargebackExternalId,
+        acquirer: 'valorion',
+        amount: amount || (transaction?.amount || 0),
+        original_amount: transaction?.amount || amount || null,
+        client_name: clientName || transaction?.donor_name || null,
+        client_document: clientDocument || transaction?.donor_cpf || null,
+        pix_transaction_id: transaction?.id || null,
+        user_id: transaction?.user_id,
+        source: 'webhook',
+        status: 'pending',
+        detected_at: new Date().toISOString(),
+        reason: `Estorno Valorion - Status: ${status}`,
+        metadata: { 
+          valorion_payload: payload,
+          valorion_internal_id: valorionInternalId,
+          ip: validation.ip
+        }
+      };
+
+      // Only insert if we found the user
+      if (chargebackData.user_id) {
+        const { data: newChargeback, error: insertError } = await supabase
+          .from('chargebacks')
+          .insert(chargebackData)
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('[VALORION-WEBHOOK] Failed to insert chargeback:', insertError);
+        } else {
+          console.log('[VALORION-WEBHOOK] Chargeback registered:', newChargeback.id);
+          
+          // Log success event
+          await supabase.from('api_monitoring_events').insert({
+            acquirer: 'valorion',
+            event_type: 'chargeback_received',
+            error_message: JSON.stringify({ 
+              chargeback_id: newChargeback.id,
+              amount: chargebackData.amount,
+              transaction_id: transaction?.id
+            }).slice(0, 500),
+          });
+        }
+      } else {
+        console.error('[VALORION-WEBHOOK] Chargeback: Could not identify user');
+        
+        await supabase.from('api_monitoring_events').insert({
+          acquirer: 'valorion',
+          event_type: 'chargeback_user_not_found',
+          error_message: JSON.stringify({ 
+            transactionId,
+            valorionInternalId,
+            amount,
+            clientName
+          }).slice(0, 500),
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, chargeback: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } else if (isPaid) {
       console.log('[VALORION-WEBHOOK] Transaction is PAID! Searching in database...');
 
       // Try multiple search strategies
@@ -354,7 +487,7 @@ serve(async (req) => {
       });
 
     } else {
-      console.log('[VALORION-WEBHOOK] Status not paid:', status);
+      console.log('[VALORION-WEBHOOK] Status not paid/chargeback:', status);
       
       await supabase.from('api_monitoring_events').insert({
         acquirer: 'valorion',
