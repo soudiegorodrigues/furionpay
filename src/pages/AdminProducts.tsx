@@ -19,6 +19,13 @@ import { toast } from "sonner";
 import { Package, Plus, FolderPlus, Search, Settings, Image, Folder, X, FolderInput, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { PerformanceIndicator } from "@/components/product/PerformanceIndicator";
 
+interface ProductStats {
+  total_transactions: number;
+  paid_transactions: number;
+  total_revenue: number;
+  conversion_rate: number;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -31,9 +38,7 @@ interface Product {
   website_url: string | null;
   created_at: string;
   updated_at: string;
-  performance_score?: number;
-  total_paid?: number;
-  conversion_rate?: number;
+  stats?: ProductStats;
 }
 
 interface ProductFolder {
@@ -147,8 +152,8 @@ const ProductCard = memo(({ product, folders, onNavigate, onMoveToFolder }: Prod
       
       {/* Performance Indicator */}
       <PerformanceIndicator 
-        score={product.performance_score || 0} 
-        totalPaid={product.total_paid || 0}
+        score={product.stats?.conversion_rate || 0} 
+        totalPaid={product.stats?.paid_transactions || 0}
       />
       
       <div className="flex flex-wrap gap-2 mt-2">
