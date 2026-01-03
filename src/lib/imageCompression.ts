@@ -25,14 +25,15 @@ export async function compressImage(
   options: CompressionOptions = {}
 ): Promise<Blob> {
   const opts = { ...defaultOptions, ...options };
+  const requestedMimeType = `image/${opts.format}`;
   
   // Skip compression for non-image files
   if (!file.type.startsWith('image/')) {
     return file;
   }
 
-  // Skip compression for small files (< 100KB)
-  if (file.size < 100 * 1024) {
+  // Skip compression for small files (< 100KB) ONLY if already in the target format
+  if (file.size < 100 * 1024 && file.type === requestedMimeType) {
     return file;
   }
 
@@ -64,6 +65,10 @@ export async function compressImage(
 
         // Draw image with white background (for transparency handling)
         if (ctx) {
+          // Higher quality resizing (helps avoid soft/blurry results)
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
           // Fill with white for non-transparent formats
           if (opts.format === 'jpeg') {
             ctx.fillStyle = '#FFFFFF';
@@ -77,8 +82,8 @@ export async function compressImage(
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              // If compressed is larger than original, return original
-              if (blob.size >= file.size) {
+              // If the output ends up larger, only keep original when it's already in the target format
+              if (blob.size >= file.size && file.type === requestedMimeType) {
                 resolve(file);
               } else {
                 console.log(`[ImageCompression] ${file.name}: ${formatFileSize(file.size)} → ${formatFileSize(blob.size)} (${Math.round((1 - blob.size / file.size) * 100)}% reduction)`);
@@ -164,9 +169,9 @@ export const compressionPresets = {
   },
   // For banners - high quality for checkout
   banner: {
-    maxWidth: 1920,
-    maxHeight: 600,
-    quality: 0.92,
+    maxWidth: 2560,
+    maxHeight: 800,
+    quality: 0.95,
     format: 'webp' as const,
   },
   // For document uploads (KYC) - preserve quality
