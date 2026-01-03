@@ -3165,17 +3165,28 @@ export type Database = {
         }
         Returns: Json
       }
-      get_products_paginated_with_performance: {
-        Args: {
-          p_folder_id?: string
-          p_page?: number
-          p_per_page?: number
-          p_search?: string
-          p_status?: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      get_products_paginated_with_performance:
+        | {
+            Args: {
+              p_folder_id?: string
+              p_page?: number
+              p_per_page?: number
+              p_search?: string
+              p_status?: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_folder_id?: string
+              p_page?: number
+              p_page_size?: number
+              p_search?: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       get_products_performance: {
         Args: { p_user_id: string }
         Returns: {
