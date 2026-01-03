@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminHeader } from "@/components/AdminSidebar";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -256,7 +256,25 @@ export default function AdminProducts() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch paginated products using RPC
+  // Fetch paginated products with performance using optimized RPC
+  const queryClient = useQueryClient();
+  
+  const fetchProducts = useCallback(async (page: number): Promise<PaginatedResponse> => {
+    if (!userId) return { products: [], total_count: 0, page: 1, per_page: ITEMS_PER_PAGE, total_pages: 0 };
+    
+    const { data, error } = await supabase.rpc('get_products_paginated_with_performance', {
+      p_user_id: userId,
+      p_page: page,
+      p_per_page: ITEMS_PER_PAGE,
+      p_search: debouncedSearch || null,
+      p_status: activeTab,
+      p_folder_id: selectedFolder
+    });
+    
+    if (error) throw error;
+    return data as unknown as PaginatedResponse;
+  }, [userId, debouncedSearch, activeTab, selectedFolder]);
+
   const {
     data: paginatedData,
     isLoading: isLoadingProducts,
@@ -266,26 +284,35 @@ export default function AdminProducts() {
     refetch: refetchProducts
   } = useQuery({
     queryKey: ["products-paginated", userId, currentPage, debouncedSearch, activeTab, selectedFolder],
-    queryFn: async (): Promise<PaginatedResponse> => {
-      if (!userId) return { products: [], total_count: 0, page: 1, per_page: ITEMS_PER_PAGE, total_pages: 0 };
-      
-      const { data, error } = await supabase.rpc('get_products_paginated', {
-        p_user_id: userId,
-        p_page: currentPage,
-        p_per_page: ITEMS_PER_PAGE,
-        p_search: debouncedSearch || null,
-        p_status: activeTab,
-        p_folder_id: selectedFolder
-      });
-      
-      if (error) throw error;
-      const result = data as unknown as PaginatedResponse;
-      return result;
-    },
+    queryFn: () => fetchProducts(currentPage),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching
+    staleTime: 60 * 1000, // 1 minute cache
+    placeholderData: (previousData) => previousData,
   });
+
+  // Prefetch next page for instant navigation
+  useEffect(() => {
+    if (!userId || !paginatedData) return;
+    const totalPages = paginatedData.total_pages || 0;
+    
+    // Prefetch next page
+    if (currentPage < totalPages) {
+      queryClient.prefetchQuery({
+        queryKey: ["products-paginated", userId, currentPage + 1, debouncedSearch, activeTab, selectedFolder],
+        queryFn: () => fetchProducts(currentPage + 1),
+        staleTime: 60 * 1000,
+      });
+    }
+    
+    // Prefetch previous page if not cached
+    if (currentPage > 1) {
+      queryClient.prefetchQuery({
+        queryKey: ["products-paginated", userId, currentPage - 1, debouncedSearch, activeTab, selectedFolder],
+        queryFn: () => fetchProducts(currentPage - 1),
+        staleTime: 60 * 1000,
+      });
+    }
+  }, [userId, currentPage, paginatedData, debouncedSearch, activeTab, selectedFolder, queryClient, fetchProducts]);
 
   // Fetch folders
   const { data: folders = [], refetch: refetchFolders } = useQuery({
@@ -319,30 +346,6 @@ export default function AdminProducts() {
     staleTime: 30 * 1000,
   });
 
-  // Fetch products performance scores
-  interface ProductPerformance {
-    product_id: string;
-    total_paid: number;
-    total_generated: number;
-    conversion_rate: number;
-    total_revenue: number;
-    performance_score: number;
-  }
-
-  const { data: performanceData = [] } = useQuery({
-    queryKey: ["products_performance", userId],
-    queryFn: async (): Promise<ProductPerformance[]> => {
-      if (!userId) return [];
-      const { data, error } = await supabase.rpc('get_products_performance', {
-        p_user_id: userId
-      });
-      if (error) throw error;
-      return (data as unknown as ProductPerformance[]) || [];
-    },
-    enabled: !!userId,
-    staleTime: 30 * 1000,
-  });
-
   // Memoized folder count lookup
   const getFolderCount = useCallback((folderId: string) => {
     const found = folderCounts.find(fc => fc.folder_id === folderId);
@@ -354,19 +357,8 @@ export default function AdminProducts() {
     return selectedFolder ? folders.find(f => f.id === selectedFolder) : null;
   }, [selectedFolder, folders]);
 
-  // Merge products with performance data
-  const products = useMemo(() => {
-    const baseProducts = paginatedData?.products || [];
-    return baseProducts.map(product => {
-      const perf = performanceData.find(p => p.product_id === product.id);
-      return {
-        ...product,
-        performance_score: perf?.performance_score || 0,
-        total_paid: perf?.total_paid || 0,
-        conversion_rate: perf?.conversion_rate || 0
-      };
-    });
-  }, [paginatedData?.products, performanceData]);
+  // Products already include performance data from optimized RPC
+  const products = paginatedData?.products || [];
 
   const totalCount = paginatedData?.total_count || 0;
   const totalPages = paginatedData?.total_pages || 0;
