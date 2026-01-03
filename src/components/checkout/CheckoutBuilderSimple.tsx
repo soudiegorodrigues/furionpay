@@ -99,6 +99,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedModelId, setSelectedModelId] = useState<string>("modelo-padrao");
   const [primaryColor, setPrimaryColor] = useState("#16A34A");
+  const [backgroundColor, setBackgroundColor] = useState("#f3f4f6");
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   
   // Required fields state
@@ -210,6 +211,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     if (config) {
       setSelectedTemplateId(config.template_id || null);
       setPrimaryColor(config.primary_color || "#16A34A");
+      setBackgroundColor(config.background_color || "#f3f4f6");
       setBannerImageUrl(config.header_logo_url || null);
       setRequiredFields({
         address: config.require_address || false,
@@ -411,6 +413,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         template_id: selectedTemplateId,
         template: templateString,
         primary_color: primaryColor,
+        background_color: backgroundColor,
         header_logo_url: bannerImageUrl,
         require_address: requiredFields.address,
         require_phone: requiredFields.phone,
@@ -460,11 +463,16 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     return () => {
       delete (window as any).__checkoutSaveConfig;
     };
-  }, [selectedTemplateId, primaryColor, customizations, bannerImageUrl, requiredFields, selectedModelId]);
+  }, [selectedTemplateId, primaryColor, backgroundColor, customizations, bannerImageUrl, requiredFields, selectedModelId]);
 
   const colors = [
     "#16a34a", "#dc2626", "#ea580c", "#eab308", "#06b6d4", "#3b82f6",
     "#2563eb", "#7c3aed", "#c026d3", "#000000",
+  ];
+
+  const backgroundColors = [
+    "#f3f4f6", "#ffffff", "#f8fafc", "#fafafa", "#f5f5f5",
+    "#f0fdf4", "#fef3c7", "#fee2e2", "#e0f2fe", "#f3e8ff",
   ];
 
   return (
@@ -636,6 +644,40 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                         type="color"
                         value={primaryColor}
                         onChange={(e) => setPrimaryColor(e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Background Color */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Cor de Fundo
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {backgroundColors.map((color) => (
+                        <button
+                          key={color}
+                          className={cn(
+                            "w-8 h-8 rounded-lg transition-all border",
+                            backgroundColor === color ? "ring-2 ring-offset-2 ring-primary" : "border-muted-foreground/20"
+                          )}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setBackgroundColor(color)}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={backgroundColor}
+                        onChange={(e) => setBackgroundColor(e.target.value)}
+                        className="h-8 text-xs font-mono flex-1"
+                      />
+                      <input
+                        type="color"
+                        value={backgroundColor}
+                        onChange={(e) => setBackgroundColor(e.target.value)}
                         className="w-8 h-8 rounded cursor-pointer"
                       />
                     </div>
