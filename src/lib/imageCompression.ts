@@ -162,11 +162,11 @@ export const compressionPresets = {
     quality: 0.7,
     format: 'webp' as const,
   },
-  // For banners - optimized width
+  // For banners - high quality for checkout
   banner: {
-    maxWidth: 1280,
-    maxHeight: 400,
-    quality: 0.7,
+    maxWidth: 1920,
+    maxHeight: 600,
+    quality: 0.92,
     format: 'webp' as const,
   },
   // For document uploads (KYC) - preserve quality
