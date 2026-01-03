@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp, Bell, Database, Shield, LayoutTemplate, MessageSquare } from "lucide-react";
+import { DollarSign, Trophy, Globe, CreditCard, Users, Percent, Palette, Mail, AlertTriangle, PieChart, Wallet, FileCheck, Bug, Award, Activity, TrendingUp, Bell, Database, Shield, LayoutTemplate, MessageSquare, RotateCcw } from "lucide-react";
 
 const adminSections = {
   analises: {
@@ -19,6 +19,7 @@ const adminSections = {
       { id: "saques", title: "Saque Global", icon: Wallet },
       { id: "faturamento", title: "Faturamento Global", icon: DollarSign },
       { id: "receita-plataforma", title: "Revenue (MRR)", icon: TrendingUp },
+      { id: "chargebacks", title: "Chargebacks", icon: RotateCcw },
     ]
   },
   gerenciamento: {

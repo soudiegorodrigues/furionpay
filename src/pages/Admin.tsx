@@ -18,6 +18,7 @@ import { UTMDebugSection } from "@/components/admin/UTMDebugSection";
 import { PremiacoesSection } from "@/components/admin/PremiacoesSection";
 import { ApiMonitoringSection } from "@/components/admin/ApiMonitoringSection";
 import { RevenueDashboard as ReceitaPlataformaSection } from "@/components/revenue";
+import { ChargebacksSection } from "@/components/admin/ChargebacksSection";
 import { NotificacoesSection } from "@/components/admin/NotificacoesSection";
 import { BackupsSection } from "@/components/admin/BackupsSection";
 import { AntiFraudeSection } from "@/components/admin/AntiFraudeSection";
@@ -225,6 +226,7 @@ const Admin = () => {
       <AnimatedSection sectionKey={activeSection}>
         {activeSection === "faturamento" && <FaturamentoSection />}
         {activeSection === "receita-plataforma" && <ReceitaPlataformaSection />}
+        {activeSection === "chargebacks" && <ChargebacksSection />}
         {activeSection === "ranking" && <RankingSection />}
         {activeSection === "dominios" && <DominiosSection />}
         {activeSection === "multi" && <MultiAcquirersSection />}
