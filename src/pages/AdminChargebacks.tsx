@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { usePermissions } from "@/hooks/usePermissions";
+
 import { AccessDenied } from "@/components/AccessDenied";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,6 @@ const acquirerColors: Record<string, string> = {
 
 export default function AdminChargebacks() {
   const { isAdmin, user } = useAdminAuth();
-  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   
   const effectiveUserId = user?.id;
@@ -98,14 +97,7 @@ export default function AdminChargebacks() {
     user_id: ""
   });
 
-  // Permission check
-  const canAccess = isAdmin || hasPermission("can_view_transactions");
-  
-  if (!canAccess) {
-    return <AccessDenied />;
-  }
-
-  // Fetch chargebacks
+  // Fetch chargebacks - hooks MUST be called before any early return
   const { data: chargebacks, isLoading } = useQuery({
     queryKey: ["chargebacks", effectiveUserId, isAdmin],
     queryFn: async () => {
@@ -238,6 +230,11 @@ export default function AdminChargebacks() {
       thisMonth: chargebacks.filter(cb => new Date(cb.detected_at) >= startOfMonth).length
     };
   }, [chargebacks]);
+
+  // Permission check - AFTER all hooks
+  if (!isAdmin) {
+    return <AccessDenied />;
+  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
