@@ -188,6 +188,40 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     staleTime: 30000, // 30 seconds
   });
 
+  // Fetch banners for preview
+  const { data: banners = [] } = useQuery({
+    queryKey: ["checkout-banners-preview", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checkout_banners")
+        .select("*")
+        .eq("product_id", productId)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 30000,
+  });
+
+  // Fetch order bumps for preview
+  const { data: orderBumps = [] } = useQuery({
+    queryKey: ["order-bumps-preview", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_order_bumps")
+        .select("*")
+        .eq("product_id", productId)
+        .eq("is_active", true)
+        .order("position", { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 30000,
+  });
+
   // Fetch first offer for preview link
   const { data: firstOffer } = useQuery({
     queryKey: ["product-first-offer", productId],
@@ -1169,6 +1203,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 productName={productName}
                 productPrice={productPrice}
                 primaryColor={primaryColor}
+                backgroundColor={backgroundColor}
                 showCountdown={customizations.showCountdown}
                 countdownMinutes={customizations.countdownMinutes}
                 countdownColor={customizations.countdownColor}
@@ -1180,6 +1215,14 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                 testimonials={testimonials}
                 deliveryDescription={customizations.deliveryDescription}
                 requiredFields={requiredFields}
+                showVideo={customizations.showVideo}
+                videoUrl={customizations.videoUrl}
+                showWhatsappButton={customizations.showWhatsappButton}
+                whatsappNumber={customizations.whatsappNumber}
+                banners={banners}
+                orderBumps={orderBumps}
+                showDiscountPopup={customizations.showDiscountPopup}
+                discountPopupPercentage={customizations.discountPopupPercentage}
               />
             </ScrollArea>
           </div>
@@ -1202,6 +1245,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   productName={productName || "Produto"}
                   productPrice={productPrice}
                   primaryColor={primaryColor}
+                  backgroundColor={backgroundColor}
                   showCountdown={customizations.showCountdown}
                   countdownMinutes={customizations.countdownMinutes}
                   countdownColor={customizations.countdownColor}
@@ -1212,6 +1256,14 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                   previewMode="desktop"
                   deliveryDescription={customizations.deliveryDescription}
                   requiredFields={requiredFields}
+                  showVideo={customizations.showVideo}
+                  videoUrl={customizations.videoUrl}
+                  showWhatsappButton={customizations.showWhatsappButton}
+                  whatsappNumber={customizations.whatsappNumber}
+                  banners={banners}
+                  orderBumps={orderBumps}
+                  showDiscountPopup={customizations.showDiscountPopup}
+                  discountPopupPercentage={customizations.discountPopupPercentage}
                 />
               )}
             </div>
