@@ -2,9 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-
-import { AccessDenied } from "@/components/AccessDenied";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,10 +24,8 @@ import {
   TrendingDown, 
   Clock,
   CheckCircle,
-  XCircle,
   AlertCircle,
   Eye,
-  MoreHorizontal,
   FileText
 } from "lucide-react";
 
@@ -72,7 +68,7 @@ const acquirerColors: Record<string, string> = {
   unknown: "bg-gray-500/10 text-gray-600",
 };
 
-export default function AdminChargebacks() {
+export function ChargebacksSection() {
   const { isAdmin, user } = useAdminAuth();
   const queryClient = useQueryClient();
   
@@ -97,7 +93,7 @@ export default function AdminChargebacks() {
     user_id: ""
   });
 
-  // Fetch chargebacks - hooks MUST be called before any early return
+  // Fetch chargebacks
   const { data: chargebacks, isLoading } = useQuery({
     queryKey: ["chargebacks", effectiveUserId, isAdmin],
     queryFn: async () => {
@@ -231,24 +227,19 @@ export default function AdminChargebacks() {
     };
   }, [chargebacks]);
 
-  // Permission check - AFTER all hooks
-  if (!isAdmin) {
-    return <AccessDenied />;
-  }
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-destructive" />
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
             Chargebacks / Estornos
-          </h1>
+          </h2>
           <p className="text-muted-foreground text-sm mt-1">
             Controle e gestão de estornos e chargebacks
           </p>
