@@ -265,6 +265,83 @@ export type Database = {
         }
         Relationships: []
       }
+      chargebacks: {
+        Row: {
+          acquirer: string
+          amount: number
+          client_document: string | null
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          detected_at: string
+          external_id: string
+          id: string
+          metadata: Json | null
+          notes: string | null
+          original_amount: number | null
+          pix_transaction_id: string | null
+          reason: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          source: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acquirer?: string
+          amount: number
+          client_document?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          detected_at?: string
+          external_id: string
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          original_amount?: number | null
+          pix_transaction_id?: string | null
+          reason?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acquirer?: string
+          amount?: number
+          client_document?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          detected_at?: string
+          external_id?: string
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          original_amount?: number | null
+          pix_transaction_id?: string | null
+          reason?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chargebacks_pix_transaction_id_fkey"
+            columns: ["pix_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pix_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_widget_config: {
         Row: {
           action_cards: Json | null
@@ -3589,6 +3666,16 @@ export type Database = {
         Args: { p_admin_email?: string; p_txid: string }
         Returns: boolean
       }
+      mark_pix_refunded: {
+        Args: {
+          p_external_id: string
+          p_notes?: string
+          p_reason?: string
+          p_source?: string
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
       mark_reward_sent: {
         Args: { p_request_id: string; p_tracking_code?: string }
         Returns: boolean
@@ -3751,7 +3838,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "super_admin"
-      pix_status: "generated" | "paid" | "expired"
+      pix_status: "generated" | "paid" | "expired" | "refunded"
       withdrawal_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -3881,7 +3968,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "super_admin"],
-      pix_status: ["generated", "paid", "expired"],
+      pix_status: ["generated", "paid", "expired", "refunded"],
       withdrawal_status: ["pending", "approved", "rejected"],
     },
   },
