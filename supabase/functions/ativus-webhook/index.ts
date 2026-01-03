@@ -212,7 +212,171 @@ serve(async (req) => {
     const paidStatuses = ['CONCLUIDO', 'CONCLUÍDA', 'PAGO', 'PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'];
     const isPaid = paidStatuses.includes(status);
 
-    if (isPaid) {
+    // Check if this is a chargeback/refund
+    const chargebackStatuses = ['ESTORNADA', 'ESTORNADO', 'ESTORNO', 'REFUND', 'REFUNDED', 'CHARGEBACK', 'REVERSED', 'CANCELLED', 'CANCELADO', 'CANCELADA'];
+    const isChargeback = chargebackStatuses.includes(status);
+
+    if (isChargeback) {
+      console.log('[ATIVUS-WEBHOOK] *** CHARGEBACK/REFUND DETECTED! Processing... ***');
+      
+      // Extract amount and client data from payload
+      const amount = parseFloat(payload.valor || payload.amount || payload.valor_bruto || '0');
+      const clientName = payload.nome || payload.client_name || payload.data?.nome || null;
+      const clientDocument = payload.documento || payload.cpf || payload.document || payload.data?.cpf || null;
+      const clientEmail = payload.email || payload.data?.email || null;
+
+      // Try to find the original transaction
+      let transaction = null;
+
+      // Strategy 1: Search by externalReference (our txid) - MOST RELIABLE
+      if (externalRef) {
+        const { data: externalRefData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status, amount, donor_name, donor_cpf, donor_email')
+          .eq('txid', externalRef)
+          .eq('acquirer', 'ativus')
+          .maybeSingle();
+        
+        if (externalRefData) {
+          console.log('[ATIVUS-WEBHOOK] Chargeback - Found by externalReference:', externalRefData.id);
+          transaction = externalRefData;
+        }
+      }
+
+      // Strategy 2: Search by idtransaction (Ativus internal ID)
+      if (!transaction && transactionId) {
+        const { data: txidData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status, amount, donor_name, donor_cpf, donor_email')
+          .eq('txid', transactionId)
+          .eq('acquirer', 'ativus')
+          .maybeSingle();
+        
+        if (txidData) {
+          console.log('[ATIVUS-WEBHOOK] Chargeback - Found by transactionId:', txidData.id);
+          transaction = txidData;
+        }
+      }
+
+      // Strategy 3: Search by UUID id
+      if (!transaction && transactionId) {
+        const { data: idData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status, amount, donor_name, donor_cpf, donor_email')
+          .eq('id', transactionId)
+          .eq('acquirer', 'ativus')
+          .maybeSingle();
+        
+        if (idData) {
+          console.log('[ATIVUS-WEBHOOK] Chargeback - Found by id:', idData.id);
+          transaction = idData;
+        }
+      }
+
+      // Strategy 4: Partial txid match using externalRef
+      if (!transaction && externalRef && externalRef.length >= 10) {
+        const { data: partialData } = await supabase
+          .from('pix_transactions')
+          .select('id, user_id, txid, status, amount, donor_name, donor_cpf, donor_email')
+          .ilike('txid', `%${externalRef.substring(0, 20)}%`)
+          .eq('acquirer', 'ativus')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (partialData) {
+          console.log('[ATIVUS-WEBHOOK] Chargeback - Found by partial externalRef match:', partialData.id);
+          transaction = partialData;
+        }
+      }
+
+      // Generate unique external_id for chargeback
+      const chargebackExternalId = `atv_${transactionId || externalRef || Date.now()}`;
+
+      // Check if chargeback already exists
+      const { data: existingChargeback } = await supabase
+        .from('chargebacks')
+        .select('id')
+        .eq('external_id', chargebackExternalId)
+        .maybeSingle();
+
+      if (existingChargeback) {
+        console.log('[ATIVUS-WEBHOOK] Chargeback already registered:', existingChargeback.id);
+        return new Response(
+          JSON.stringify({ success: true, message: 'Chargeback already registered' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Determine user_id and final amount
+      const userId = transaction?.user_id || null;
+      const finalAmount = amount > 0 ? amount : (transaction?.amount || 0);
+
+      if (!userId) {
+        console.error('[ATIVUS-WEBHOOK] Cannot register chargeback - user not identified');
+        
+        await supabase.from('api_monitoring_events').insert({
+          acquirer: 'ativus',
+          event_type: 'chargeback_orphan',
+          error_message: `Chargeback sem usuário: txid=${transactionId}, externalRef=${externalRef}, amount=${finalAmount}`,
+        });
+        
+        return new Response(
+          JSON.stringify({ success: false, error: 'User not identified for chargeback' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Register chargeback
+      const { data: newChargeback, error: chargebackError } = await supabase
+        .from('chargebacks')
+        .insert({
+          user_id: userId,
+          pix_transaction_id: transaction?.id || null,
+          external_id: chargebackExternalId,
+          amount: finalAmount,
+          original_amount: transaction?.amount || null,
+          acquirer: 'ativus',
+          source: 'webhook',
+          status: 'pending',
+          reason: `Status: ${status}`,
+          client_name: clientName || transaction?.donor_name || null,
+          client_document: clientDocument || transaction?.donor_cpf || null,
+          client_email: clientEmail || transaction?.donor_email || null,
+          detected_at: new Date().toISOString(),
+          metadata: {
+            original_payload: payload,
+            webhook_ip: validation.ip,
+            webhook_timestamp: timestamp
+          }
+        })
+        .select()
+        .single();
+
+      if (chargebackError) {
+        console.error('[ATIVUS-WEBHOOK] Error registering chargeback:', chargebackError);
+        
+        await supabase.from('api_monitoring_events').insert({
+          acquirer: 'ativus',
+          event_type: 'chargeback_error',
+          error_message: `Error: ${chargebackError.message}`,
+        });
+      } else {
+        console.log('[ATIVUS-WEBHOOK] Chargeback registered successfully:', newChargeback.id);
+        
+        await supabase.from('api_monitoring_events').insert({
+          acquirer: 'ativus',
+          event_type: 'chargeback_received',
+          error_message: JSON.stringify({
+            chargeback_id: newChargeback.id,
+            amount: finalAmount,
+            transaction_id: transaction?.id,
+            ip: validation.ip
+          }).slice(0, 500),
+        });
+      }
+
+    } else if (isPaid) {
       console.log('[ATIVUS-WEBHOOK] *** PAYMENT CONFIRMED via webhook! Searching in database ***');
       
       // Try to find the transaction
@@ -365,7 +529,7 @@ serve(async (req) => {
       });
 
     } else {
-      console.log('[ATIVUS-WEBHOOK] Status not paid:', status);
+      console.log('[ATIVUS-WEBHOOK] Status not paid/chargeback:', status);
       
       await supabase.from('api_monitoring_events').insert({
         acquirer: 'ativus',
