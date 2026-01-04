@@ -2968,18 +2968,53 @@ export type Database = {
           value: string
         }[]
       }
-      get_global_transactions_paginated: {
-        Args: {
-          p_date_filter?: string
-          p_end_date?: string
-          p_page?: number
-          p_per_page?: number
-          p_search?: string
-          p_start_date?: string
-          p_status?: string
-        }
-        Returns: Json
-      }
+      get_global_transactions_paginated:
+        | {
+            Args: {
+              p_date_filter?: string
+              p_limit?: number
+              p_offset?: number
+              p_search?: string
+              p_status_filter?: string
+            }
+            Returns: {
+              acquirer: string
+              amount: number
+              approved_by_email: string
+              client_ip: string
+              created_at: string
+              donor_cpf: string
+              donor_email: string
+              donor_name: string
+              fee_fixed: number
+              fee_percentage: number
+              id: string
+              is_manual_approval: boolean
+              order_bumps: Json
+              paid_at: string
+              popup_model: string
+              product_name: string
+              status: string
+              total_count: number
+              txid: string
+              user_email: string
+              user_id: string
+              user_name: string
+              utm_data: Json
+            }[]
+          }
+        | {
+            Args: {
+              p_date_filter?: string
+              p_end_date?: string
+              p_page?: number
+              p_per_page?: number
+              p_search?: string
+              p_start_date?: string
+              p_status?: string
+            }
+            Returns: Json
+          }
       get_global_transactions_v2: {
         Args: {
           p_date_filter?: string
