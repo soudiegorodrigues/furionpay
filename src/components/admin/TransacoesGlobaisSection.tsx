@@ -27,6 +27,7 @@ interface Transaction {
   acquirer: string | null;
   approved_by_email: string | null;
   is_manual_approval: boolean | null;
+  client_ip: string | null;
 }
 
 type DateFilter = 'all' | 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year';
@@ -383,7 +384,8 @@ export const TransacoesGlobaisSection = () => {
       ...tx,
       fee_percentage: 0,
       fee_fixed: 0,
-      popup_model: null
+      popup_model: null,
+      client_ip: tx.client_ip
     });
     setSheetOpen(true);
   };

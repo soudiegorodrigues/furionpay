@@ -1,7 +1,7 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, ShoppingBag } from "lucide-react";
+import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, ShoppingBag, Globe } from "lucide-react";
 import { useState } from "react";
 import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, getCustomerEmail, UTMData } from "@/lib/utmHelpers";
 
@@ -30,6 +30,7 @@ interface Transaction {
   popup_model: string | null;
   acquirer?: string;
   order_bumps?: OrderBumpItem[] | null;
+  client_ip?: string | null;
 }
 
 interface TransactionDetailsSheetProps {
@@ -279,6 +280,26 @@ const TransactionDetailsSheet = ({
                   className="h-7 w-7 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
                 >
                   {copiedId === 'txid' ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+                </Button>
+              </div>
+            )}
+
+            {transaction.client_ip && (
+              <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2.5">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <div className="flex items-center gap-1.5">
+                    <Globe className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground font-medium">IP</p>
+                  </div>
+                  <p className="text-xs font-mono truncate break-all">{transaction.client_ip}</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => copyToClipboard(transaction.client_ip || '', 'ip')} 
+                  className="h-7 w-7 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
+                >
+                  {copiedId === 'ip' ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
                 </Button>
               </div>
             )}
