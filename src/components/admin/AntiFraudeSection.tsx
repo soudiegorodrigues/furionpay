@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, Fingerprint, Globe, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, Fingerprint, Globe, Lock, Eye, EyeOff, Loader2, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -26,6 +27,16 @@ interface RateLimitStats {
   ip_blocked: number;
   ip_blocks_24h: number;
   ip_total: number;
+}
+
+interface BlacklistedIP {
+  id: string;
+  ip_address: string;
+  reason: string | null;
+  transactions_count: number;
+  total_amount: number;
+  created_at: string;
+  is_active: boolean;
 }
 
 export function AntiFraudeSection() {
@@ -51,10 +62,19 @@ export function AntiFraudeSection() {
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
   const [disableConfirmText, setDisableConfirmText] = useState("");
 
+  // IP Blacklist states
+  const [blacklistedIPs, setBlacklistedIPs] = useState<BlacklistedIP[]>([]);
+  const [loadingBlacklist, setLoadingBlacklist] = useState(false);
+  const [showAddIPDialog, setShowAddIPDialog] = useState(false);
+  const [newIP, setNewIP] = useState("");
+  const [newIPReason, setNewIPReason] = useState("");
+  const [addingIP, setAddingIP] = useState(false);
+
   useEffect(() => {
     loadConfig();
     loadStats();
     getCurrentUser();
+    loadBlacklistedIPs();
   }, []);
 
   const getCurrentUser = async () => {
@@ -96,6 +116,130 @@ export function AntiFraudeSection() {
       setStats(data as unknown as RateLimitStats);
     } catch (err) {
       console.error('Error loading stats:', err);
+    }
+  };
+
+  const loadBlacklistedIPs = async () => {
+    setLoadingBlacklist(true);
+    try {
+      const { data, error } = await supabase
+        .from('ip_blacklist')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setBlacklistedIPs((data as BlacklistedIP[]) || []);
+    } catch (err) {
+      console.error('Error loading blacklisted IPs:', err);
+    } finally {
+      setLoadingBlacklist(false);
+    }
+  };
+
+  const addIPToBlacklist = async () => {
+    if (!newIP.trim()) {
+      toast({
+        title: "Erro",
+        description: "Digite um IP válido",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Basic IP validation
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    if (!ipRegex.test(newIP.trim())) {
+      toast({
+        title: "IP inválido",
+        description: "Digite um endereço IP válido (ex: 192.168.1.1)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAddingIP(true);
+    try {
+      const { error } = await supabase
+        .from('ip_blacklist')
+        .insert({
+          ip_address: newIP.trim(),
+          reason: newIPReason.trim() || 'Bloqueio manual pelo admin',
+          is_active: true
+        });
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          toast({
+            title: "IP já existe",
+            description: "Este IP já está na blacklist",
+            variant: "destructive"
+          });
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      toast({
+        title: "IP bloqueado",
+        description: `O IP ${newIP} foi adicionado à blacklist permanente`
+      });
+      setNewIP("");
+      setNewIPReason("");
+      setShowAddIPDialog(false);
+      loadBlacklistedIPs();
+    } catch (err) {
+      console.error('Error adding IP to blacklist:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o IP à blacklist",
+        variant: "destructive"
+      });
+    } finally {
+      setAddingIP(false);
+    }
+  };
+
+  const removeIPFromBlacklist = async (id: string, ip: string) => {
+    try {
+      const { error } = await supabase
+        .from('ip_blacklist')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "IP removido",
+        description: `O IP ${ip} foi removido da blacklist`
+      });
+      loadBlacklistedIPs();
+    } catch (err) {
+      console.error('Error removing IP from blacklist:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o IP da blacklist",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleIPStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('ip_blacklist')
+        .update({ is_active: !currentStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: currentStatus ? "IP desativado" : "IP reativado",
+        description: currentStatus ? "O bloqueio foi desativado" : "O bloqueio foi reativado"
+      });
+      loadBlacklistedIPs();
+    } catch (err) {
+      console.error('Error toggling IP status:', err);
     }
   };
 
@@ -560,6 +704,82 @@ export function AntiFraudeSection() {
 
             <div className="border-t" />
 
+            {/* IP Blacklist Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Ban className="h-4 w-4 text-destructive" />
+                  Blacklist de IPs ({blacklistedIPs.filter(ip => ip.is_active).length} ativos)
+                </div>
+                <Button size="sm" onClick={() => setShowAddIPDialog(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Adicionar IP
+                </Button>
+              </div>
+
+              {loadingBlacklist ? (
+                <div className="flex items-center justify-center p-4">
+                  <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : blacklistedIPs.length > 0 ? (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>IP</TableHead>
+                        <TableHead className="hidden sm:table-cell">Motivo</TableHead>
+                        <TableHead className="hidden md:table-cell">Transações</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="text-right">Ação</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {blacklistedIPs.map((ip) => (
+                        <TableRow key={ip.id} className={!ip.is_active ? "opacity-50" : ""}>
+                          <TableCell className="font-mono text-sm">{ip.ip_address}</TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
+                            {ip.reason || "-"}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <span className="text-xs">
+                              {ip.transactions_count} ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ip.total_amount || 0)})
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Switch
+                              checked={ip.is_active}
+                              onCheckedChange={() => toggleIPStatus(ip.id, ip.is_active)}
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeIPFromBlacklist(ip.id, ip.ip_address)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center p-4 text-muted-foreground text-sm border rounded-lg">
+                  Nenhum IP na blacklist
+                </div>
+              )}
+
+              <Button variant="outline" size="sm" onClick={loadBlacklistedIPs} className="w-full">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Atualizar Blacklist
+              </Button>
+            </div>
+
+            <div className="border-t" />
+
             {/* Info Section */}
             <div className="p-4 rounded-lg border-primary/20 bg-primary/5">
               <div className="flex flex-col sm:flex-row gap-4">
@@ -572,6 +792,7 @@ export function AntiFraudeSection() {
                     <li>• <strong>Cooldown:</strong> Tempo mínimo obrigatório entre gerações de PIX</li>
                     <li>• <strong>Janela de tempo:</strong> Os PIX não pagos são contados dentro desta janela</li>
                     <li>• <strong>Desbloqueio automático:</strong> O dispositivo é desbloqueado após a janela de tempo expirar</li>
+                    <li>• <strong className="text-destructive">Blacklist de IPs:</strong> IPs bloqueados permanentemente não conseguem gerar PIX</li>
                   </ul>
                 </div>
               </div>
@@ -579,6 +800,69 @@ export function AntiFraudeSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add IP Dialog */}
+      <Dialog open={showAddIPDialog} onOpenChange={setShowAddIPDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-destructive" />
+              Adicionar IP à Blacklist
+            </DialogTitle>
+            <DialogDescription>
+              IPs na blacklist são bloqueados permanentemente de gerar PIX.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="ip-address">Endereço IP</Label>
+              <Input
+                id="ip-address"
+                placeholder="Ex: 189.5.179.111"
+                value={newIP}
+                onChange={(e) => setNewIP(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ip-reason">Motivo (opcional)</Label>
+              <Input
+                id="ip-reason"
+                placeholder="Ex: Fraude detectada - 18 transações não pagas"
+                value={newIPReason}
+                onChange={(e) => setNewIPReason(e.target.value)}
+              />
+            </div>
+            
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                O bloqueio é permanente. Qualquer pessoa usando este IP não poderá gerar PIX.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowAddIPDialog(false); setNewIP(""); setNewIPReason(""); }}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={addIPToBlacklist} disabled={addingIP || !newIP.trim()}>
+              {addingIP ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Bloqueando...
+                </>
+              ) : (
+                <>
+                  <Ban className="h-4 w-4 mr-2" />
+                  Bloquear IP
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Disable Confirmation Dialog */}
       <Dialog open={showDisableConfirm} onOpenChange={setShowDisableConfirm}>

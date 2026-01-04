@@ -1190,6 +1190,39 @@ export type Database = {
           },
         ]
       }
+      ip_blacklist: {
+        Row: {
+          blocked_by: string | null
+          created_at: string
+          id: string
+          ip_address: string
+          is_active: boolean | null
+          reason: string | null
+          total_amount: number | null
+          transactions_count: number | null
+        }
+        Insert: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address: string
+          is_active?: boolean | null
+          reason?: string | null
+          total_amount?: number | null
+          transactions_count?: number | null
+        }
+        Update: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string
+          is_active?: boolean | null
+          reason?: string | null
+          total_amount?: number | null
+          transactions_count?: number | null
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempt_count: number

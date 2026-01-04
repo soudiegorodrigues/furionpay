@@ -1184,6 +1184,39 @@ async function generatePixWithRetry(
   return { success: false, error: `Falha após ${attemptNumber} tentativas: ${lastError}` };
 }
 
+// Check if IP is in permanent blacklist
+async function checkIpBlacklist(clientIp: string | undefined): Promise<{ blocked: boolean; reason?: string }> {
+  if (!clientIp) {
+    return { blocked: false };
+  }
+  
+  const supabase = getSupabaseClient();
+  
+  try {
+    const { data, error } = await supabase
+      .from('ip_blacklist')
+      .select('reason')
+      .eq('ip_address', clientIp)
+      .eq('is_active', true)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('[BLACKLIST] Error checking IP blacklist:', error);
+      return { blocked: false };
+    }
+    
+    if (data) {
+      console.log(`[BLACKLIST] IP ${clientIp} is BLACKLISTED: ${data.reason}`);
+      return { blocked: true, reason: data.reason || 'IP bloqueado permanentemente' };
+    }
+    
+    return { blocked: false };
+  } catch (err) {
+    console.error('[BLACKLIST] Exception checking IP blacklist:', err);
+    return { blocked: false };
+  }
+}
+
 // Get client IP from request headers
 function getClientIp(req: Request): string | undefined {
   const xForwardedFor = req.headers.get('x-forwarded-for');
@@ -1226,6 +1259,21 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // ============= CHECK PERMANENT IP BLACKLIST =============
+    // Verifica se o IP está na blacklist permanente ANTES de qualquer outra coisa
+    const blacklistCheck = await checkIpBlacklist(clientIp);
+    if (blacklistCheck.blocked) {
+      console.log(`[BLACKLIST] Request blocked. IP: ${clientIp}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'IP_BLACKLISTED',
+          message: 'Este IP foi bloqueado permanentemente devido a atividade suspeita.',
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // ========================================================
 
     // ============= CHECK SELLER BYPASS ANTIFRAUDE =============
     // Verifica se o vendedor tem bypass_antifraud ativado pelo admin
