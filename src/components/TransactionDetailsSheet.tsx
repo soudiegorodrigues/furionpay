@@ -1,9 +1,14 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, ShoppingBag, Globe } from "lucide-react";
-import { useState } from "react";
+import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, ShoppingBag, Globe, Ban, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, getCustomerEmail, UTMData } from "@/lib/utmHelpers";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface OrderBumpItem {
   id: string;
@@ -48,6 +53,65 @@ const TransactionDetailsSheet = ({
   isAdmin = false
 }: TransactionDetailsSheetProps) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [addingToBlacklist, setAddingToBlacklist] = useState(false);
+  const [showBlacklistDialog, setShowBlacklistDialog] = useState(false);
+  const [blacklistReason, setBlacklistReason] = useState("");
+  const [isAlreadyBlacklisted, setIsAlreadyBlacklisted] = useState(false);
+
+  const checkIfBlacklisted = async (ip: string) => {
+    const { data } = await supabase
+      .from('ip_blacklist')
+      .select('id')
+      .eq('ip_address', ip)
+      .eq('is_active', true)
+      .maybeSingle();
+    return !!data;
+  };
+
+  const addToBlacklist = async () => {
+    if (!transaction?.client_ip) return;
+    
+    setAddingToBlacklist(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('ip_blacklist')
+        .insert({
+          ip_address: transaction.client_ip,
+          reason: blacklistReason || 'Bloqueado via detalhes da transação',
+          blocked_by: user?.id || null,
+          is_active: true
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Este IP já está na blacklist');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success('IP adicionado à blacklist com sucesso');
+        setIsAlreadyBlacklisted(true);
+        setShowBlacklistDialog(false);
+        setBlacklistReason("");
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar à blacklist:', error);
+      toast.error('Erro ao adicionar IP à blacklist');
+    } finally {
+      setAddingToBlacklist(false);
+    }
+  };
+
+  useEffect(() => {
+    if (transaction?.client_ip && open) {
+      checkIfBlacklisted(transaction.client_ip).then(setIsAlreadyBlacklisted);
+    } else {
+      setIsAlreadyBlacklisted(false);
+    }
+  }, [transaction?.client_ip, open]);
+
   if (!transaction) return null;
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -290,6 +354,9 @@ const TransactionDetailsSheet = ({
                   <div className="flex items-center gap-1.5">
                     <Globe className="h-3 w-3 text-muted-foreground" />
                     <p className="text-xs text-muted-foreground font-medium">IP</p>
+                    {isAlreadyBlacklisted && (
+                      <Badge variant="destructive" className="text-[10px] h-4 px-1.5">Bloqueado</Badge>
+                    )}
                   </div>
                   <p className="text-xs font-mono truncate break-all">{transaction.client_ip}</p>
                 </div>
@@ -301,10 +368,63 @@ const TransactionDetailsSheet = ({
                 >
                   {copiedId === 'ip' ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
                 </Button>
+                {isAdmin && !isAlreadyBlacklisted && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowBlacklistDialog(true)}
+                    className="h-7 w-7 p-0 shrink-0 hover:bg-destructive/10"
+                    title="Adicionar à Blacklist"
+                  >
+                    <Ban className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                )}
               </div>
             )}
           </div>
         </div>
+
+        {/* Dialog de Blacklist */}
+        <Dialog open={showBlacklistDialog} onOpenChange={setShowBlacklistDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Ban className="h-5 w-5 text-destructive" />
+                Bloquear IP
+              </DialogTitle>
+              <DialogDescription>
+                O IP <span className="font-mono font-semibold">{transaction.client_ip}</span> será adicionado à blacklist permanente.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="blacklist-reason">Motivo (opcional)</Label>
+                <Input 
+                  id="blacklist-reason"
+                  placeholder="Ex: Tentativas de fraude, comportamento suspeito..."
+                  value={blacklistReason}
+                  onChange={(e) => setBlacklistReason(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setShowBlacklistDialog(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={addToBlacklist}
+                disabled={addingToBlacklist}
+                className="gap-2"
+              >
+                {addingToBlacklist ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                Bloquear IP
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SheetContent>
     </Sheet>;
 };
