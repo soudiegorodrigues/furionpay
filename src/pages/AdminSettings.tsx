@@ -122,8 +122,29 @@ const AdminSettings = () => {
     };
     setPixels([...pixels, newPixel]);
   };
-  const removePixel = (id: string) => {
-    setPixels(pixels.filter(p => p.id !== id));
+  const removePixel = async (id: string) => {
+    const previousPixels = pixels;
+    const updatedPixels = pixels.filter(p => p.id !== id);
+    setPixels(updatedPixels);
+    
+    try {
+      await supabase.rpc('update_user_setting', {
+        setting_key: 'meta_pixels',
+        setting_value: JSON.stringify(updatedPixels)
+      });
+      toast({
+        title: "Pixel excluído",
+        description: "O pixel foi removido com sucesso!"
+      });
+    } catch (error) {
+      console.error('Erro ao excluir pixel:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao excluir pixel. Tente novamente.",
+        variant: "destructive"
+      });
+      setPixels(previousPixels);
+    }
   };
   const updatePixel = (id: string, field: 'name' | 'pixelId' | 'accessToken', value: string) => {
     setPixels(pixels.map(p => p.id === id ? {
