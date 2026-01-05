@@ -1436,6 +1436,7 @@ export type Database = {
           paid_date_brazil: string | null
           pix_code: string | null
           popup_model: string | null
+          product_code: string | null
           product_name: string | null
           status: Database["public"]["Enums"]["pix_status"]
           txid: string | null
@@ -1472,6 +1473,7 @@ export type Database = {
           paid_date_brazil?: string | null
           pix_code?: string | null
           popup_model?: string | null
+          product_code?: string | null
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
@@ -1508,6 +1510,7 @@ export type Database = {
           paid_date_brazil?: string | null
           pix_code?: string | null
           popup_model?: string | null
+          product_code?: string | null
           product_name?: string | null
           status?: Database["public"]["Enums"]["pix_status"]
           txid?: string | null
@@ -3579,19 +3582,37 @@ export type Database = {
           utm_data: Json
         }[]
       }
-      get_user_transactions_paginated: {
-        Args: {
-          p_date_filter?: string
-          p_end_date?: string
-          p_page?: number
-          p_per_page?: number
-          p_platform?: string
-          p_search?: string
-          p_start_date?: string
-          p_status?: string
-        }
-        Returns: Json
-      }
+      get_user_transactions_paginated:
+        | {
+            Args: {
+              p_date_filter?: string
+              p_end_date?: string
+              p_page?: number
+              p_per_page?: number
+              p_platform?: string
+              p_search?: string
+              p_start_date?: string
+              p_status?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_end_date?: string
+              p_page?: number
+              p_per_page?: number
+              p_platform?: string
+              p_search?: string
+              p_start_date?: string
+              p_status?: string
+              p_user_id?: string
+            }
+            Returns: {
+              total_count: number
+              total_pages: number
+              transactions: Json
+            }[]
+          }
       get_user_webhook_deliveries: {
         Args: { p_client_id?: string; p_limit?: number }
         Returns: {
