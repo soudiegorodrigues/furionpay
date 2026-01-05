@@ -29,14 +29,14 @@ const DONATION_AMOUNTS: {
 }, {
   amount: 50
 }, {
-  amount: 100
+  amount: 100,
+  badge: "Doe com Amor 💚"
 }, {
   amount: 300
 }, {
   amount: 500
 }, {
-  amount: 1000,
-  badge: "Doe com Amor 💚"
+  amount: 1000
 }, {
   amount: 2500
 }, {
