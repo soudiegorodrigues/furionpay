@@ -366,7 +366,7 @@ const TransactionDetailsSheet = ({
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-2 bg-red-50/50 dark:bg-red-950/20 rounded-lg p-3">
             <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">IDs</span>
             
             <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2.5">
