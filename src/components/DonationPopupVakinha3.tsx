@@ -39,14 +39,6 @@ const DONATION_AMOUNTS: {
 }, {
   amount: 1000,
   badge: "Doe com Amor 💚"
-}, {
-  amount: 2500
-}, {
-  amount: 5000
-}, {
-  amount: 7000
-}, {
-  amount: 10000
 }];
 
 const BOOST_OPTIONS = [{
