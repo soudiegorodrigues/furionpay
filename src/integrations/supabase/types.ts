@@ -3579,57 +3579,19 @@ export type Database = {
           utm_data: Json
         }[]
       }
-      get_user_transactions_paginated:
-        | {
-            Args: {
-              p_date_filter?: string
-              p_end_date?: string
-              p_page?: number
-              p_per_page?: number
-              p_search?: string
-              p_start_date?: string
-              p_status?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_date_filter?: string
-              p_end_date?: string
-              p_page?: number
-              p_per_page?: number
-              p_platform?: string
-              p_search?: string
-              p_start_date?: string
-              p_status?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_date_filter?: string
-              p_end_date?: string
-              p_page?: number
-              p_per_page?: number
-              p_platform?: string
-              p_search?: string
-              p_start_date?: string
-              p_status?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_date_filter?: string
-              p_end_date?: string
-              p_page?: number
-              p_per_page?: number
-              p_search?: string
-              p_start_date?: string
-              p_status?: string
-            }
-            Returns: Json
-          }
+      get_user_transactions_paginated: {
+        Args: {
+          p_date_filter?: string
+          p_end_date?: string
+          p_page?: number
+          p_per_page?: number
+          p_platform?: string
+          p_search?: string
+          p_start_date?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
       get_user_webhook_deliveries: {
         Args: { p_client_id?: string; p_limit?: number }
         Returns: {
