@@ -41,10 +41,6 @@ const DONATION_AMOUNTS: {
   amount: 500
 }, {
   amount: 1000
-}, {
-  amount: 2500
-}, {
-  amount: 5000
 }];
 const BOOST_OPTIONS = [{
   id: "hearts",
