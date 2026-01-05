@@ -370,6 +370,30 @@ export const DonationPopupInstituto = ({
             >
               R$ 1000
             </Button>
+
+            {/* Social Proof - Apoiadores */}
+            <div className="flex items-center justify-center gap-3 pt-4">
+              <div className="flex -space-x-2">
+                {[
+                  "https://randomuser.me/api/portraits/women/1.jpg",
+                  "https://randomuser.me/api/portraits/men/2.jpg",
+                  "https://randomuser.me/api/portraits/women/3.jpg",
+                  "https://randomuser.me/api/portraits/men/4.jpg",
+                  "https://randomuser.me/api/portraits/women/5.jpg",
+                  "https://randomuser.me/api/portraits/men/6.jpg"
+                ].map((src, i) => (
+                  <img 
+                    key={i} 
+                    src={src} 
+                    alt="" 
+                    className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" 
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-gray-600">
+                <span className="font-semibold text-[#E91E8C]">+1.542</span> apoiadores
+              </span>
+            </div>
           </div>
         )}
 
