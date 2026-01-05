@@ -328,6 +328,30 @@ export const DonationPopupClean = ({
               >
                 Doar Agora
               </Button>
+
+              {/* Social Proof - Supporters */}
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <div className="flex -space-x-2">
+                  {[
+                    "https://randomuser.me/api/portraits/women/1.jpg",
+                    "https://randomuser.me/api/portraits/men/2.jpg",
+                    "https://randomuser.me/api/portraits/women/3.jpg",
+                    "https://randomuser.me/api/portraits/men/4.jpg",
+                    "https://randomuser.me/api/portraits/women/5.jpg",
+                    "https://randomuser.me/api/portraits/men/6.jpg"
+                  ].map((src, i) => (
+                    <img 
+                      key={i} 
+                      src={src} 
+                      alt="" 
+                      className="w-8 h-8 rounded-full border-2 border-white object-cover" 
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-slate-600">
+                  <span className="font-semibold text-slate-900">+1.542</span> apoiadores
+                </span>
+              </div>
             </div>
           )}
 
