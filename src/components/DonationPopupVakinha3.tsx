@@ -599,7 +599,7 @@ const PixScreenVakinha3 = ({ pixCode, transactionId, amount, selectedAmount, tra
         </div>
 
         {/* Campo do código PIX */}
-        <div className="bg-white border border-gray-200 rounded-lg p-3">
+        <div className="bg-white border border-gray-200 rounded-lg p-3 max-w-xs mx-auto">
           <p className="text-xs text-gray-400 mb-1">Código Pix</p>
           <p className="text-xs text-gray-600 break-all font-mono leading-relaxed">
             {pixCode.slice(0, 60)}...
