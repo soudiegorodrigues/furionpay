@@ -16,7 +16,22 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+const ALLOWED_PWA_DOMAINS = [
+  "app.furionpay.com",
+  "localhost",
+  "127.0.0.1",
+];
+
+const isAllowedPWADomain = (): boolean => {
+  const hostname = window.location.hostname;
+  return ALLOWED_PWA_DOMAINS.some(domain => hostname === domain) ||
+    hostname.endsWith(".lovable.app") ||
+    hostname.endsWith(".lovableproject.com");
+};
+
 export const PWAInstallPrompt = () => {
+  // Don't show PWA prompt on checkout/other domains
+  if (!isAllowedPWADomain()) return null;
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
