@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp } from "lucide-react";
+import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp, Video } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -74,6 +74,7 @@ interface CheckoutOffer {
   product_name: string;
   meta_pixel_ids: string[];
   click_count?: number;
+  video_url?: string;
 }
 
 interface AvailableDomain {
@@ -139,6 +140,7 @@ export const CheckoutOfferCard = ({
   const [popupModel, setPopupModel] = useState(offer.popup_model);
   const [productName, setProductName] = useState(offer.product_name);
   const [metaPixelIds, setMetaPixelIds] = useState<string[]>(offer.meta_pixel_ids || []);
+  const [videoUrl, setVideoUrl] = useState(offer.video_url || "");
 
   // Sync local state with offer from backend when not editing
   useEffect(() => {
@@ -148,6 +150,7 @@ export const CheckoutOfferCard = ({
       setPopupModel(offer.popup_model);
       setProductName(offer.product_name);
       setMetaPixelIds(offer.meta_pixel_ids || []);
+      setVideoUrl(offer.video_url || "");
     }
   }, [offer, isEditing]);
 
@@ -175,6 +178,12 @@ export const CheckoutOfferCard = ({
         link += `&pixel=${pixelValues}`;
       }
     }
+    
+    // Adicionar vídeo ao link se for vakinha3 e tiver URL
+    if (popupModel === 'vakinha3' && videoUrl) {
+      link += `&video=${encodeURIComponent(videoUrl)}`;
+    }
+    
     return link;
   };
 
@@ -238,6 +247,7 @@ export const CheckoutOfferCard = ({
         popup_model: popupModel,
         product_name: productName,
         meta_pixel_ids: metaPixelIds,
+        video_url: popupModel === 'vakinha3' ? videoUrl : undefined,
       });
       setIsEditing(false);
     } finally {
@@ -260,6 +270,7 @@ export const CheckoutOfferCard = ({
     setPopupModel(offer.popup_model);
     setProductName(offer.product_name);
     setMetaPixelIds(offer.meta_pixel_ids || []);
+    setVideoUrl(offer.video_url || "");
     setIsEditing(false);
     if (isNew) {
       onDelete(offer.id);
@@ -513,6 +524,25 @@ export const CheckoutOfferCard = ({
               Nome que aparecerá no gateway de pagamento (obrigatório)
             </p>
           </div>
+
+          {/* Campo de Vídeo - Apenas para Vakinha 3 */}
+          {popupModel === 'vakinha3' && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                URL do Vídeo (opcional)
+              </Label>
+              <Input 
+                placeholder="https://youtube.com/watch?v=... ou https://vimeo.com/..." 
+                value={videoUrl} 
+                onChange={(e) => setVideoUrl(e.target.value)}
+                disabled={!isEditing}
+              />
+              <p className="text-xs text-muted-foreground">
+                YouTube, Vimeo ou link direto de vídeo. Aparece abaixo do banner.
+              </p>
+            </div>
+          )}
 
           {!isEditing && (
             <div className="space-y-2">
