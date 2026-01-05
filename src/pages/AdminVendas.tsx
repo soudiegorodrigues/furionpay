@@ -229,13 +229,13 @@ const AdminVendas = () => {
     try {
       const { data, error } = await supabase.rpc('get_user_transactions_paginated', {
         p_page: currentPage,
-        p_per_page: ITEMS_PER_PAGE,
+        p_items_per_page: ITEMS_PER_PAGE,
         p_date_filter: dateFilter,
         p_start_date: null,
         p_end_date: null,
-        p_status: statusFilter,
-        p_search: debouncedSearch,
-        p_platform: platformFilter
+        p_status_filter: statusFilter,
+        p_search: debouncedSearch || '',
+        p_platform_filter: platformFilter
       });
 
       if (error) throw error;
