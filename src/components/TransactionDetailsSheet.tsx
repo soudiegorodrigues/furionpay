@@ -263,7 +263,7 @@ const TransactionDetailsSheet = ({
               <div className="space-y-2">
                 {getUtmValue('utm_source') && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-24">Plataforma</span>
+                    <span className="text-xs text-muted-foreground w-24 font-semibold">Plataforma</span>
                     <Badge variant="secondary" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_source')}>
                       <span className="truncate">{getUtmValue('utm_source')}</span>
                     </Badge>
@@ -271,7 +271,7 @@ const TransactionDetailsSheet = ({
                 )}
                 {getUtmValue('utm_campaign') && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-24">Campanha</span>
+                    <span className="text-xs text-muted-foreground w-24 font-semibold">Campanha</span>
                     <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_campaign')}>
                       <span className="truncate">{getUtmValue('utm_campaign')}</span>
                     </Badge>
@@ -279,7 +279,7 @@ const TransactionDetailsSheet = ({
                 )}
                 {getUtmValue('utm_medium') && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-24">Conjunto</span>
+                    <span className="text-xs text-muted-foreground w-24 font-semibold">Conjunto</span>
                     <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_medium')}>
                       <span className="truncate">{getUtmValue('utm_medium')}</span>
                     </Badge>
@@ -287,7 +287,7 @@ const TransactionDetailsSheet = ({
                 )}
                 {getUtmValue('utm_content') && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-24">Anúncios</span>
+                    <span className="text-xs text-muted-foreground w-24 font-semibold">Anúncios</span>
                     <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_content')}>
                       <span className="truncate">{getUtmValue('utm_content')}</span>
                     </Badge>
@@ -295,7 +295,7 @@ const TransactionDetailsSheet = ({
                 )}
                 {getUtmValue('utm_term') && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-24">Posicionamento</span>
+                    <span className="text-xs text-muted-foreground w-24 font-semibold">Posicionamento</span>
                     <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_term')}>
                       <span className="truncate">{getUtmValue('utm_term')}</span>
                     </Badge>
