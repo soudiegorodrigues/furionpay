@@ -18,16 +18,46 @@ import { prefetchCheckoutData } from "@/hooks/useCheckoutData";
 import furionPayLogoLight from "@/assets/furionpay-logo-dark-text.png";
 import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
+// Cache key for session state
+const SESSION_CACHE_KEY = 'admin_session_cache';
+
+// Get cached session state for instant initial render
+const getCachedSessionState = () => {
+  try {
+    const cached = sessionStorage.getItem(SESSION_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      // Cache expires after 5 minutes
+      if (Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
+};
+
 export function AdminLayoutWrapper() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAuthenticated, loading, signOut, user, isBlocked, isAdmin, isApproved, mfaInfo, checkMFAStatus } = useAdminAuth();
   const { isOwner, hasPermission } = usePermissions();
-  const [userName, setUserName] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(() => getCachedSessionState()?.userName || null);
   const [mfaChecked, setMfaChecked] = useState(false);
   const { theme } = useTheme();
   const initialAuthChecked = useRef(false);
   const prefetchedRef = useRef(false);
+  
+  // Cache session state for faster reloads
+  useEffect(() => {
+    if (isAuthenticated && user?.id && !loading) {
+      sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify({
+        userName,
+        isApproved,
+        isAdmin,
+        timestamp: Date.now()
+      }));
+    }
+  }, [isAuthenticated, user?.id, userName, isApproved, isAdmin, loading]);
 
   // Transaction notifications - only active for authenticated users inside admin
   useTransactionNotifications(user?.id || null);

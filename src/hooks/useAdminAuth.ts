@@ -222,12 +222,10 @@ export const useAdminAuth = () => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Check if user is blocked, admin, and approved when they sign in
+        // Check if user is blocked, admin, and approved when they sign in - run in parallel
         if (event === 'SIGNED_IN' && session?.user) {
           checkIfBlocked();
-          checkIfAdmin();
-          checkIfApproved();
-          setTimeout(() => checkMFAStatus(), 0);
+          Promise.all([checkIfAdmin(), checkIfApproved(), checkMFAStatus()]);
         }
         
         if (event === 'SIGNED_OUT') {
@@ -245,12 +243,15 @@ export const useAdminAuth = () => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Check if existing user is blocked, admin, and approved
+      // Check if existing user is blocked, admin, and approved - run in parallel for faster loading
       if (session?.user) {
         checkIfBlocked();
-        await checkIfAdmin();
-        await checkIfApproved();
-        await checkMFAStatus();
+        // Run admin, approved, and MFA checks in parallel
+        await Promise.all([
+          checkIfAdmin(),
+          checkIfApproved(),
+          checkMFAStatus()
+        ]);
       } else {
         setIsAdmin(false);
         setIsApproved(false);
