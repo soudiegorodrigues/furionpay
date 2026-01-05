@@ -255,7 +255,7 @@ const TransactionDetailsSheet = ({
           </div>
 
           {/* UTM */}
-          {hasUtm && <div className="bg-muted/30 rounded-lg p-3">
+          {hasUtm && <div className="bg-red-50/50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">UTM Tracking</span>
