@@ -8,6 +8,7 @@ import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
+import { DonationPopupVakinha3 } from "@/components/DonationPopupVakinha3";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
 import { trackOfferClick } from "@/lib/clickTracking";
@@ -21,6 +22,8 @@ const Index = () => {
   const urlModel = searchParams.get('m') || searchParams.get('model');
   // Offer ID for click tracking
   const offerId = searchParams.get('o') || searchParams.get('offer_id');
+  // Video URL for vakinha3
+  const videoUrl = searchParams.get('video');
   // Debug mode
   const debugClick = searchParams.get('debug_click') === '1';
   
@@ -182,6 +185,14 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           utmParams={utmParams || undefined}
+        />
+      ) : popupModel === 'vakinha3' ? (
+        <DonationPopupVakinha3
+          isOpen={true}
+          onClose={() => {}}
+          userId={userId || undefined}
+          utmParams={utmParams || undefined}
+          videoUrl={videoUrl || undefined}
         />
       ) : (
         <DonationPopup

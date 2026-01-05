@@ -12,6 +12,7 @@ import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
 import vakinhaBanner from "@/assets/vakinha-banner.jpg";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
+import { CustomVideoPlayer } from "@/components/checkout/CustomVideoPlayer";
 
 interface DonationPopupVakinha3Props {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface DonationPopupVakinha3Props {
   showCloseButton?: boolean;
   isPreview?: boolean;
   utmParams?: UTMParams;
+  videoUrl?: string;
 }
 
 const DONATION_AMOUNTS: {
@@ -81,7 +83,8 @@ export const DonationPopupVakinha3 = ({
   userId,
   showCloseButton = false,
   isPreview = false,
-  utmParams: propUtmParams
+  utmParams: propUtmParams,
+  videoUrl
 }: DonationPopupVakinha3Props) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedBoosts, setSelectedBoosts] = useState<string[]>([]);
@@ -312,6 +315,16 @@ export const DonationPopupVakinha3 = ({
             <div className="w-full flex justify-center mb-4">
               <img src={vakinhaBanner} alt="Salvando Vidas - Vakinha" className="w-full max-w-md h-auto object-cover rounded-lg" />
             </div>
+
+            {/* Video Section - Exibido se configurado */}
+            {videoUrl && (
+              <div className="w-full mb-4">
+                <CustomVideoPlayer 
+                  videoUrl={videoUrl} 
+                  className="rounded-lg overflow-hidden"
+                />
+              </div>
+            )}
 
             {/* Contribution Value Section */}
             <div>
