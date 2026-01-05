@@ -485,7 +485,6 @@ export type Database = {
           product_name: string | null
           updated_at: string
           user_id: string
-          video_url: string | null
         }
         Insert: {
           click_count?: number
@@ -498,7 +497,6 @@ export type Database = {
           product_name?: string | null
           updated_at?: string
           user_id: string
-          video_url?: string | null
         }
         Update: {
           click_count?: number
@@ -511,7 +509,6 @@ export type Database = {
           product_name?: string | null
           updated_at?: string
           user_id?: string
-          video_url?: string | null
         }
         Relationships: []
       }
