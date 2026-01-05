@@ -17,6 +17,7 @@ interface CheckoutOffer {
   product_name: string;
   meta_pixel_ids: string[];
   click_count?: number;
+  video_url?: string;
 }
 
 interface AvailableDomain {
@@ -80,7 +81,8 @@ async function fetchOffers(validPixelIds: Set<string>) {
       popup_model: o.popup_model || 'landing',
       product_name: o.product_name || '',
       meta_pixel_ids: validIds,
-      click_count: o.click_count || 0
+      click_count: o.click_count || 0,
+      video_url: o.video_url || ''
     });
   }
   
@@ -163,7 +165,8 @@ export function useCheckoutOffers(userId: string | undefined) {
             domain: offer.domain || null,
             popup_model: offer.popup_model,
             product_name: offer.product_name || null,
-            meta_pixel_ids: offer.meta_pixel_ids || []
+            meta_pixel_ids: offer.meta_pixel_ids || [],
+            video_url: offer.video_url || null
           })
           .select()
           .single();
@@ -177,7 +180,8 @@ export function useCheckoutOffers(userId: string | undefined) {
             domain: offer.domain || null,
             popup_model: offer.popup_model,
             product_name: offer.product_name || null,
-            meta_pixel_ids: offer.meta_pixel_ids || []
+            meta_pixel_ids: offer.meta_pixel_ids || [],
+            video_url: offer.video_url || null
           })
           .eq('id', offer.id);
         if (error) throw error;
