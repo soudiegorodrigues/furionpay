@@ -3587,25 +3587,12 @@ export type Database = {
             Args: {
               p_date_filter?: string
               p_end_date?: string
+              p_items_per_page?: number
               p_page?: number
-              p_per_page?: number
-              p_platform?: string
+              p_platform_filter?: string
               p_search?: string
               p_start_date?: string
-              p_status?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_date_filter?: string
-              p_end_date?: string
-              p_page?: number
-              p_per_page?: number
-              p_platform?: string
-              p_search?: string
-              p_start_date?: string
-              p_status?: string
+              p_status_filter?: string
             }
             Returns: Json
           }
