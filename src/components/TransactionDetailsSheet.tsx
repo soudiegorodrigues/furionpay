@@ -260,31 +260,46 @@ const TransactionDetailsSheet = ({
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">UTM Tracking</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="space-y-2">
                 {getUtmValue('utm_source') && (
-                  <Badge variant="secondary" className="text-xs h-6 max-w-full" title={getUtmValue('utm_source')}>
-                    <span className="truncate">{(getUtmValue('utm_source') || '').length > 25 ? getUtmValue('utm_source')?.slice(0, 25) + '...' : getUtmValue('utm_source')}</span>
-                  </Badge>
-                )}
-                {getUtmValue('utm_medium') && (
-                  <Badge variant="outline" className="text-xs h-6 max-w-full" title={getUtmValue('utm_medium')}>
-                    <span className="truncate">{(getUtmValue('utm_medium') || '').length > 25 ? getUtmValue('utm_medium')?.slice(0, 25) + '...' : getUtmValue('utm_medium')}</span>
-                  </Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">Plataforma</span>
+                    <Badge variant="secondary" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_source')}>
+                      <span className="truncate">{getUtmValue('utm_source')}</span>
+                    </Badge>
+                  </div>
                 )}
                 {getUtmValue('utm_campaign') && (
-                  <Badge variant="outline" className="text-xs h-6 max-w-full" title={getUtmValue('utm_campaign')}>
-                    <span className="truncate">{(getUtmValue('utm_campaign') || '').length > 25 ? getUtmValue('utm_campaign')?.slice(0, 25) + '...' : getUtmValue('utm_campaign')}</span>
-                  </Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">Campanha</span>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_campaign')}>
+                      <span className="truncate">{getUtmValue('utm_campaign')}</span>
+                    </Badge>
+                  </div>
                 )}
                 {getUtmValue('utm_content') && (
-                  <Badge variant="outline" className="text-xs h-6 max-w-full" title={getUtmValue('utm_content')}>
-                    <span className="truncate">{(getUtmValue('utm_content') || '').length > 25 ? getUtmValue('utm_content')?.slice(0, 25) + '...' : getUtmValue('utm_content')}</span>
-                  </Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">Conjunto</span>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_content')}>
+                      <span className="truncate">{getUtmValue('utm_content')}</span>
+                    </Badge>
+                  </div>
+                )}
+                {getUtmValue('utm_medium') && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">Anúncios</span>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_medium')}>
+                      <span className="truncate">{getUtmValue('utm_medium')}</span>
+                    </Badge>
+                  </div>
                 )}
                 {getUtmValue('utm_term') && (
-                  <Badge variant="outline" className="text-xs h-6 max-w-full" title={getUtmValue('utm_term')}>
-                    <span className="truncate">{(getUtmValue('utm_term') || '').length > 25 ? getUtmValue('utm_term')?.slice(0, 25) + '...' : getUtmValue('utm_term')}</span>
-                  </Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">Posicionamento</span>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_term')}>
+                      <span className="truncate">{getUtmValue('utm_term')}</span>
+                    </Badge>
+                  </div>
                 )}
               </div>
             </div>}
