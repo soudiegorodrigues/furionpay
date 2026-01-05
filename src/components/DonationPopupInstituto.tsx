@@ -299,7 +299,7 @@ export const DonationPopupInstituto = ({
               <img 
                 src={institutoLogo} 
                 alt="Instituto Amor de Criança" 
-                className="h-20 sm:h-24 object-contain"
+                className="h-28 sm:h-36 object-contain"
               />
             </div>
             
