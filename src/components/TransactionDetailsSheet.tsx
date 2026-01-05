@@ -3,7 +3,33 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, ShoppingBag, Globe, Ban, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, getCustomerEmail, UTMData } from "@/lib/utmHelpers";
+import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, getCustomerEmail, getTrafficSource, UTMData } from "@/lib/utmHelpers";
+
+// Ícone Facebook
+const FacebookIcon = () => (
+  <svg viewBox="0 0 48 48" className="h-4 w-4 shrink-0">
+    <circle cx="24" cy="24" r="24" fill="#1877F2" />
+    <path d="M32.5 24.5H27V33H22V24.5H18V20H22V17C22 13.7 24.2 11 28 11H32V15.5H29C27.6 15.5 27 16.3 27 17.5V20H32L32.5 24.5Z" fill="white" />
+  </svg>
+);
+
+// Ícone TikTok
+const TiktokIcon = () => (
+  <svg viewBox="0 0 48 48" className="h-4 w-4 shrink-0">
+    <circle cx="24" cy="24" r="24" fill="#000000" />
+    <path d="M33.5 17.5V21.5C31.3 21.5 29.3 20.8 27.7 19.6V28.5C27.7 32.9 24.1 36.5 19.7 36.5C15.3 36.5 11.7 32.9 11.7 28.5C11.7 24.1 15.3 20.5 19.7 20.5C20.2 20.5 20.7 20.6 21.2 20.7V24.8C20.7 24.6 20.2 24.5 19.7 24.5C17.5 24.5 15.7 26.3 15.7 28.5C15.7 30.7 17.5 32.5 19.7 32.5C21.9 32.5 23.7 30.7 23.7 28.5V11.5H27.7C27.7 11.5 27.7 11.7 27.7 12C28 14.7 30.5 16.9 33.5 17.5Z" fill="white" />
+  </svg>
+);
+
+// Ícone Google
+const GoogleIcon = () => (
+  <svg viewBox="0 0 48 48" className="h-4 w-4 shrink-0">
+    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/>
+    <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+  </svg>
+);
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,6 +196,17 @@ const TransactionDetailsSheet = ({
   // Verifica UTMs usando o utilitário compartilhado
   const hasUtm = hasUtmDataHelper(transaction.utm_data);
   const statusConfig = getStatusConfig(transaction.status);
+
+  // Função para obter o ícone baseado na plataforma
+  const getPlatformIcon = () => {
+    const source = getTrafficSource(transaction.utm_data);
+    switch (source) {
+      case 'facebook': return <FacebookIcon />;
+      case 'google': return <GoogleIcon />;
+      case 'tiktok': return <TiktokIcon />;
+      default: return null;
+    }
+  };
   return <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:w-[400px] p-0 border-l border-border/50 bg-background">
         {/* Header compacto */}
@@ -264,7 +301,8 @@ const TransactionDetailsSheet = ({
                 {getUtmValue('utm_source') && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-24 font-semibold">Plataforma</span>
-                    <Badge variant="secondary" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_source')}>
+                    <Badge variant="secondary" className="text-xs h-6 max-w-[180px] gap-1.5" title={getUtmValue('utm_source')}>
+                      {getPlatformIcon()}
                       <span className="truncate">{getUtmValue('utm_source')}</span>
                     </Badge>
                   </div>
