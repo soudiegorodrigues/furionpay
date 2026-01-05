@@ -31,7 +31,7 @@ const DONATION_AMOUNTS: {
 }, {
   amount: 50
 }, {
-  amount: 100
+  amount: 75
 }, {
   amount: 300
 }, {
