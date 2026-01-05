@@ -25,7 +25,7 @@ const DONATION_AMOUNTS: {
   amount: number;
   badge?: string;
 }[] = [{
-  amount: 35
+  amount: 20
 }, {
   amount: 50
 }, {
