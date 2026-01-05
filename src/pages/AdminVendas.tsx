@@ -49,6 +49,7 @@ interface Transaction {
   popup_model: string | null;
   acquirer?: string;
   order_bumps?: OrderBumpItem[] | null;
+  client_ip?: string | null;
 }
 
 interface FeeConfig {
