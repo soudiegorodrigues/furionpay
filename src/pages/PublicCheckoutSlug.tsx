@@ -90,11 +90,13 @@ const PublicCheckoutSlug = () => {
             });
             
             if (!pixelError && pixelIds && pixelIds.length > 0) {
-              console.log('[SLUG PAGE] Resolved pixel IDs:', pixelIds);
+              console.log('%c[SLUG PAGE] ✅ Resolved pixel IDs: ' + pixelIds.join(', '), 'background: purple; color: white; font-size: 14px;');
               initializeWithPixelIds(pixelIds);
+            } else {
+              console.log('%c[SLUG PAGE] ⚠️ No pixel IDs found for offer', 'background: orange; color: black;');
             }
           } catch (pixelErr) {
-            console.error('Error fetching pixel IDs:', pixelErr);
+            console.error('[SLUG PAGE] Error fetching pixel IDs:', pixelErr);
           }
         }
       } catch (err) {
