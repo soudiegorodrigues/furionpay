@@ -292,7 +292,7 @@ const TransactionDetailsSheet = ({
           </div>
 
           {/* UTM */}
-          {hasUtm && <div className="bg-red-50/50 rounded-lg p-3">
+          {hasUtm && <div className="bg-red-50/50 dark:bg-red-900/20 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">UTM Tracking</span>
@@ -301,7 +301,7 @@ const TransactionDetailsSheet = ({
                 {getUtmValue('utm_source') && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-24 font-semibold">Plataforma</span>
-                    <Badge variant="secondary" className="text-xs h-6 max-w-[180px] gap-1.5" title={getUtmValue('utm_source')}>
+                    <Badge variant="secondary" className="text-xs h-6 max-w-[180px] gap-1.5 dark:bg-red-900/30 dark:text-red-200" title={getUtmValue('utm_source')}>
                       {getPlatformIcon()}
                       <span className="truncate">{getUtmValue('utm_source')}</span>
                     </Badge>
@@ -310,7 +310,7 @@ const TransactionDetailsSheet = ({
                 {getUtmValue('utm_campaign') && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-24 font-semibold">Campanha</span>
-                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_campaign')}>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px] dark:border-red-700/50 dark:text-red-200 dark:bg-red-900/20" title={getUtmValue('utm_campaign')}>
                       <span className="truncate">{getUtmValue('utm_campaign')}</span>
                     </Badge>
                   </div>
@@ -318,7 +318,7 @@ const TransactionDetailsSheet = ({
                 {getUtmValue('utm_medium') && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-24 font-semibold">Conjunto</span>
-                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_medium')}>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px] dark:border-red-700/50 dark:text-red-200 dark:bg-red-900/20" title={getUtmValue('utm_medium')}>
                       <span className="truncate">{getUtmValue('utm_medium')}</span>
                     </Badge>
                   </div>
@@ -326,7 +326,7 @@ const TransactionDetailsSheet = ({
                 {getUtmValue('utm_content') && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-24 font-semibold">Anúncios</span>
-                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_content')}>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px] dark:border-red-700/50 dark:text-red-200 dark:bg-red-900/20" title={getUtmValue('utm_content')}>
                       <span className="truncate">{getUtmValue('utm_content')}</span>
                     </Badge>
                   </div>
@@ -334,7 +334,7 @@ const TransactionDetailsSheet = ({
                 {getUtmValue('utm_term') && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-24 font-semibold">Posicionamento</span>
-                    <Badge variant="outline" className="text-xs h-6 max-w-[180px]" title={getUtmValue('utm_term')}>
+                    <Badge variant="outline" className="text-xs h-6 max-w-[180px] dark:border-red-700/50 dark:text-red-200 dark:bg-red-900/20" title={getUtmValue('utm_term')}>
                       <span className="truncate">{getUtmValue('utm_term')}</span>
                     </Badge>
                   </div>
