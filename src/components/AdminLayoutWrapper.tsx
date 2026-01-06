@@ -126,8 +126,8 @@ export function AdminLayoutWrapper() {
     navigate('/login');
   };
 
-  // Only show skeleton during very first auth check
-  if (loading && !initialAuthChecked.current) {
+  // Show skeleton while loading auth state
+  if (loading) {
     return (
       <div className="min-h-screen flex w-full bg-background">
         <div className="w-64 min-w-64 max-w-64 flex-shrink-0 border-r border-border bg-background dark:bg-black" />
