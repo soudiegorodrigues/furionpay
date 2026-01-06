@@ -82,11 +82,32 @@ async function getGlobalPixels(supabase: any, userId: string | null): Promise<an
     query = query.is('user_id', null);
   }
 
-  const { data: multiplePixels, error: multiError } = await query.single();
+  // Use maybeSingle to avoid error when no record exists
+  const { data: multiplePixels, error: multiError } = await query.maybeSingle();
+
+  console.log('getGlobalPixels - userId:', userId, 'data:', multiplePixels, 'error:', multiError);
 
   if (!multiError && multiplePixels?.value) {
     try {
-      const parsed = JSON.parse(multiplePixels.value);
+      // Handle value as either string OR already-parsed JSON
+      let parsed: any;
+      const valueType = typeof multiplePixels.value;
+      console.log('meta_pixels value type:', valueType);
+      
+      if (valueType === 'string') {
+        parsed = JSON.parse(multiplePixels.value);
+      } else if (Array.isArray(multiplePixels.value)) {
+        parsed = multiplePixels.value;
+      } else if (valueType === 'object') {
+        // If it's an object but not array, wrap it
+        parsed = [multiplePixels.value];
+      } else {
+        console.error('Unexpected value type for meta_pixels:', valueType);
+        return [];
+      }
+      
+      console.log('Parsed pixels count:', Array.isArray(parsed) ? parsed.length : 0);
+      
       if (Array.isArray(parsed)) {
         return parsed.map((pixel: any) => ({
           id: pixel.id || pixel.pixelId,
@@ -96,7 +117,7 @@ async function getGlobalPixels(supabase: any, userId: string | null): Promise<an
         }));
       }
     } catch (parseError) {
-      console.error('Error parsing meta_pixels JSON:', parseError);
+      console.error('Error parsing meta_pixels JSON:', parseError, 'raw value:', multiplePixels.value);
     }
   }
 
