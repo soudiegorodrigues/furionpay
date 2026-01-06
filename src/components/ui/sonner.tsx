@@ -13,7 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       position={isMobile ? "bottom-center" : "top-right"}
-      duration={4000}
+      duration={2000}
       closeButton
       visibleToasts={5}
       expand={true}
