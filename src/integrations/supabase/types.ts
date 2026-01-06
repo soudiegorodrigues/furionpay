@@ -3616,6 +3616,24 @@ export type Database = {
               transactions: Json
             }[]
           }
+        | {
+            Args: {
+              p_date_filter?: string
+              p_end_date?: string
+              p_page?: number
+              p_per_page?: number
+              p_platform_filter?: string
+              p_search?: string
+              p_start_date?: string
+              p_status_filter?: string
+              p_user_id: string
+            }
+            Returns: {
+              total_count: number
+              total_pages: number
+              transactions: Json
+            }[]
+          }
       get_user_webhook_deliveries: {
         Args: { p_client_id?: string; p_limit?: number }
         Returns: {
