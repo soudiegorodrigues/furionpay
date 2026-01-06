@@ -506,11 +506,21 @@ export const DonationPopupInstituto2 = ({
                 </div>
               </>
             )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
 
-      {/* Expired Dialog */}
+        {/* Footer */}
+        <div className="text-center text-xs text-gray-400 pt-4 pb-2 space-y-1">
+          <p>© 2025 - Todos os direitos reservados.</p>
+          <p>
+            <a href="#" className="hover:underline">Políticas de Privacidade</a>
+            {" | "}
+            <a href="#" className="hover:underline">Termos de Serviço</a>
+          </p>
+        </div>
+
+        {/* Expired Dialog */}
       <Dialog open={showExpiredDialog} onOpenChange={setShowExpiredDialog}>
         <DialogContent>
           <DialogHeader>
