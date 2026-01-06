@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, CreditCard, TrendingUp, Plus, LayoutGrid, Settings, RefreshCw } from "lucide-react";
+import { DateRangePicker, type DateRange } from "@/components/ui/date-range-picker";
 import { toast } from "@/hooks/use-toast";
 import { DonationPopup } from "@/components/DonationPopup";
 import { DonationPopupSimple } from "@/components/DonationPopupSimple";
@@ -87,6 +88,7 @@ const popupModels = [{
 const AdminCheckout = () => {
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const { user } = useAdminAuth();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
   // Use React Query hook for all data - instant on second visit
   const {
@@ -101,7 +103,7 @@ const AdminCheckout = () => {
     saveOffer,
     deleteOffer,
     refetchAll
-  } = useCheckoutOffers(user?.id);
+  } = useCheckoutOffers(user?.id, dateRange);
 
   const handleRefresh = async () => {
     await refetchAll();
@@ -203,8 +205,13 @@ const AdminCheckout = () => {
           {/* Tab: Offers */}
           <TabsContent value="offers" className="mt-4 space-y-4">
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <DateRangePicker
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                  placeholder="Filtrar por período"
+                />
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -216,12 +223,12 @@ const AdminCheckout = () => {
                   Atualizar
                 </Button>
                 {dataUpdatedAt && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground hidden sm:inline">
                     Atualizado às {formatLastUpdate()}
                   </span>
                 )}
               </div>
-              <Button onClick={handleCreateOffer} className="gap-2">
+              <Button onClick={handleCreateOffer} className="gap-2 w-full sm:w-auto">
                 <Plus className="w-4 h-4" />
                 Nova Oferta
               </Button>

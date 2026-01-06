@@ -3135,7 +3135,7 @@ export type Database = {
         }[]
       }
       get_offer_stats: {
-        Args: { p_user_id: string }
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string }
         Returns: {
           conversion_rate: number
           offer_id: string
