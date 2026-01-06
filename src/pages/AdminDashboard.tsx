@@ -672,7 +672,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
     const estimatedNetGenerated = periodStats.total_amount_generated - periodStats.estimated_fees_generated;
     const ticketMedio = paid > 0 ? amountPaid / paid : 0;
     return {
-      generated: totalTransactions,
+      generated: pendingCount,
       paid,
       amountGenerated,
       amountPaid,
