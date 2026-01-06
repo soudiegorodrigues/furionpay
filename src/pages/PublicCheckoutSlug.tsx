@@ -13,6 +13,7 @@ import { DonationPopupInstituto2 } from "@/components/DonationPopupInstituto2";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
 import { trackOfferClick } from "@/lib/clickTracking";
+import { usePixel } from "@/components/MetaPixelProvider";
 
 interface OfferData {
   id: string;
@@ -28,6 +29,7 @@ interface OfferData {
 const PublicCheckoutSlug = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { initializeWithPixelIds } = usePixel();
   
   const [offer, setOffer] = useState<OfferData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +80,22 @@ const PublicCheckoutSlug = () => {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         if (supabaseUrl && offerData.id) {
           trackOfferClick(offerData.id, supabaseUrl);
+        }
+
+        // Initialize Meta Pixels for this offer
+        if (offerData.id) {
+          try {
+            const { data: pixelIds, error: pixelError } = await supabase.rpc('get_pixel_ids_for_offer', {
+              p_offer_id: offerData.id
+            });
+            
+            if (!pixelError && pixelIds && pixelIds.length > 0) {
+              console.log('[SLUG PAGE] Resolved pixel IDs:', pixelIds);
+              initializeWithPixelIds(pixelIds);
+            }
+          } catch (pixelErr) {
+            console.error('Error fetching pixel IDs:', pixelErr);
+          }
         }
       } catch (err) {
         console.error('Error:', err);
