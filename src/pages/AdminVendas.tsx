@@ -69,7 +69,7 @@ interface PeriodStats {
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
 type PlatformFilter = 'all' | 'facebook' | 'google' | 'tiktok' | 'other';
-type StatusFilter = 'all' | 'paid' | 'generated' | 'expired' | 'refunded';
+type StatusFilter = 'all' | 'paid' | 'generated' | 'refunded';
 
 const AdminVendas = () => {
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
@@ -426,7 +426,6 @@ const AdminVendas = () => {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="paid">Pago</SelectItem>
                 <SelectItem value="generated">Gerado</SelectItem>
-                <SelectItem value="expired">Expirado</SelectItem>
                 <SelectItem value="refunded">Reembolsado</SelectItem>
               </SelectContent>
             </Select>
