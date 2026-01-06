@@ -105,7 +105,12 @@ async function fetchOffers(validPixelIds: Set<string>) {
   return processedOffers;
 }
 
-export function useCheckoutOffers(userId: string | undefined) {
+interface DateRange {
+  from: Date | undefined;
+  to?: Date | undefined;
+}
+
+export function useCheckoutOffers(userId: string | undefined, dateRange?: DateRange) {
   const queryClient = useQueryClient();
 
   // First fetch settings to get valid pixel IDs
@@ -161,9 +166,13 @@ export function useCheckoutOffers(userId: string | undefined) {
   });
 
   const offerStatsQuery = useQuery({
-    queryKey: ['offer_stats', userId],
+    queryKey: ['offer_stats', userId, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_offer_stats', { p_user_id: userId });
+      const { data, error } = await supabase.rpc('get_offer_stats', { 
+        p_user_id: userId,
+        p_start_date: dateRange?.from?.toISOString() || null,
+        p_end_date: dateRange?.to?.toISOString() || null
+      });
       if (error) throw error;
       return (data || []) as OfferStats[];
     },
