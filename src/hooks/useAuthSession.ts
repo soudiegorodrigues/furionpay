@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 
 // Hook otimizado para sessão - evita re-fetch a cada navegação
@@ -41,70 +41,58 @@ export const useAuthSession = () => {
 // Hook para status do usuário (blocked, admin, approved) - CACHEADO
 export const useUserStatus = (userId: string | undefined) => {
   const queryClient = useQueryClient();
+  const enabled = !!userId;
 
-  // Retorna valores default imediatamente se não tem userId
-  // Isso evita o erro "observer.getOptimisticResult is not a function"
-  if (!userId) {
-    return {
-      isBlocked: false,
-      isAdmin: false,
-      isApproved: false,
-      loading: false,
-      refresh: () => {},
-    };
-  }
-
-  return useUserStatusInternal(userId, queryClient);
-};
-
-// Hook interno que só é chamado com userId válido
-const useUserStatusInternal = (userId: string, queryClient: ReturnType<typeof useQueryClient>) => {
   const blockedQuery = useQuery({
-    queryKey: ['auth', 'blocked', userId],
+    queryKey: ['auth', 'blocked', userId ?? 'none'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('check_user_blocked' as any);
       if (error) throw error;
       return data === true;
     },
+    enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });
 
   const adminQuery = useQuery({
-    queryKey: ['auth', 'admin', userId],
+    queryKey: ['auth', 'admin', userId ?? 'none'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('is_admin_authenticated');
       if (error) throw error;
       return data === true;
     },
+    enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });
 
   const approvedQuery = useQuery({
-    queryKey: ['auth', 'approved', userId],
+    queryKey: ['auth', 'approved', userId ?? 'none'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('check_user_approved' as any);
       if (error) throw error;
       return data === true;
     },
+    enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });
 
   const refresh = useCallback(() => {
+    if (!userId) return;
     queryClient.invalidateQueries({ queryKey: ['auth', 'blocked', userId] });
     queryClient.invalidateQueries({ queryKey: ['auth', 'admin', userId] });
     queryClient.invalidateQueries({ queryKey: ['auth', 'approved', userId] });
   }, [queryClient, userId]);
 
-  return {
+  return useMemo(() => ({
     isBlocked: blockedQuery.data ?? false,
     isAdmin: adminQuery.data ?? false,
     isApproved: approvedQuery.data ?? false,
-    loading: blockedQuery.isLoading || adminQuery.isLoading || approvedQuery.isLoading,
+    loading: enabled ? (blockedQuery.isLoading || adminQuery.isLoading || approvedQuery.isLoading) : false,
     refresh,
-  };
+  }), [blockedQuery.data, blockedQuery.isLoading, adminQuery.data, adminQuery.isLoading, approvedQuery.data, approvedQuery.isLoading, enabled, refresh]);
 };
 
 // Hook para billing progress - CACHEADO
