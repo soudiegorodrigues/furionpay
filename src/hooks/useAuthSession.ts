@@ -42,53 +42,60 @@ export const useAuthSession = () => {
 export const useUserStatus = (userId: string | undefined) => {
   const queryClient = useQueryClient();
 
-  const { data: isBlocked = false, isLoading: blockedLoading } = useQuery({
+  // Only run queries when we have a valid userId
+  const enabled = !!userId;
+
+  const blockedQuery = useQuery({
     queryKey: ['auth', 'blocked', userId],
     queryFn: async () => {
+      if (!userId) return false;
       const { data, error } = await supabase.rpc('check_user_blocked' as any);
       if (error) throw error;
       return data === true;
     },
-    enabled: !!userId,
+    enabled,
     staleTime: 1000 * 60 * 5, // 5 minutos
     gcTime: 1000 * 60 * 10,
   });
 
-  const { data: isAdmin = false, isLoading: adminLoading } = useQuery({
+  const adminQuery = useQuery({
     queryKey: ['auth', 'admin', userId],
     queryFn: async () => {
+      if (!userId) return false;
       const { data, error } = await supabase.rpc('is_admin_authenticated');
       if (error) throw error;
       return data === true;
     },
-    enabled: !!userId,
+    enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });
 
-  const { data: isApproved = false, isLoading: approvedLoading } = useQuery({
+  const approvedQuery = useQuery({
     queryKey: ['auth', 'approved', userId],
     queryFn: async () => {
+      if (!userId) return false;
       const { data, error } = await supabase.rpc('check_user_approved' as any);
       if (error) throw error;
       return data === true;
     },
-    enabled: !!userId,
+    enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });
 
   const refresh = useCallback(() => {
+    if (!userId) return;
     queryClient.invalidateQueries({ queryKey: ['auth', 'blocked', userId] });
     queryClient.invalidateQueries({ queryKey: ['auth', 'admin', userId] });
     queryClient.invalidateQueries({ queryKey: ['auth', 'approved', userId] });
   }, [queryClient, userId]);
 
   return {
-    isBlocked,
-    isAdmin,
-    isApproved,
-    loading: blockedLoading || adminLoading || approvedLoading,
+    isBlocked: blockedQuery.data ?? false,
+    isAdmin: adminQuery.data ?? false,
+    isApproved: approvedQuery.data ?? false,
+    loading: enabled ? (blockedQuery.isLoading || adminQuery.isLoading || approvedQuery.isLoading) : false,
     refresh,
   };
 };
