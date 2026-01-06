@@ -48,7 +48,7 @@ interface OrderBumpItem {
 interface Transaction {
   id: string;
   amount: number;
-  status: 'generated' | 'paid' | 'expired';
+  status: 'generated' | 'paid' | 'expired' | 'refunded';
   txid: string;
   donor_name: string;
   donor_email?: string;
