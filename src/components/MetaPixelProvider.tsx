@@ -225,13 +225,24 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       console.log('%c[PIXEL DEBUG] ✅ SUCCESS: fbq init called for pixel: ' + pixel.pixelId, 'background: green; color: white; font-size: 16px;');
     });
 
+    // Fire PageView immediately (queued, will execute when script loads)
+    window.fbq('track', 'PageView');
+    console.log('%c[PIXEL DEBUG] 📄 PageView queued', 'background: blue; color: white; font-size: 14px;');
+
     // Load the actual Facebook script
     const script = document.createElement('script');
     script.async = true;
     script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    
+    // Fire PageView again after script fully loads (ensures Pixel Helper detects it)
+    script.onload = () => {
+      console.log('%c[PIXEL DEBUG] 📄 fbevents.js loaded, firing PageView', 'background: green; color: white; font-size: 14px;');
+      window.fbq('track', 'PageView');
+    };
+    
     document.head.appendChild(script);
 
-    console.log('Pixel script loaded - Ready for events');
+    console.log('Pixel script injected - Ready for events');
     setIsLoaded(true);
   };
 
