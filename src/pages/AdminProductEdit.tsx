@@ -166,6 +166,7 @@ export default function AdminProductEdit() {
       queryClient.invalidateQueries({ queryKey: ["product", id] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
+      queryClient.invalidateQueries({ queryKey: ["public-checkout"] });
     },
     onError: () => {
       toast.error("Erro ao atualizar produto");
