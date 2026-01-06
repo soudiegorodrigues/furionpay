@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { startOfDay, endOfDay } from "date-fns";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCheckoutOffers } from "@/hooks/useCheckoutData";
@@ -88,7 +89,10 @@ const popupModels = [{
 const AdminCheckout = () => {
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
   const { user } = useAdminAuth();
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date())
+  });
   
   // Use React Query hook for all data - instant on second visit
   const {
