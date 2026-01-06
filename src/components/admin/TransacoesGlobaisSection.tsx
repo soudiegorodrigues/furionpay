@@ -16,7 +16,7 @@ import type { UTMData } from "@/lib/utmHelpers";
 interface Transaction {
   id: string;
   amount: number;
-  status: 'generated' | 'paid' | 'expired';
+  status: 'generated' | 'paid' | 'expired' | 'refunded';
   txid: string;
   donor_name: string;
   product_name: string | null;
@@ -31,7 +31,7 @@ interface Transaction {
 }
 
 type DateFilter = 'all' | 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year';
-type StatusFilter = 'all' | 'generated' | 'paid' | 'expired';
+type StatusFilter = 'all' | 'generated' | 'paid' | 'refunded';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -193,7 +193,9 @@ export const TransacoesGlobaisSection = () => {
       case 'paid':
         return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Pago</Badge>;
       case 'expired':
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Expirado</Badge>;
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Expirado</Badge>;
+      case 'refunded':
+        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Reembolsado</Badge>;
       default:
         return <Badge className="bg-red-500/80 text-white border-red-500/50">Gerado</Badge>;
     }
@@ -450,7 +452,7 @@ export const TransacoesGlobaisSection = () => {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="generated">Gerado</SelectItem>
                 <SelectItem value="paid">Pago</SelectItem>
-                <SelectItem value="expired">Expirado</SelectItem>
+                <SelectItem value="refunded">Reembolsado</SelectItem>
               </SelectContent>
             </Select>
 
