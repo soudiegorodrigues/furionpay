@@ -9,6 +9,7 @@ import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
 import { DonationPopupVakinha3 } from "@/components/DonationPopupVakinha3";
+import { DonationPopupInstituto2 } from "@/components/DonationPopupInstituto2";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
 import { trackOfferClick } from "@/lib/clickTracking";
@@ -196,6 +197,15 @@ const Index = () => {
           isOpen={true}
           onClose={() => {}}
           userId={userId || undefined}
+          utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
+        />
+      ) : popupModel === 'instituto2' ? (
+        <DonationPopupInstituto2
+          isOpen={true}
+          onClose={() => {}}
+          userId={userId || undefined}
+          fixedAmount={fixedAmount}
           utmParams={utmParams || undefined}
           offerId={offerId || undefined}
         />
