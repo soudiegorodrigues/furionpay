@@ -672,7 +672,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
     const estimatedNetGenerated = periodStats.total_amount_generated - periodStats.estimated_fees_generated;
     const ticketMedio = paid > 0 ? amountPaid / paid : 0;
     return {
-      generated: pendingCount,
+      generated: totalTransactions,
       paid,
       amountGenerated,
       amountPaid,
@@ -818,7 +818,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-2 sm:p-3">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Vendas pendentes</p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">Total Vendas</p>
               <QrCode className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary" />
             </div>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mt-1">{hideData ? "•••" : filteredStats.generated}</p>
