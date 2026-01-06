@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Heart, X, ArrowLeft, Clock, Copy, Lock } from "lucide-react";
-import institutoLogo from "@/assets/borboletas-logo.png";
+import institutoLogo from "@/assets/campanha-jade.png";
 import { Button } from "@/components/ui/button";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 
