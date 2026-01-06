@@ -301,8 +301,8 @@ export const DonationPopupInstituto2 = ({
             <div className="flex justify-center">
               <img 
                 src={institutoLogo} 
-                alt="Instituto Amor de Criança" 
-                className="h-28 sm:h-36 object-contain"
+                alt="Campanha Ajude a Jade" 
+                className="w-full max-w-xs sm:max-w-sm object-contain mx-auto"
               />
             </div>
             
