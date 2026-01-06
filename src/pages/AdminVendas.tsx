@@ -36,7 +36,7 @@ interface OrderBumpItem {
 interface Transaction {
   id: string;
   amount: number;
-  status: 'generated' | 'paid' | 'expired';
+  status: 'generated' | 'paid' | 'expired' | 'refunded';
   txid: string;
   donor_name: string;
   donor_email?: string;
@@ -69,7 +69,7 @@ interface PeriodStats {
 const ITEMS_PER_PAGE = 10;
 type DateFilter = 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year' | 'all';
 type PlatformFilter = 'all' | 'facebook' | 'google' | 'tiktok' | 'other';
-type StatusFilter = 'all' | 'paid' | 'generated' | 'expired';
+type StatusFilter = 'all' | 'paid' | 'generated' | 'expired' | 'refunded';
 
 const AdminVendas = () => {
   const { isOwner, hasPermission, loading: permissionsLoading } = usePermissions();
@@ -135,6 +135,8 @@ const AdminVendas = () => {
         return <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px] px-1.5 py-0">Pago</Badge>;
       case 'expired':
         return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">Expirado</Badge>;
+      case 'refunded':
+        return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[10px] px-1.5 py-0">Reembolsado</Badge>;
       default:
         return <Badge className="bg-red-500/80 text-white border-red-500/50 text-[10px] px-1.5 py-0">Gerado</Badge>;
     }
@@ -425,6 +427,7 @@ const AdminVendas = () => {
                 <SelectItem value="paid">Pago</SelectItem>
                 <SelectItem value="generated">Gerado</SelectItem>
                 <SelectItem value="expired">Expirado</SelectItem>
+                <SelectItem value="refunded">Reembolsado</SelectItem>
               </SelectContent>
             </Select>
 
