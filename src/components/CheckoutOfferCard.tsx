@@ -73,6 +73,7 @@ interface CheckoutOffer {
   popup_model: string;
   product_name: string;
   meta_pixel_ids: string[];
+  slug?: string;
   click_count?: number;
   created_at?: string;
 }
@@ -149,6 +150,8 @@ export const CheckoutOfferCard = ({
   const [popupModel, setPopupModel] = useState(offer.popup_model);
   const [productName, setProductName] = useState(offer.product_name);
   const [metaPixelIds, setMetaPixelIds] = useState<string[]>(offer.meta_pixel_ids || []);
+  const [slug, setSlug] = useState(offer.slug || '');
+  const [slugError, setSlugError] = useState<string | null>(null);
 
   // Sync local state with offer from backend when not editing
   useEffect(() => {
@@ -158,8 +161,40 @@ export const CheckoutOfferCard = ({
       setPopupModel(offer.popup_model);
       setProductName(offer.product_name);
       setMetaPixelIds(offer.meta_pixel_ids || []);
+      setSlug(offer.slug || '');
+      setSlugError(null);
     }
   }, [offer, isEditing]);
+
+  // Generate slug suggestion from name
+  const generateSlugFromName = (offerName: string): string => {
+    return offerName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 50);
+  };
+
+  // Validate slug format
+  const validateSlug = (value: string): string | null => {
+    if (!value) return null; // Empty is OK
+    if (value.length < 3) return 'Mínimo 3 caracteres';
+    if (value.length > 50) return 'Máximo 50 caracteres';
+    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(value)) {
+      return 'Use apenas letras minúsculas, números e hífens';
+    }
+    if (/--/.test(value)) return 'Não use hífens consecutivos';
+    return null;
+  };
+
+  // Handle slug change
+  const handleSlugChange = (value: string) => {
+    const normalized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setSlug(normalized);
+    setSlugError(validateSlug(normalized));
+  };
 
   const togglePixel = (pixelId: string) => {
     setMetaPixelIds(prev => 
@@ -170,22 +205,16 @@ export const CheckoutOfferCard = ({
   };
 
   const generateLink = () => {
-    // Include offer ID for click tracking
     const normalizedDomain = (domain || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
     const baseUrl = normalizedDomain ? `https://${normalizedDomain}` : window.location.origin;
-    let link = `${baseUrl}/?o=${offer.id}&u=${userId}&m=${popupModel}`;
-
     
-    if (metaPixelIds.length > 0) {
-      const pixelValues = metaPixelIds
-        .map(id => metaPixels.find(p => p.id === id)?.pixelId)
-        .filter(Boolean)
-        .join(',');
-      if (pixelValues) {
-        link += `&pixel=${pixelValues}`;
-      }
+    // Use short slug if available
+    if (slug && !slugError) {
+      return `${baseUrl}/c/${slug}`;
     }
-    return link;
+    
+    // Fallback to full URL (without pixel param - loaded from DB)
+    return `${baseUrl}/?o=${offer.id}&u=${userId}&m=${popupModel}`;
   };
 
   const copyLink = () => {
@@ -239,6 +268,16 @@ export const CheckoutOfferCard = ({
       return;
     }
 
+    // Validate slug if provided
+    if (slug && slugError) {
+      toast({
+        title: "Slug inválido",
+        description: slugError,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       await onSave({
@@ -248,6 +287,7 @@ export const CheckoutOfferCard = ({
         popup_model: popupModel,
         product_name: productName,
         meta_pixel_ids: metaPixelIds,
+        slug: slug || undefined,
       });
       setIsEditing(false);
     } finally {
@@ -270,6 +310,8 @@ export const CheckoutOfferCard = ({
     setPopupModel(offer.popup_model);
     setProductName(offer.product_name);
     setMetaPixelIds(offer.meta_pixel_ids || []);
+    setSlug(offer.slug || '');
+    setSlugError(null);
     setIsEditing(false);
     if (isNew) {
       onDelete(offer.id);
@@ -358,6 +400,40 @@ export const CheckoutOfferCard = ({
               onChange={(e) => setName(e.target.value)}
               disabled={!isEditing}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Link className="w-4 h-4" />
+              Slug do Link (opcional)
+            </Label>
+            <div className="flex gap-2">
+              <Input 
+                placeholder="ex: oferta-jade-2025" 
+                value={slug} 
+                onChange={(e) => handleSlugChange(e.target.value)}
+                disabled={!isEditing}
+                className={slugError ? 'border-destructive' : ''}
+              />
+              {isEditing && name && !slug && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleSlugChange(generateSlugFromName(name))}
+                >
+                  Sugerir
+                </Button>
+              )}
+            </div>
+            {slugError && (
+              <p className="text-xs text-destructive">{slugError}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {slug && !slugError 
+                ? `Link curto: ${(domain || window.location.host).replace(/^https?:\/\//, '')}/c/${slug}`
+                : 'Crie um link curto e fácil de lembrar (ex: jade2025)'}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

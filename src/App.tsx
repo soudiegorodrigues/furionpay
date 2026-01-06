@@ -29,6 +29,7 @@ const AdminColaboradores = lazy(() => import("./pages/AdminColaboradores"));
 const AdminVendas = lazy(() => import("./pages/AdminVendas"));
 const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
 const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
+const PublicCheckoutSlug = lazy(() => import("./pages/PublicCheckoutSlug"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 const Setup2FA = lazy(() => import("./pages/Setup2FA"));
 
@@ -167,6 +168,13 @@ const App = () => (
                   </Suspense>
                 } />
               </Route>
+              
+              {/* Short slug route for checkout offers - e.g. /c/jade2025 */}
+              <Route path="/c/:slug" element={
+                <Suspense fallback={<PageSkeleton />}>
+                  <PublicCheckoutSlug />
+                </Suspense>
+              } />
               
               {/* Public checkout route - simplified URL without /checkout prefix - MUST be before catch-all */}
               <Route path="/:offerCode" element={
