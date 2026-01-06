@@ -11,18 +11,57 @@ interface MFAInfo {
   unverifiedFactors: Factor[];
 }
 
+// Cache key for auth state in localStorage
+const AUTH_CACHE_KEY = 'furionpay_auth_cache';
+
+// Get cached auth state for instant initial render
+const getCachedAuthState = () => {
+  try {
+    const cached = localStorage.getItem(AUTH_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      // Cache expires after 30 minutes
+      if (Date.now() - parsed.timestamp < 30 * 60 * 1000) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
+};
+
+// Save auth state to cache
+const setCachedAuthState = (state: { isAdmin: boolean; isApproved: boolean; userId: string }) => {
+  try {
+    localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify({
+      ...state,
+      timestamp: Date.now()
+    }));
+  } catch {}
+};
+
+// Clear auth cache
+const clearAuthCache = () => {
+  try {
+    localStorage.removeItem(AUTH_CACHE_KEY);
+  } catch {}
+};
+
 export const useAdminAuth = () => {
+  const cachedState = getCachedAuthState();
+  
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [adminLoading, setAdminLoading] = useState(true);
-  const [approvedLoading, setApprovedLoading] = useState(true);
+  // Start with false loading if we have cache (instant render)
+  const [loading, setLoading] = useState(!cachedState);
+  const [adminLoading, setAdminLoading] = useState(!cachedState);
+  const [approvedLoading, setApprovedLoading] = useState(!cachedState);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(cachedState?.isAdmin ?? false);
+  const [isApproved, setIsApproved] = useState(cachedState?.isApproved ?? false);
   const [mfaInfo, setMfaInfo] = useState<MFAInfo | null>(null);
 
   const signOut = useCallback(async () => {
+    clearAuthCache();
     const { error } = await supabase.auth.signOut();
     return { error };
   }, []);
@@ -229,10 +268,18 @@ export const useAdminAuth = () => {
         // Check if user is blocked, admin, and approved when they sign in - run in parallel
         if (event === 'SIGNED_IN' && session?.user) {
           checkIfBlocked();
-          Promise.all([checkIfAdmin(), checkIfApproved(), checkMFAStatus()]);
+          Promise.all([checkIfAdmin(), checkIfApproved(), checkMFAStatus()]).then(([admin, approved]) => {
+            // Cache the auth state after successful checks
+            setCachedAuthState({
+              isAdmin: admin,
+              isApproved: approved,
+              userId: session.user.id
+            });
+          });
         }
         
         if (event === 'SIGNED_OUT') {
+          clearAuthCache();
           setIsAdmin(false);
           setIsApproved(false);
           setAdminLoading(false);
@@ -252,12 +299,19 @@ export const useAdminAuth = () => {
       if (session?.user) {
         checkIfBlocked();
         // Run admin, approved, and MFA checks in parallel
-        await Promise.all([
+        const [admin, approved] = await Promise.all([
           checkIfAdmin(),
           checkIfApproved(),
           checkMFAStatus()
         ]);
+        // Update cache with fresh data
+        setCachedAuthState({
+          isAdmin: admin,
+          isApproved: approved,
+          userId: session.user.id
+        });
       } else {
+        clearAuthCache();
         setIsAdmin(false);
         setIsApproved(false);
         setAdminLoading(false);

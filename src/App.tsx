@@ -34,12 +34,12 @@ const PublicCheckout = lazy(() => import("./pages/PublicCheckout"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs"));
 const Setup2FA = lazy(() => import("./pages/Setup2FA"));
 
-// Optimized QueryClient with caching
+// Optimized QueryClient with aggressive caching for instant tab-return experience
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes - data stays fresh
-      gcTime: 1000 * 60 * 10, // 10 minutes - garbage collection time
+      staleTime: 1000 * 60 * 10, // 10 minutes - data stays fresh longer
+      gcTime: 1000 * 60 * 30, // 30 minutes - garbage collection time
       refetchOnWindowFocus: false, // Don't refetch on tab focus
       retry: 1, // Only retry once on failure
       refetchOnMount: false, // Don't refetch if data exists
