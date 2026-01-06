@@ -319,15 +319,15 @@ const AdminCheckout = () => {
                       <div className="grid grid-cols-3 gap-2 text-sm">
                         <div className="bg-muted/50 rounded-lg p-2 text-center">
                           <div className="font-semibold text-blue-500 text-sm">{stats?.total_generated || 0}</div>
-                          <div className="text-xs text-muted-foreground">Gerados</div>
+                          <div className="text-xs text-muted-foreground">PIX Gerado</div>
                         </div>
                         <div className="bg-muted/50 rounded-lg p-2 text-center">
                           <div className="font-semibold text-green-500 text-sm">{stats?.total_paid || 0}</div>
-                          <div className="text-xs text-muted-foreground">Pagos</div>
+                          <div className="text-xs text-muted-foreground">PIX Pago</div>
                         </div>
                         <div className="bg-muted/50 rounded-lg p-2 text-center">
                           <div className="font-semibold text-amber-500 text-sm">{stats?.conversion_rate || 0}%</div>
-                          <div className="text-xs text-muted-foreground">Conversão</div>
+                          <div className="text-xs text-muted-foreground">Taxa%</div>
                         </div>
                       </div>
                       
