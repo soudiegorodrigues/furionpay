@@ -884,6 +884,7 @@ async function callAcquirer(
     fingerprint?: string;
     clientIp?: string;
     orderBumps?: OrderBumpData[];
+    offerId?: string;
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string }> {
   
@@ -922,6 +923,7 @@ async function callAcquirer(
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
           orderBumps: params.orderBumps,
+          offerId: params.offerId,
         }),
       });
       
@@ -959,6 +961,7 @@ async function callAcquirer(
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
           orderBumps: params.orderBumps,
+          offerId: params.offerId,
         }),
       });
       
@@ -996,6 +999,7 @@ async function callAcquirer(
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
           orderBumps: params.orderBumps,
+          offerId: params.offerId,
         }),
       });
       
@@ -1034,6 +1038,7 @@ async function callAcquirer(
           fingerprint: params.fingerprint,
           clientIp: params.clientIp,
           orderBumps: params.orderBumps,
+          offerId: params.offerId,
         }),
       });
       
@@ -1086,6 +1091,7 @@ async function generatePixWithRetry(
     fingerprint?: string;
     clientIp?: string;
     orderBumps?: OrderBumpData[];
+    offerId?: string;
   }
 ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; acquirerUsed?: string }> {
   
@@ -1349,7 +1355,8 @@ serve(async (req) => {
         feeConfig,
         fingerprint,
         clientIp,
-        orderBumps
+        orderBumps,
+        offerId
       });
       
       if (result.success) {
@@ -1407,7 +1414,8 @@ serve(async (req) => {
       productName,
       feeConfig,
       fingerprint,
-      clientIp
+      clientIp,
+      offerId
     });
 
     if (result.success) {

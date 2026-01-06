@@ -110,6 +110,7 @@ interface GeneratePixRequest {
   fingerprint?: string;
   clientIp?: string;
   orderBumps?: OrderBumpData[];
+  offerId?: string;
 }
 
 interface FeeConfig {
@@ -410,7 +411,8 @@ async function logPixGenerated(
   donorCpf?: string,
   donorBirthdate?: string,
   donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; },
-  orderBumps?: OrderBumpData[]
+  orderBumps?: OrderBumpData[],
+  offerId?: string
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -439,6 +441,7 @@ async function logPixGenerated(
       p_donor_city: donorAddress?.city || null,
       p_donor_state: donorAddress?.state || null,
       p_order_bumps: orderBumps && orderBumps.length > 0 ? orderBumps : null,
+      p_offer_id: offerId || null,
     });
 
     if (error) {
@@ -540,7 +543,7 @@ serve(async (req) => {
   const requestStartTime = Date.now();
 
   try {
-    const { amount, donorName, donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp, orderBumps } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp, orderBumps, offerId } = await req.json() as GeneratePixRequest;
 
     console.log('=== VALORION PIX GENERATION START ===');
     console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}, HealthCheck: ${healthCheck}, IP: ${clientIp}`);
@@ -731,7 +734,8 @@ serve(async (req) => {
         donorCpf,
         donorBirthdate,
         donorAddress,
-        orderBumps
+        orderBumps,
+        offerId
       );
     } else {
       console.log('[VALORION] Health check mode - skipping transaction log');
