@@ -1434,6 +1434,7 @@ export type Database = {
           fingerprint_hash: string | null
           id: string
           is_manual_approval: boolean | null
+          offer_id: string | null
           order_bumps: Json | null
           paid_at: string | null
           paid_date_brazil: string | null
@@ -1471,6 +1472,7 @@ export type Database = {
           fingerprint_hash?: string | null
           id?: string
           is_manual_approval?: boolean | null
+          offer_id?: string | null
           order_bumps?: Json | null
           paid_at?: string | null
           paid_date_brazil?: string | null
@@ -1508,6 +1510,7 @@ export type Database = {
           fingerprint_hash?: string | null
           id?: string
           is_manual_approval?: boolean | null
+          offer_id?: string | null
           order_bumps?: Json | null
           paid_at?: string | null
           paid_date_brazil?: string | null
@@ -1520,7 +1523,15 @@ export type Database = {
           user_id?: string
           utm_data?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pix_transactions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pix_transactions_backup: {
         Row: {
@@ -3121,6 +3132,15 @@ export type Database = {
         Returns: {
           clicks: number
           date: string
+        }[]
+      }
+      get_offer_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          conversion_rate: number
+          offer_id: string
+          total_generated: number
+          total_paid: number
         }[]
       }
       get_pending_reward_requests: {

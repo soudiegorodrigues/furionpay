@@ -79,6 +79,7 @@ interface GeneratePixRequest {
   popupModel?: string;
   fingerprint?: string;
   productName?: string;
+  offerId?: string;
   utmParams?: {
     utm_source?: string;
     utm_medium?: string;
@@ -774,12 +775,13 @@ async function logPixGenerated(
   fingerprintHash?: string,
   clientIp?: string,
   donorEmail?: string,
-  customerData?: CustomerData
+  customerData?: CustomerData,
+  offerId?: string
 ): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     
-    // Insert with fingerprint, IP and customer data
+    // Insert with fingerprint, IP, customer data, and offer_id
     const { data, error } = await supabase
       .from('pix_transactions')
       .insert({
@@ -808,6 +810,7 @@ async function logPixGenerated(
         acquirer,
         fingerprint_hash: fingerprintHash || null,
         client_ip: clientIp || null,
+        offer_id: offerId || null,
       })
       .select('id')
       .single();
@@ -816,7 +819,7 @@ async function logPixGenerated(
       console.error('Error logging PIX transaction:', error);
       return null;
     } else {
-      console.log('PIX transaction logged with ID:', data.id);
+      console.log('PIX transaction logged with ID:', data.id, 'Offer ID:', offerId || 'none');
       return data.id as string;
     }
   } catch (err) {
@@ -1239,7 +1242,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, customerName, customerEmail, customerDocument, customerPhone, customerCpf, customerBirthdate, customerAddress, utmParams, userId, popupModel, fingerprint, productName: requestProductName, orderBumps }: GeneratePixRequest = await req.json();
+    const { amount, customerName, customerEmail, customerDocument, customerPhone, customerCpf, customerBirthdate, customerAddress, utmParams, userId, popupModel, fingerprint, productName: requestProductName, orderBumps, offerId }: GeneratePixRequest = await req.json();
     
     console.log('Order Bumps received:', orderBumps ? JSON.stringify(orderBumps) : 'none');
     

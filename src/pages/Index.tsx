@@ -8,6 +8,7 @@ import { DonationPopupHot } from "@/components/DonationPopupHot";
 import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
+import { DonationPopupVakinha3 } from "@/components/DonationPopupVakinha3";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
 import { trackOfferClick } from "@/lib/clickTracking";
@@ -137,6 +138,7 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       ) : popupModel === 'clean' ? (
         <DonationPopupClean
@@ -144,6 +146,7 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       ) : popupModel === 'direct' ? (
         <DonationPopupDirect
@@ -152,6 +155,7 @@ const Index = () => {
           userId={userId || undefined}
           fixedAmount={fixedAmount}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       ) : popupModel === 'hot' ? (
         <DonationPopupHot
@@ -160,6 +164,7 @@ const Index = () => {
           userId={userId || undefined}
           fixedAmount={fixedAmount}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       ) : popupModel === 'landing' ? (
         <DonationPopupLanding
@@ -167,6 +172,7 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       ) : popupModel === 'instituto' ? (
         <DonationPopupInstituto
@@ -175,6 +181,7 @@ const Index = () => {
           userId={userId || undefined}
           fixedAmount={fixedAmount}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       ) : popupModel === 'vakinha2' ? (
         <DonationPopupVakinha2
@@ -182,6 +189,15 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
+        />
+      ) : popupModel === 'vakinha3' ? (
+        <DonationPopupVakinha3
+          isOpen={true}
+          onClose={() => {}}
+          userId={userId || undefined}
+          utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       ) : (
         <DonationPopup
@@ -189,6 +205,7 @@ const Index = () => {
           onClose={() => {}}
           userId={userId || undefined}
           utmParams={utmParams || undefined}
+          offerId={offerId || undefined}
         />
       )}
     </div>

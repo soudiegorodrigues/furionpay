@@ -16,6 +16,7 @@ interface DonationPopupCleanProps {
   userId?: string;
   showCloseButton?: boolean;
   utmParams?: UTMParams;
+  offerId?: string;
 }
 
 const DONATION_AMOUNTS = [
@@ -44,7 +45,8 @@ export const DonationPopupClean = ({
   recipientName = "Davizinho",
   userId,
   showCloseButton = false,
-  utmParams: propUtmParams
+  utmParams: propUtmParams,
+  offerId,
 }: DonationPopupCleanProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(30);
   const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
@@ -143,6 +145,7 @@ export const DonationPopupClean = ({
           utmParams: utmParams,
           userId: userId,
           popupModel: 'clean',
+          offerId: offerId,
         },
       });
 

@@ -21,6 +21,7 @@ interface DonationPopupVakinha3Props {
   showCloseButton?: boolean;
   isPreview?: boolean;
   utmParams?: UTMParams;
+  offerId?: string;
 }
 
 const DONATION_AMOUNTS: {
@@ -77,7 +78,8 @@ export const DonationPopupVakinha3 = ({
   userId,
   showCloseButton = false,
   isPreview = false,
-  utmParams: propUtmParams
+  utmParams: propUtmParams,
+  offerId,
 }: DonationPopupVakinha3Props) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedBoosts, setSelectedBoosts] = useState<string[]>([]);
@@ -190,7 +192,8 @@ export const DonationPopupVakinha3 = ({
             utmParams: utmParams,
             userId: userId,
             popupModel: 'vakinha3',
-            fingerprint
+            fingerprint,
+            offerId: offerId,
           }
         });
         

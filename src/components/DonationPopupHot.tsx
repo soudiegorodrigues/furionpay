@@ -15,6 +15,7 @@ interface DonationPopupHotProps {
   fixedAmount?: number;
   showCloseButton?: boolean;
   utmParams?: UTMParams;
+  offerId?: string;
 }
 
 type Step = "email" | "loading" | "pix";
@@ -25,7 +26,8 @@ export const DonationPopupHot = ({
   userId,
   fixedAmount = 19.90,
   showCloseButton = false,
-  utmParams: propUtmParams
+  utmParams: propUtmParams,
+  offerId,
 }: DonationPopupHotProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -163,6 +165,7 @@ export const DonationPopupHot = ({
           customerEmail: email,
           popupModel: 'hot',
           fingerprint,
+          offerId: offerId,
         },
       });
 
