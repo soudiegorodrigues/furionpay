@@ -19,6 +19,7 @@ import { DonationPopupLanding } from "@/components/DonationPopupLanding";
 import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
 import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
 import { DonationPopupVakinha3 } from "@/components/DonationPopupVakinha3";
+import { DonationPopupInstituto2 } from "@/components/DonationPopupInstituto2";
 import { CheckoutOfferCard } from "@/components/CheckoutOfferCard";
 
 
@@ -75,6 +76,11 @@ const popupModels = [{
   id: "vakinha3",
   name: "Vakinha 3",
   description: "Modelo baseado no Vakinha 2",
+  hasDynamicAmount: false
+}, {
+  id: "instituto2",
+  name: "Instituto 2",
+  description: "Modelo institucional alternativo",
   hasDynamicAmount: false
 }];
 
@@ -391,6 +397,16 @@ const AdminCheckout = () => {
           <DialogTitle className="sr-only">Preview Modelo Vakinha 3</DialogTitle>
           <div className="relative">
             <DonationPopupVakinha3 isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={false} isPreview={true} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Instituto2 - com Dialog igual aos outros */}
+      <Dialog open={previewModel === 'instituto2'} onOpenChange={open => !open && setPreviewModel(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-auto p-0">
+          <DialogTitle className="sr-only">Preview Modelo Instituto 2</DialogTitle>
+          <div className="relative">
+            <DonationPopupInstituto2 isOpen={true} onClose={() => setPreviewModel(null)} userId={user?.id} showCloseButton={false} isPreview={true} />
           </div>
         </DialogContent>
       </Dialog>
