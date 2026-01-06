@@ -161,12 +161,14 @@ export default function PublicCheckout() {
         crosssell_url: offerRow.crosssell_url,
       };
       
-      // Map to Product format
+      // Map to Product format - add cache busting to image URL
       const product: Product = {
         id: offerRow.product_id,
         name: offerRow.product_name,
         description: offerRow.product_description,
-        image_url: offerRow.product_image_url,
+        image_url: offerRow.product_image_url 
+          ? `${offerRow.product_image_url.split('?')[0]}?t=${Date.now()}`
+          : null,
         price: offerRow.product_price,
         product_code: offerRow.product_code,
         is_active: true,
@@ -251,7 +253,7 @@ export default function PublicCheckout() {
       return { offer, product, config, testimonials, pixelConfig, orderBumps, banners };
     },
     enabled: !!offerCode,
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes (reduces duplicate requests)
+    staleTime: 1000 * 30, // Cache for 30 seconds (ensures fresh product images)
     gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
   });
 
