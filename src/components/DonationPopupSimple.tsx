@@ -19,6 +19,7 @@ interface DonationPopupSimpleProps {
   userId?: string;
   showCloseButton?: boolean;
   utmParams?: UTMParams;
+  offerId?: string;
 }
 
 const DONATION_AMOUNTS = [
@@ -46,7 +47,8 @@ export const DonationPopupSimple = ({
   recipientName = "Davizinho",
   userId,
   showCloseButton = false,
-  utmParams: propUtmParams
+  utmParams: propUtmParams,
+  offerId,
 }: DonationPopupSimpleProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [step, setStep] = useState<Step>("select");
@@ -111,6 +113,7 @@ export const DonationPopupSimple = ({
           userId: userId,
           popupModel: 'simple',
           fingerprint,
+          offerId: offerId,
         },
       });
 

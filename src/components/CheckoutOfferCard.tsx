@@ -103,6 +103,13 @@ interface PopupModelStats {
   conversion_rate: number;
 }
 
+interface OfferStats {
+  offer_id: string;
+  total_generated: number;
+  total_paid: number;
+  conversion_rate: number;
+}
+
 interface CheckoutOfferCardProps {
   offer: CheckoutOffer;
   userId: string;
@@ -110,6 +117,7 @@ interface CheckoutOfferCardProps {
   metaPixels: MetaPixel[];
   popupModels: PopupModel[];
   popupStats?: PopupModelStats[];
+  offerStats?: OfferStats;
   onSave: (offer: CheckoutOffer) => Promise<void>;
   onDelete: (offerId: string) => Promise<void>;
   isNew?: boolean;
@@ -122,12 +130,13 @@ export const CheckoutOfferCard = ({
   metaPixels,
   popupModels,
   popupStats = [],
+  offerStats,
   onSave,
   onDelete,
   isNew = false,
 }: CheckoutOfferCardProps) => {
-  // Get stats for this offer's popup model
-  const stats = popupStats.find(s => s.popup_model === offer.popup_model);
+  // Use offer-specific stats if available, fallback to popup model stats
+  const stats = offerStats || popupStats.find(s => s.popup_model === offer.popup_model);
   const [isEditing, setIsEditing] = useState(isNew);
   const [isExpanded, setIsExpanded] = useState(isNew);
   const [isSaving, setIsSaving] = useState(false);

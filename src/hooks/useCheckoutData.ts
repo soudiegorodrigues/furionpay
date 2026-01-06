@@ -32,6 +32,13 @@ interface PopupModelStats {
   conversion_rate: number;
 }
 
+interface OfferStats {
+  offer_id: string;
+  total_generated: number;
+  total_paid: number;
+  conversion_rate: number;
+}
+
 // Fetch user settings and parse meta pixels
 async function fetchUserSettings() {
   const { data, error } = await supabase.rpc('get_user_settings');
@@ -151,6 +158,18 @@ export function useCheckoutOffers(userId: string | undefined) {
     gcTime: 5 * 60 * 1000,
   });
 
+  const offerStatsQuery = useQuery({
+    queryKey: ['offer_stats', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_offer_stats', { p_user_id: userId });
+      if (error) throw error;
+      return (data || []) as OfferStats[];
+    },
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: async ({ offer, isNew }: { offer: CheckoutOffer; isNew: boolean }) => {
@@ -233,6 +252,7 @@ export function useCheckoutOffers(userId: string | undefined) {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['checkout_offers', userId] }),
       queryClient.invalidateQueries({ queryKey: ['popup_model_stats', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['offer_stats', userId] }),
       queryClient.invalidateQueries({ queryKey: ['offer_clicks_chart', userId] }),
     ]);
   };
@@ -243,11 +263,12 @@ export function useCheckoutOffers(userId: string | undefined) {
     metaPixels: settingsQuery.data || [],
     availableDomains: domainsQuery.data || [],
     popupStats: statsQuery.data || [],
+    offerStats: offerStatsQuery.data || [],
     
     // Loading states - offers are the priority
     isLoadingOffers: settingsQuery.isLoading || !offersQuery.isFetched,
     isLoadingExtras: domainsQuery.isLoading || statsQuery.isLoading,
-    isRefetching: offersQuery.isRefetching || statsQuery.isRefetching,
+    isRefetching: offersQuery.isRefetching || statsQuery.isRefetching || offerStatsQuery.isRefetching,
     
     // Last fetched time
     dataUpdatedAt: offersQuery.dataUpdatedAt,

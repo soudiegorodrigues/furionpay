@@ -18,6 +18,7 @@ interface DonationPopupProps {
   userId?: string;
   showCloseButton?: boolean;
   utmParams?: UTMParams;
+  offerId?: string;
 }
 
 const BOOST_OPTIONS = [
@@ -37,7 +38,8 @@ export const DonationPopup = ({
   recipientName = "Davizinho",
   userId,
   showCloseButton = false,
-  utmParams: propUtmParams
+  utmParams: propUtmParams,
+  offerId,
 }: DonationPopupProps) => {
   const [customAmount, setCustomAmount] = useState<string>("");
   const [selectedBoosts, setSelectedBoosts] = useState<number[]>([]);
@@ -122,6 +124,7 @@ export const DonationPopup = ({
           utmParams: utmParams,
           userId: userId,
           popupModel: 'boost',
+          offerId: offerId,
         },
       });
 

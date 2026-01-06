@@ -29,6 +29,7 @@ interface DonationPopupInstitutoProps {
   fixedAmount?: number;
   isPreview?: boolean;
   utmParams?: UTMParams;
+  offerId?: string;
 }
 
 const DONATION_AMOUNTS = [
@@ -55,6 +56,7 @@ export const DonationPopupInstituto = ({
   fixedAmount,
   isPreview = false,
   utmParams: propUtmParams,
+  offerId,
 }: DonationPopupInstitutoProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [step, setStep] = useState<Step>("select");
@@ -203,6 +205,7 @@ export const DonationPopupInstituto = ({
           userId: userId,
           popupModel: 'instituto',
           fingerprint,
+          offerId: offerId,
         },
       });
 

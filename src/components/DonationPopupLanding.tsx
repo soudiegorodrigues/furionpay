@@ -22,6 +22,7 @@ interface DonationPopupLandingProps {
   showCloseButton?: boolean;
   isPreview?: boolean;
   utmParams?: UTMParams;
+  offerId?: string;
 }
 
 const DONATION_AMOUNTS: { amount: number; badge?: string }[] = [
@@ -51,6 +52,7 @@ export const DonationPopupLanding = ({
   showCloseButton = false,
   isPreview = false,
   utmParams: propUtmParams,
+  offerId,
 }: DonationPopupLandingProps) => {
   const [customAmount, setCustomAmount] = useState<string>("0,00");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -181,6 +183,7 @@ export const DonationPopupLanding = ({
           userId: userId,
           popupModel: 'landing',
           fingerprint,
+          offerId: offerId,
         },
       });
 
