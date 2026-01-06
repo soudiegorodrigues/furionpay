@@ -1,5 +1,5 @@
 import * as React from "react"
-import { format, startOfDay, startOfMonth, startOfYear, endOfDay } from "date-fns"
+import { format, startOfDay, startOfMonth, startOfYear, endOfDay, subDays } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Calendar as CalendarIcon, X } from "lucide-react"
 import type { DateRange } from "react-day-picker"
@@ -30,7 +30,7 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false)
 
-  const handlePreset = (preset: 'today' | 'month' | 'year') => {
+  const handlePreset = (preset: 'today' | 'yesterday' | '7days' | 'month' | 'year') => {
     const now = new Date()
     let from: Date
     let to: Date = endOfDay(now)
@@ -38,6 +38,13 @@ export function DateRangePicker({
     switch (preset) {
       case 'today':
         from = startOfDay(now)
+        break
+      case 'yesterday':
+        from = startOfDay(subDays(now, 1))
+        to = endOfDay(subDays(now, 1))
+        break
+      case '7days':
+        from = startOfDay(subDays(now, 6))
         break
       case 'month':
         from = startOfMonth(now)
@@ -98,6 +105,22 @@ export function DateRangePicker({
               className="text-xs h-8"
             >
               Hoje
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePreset('yesterday')}
+              className="text-xs h-8"
+            >
+              Ontem
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePreset('7days')}
+              className="text-xs h-8"
+            >
+              7 Dias
             </Button>
             <Button
               variant="outline"
