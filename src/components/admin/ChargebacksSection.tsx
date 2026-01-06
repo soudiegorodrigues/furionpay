@@ -90,7 +90,8 @@ export function ChargebacksSection() {
     client_email: "",
     reason: "",
     notes: "",
-    user_id: ""
+    user_id: "",
+    pix_transaction_id: ""
   });
 
   // Fetch chargebacks
@@ -124,9 +125,51 @@ export function ChargebacksSection() {
     enabled: isAdmin
   });
 
+  // Fetch paid transactions for linking
+  const { data: paidTransactions } = useQuery({
+    queryKey: ["paid-transactions-for-refund", newChargeback.user_id || effectiveUserId, isAdmin],
+    queryFn: async () => {
+      const targetUserId = isAdmin && newChargeback.user_id ? newChargeback.user_id : effectiveUserId;
+      
+      let query = supabase
+        .from("pix_transactions")
+        .select("id, txid, donor_name, donor_cpf, donor_email, amount, created_at, product_name, acquirer")
+        .eq("status", "paid")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      
+      if (targetUserId) {
+        query = query.eq("user_id", targetUserId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAddDialogOpen && !!effectiveUserId
+  });
+
   // Add chargeback mutation
   const addChargebackMutation = useMutation({
     mutationFn: async (data: typeof newChargeback) => {
+      // Se tem transação vinculada, usar RPC que atualiza status automaticamente
+      if (data.pix_transaction_id) {
+        const { data: result, error } = await supabase.rpc('mark_pix_refunded', {
+          p_transaction_id: data.pix_transaction_id,
+          p_external_id: data.external_id || null,
+          p_reason: data.reason || 'Reembolso manual',
+          p_notes: data.notes || null,
+          p_source: 'manual'
+        });
+        
+        if (error) throw error;
+        if (result && typeof result === 'object' && 'success' in result && !result.success) {
+          throw new Error((result as { error?: string }).error || 'Erro ao processar reembolso');
+        }
+        return result;
+      }
+      
+      // Se NÃO tem transação vinculada, inserir apenas o chargeback
       const { error } = await supabase.from("chargebacks").insert({
         external_id: data.external_id,
         acquirer: data.acquirer,
@@ -143,8 +186,10 @@ export function ChargebacksSection() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Chargeback registrado com sucesso!");
+      toast.success("Chargeback registrado com sucesso! Transação marcada como reembolsada.");
       queryClient.invalidateQueries({ queryKey: ["chargebacks"] });
+      queryClient.invalidateQueries({ queryKey: ["pix-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       setIsAddDialogOpen(false);
       resetForm();
     },
@@ -190,8 +235,31 @@ export function ChargebacksSection() {
       client_email: "",
       reason: "",
       notes: "",
-      user_id: ""
+      user_id: "",
+      pix_transaction_id: ""
     });
+  };
+
+  // Handler para selecionar transação
+  const handleTransactionSelect = (transactionId: string) => {
+    if (transactionId === "none") {
+      setNewChargeback(prev => ({ ...prev, pix_transaction_id: "" }));
+      return;
+    }
+    
+    const transaction = paidTransactions?.find(t => t.id === transactionId);
+    if (transaction) {
+      setNewChargeback(prev => ({
+        ...prev,
+        pix_transaction_id: transactionId,
+        amount: transaction.amount?.toString() || prev.amount,
+        client_name: transaction.donor_name || prev.client_name,
+        client_document: transaction.donor_cpf || prev.client_document,
+        client_email: transaction.donor_email || prev.client_email,
+        acquirer: transaction.acquirer || prev.acquirer,
+        external_id: transaction.txid || prev.external_id
+      }));
+    }
   };
 
   // Filter chargebacks
@@ -257,9 +325,36 @@ export function ChargebacksSection() {
               <DialogTitle>Registrar Chargeback Manual</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Campo de seleção de transação PIX */}
+              <div className="space-y-2">
+                <Label>Vincular a Transação PIX</Label>
+                <Select 
+                  value={newChargeback.pix_transaction_id || "none"}
+                  onValueChange={handleTransactionSelect}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma transação..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem vínculo com transação</SelectItem>
+                    {paidTransactions?.map((tx) => (
+                      <SelectItem key={tx.id} value={tx.id}>
+                        {tx.donor_name || 'Cliente'} - R$ {tx.amount?.toFixed(2)} - {tx.product_name || 'Produto'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {newChargeback.pix_transaction_id 
+                    ? "✓ Transação vinculada - status será alterado para 'refunded' automaticamente"
+                    : "Se vinculado, a contagem de vendas será atualizada automaticamente"
+                  }
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>ID Externo *</Label>
+                  <Label>ID Externo {!newChargeback.pix_transaction_id && '*'}</Label>
                   <Input 
                     placeholder="ID na adquirente"
                     value={newChargeback.external_id}
@@ -370,7 +465,7 @@ export function ChargebacksSection() {
               </Button>
               <Button 
                 onClick={() => addChargebackMutation.mutate(newChargeback)}
-                disabled={!newChargeback.external_id || !newChargeback.amount || addChargebackMutation.isPending}
+                disabled={(!newChargeback.external_id && !newChargeback.pix_transaction_id) || !newChargeback.amount || addChargebackMutation.isPending}
               >
                 {addChargebackMutation.isPending ? "Salvando..." : "Registrar"}
               </Button>
