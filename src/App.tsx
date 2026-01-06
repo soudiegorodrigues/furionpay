@@ -8,6 +8,8 @@ import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
 import { DomainGuard } from "@/components/DomainGuard";
+import { usePWAUpdate } from "@/hooks/usePWAUpdate";
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
 import NotFound from "./pages/NotFound";
@@ -56,14 +58,28 @@ const PageSkeleton = () => (
   </div>
 );
 
+const PWAWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { showUpdatePrompt, handleUpdate, dismissUpdate } = usePWAUpdate();
+  
+  return (
+    <>
+      {children}
+      {showUpdatePrompt && (
+        <PWAUpdatePrompt onUpdate={handleUpdate} onDismiss={dismissUpdate} />
+      )}
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <MetaPixelProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+          <PWAWrapper>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<DomainGuard><AdminAuth /></DomainGuard>} />
@@ -178,7 +194,8 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+            </BrowserRouter>
+          </PWAWrapper>
         </MetaPixelProvider>
       </TooltipProvider>
     </ThemeProvider>
