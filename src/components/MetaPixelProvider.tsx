@@ -45,6 +45,14 @@ interface AdvancedMatchingParams {
   client_user_agent?: string; // User agent
 }
 
+interface PixelDebugStatus {
+  pixelIds: string[];
+  scriptInjected: boolean;
+  scriptLoaded: boolean;
+  scriptError: string | null;
+  pageViewFired: boolean;
+}
+
 interface MetaPixelContextType {
   trackEvent: (eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => void;
   trackCustomEvent: (eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => void;
@@ -52,6 +60,7 @@ interface MetaPixelContextType {
   utmParams: UTMParams;
   setAdvancedMatching: (params: AdvancedMatchingParams) => void;
   initializeWithPixelIds: (pixelIds: string[]) => void;
+  debugStatus: PixelDebugStatus;
 }
 
 const MetaPixelContext = createContext<MetaPixelContextType>({
@@ -61,6 +70,7 @@ const MetaPixelContext = createContext<MetaPixelContextType>({
   utmParams: {},
   setAdvancedMatching: () => {},
   initializeWithPixelIds: () => {},
+  debugStatus: { pixelIds: [], scriptInjected: false, scriptLoaded: false, scriptError: null, pageViewFired: false },
 });
 
 export const usePixel = () => useContext(MetaPixelContext);
@@ -80,6 +90,13 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   const [advancedMatchingData, setAdvancedMatchingData] = useState<AdvancedMatchingParams>({
     country: 'br', // Default to Brazil
     client_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+  });
+  const [debugStatus, setDebugStatus] = useState<PixelDebugStatus>({
+    pixelIds: [],
+    scriptInjected: false,
+    scriptLoaded: false,
+    scriptError: null,
+    pageViewFired: false,
   });
 
   // Capture Meta cookies on mount and update advanced matching data
@@ -195,7 +212,11 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       return;
     }
 
+    const pixelIdsList = validPixels.map(p => p.pixelId);
     console.log('%c[PIXEL DEBUG] 🚀 Initializing pixels (forceInit=' + forceInit + ')', 'background: purple; color: white; font-size: 14px;', validPixels);
+    
+    // Update debug status
+    setDebugStatus(prev => ({ ...prev, pixelIds: pixelIdsList }));
 
     // Remove any existing fbq script to avoid conflicts
     const existingScript = document.querySelector('script[src*="fbevents.js"]');
@@ -234,10 +255,23 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     script.async = true;
     script.src = 'https://connect.facebook.net/en_US/fbevents.js';
     
+    // Update debug status - script injected
+    setDebugStatus(prev => ({ ...prev, scriptInjected: true }));
+    
     // Fire PageView again after script fully loads (ensures Pixel Helper detects it)
     script.onload = () => {
       console.log('%c[PIXEL DEBUG] 📄 fbevents.js loaded, firing PageView', 'background: green; color: white; font-size: 14px;');
       window.fbq('track', 'PageView');
+      setDebugStatus(prev => ({ ...prev, scriptLoaded: true, pageViewFired: true }));
+    };
+    
+    // Handle script load error (blocked by ad-blocker, CSP, etc.)
+    script.onerror = (error) => {
+      console.error('%c[PIXEL DEBUG] ❌ fbevents.js BLOCKED or failed to load!', 'background: red; color: white; font-size: 16px;', error);
+      setDebugStatus(prev => ({ 
+        ...prev, 
+        scriptError: 'Script blocked by ad-blocker, privacy extension, or network error'
+      }));
     };
     
     document.head.appendChild(script);
@@ -315,8 +349,50 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     }
   }, [utmParams, advancedMatchingData]);
 
+  // Check for debug mode
+  const showDebugPanel = typeof window !== 'undefined' && 
+    new URLSearchParams(window.location.search).get('debug_pixel') === '1';
+
   return (
-    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams, setAdvancedMatching, initializeWithPixelIds }}>
+    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams, setAdvancedMatching, initializeWithPixelIds, debugStatus }}>
+      {showDebugPanel && (
+        <div style={{
+          position: 'fixed',
+          top: 10,
+          right: 10,
+          background: 'rgba(0,0,0,0.9)',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: 8,
+          fontSize: 12,
+          fontFamily: 'monospace',
+          zIndex: 99999,
+          maxWidth: 320,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 14 }}>🔍 Pixel Debug</div>
+          <div style={{ marginBottom: 4 }}>
+            <strong>Pixel IDs:</strong> {debugStatus.pixelIds.length > 0 ? debugStatus.pixelIds.join(', ') : '(none)'}
+          </div>
+          <div style={{ marginBottom: 4 }}>
+            <strong>Script Injected:</strong> {debugStatus.scriptInjected ? '✅' : '❌'}
+          </div>
+          <div style={{ marginBottom: 4 }}>
+            <strong>Script Loaded:</strong> {debugStatus.scriptLoaded ? '✅' : '❌'}
+          </div>
+          <div style={{ marginBottom: 4 }}>
+            <strong>PageView Fired:</strong> {debugStatus.pageViewFired ? '✅' : '❌'}
+          </div>
+          {debugStatus.scriptError && (
+            <div style={{ marginTop: 8, padding: 8, background: '#ff4444', borderRadius: 4 }}>
+              <strong>⚠️ Error:</strong> {debugStatus.scriptError}
+            </div>
+          )}
+          <div style={{ marginTop: 8, opacity: 0.7, fontSize: 10 }}>
+            Add ?debug_pixel=1 to URL to show this panel
+          </div>
+        </div>
+      )}
       {children}
     </MetaPixelContext.Provider>
   );
