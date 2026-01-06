@@ -130,14 +130,23 @@ const AdminDashboard = () => {
     month_paid: 0,
     month_amount_paid: 0
   });
-  const [periodStats, setPeriodStats] = useState<PeriodStats>({
-    total_generated: 0,
-    total_paid: 0,
-    total_expired: 0,
-    total_amount_generated: 0,
-    total_amount_paid: 0,
-    total_fees: 0,
-    estimated_fees_generated: 0
+  // Initialize periodStats from sessionStorage cache for instant rendering
+  const [periodStats, setPeriodStats] = useState<PeriodStats>(() => {
+    try {
+      const cached = sessionStorage.getItem('dashboard_period_stats');
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch {}
+    return {
+      total_generated: 0,
+      total_paid: 0,
+      total_expired: 0,
+      total_amount_generated: 0,
+      total_amount_paid: 0,
+      total_fees: 0,
+      estimated_fees_generated: 0
+    };
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
@@ -150,28 +159,71 @@ const AdminDashboard = () => {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [chartFilter, setChartFilter] = useState<ChartFilter>('today');
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
-  const [isBannerLoading, setIsBannerLoading] = useState(true);
-  const [isBannerImageLoaded, setIsBannerImageLoaded] = useState(false);
+  // Initialize banner from sessionStorage cache for instant display
+  const [bannerUrl, setBannerUrl] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem('dashboard_banner_url');
+    } catch {
+      return null;
+    }
+  });
+  const [isBannerLoading, setIsBannerLoading] = useState(() => {
+    // Only show loading if we don't have cached banner
+    return !sessionStorage.getItem('dashboard_banner_url');
+  });
+  const [isBannerImageLoaded, setIsBannerImageLoaded] = useState(() => {
+    // If we have cached URL, consider image as pre-loaded (browser cache will handle it)
+    return !!sessionStorage.getItem('dashboard_banner_url');
+  });
   const [hideData, setHideData] = useState(() => {
     return localStorage.getItem('dashboard_hide_data') === 'true';
   });
 
-  // Load banner IMMEDIATELY on mount - separate from other data
+  // Load banner IMMEDIATELY on mount with caching and preloading
   useEffect(() => {
+    const cachedUrl = sessionStorage.getItem('dashboard_banner_url');
+    
     const loadBanner = async () => {
       try {
         const { data, error } = await supabase.rpc('get_global_banner_url');
         if (!error && data) {
-          setBannerUrl(data);
+          // Save to cache
+          sessionStorage.setItem('dashboard_banner_url', data);
+          
+          // If no cached version, preload the image before showing
+          if (!cachedUrl) {
+            const img = new Image();
+            img.onload = () => {
+              setBannerUrl(data);
+              setIsBannerLoading(false);
+              setIsBannerImageLoaded(true);
+            };
+            img.onerror = () => {
+              setIsBannerLoading(false);
+            };
+            img.src = data;
+          } else if (cachedUrl !== data) {
+            // URL changed, update silently
+            setBannerUrl(data);
+          }
+        } else if (!cachedUrl) {
+          setIsBannerLoading(false);
         }
       } catch (e) {
         console.error('Error loading banner:', e);
-      } finally {
-        setIsBannerLoading(false);
+        if (!cachedUrl) {
+          setIsBannerLoading(false);
+        }
       }
     };
-    loadBanner();
+    
+    // If we have cache, we already set bannerUrl in useState init
+    // Just fetch in background to update cache
+    if (cachedUrl) {
+      loadBanner();
+    } else {
+      loadBanner();
+    }
   }, []);
 
   // Persist hide data preference
@@ -377,7 +429,13 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
 
   // Load period stats when dateFilter changes
   const loadPeriodStats = async (period: DateFilter) => {
-    setIsLoadingPeriodStats(true);
+    // Only show loading if we don't have cached data
+    const cacheKey = `dashboard_period_stats_${period}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (!cached) {
+      setIsLoadingPeriodStats(true);
+    }
+    
     try {
       const { data, error } = await supabase.rpc('get_user_stats_by_period', {
         p_period: period,
@@ -386,7 +444,12 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
       });
       if (error) throw error;
       if (data) {
-        setPeriodStats(data as unknown as PeriodStats);
+        const statsData = data as unknown as PeriodStats;
+        setPeriodStats(statsData);
+        // Cache the stats for this period
+        sessionStorage.setItem(cacheKey, JSON.stringify(statsData));
+        // Also update the generic cache for initial load
+        sessionStorage.setItem('dashboard_period_stats', JSON.stringify(statsData));
       }
     } catch (error) {
       console.error('Error loading period stats:', error);
@@ -395,9 +458,18 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
     }
   };
 
-  // Load period stats when dateFilter changes
+  // Load period stats when dateFilter changes - use cache for instant display
   useEffect(() => {
     if (isAuthenticated) {
+      // Immediately load cached data for this filter if available
+      const cacheKey = `dashboard_period_stats_${dateFilter}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          setPeriodStats(JSON.parse(cached));
+        } catch {}
+      }
+      // Then fetch fresh data from server
       loadPeriodStats(dateFilter);
     }
   }, [dateFilter, isAuthenticated]);
@@ -803,24 +875,18 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         </div>
       </div>
 
-      {/* Banner */}
-      {isBannerLoading ? (
-        <div className="rounded-lg overflow-hidden border border-border h-[100px] sm:h-[150px] lg:h-[200px] bg-muted animate-pulse" />
-      ) : bannerUrl ? (
+      {/* Banner - prioritize showing URL over loading state (no skeleton flicker) */}
+      {bannerUrl ? (
         <div className="rounded-lg overflow-hidden border border-border">
-          <div className={`relative ${!isBannerImageLoaded ? 'h-[100px] sm:h-[150px] lg:h-[200px] bg-muted animate-pulse' : ''}`}>
-            <img 
-              src={bannerUrl} 
-              alt="Banner do Dashboard" 
-              className={`w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px] transition-opacity duration-300 ${isBannerImageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setIsBannerImageLoaded(true)}
-              onError={e => {
-                (e.target as HTMLImageElement).style.display = 'none';
-                setIsBannerImageLoaded(true);
-              }}
-            />
-          </div>
+          <img 
+            src={bannerUrl} 
+            alt="Banner do Dashboard" 
+            className="w-full h-auto object-cover max-h-[100px] sm:max-h-[150px] lg:max-h-[200px]"
+            loading="eager"
+          />
         </div>
+      ) : isBannerLoading ? (
+        <div className="rounded-lg overflow-hidden border border-border h-[100px] sm:h-[150px] lg:h-[200px] bg-muted animate-pulse" />
       ) : null}
 
       {/* Stats Grid - Unified */}
