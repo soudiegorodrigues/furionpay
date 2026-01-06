@@ -483,6 +483,7 @@ export type Database = {
           name: string
           popup_model: string | null
           product_name: string | null
+          slug: string | null
           updated_at: string
           user_id: string
           video_url: string | null
@@ -496,6 +497,7 @@ export type Database = {
           name?: string
           popup_model?: string | null
           product_name?: string | null
+          slug?: string | null
           updated_at?: string
           user_id: string
           video_url?: string | null
@@ -509,6 +511,7 @@ export type Database = {
           name?: string
           popup_model?: string | null
           product_name?: string | null
+          slug?: string | null
           updated_at?: string
           user_id?: string
           video_url?: string | null
@@ -2971,6 +2974,19 @@ export type Database = {
           hour_brazil: number
           pagos: number
           valor_pago: number
+        }[]
+      }
+      get_checkout_offer_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          domain: string
+          id: string
+          meta_pixel_ids: string[]
+          name: string
+          popup_model: string
+          product_name: string
+          user_id: string
+          video_url: string
         }[]
       }
       get_db_performance_summary: { Args: never; Returns: Json }

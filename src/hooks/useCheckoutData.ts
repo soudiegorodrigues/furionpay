@@ -16,6 +16,7 @@ interface CheckoutOffer {
   popup_model: string;
   product_name: string;
   meta_pixel_ids: string[];
+  slug?: string;
   click_count?: number;
   created_at?: string;
 }
@@ -88,6 +89,7 @@ async function fetchOffers(validPixelIds: Set<string>) {
       popup_model: o.popup_model || 'landing',
       product_name: o.product_name || '',
       meta_pixel_ids: validIds,
+      slug: o.slug || undefined,
       click_count: o.click_count || 0,
       created_at: o.created_at
     });
@@ -193,7 +195,8 @@ export function useCheckoutOffers(userId: string | undefined, dateRange?: DateRa
             domain: offer.domain || null,
             popup_model: offer.popup_model,
             product_name: offer.product_name || null,
-            meta_pixel_ids: offer.meta_pixel_ids || []
+            meta_pixel_ids: offer.meta_pixel_ids || [],
+            slug: offer.slug || null
           })
           .select()
           .single();
@@ -207,7 +210,8 @@ export function useCheckoutOffers(userId: string | undefined, dateRange?: DateRa
             domain: offer.domain || null,
             popup_model: offer.popup_model,
             product_name: offer.product_name || null,
-            meta_pixel_ids: offer.meta_pixel_ids || []
+            meta_pixel_ids: offer.meta_pixel_ids || [],
+            slug: offer.slug || null
           })
           .eq('id', offer.id);
         if (error) throw error;
