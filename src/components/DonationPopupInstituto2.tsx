@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Heart, X, ArrowLeft, Clock, Copy, Lock } from "lucide-react";
-import institutoLogo from "@/assets/campanha-jade.png";
+import heroImage from "@/assets/hero-2.webp";
 import { Button } from "@/components/ui/button";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 
@@ -297,12 +297,12 @@ export const DonationPopupInstituto2 = ({
       <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
-            {/* Logo */}
-            <div className="flex justify-center">
+            {/* Hero Banner */}
+            <div className="w-full">
               <img 
-                src={institutoLogo} 
+                src={heroImage} 
                 alt="Campanha Ajude a Jade" 
-                className="w-full max-w-xs sm:max-w-sm object-contain mx-auto"
+                className="w-full h-auto object-cover rounded-lg"
               />
             </div>
             
