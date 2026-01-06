@@ -3593,7 +3593,7 @@ export type Database = {
               p_items_per_page?: number
               p_page?: number
               p_platform_filter?: string
-              p_search_query?: string
+              p_search?: string
               p_start_date?: string
               p_status_filter?: string
             }
@@ -3606,7 +3606,7 @@ export type Database = {
               p_items_per_page?: number
               p_page?: number
               p_platform_filter?: string
-              p_search?: string
+              p_search_query?: string
               p_start_date?: string
               p_status_filter?: string
             }
