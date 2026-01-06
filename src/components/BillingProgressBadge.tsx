@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useBillingProgress } from "@/hooks/useAuthSession";
 
 interface BillingProgressBadgeProps {
   userId?: string;
@@ -19,37 +18,7 @@ const formatCurrency = (value: number): string => {
 };
 
 export function BillingProgressBadge({ userId }: BillingProgressBadgeProps) {
-  const [currentAmount, setCurrentAmount] = useState<number>(0);
-  const [goalAmount, setGoalAmount] = useState<number>(1000000);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!userId) return;
-    
-    const loadData = async () => {
-      try {
-        // Load dashboard stats for current amount (net amount after fees) - using V2 optimized function
-        const { data: dashboardData } = await supabase.rpc('get_user_dashboard_v2');
-        if (dashboardData) {
-          const totalPaid = (dashboardData as any).total_amount_paid || 0;
-          setCurrentAmount(totalPaid);
-        }
-
-        // Load global billing goal set by admin
-        const { data: globalGoal } = await supabase.rpc('get_global_billing_goal');
-        if (globalGoal) {
-          setGoalAmount(globalGoal);
-        }
-      } catch (error) {
-        console.error('Error loading billing data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [userId]);
-
+  const { currentAmount, goalAmount, loading } = useBillingProgress(userId);
   const progressPercentage = Math.min((currentAmount / goalAmount) * 100, 100);
 
   if (loading) {

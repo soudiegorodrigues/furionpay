@@ -268,13 +268,13 @@ export const useAdminAuth = () => {
     return () => subscription.unsubscribe();
   }, [checkIfBlocked, checkIfAdmin, checkIfApproved, checkMFAStatus]);
 
-  // Periodically check if user is blocked (every 30 seconds)
+  // Periodically check if user is blocked (every 2 minutes - reduced from 30s)
   useEffect(() => {
     if (!session?.user) return;
     
     const interval = setInterval(() => {
       checkIfBlocked();
-    }, 30000);
+    }, 120000); // 2 minutos
     
     return () => clearInterval(interval);
   }, [session?.user, checkIfBlocked]);
