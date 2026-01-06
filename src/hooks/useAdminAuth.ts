@@ -16,6 +16,7 @@ export const useAdminAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [adminLoading, setAdminLoading] = useState(true);
+  const [approvedLoading, setApprovedLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
@@ -71,6 +72,7 @@ export const useAdminAuth = () => {
   }, []);
 
   const checkIfApproved = useCallback(async () => {
+    setApprovedLoading(true);
     try {
       const { data, error } = await supabase.rpc('check_user_approved' as any);
       
@@ -86,6 +88,8 @@ export const useAdminAuth = () => {
       console.error('Error in checkIfApproved:', err);
       setIsApproved(false);
       return false;
+    } finally {
+      setApprovedLoading(false);
     }
   }, []);
 
@@ -232,6 +236,7 @@ export const useAdminAuth = () => {
           setIsAdmin(false);
           setIsApproved(false);
           setAdminLoading(false);
+          setApprovedLoading(false);
           setMfaInfo(null);
         }
       }
@@ -256,6 +261,7 @@ export const useAdminAuth = () => {
         setIsAdmin(false);
         setIsApproved(false);
         setAdminLoading(false);
+        setApprovedLoading(false);
       }
     });
 
@@ -346,7 +352,7 @@ export const useAdminAuth = () => {
   return {
     user,
     session,
-    loading: loading || adminLoading,
+    loading: loading || adminLoading || approvedLoading,
     isBlocked,
     isAdmin,
     isApproved,
