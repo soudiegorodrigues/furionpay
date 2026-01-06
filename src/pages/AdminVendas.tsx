@@ -288,6 +288,47 @@ const AdminVendas = () => {
     }
   }, [dateFilter, statusFilter, platformFilter, isAuthenticated, loadPeriodStats]);
 
+  // Realtime subscription for transaction updates
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    console.log('[AdminVendas] Configurando realtime subscription...');
+    
+    const channel = supabase
+      .channel('seller-transactions-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pix_transactions'
+        },
+        (payload) => {
+          console.log('[AdminVendas] Realtime event:', payload.eventType, payload);
+          
+          // Reload transactions and stats when any change happens
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            toast({
+              title: "📥 Atualização",
+              description: payload.eventType === 'INSERT' 
+                ? "Nova transação recebida!" 
+                : "Transação atualizada!",
+            });
+            loadTransactions(false);
+            loadPeriodStats(dateFilter, statusFilter, platformFilter);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[AdminVendas] Realtime status:', status);
+      });
+
+    return () => {
+      console.log('[AdminVendas] Removendo realtime subscription...');
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, loadTransactions, loadPeriodStats, dateFilter, statusFilter, platformFilter, toast]);
+
   // Reset page when filters change (except page itself)
   useEffect(() => {
     setCurrentPage(1);
