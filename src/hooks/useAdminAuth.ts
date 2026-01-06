@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { User, Session, AuthenticatorAssuranceLevels, Factor } from '@supabase/supabase-js';
+import { useState, useCallback } from 'react';
+import { AuthenticatorAssuranceLevels, Factor } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthSession, useUserStatus } from './useAuthSession';
 
 interface MFAInfo {
   currentLevel: AuthenticatorAssuranceLevels | null;
@@ -12,14 +13,18 @@ interface MFAInfo {
 }
 
 export const useAdminAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [adminLoading, setAdminLoading] = useState(true);
-  const [approvedLoading, setApprovedLoading] = useState(true);
-  const [isBlocked, setIsBlocked] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
+  // Use cached session hook instead of local state
+  const { session, user, loading: sessionLoading } = useAuthSession();
+  
+  // Use cached user status hook (isBlocked, isAdmin, isApproved)
+  const { 
+    isBlocked, 
+    isAdmin, 
+    isApproved, 
+    loading: statusLoading,
+    refresh: refreshStatus 
+  } = useUserStatus(user?.id);
+  
   const [mfaInfo, setMfaInfo] = useState<MFAInfo | null>(null);
 
   const signOut = useCallback(async () => {
@@ -27,71 +32,21 @@ export const useAdminAuth = () => {
     return { error };
   }, []);
 
+  // Keep these for compatibility but they now just trigger cache refresh
   const checkIfBlocked = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.rpc('check_user_blocked' as any);
-      
-      if (error) {
-        console.error('Error checking blocked status:', error);
-        return false;
-      }
-      
-      if (data === true) {
-        setIsBlocked(true);
-        await signOut();
-        return true;
-      }
-      
-      return false;
-    } catch (err) {
-      console.error('Error in checkIfBlocked:', err);
-      return false;
-    }
-  }, [signOut]);
+    refreshStatus();
+    return isBlocked;
+  }, [refreshStatus, isBlocked]);
 
   const checkIfAdmin = useCallback(async () => {
-    setAdminLoading(true);
-    try {
-      const { data, error } = await supabase.rpc('is_admin_authenticated');
-      
-      if (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-        return false;
-      }
-      
-      setIsAdmin(data === true);
-      return data === true;
-    } catch (err) {
-      console.error('Error in checkIfAdmin:', err);
-      setIsAdmin(false);
-      return false;
-    } finally {
-      setAdminLoading(false);
-    }
-  }, []);
+    refreshStatus();
+    return isAdmin;
+  }, [refreshStatus, isAdmin]);
 
   const checkIfApproved = useCallback(async () => {
-    setApprovedLoading(true);
-    try {
-      const { data, error } = await supabase.rpc('check_user_approved' as any);
-      
-      if (error) {
-        console.error('Error checking approved status:', error);
-        setIsApproved(false);
-        return false;
-      }
-      
-      setIsApproved(data === true);
-      return data === true;
-    } catch (err) {
-      console.error('Error in checkIfApproved:', err);
-      setIsApproved(false);
-      return false;
-    } finally {
-      setApprovedLoading(false);
-    }
-  }, []);
+    refreshStatus();
+    return isApproved;
+  }, [refreshStatus, isApproved]);
 
   // Check MFA status
   const checkMFAStatus = useCallback(async (): Promise<MFAInfo | null> => {
@@ -218,66 +173,7 @@ export const useAdminAuth = () => {
     }
   }, [checkMFAStatus]);
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        // Check if user is blocked, admin, and approved when they sign in - run in parallel
-        if (event === 'SIGNED_IN' && session?.user) {
-          checkIfBlocked();
-          Promise.all([checkIfAdmin(), checkIfApproved(), checkMFAStatus()]);
-        }
-        
-        if (event === 'SIGNED_OUT') {
-          setIsAdmin(false);
-          setIsApproved(false);
-          setAdminLoading(false);
-          setApprovedLoading(false);
-          setMfaInfo(null);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      // Check if existing user is blocked, admin, and approved - run in parallel for faster loading
-      if (session?.user) {
-        checkIfBlocked();
-        // Run admin, approved, and MFA checks in parallel
-        await Promise.all([
-          checkIfAdmin(),
-          checkIfApproved(),
-          checkMFAStatus()
-        ]);
-      } else {
-        setIsAdmin(false);
-        setIsApproved(false);
-        setAdminLoading(false);
-        setApprovedLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [checkIfBlocked, checkIfAdmin, checkIfApproved, checkMFAStatus]);
-
-  // Periodically check if user is blocked (every 2 minutes - reduced from 30s)
-  useEffect(() => {
-    if (!session?.user) return;
-    
-    const interval = setInterval(() => {
-      checkIfBlocked();
-    }, 120000); // 2 minutos
-    
-    return () => clearInterval(interval);
-  }, [session?.user, checkIfBlocked]);
+  // MFA status is checked only when needed, not on every render
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -352,7 +248,7 @@ export const useAdminAuth = () => {
   return {
     user,
     session,
-    loading: loading || adminLoading || approvedLoading,
+    loading: sessionLoading || statusLoading,
     isBlocked,
     isAdmin,
     isApproved,
