@@ -299,15 +299,15 @@ export const CheckoutOfferCard = ({
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-xs">
                     <BarChart3 className="w-3 h-3" />
-                    {stats.total_generated} gerados
+                    {stats.total_generated} PIX gerado
                   </span>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs">
                     <CheckCircle className="w-3 h-3" />
-                    {stats.total_paid} vendas
+                    {stats.total_paid} PIX pago
                   </span>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs">
                     <TrendingUp className="w-3 h-3" />
-                    {stats.conversion_rate}%
+                    Taxa {stats.conversion_rate}%
                   </span>
                 </div>
               )}
