@@ -157,6 +157,23 @@ const AdminDashboard = () => {
     return localStorage.getItem('dashboard_hide_data') === 'true';
   });
 
+  // Load banner IMMEDIATELY on mount - separate from other data
+  useEffect(() => {
+    const loadBanner = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_global_banner_url');
+        if (!error && data) {
+          setBannerUrl(data);
+        }
+      } catch (e) {
+        console.error('Error loading banner:', e);
+      } finally {
+        setIsBannerLoading(false);
+      }
+    };
+    loadBanner();
+  }, []);
+
   // Persist hide data preference
   useEffect(() => {
     localStorage.setItem('dashboard_hide_data', String(hideData));
@@ -516,14 +533,14 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
       const uid = user?.id ?? (await supabase.auth.getUser()).data.user?.id;
 
       // PHASE 1: Load small/fast data FIRST (non-blocking for UI)
-      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult, bannerResult, rewardRequestsResult] = await Promise.all([
+      // Banner is loaded separately in useEffect for immediate display
+      const [userSettingsResult, statsResult, rewardsResult, defaultFeeResult, availableBalanceResult, profileResult, rewardRequestsResult] = await Promise.all([
         supabase.rpc('get_user_settings'), 
         supabase.rpc('get_user_dashboard_v2'), 
         supabase.from('rewards').select('id, name, threshold_amount, image_url').eq('is_active', true).order('threshold_amount', { ascending: true }), 
         supabase.from('fee_configs').select('pix_percentage, pix_fixed').eq('is_default', true).maybeSingle(), 
         supabase.rpc('get_user_available_balance'), 
         uid ? supabase.from('profiles').select('full_name').eq('id', uid).maybeSingle() : Promise.resolve({ data: null, error: null }), 
-        supabase.rpc('get_global_banner_url'),
         // Fetch reward_requests in the same Promise.all to avoid flash
         uid ? supabase.from('reward_requests').select('reward_id').eq('user_id', uid) : Promise.resolve({ data: null, error: null })
       ]);
@@ -552,13 +569,7 @@ ${redeemFormData.telefone ? `Tel: ${redeemFormData.telefone}` : ''}`.trim();
         setUserName(profileResult.data.full_name);
       }
 
-      // Set banner immediately from Promise.all result
-      if (!bannerResult.error && bannerResult.data) {
-        setBannerUrl(bannerResult.data);
-      }
-      setIsBannerLoading(false);
-
-      // Banner is now loaded in the main Promise.all above
+      // Banner is loaded separately in useEffect - no need to set here
 
       // Process settings and fee config
       let feeData = defaultFeeResult.data;
