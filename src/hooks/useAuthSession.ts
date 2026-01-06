@@ -41,11 +41,15 @@ export const useAuthSession = () => {
 // Hook para status do usuário (blocked, admin, approved) - CACHEADO
 export const useUserStatus = (userId: string | undefined) => {
   const queryClient = useQueryClient();
+  
+  // Use uma queryKey estável - sempre inclui userId (ou 'anonymous')
+  const stableUserId = userId || 'anonymous';
   const enabled = !!userId;
 
   const blockedQuery = useQuery({
-    queryKey: ['auth', 'blocked', userId ?? 'none'],
+    queryKey: ['auth', 'blocked', stableUserId],
     queryFn: async () => {
+      if (!userId) return false;
       const { data, error } = await supabase.rpc('check_user_blocked' as any);
       if (error) throw error;
       return data === true;
@@ -53,11 +57,13 @@ export const useUserStatus = (userId: string | undefined) => {
     enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 
   const adminQuery = useQuery({
-    queryKey: ['auth', 'admin', userId ?? 'none'],
+    queryKey: ['auth', 'admin', stableUserId],
     queryFn: async () => {
+      if (!userId) return false;
       const { data, error } = await supabase.rpc('is_admin_authenticated');
       if (error) throw error;
       return data === true;
@@ -65,11 +71,13 @@ export const useUserStatus = (userId: string | undefined) => {
     enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 
   const approvedQuery = useQuery({
-    queryKey: ['auth', 'approved', userId ?? 'none'],
+    queryKey: ['auth', 'approved', stableUserId],
     queryFn: async () => {
+      if (!userId) return false;
       const { data, error } = await supabase.rpc('check_user_approved' as any);
       if (error) throw error;
       return data === true;
@@ -77,6 +85,7 @@ export const useUserStatus = (userId: string | undefined) => {
     enabled,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 
   const refresh = useCallback(() => {
@@ -86,20 +95,29 @@ export const useUserStatus = (userId: string | undefined) => {
     queryClient.invalidateQueries({ queryKey: ['auth', 'approved', userId] });
   }, [queryClient, userId]);
 
+  // Retorna valores memoizados para evitar re-renders desnecessários
+  const isBlocked = blockedQuery.data ?? false;
+  const isAdmin = adminQuery.data ?? false;
+  const isApproved = approvedQuery.data ?? false;
+  const loading = enabled && (blockedQuery.isLoading || adminQuery.isLoading || approvedQuery.isLoading);
+
   return useMemo(() => ({
-    isBlocked: blockedQuery.data ?? false,
-    isAdmin: adminQuery.data ?? false,
-    isApproved: approvedQuery.data ?? false,
-    loading: enabled ? (blockedQuery.isLoading || adminQuery.isLoading || approvedQuery.isLoading) : false,
+    isBlocked,
+    isAdmin,
+    isApproved,
+    loading,
     refresh,
-  }), [blockedQuery.data, blockedQuery.isLoading, adminQuery.data, adminQuery.isLoading, approvedQuery.data, approvedQuery.isLoading, enabled, refresh]);
+  }), [isBlocked, isAdmin, isApproved, loading, refresh]);
 };
 
 // Hook para billing progress - CACHEADO
 export const useBillingProgress = (userId: string | undefined) => {
+  const stableUserId = userId || 'anonymous';
+  
   const { data, isLoading } = useQuery({
-    queryKey: ['billing', 'progress', userId],
+    queryKey: ['billing', 'progress', stableUserId],
     queryFn: async () => {
+      if (!userId) return { currentAmount: 0, goalAmount: 1000000 };
       const [dashboardRes, goalRes] = await Promise.all([
         supabase.rpc('get_user_dashboard_v2'),
         supabase.rpc('get_global_billing_goal'),
@@ -111,8 +129,9 @@ export const useBillingProgress = (userId: string | undefined) => {
       return { currentAmount, goalAmount };
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    retry: false,
   });
 
   return {
