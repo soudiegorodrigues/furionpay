@@ -57,6 +57,7 @@ interface GeneratePixRequest {
   fingerprint?: string;
   clientIp?: string;
   orderBumps?: OrderBumpData[];
+  offerId?: string;
 }
 
 interface EfiCredentials {
@@ -394,7 +395,8 @@ async function logPixGenerated(
   donorPhone?: string,
   donorCpf?: string,
   donorBirthdate?: string,
-  donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; }
+  donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; },
+  offerId?: string
 ) {
   try {
     const { data, error } = await supabase.rpc('log_pix_generated_user', {
@@ -422,6 +424,7 @@ async function logPixGenerated(
       p_donor_neighborhood: donorAddress?.neighborhood || null,
       p_donor_city: donorAddress?.city || null,
       p_donor_state: donorAddress?.state || null,
+      p_offer_id: offerId || null,
     });
 
     if (error) {
@@ -481,7 +484,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, donorName, donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp } = await req.json() as GeneratePixRequest;
+    const { amount, donorName, donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress, userId, utmData, productName, popupModel, healthCheck, fingerprint, clientIp, offerId } = await req.json() as GeneratePixRequest;
 
     console.log('[EFI] Gerando PIX - Valor:', amount, 'Usuário:', userId, 'HealthCheck:', healthCheck, 'IP:', clientIp);
 
@@ -552,7 +555,8 @@ serve(async (req) => {
         donorPhone,
         donorCpf,
         donorBirthdate,
-        donorAddress
+        donorAddress,
+        offerId
       );
     } else {
       console.log('[EFI] Health check mode - skipping transaction log');

@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.chargeback-webhook]
 verify_jwt = false
+
+[functions.backfill-offer-sales]
+verify_jwt = false
