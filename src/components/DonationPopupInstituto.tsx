@@ -114,6 +114,67 @@ export const DonationPopupInstituto = ({
     return () => clearInterval(interval);
   }, [step, isPaid, timeLeft]);
 
+  // Send CAPI event for Purchase
+  const sendCAPIEvent = async (transactionId: string, value: number) => {
+    try {
+      // Fetch pixel config for this user/offer
+      const { data: pixelConfig } = await supabase.functions.invoke('get-pixel-config', {
+        body: { userId, offerId }
+      });
+
+      const pixel = pixelConfig?.pixels?.[0];
+      if (!pixel?.pixelId || !pixel?.accessToken) {
+        console.log('[CAPI Instituto] Sem configuração de pixel, pulando CAPI');
+        return;
+      }
+
+      const eventId = `${transactionId}_${Date.now()}`;
+
+      console.log('[CAPI Instituto] Enviando evento Purchase via CAPI');
+      
+      await supabase.functions.invoke('track-conversion', {
+        body: {
+          pixelId: pixel.pixelId,
+          accessToken: pixel.accessToken,
+          eventName: 'Purchase',
+          eventId,
+          value,
+          currency: 'BRL',
+          transactionId,
+          productName: 'Donation Instituto',
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.href,
+        },
+      });
+
+      // Also track via browser pixel with complete data
+      trackEvent('Purchase', {
+        value,
+        currency: 'BRL',
+        content_name: 'Donation Instituto',
+        content_type: 'product',
+        transaction_id: transactionId,
+        eventID: eventId,
+      }, {
+        external_id: transactionId,
+      });
+
+      console.log('[CAPI Instituto] ✅ Evento Purchase enviado com sucesso');
+    } catch (err) {
+      console.error('[CAPI Instituto] ❌ Erro ao enviar CAPI:', err);
+      // Fallback: still track via browser pixel
+      trackEvent('Purchase', {
+        value,
+        currency: 'BRL',
+        content_name: 'Donation Instituto',
+        content_type: 'product',
+        transaction_id: transactionId,
+      }, {
+        external_id: transactionId,
+      });
+    }
+  };
+
   // Poll for payment status using active SpedPay polling
   useEffect(() => {
     if (!pixData?.transactionId || step !== "pix" || isPaid) return;
@@ -129,10 +190,10 @@ export const DonationPopupInstituto = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
-          trackEvent('Purchase', {
-            value: selectedAmount || 1000,
-            currency: 'BRL',
-          });
+          
+          // Send complete Purchase event via CAPI + browser pixel
+          await sendCAPIEvent(pixData.transactionId!, selectedAmount || 1000);
+          
           toast({
             title: "Pagamento confirmado!",
             description: "Obrigado pela sua doação!",
@@ -145,7 +206,7 @@ export const DonationPopupInstituto = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [pixData?.transactionId, step, selectedAmount, toast, trackEvent, isPaid]);
+  }, [pixData?.transactionId, step, selectedAmount, toast, trackEvent, isPaid, userId, offerId]);
 
   useEffect(() => {
     if (!isOpen) {
