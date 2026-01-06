@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp } from "lucide-react";
+import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -74,6 +77,7 @@ interface CheckoutOffer {
   product_name: string;
   meta_pixel_ids: string[];
   click_count?: number;
+  created_at?: string;
 }
 
 interface AvailableDomain {
@@ -297,20 +301,38 @@ export const CheckoutOfferCard = ({
               {!isNew && (
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   {stats && (
-                    <>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-xs">
-                        <BarChart3 className="w-3 h-3" />
-                        {stats.total_generated} gerados
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs">
-                        <CheckCircle className="w-3 h-3" />
-                        {stats.total_paid} vendas
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs">
-                        <TrendingUp className="w-3 h-3" />
-                        {stats.conversion_rate}%
-                      </span>
-                    </>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2 flex-wrap cursor-help">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-xs">
+                              <BarChart3 className="w-3 h-3" />
+                              {stats.total_generated} gerados
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs">
+                              <CheckCircle className="w-3 h-3" />
+                              {stats.total_paid} vendas
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs">
+                              <TrendingUp className="w-3 h-3" />
+                              {stats.conversion_rate}%
+                            </span>
+                            {offer.created_at && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-secondary/50 text-muted-foreground rounded-full text-xs">
+                                <Calendar className="w-3 h-3" />
+                                Desde {format(new Date(offer.created_at), "dd/MM/yy", { locale: ptBR })}
+                              </span>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs">
+                          <p className="text-xs">
+                            Métricas exclusivas desta oferta desde sua criação
+                            {offer.created_at && ` em ${format(new Date(offer.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`}.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 </div>
               )}
