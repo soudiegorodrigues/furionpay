@@ -7,6 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Key, Plus, Copy, Trash2, Eye, EyeOff, RefreshCw, Activity, Globe, Book, Webhook, ExternalLink } from 'lucide-react';
@@ -50,6 +60,8 @@ export function ApiKeysSection() {
   const [editName, setEditName] = useState('');
   const [editWebhookUrl, setEditWebhookUrl] = useState('');
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
   function toggleKeyVisibility(clientId: string) {
     setVisibleKeys(prev => ({
@@ -116,14 +128,17 @@ export function ApiKeysSection() {
     }
   }
 
-  async function deleteApiKey(clientId: string) {
-    if (!confirm('Tem certeza que deseja deletar esta API key? Esta ação não pode ser desfeita.')) {
-      return;
-    }
+  function confirmDelete(clientId: string) {
+    setClientToDelete(clientId);
+    setDeleteDialogOpen(true);
+  }
+
+  async function executeDelete() {
+    if (!clientToDelete) return;
 
     try {
       const { error } = await supabase.rpc('delete_api_client', {
-        p_client_id: clientId
+        p_client_id: clientToDelete
       });
 
       if (error) throw error;
@@ -132,6 +147,9 @@ export function ApiKeysSection() {
     } catch (error) {
       console.error('Error deleting API key:', error);
       toast.error('Erro ao deletar API key');
+    } finally {
+      setDeleteDialogOpen(false);
+      setClientToDelete(null);
     }
   }
 
@@ -356,7 +374,7 @@ export function ApiKeysSection() {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                              onClick={() => deleteApiKey(client.id)}
+                              onClick={() => confirmDelete(client.id)}
                               title="Deletar"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -397,7 +415,7 @@ export function ApiKeysSection() {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        onClick={() => deleteApiKey(client.id)}
+                        onClick={() => confirmDelete(client.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -644,6 +662,27 @@ export function ApiKeysSection() {
       </TabsContent>
 
       </Tabs>
+
+      {/* AlertDialog: Confirmar Exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar API Key</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar esta API key? Esta ação não pode ser desfeita e todas as integrações que usam esta chave deixarão de funcionar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={executeDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
