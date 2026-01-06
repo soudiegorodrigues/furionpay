@@ -51,6 +51,7 @@ interface MetaPixelContextType {
   isLoaded: boolean;
   utmParams: UTMParams;
   setAdvancedMatching: (params: AdvancedMatchingParams) => void;
+  initializeWithPixelIds: (pixelIds: string[]) => void;
 }
 
 const MetaPixelContext = createContext<MetaPixelContextType>({
@@ -59,6 +60,7 @@ const MetaPixelContext = createContext<MetaPixelContextType>({
   isLoaded: false,
   utmParams: {},
   setAdvancedMatching: () => {},
+  initializeWithPixelIds: () => {},
 });
 
 export const usePixel = () => useContext(MetaPixelContext);
@@ -239,6 +241,22 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     console.log('Advanced Matching updated:', params);
   }, []);
 
+  // Function to initialize pixels programmatically (for slug-based URLs)
+  const initializeWithPixelIds = useCallback((pixelIds: string[]) => {
+    if (!pixelIds || pixelIds.length === 0) {
+      console.log('[PIXEL DEBUG] No pixel IDs provided for initialization');
+      return;
+    }
+    const validPixelIds = pixelIds.filter(id => /^\d+$/.test(id));
+    if (validPixelIds.length === 0) {
+      console.log('[PIXEL DEBUG] No valid numeric pixel IDs');
+      return;
+    }
+    console.log('%c[PIXEL DEBUG] 🎯 Initializing pixels programmatically: ' + validPixelIds.join(', '), 'background: orange; color: black; font-size: 14px;');
+    const pixelConfigs = validPixelIds.map(pixelId => ({ pixelId }));
+    initializePixels(pixelConfigs, true);
+  }, []);
+
   const trackEvent = useCallback((eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => {
     if (typeof window !== 'undefined' && window.fbq) {
       // Merge advanced matching params
@@ -287,7 +305,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   }, [utmParams, advancedMatchingData]);
 
   return (
-    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams, setAdvancedMatching }}>
+    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams, setAdvancedMatching, initializeWithPixelIds }}>
       {children}
     </MetaPixelContext.Provider>
   );

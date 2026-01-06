@@ -3231,6 +3231,10 @@ export type Database = {
         }[]
       }
       get_pix_transactions_count: { Args: never; Returns: number }
+      get_pixel_ids_for_offer: {
+        Args: { p_offer_id: string }
+        Returns: string[]
+      }
       get_platform_revenue_chart: {
         Args: { p_filter?: string; p_user_email?: string }
         Returns: {
