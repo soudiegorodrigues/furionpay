@@ -20,6 +20,7 @@ import furionPayLogoDark from "@/assets/furionpay-logo-white-text.png";
 
 // Cache key for session state
 const SESSION_CACHE_KEY = 'admin_session_cache';
+const AUTH_CACHE_KEY = 'furionpay_auth_cache';
 
 // Get cached session state for instant initial render
 const getCachedSessionState = () => {
@@ -27,13 +28,25 @@ const getCachedSessionState = () => {
     const cached = sessionStorage.getItem(SESSION_CACHE_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
-      // Cache expires after 5 minutes
-      if (Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+      // Cache expires after 30 minutes for instant reload
+      if (Date.now() - parsed.timestamp < 30 * 60 * 1000) {
         return parsed;
       }
     }
   } catch {}
   return null;
+};
+
+// Check if we have a cached auth state (for skeleton bypass)
+const hasCachedAuth = () => {
+  try {
+    const cached = localStorage.getItem(AUTH_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return Date.now() - parsed.timestamp < 30 * 60 * 1000;
+    }
+  } catch {}
+  return false;
 };
 
 export function AdminLayoutWrapper() {
@@ -126,8 +139,8 @@ export function AdminLayoutWrapper() {
     navigate('/login');
   };
 
-  // Show skeleton while loading auth state
-  if (loading) {
+  // Show skeleton only if loading AND no cached auth (instant render with cache)
+  if (loading && !hasCachedAuth()) {
     return (
       <div className="min-h-screen flex w-full bg-background">
         <div className="w-64 min-w-64 max-w-64 flex-shrink-0 border-r border-border bg-background dark:bg-black" />
@@ -136,6 +149,7 @@ export function AdminLayoutWrapper() {
     );
   }
 
+  // If loading but has cache, show full layout immediately
   if (!isAuthenticated && !loading) {
     return null;
   }
