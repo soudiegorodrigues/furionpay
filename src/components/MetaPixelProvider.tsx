@@ -308,9 +308,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       const matchingData = { ...advancedMatchingData, ...advancedMatching };
       
       // Include UTM params and user data in all events
+      // Automatically add currency: 'BRL' when value is present (fixes Meta Pixel currency error)
       const eventParams = { 
         ...params, 
         ...utmParams,
+        // Add currency when value is present
+        ...(params?.value && !params?.currency && { currency: 'BRL' }),
         // Add external_id for deduplication
         ...(matchingData.external_id && { event_id: matchingData.external_id })
       };
@@ -332,9 +335,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       const matchingData = { ...advancedMatchingData, ...advancedMatching };
       
       // Include UTM params in all events
+      // Automatically add currency: 'BRL' when value is present
       const eventParams = { 
         ...params, 
         ...utmParams,
+        // Add currency when value is present
+        ...(params?.value && !params?.currency && { currency: 'BRL' }),
         ...(matchingData.external_id && { event_id: matchingData.external_id })
       };
       
