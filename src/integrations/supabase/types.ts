@@ -1375,6 +1375,60 @@ export type Database = {
         }
         Relationships: []
       }
+      pix_generation_audit_logs: {
+        Row: {
+          acquirer: string | null
+          amount: number
+          completed_at: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          fallback_used: boolean | null
+          id: string
+          request_payload: Json | null
+          response_payload: Json | null
+          retry_count: number | null
+          status: string
+          success: boolean | null
+          txid: string
+          user_id: string
+        }
+        Insert: {
+          acquirer?: string | null
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number | null
+          status?: string
+          success?: boolean | null
+          txid: string
+          user_id: string
+        }
+        Update: {
+          acquirer?: string | null
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number | null
+          status?: string
+          success?: boolean | null
+          txid?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pix_rate_limits: {
         Row: {
           blocked_until: string | null
