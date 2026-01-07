@@ -42,7 +42,7 @@ interface AdvancedMatchingParams {
   st?: string; // State
   fbc?: string; // Facebook Click ID
   fbp?: string; // Facebook Browser ID
-  client_user_agent?: string; // User agent
+  // client_user_agent removido - Meta captura automaticamente no browser pixel, usar apenas no CAPI
 }
 
 interface PixelDebugStatus {
@@ -89,7 +89,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   const [utmParams, setUtmParams] = useState<UTMParams>({});
   const [advancedMatchingData, setAdvancedMatchingData] = useState<AdvancedMatchingParams>({
     country: 'br', // Default to Brazil
-    client_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+    // client_user_agent removido - Meta captura automaticamente no browser pixel
   });
   const [debugStatus, setDebugStatus] = useState<PixelDebugStatus>({
     pixelIds: [],
