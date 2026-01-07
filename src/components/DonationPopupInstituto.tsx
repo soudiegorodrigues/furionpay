@@ -359,11 +359,11 @@ export const DonationPopupInstituto = ({
         {step === "select" && (
           <div className="space-y-6">
             {/* Banner */}
-            <div className="w-full -mx-4 -mt-6 sm:-mt-10">
+            <div className="flex justify-center">
               <img 
                 src={institutoBanner} 
                 alt="Cantinho das Borboletas - Doe e Ajude" 
-                className="w-full h-auto object-cover rounded-t-lg"
+                className="w-full h-auto object-contain rounded-lg"
               />
             </div>
             
