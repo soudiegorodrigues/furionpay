@@ -453,10 +453,22 @@ export const DonationPopupInstituto2 = ({
                     className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" 
                   />
                 ))}
-              </div>
+            </div>
               <span className="text-sm text-gray-600">
                 <span className="font-semibold text-[#E91E8C]">+1.542</span> apoiadores
               </span>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center pt-6 mt-4 border-t border-gray-100">
+              <p className="text-xs text-gray-400">
+                © 2025 - Todos os direitos reservados.
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                <a href="#" className="hover:text-[#E91E8C] transition-colors">Políticas de Privacidade</a>
+                {" | "}
+                <a href="#" className="hover:text-[#E91E8C] transition-colors">Termos de Serviço</a>
+              </p>
             </div>
           </div>
         )}
