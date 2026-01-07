@@ -723,10 +723,69 @@ async function getProductNameFromDatabase(userId?: string, popupModel?: string):
   return DEFAULT_PRODUCT_NAME;
 }
 
+// ============= BRCODE PIX VALIDATION =============
+// Validates BRCode EMV structure to detect invalid QR codes
+interface BRCodeValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+function validateBRCode(pixCode: string): BRCodeValidationResult {
+  // Basic length validation
+  if (!pixCode || pixCode.length < 50) {
+    return { valid: false, error: 'BRCode muito curto (mínimo 50 caracteres)' };
+  }
+  
+  if (pixCode.length > 512) {
+    return { valid: false, error: 'BRCode muito longo (máximo 512 caracteres)' };
+  }
+  
+  // Check for placeholder characters (detected in Ativus bug)
+  if (pixCode.includes('***') || pixCode.includes('???') || pixCode.includes('###')) {
+    return { valid: false, error: 'BRCode contém caracteres de placeholder (***,???,###)' };
+  }
+  
+  // BRCode EMV must start with "00" (Payload Format Indicator)
+  if (!pixCode.startsWith('00')) {
+    return { valid: false, error: 'BRCode não começa com Payload Format Indicator (00)' };
+  }
+  
+  // Verify CRC16 exists at the end (field 63 with tag "6304")
+  const crcIndex = pixCode.lastIndexOf('6304');
+  if (crcIndex === -1) {
+    return { valid: false, error: 'BRCode sem CRC16 (campo 6304)' };
+  }
+  
+  // CRC16 must be 4 hexadecimal characters after "6304"
+  const crc = pixCode.substring(crcIndex + 4);
+  if (crc.length !== 4) {
+    return { valid: false, error: `CRC16 com tamanho incorreto (${crc.length} != 4)` };
+  }
+  
+  if (!/^[0-9A-Fa-f]{4}$/.test(crc)) {
+    return { valid: false, error: `CRC16 contém caracteres inválidos: ${crc}` };
+  }
+  
+  // Verify presence of receiver info (field 26 for static or 27 for dynamic PIX)
+  const hasReceiverInfo = pixCode.includes('26') || pixCode.includes('27');
+  if (!hasReceiverInfo) {
+    return { valid: false, error: 'BRCode sem informação do recebedor (campos 26/27)' };
+  }
+  
+  // Check for BR.GOV.BCB.PIX identifier
+  if (!pixCode.includes('BR.GOV.BCB.PIX') && !pixCode.includes('br.gov.bcb.pix')) {
+    return { valid: false, error: 'BRCode sem identificador PIX do BCB' };
+  }
+  
+  // All validations passed
+  return { valid: true };
+}
+// ================================================
+
 // Log API monitoring event
 async function logApiEvent(
   acquirer: string, 
-  eventType: 'success' | 'failure' | 'retry' | 'circuit_open' | 'circuit_close',
+  eventType: 'success' | 'failure' | 'retry' | 'circuit_open' | 'circuit_close' | 'invalid_brcode',
   responseTimeMs?: number,
   errorMessage?: string,
   retryAttempt?: number
@@ -886,7 +945,7 @@ async function callAcquirer(
     orderBumps?: OrderBumpData[];
     offerId?: string;
   }
-): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string }> {
+): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; invalidBRCode?: boolean }> {
   
   // Check if test mode is forcing failure for this acquirer
   const shouldSimulateFail = await checkTestMode(acquirer);
@@ -899,6 +958,33 @@ async function callAcquirer(
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
   
   const startTime = Date.now();
+  
+  // Helper function to validate BRCode after successful acquirer response
+  const validateAndReturn = async (
+    data: { success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string },
+    responseTime: number,
+    acq: string
+  ): Promise<{ success: boolean; pixCode?: string; qrCodeUrl?: string; transactionId?: string; error?: string; invalidBRCode?: boolean }> => {
+    if (data.success && data.pixCode) {
+      const validation = validateBRCode(data.pixCode);
+      if (!validation.valid) {
+        console.log(`[BRCODE-VALIDATION] ❌ Invalid BRCode from ${acq}: ${validation.error}`);
+        console.log(`[BRCODE-VALIDATION] BRCode preview: ${data.pixCode.substring(0, 50)}...`);
+        await logApiEvent(acq, 'invalid_brcode', responseTime, validation.error);
+        return { 
+          success: false, 
+          error: `BRCode inválido do ${acq}: ${validation.error}`,
+          invalidBRCode: true
+        };
+      }
+      console.log(`[BRCODE-VALIDATION] ✓ BRCode from ${acq} is valid (${data.pixCode.length} chars)`);
+      await logApiEvent(acq, 'success', responseTime);
+      return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
+    }
+    
+    await logApiEvent(acq, 'failure', responseTime, data.error);
+    return { success: false, error: data.error };
+  };
   
   try {
     if (acquirer === 'inter') {
@@ -930,13 +1016,7 @@ async function callAcquirer(
       const data = await response.json();
       const responseTime = Date.now() - startTime;
       
-      if (data.success) {
-        await logApiEvent('inter', 'success', responseTime);
-        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
-      } else {
-        await logApiEvent('inter', 'failure', responseTime, data.error);
-        return { success: false, error: data.error };
-      }
+      return await validateAndReturn(data, responseTime, 'inter');
     }
     
     if (acquirer === 'ativus') {
@@ -968,13 +1048,7 @@ async function callAcquirer(
       const data = await response.json();
       const responseTime = Date.now() - startTime;
       
-      if (data.success) {
-        await logApiEvent('ativus', 'success', responseTime);
-        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
-      } else {
-        await logApiEvent('ativus', 'failure', responseTime, data.error);
-        return { success: false, error: data.error };
-      }
+      return await validateAndReturn(data, responseTime, 'ativus');
     }
     
     if (acquirer === 'valorion') {
@@ -1006,13 +1080,7 @@ async function callAcquirer(
       const data = await response.json();
       const responseTime = Date.now() - startTime;
       
-      if (data.success) {
-        await logApiEvent('valorion', 'success', responseTime);
-        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
-      } else {
-        await logApiEvent('valorion', 'failure', responseTime, data.error);
-        return { success: false, error: data.error };
-      }
+      return await validateAndReturn(data, responseTime, 'valorion');
     }
     
     if (acquirer === 'efi') {
@@ -1046,13 +1114,7 @@ async function callAcquirer(
       const responseTime = Date.now() - startTime;
       console.log('[EFI] Response:', JSON.stringify(data), 'responseTime:', responseTime);
       
-      if (data.success) {
-        await logApiEvent('efi', 'success', responseTime);
-        return { success: true, pixCode: data.pixCode, qrCodeUrl: data.qrCodeUrl, transactionId: data.transactionId };
-      } else {
-        await logApiEvent('efi', 'failure', responseTime, data.error);
-        return { success: false, error: data.error };
-      }
+      return await validateAndReturn(data, responseTime, 'efi');
     }
     
     return { success: false, error: `Unknown acquirer: ${acquirer}` };
@@ -1120,7 +1182,12 @@ async function generatePixWithRetry(
         console.log(`[SMART] Success with primary ${primaryAcquirer}`);
         return { ...result, acquirerUsed: primaryAcquirer };
       }
-      console.log(`[SMART] Primary ${primaryAcquirer} failed despite being healthy: ${result.error}`);
+      // Check if it was an invalid BRCode - log and continue to retry flow
+      if (result.invalidBRCode) {
+        console.log(`[SMART] ⚠️ Primary ${primaryAcquirer} returned INVALID BRCODE - immediately trying retry flow`);
+      } else {
+        console.log(`[SMART] Primary ${primaryAcquirer} failed despite being healthy: ${result.error}`);
+      }
     }
   } else if (primaryAcquirer) {
     console.log(`[SMART] ⚠️ Primary ${primaryAcquirer} is UNHEALTHY - skipping directly to retry flow`);
@@ -1177,9 +1244,16 @@ async function generatePixWithRetry(
       }
       
       lastError = result.error || 'Unknown error';
+      
+      // If BRCode is invalid, skip to next acquirer immediately (no delay)
+      if (result.invalidBRCode) {
+        console.log(`[SMART] ⚠️ ${acquirer} returned INVALID BRCODE - skipping to next acquirer immediately`);
+        break; // Exit inner loop to try next acquirer
+      }
+      
       console.log(`[SMART] ❌ Failed with ${acquirer}: ${lastError}`);
       
-      // Wait before next attempt
+      // Wait before next attempt (only for non-BRCode errors)
       if (attemptNumber < maxRetries) {
         console.log(`[SMART] Waiting ${delayMs}ms before next attempt`);
         await delay(delayMs);
