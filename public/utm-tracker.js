@@ -10,16 +10,13 @@
 (function() {
   'use strict';
 
-  // Domínios de checkout conhecidos
+  // Domínios de checkout conhecidos (atualizados conforme available_domains)
   var CHECKOUT_DOMAINS = [
-    'vakinha-doar.shop',
-    'www.vakinha-doar.shop',
-    'vakinha.doehoje.shop',
-    'www.vakinha.doehoje.shop',
-    'doehoje.shop',
-    'www.doehoje.shop',
-    'furionpay.com',
-    'www.furionpay.com',
+    'checkout-comprasegura.com',
+    'www.checkout-comprasegura.com',
+    'checkout.furionpay.com',
+    'vakinha-comprasegura.shop',
+    'www.vakinha-comprasegura.shop',
     'lovable.app',
     'lovableproject.com',
     'lovable.dev'
