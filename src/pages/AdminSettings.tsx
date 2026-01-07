@@ -1,4 +1,4 @@
-// v2.1 - Social Proof removed
+// v2.2 - Added loading skeleton for pixels
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -9,11 +9,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Settings, Activity, Save, Loader2, Plus, Trash2, AlertTriangle, Pencil, ChevronDown, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UTMScriptSection } from "@/components/admin/UTMScriptSection";
+
+// Skeleton component for pixel items during loading
+const PixelSkeleton = () => (
+  <div className="border rounded-lg overflow-hidden">
+    <div className="flex items-center justify-between p-3">
+      <div className="flex items-center gap-2">
+        <Skeleton className="w-4 h-4" />
+        <div className="flex flex-col gap-1">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <Skeleton className="w-8 h-8 rounded" />
+        <Skeleton className="w-8 h-8 rounded" />
+      </div>
+    </div>
+  </div>
+);
 
 interface MetaPixel {
   id: string;
@@ -235,9 +255,16 @@ const AdminSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pixels.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">
+              {isLoading ? (
+                <div className="space-y-4">
+                  <PixelSkeleton />
+                  <PixelSkeleton />
+                </div>
+              ) : pixels.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
                   Nenhum pixel configurado. Clique em "Adicionar Pixel" para começar.
-                </p> : <>
+                </p>
+              ) : <>
                 {pixels.slice((pixelPage - 1) * PIXELS_PER_PAGE, pixelPage * PIXELS_PER_PAGE).map((pixel, index) => {
                   const actualIndex = (pixelPage - 1) * PIXELS_PER_PAGE + index;
                   const isEditing = editingPixelId === pixel.id;
