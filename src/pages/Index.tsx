@@ -13,6 +13,8 @@ import { DonationPopupInstituto2 } from "@/components/DonationPopupInstituto2";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
 import { trackOfferClick } from "@/lib/clickTracking";
+import { AlertCircle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -31,9 +33,66 @@ const Index = () => {
   // Debug state
   const [clickDebugInfo, setClickDebugInfo] = useState<{ status: string; details?: any } | null>(null);
   
+  // Estado para validação de oferta
+  const [offerValidation, setOfferValidation] = useState<{
+    isValidating: boolean;
+    isValid: boolean | null;
+    error: string | null;
+  }>({ isValidating: !!offerId, isValid: null, error: null });
+
+  // Valida se a oferta existe quando há offerId
+  useEffect(() => {
+    if (!offerId) {
+      setOfferValidation({ isValidating: false, isValid: true, error: null });
+      return;
+    }
+
+    const validateOffer = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('checkout_offers')
+          .select('id, name')
+          .eq('id', offerId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('[Index] Error validating offer:', error);
+          setOfferValidation({ 
+            isValidating: false, 
+            isValid: false, 
+            error: 'Erro ao validar oferta' 
+          });
+          return;
+        }
+
+        if (!data) {
+          console.log('[Index] Offer not found:', offerId);
+          setOfferValidation({ 
+            isValidating: false, 
+            isValid: false, 
+            error: 'Esta oferta não está mais disponível' 
+          });
+          return;
+        }
+
+        console.log('[Index] Offer validated:', data.name);
+        setOfferValidation({ isValidating: false, isValid: true, error: null });
+      } catch (err) {
+        console.error('[Index] Exception validating offer:', err);
+        setOfferValidation({ 
+          isValidating: false, 
+          isValid: false, 
+          error: 'Erro ao validar oferta' 
+        });
+      }
+    };
+
+    validateOffer();
+  }, [offerId]);
+  
   // Track offer click when page loads - every open = 1 click
   useEffect(() => {
-    if (!offerId) return;
+    if (!offerId || !offerValidation.isValid) return;
     
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     if (!supabaseUrl) {
@@ -51,7 +110,7 @@ const Index = () => {
       }
       console.log('[Index] Click tracked:', result);
     });
-  }, [offerId, debugClick]);
+  }, [offerId, debugClick, offerValidation.isValid]);
   
   // Captura UTMs IMEDIATAMENTE ao carregar a página
   useEffect(() => {
@@ -111,11 +170,44 @@ const Index = () => {
     fetchSettings();
   }, [userId, urlModel, urlAmount]);
 
-  // Mostra loading enquanto redireciona
-  if (!userId) {
+  // Mostra loading enquanto redireciona ou valida oferta
+  if (!userId || offerValidation.isValidating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Mostra erro se a oferta não existe
+  if (offerValidation.isValid === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-destructive" />
+          </div>
+          
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-foreground">
+              Oferta Indisponível
+            </h1>
+            <p className="text-muted-foreground">
+              {offerValidation.error || 'Esta oferta não está mais disponível ou foi removida.'}
+            </p>
+          </div>
+          
+          <div className="pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => window.history.back()}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
