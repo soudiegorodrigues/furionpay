@@ -424,7 +424,6 @@ async function logPixGenerated(
       p_donor_neighborhood: donorAddress?.neighborhood || null,
       p_donor_city: donorAddress?.city || null,
       p_donor_state: donorAddress?.state || null,
-      p_offer_id: offerId || null,
     });
 
     if (error) {

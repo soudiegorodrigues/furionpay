@@ -263,7 +263,6 @@ async function logPixGenerated(
       p_donor_city: donorAddress?.city || null,
       p_donor_state: donorAddress?.state || null,
       p_order_bumps: orderBumps && orderBumps.length > 0 ? orderBumps : null,
-      p_offer_id: offerId || null,
     });
 
     if (error) {
