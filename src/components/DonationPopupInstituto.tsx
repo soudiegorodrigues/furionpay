@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Heart, X, ArrowLeft, Clock, Copy, Lock } from "lucide-react";
-import institutoLogo from "@/assets/borboletas-logo.png";
+import institutoBanner from "@/assets/cantinho-banner.webp";
 import { Button } from "@/components/ui/button";
 import { PixLoadingSkeleton } from "./PixLoadingSkeleton";
 
@@ -358,12 +358,12 @@ export const DonationPopupInstituto = ({
       <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
-            {/* Logo */}
-            <div className="flex justify-center">
+            {/* Banner */}
+            <div className="w-full -mx-4 -mt-6 sm:-mt-10">
               <img 
-                src={institutoLogo} 
-                alt="Instituto Amor de Criança" 
-                className="h-28 sm:h-36 object-contain"
+                src={institutoBanner} 
+                alt="Cantinho das Borboletas - Doe e Ajude" 
+                className="w-full h-auto object-cover rounded-t-lg"
               />
             </div>
             
