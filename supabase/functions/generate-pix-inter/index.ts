@@ -353,6 +353,116 @@ async function createPixCob(client: Deno.HttpClient, accessToken: string, amount
   return data;
 }
 
+// ============= AUDIT LOG FUNCTION =============
+async function logAudit(
+  supabase: any,
+  userId: string | undefined,
+  txid: string,
+  amount: number,
+  acquirer: string,
+  status: 'attempted' | 'success' | 'fallback_success' | 'failed',
+  success: boolean,
+  errorMessage?: string,
+  errorCode?: string,
+  retryCount: number = 0,
+  fallbackUsed: boolean = false
+) {
+  try {
+    await supabase.from('pix_generation_audit_logs').insert({
+      user_id: userId || '00000000-0000-0000-0000-000000000000',
+      txid,
+      amount,
+      acquirer,
+      status,
+      success,
+      error_message: errorMessage,
+      error_code: errorCode,
+      retry_count: retryCount,
+      fallback_used: fallbackUsed,
+      completed_at: success ? new Date().toISOString() : null,
+    });
+    console.log(`[INTER] 📝 Audit log saved: status=${status}, success=${success}`);
+  } catch (auditError) {
+    console.error('[INTER] ⚠️ Failed to save audit log:', auditError);
+  }
+}
+
+// ============= FALLBACK INSERT FUNCTION =============
+async function fallbackDirectInsert(
+  supabase: any,
+  amount: number,
+  txid: string,
+  pixCode: string,
+  donorName: string,
+  userId?: string,
+  productName?: string,
+  popupModel?: string,
+  utmData?: Record<string, string>,
+  feePercentage?: number,
+  feeFixed?: number,
+  acquirer: string = 'inter',
+  fingerprint?: string,
+  clientIp?: string,
+  donorEmail?: string,
+  donorPhone?: string,
+  donorCpf?: string,
+  donorBirthdate?: string,
+  donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; }
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    console.log('[INTER] 🔄 Attempting fallback direct insert...');
+    
+    const now = new Date();
+    const brazilTime = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+    const createdDateBrazil = brazilTime.toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('pix_transactions')
+      .insert({
+        amount,
+        txid,
+        pix_code: pixCode,
+        donor_name: donorName,
+        user_id: userId,
+        product_name: productName,
+        popup_model: popupModel,
+        utm_data: utmData,
+        fee_percentage: feePercentage,
+        fee_fixed: feeFixed,
+        acquirer,
+        fingerprint_hash: fingerprint,
+        client_ip: clientIp,
+        donor_email: donorEmail,
+        donor_phone: donorPhone,
+        donor_cpf: donorCpf,
+        donor_birthdate: donorBirthdate,
+        donor_cep: donorAddress?.cep,
+        donor_street: donorAddress?.street,
+        donor_number: donorAddress?.number,
+        donor_complement: donorAddress?.complement,
+        donor_neighborhood: donorAddress?.neighborhood,
+        donor_city: donorAddress?.city,
+        donor_state: donorAddress?.state,
+        status: 'generated',
+        created_date_brazil: createdDateBrazil,
+      })
+      .select('id')
+      .single();
+    
+    if (error) {
+      console.error('[INTER] ❌ Fallback insert failed:', error);
+      return { success: false, error: error.message };
+    }
+    
+    console.log('[INTER] ✅ Fallback insert succeeded, ID:', data?.id);
+    return { success: true, id: data?.id };
+  } catch (err) {
+    console.error('[INTER] ❌ Fallback insert exception:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// ============= MAIN LOG FUNCTION WITH RETRY AND FALLBACK =============
 async function logPixGenerated(
   supabase: any,
   amount: number,
@@ -375,44 +485,87 @@ async function logPixGenerated(
   donorAddress?: { cep?: string; street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; },
   offerId?: string
 ) {
-  try {
-    const { data, error } = await supabase.rpc('log_pix_generated_user', {
-      p_amount: amount,
-      p_txid: txid,
-      p_pix_code: pixCode,
-      p_donor_name: donorName,
-      p_utm_data: utmData || null,
-      p_product_name: productName || null,
-      p_user_id: userId || null,
-      p_popup_model: popupModel || null,
-      p_fee_percentage: feePercentage ?? null,
-      p_fee_fixed: feeFixed ?? null,
-      p_acquirer: acquirer,
-      p_fingerprint_hash: fingerprint || null,
-      p_client_ip: clientIp || null,
-      p_donor_email: donorEmail || null,
-      p_donor_phone: donorPhone || null,
-      p_donor_cpf: donorCpf || null,
-      p_donor_birthdate: donorBirthdate || null,
-      p_donor_cep: donorAddress?.cep || null,
-      p_donor_street: donorAddress?.street || null,
-      p_donor_number: donorAddress?.number || null,
-      p_donor_complement: donorAddress?.complement || null,
-      p_donor_neighborhood: donorAddress?.neighborhood || null,
-      p_donor_city: donorAddress?.city || null,
-      p_donor_state: donorAddress?.state || null,
-    });
+  const MAX_RETRIES = 3;
+  let lastError: string | null = null;
+  let retryCount = 0;
 
-    if (error) {
-      console.error('Erro ao registrar PIX:', error);
-    } else {
-      console.log('PIX registrado com sucesso, ID:', data);
+  await logAudit(supabase, userId, txid, amount, acquirer, 'attempted', false);
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    retryCount = attempt;
+    console.log(`[INTER] 🔄 RPC attempt ${attempt}/${MAX_RETRIES}...`);
+    
+    try {
+      const { data, error } = await supabase.rpc('log_pix_generated_user', {
+        p_amount: amount,
+        p_txid: txid,
+        p_pix_code: pixCode,
+        p_donor_name: donorName,
+        p_utm_data: utmData || null,
+        p_product_name: productName || null,
+        p_user_id: userId || null,
+        p_popup_model: popupModel || null,
+        p_fee_percentage: feePercentage ?? null,
+        p_fee_fixed: feeFixed ?? null,
+        p_acquirer: acquirer,
+        p_fingerprint_hash: fingerprint || null,
+        p_client_ip: clientIp || null,
+        p_donor_email: donorEmail || null,
+        p_donor_phone: donorPhone || null,
+        p_donor_cpf: donorCpf || null,
+        p_donor_birthdate: donorBirthdate || null,
+        p_donor_cep: donorAddress?.cep || null,
+        p_donor_street: donorAddress?.street || null,
+        p_donor_number: donorAddress?.number || null,
+        p_donor_complement: donorAddress?.complement || null,
+        p_donor_neighborhood: donorAddress?.neighborhood || null,
+        p_donor_city: donorAddress?.city || null,
+        p_donor_state: donorAddress?.state || null,
+      });
+
+      if (error) {
+        lastError = error.message;
+        console.error(`[INTER] ❌ RPC attempt ${attempt} failed:`, error);
+        if (attempt < MAX_RETRIES) {
+          const delay = Math.pow(2, attempt) * 500;
+          console.log(`[INTER] ⏳ Waiting ${delay}ms before retry...`);
+          await new Promise(r => setTimeout(r, delay));
+        }
+        continue;
+      }
+      
+      console.log('[INTER] ✅ PIX registrado com sucesso via RPC, ID:', data);
+      await logAudit(supabase, userId, txid, amount, acquirer, 'success', true, undefined, undefined, retryCount);
+      return { success: true, id: data };
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : 'Unknown error';
+      console.error(`[INTER] ❌ RPC attempt ${attempt} exception:`, err);
+      if (attempt < MAX_RETRIES) {
+        const delay = Math.pow(2, attempt) * 500;
+        await new Promise(r => setTimeout(r, delay));
+      }
     }
-    return data;
-  } catch (err) {
-    console.error('Exceção ao registrar PIX:', err);
-    return null;
   }
+
+  console.log('[INTER] ⚠️ All RPC attempts failed. Trying fallback insert...');
+  
+  const fallbackResult = await fallbackDirectInsert(
+    supabase, amount, txid, pixCode, donorName, userId, productName, popupModel,
+    utmData, feePercentage, feeFixed, acquirer, fingerprint, clientIp,
+    donorEmail, donorPhone, donorCpf, donorBirthdate, donorAddress
+  );
+
+  if (fallbackResult.success) {
+    console.log('[INTER] ✅ Fallback insert succeeded!');
+    await logAudit(supabase, userId, txid, amount, acquirer, 'fallback_success', true, lastError || undefined, 'RPC_FAILED', retryCount, true);
+    return { success: true, id: fallbackResult.id, fallbackUsed: true };
+  }
+
+  console.error('[INTER] ❌❌ CRITICAL: Both RPC and fallback failed!');
+  await logAudit(supabase, userId, txid, amount, acquirer, 'failed', false,
+    `RPC: ${lastError || 'unknown'} | Fallback: ${fallbackResult.error}`, 'BOTH_FAILED', retryCount, true);
+  
+  return { success: false, error: `RPC failed: ${lastError}. Fallback failed: ${fallbackResult.error}` };
 }
 
 async function getProductNameFromOffer(supabase: any, userId?: string, popupModel?: string): Promise<string> {
