@@ -67,6 +67,21 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
+        // Network-first for checkout routes to prevent stale cache issues
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\/(c\/[^/]+|[a-zA-Z0-9-]+)$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'checkout-pages',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 5, // 5 minutes
+              },
+              networkTimeoutSeconds: 10,
+            },
+          },
+        ],
       },
     }),
   ].filter(Boolean),

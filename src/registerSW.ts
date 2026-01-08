@@ -25,19 +25,30 @@ export const registerServiceWorker = async () => {
         scope: '/',
       });
       
-      // Auto-update check
+      // Auto-update check with immediate activation
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available
+              // New version available - activate immediately
+              console.log('[PWA] New version available, activating...');
               newWorker.postMessage({ type: 'SKIP_WAITING' });
-              window.location.reload();
             }
           });
         }
       });
+
+      // Listen for controller change and reload
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('[PWA] Controller changed, reloading page...');
+        window.location.reload();
+      });
+
+      // Periodically check for updates (every 60 seconds)
+      setInterval(() => {
+        registration.update().catch(err => console.log('[PWA] Update check failed:', err));
+      }, 60000);
       
       console.log('[PWA] Service Worker registered successfully');
     } catch (error) {

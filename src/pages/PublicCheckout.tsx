@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, memo, useRef } from "react";
+import { useState, useEffect, Suspense, memo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { getUTMParams, captureUTMParams, saveUTMParams } from "@/lib/utm";
 import { trackOfferClick } from "@/lib/clickTracking";
 import { preloadCheckoutResources, preloadImage } from "@/lib/performanceUtils";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 import type {
   ProductOffer,
   Product,
@@ -16,13 +18,13 @@ import type {
   OrderBumpData,
 } from "@/components/checkout/types";
 
-// Lazy load ALL templates for maximum code splitting
-const CheckoutTemplatePadrao = lazy(() => import("@/components/checkout/CheckoutTemplatePadrao").then(m => ({ default: m.CheckoutTemplatePadrao })));
-const CheckoutTemplateVega = lazy(() => import("@/components/checkout/CheckoutTemplateVega").then(m => ({ default: m.CheckoutTemplateVega })));
-const CheckoutTemplateAfilia = lazy(() => import("@/components/checkout/CheckoutTemplateAfilia").then(m => ({ default: m.CheckoutTemplateAfilia })));
-const CheckoutTemplateMultistep = lazy(() => import("@/components/checkout/CheckoutTemplateMultistep").then(m => ({ default: m.CheckoutTemplateMultistep })));
-const CheckoutPixPayment = lazy(() => import("@/components/checkout/CheckoutPixPayment").then(m => ({ default: m.CheckoutPixPayment })));
-const ExitIntentPopup = lazy(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })));
+// Lazy load ALL templates with retry for maximum reliability
+const CheckoutTemplatePadrao = lazyWithRetry(() => import("@/components/checkout/CheckoutTemplatePadrao").then(m => ({ default: m.CheckoutTemplatePadrao })), 'CheckoutTemplatePadrao');
+const CheckoutTemplateVega = lazyWithRetry(() => import("@/components/checkout/CheckoutTemplateVega").then(m => ({ default: m.CheckoutTemplateVega })), 'CheckoutTemplateVega');
+const CheckoutTemplateAfilia = lazyWithRetry(() => import("@/components/checkout/CheckoutTemplateAfilia").then(m => ({ default: m.CheckoutTemplateAfilia })), 'CheckoutTemplateAfilia');
+const CheckoutTemplateMultistep = lazyWithRetry(() => import("@/components/checkout/CheckoutTemplateMultistep").then(m => ({ default: m.CheckoutTemplateMultistep })), 'CheckoutTemplateMultistep');
+const CheckoutPixPayment = lazyWithRetry(() => import("@/components/checkout/CheckoutPixPayment").then(m => ({ default: m.CheckoutPixPayment })), 'CheckoutPixPayment');
+const ExitIntentPopup = lazyWithRetry(() => import("@/components/checkout/ExitIntentPopup").then(m => ({ default: m.ExitIntentPopup })), 'ExitIntentPopup');
 
 
 // Minimal skeleton for instant render - CSS-only, no JS
@@ -711,22 +713,24 @@ export default function PublicCheckout() {
   };
 
   return (
-    <Suspense fallback={<CheckoutSkeleton />}>
-      {renderTemplate()}
-      {config?.show_discount_popup && (
-        <Suspense fallback={null}>
-          <ExitIntentPopup
-            isEnabled={true}
-            title={config?.discount_popup_title || undefined}
-            message={config?.discount_popup_message || undefined}
-            ctaText={config?.discount_popup_cta || undefined}
-            primaryColor={config?.discount_popup_color || config?.primary_color || "#16A34A"}
-            discountPercentage={config?.discount_popup_percentage || 10}
-            imageUrl={config?.discount_popup_image_url || undefined}
-            onCtaClick={handleApplyDiscount}
-          />
-        </Suspense>
-      )}
-    </Suspense>
+    <ChunkErrorBoundary>
+      <Suspense fallback={<CheckoutSkeleton />}>
+        {renderTemplate()}
+        {config?.show_discount_popup && (
+          <Suspense fallback={null}>
+            <ExitIntentPopup
+              isEnabled={true}
+              title={config?.discount_popup_title || undefined}
+              message={config?.discount_popup_message || undefined}
+              ctaText={config?.discount_popup_cta || undefined}
+              primaryColor={config?.discount_popup_color || config?.primary_color || "#16A34A"}
+              discountPercentage={config?.discount_popup_percentage || 10}
+              imageUrl={config?.discount_popup_image_url || undefined}
+              onCtaClick={handleApplyDiscount}
+            />
+          </Suspense>
+        )}
+      </Suspense>
+    </ChunkErrorBoundary>
   );
 }
