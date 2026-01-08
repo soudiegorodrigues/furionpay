@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle, Lock, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Wallet, RefreshCw, Eye, EyeOff, Building2, Key, Mail, Copy, Construction, Clock, History, Percent, ArrowRightLeft, AlertTriangle, Settings, CreditCard, Search, Check, ChevronsUpDown, X, CheckCircle, Lock, Loader2, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -984,6 +984,42 @@ const AdminFinanceiro = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Aviso e Suporte ao Financeiro */}
+          <Card className="mt-6 border-green-500/30 bg-green-500/5">
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-full bg-green-500/20">
+                    <MessageCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-green-700 dark:text-green-400">
+                      Suporte Financeiro
+                    </h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Dúvidas sobre saques ou pagamentos? Entre em contato com nosso suporte financeiro.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Horário de atendimento: Seg a Sex, 9h às 18h
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 border-green-500 text-green-600 hover:bg-green-500/10 whitespace-nowrap"
+                  onClick={() => {
+                    const whatsappNumber = "5511999999999"; // Número do financeiro
+                    const message = encodeURIComponent("Olá! Preciso de suporte financeiro.");
+                    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Falar com Financeiro
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Dialog de Configurar Conta Bancária */}
           <Dialog open={showBankDialog} onOpenChange={setShowBankDialog}>
