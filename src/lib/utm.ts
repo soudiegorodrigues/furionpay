@@ -236,12 +236,28 @@ export function getSavedUTMParams(): UTMParams {
     
     if (saved) {
       const params = JSON.parse(saved);
+      
+      // Validate that parsed data is a valid object (not array or primitive)
+      if (typeof params !== 'object' || params === null || Array.isArray(params)) {
+        console.warn('[UTM] Dados corrompidos no storage, limpando...');
+        try {
+          sessionStorage.removeItem(UTM_STORAGE_KEY);
+          localStorage.removeItem(UTM_STORAGE_KEY);
+        } catch {}
+        return {};
+      }
+      
       console.log('[UTM DEBUG] UTMs recuperados do storage:', params);
       return params;
     }
     return {};
   } catch (error) {
-    console.error("Erro ao recuperar UTM params:", error);
+    // JSON inválido - limpar storage para evitar problemas futuros
+    console.warn('[UTM] Erro ao parsear UTMs, limpando storage:', error);
+    try {
+      sessionStorage.removeItem(UTM_STORAGE_KEY);
+      localStorage.removeItem(UTM_STORAGE_KEY);
+    } catch {}
     return {};
   }
 }

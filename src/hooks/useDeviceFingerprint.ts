@@ -27,6 +27,14 @@ export const useDeviceFingerprint = () => {
         console.error('[Fingerprint] Error getting fingerprint:', error);
         // Fallback: generate a random ID and store in localStorage
         let fallbackId = localStorage.getItem('fp_fallback_id');
+        
+        // Validate fallback ID format - clear if corrupted
+        if (fallbackId && !fallbackId.startsWith('fb_')) {
+          console.warn('[Fingerprint] Fallback ID corrompido, regenerando...');
+          localStorage.removeItem('fp_fallback_id');
+          fallbackId = null;
+        }
+        
         if (!fallbackId) {
           fallbackId = `fb_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
           localStorage.setItem('fp_fallback_id', fallbackId);
