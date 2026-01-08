@@ -53,11 +53,15 @@ const PublicCheckoutSlug = () => {
       return;
     }
 
+    let cancelled = false;
+
     const fetchOffer = async () => {
       try {
         const { data, error: rpcError } = await supabase.rpc('get_checkout_offer_by_slug', {
           p_slug: slug
         });
+
+        if (cancelled) return;
 
         if (rpcError) {
           console.error('Error fetching offer by slug:', rpcError);
@@ -83,11 +87,13 @@ const PublicCheckoutSlug = () => {
         }
 
         // Initialize Meta Pixels for this offer
-        if (offerData.id) {
+        if (offerData.id && !cancelled) {
           try {
             const { data: pixelIds, error: pixelError } = await supabase.rpc('get_pixel_ids_for_offer', {
               p_offer_id: offerData.id
             });
+            
+            if (cancelled) return;
             
             if (!pixelError && pixelIds && pixelIds.length > 0) {
               console.log('%c[SLUG PAGE] ✅ Resolved pixel IDs: ' + pixelIds.join(', '), 'background: purple; color: white; font-size: 14px;');
@@ -100,14 +106,20 @@ const PublicCheckoutSlug = () => {
           }
         }
       } catch (err) {
-        console.error('Error:', err);
-        setError("Erro inesperado");
-        setIsLoading(false);
+        if (!cancelled) {
+          console.error('Error:', err);
+          setError("Erro inesperado");
+          setIsLoading(false);
+        }
       }
     };
 
     fetchOffer();
-  }, [slug]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, initializeWithPixelIds]);
 
   // Loading state
   if (isLoading) {

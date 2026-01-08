@@ -101,14 +101,19 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
 
   // Capture Meta cookies on mount and update advanced matching data
   useEffect(() => {
-    const { fbc, fbp } = getMetaCookies();
-    if (fbc || fbp) {
-      setAdvancedMatchingData(prev => ({
-        ...prev,
-        ...(fbc && { fbc }),
-        ...(fbp && { fbp }),
-      }));
-      console.log('[META COOKIES] Cookies capturados e adicionados ao Advanced Matching');
+    try {
+      const { fbc, fbp } = getMetaCookies();
+      if (fbc || fbp) {
+        setAdvancedMatchingData(prev => ({
+          ...prev,
+          ...(fbc && { fbc }),
+          ...(fbp && { fbp }),
+        }));
+        console.log('[META COOKIES] Cookies capturados e adicionados ao Advanced Matching');
+      }
+    } catch (error) {
+      console.error('[META COOKIES] Erro ao capturar cookies:', error);
+      // Continue without cookies - should not break the app
     }
   }, []);
 
@@ -137,6 +142,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     console.log('%c[PIXEL DEBUG] Full URL: ' + window.location.href, 'color: blue;');
     
     const loadPixelConfig = async () => {
+      // Timeout de 5 segundos para evitar travamento infinito
+      const timeoutId = setTimeout(() => {
+        console.warn('[PIXEL DEBUG] Timeout ao carregar configuração do pixel');
+        setIsLoaded(true);
+      }, 5000);
+
       try {
         // Get userId and pixel from URL params
         const urlParams = new URLSearchParams(window.location.search);
@@ -154,6 +165,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
             console.log('%c[PIXEL DEBUG] ✅ PRIORITY: Initializing pixels from URL: ' + pixelIds.join(', '), 'background: green; color: white; font-size: 14px;');
             const pixelConfigs = pixelIds.map(pixelId => ({ pixelId }));
             initializePixels(pixelConfigs, true); // força inicialização
+            clearTimeout(timeoutId);
             return;
           } else {
             console.log('%c[PIXEL DEBUG] ❌ No valid pixel IDs in URL param', 'background: red; color: white;');
@@ -165,6 +177,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         // PRIORIDADE 2: Se o pixel já existe no window (site do usuário), usar ele
         if (window.fbq) {
           console.log('Facebook Pixel already exists from user site');
+          clearTimeout(timeoutId);
           setIsLoaded(true);
           return;
         }
@@ -173,6 +186,8 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         const { data, error } = await supabase.functions.invoke('get-pixel-config', {
           body: { userId }
         });
+        
+        clearTimeout(timeoutId);
         
         if (error) {
           console.log('Pixel config not available:', error);
