@@ -1008,15 +1008,22 @@ const AdminFinanceiro = () => {
                     </p>
                   </div>
                 </div>
-                <a
-                  href="https://wa.me/5564993151075?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20financeiro."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-md border border-green-500 text-green-600 hover:bg-green-500/10 whitespace-nowrap px-4 py-2 text-sm font-medium"
+                <Button 
+                  variant="outline" 
+                  className="gap-2 border-green-500 text-green-600 hover:bg-green-500/10 whitespace-nowrap"
+                  onClick={() => {
+                    const phone = "5564993151075";
+                    const text = encodeURIComponent("Olá! Preciso de suporte financeiro.");
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    const url = isMobile 
+                      ? `https://wa.me/${phone}?text=${text}`
+                      : `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
+                    window.open(url, '_blank');
+                  }}
                 >
                   <MessageCircle className="h-4 w-4" />
                   Falar com Financeiro
-                </a>
+                </Button>
               </div>
             </CardContent>
           </Card>
