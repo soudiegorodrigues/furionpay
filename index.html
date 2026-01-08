@@ -46,6 +46,24 @@
     <meta name="twitter:title" content="checkout Seguro">
     <meta property="og:description" content="Pagamento online">
     <meta name="twitter:description" content="Pagamento online">
+    
+    <!-- Remove manifest em domínios não permitidos para evitar prompt de instalação PWA -->
+    <script>
+      (function() {
+        var allowed = ['app.furionpay.com', 'localhost', '127.0.0.1'];
+        var host = window.location.hostname;
+        var isAllowed = allowed.some(function(d) { return host === d; }) ||
+          host.endsWith('.lovable.app') || host.endsWith('.lovableproject.com');
+        
+        if (!isAllowed) {
+          // Remove manifest link para não aparecer como PWA instalável
+          document.addEventListener('DOMContentLoaded', function() {
+            var manifestLink = document.querySelector('link[rel="manifest"]');
+            if (manifestLink) manifestLink.remove();
+          });
+        }
+      })();
+    </script>
   </head>
   <body>
     <!-- Inline skeleton for instant visual (before JS loads) -->
