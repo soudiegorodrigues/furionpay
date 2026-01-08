@@ -142,7 +142,7 @@ export const DonationPopupInstituto = ({
           currency: 'BRL',
           transactionId,
           productName: 'Donation Instituto',
-          userAgent: navigator.userAgent,
+          // userAgent removed - blocked by Meta 2026 policies
           sourceUrl: window.location.href,
         },
       });
@@ -154,7 +154,7 @@ export const DonationPopupInstituto = ({
         content_name: 'Donation Instituto',
         content_type: 'product',
         transaction_id: transactionId,
-        eventID: eventId,
+        event_id: eventId, // Corrected: event_id instead of eventID
       }, {
         external_id: transactionId,
       });

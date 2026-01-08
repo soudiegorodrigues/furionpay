@@ -75,9 +75,8 @@ serve(async (req) => {
     const hashedFirstName = await hashData(firstName);
     const hashedLastName = await hashData(lastName);
 
-    // Build user_data object
+    // Build user_data object - NO client_user_agent or client_ip_address (blocked by Meta 2026)
     const userData: Record<string, any> = {
-      client_user_agent: userAgent || 'Mozilla/5.0',
       country: ['br'],
     };
 
@@ -106,19 +105,19 @@ serve(async (req) => {
       eventData.event_source_url = sourceUrl;
     }
 
-    // Add custom_data for Purchase events
-    if (eventName === 'Purchase' && value) {
+    // Add custom_data for all conversion events (Purchase, InitiateCheckout, ViewContent, etc.)
+    if (value !== undefined) {
       eventData.custom_data = {
         value: value,
         currency: currency,
         content_name: productName || 'Produto',
         content_type: 'product',
-        order_id: transactionId,
+        ...(transactionId && { order_id: transactionId }),
       };
     }
 
-    // Send to Meta Conversions API
-    const capiUrl = `https://graph.facebook.com/v18.0/${pixelId}/events`;
+    // Send to Meta Conversions API - Updated to v20.0 for Meta 2026 policies
+    const capiUrl = `https://graph.facebook.com/v20.0/${pixelId}/events`;
     
     const capiPayload = {
       data: [eventData],
