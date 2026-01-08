@@ -1012,7 +1012,7 @@ const AdminFinanceiro = () => {
                   variant="outline" 
                   className="gap-2 border-green-500 text-green-600 hover:bg-green-500/10 whitespace-nowrap"
                   onClick={() => {
-                    const whatsappNumber = "5511999999999"; // Número do financeiro
+                    const whatsappNumber = "5564993151075"; // Número do financeiro
                     const message = encodeURIComponent("Olá! Preciso de suporte financeiro.");
                     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
                   }}
