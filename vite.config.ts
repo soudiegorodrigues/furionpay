@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      injectRegister: null, // Desabilitado - registro manual em src/registerSW.ts
       includeAssets: ["favicon.png", "robots.txt"],
       manifest: {
         name: "Plataforma FurionPay",
