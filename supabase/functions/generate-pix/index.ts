@@ -1316,6 +1316,57 @@ function getClientIp(req: Request): string | undefined {
   return undefined;
 }
 
+// ============= HIGH VALUE IP LIMIT =============
+// Para valores >= R$700, só permite 1 PIX não pago por IP
+const HIGH_VALUE_THRESHOLD = 700;
+
+async function checkHighValueIpLimit(
+  clientIp: string | undefined, 
+  amount: number
+): Promise<{ blocked: boolean; reason?: string }> {
+  // Se valor abaixo do threshold, não aplica essa regra
+  if (amount < HIGH_VALUE_THRESHOLD) {
+    return { blocked: false };
+  }
+  
+  if (!clientIp) {
+    console.log('[HIGH-VALUE] No IP available, allowing request');
+    return { blocked: false };
+  }
+  
+  const supabase = getSupabaseClient();
+  
+  try {
+    // Conta quantos PIX >= R$700 com status 'generated' esse IP tem
+    const { count, error } = await supabase
+      .from('pix_transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('client_ip', clientIp)
+      .eq('status', 'generated')
+      .gte('amount', HIGH_VALUE_THRESHOLD);
+    
+    if (error) {
+      console.error('[HIGH-VALUE] Error checking IP limit:', error);
+      return { blocked: false }; // Em caso de erro, permite (fail-open)
+    }
+    
+    if (count && count >= 1) {
+      console.log(`[HIGH-VALUE] IP ${clientIp} BLOCKED - already has ${count} unpaid PIX >= R$${HIGH_VALUE_THRESHOLD}`);
+      return { 
+        blocked: true, 
+        reason: `Este IP já possui ${count} PIX de valor alto (R$${HIGH_VALUE_THRESHOLD}+) não pago. Pague o PIX pendente antes de gerar outro.`
+      };
+    }
+    
+    console.log(`[HIGH-VALUE] IP ${clientIp} allowed - no unpaid high-value PIX`);
+    return { blocked: false };
+  } catch (err) {
+    console.error('[HIGH-VALUE] Exception:', err);
+    return { blocked: false }; // Fail-open em caso de exceção
+  }
+}
+// ===============================================
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -1357,6 +1408,21 @@ serve(async (req) => {
       );
     }
     // ========================================================
+
+    // ============= CHECK HIGH-VALUE IP LIMIT =============
+    // Para valores >= R$700, só permite 1 PIX não pago por IP
+    const highValueCheck = await checkHighValueIpLimit(clientIp, amount);
+    if (highValueCheck.blocked) {
+      console.log(`[HIGH-VALUE] Request blocked. IP: ${clientIp}, Amount: R$${amount}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'HIGH_VALUE_LIMIT',
+          message: highValueCheck.reason,
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // =====================================================
 
     // ============= CHECK SELLER BYPASS ANTIFRAUDE =============
     // Verifica se o vendedor tem bypass_antifraud ativado pelo admin
