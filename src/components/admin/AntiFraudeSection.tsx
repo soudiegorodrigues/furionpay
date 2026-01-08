@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, Fingerprint, Globe, Lock, Eye, EyeOff, Loader2, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Shield, ShieldCheck, ShieldX, Clock, Hash, Ban, RefreshCw, Save, Activity, Fingerprint, Globe, Lock, Eye, EyeOff, Loader2, Plus, Trash2, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -70,6 +70,10 @@ export function AntiFraudeSection() {
   const [newIPReason, setNewIPReason] = useState("");
   const [addingIP, setAddingIP] = useState(false);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   useEffect(() => {
     loadConfig();
     loadStats();
@@ -129,6 +133,7 @@ export function AntiFraudeSection() {
       
       if (error) throw error;
       setBlacklistedIPs((data as BlacklistedIP[]) || []);
+      setCurrentPage(1); // Reset to first page when refreshing
     } catch (err) {
       console.error('Error loading blacklisted IPs:', err);
     } finally {
@@ -722,50 +727,92 @@ export function AntiFraudeSection() {
                   <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : blacklistedIPs.length > 0 ? (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>IP</TableHead>
-                        <TableHead className="hidden sm:table-cell">Motivo</TableHead>
-                        <TableHead className="hidden md:table-cell">Transações</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead className="text-right">Ação</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {blacklistedIPs.map((ip) => (
-                        <TableRow key={ip.id} className={!ip.is_active ? "opacity-50" : ""}>
-                          <TableCell className="font-mono text-sm">{ip.ip_address}</TableCell>
-                          <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
-                            {ip.reason || "-"}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <span className="text-xs">
-                              {ip.transactions_count} ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ip.total_amount || 0)})
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Switch
-                              checked={ip.is_active}
-                              onCheckedChange={() => toggleIPStatus(ip.id, ip.is_active)}
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
+                (() => {
+                  const totalPages = Math.ceil(blacklistedIPs.length / ITEMS_PER_PAGE);
+                  const paginatedIPs = blacklistedIPs.slice(
+                    (currentPage - 1) * ITEMS_PER_PAGE,
+                    currentPage * ITEMS_PER_PAGE
+                  );
+                  
+                  return (
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>IP</TableHead>
+                            <TableHead className="hidden sm:table-cell">Motivo</TableHead>
+                            <TableHead className="hidden md:table-cell">Transações</TableHead>
+                            <TableHead className="text-center">Status</TableHead>
+                            <TableHead className="text-right">Ação</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedIPs.map((ip) => (
+                            <TableRow key={ip.id} className={!ip.is_active ? "opacity-50" : ""}>
+                              <TableCell className="font-mono text-sm">{ip.ip_address}</TableCell>
+                              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
+                                {ip.reason || "-"}
+                              </TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                <span className="text-xs">
+                                  {ip.transactions_count} ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ip.total_amount || 0)})
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Switch
+                                  checked={ip.is_active}
+                                  onCheckedChange={() => toggleIPStatus(ip.id, ip.is_active)}
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeIPFromBlacklist(ip.id, ip.ip_address)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      
+                      {/* Pagination controls */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
+                          <span className="text-xs text-muted-foreground">
+                            {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, blacklistedIPs.length)} de {blacklistedIPs.length}
+                          </span>
+                          <div className="flex items-center gap-2">
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeIPFromBlacklist(ip.id, ip.ip_address)}
-                              className="text-destructive hover:text-destructive"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                              disabled={currentPage === 1}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <ChevronLeft className="h-4 w-4" />
+                              <span className="hidden sm:inline ml-1">Anterior</span>
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                            <span className="text-sm font-medium px-2">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                              disabled={currentPage === totalPages}
+                            >
+                              <span className="hidden sm:inline mr-1">Próximo</span>
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
               ) : (
                 <div className="text-center p-4 text-muted-foreground text-sm border rounded-lg">
                   Nenhum IP na blacklist
