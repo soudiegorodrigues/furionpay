@@ -1003,6 +1003,9 @@ const AdminFinanceiro = () => {
                     <p className="text-xs text-muted-foreground mt-1">
                       Horário de atendimento: Seg a Sex, 9h às 18h
                     </p>
+                    <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-2">
+                      ⚠️ Saques em feriados e finais de semana podem ser aprovados conforme disponibilidade do suporte.
+                    </p>
                   </div>
                 </div>
                 <Button 
