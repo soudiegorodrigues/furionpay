@@ -80,7 +80,7 @@ export const CheckoutPixPayment = ({
           customerEmail,
           customerName,
           productName: productName || 'Produto',
-          userAgent: navigator.userAgent,
+          // userAgent removed - blocked by Meta 2026 policies
           sourceUrl: window.location.href,
           fbc: getCookie('_fbc'),
           fbp: getCookie('_fbp'),
@@ -125,7 +125,7 @@ export const CheckoutPixPayment = ({
         content_name: productName || 'Produto',
         content_type: 'product',
         transaction_id: transactionId,
-        eventID: eventId, // Meta uses this for deduplication
+        event_id: eventId, // Corrected: Meta uses event_id (not eventID) for deduplication
       }, {
         external_id: transactionId,
         em: customerEmail,

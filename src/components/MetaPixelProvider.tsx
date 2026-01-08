@@ -314,8 +314,8 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         ...utmParams,
         // Add currency when value is present
         ...(params?.value && !params?.currency && { currency: 'BRL' }),
-        // Add external_id for deduplication
-        ...(matchingData.external_id && { event_id: matchingData.external_id })
+        // Use event_id from params for deduplication (passed from CAPI)
+        ...(params?.event_id && { event_id: params.event_id })
       };
       
       // Use fbq with user_data for advanced matching
@@ -341,7 +341,8 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         ...utmParams,
         // Add currency when value is present
         ...(params?.value && !params?.currency && { currency: 'BRL' }),
-        ...(matchingData.external_id && { event_id: matchingData.external_id })
+        // Use event_id from params for deduplication (passed from CAPI)
+        ...(params?.event_id && { event_id: params.event_id })
       };
       
       // Use fbq with user_data for advanced matching
