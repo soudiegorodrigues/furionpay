@@ -1008,18 +1008,15 @@ const AdminFinanceiro = () => {
                     </p>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="gap-2 border-green-500 text-green-600 hover:bg-green-500/10 whitespace-nowrap"
-                  onClick={() => {
-                    const whatsappNumber = "5564993151075"; // Número do financeiro
-                    const message = encodeURIComponent("Olá! Preciso de suporte financeiro.");
-                    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
-                  }}
+                <a
+                  href="https://wa.me/5564993151075?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20financeiro."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-green-500 text-green-600 hover:bg-green-500/10 whitespace-nowrap px-4 py-2 text-sm font-medium"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Falar com Financeiro
-                </Button>
+                </a>
               </div>
             </CardContent>
           </Card>
