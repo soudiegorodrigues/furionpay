@@ -3151,6 +3151,50 @@ export type Database = {
               utm_data: Json
             }[]
           }
+        | {
+            Args: {
+              p_end_date?: string
+              p_page_number?: number
+              p_page_size?: number
+              p_popup_model?: string
+              p_search?: string
+              p_start_date?: string
+              p_status?: string
+            }
+            Returns: {
+              acquirer: string
+              amount: number
+              approved_by_email: string
+              created_at: string
+              donor_cep: string
+              donor_city: string
+              donor_complement: string
+              donor_cpf: string
+              donor_email: string
+              donor_name: string
+              donor_neighborhood: string
+              donor_number: string
+              donor_phone: string
+              donor_state: string
+              donor_street: string
+              expired_at: string
+              id: string
+              is_manual_approval: boolean
+              offer_code: string
+              offer_domain: string
+              offer_id: string
+              order_bumps: Json
+              paid_at: string
+              pix_code: string
+              popup_model: string
+              product_code: string
+              product_name: string
+              status: string
+              txid: string
+              user_id: string
+              utm_data: Json
+            }[]
+          }
       get_global_transactions_v2: {
         Args: {
           p_date_filter?: string
@@ -3746,23 +3790,6 @@ export type Database = {
           }
         | {
             Args: {
-              p_end_date?: string
-              p_page?: number
-              p_per_page?: number
-              p_platform?: string
-              p_search?: string
-              p_start_date?: string
-              p_status?: string
-              p_user_id?: string
-            }
-            Returns: {
-              total_count: number
-              total_pages: number
-              transactions: Json
-            }[]
-          }
-        | {
-            Args: {
               p_date_filter?: string
               p_end_date?: string
               p_page?: number
@@ -3802,6 +3829,50 @@ export type Database = {
               fee_fixed: number
               fee_percentage: number
               id: string
+              offer_code: string
+              offer_domain: string
+              offer_id: string
+              order_bumps: Json
+              paid_at: string
+              pix_code: string
+              popup_model: string
+              product_code: string
+              product_name: string
+              status: string
+              txid: string
+              utm_data: Json
+            }[]
+          }
+        | {
+            Args: {
+              p_end_date?: string
+              p_page_number?: number
+              p_page_size?: number
+              p_popup_model?: string
+              p_search?: string
+              p_start_date?: string
+              p_status?: string
+              p_user_id: string
+            }
+            Returns: {
+              acquirer: string
+              amount: number
+              approved_by_email: string
+              created_at: string
+              donor_cep: string
+              donor_city: string
+              donor_complement: string
+              donor_cpf: string
+              donor_email: string
+              donor_name: string
+              donor_neighborhood: string
+              donor_number: string
+              donor_phone: string
+              donor_state: string
+              donor_street: string
+              expired_at: string
+              id: string
+              is_manual_approval: boolean
               offer_code: string
               offer_domain: string
               offer_id: string
