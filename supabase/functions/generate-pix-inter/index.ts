@@ -305,10 +305,27 @@ async function getAccessToken(supabase: any, client: Deno.HttpClient, credential
 }
 
 function sanitizePixKey(key: string): string {
-  if (key.includes('@') || key.startsWith('+')) {
-    return key;
+  const trimmed = (key || '').trim();
+
+  // Email and E.164 phone (+55...) should not be modified
+  if (trimmed.includes('@') || trimmed.startsWith('+')) {
+    return trimmed;
   }
-  return key.replace(/[.\-\/]/g, '');
+
+  // Chave aleatória (UUID) must keep hyphens
+  const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(trimmed);
+  if (isUuid) {
+    return trimmed;
+  }
+
+  // Some integrations store random keys without hyphens (32 hex)
+  const isHex32 = /^[0-9a-fA-F]{32}$/.test(trimmed);
+  if (isHex32) {
+    return trimmed;
+  }
+
+  // CPF/CNPJ can be sent without punctuation
+  return trimmed.replace(/[.\-\/]/g, '');
 }
 
 async function createPixCob(client: Deno.HttpClient, accessToken: string, amount: number, txid: string, pixKey: string): Promise<any> {
