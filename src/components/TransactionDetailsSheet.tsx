@@ -1,7 +1,7 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, ShoppingBag, Globe, Ban, Loader2 } from "lucide-react";
+import { Copy, Calendar, User, Package, TrendingUp, Check, CreditCard, Mail, Phone, ShoppingBag, Globe, Ban, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getUtmValue as getUtmValueHelper, hasUtmData as hasUtmDataHelper, getCustomerEmail, getTrafficSource, UTMData } from "@/lib/utmHelpers";
 
@@ -52,6 +52,7 @@ interface Transaction {
   txid: string;
   donor_name: string;
   donor_email?: string;
+  donor_phone?: string;
   product_name: string | null;
   created_at: string;
   paid_at: string | null;
@@ -262,6 +263,27 @@ const TransactionDetailsSheet = ({
                     className="h-6 w-6 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
                   >
                     {copiedId === 'email' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Telefone */}
+            {transaction.donor_phone && (
+              <div className="bg-muted/30 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Telefone</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold truncate flex-1 min-w-0">{transaction.donor_phone}</p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => copyToClipboard(transaction.donor_phone || '', 'phone')} 
+                    className="h-6 w-6 p-0 shrink-0 hover:bg-muted focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
+                  >
+                    {copiedId === 'phone' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                   </Button>
                 </div>
               </div>
