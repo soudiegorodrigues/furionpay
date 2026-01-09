@@ -1521,62 +1521,90 @@ serve(async (req) => {
       }
     }
 
-    // Fallback: Original logic without retry
-    console.log('[STANDARD MODE] Using single acquirer without retry');
+    // Fallback: Original logic without retry - NOW WITH AUTOMATIC FALLBACK
+    console.log('[STANDARD MODE] Using single acquirer with automatic fallback');
     
     // Check user's acquirer preference
-    const acquirer = await getUserAcquirer(userId);
-    console.log('Selected acquirer:', acquirer);
+    const preferredAcquirer = await getUserAcquirer(userId);
+    console.log('Preferred acquirer:', preferredAcquirer);
 
-    // Check if the selected acquirer is enabled
-    const isEnabled = await isAcquirerEnabled(acquirer);
-    if (!isEnabled) {
-      console.log(`Acquirer ${acquirer} is disabled`);
-      const acquirerName = acquirer === 'inter' ? 'Banco Inter' : acquirer === 'ativus' ? 'Ativus Hub' : 'Valorion';
-      return new Response(
-        JSON.stringify({ error: `Adquirente ${acquirerName} está desativada. Ative-a no painel admin ou selecione outra adquirente.` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Fallback order: prioritize Ativus (most stable), then EFI, Inter, Valorion
+    const FALLBACK_ORDER = ['ativus', 'efi', 'inter', 'valorion'];
+    
+    // Build ordered list: preferred first, then fallbacks (excluding preferred to avoid duplicates)
+    const acquirersToTry = [
+      preferredAcquirer,
+      ...FALLBACK_ORDER.filter(a => a !== preferredAcquirer)
+    ];
+    
+    console.log(`[STANDARD+FALLBACK] Order: ${acquirersToTry.join(' → ')}`);
 
-    // Call the selected acquirer directly
-    const result = await callAcquirer(acquirer, {
-      amount,
-      customerName,
-      customerEmail,
-      customerPhone,
-      customerCpf,
-      customerBirthdate,
-      customerAddress,
-      utmParams,
-      userId,
-      popupModel,
-      productName,
-      feeConfig,
-      fingerprint,
-      clientIp,
-      offerId
-    });
+    let lastError = '';
+    let acquirerUsed = '';
 
-    if (result.success) {
-      // Update rate limit record after successful generation
-      await updateRateLimitRecord(fingerprint, clientIp);
+    for (const acquirer of acquirersToTry) {
+      // Check if the acquirer is enabled
+      const isEnabled = await isAcquirerEnabled(acquirer);
+      if (!isEnabled) {
+        console.log(`[STANDARD+FALLBACK] Acquirer ${acquirer} is disabled, skipping`);
+        continue;
+      }
+
+      console.log(`[STANDARD+FALLBACK] Trying ${acquirer}...`);
+
+      const result = await callAcquirer(acquirer, {
+        amount,
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerCpf,
+        customerBirthdate,
+        customerAddress,
+        utmParams,
+        userId,
+        popupModel,
+        productName,
+        feeConfig,
+        fingerprint,
+        clientIp,
+        offerId
+      });
+
+      if (result.success) {
+        // Update rate limit record after successful generation
+        await updateRateLimitRecord(fingerprint, clientIp);
+        
+        acquirerUsed = acquirer;
+        console.log(`[STANDARD+FALLBACK] ✅ Success with ${acquirer}`);
+        
+        return new Response(
+          JSON.stringify({
+            success: true,
+            pixCode: result.pixCode,
+            qrCodeUrl: result.qrCodeUrl,
+            transactionId: result.transactionId,
+            acquirerUsed: acquirer
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      lastError = result.error || 'Unknown error';
       
-      return new Response(
-        JSON.stringify({
-          success: true,
-          pixCode: result.pixCode,
-          qrCodeUrl: result.qrCodeUrl,
-          transactionId: result.transactionId,
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      return new Response(
-        JSON.stringify({ error: result.error }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // If BRCode is invalid, log specifically and continue to next
+      if (result.invalidBRCode) {
+        console.log(`[STANDARD+FALLBACK] ⚠️ ${acquirer} returned INVALID BRCODE - trying next acquirer`);
+      } else {
+        console.log(`[STANDARD+FALLBACK] ❌ ${acquirer} failed: ${lastError}`);
+      }
     }
+
+    // All acquirers failed
+    console.log(`[STANDARD+FALLBACK] All acquirers failed. Last error: ${lastError}`);
+    return new Response(
+      JSON.stringify({ error: `Falha ao gerar PIX com todos os adquirentes disponíveis. Tente novamente em alguns segundos. (${lastError})` }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error generating PIX:', error);
