@@ -19,6 +19,7 @@ interface Transaction {
   status: 'generated' | 'paid' | 'expired' | 'refunded';
   txid: string;
   donor_name: string;
+  donor_phone?: string;
   product_name: string | null;
   created_at: string;
   paid_at: string | null;
@@ -28,6 +29,8 @@ interface Transaction {
   approved_by_email: string | null;
   is_manual_approval: boolean | null;
   client_ip: string | null;
+  offer_code?: string | null;
+  offer_domain?: string | null;
 }
 
 type DateFilter = 'all' | 'today' | 'yesterday' | '7days' | '15days' | 'month' | 'year';

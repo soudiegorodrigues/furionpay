@@ -40,6 +40,7 @@ interface Transaction {
   txid: string;
   donor_name: string;
   donor_email?: string;
+  donor_phone?: string;
   product_name: string | null;
   created_at: string;
   paid_at: string | null;
@@ -50,6 +51,8 @@ interface Transaction {
   acquirer?: string;
   order_bumps?: OrderBumpItem[] | null;
   client_ip?: string | null;
+  offer_code?: string | null;
+  offer_domain?: string | null;
 }
 
 interface FeeConfig {
