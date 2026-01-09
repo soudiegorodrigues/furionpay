@@ -305,24 +305,27 @@ const TransactionDetailsSheet = ({
                           ? `${baseDomain}/${transaction.offer_code}` 
                           : null;
                         
-                        // Mensagem baseada no status
+                        // Mensagem baseada no status com urgência
                         let message = '';
+                        const productName = transaction.product_name || 'nosso produto';
+                        const clientName = transaction.donor_name || 'cliente';
+                        
                         if (transaction.status === 'generated') {
                           if (checkoutLink) {
-                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que você gerou um PIX para o produto *${transaction.product_name || 'nosso produto'}*.\n\n🔗 Link para concluir sua compra:\n${checkoutLink}\n\nPosso ajudar com algo? Se tiver qualquer dúvida sobre o pagamento ou o produto, estou à disposição!\n\nAbraço! 😊`;
+                            message = `Olá ${clientName}! 👋\n\nVi que você iniciou a compra do *${productName}* mas ainda não finalizou o pagamento.\n\n⚠️ *ATENÇÃO:* O PIX tem validade limitada e pode expirar a qualquer momento!\n\n🔗 *Finalize agora sua compra:*\n${checkoutLink}\n\n✅ Após o pagamento, envie o comprovante aqui para liberarmos seu acesso imediatamente!\n\n⏰ Não perca essa oportunidade!`;
                           } else {
-                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que você gerou um PIX para o produto *${transaction.product_name || 'nosso produto'}*.\n\nPosso ajudar com algo? Se tiver qualquer dúvida sobre o pagamento ou o produto, estou à disposição!\n\nAbraço! 😊`;
+                            message = `Olá ${clientName}! 👋\n\nVi que você iniciou a compra do *${productName}* mas ainda não finalizou o pagamento.\n\n⚠️ *ATENÇÃO:* O PIX tem validade limitada e pode expirar a qualquer momento!\n\n✅ Após o pagamento, envie o comprovante aqui para liberarmos seu acesso imediatamente!\n\n⏰ Não perca essa oportunidade! Posso ajudar com algo?`;
                           }
                         } else if (transaction.status === 'paid') {
-                          message = `Olá ${transaction.donor_name || 'cliente'}! 🎉\n\nMuito obrigado pela sua compra do *${transaction.product_name || 'nosso produto'}*!\n\nSeu pagamento foi confirmado com sucesso. Se precisar de qualquer suporte ou tiver dúvidas, é só chamar!\n\nAbraço! 😊`;
+                          message = `Olá ${clientName}! 🎉\n\nMuito obrigado pela sua compra do *${productName}*!\n\n✅ Seu pagamento foi confirmado com sucesso!\n\nSe precisar de qualquer suporte ou tiver dúvidas, estou à disposição!\n\nAbraço! 😊`;
                         } else if (transaction.status === 'expired') {
                           if (checkoutLink) {
-                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que seu PIX para o produto *${transaction.product_name || 'nosso produto'}* expirou.\n\n🔗 Caso ainda queira concluir a compra:\n${checkoutLink}\n\nPosso ajudar com algo?\n\nAbraço! 😊`;
+                            message = `Olá ${clientName}! 👋\n\nVi que seu PIX para o *${productName}* expirou, mas ainda dá tempo de garantir o seu!\n\n🔥 *Aproveite antes que acabe!*\n\n🔗 *Gere um novo PIX aqui:*\n${checkoutLink}\n\n✅ Após o pagamento, envie o comprovante aqui para liberarmos seu acesso imediatamente!\n\n⏰ Corra, as vagas são limitadas!`;
                           } else {
-                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que seu PIX para o produto *${transaction.product_name || 'nosso produto'}* expirou.\n\nCaso ainda queira concluir a compra, estou à disposição!\n\nAbraço! 😊`;
+                            message = `Olá ${clientName}! 👋\n\nVi que seu PIX para o *${productName}* expirou, mas ainda dá tempo de garantir o seu!\n\n🔥 Quer que eu gere um novo código para você finalizar a compra?\n\n✅ Após o pagamento, envie o comprovante aqui para liberarmos seu acesso imediatamente!`;
                           }
                         } else {
-                          message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nEstou entrando em contato sobre o produto *${transaction.product_name || 'nosso produto'}*.\n\nPosso ajudar com algo?\n\nAbraço! 😊`;
+                          message = `Olá ${clientName}! 👋\n\nEstou entrando em contato sobre o *${productName}*.\n\nPosso ajudar com algo?`;
                         }
                         
                         const encodedMessage = encodeURIComponent(message);
