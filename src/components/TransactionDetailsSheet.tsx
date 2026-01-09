@@ -277,7 +277,6 @@ const TransactionDetailsSheet = ({
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold truncate flex-1 min-w-0">{transaction.donor_phone}</p>
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -286,6 +285,7 @@ const TransactionDetailsSheet = ({
                     >
                       {copiedId === 'phone' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                     </Button>
+                    <p className="text-sm font-semibold truncate flex-1 min-w-0">{transaction.donor_phone}</p>
                   </div>
                   <div className="flex items-center justify-center">
                     <Button 
