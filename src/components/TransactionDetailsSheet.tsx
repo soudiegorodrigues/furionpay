@@ -307,12 +307,22 @@ const TransactionDetailsSheet = ({
                         
                         // Mensagem baseada no status
                         let message = '';
-                        if (transaction.status === 'generated' && checkoutLink) {
-                          message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que você gerou um PIX para o produto *${transaction.product_name || 'nosso produto'}*.\n\n🔗 Link para concluir sua compra:\n${checkoutLink}\n\nPosso ajudar com algo? Se tiver qualquer dúvida sobre o pagamento ou o produto, estou à disposição!\n\nAbraço! 😊`;
+                        if (transaction.status === 'generated') {
+                          if (checkoutLink) {
+                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que você gerou um PIX para o produto *${transaction.product_name || 'nosso produto'}*.\n\n🔗 Link para concluir sua compra:\n${checkoutLink}\n\nPosso ajudar com algo? Se tiver qualquer dúvida sobre o pagamento ou o produto, estou à disposição!\n\nAbraço! 😊`;
+                          } else {
+                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que você gerou um PIX para o produto *${transaction.product_name || 'nosso produto'}*.\n\nPosso ajudar com algo? Se tiver qualquer dúvida sobre o pagamento ou o produto, estou à disposição!\n\nAbraço! 😊`;
+                          }
                         } else if (transaction.status === 'paid') {
                           message = `Olá ${transaction.donor_name || 'cliente'}! 🎉\n\nMuito obrigado pela sua compra do *${transaction.product_name || 'nosso produto'}*!\n\nSeu pagamento foi confirmado com sucesso. Se precisar de qualquer suporte ou tiver dúvidas, é só chamar!\n\nAbraço! 😊`;
+                        } else if (transaction.status === 'expired') {
+                          if (checkoutLink) {
+                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que seu PIX para o produto *${transaction.product_name || 'nosso produto'}* expirou.\n\n🔗 Caso ainda queira concluir a compra:\n${checkoutLink}\n\nPosso ajudar com algo?\n\nAbraço! 😊`;
+                          } else {
+                            message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nVi que seu PIX para o produto *${transaction.product_name || 'nosso produto'}* expirou.\n\nCaso ainda queira concluir a compra, estou à disposição!\n\nAbraço! 😊`;
+                          }
                         } else {
-                          message = `Olá ${transaction.donor_name || 'cliente'}! 👋`;
+                          message = `Olá ${transaction.donor_name || 'cliente'}! 👋\n\nEstou entrando em contato sobre o produto *${transaction.product_name || 'nosso produto'}*.\n\nPosso ajudar com algo?\n\nAbraço! 😊`;
                         }
                         
                         const encodedMessage = encodeURIComponent(message);
