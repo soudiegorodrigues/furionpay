@@ -3113,6 +3113,44 @@ export type Database = {
             }
             Returns: Json
           }
+        | {
+            Args: {
+              p_cursor?: string
+              p_end_date?: string
+              p_page_size?: number
+              p_search?: string
+              p_start_date?: string
+              p_status?: string
+              p_user_id?: string
+            }
+            Returns: {
+              acquirer: string
+              amount: number
+              client_ip: string
+              created_at: string
+              donor_cpf: string
+              donor_email: string
+              donor_name: string
+              donor_phone: string
+              expired_at: string
+              fee_fixed: number
+              fee_percentage: number
+              id: string
+              offer_code: string
+              offer_domain: string
+              offer_id: string
+              order_bumps: Json
+              paid_at: string
+              pix_code: string
+              popup_model: string
+              product_code: string
+              product_name: string
+              status: string
+              txid: string
+              user_id: string
+              utm_data: Json
+            }[]
+          }
       get_global_transactions_v2: {
         Args: {
           p_date_filter?: string
@@ -3739,6 +3777,43 @@ export type Database = {
               total_count: number
               total_pages: number
               transactions: Json
+            }[]
+          }
+        | {
+            Args: {
+              p_cursor?: string
+              p_end_date?: string
+              p_page_size?: number
+              p_search?: string
+              p_start_date?: string
+              p_status?: string
+              p_user_id: string
+            }
+            Returns: {
+              acquirer: string
+              amount: number
+              client_ip: string
+              created_at: string
+              donor_cpf: string
+              donor_email: string
+              donor_name: string
+              donor_phone: string
+              expired_at: string
+              fee_fixed: number
+              fee_percentage: number
+              id: string
+              offer_code: string
+              offer_domain: string
+              offer_id: string
+              order_bumps: Json
+              paid_at: string
+              pix_code: string
+              popup_model: string
+              product_code: string
+              product_name: string
+              status: string
+              txid: string
+              utm_data: Json
             }[]
           }
       get_user_webhook_deliveries: {
