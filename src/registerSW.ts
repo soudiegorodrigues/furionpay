@@ -12,10 +12,65 @@ const isAllowedPWADomain = (): boolean => {
     hostname.endsWith(".lovableproject.com");
 };
 
+// Kill switch: remove SW e limpa caches em domínios não permitidos
+const killServiceWorkerAndCaches = async () => {
+  const CLEANUP_FLAG = '__sw_cleanup_done__';
+  
+  // Evita loop infinito de reload
+  if (sessionStorage.getItem(CLEANUP_FLAG)) {
+    console.log('[PWA] Cleanup já foi feito nesta sessão, pulando...');
+    return;
+  }
+
+  let needsReload = false;
+
+  // 1. Remove todos os Service Workers registrados
+  if ('serviceWorker' in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      if (registrations.length > 0) {
+        console.log(`[PWA] Encontrados ${registrations.length} Service Worker(s) em domínio não permitido. Removendo...`);
+        for (const registration of registrations) {
+          await registration.unregister();
+          console.log('[PWA] Service Worker removido:', registration.scope);
+        }
+        needsReload = true;
+      }
+    } catch (error) {
+      console.error('[PWA] Erro ao remover Service Workers:', error);
+    }
+  }
+
+  // 2. Limpa todo o Cache Storage
+  if ('caches' in window) {
+    try {
+      const cacheNames = await caches.keys();
+      if (cacheNames.length > 0) {
+        console.log(`[PWA] Encontrados ${cacheNames.length} cache(s). Limpando...`);
+        for (const cacheName of cacheNames) {
+          await caches.delete(cacheName);
+          console.log('[PWA] Cache removido:', cacheName);
+        }
+        needsReload = true;
+      }
+    } catch (error) {
+      console.error('[PWA] Erro ao limpar caches:', error);
+    }
+  }
+
+  // 3. Recarrega a página uma única vez para aplicar a limpeza
+  if (needsReload) {
+    console.log('[PWA] Limpeza concluída. Recarregando página...');
+    sessionStorage.setItem(CLEANUP_FLAG, 'true');
+    window.location.reload();
+  }
+};
+
 export const registerServiceWorker = async () => {
-  // Só registra o Service Worker em domínios permitidos
+  // Em domínios não permitidos: remover SW e caches antigos
   if (!isAllowedPWADomain()) {
-    console.log('[PWA] Domain not allowed for PWA, skipping SW registration:', window.location.hostname);
+    console.log('[PWA] Domínio não permitido para PWA:', window.location.hostname);
+    await killServiceWorkerAndCaches();
     return;
   }
 
