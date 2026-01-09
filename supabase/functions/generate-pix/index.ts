@@ -740,9 +740,10 @@ function validateBRCode(pixCode: string): BRCodeValidationResult {
     return { valid: false, error: 'BRCode muito longo (máximo 512 caracteres)' };
   }
   
-  // Check for placeholder characters (detected in Ativus bug)
-  if (pixCode.includes('***') || pixCode.includes('???') || pixCode.includes('###')) {
-    return { valid: false, error: 'BRCode contém caracteres de placeholder (***,???,###)' };
+  // Check for placeholder characters (detected in Ativus/Inter bugs)
+  // 5901* is Inter's masked merchant name pattern
+  if (pixCode.includes('***') || pixCode.includes('???') || pixCode.includes('###') || pixCode.includes('5901*')) {
+    return { valid: false, error: 'BRCode contém caracteres de placeholder (***,???,###,5901*)' };
   }
   
   // BRCode EMV must start with "00" (Payload Format Indicator)
