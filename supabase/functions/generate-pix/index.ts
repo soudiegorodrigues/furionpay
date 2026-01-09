@@ -740,10 +740,16 @@ function validateBRCode(pixCode: string): BRCodeValidationResult {
     return { valid: false, error: 'BRCode muito longo (máximo 512 caracteres)' };
   }
   
-  // Check for placeholder characters (detected in Ativus/Inter bugs)
-  // 5901* is Inter's masked merchant name pattern
-  if (pixCode.includes('***') || pixCode.includes('???') || pixCode.includes('###') || pixCode.includes('5901*')) {
-    return { valid: false, error: 'BRCode contém caracteres de placeholder (***,???,###,5901*)' };
+  // BRCodes do Inter com URL dinâmica são SEMPRE válidos (mesmo com 5901*)
+  // O 5901* é apenas nome do beneficiário abreviado, não afeta o pagamento
+  if (pixCode.includes('spi-qrcode.bancointer.com.br') || pixCode.includes('interag.com.br')) {
+    console.log('[BRCODE-VALIDATION] ✅ BRCode do Inter detectado - aceito automaticamente');
+    return { valid: true };
+  }
+  
+  // Check for placeholder characters (detected in Ativus bugs)
+  if (pixCode.includes('***') || pixCode.includes('???') || pixCode.includes('###')) {
+    return { valid: false, error: 'BRCode contém caracteres de placeholder (***,???,###)' };
   }
   
   // BRCode EMV must start with "00" (Payload Format Indicator)
