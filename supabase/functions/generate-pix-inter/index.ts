@@ -408,6 +408,40 @@ async function getPixQrCodeByLocId(
   }
 }
 
+// Fallback: consultar a cobrança via GET para obter pixCopiaECola não mascarado
+async function getPixCobByTxid(
+  client: Deno.HttpClient,
+  accessToken: string,
+  txid: string
+): Promise<{ pixCopiaECola?: string } | null> {
+  const url = `${INTER_API_URL}/pix/v2/cob/${txid}`;
+
+  try {
+    console.log(`[INTER] Consultando cobrança GET /pix/v2/cob/${txid}...`);
+    const resp = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      client,
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text();
+      console.log('[INTER] GET cob endpoint failed:', resp.status, txt);
+      return null;
+    }
+
+    const json = await resp.json();
+    console.log('[INTER] GET cob success. pixCopiaECola length:', json?.pixCopiaECola?.length || 0);
+    return json;
+  } catch (err) {
+    console.log('[INTER] GET cob endpoint exception:', err);
+    return null;
+  }
+}
+
 // ============= AUDIT LOG FUNCTION =============
 async function logAudit(
   supabase: any,
@@ -707,16 +741,28 @@ serve(async (req) => {
     const locId: number | undefined = cobData?.loc?.id;
     const qrCodeUrl = null;
 
-    // If Inter returns a masked/invalid pixCopiaECola, try the official QRCode endpoint using loc.id
-    if (isPossiblyMaskedPixCode(pixCode) && typeof locId === 'number') {
-      console.log(`[INTER] pixCopiaECola seems masked/invalid; trying /pix/v2/loc/${locId}/qrcode ...`);
-      const qr = await getPixQrCodeByLocId(mtlsClient, accessToken, locId);
-      const qrcode = (qr as any)?.qrcode;
-      if (typeof qrcode === 'string' && qrcode.length > 20) {
-        console.log('[INTER] Using qrcode from loc endpoint as pixCode');
-        pixCode = qrcode;
+    // If Inter returns a masked/invalid pixCopiaECola, try fallbacks
+    if (isPossiblyMaskedPixCode(pixCode)) {
+      console.log(`[INTER] pixCopiaECola seems masked/invalid. Trying fallbacks...`);
+      
+      // Fallback 1: GET /pix/v2/cob/{txid} - consultar a cobrança criada
+      const cobConsulta = await getPixCobByTxid(mtlsClient, accessToken, txid);
+      if (cobConsulta?.pixCopiaECola && !isPossiblyMaskedPixCode(cobConsulta.pixCopiaECola)) {
+        console.log('[INTER] ✅ Using pixCopiaECola from GET /cob/{txid}');
+        pixCode = cobConsulta.pixCopiaECola;
       } else {
-        console.log('[INTER] loc qrcode did not return a usable qrcode field');
+        // Fallback 2: /pix/v2/loc/{id}/qrcode
+        if (typeof locId === 'number') {
+          console.log(`[INTER] Trying /pix/v2/loc/${locId}/qrcode ...`);
+          const qr = await getPixQrCodeByLocId(mtlsClient, accessToken, locId);
+          const qrcode = (qr as any)?.qrcode;
+          if (typeof qrcode === 'string' && qrcode.length > 20 && !isPossiblyMaskedPixCode(qrcode)) {
+            console.log('[INTER] ✅ Using qrcode from loc endpoint');
+            pixCode = qrcode;
+          } else {
+            console.log('[INTER] ⚠️ All fallbacks failed - pixCode remains masked');
+          }
+        }
       }
     }
 
