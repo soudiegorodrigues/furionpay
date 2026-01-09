@@ -747,9 +747,16 @@ function validateBRCode(pixCode: string): BRCodeValidationResult {
     return { valid: true };
   }
   
-  // Check for placeholder characters (detected in Ativus bugs)
-  if (pixCode.includes('***') || pixCode.includes('???') || pixCode.includes('###')) {
-    return { valid: false, error: 'BRCode contém caracteres de placeholder (***,???,###)' };
+  // BRCodes do Valorion/Microcashif usam *** no campo 62 - é formato válido deles
+  // O 62070503*** é padrão do Microcashif para referência do pagamento
+  if (pixCode.includes('qrcode.microcashif.com.br') || pixCode.includes('62070503***')) {
+    console.log('[BRCODE-VALIDATION] ✅ BRCode do Valorion/Microcashif detectado - aceito automaticamente');
+    return { valid: true };
+  }
+  
+  // Check for placeholder characters (apenas se não for formato conhecido)
+  if (pixCode.includes('???') || pixCode.includes('###')) {
+    return { valid: false, error: 'BRCode contém caracteres de placeholder (???,###)' };
   }
   
   // BRCode EMV must start with "00" (Payload Format Indicator)
