@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { cn } from "@/lib/utils";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
+import { trackInitiateCheckoutToUtmify } from "@/lib/trackInitiateCheckout";
 
 interface DonationPopupCleanProps {
   isOpen: boolean;
@@ -94,8 +95,17 @@ export const DonationPopupClean = ({
         content_name: 'Donation Popup Clean',
         currency: 'BRL',
       });
+      // Also track to UTMify server-side
+      trackInitiateCheckoutToUtmify({
+        userId,
+        offerId,
+        productName: 'Donation Clean',
+        value: totalAmount,
+        utmParams,
+        popupModel: 'clean',
+      });
     }
-  }, [isOpen, trackEvent]);
+  }, [isOpen, trackEvent, userId, offerId, utmParams, totalAmount]);
 
   // Poll for payment status
   useEffect(() => {
