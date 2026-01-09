@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePixel } from "./MetaPixelProvider";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
+import { trackInitiateCheckoutToUtmify } from "@/lib/trackInitiateCheckout";
 
 
 interface DonationPopupDirectProps {
@@ -61,6 +62,15 @@ export const DonationPopupDirect = ({
         currency: 'BRL',
         value: fixedAmount,
       });
+      // Also track to UTMify server-side
+      trackInitiateCheckoutToUtmify({
+        userId,
+        offerId,
+        productName: 'Donation Direct',
+        value: fixedAmount,
+        utmParams,
+        popupModel: 'direct',
+      });
     }
     
     if (!isOpen) {
@@ -70,7 +80,7 @@ export const DonationPopupDirect = ({
       setIsPaid(false);
       setTimeLeft(600);
     }
-  }, [isOpen]);
+  }, [isOpen, userId, offerId, utmParams, fixedAmount]);
 
   // Countdown timer
   useEffect(() => {
