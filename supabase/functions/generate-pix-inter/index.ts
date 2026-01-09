@@ -22,7 +22,56 @@ const RANDOM_NAMES = [
   'Isabela Nascimento Costa', 'Leticia Carvalho Ribeiro', 'Vanessa Lima Santos'
 ];
 
+// Random email domains
+const EMAIL_DOMAINS = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'uol.com.br'];
+
 const getRandomName = () => RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
+
+const getRandomEmail = (name: string) => {
+  const domain = EMAIL_DOMAINS[Math.floor(Math.random() * EMAIL_DOMAINS.length)];
+  const cleanName = name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '.')
+    .replace(/[^a-z.]/g, '');
+  const randomNum = Math.floor(Math.random() * 999) + 1;
+  return `${cleanName}${randomNum}@${domain}`;
+};
+
+const getRandomPhone = () => {
+  const ddds = ['11', '21', '31', '41', '51', '61', '71', '81', '85', '62', '27', '48'];
+  const ddd = ddds[Math.floor(Math.random() * ddds.length)];
+  const number = Math.floor(Math.random() * 900000000) + 100000000;
+  return `${ddd}9${number.toString().slice(0, 8)}`;
+};
+
+// Generate valid CPF (for anonymous Inter transactions only)
+const generateRandomCpf = (): string => {
+  const randomDigits = () => Math.floor(Math.random() * 10);
+  const digits: number[] = [];
+  
+  // Generate first 9 random digits
+  for (let i = 0; i < 9; i++) {
+    digits.push(randomDigits());
+  }
+  
+  // Calculate first check digit
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += digits[i] * (10 - i);
+  }
+  let remainder = sum % 11;
+  digits.push(remainder < 2 ? 0 : 11 - remainder);
+  
+  // Calculate second check digit
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += digits[i] * (11 - i);
+  }
+  remainder = sum % 11;
+  digits.push(remainder < 2 ? 0 : 11 - remainder);
+  
+  return digits.join('');
+};
 
 interface OrderBumpData {
   id: string;
@@ -361,33 +410,35 @@ async function createPixCob(
     solicitacaoPagador: "Pagamento PIX",
   };
 
-  // Add devedor (payer) data if available - this prevents masked BRCodes
-  if (devedor?.donorName) {
-    const cpfClean = devedor.donorCpf?.replace(/\D/g, '') || '';
-    
-    if (cpfClean.length === 11) {
-      // CPF válido
-      payload.devedor = {
-        cpf: cpfClean,
-        nome: devedor.donorName.substring(0, 100), // Inter limita a 100 chars
-      };
-      console.log('[INTER] ✅ Incluindo devedor com CPF:', cpfClean.substring(0, 3) + '***');
-    } else if (cpfClean.length === 14) {
-      // CNPJ válido
-      payload.devedor = {
-        cnpj: cpfClean,
-        nome: devedor.donorName.substring(0, 100),
-      };
-      console.log('[INTER] ✅ Incluindo devedor com CNPJ:', cpfClean.substring(0, 4) + '***');
-    } else {
-      // Sem documento válido, mas incluir nome pode ajudar
-      payload.devedor = {
-        nome: devedor.donorName.substring(0, 100),
-      };
-      console.log('[INTER] ⚠️ Incluindo devedor apenas com nome (sem CPF/CNPJ válido)');
-    }
+  // Add devedor (payer) data - REQUIRED by Inter to avoid masked BRCodes and 400 errors
+  // If no CPF/CNPJ provided, generate random valid data for popups
+  const cpfClean = devedor?.donorCpf?.replace(/\D/g, '') || '';
+  const hasValidCpf = cpfClean.length === 11;
+  const hasValidCnpj = cpfClean.length === 14;
+  
+  if (hasValidCpf) {
+    // CPF válido do cliente
+    payload.devedor = {
+      cpf: cpfClean,
+      nome: (devedor?.donorName || getRandomName()).substring(0, 100),
+    };
+    console.log('[INTER] ✅ Incluindo devedor com CPF real:', cpfClean.substring(0, 3) + '***');
+  } else if (hasValidCnpj) {
+    // CNPJ válido do cliente
+    payload.devedor = {
+      cnpj: cpfClean,
+      nome: (devedor?.donorName || getRandomName()).substring(0, 100),
+    };
+    console.log('[INTER] ✅ Incluindo devedor com CNPJ real:', cpfClean.substring(0, 4) + '***');
   } else {
-    console.log('[INTER] ⚠️ Sem dados do devedor - BRCode pode vir mascarado');
+    // Sem CPF/CNPJ válido - gerar dados aleatórios para popup
+    const randomCpf = generateRandomCpf();
+    const randomName = devedor?.donorName || getRandomName();
+    payload.devedor = {
+      cpf: randomCpf,
+      nome: randomName.substring(0, 100),
+    };
+    console.log('[INTER] 🎲 Usando CPF aleatório para popup:', randomCpf.substring(0, 3) + '***', '- Nome:', randomName);
   }
 
   console.log('Criando cobrança PIX Inter:', JSON.stringify(payload));
