@@ -328,7 +328,19 @@ function sanitizePixKey(key: string): string {
   return trimmed.replace(/[.\-\/]/g, '');
 }
 
-async function createPixCob(client: Deno.HttpClient, accessToken: string, amount: number, txid: string, pixKey: string): Promise<any> {
+interface DevedorData {
+  donorName?: string;
+  donorCpf?: string;
+}
+
+async function createPixCob(
+  client: Deno.HttpClient, 
+  accessToken: string, 
+  amount: number, 
+  txid: string, 
+  pixKey: string,
+  devedor?: DevedorData
+): Promise<any> {
   const cobUrl = `${INTER_API_URL}/pix/v2/cob/${txid}`;
   
   const expirationSeconds = 3600;
@@ -337,7 +349,8 @@ async function createPixCob(client: Deno.HttpClient, accessToken: string, amount
   console.log('Chave PIX original:', pixKey);
   console.log('Chave PIX sanitizada:', sanitizedPixKey);
   
-  const payload = {
+  // Build payload with devedor (payer) data to avoid masked BRCodes
+  const payload: any = {
     calendario: {
       expiracao: expirationSeconds,
     },
@@ -345,7 +358,37 @@ async function createPixCob(client: Deno.HttpClient, accessToken: string, amount
       original: amount.toFixed(2),
     },
     chave: sanitizedPixKey,
+    solicitacaoPagador: "Pagamento PIX",
   };
+
+  // Add devedor (payer) data if available - this prevents masked BRCodes
+  if (devedor?.donorName) {
+    const cpfClean = devedor.donorCpf?.replace(/\D/g, '') || '';
+    
+    if (cpfClean.length === 11) {
+      // CPF válido
+      payload.devedor = {
+        cpf: cpfClean,
+        nome: devedor.donorName.substring(0, 100), // Inter limita a 100 chars
+      };
+      console.log('[INTER] ✅ Incluindo devedor com CPF:', cpfClean.substring(0, 3) + '***');
+    } else if (cpfClean.length === 14) {
+      // CNPJ válido
+      payload.devedor = {
+        cnpj: cpfClean,
+        nome: devedor.donorName.substring(0, 100),
+      };
+      console.log('[INTER] ✅ Incluindo devedor com CNPJ:', cpfClean.substring(0, 4) + '***');
+    } else {
+      // Sem documento válido, mas incluir nome pode ajudar
+      payload.devedor = {
+        nome: devedor.donorName.substring(0, 100),
+      };
+      console.log('[INTER] ⚠️ Incluindo devedor apenas com nome (sem CPF/CNPJ válido)');
+    }
+  } else {
+    console.log('[INTER] ⚠️ Sem dados do devedor - BRCode pode vir mascarado');
+  }
 
   console.log('Criando cobrança PIX Inter:', JSON.stringify(payload));
 
@@ -734,8 +777,11 @@ serve(async (req) => {
     // Gerar txid único
     const txid = generateTxId();
 
-    // Criar cobrança PIX
-    const cobData = await createPixCob(mtlsClient, accessToken, amount, txid, credentials.pixKey);
+    // Criar cobrança PIX com dados do devedor para evitar BRCode mascarado
+    const cobData = await createPixCob(mtlsClient, accessToken, amount, txid, credentials.pixKey, {
+      donorName: donorName,
+      donorCpf: donorCpf,
+    });
 
     let pixCode: string = cobData?.pixCopiaECola;
     const locId: number | undefined = cobData?.loc?.id;
