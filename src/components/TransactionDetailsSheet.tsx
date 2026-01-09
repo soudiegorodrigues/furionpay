@@ -275,9 +275,9 @@ const TransactionDetailsSheet = ({
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Telefone</span>
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-1.5">
-                  <p className="text-sm font-semibold truncate flex-1 min-w-0">{transaction.donor_phone}</p>
-                  <div className="flex items-center gap-1.5">
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-semibold">{transaction.donor_phone}</p>
+                  <div className="flex items-center gap-2">
                     <Button 
                       variant="ghost" 
                       size="sm" 
