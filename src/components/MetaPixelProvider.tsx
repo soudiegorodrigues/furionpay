@@ -61,12 +61,19 @@ interface PixelDebugStatus {
   pendingEventsCount: number;
 }
 
+interface CapiCredentials {
+  pixelId?: string;
+  accessToken?: string;
+}
+
 interface MetaPixelContextType {
   trackEvent: (eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => void;
   trackCustomEvent: (eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => void;
+  trackEventWithCAPI: (eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => Promise<void>;
   isLoaded: boolean;
   utmParams: UTMParams;
   setAdvancedMatching: (params: AdvancedMatchingParams) => void;
+  setCapiCredentials: (pixelId: string, accessToken: string) => void;
   initializeWithPixelIds: (pixelIds: string[]) => void;
   debugStatus: PixelDebugStatus;
 }
@@ -74,9 +81,11 @@ interface MetaPixelContextType {
 const MetaPixelContext = createContext<MetaPixelContextType>({
   trackEvent: () => {},
   trackCustomEvent: () => {},
+  trackEventWithCAPI: async () => {},
   isLoaded: false,
   utmParams: {},
   setAdvancedMatching: () => {},
+  setCapiCredentials: () => {},
   initializeWithPixelIds: () => {},
   debugStatus: { pixelIds: [], scriptInjected: false, scriptLoaded: false, scriptError: null, pendingEventsCount: 0 },
 });
@@ -106,6 +115,9 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     scriptError: null,
     pendingEventsCount: 0,
   });
+  
+  // CAPI credentials for server-side tracking
+  const [capiCredentials, setCapiCredentialsState] = useState<CapiCredentials>({});
   
   // Queue for pending events (before fbq is ready)
   const pendingEventsRef = useRef<PendingEvent[]>([]);
@@ -331,6 +343,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     console.log('Advanced Matching updated:', params);
   }, []);
 
+  // Function to set CAPI credentials (call when pixel config is loaded)
+  const setCapiCredentials = useCallback((pixelId: string, accessToken: string) => {
+    setCapiCredentialsState({ pixelId, accessToken });
+    console.log('[CAPI] ✅ Credentials configured for pixel:', pixelId);
+  }, []);
+
   // Function to initialize pixels programmatically (for slug-based URLs)
   const initializeWithPixelIds = useCallback((pixelIds: string[]) => {
     if (!pixelIds || pixelIds.length === 0) {
@@ -425,12 +443,64 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     }
   }, [utmParams, advancedMatchingData]);
 
+  // Track event with both Browser Pixel and CAPI for maximum reliability
+  const trackEventWithCAPI = useCallback(async (
+    eventName: string,
+    params?: Record<string, any>,
+    advancedMatching?: AdvancedMatchingParams
+  ) => {
+    // Generate unique event ID for deduplication
+    const eventId = `${eventName}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 1. Track via browser pixel (with event_id for deduplication)
+    trackEvent(eventName, { ...params, event_id: eventId }, advancedMatching);
+    
+    // 2. Track via CAPI (if credentials available)
+    if (capiCredentials.pixelId && capiCredentials.accessToken) {
+      try {
+        const { fbc, fbp } = getMetaCookies();
+        
+        const capiPayload = {
+          pixelId: capiCredentials.pixelId,
+          accessToken: capiCredentials.accessToken,
+          eventName,
+          eventId,
+          value: params?.value,
+          currency: params?.currency || 'BRL',
+          productName: params?.content_name,
+          transactionId: advancedMatching?.external_id || params?.transaction_id,
+          customerEmail: advancedMatching?.em,
+          customerName: advancedMatching?.fn ? `${advancedMatching.fn} ${advancedMatching.ln || ''}`.trim() : undefined,
+          sourceUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+          fbc,
+          fbp,
+        };
+
+        console.log(`[CAPI] 📤 Sending ${eventName} to CAPI...`, capiPayload);
+        
+        const { data, error } = await supabase.functions.invoke('track-conversion', {
+          body: capiPayload,
+        });
+
+        if (error) {
+          console.error(`[CAPI] ❌ Error sending ${eventName}:`, error);
+        } else {
+          console.log(`[CAPI] ✅ ${eventName} sent successfully via CAPI`, data);
+        }
+      } catch (error) {
+        console.error(`[CAPI] ❌ Exception sending ${eventName}:`, error);
+      }
+    } else {
+      console.log(`[CAPI] ⚠️ ${eventName} - No CAPI credentials, browser pixel only`);
+    }
+  }, [trackEvent, capiCredentials]);
+
   // Check for debug mode
   const showDebugPanel = typeof window !== 'undefined' && 
     new URLSearchParams(window.location.search).get('debug_pixel') === '1';
 
   return (
-    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, isLoaded, utmParams, setAdvancedMatching, initializeWithPixelIds, debugStatus }}>
+    <MetaPixelContext.Provider value={{ trackEvent, trackCustomEvent, trackEventWithCAPI, isLoaded, utmParams, setAdvancedMatching, setCapiCredentials, initializeWithPixelIds, debugStatus }}>
       {showDebugPanel && (
         <div style={{
           position: 'fixed',

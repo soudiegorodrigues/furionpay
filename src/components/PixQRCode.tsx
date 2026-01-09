@@ -34,18 +34,18 @@ export const PixQRCode = ({
   const [timeLeft, setTimeLeft] = useState(expirationMinutes * 60);
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
-  const { trackEvent, trackCustomEvent } = usePixel();
+  const { trackEvent, trackEventWithCAPI } = usePixel();
 
-  // Track PixGenerated when component mounts
+  // Track PixGenerated when component mounts (via CAPI for reliability)
   useEffect(() => {
-    trackCustomEvent('PixGenerated', {
+    trackEventWithCAPI('PixGenerated', {
       value: amount,
       currency: 'BRL',
     }, {
       external_id: transactionId,
       country: 'br',
     });
-  }, [amount, transactionId, trackCustomEvent]);
+  }, [amount, transactionId, trackEventWithCAPI]);
 
   // Poll for payment status
   useEffect(() => {
@@ -62,7 +62,8 @@ export const PixQRCode = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
-          trackEvent('Purchase', {
+          // Track Purchase via CAPI for reliability
+          trackEventWithCAPI('Purchase', {
             value: amount,
             currency: 'BRL',
             content_name: 'Doação PIX',
@@ -84,7 +85,7 @@ export const PixQRCode = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [transactionId, amount, isPaid, trackEvent]);
+  }, [transactionId, amount, isPaid, trackEventWithCAPI]);
 
   useEffect(() => {
     if (timeLeft <= 0) {

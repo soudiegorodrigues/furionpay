@@ -41,7 +41,7 @@ export const DonationPopupDirect = ({
   const [isPaid, setIsPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { trackEventWithCAPI, utmParams: contextUtmParams } = usePixel();
   const hasGenerated = useRef(false);
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
@@ -57,7 +57,8 @@ export const DonationPopupDirect = ({
     if (isOpen && !hasGenerated.current) {
       hasGenerated.current = true;
       generatePix();
-      trackEvent('InitiateCheckout', {
+      // Track InitiateCheckout via CAPI for reliability
+      trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Direct',
         currency: 'BRL',
         value: fixedAmount,
@@ -115,7 +116,8 @@ export const DonationPopupDirect = ({
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
           setStep("success");
-          trackEvent("Purchase", {
+          // Track Purchase via CAPI for reliability
+          trackEventWithCAPI("Purchase", {
             value: fixedAmount,
             currency: "BRL",
             content_name: "Donation Direct",
@@ -128,7 +130,7 @@ export const DonationPopupDirect = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [step, pixData?.transactionId, isPaid, fixedAmount, trackEvent]);
+  }, [step, pixData?.transactionId, isPaid, fixedAmount, trackEventWithCAPI]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -174,8 +176,8 @@ export const DonationPopupDirect = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event with advanced matching
-      trackEvent('PixGenerated', {
+      // Fire PixGenerated event via CAPI for reliability
+      trackEventWithCAPI('PixGenerated', {
         value: fixedAmount,
         currency: 'BRL',
         content_name: 'Donation Direct',
