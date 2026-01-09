@@ -60,7 +60,7 @@ export const DonationPopupClean = ({
   const [copied, setCopied] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { trackEventWithCAPI, utmParams: contextUtmParams } = usePixel();
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
@@ -91,7 +91,8 @@ export const DonationPopupClean = ({
       setSelectedBoosts([]);
       setIsPaid(false);
     } else {
-      trackEvent('InitiateCheckout', {
+      // Track InitiateCheckout via CAPI for reliability
+      trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Clean',
         currency: 'BRL',
       });
@@ -105,7 +106,7 @@ export const DonationPopupClean = ({
         popupModel: 'clean',
       });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams, totalAmount]);
+  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, totalAmount]);
 
   // Poll for payment status
   useEffect(() => {
@@ -122,7 +123,8 @@ export const DonationPopupClean = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
-          trackEvent("Purchase", {
+          // Track Purchase via CAPI for reliability
+          trackEventWithCAPI("Purchase", {
             value: totalAmount,
             currency: "BRL",
             content_name: "Donation Clean",
@@ -135,7 +137,7 @@ export const DonationPopupClean = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [step, pixData?.transactionId, isPaid, selectedAmount, trackEvent]);
+  }, [step, pixData?.transactionId, isPaid, totalAmount, trackEventWithCAPI]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -176,8 +178,8 @@ export const DonationPopupClean = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event with advanced matching
-      trackEvent('PixGenerated', {
+      // Fire PixGenerated event via CAPI for reliability
+      trackEventWithCAPI('PixGenerated', {
         value: totalAmount,
         currency: 'BRL',
         content_name: 'Donation Clean',

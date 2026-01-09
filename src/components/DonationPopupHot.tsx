@@ -42,7 +42,7 @@ export const DonationPopupHot = ({
   const [isPaid, setIsPaid] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { trackEventWithCAPI, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
   const getEffectiveUtmParams = (): UTMParams => {
@@ -68,7 +68,8 @@ export const DonationPopupHot = ({
       setIsPaid(false);
       setTimeLeft(15 * 60);
     } else {
-      trackEvent('InitiateCheckout', {
+      // Track InitiateCheckout via CAPI for reliability
+      trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Hot',
         currency: 'BRL',
       });
@@ -82,7 +83,7 @@ export const DonationPopupHot = ({
         popupModel: 'hot',
       });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams, fixedAmount]);
+  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, fixedAmount]);
 
   useEffect(() => {
     if (step !== "pix" || isPaid || timeLeft <= 0) return;
@@ -113,7 +114,8 @@ export const DonationPopupHot = ({
 
         if (!error && data && data.status === "paid") {
           setIsPaid(true);
-          trackEvent("Purchase", {
+          // Track Purchase via CAPI for reliability
+          trackEventWithCAPI("Purchase", {
             value: fixedAmount,
             currency: "BRL",
             content_name: "Donation Hot",
@@ -126,7 +128,7 @@ export const DonationPopupHot = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [step, pixData?.transactionId, isPaid, fixedAmount, trackEvent]);
+  }, [step, pixData?.transactionId, isPaid, fixedAmount, trackEventWithCAPI]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -196,7 +198,8 @@ export const DonationPopupHot = ({
         transactionId: data.transactionId,
       });
       
-      trackEvent('PixGenerated', {
+      // Fire PixGenerated event via CAPI for reliability
+      trackEventWithCAPI('PixGenerated', {
         value: fixedAmount,
         currency: 'BRL',
         content_name: 'Donation Hot',

@@ -59,7 +59,7 @@ export const DonationPopupSimple = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { trackEventWithCAPI, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
@@ -76,7 +76,8 @@ export const DonationPopupSimple = ({
       setPixData(null);
       setSelectedAmount(100);
     } else {
-      trackEvent('InitiateCheckout', {
+      // Track InitiateCheckout via CAPI for reliability
+      trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Simple',
         currency: 'BRL',
       });
@@ -90,7 +91,7 @@ export const DonationPopupSimple = ({
         popupModel: 'simple',
       });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams, selectedAmount]);
+  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, selectedAmount]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {

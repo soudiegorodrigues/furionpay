@@ -89,7 +89,7 @@ export const DonationPopupVakinha2 = ({
     toast
   } = useToast();
   const {
-    trackEvent,
+    trackEventWithCAPI,
     utmParams: contextUtmParams
   } = usePixel();
   const {
@@ -117,7 +117,8 @@ export const DonationPopupVakinha2 = ({
       setSelectedAmount(null);
       setSelectedBoosts([]);
     } else {
-      trackEvent('InitiateCheckout', {
+      // Track InitiateCheckout via CAPI for reliability
+      trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Vakinha2',
         currency: 'BRL'
       });
@@ -131,7 +132,7 @@ export const DonationPopupVakinha2 = ({
         popupModel: 'vakinha2',
       });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams, selectedAmount]);
+  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, selectedAmount]);
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -246,7 +247,8 @@ export const DonationPopupVakinha2 = ({
         
         console.log(`[PIX] PIX gerado com sucesso na tentativa ${attempt + 1}`);
         
-        trackEvent('PixGenerated', {
+        // Track PixGenerated via CAPI for reliability
+        trackEventWithCAPI('PixGenerated', {
           value: total,
           currency: 'BRL',
           content_name: 'Donation Vakinha2'
@@ -400,7 +402,7 @@ export const DonationPopupVakinha2 = ({
           transactionId={pixData.transactionId} 
           amount={calculateTotal()} 
           selectedAmount={selectedAmount}
-          trackEvent={trackEvent}
+          trackEventWithCAPI={trackEventWithCAPI}
           isPreview={isPreview}
         />}
       </div>
@@ -413,11 +415,11 @@ interface PixScreenVakinha2Props {
   transactionId?: string;
   amount: number;
   selectedAmount: number | null;
-  trackEvent: (event: string, params?: Record<string, unknown>, userData?: Record<string, unknown>) => void;
+  trackEventWithCAPI: (event: string, params?: Record<string, unknown>, userData?: Record<string, unknown>) => Promise<void>;
   isPreview?: boolean;
 }
 
-const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, trackEvent, isPreview }: PixScreenVakinha2Props) => {
+const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, trackEventWithCAPI, isPreview }: PixScreenVakinha2Props) => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutos
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
@@ -469,7 +471,8 @@ const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, tra
 
         if (!error && data?.status === 'paid') {
           setPaymentConfirmed(true);
-          trackEvent('Purchase', {
+          // Track Purchase via CAPI for reliability
+          trackEventWithCAPI('Purchase', {
             value: amount,
             currency: 'BRL',
             content_name: 'Donation Vakinha2'
@@ -491,7 +494,7 @@ const PixScreenVakinha2 = ({ pixCode, transactionId, amount, selectedAmount, tra
         clearInterval(pollingRef.current);
       }
     };
-  }, [transactionId, paymentConfirmed, amount, trackEvent]);
+  }, [transactionId, paymentConfirmed, amount, trackEventWithCAPI]);
 
   // Timer de expiração
   useEffect(() => {

@@ -51,7 +51,7 @@ export const DonationPopup = ({
     transactionId?: string;
   } | null>(null);
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { trackEventWithCAPI, utmParams: contextUtmParams } = usePixel();
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
   const getEffectiveUtmParams = (): UTMParams => {
@@ -68,8 +68,8 @@ export const DonationPopup = ({
       setCustomAmount("");
       setSelectedBoosts([]);
     } else {
-      // Track InitiateCheckout when popup opens
-      trackEvent('InitiateCheckout', {
+      // Track InitiateCheckout via CAPI for reliability
+      trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup',
         currency: 'BRL',
       });
@@ -83,7 +83,7 @@ export const DonationPopup = ({
         popupModel: 'boost',
       });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams]);
+  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams]);
 
   const baseAmount = parseFloat(customAmount) || 0;
   const boostsTotal = selectedBoosts.reduce((sum, id) => {

@@ -78,7 +78,7 @@ export const DonationPopupInstituto = ({
   const [showExpiredDialog, setShowExpiredDialog] = useState(false);
   
   const { toast } = useToast();
-  const { trackEvent, utmParams: contextUtmParams } = usePixel();
+  const { trackEventWithCAPI, utmParams: contextUtmParams } = usePixel();
   const { getFingerprint } = useDeviceFingerprint();
   
   // Prioriza UTMs passados via prop, depois contexto, depois recupera do storage como fallback
@@ -115,64 +115,24 @@ export const DonationPopupInstituto = ({
     return () => clearInterval(interval);
   }, [step, isPaid, timeLeft]);
 
-  // Send CAPI event for Purchase
+  // Send CAPI event for Purchase (using trackEventWithCAPI)
   const sendCAPIEvent = async (transactionId: string, value: number) => {
     try {
-      // Fetch pixel config for this user/offer
-      const { data: pixelConfig } = await supabase.functions.invoke('get-pixel-config', {
-        body: { userId, offerId }
-      });
-
-      const pixel = pixelConfig?.pixels?.[0];
-      if (!pixel?.pixelId || !pixel?.accessToken) {
-        console.log('[CAPI Instituto] Sem configuração de pixel, pulando CAPI');
-        return;
-      }
-
-      const eventId = `${transactionId}_${Date.now()}`;
-
-      console.log('[CAPI Instituto] Enviando evento Purchase via CAPI');
-      
-      await supabase.functions.invoke('track-conversion', {
-        body: {
-          pixelId: pixel.pixelId,
-          accessToken: pixel.accessToken,
-          eventName: 'Purchase',
-          eventId,
-          value,
-          currency: 'BRL',
-          transactionId,
-          productName: 'Donation Instituto',
-          // userAgent removed - blocked by Meta 2026 policies
-          sourceUrl: window.location.href,
-        },
-      });
-
-      // Also track via browser pixel with complete data
-      trackEvent('Purchase', {
+      // Track Purchase via CAPI for reliability
+      await trackEventWithCAPI('Purchase', {
         value,
         currency: 'BRL',
         content_name: 'Donation Instituto',
         content_type: 'product',
         transaction_id: transactionId,
-        event_id: eventId, // Corrected: event_id instead of eventID
       }, {
         external_id: transactionId,
+        country: 'br',
       });
 
       console.log('[CAPI Instituto] ✅ Evento Purchase enviado com sucesso');
     } catch (err) {
       console.error('[CAPI Instituto] ❌ Erro ao enviar CAPI:', err);
-      // Fallback: still track via browser pixel
-      trackEvent('Purchase', {
-        value,
-        currency: 'BRL',
-        content_name: 'Donation Instituto',
-        content_type: 'product',
-        transaction_id: transactionId,
-      }, {
-        external_id: transactionId,
-      });
     }
   };
 
@@ -207,7 +167,7 @@ export const DonationPopupInstituto = ({
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [pixData?.transactionId, step, selectedAmount, toast, trackEvent, isPaid, userId, offerId]);
+  }, [pixData?.transactionId, step, selectedAmount, toast, trackEventWithCAPI, isPaid, userId, offerId]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -217,7 +177,8 @@ export const DonationPopupInstituto = ({
       setTimeLeft(10 * 60);
       setIsPaid(false);
     } else {
-      trackEvent('InitiateCheckout', {
+      // Track InitiateCheckout via CAPI for reliability
+      trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Instituto',
         currency: 'BRL',
       });
@@ -231,7 +192,7 @@ export const DonationPopupInstituto = ({
         popupModel: 'instituto',
       });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams, selectedAmount]);
+  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, selectedAmount]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -291,7 +252,8 @@ export const DonationPopupInstituto = ({
         return;
       }
 
-      trackEvent('PixGenerated', {
+      // Track PixGenerated via CAPI for reliability
+      trackEventWithCAPI('PixGenerated', {
         value: amount,
         currency: 'BRL',
         content_name: 'Donation Instituto',
