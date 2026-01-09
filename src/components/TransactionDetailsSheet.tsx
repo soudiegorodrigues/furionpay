@@ -287,7 +287,7 @@ const TransactionDetailsSheet = ({
                       {copiedId === 'phone' ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                     </Button>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-center">
                     <Button 
                       variant="ghost" 
                       size="sm" 
