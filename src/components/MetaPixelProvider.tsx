@@ -1,4 +1,4 @@
-import { useEffect, createContext, useContext, ReactNode, useCallback, useState } from "react";
+import { useEffect, createContext, useContext, ReactNode, useCallback, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUTMParams, captureUTMParams, saveUTMParams, UTMParams } from "@/lib/utm";
 
@@ -45,12 +45,20 @@ interface AdvancedMatchingParams {
   // client_user_agent removido - Meta captura automaticamente no browser pixel, usar apenas no CAPI
 }
 
+// Pending event structure for queue
+interface PendingEvent {
+  type: 'standard' | 'custom';
+  eventName: string;
+  params?: Record<string, any>;
+  advancedMatching?: AdvancedMatchingParams;
+}
+
 interface PixelDebugStatus {
   pixelIds: string[];
   scriptInjected: boolean;
   scriptLoaded: boolean;
   scriptError: string | null;
-  pageViewFired: boolean;
+  pendingEventsCount: number;
 }
 
 interface MetaPixelContextType {
@@ -70,7 +78,7 @@ const MetaPixelContext = createContext<MetaPixelContextType>({
   utmParams: {},
   setAdvancedMatching: () => {},
   initializeWithPixelIds: () => {},
-  debugStatus: { pixelIds: [], scriptInjected: false, scriptLoaded: false, scriptError: null, pageViewFired: false },
+  debugStatus: { pixelIds: [], scriptInjected: false, scriptLoaded: false, scriptError: null, pendingEventsCount: 0 },
 });
 
 export const usePixel = () => useContext(MetaPixelContext);
@@ -96,8 +104,12 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     scriptInjected: false,
     scriptLoaded: false,
     scriptError: null,
-    pageViewFired: false,
+    pendingEventsCount: 0,
   });
+  
+  // Queue for pending events (before fbq is ready)
+  const pendingEventsRef = useRef<PendingEvent[]>([]);
+  const [pendingEventsCount, setPendingEventsCount] = useState(0);
 
   // Capture Meta cookies on mount and update advanced matching data
   useEffect(() => {
@@ -135,6 +147,30 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     
     setUtmParams(mergedParams);
   }, []);
+
+  // Flush pending events when pixels are loaded
+  useEffect(() => {
+    if (isLoaded && typeof window !== 'undefined' && window.fbq && pendingEventsRef.current.length > 0) {
+      console.log(`%c[PIXEL] Flushing ${pendingEventsRef.current.length} queued events`, 'background: orange; color: black; font-size: 14px;');
+      
+      pendingEventsRef.current.forEach(event => {
+        const fbqMethod = event.type === 'standard' ? 'track' : 'trackCustom';
+        
+        if (event.advancedMatching && Object.keys(event.advancedMatching).length > 0) {
+          window.fbq(fbqMethod, event.eventName, event.params || {}, { user_data: event.advancedMatching });
+        } else {
+          window.fbq(fbqMethod, event.eventName, event.params || {});
+        }
+        
+        console.log(`%c[PIXEL] ✅ Flushed queued event: ${event.eventName}`, 'background: green; color: white;');
+      });
+      
+      // Clear the queue
+      pendingEventsRef.current = [];
+      setPendingEventsCount(0);
+      setDebugStatus(prev => ({ ...prev, pendingEventsCount: 0 }));
+    }
+  }, [isLoaded]);
 
   useEffect(() => {
     // Log immediately on mount
@@ -261,10 +297,6 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
       console.log('%c[PIXEL DEBUG] ✅ SUCCESS: fbq init called for pixel: ' + pixel.pixelId, 'background: green; color: white; font-size: 16px;');
     });
 
-    // Fire PageView immediately (queued, will execute when script loads)
-    window.fbq('track', 'PageView');
-    console.log('%c[PIXEL DEBUG] 📄 PageView queued', 'background: blue; color: white; font-size: 14px;');
-
     // Load the actual Facebook script
     const script = document.createElement('script');
     script.async = true;
@@ -273,11 +305,9 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
     // Update debug status - script injected
     setDebugStatus(prev => ({ ...prev, scriptInjected: true }));
     
-    // Fire PageView again after script fully loads (ensures Pixel Helper detects it)
     script.onload = () => {
-      console.log('%c[PIXEL DEBUG] 📄 fbevents.js loaded, firing PageView', 'background: green; color: white; font-size: 14px;');
-      window.fbq('track', 'PageView');
-      setDebugStatus(prev => ({ ...prev, scriptLoaded: true, pageViewFired: true }));
+      console.log('%c[PIXEL DEBUG] 📄 fbevents.js loaded', 'background: green; color: white; font-size: 14px;');
+      setDebugStatus(prev => ({ ...prev, scriptLoaded: true }));
     };
     
     // Handle script load error (blocked by ad-blocker, CSP, etc.)
@@ -318,21 +348,22 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
   }, []);
 
   const trackEvent = useCallback((eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => {
+    // Merge advanced matching params
+    const matchingData = { ...advancedMatchingData, ...advancedMatching };
+    
+    // Include UTM params and user data in all events
+    // Automatically add currency: 'BRL' when value is present (fixes Meta Pixel currency error)
+    const eventParams = { 
+      ...params, 
+      ...utmParams,
+      // Add currency when value is present
+      ...(params?.value && !params?.currency && { currency: 'BRL' }),
+      // Use event_id from params for deduplication (passed from CAPI)
+      ...(params?.event_id && { event_id: params.event_id })
+    };
+    
+    // Check if fbq is ready
     if (typeof window !== 'undefined' && window.fbq) {
-      // Merge advanced matching params
-      const matchingData = { ...advancedMatchingData, ...advancedMatching };
-      
-      // Include UTM params and user data in all events
-      // Automatically add currency: 'BRL' when value is present (fixes Meta Pixel currency error)
-      const eventParams = { 
-        ...params, 
-        ...utmParams,
-        // Add currency when value is present
-        ...(params?.value && !params?.currency && { currency: 'BRL' }),
-        // Use event_id from params for deduplication (passed from CAPI)
-        ...(params?.event_id && { event_id: params.event_id })
-      };
-      
       // Use fbq with user_data for advanced matching
       if (Object.keys(matchingData).length > 0) {
         window.fbq('track', eventName, eventParams, { user_data: matchingData });
@@ -341,25 +372,37 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         window.fbq('track', eventName, eventParams);
         console.log(`Pixel Event: ${eventName}`, eventParams);
       }
+    } else {
+      // Queue the event for later
+      console.log(`%c[PIXEL] Queuing event: ${eventName} (fbq not ready)`, 'background: yellow; color: black;');
+      pendingEventsRef.current.push({
+        type: 'standard',
+        eventName,
+        params: eventParams,
+        advancedMatching: matchingData
+      });
+      setPendingEventsCount(pendingEventsRef.current.length);
+      setDebugStatus(prev => ({ ...prev, pendingEventsCount: pendingEventsRef.current.length }));
     }
   }, [utmParams, advancedMatchingData]);
 
   const trackCustomEvent = useCallback((eventName: string, params?: Record<string, any>, advancedMatching?: AdvancedMatchingParams) => {
+    // Merge advanced matching params
+    const matchingData = { ...advancedMatchingData, ...advancedMatching };
+    
+    // Include UTM params in all events
+    // Automatically add currency: 'BRL' when value is present
+    const eventParams = { 
+      ...params, 
+      ...utmParams,
+      // Add currency when value is present
+      ...(params?.value && !params?.currency && { currency: 'BRL' }),
+      // Use event_id from params for deduplication (passed from CAPI)
+      ...(params?.event_id && { event_id: params.event_id })
+    };
+    
+    // Check if fbq is ready
     if (typeof window !== 'undefined' && window.fbq) {
-      // Merge advanced matching params
-      const matchingData = { ...advancedMatchingData, ...advancedMatching };
-      
-      // Include UTM params in all events
-      // Automatically add currency: 'BRL' when value is present
-      const eventParams = { 
-        ...params, 
-        ...utmParams,
-        // Add currency when value is present
-        ...(params?.value && !params?.currency && { currency: 'BRL' }),
-        // Use event_id from params for deduplication (passed from CAPI)
-        ...(params?.event_id && { event_id: params.event_id })
-      };
-      
       // Use fbq with user_data for advanced matching
       if (Object.keys(matchingData).length > 0) {
         window.fbq('trackCustom', eventName, eventParams, { user_data: matchingData });
@@ -368,6 +411,17 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         window.fbq('trackCustom', eventName, eventParams);
         console.log(`Pixel Custom Event: ${eventName}`, eventParams);
       }
+    } else {
+      // Queue the event for later
+      console.log(`%c[PIXEL] Queuing custom event: ${eventName} (fbq not ready)`, 'background: yellow; color: black;');
+      pendingEventsRef.current.push({
+        type: 'custom',
+        eventName,
+        params: eventParams,
+        advancedMatching: matchingData
+      });
+      setPendingEventsCount(pendingEventsRef.current.length);
+      setDebugStatus(prev => ({ ...prev, pendingEventsCount: pendingEventsRef.current.length }));
     }
   }, [utmParams, advancedMatchingData]);
 
@@ -403,7 +457,7 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
             <strong>Script Loaded:</strong> {debugStatus.scriptLoaded ? '✅' : '❌'}
           </div>
           <div style={{ marginBottom: 4 }}>
-            <strong>PageView Fired:</strong> {debugStatus.pageViewFired ? '✅' : '❌'}
+            <strong>Pending Events:</strong> {debugStatus.pendingEventsCount}
           </div>
           {debugStatus.scriptError && (
             <div style={{ marginTop: 8, padding: 8, background: '#ff4444', borderRadius: 4 }}>
