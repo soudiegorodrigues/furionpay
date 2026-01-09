@@ -370,6 +370,44 @@ async function createPixCob(client: Deno.HttpClient, accessToken: string, amount
   return data;
 }
 
+function isPossiblyMaskedPixCode(pixCode: string | undefined): boolean {
+  if (!pixCode) return true;
+  // observed cases where Inter/others returned masked placeholders
+  return pixCode.includes('***') || pixCode.includes('???') || pixCode.includes('###') || pixCode.includes('5901*');
+}
+
+async function getPixQrCodeByLocId(
+  client: Deno.HttpClient,
+  accessToken: string,
+  locId: number
+): Promise<{ qrcode?: string; imagemQrcode?: string } | null> {
+  const url = `${INTER_API_URL}/pix/v2/loc/${locId}/qrcode`;
+
+  try {
+    const resp = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      client,
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text();
+      console.log('[INTER] QRCode endpoint failed:', resp.status, txt);
+      return null;
+    }
+
+    const json = await resp.json();
+    console.log('[INTER] QRCode endpoint success. Keys:', Object.keys(json || {}));
+    return json;
+  } catch (err) {
+    console.log('[INTER] QRCode endpoint exception:', err);
+    return null;
+  }
+}
+
 // ============= AUDIT LOG FUNCTION =============
 async function logAudit(
   supabase: any,
@@ -665,8 +703,22 @@ serve(async (req) => {
     // Criar cobrança PIX
     const cobData = await createPixCob(mtlsClient, accessToken, amount, txid, credentials.pixKey);
 
-    const pixCode = cobData.pixCopiaECola;
+    let pixCode: string = cobData?.pixCopiaECola;
+    const locId: number | undefined = cobData?.loc?.id;
     const qrCodeUrl = null;
+
+    // If Inter returns a masked/invalid pixCopiaECola, try the official QRCode endpoint using loc.id
+    if (isPossiblyMaskedPixCode(pixCode) && typeof locId === 'number') {
+      console.log(`[INTER] pixCopiaECola seems masked/invalid; trying /pix/v2/loc/${locId}/qrcode ...`);
+      const qr = await getPixQrCodeByLocId(mtlsClient, accessToken, locId);
+      const qrcode = (qr as any)?.qrcode;
+      if (typeof qrcode === 'string' && qrcode.length > 20) {
+        console.log('[INTER] Using qrcode from loc endpoint as pixCode');
+        pixCode = qrcode;
+      } else {
+        console.log('[INTER] loc qrcode did not return a usable qrcode field');
+      }
+    }
 
     // Get product name from checkout_offers if not provided
     const finalProductName = productName || await getProductNameFromOffer(supabase, userId, popupModel);

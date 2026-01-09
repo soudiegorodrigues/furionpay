@@ -1164,6 +1164,7 @@ async function generatePixWithRetry(
   // 2. Buscar status de saúde de todos os adquirentes (consulta instantânea ao cache)
   const healthyAcquirers = await getHealthyAcquirers();
   const healthyAcquirerNames = healthyAcquirers.map(h => h.acquirer);
+  const attemptedAcquirers = new Set<string>();
   
   console.log(`[SMART] Primary acquirer: ${primaryAcquirer || 'none'}`);
   console.log(`[SMART] Healthy acquirers: ${healthyAcquirerNames.join(', ') || 'none'}`);
@@ -1177,6 +1178,7 @@ async function generatePixWithRetry(
     
     const isEnabled = await isAcquirerEnabled(primaryAcquirer);
     if (isEnabled) {
+      attemptedAcquirers.add(primaryAcquirer);
       const result = await callAcquirer(primaryAcquirer, params);
       if (result.success) {
         console.log(`[SMART] Success with primary ${primaryAcquirer}`);
@@ -1236,7 +1238,8 @@ async function generatePixWithRetry(
         await logApiEvent(acquirer, 'retry', undefined, undefined, attemptNumber);
       }
       
-      const result = await callAcquirer(acquirer, params);
+       attemptedAcquirers.add(acquirer);
+       const result = await callAcquirer(acquirer, params);
       
       if (result.success) {
         console.log(`[SMART] ✅ Success with ${acquirer} on attempt ${attemptNumber}`);
@@ -1264,6 +1267,41 @@ async function generatePixWithRetry(
   }
   
   console.log(`[SMART] All ${attemptNumber} attempts failed. Last error: ${lastError}`);
+
+  // Extra safety fallback: if retry_flow_steps is misconfigured (e.g. only includes a broken acquirer),
+  // try other enabled acquirers at least once before failing.
+  const EXTRA_FALLBACK_ORDER = ['ativus', 'efi', 'inter', 'valorion'];
+  const extraAcquirers = EXTRA_FALLBACK_ORDER.filter(a => !attemptedAcquirers.has(a));
+
+  if (extraAcquirers.length > 0) {
+    console.log(`[SMART] Extra fallback after retry flow exhausted: ${extraAcquirers.join(' -> ')}`);
+
+    for (const acquirer of extraAcquirers) {
+      const isEnabled = await isAcquirerEnabled(acquirer);
+      if (!isEnabled) {
+        console.log(`[SMART] Extra fallback: ${acquirer} is disabled, skipping`);
+        continue;
+      }
+
+      attemptedAcquirers.add(acquirer);
+      console.log(`[SMART] Extra fallback attempt with ${acquirer}`);
+
+      const result = await callAcquirer(acquirer, params);
+      if (result.success) {
+        console.log(`[SMART] ✅ Extra fallback success with ${acquirer}`);
+        return { ...result, acquirerUsed: acquirer };
+      }
+
+      lastError = result.error || 'Unknown error';
+      if (result.invalidBRCode) {
+        console.log(`[SMART] ⚠️ Extra fallback ${acquirer} returned INVALID BRCODE - continuing`);
+        continue;
+      }
+
+      console.log(`[SMART] ❌ Extra fallback ${acquirer} failed: ${lastError}`);
+    }
+  }
+
   return { success: false, error: `Falha após ${attemptNumber} tentativas: ${lastError}` };
 }
 
