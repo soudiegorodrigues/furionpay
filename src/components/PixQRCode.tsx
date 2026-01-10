@@ -36,16 +36,14 @@ export const PixQRCode = ({
   const [isPaid, setIsPaid] = useState(false);
   const { trackEvent, trackEventWithCAPI } = usePixel();
 
-  // Track PixGenerated when component mounts (via CAPI for reliability)
+  // Track InitiateCheckout when component mounts (PIX was generated)
   useEffect(() => {
-    trackEventWithCAPI('PixGenerated', {
+    trackEventWithCAPI('InitiateCheckout', {
       value: amount,
       currency: 'BRL',
-    }, {
-      external_id: transactionId,
-      country: 'br',
+      content_name: 'Doação PIX',
     });
-  }, [amount, transactionId, trackEventWithCAPI]);
+  }, [amount, trackEventWithCAPI]);
 
   // Poll for payment status
   useEffect(() => {

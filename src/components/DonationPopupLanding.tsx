@@ -90,14 +90,8 @@ export const DonationPopupLanding = ({
       setSelectedAmount(null);
       setCustomAmount("0,00");
       setSelectedBoosts([]);
-    } else {
-      // Track InitiateCheckout via CAPI for reliability
-      trackEventWithCAPI('InitiateCheckout', {
-        content_name: 'Donation Popup Landing',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams]);
+  }, [isOpen]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -211,14 +205,11 @@ export const DonationPopupLanding = ({
         return;
       }
 
-      // Track PixGenerated via CAPI for reliability
-      trackEventWithCAPI('PixGenerated', {
+      // Track InitiateCheckout when PIX is generated
+      trackEventWithCAPI('InitiateCheckout', {
         value: total,
         currency: 'BRL',
         content_name: 'Donation Landing',
-      }, {
-        external_id: data.transactionId,
-        country: 'br',
       });
 
       setPixData({

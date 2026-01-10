@@ -74,14 +74,8 @@ export const DonationPopupSimple = ({
       setStep("select");
       setPixData(null);
       setSelectedAmount(100);
-    } else {
-      // Track InitiateCheckout via CAPI for reliability
-      trackEventWithCAPI('InitiateCheckout', {
-        content_name: 'Donation Popup Simple',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, selectedAmount]);
+  }, [isOpen]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {

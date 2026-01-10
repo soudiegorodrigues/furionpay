@@ -121,13 +121,8 @@ export const DonationPopupVakinha3 = ({
       setPixData(null);
       setSelectedAmount(null);
       setSelectedBoosts([]);
-    } else {
-      trackEvent('InitiateCheckout', {
-        content_name: 'Donation Popup Vakinha3',
-        currency: 'BRL'
-      });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams, selectedAmount]);
+  }, [isOpen]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -249,13 +244,11 @@ export const DonationPopupVakinha3 = ({
         
         console.log(`[PIX] PIX gerado com sucesso na tentativa ${attempt + 1}`);
         
-        trackEvent('PixGenerated', {
+        // Track InitiateCheckout when PIX is generated
+        trackEvent('InitiateCheckout', {
           value: total,
           currency: 'BRL',
           content_name: 'Donation Vakinha3'
-        }, {
-          external_id: data.transactionId,
-          country: 'br'
         });
         
         setPixData({

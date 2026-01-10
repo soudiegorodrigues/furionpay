@@ -89,14 +89,8 @@ export const DonationPopupClean = ({
       setSelectedAmount(30);
       setSelectedBoosts([]);
       setIsPaid(false);
-    } else {
-      // Track InitiateCheckout via CAPI for reliability
-      trackEventWithCAPI('InitiateCheckout', {
-        content_name: 'Donation Popup Clean',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, totalAmount]);
+  }, [isOpen]);
 
   // Poll for payment status
   useEffect(() => {
@@ -168,14 +162,11 @@ export const DonationPopupClean = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event via CAPI for reliability
-      trackEventWithCAPI('PixGenerated', {
+      // Track InitiateCheckout when PIX is generated
+      trackEventWithCAPI('InitiateCheckout', {
         value: totalAmount,
         currency: 'BRL',
         content_name: 'Donation Clean',
-      }, {
-        external_id: data.transactionId,
-        country: 'br',
       });
       
       setStep("pix");

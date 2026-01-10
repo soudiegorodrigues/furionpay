@@ -215,13 +215,8 @@ export const DonationPopupInstituto2 = ({
       setSelectedAmount(null);
       setTimeLeft(10 * 60);
       setIsPaid(false);
-    } else {
-      trackEvent('InitiateCheckout', {
-        content_name: 'Donation Popup Instituto 2',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEvent, userId, offerId, utmParams, selectedAmount]);
+  }, [isOpen]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -281,13 +276,11 @@ export const DonationPopupInstituto2 = ({
         return;
       }
 
-      trackEvent('PixGenerated', {
+      // Track InitiateCheckout when PIX is generated
+      trackEvent('InitiateCheckout', {
         value: amount,
         currency: 'BRL',
         content_name: 'Donation Instituto 2',
-      }, {
-        external_id: data.transactionId,
-        country: 'br',
       });
 
       setPixData({

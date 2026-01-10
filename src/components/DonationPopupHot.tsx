@@ -66,14 +66,8 @@ export const DonationPopupHot = ({
       setEmail("");
       setIsPaid(false);
       setTimeLeft(15 * 60);
-    } else {
-      // Track InitiateCheckout via CAPI for reliability
-      trackEventWithCAPI('InitiateCheckout', {
-        content_name: 'Donation Popup Hot',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, fixedAmount]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (step !== "pix" || isPaid || timeLeft <= 0) return;
@@ -188,17 +182,11 @@ export const DonationPopupHot = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event via CAPI for reliability
-      trackEventWithCAPI('PixGenerated', {
+      // Track InitiateCheckout when PIX is generated
+      trackEventWithCAPI('InitiateCheckout', {
         value: fixedAmount,
         currency: 'BRL',
         content_name: 'Donation Hot',
-      }, {
-        fn: name.split(' ')[0]?.toLowerCase(),
-        ln: name.split(' ').slice(1).join(' ')?.toLowerCase(),
-        em: email?.toLowerCase(),
-        external_id: data.transactionId,
-        country: 'br',
       });
       
       setStep("pix");
