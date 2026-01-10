@@ -2919,10 +2919,13 @@ export type Database = {
           webhook_url: string
         }[]
       }
-      create_full_system_backup: {
-        Args: { p_backup_name?: string }
-        Returns: string
-      }
+      create_full_system_backup:
+        | { Args: { p_backup_name?: string }; Returns: string }
+        | {
+            Args: { p_backup_type?: string; p_created_by?: string }
+            Returns: string
+          }
+      create_light_backup: { Args: { p_created_by?: string }; Returns: string }
       create_manual_backup: { Args: never; Returns: string }
       delete_api_client: { Args: { p_client_id: string }; Returns: boolean }
       delete_system_backup: { Args: { p_backup_id: string }; Returns: boolean }
