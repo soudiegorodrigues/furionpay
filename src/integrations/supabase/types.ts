@@ -2889,6 +2889,7 @@ export type Database = {
         Returns: Json
       }
       auto_backup_transactions: { Args: never; Returns: string }
+      auto_expire_pix_cron: { Args: never; Returns: undefined }
       auto_full_system_backup: { Args: never; Returns: string }
       backup_and_reset_transactions: { Args: never; Returns: string }
       block_user: { Args: { target_user_id: string }; Returns: boolean }
@@ -2939,6 +2940,13 @@ export type Database = {
         Returns: boolean
       }
       delete_user: { Args: { target_user_id: string }; Returns: boolean }
+      expire_old_pix_transactions_batch: {
+        Args: { batch_size?: number }
+        Returns: {
+          expired_count: number
+          remaining_count: number
+        }[]
+      }
       export_full_backup: { Args: never; Returns: Json }
       generate_api_key: {
         Args: never
