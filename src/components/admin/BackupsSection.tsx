@@ -141,12 +141,13 @@ export function BackupsSection() {
     };
   }, [isAuthenticated]);
 
-  const handleCreateBackup = async () => {
+  const handleCreateBackup = async (isLight = false) => {
     setActionLoading(true);
     try {
-      const { data, error } = await supabase.rpc('create_full_system_backup');
+      const rpcName = isLight ? 'create_light_backup' : 'create_full_system_backup';
+      const { data, error } = await supabase.rpc(rpcName);
       if (error) throw error;
-      toast.success('Backup completo criado com sucesso!');
+      toast.success(isLight ? 'Backup leve criado com sucesso!' : 'Backup completo criado com sucesso!');
       loadBackups();
     } catch (error: any) {
       console.error('Error creating backup:', error);
@@ -623,12 +624,23 @@ export function BackupsSection() {
                     className="hidden"
                   />
                   <Button 
+                    variant="secondary"
                     size="sm" 
-                    onClick={handleCreateBackup}
+                    onClick={() => handleCreateBackup(true)}
                     disabled={actionLoading}
+                    title="Backup rápido sem transações PIX (recomendado para uso diário)"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {actionLoading ? 'Criando...' : 'Criar Backup'}
+                    {actionLoading ? 'Criando...' : 'Backup Leve'}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleCreateBackup(false)}
+                    disabled={actionLoading}
+                    title="Backup completo com transações PIX dos últimos 30 dias"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {actionLoading ? 'Criando...' : 'Backup Completo'}
                   </Button>
                 </div>
               </div>
