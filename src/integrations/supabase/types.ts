@@ -3021,15 +3021,7 @@ export type Database = {
           valor_pago: number
         }[]
       }
-      get_chart_data_by_hour: {
-        Args: { p_date?: string }
-        Returns: {
-          gerados: number
-          hour_brazil: number
-          pagos: number
-          valor_pago: number
-        }[]
-      }
+      get_chart_data_by_hour: { Args: { p_date: string }; Returns: Json }
       get_checkout_offer_by_slug: {
         Args: { p_slug: string }
         Returns: {
