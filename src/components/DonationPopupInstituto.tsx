@@ -333,8 +333,8 @@ export const DonationPopupInstituto = ({
       <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
-            {/* Player VTurb Style */}
-            <div className="relative flex justify-center rounded-lg overflow-hidden shadow-lg">
+            {/* Player VTurb Style - optimized loading */}
+            <div className="relative flex justify-center rounded-lg overflow-hidden shadow-lg bg-gray-900">
               <video 
                 ref={videoRef}
                 src="/videos/vsl.mp4"
@@ -342,6 +342,7 @@ export const DonationPopupInstituto = ({
                 muted={isMuted}
                 playsInline
                 loop
+                preload="metadata"
                 className="w-full h-auto"
                 onContextMenu={(e) => e.preventDefault()}
               />
@@ -471,23 +472,25 @@ export const DonationPopupInstituto = ({
               </Button>
             </div>
 
-            {/* Social Proof - Apoiadores */}
+            {/* Social Proof - Apoiadores (inline avatars - no external requests) */}
             <div className="flex items-center justify-center gap-3 pt-4">
               <div className="flex -space-x-2">
                 {[
-                  "https://randomuser.me/api/portraits/women/1.jpg",
-                  "https://randomuser.me/api/portraits/men/2.jpg",
-                  "https://randomuser.me/api/portraits/women/3.jpg",
-                  "https://randomuser.me/api/portraits/men/4.jpg",
-                  "https://randomuser.me/api/portraits/women/5.jpg",
-                  "https://randomuser.me/api/portraits/men/6.jpg"
-                ].map((src, i) => (
-                  <img 
+                  { from: 'from-pink-400', to: 'to-rose-500' },
+                  { from: 'from-blue-400', to: 'to-indigo-500' },
+                  { from: 'from-green-400', to: 'to-emerald-500' },
+                  { from: 'from-purple-400', to: 'to-violet-500' },
+                  { from: 'from-orange-400', to: 'to-amber-500' },
+                  { from: 'from-cyan-400', to: 'to-teal-500' },
+                ].map((colors, i) => (
+                  <div 
                     key={i} 
-                    src={src} 
-                    alt="" 
-                    className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" 
-                  />
+                    className={`w-8 h-8 rounded-full border-2 border-white shadow-sm bg-gradient-to-br ${colors.from} ${colors.to} flex items-center justify-center`}
+                  >
+                    <span className="text-white text-xs font-bold">
+                      {['M', 'J', 'A', 'C', 'R', 'L'][i]}
+                    </span>
+                  </div>
                 ))}
               </div>
               <span className="text-sm text-gray-600">

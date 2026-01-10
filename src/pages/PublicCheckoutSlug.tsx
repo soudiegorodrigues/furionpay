@@ -1,19 +1,69 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { DonationPopup } from "@/components/DonationPopup";
-import { DonationPopupSimple } from "@/components/DonationPopupSimple";
-import { DonationPopupClean } from "@/components/DonationPopupClean";
-import { DonationPopupDirect } from "@/components/DonationPopupDirect";
-import { DonationPopupHot } from "@/components/DonationPopupHot";
-import { DonationPopupLanding } from "@/components/DonationPopupLanding";
-import { DonationPopupInstituto } from "@/components/DonationPopupInstituto";
-import { DonationPopupVakinha2 } from "@/components/DonationPopupVakinha2";
-import { DonationPopupVakinha3 } from "@/components/DonationPopupVakinha3";
-import { DonationPopupInstituto2 } from "@/components/DonationPopupInstituto2";
+import React, { useState, useEffect, lazy, Suspense } from "react";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
 import { trackOfferClick } from "@/lib/clickTracking";
 import { usePixel } from "@/components/MetaPixelProvider";
+
+// Lazy load popup components - only loads the one needed
+const DonationPopup = lazy(() => import("@/components/DonationPopup").then(m => ({ default: m.DonationPopup })));
+const DonationPopupSimple = lazy(() => import("@/components/DonationPopupSimple").then(m => ({ default: m.DonationPopupSimple })));
+const DonationPopupClean = lazy(() => import("@/components/DonationPopupClean").then(m => ({ default: m.DonationPopupClean })));
+const DonationPopupDirect = lazy(() => import("@/components/DonationPopupDirect").then(m => ({ default: m.DonationPopupDirect })));
+const DonationPopupHot = lazy(() => import("@/components/DonationPopupHot").then(m => ({ default: m.DonationPopupHot })));
+const DonationPopupLanding = lazy(() => import("@/components/DonationPopupLanding").then(m => ({ default: m.DonationPopupLanding })));
+const DonationPopupInstituto = lazy(() => import("@/components/DonationPopupInstituto").then(m => ({ default: m.DonationPopupInstituto })));
+const DonationPopupVakinha2 = lazy(() => import("@/components/DonationPopupVakinha2").then(m => ({ default: m.DonationPopupVakinha2 })));
+const DonationPopupVakinha3 = lazy(() => import("@/components/DonationPopupVakinha3").then(m => ({ default: m.DonationPopupVakinha3 })));
+const DonationPopupInstituto2 = lazy(() => import("@/components/DonationPopupInstituto2").then(m => ({ default: m.DonationPopupInstituto2 })));
+
+// Ultra-fast skeleton that matches Instituto/Borboleta layout
+const PopupSkeleton = () => (
+  <div className="fixed inset-0 z-50 bg-white overflow-auto">
+    <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-10 space-y-6">
+      {/* Video skeleton */}
+      <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg animate-pulse" />
+      
+      {/* Progress skeleton */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+          <div className="h-8 w-32 bg-pink-200 rounded animate-pulse" />
+        </div>
+        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-full w-3/4 bg-gradient-to-r from-cyan-300 to-green-300 animate-pulse" />
+        </div>
+      </div>
+      
+      {/* Title skeleton */}
+      <div className="h-6 w-3/4 mx-auto bg-gray-200 rounded animate-pulse" />
+      
+      {/* Amount buttons skeleton */}
+      <div className="grid grid-cols-2 gap-3">
+        {[...Array(10)].map((_, i) => (
+          <div 
+            key={i} 
+            className={`h-12 rounded-xl animate-pulse ${i === 2 || i === 3 ? 'bg-gradient-to-r from-pink-300 to-purple-300' : 'bg-pink-200'}`}
+          />
+        ))}
+      </div>
+      
+      {/* Custom input skeleton */}
+      <div className="h-14 bg-gray-100 border-2 border-pink-200 rounded-xl animate-pulse" />
+      <div className="h-14 bg-gradient-to-r from-pink-300 to-purple-300 rounded-xl animate-pulse" />
+      
+      {/* Social proof skeleton */}
+      <div className="flex items-center justify-center gap-3 pt-4">
+        <div className="flex -space-x-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-200 to-purple-200 border-2 border-white animate-pulse" />
+          ))}
+        </div>
+        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+      </div>
+    </div>
+  </div>
+);
 
 interface OfferData {
   id: string;
@@ -28,7 +78,6 @@ interface OfferData {
 
 const PublicCheckoutSlug = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const { initializeWithPixelIds } = usePixel();
   
   const [offer, setOffer] = useState<OfferData | null>(null);
@@ -121,13 +170,9 @@ const PublicCheckoutSlug = () => {
     };
   }, [slug, initializeWithPixelIds]);
 
-  // Loading state
+  // Loading state - show specific skeleton for instant FCP
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PopupSkeleton />;
   }
 
   // Error state
@@ -151,93 +196,95 @@ const PublicCheckoutSlug = () => {
   const offerId = offer.id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {popupModel === 'simple' ? (
-        <DonationPopupSimple
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'clean' ? (
-        <DonationPopupClean
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'direct' ? (
-        <DonationPopupDirect
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          fixedAmount={100}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'hot' ? (
-        <DonationPopupHot
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          fixedAmount={100}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'landing' ? (
-        <DonationPopupLanding
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'instituto' ? (
-        <DonationPopupInstituto
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          fixedAmount={100}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'vakinha2' ? (
-        <DonationPopupVakinha2
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'vakinha3' ? (
-        <DonationPopupVakinha3
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : popupModel === 'instituto2' ? (
-        <DonationPopupInstituto2
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          fixedAmount={100}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      ) : (
-        <DonationPopup
-          isOpen={true}
-          onClose={() => {}}
-          userId={userId}
-          utmParams={utmParams || undefined}
-          offerId={offerId}
-        />
-      )}
-    </div>
+    <Suspense fallback={<PopupSkeleton />}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+        {popupModel === 'simple' ? (
+          <DonationPopupSimple
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'clean' ? (
+          <DonationPopupClean
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'direct' ? (
+          <DonationPopupDirect
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            fixedAmount={100}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'hot' ? (
+          <DonationPopupHot
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            fixedAmount={100}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'landing' ? (
+          <DonationPopupLanding
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'instituto' ? (
+          <DonationPopupInstituto
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            fixedAmount={100}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'vakinha2' ? (
+          <DonationPopupVakinha2
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'vakinha3' ? (
+          <DonationPopupVakinha3
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : popupModel === 'instituto2' ? (
+          <DonationPopupInstituto2
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            fixedAmount={100}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        ) : (
+          <DonationPopup
+            isOpen={true}
+            onClose={() => {}}
+            userId={userId}
+            utmParams={utmParams || undefined}
+            offerId={offerId}
+          />
+        )}
+      </div>
+    </Suspense>
   );
 };
 
