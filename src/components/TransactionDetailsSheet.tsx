@@ -67,6 +67,26 @@ interface Transaction {
   offer_domain?: string | null;
 }
 
+// Mapeamento de nomes amigáveis dos popup models
+const POPUP_MODEL_NAMES: Record<string, string> = {
+  boost: "Boost",
+  simple: "Simples",
+  clean: "Clean",
+  direct: "Direto",
+  hot: "Hot",
+  landing: "Modelo Vakinha",
+  instituto: "Borboleta",
+  instituto2: "Instituto 2",
+  vakinha2: "Vakinha 2",
+  vakinha3: "Vakinha 3",
+  api: "API",
+  checkout: "Checkout"
+};
+
+const getPopupModelName = (model: string): string => {
+  return POPUP_MODEL_NAMES[model] || model;
+}
+
 interface TransactionDetailsSheetProps {
   transaction: Transaction | null;
   open: boolean;
@@ -368,7 +388,7 @@ const TransactionDetailsSheet = ({
               </div>
               <p className="text-sm font-semibold truncate">{transaction.product_name || '-'}</p>
               {transaction.popup_model && <Badge variant="outline" className="mt-1.5 text-[10px] h-5">
-                  {transaction.popup_model}
+                  {getPopupModelName(transaction.popup_model)}
                 </Badge>}
             </div>
           </div>
