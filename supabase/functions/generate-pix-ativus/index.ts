@@ -602,14 +602,30 @@ serve(async (req) => {
     
     console.log('Auth type:', isAlreadyBase64 ? 'Key already Base64' : 'Key encoded to Base64');
 
-    const response = await fetch(ATIVUS_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${authHeader}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    // Add 8-second timeout to prevent long waits
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    
+    let response: Response;
+    try {
+      response = await fetch(ATIVUS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('[ATIVUS] ⏱️ Request timeout after 8 seconds');
+        throw new Error('Timeout: API Ativus não respondeu em 8 segundos');
+      }
+      throw fetchError;
+    }
+    clearTimeout(timeoutId);
 
     const responseText = await response.text();
     console.log('Resposta Ativus (raw):', responseText);
