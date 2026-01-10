@@ -7,13 +7,40 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, 
-  Loader2, RefreshCw, Activity, Clock, ChevronDown, Upload
+  Loader2, RefreshCw, Activity, Clock, ChevronDown, Upload, Info
 } from "lucide-react";
 import utmifyLogo from "@/assets/utmify-logo.png";
+
+// Validation for UTMify API token
+const validateUtmifyToken = (token: string): { valid: boolean; message?: string } => {
+  const trimmed = token.trim();
+  
+  if (!trimmed) {
+    return { valid: false, message: 'Digite o token da API' };
+  }
+  
+  // Token should not be a URL or UTM template
+  if (trimmed.startsWith('?') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return { valid: false, message: 'Isso parece ser uma URL, não um token de API. Acesse Utmify → Configurações → API → Token' };
+  }
+  
+  // Token should not contain URL-like characters
+  if (/[&=?]/.test(trimmed)) {
+    return { valid: false, message: 'Token inválido. O token não deve conter caracteres como &, = ou ?. Verifique se copiou o token correto do UTMify' };
+  }
+  
+  // Token should have minimum length
+  if (trimmed.length < 20) {
+    return { valid: false, message: 'Token muito curto. Verifique se copiou o token completo do UTMify' };
+  }
+  
+  return { valid: true };
+};
 
 interface SyncStats {
   pixGerados: number;
@@ -26,6 +53,7 @@ interface SyncStats {
     donor_name: string;
     product_name: string;
     utm_data: any;
+    user_id: string;
   }>;
 }
 
@@ -57,6 +85,8 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
   const [showToken, setShowToken] = useState(false);
   const [isConfigured, setIsConfigured] = useState(initialData?.isConfigured ?? false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [sendInitiateCheckout, setSendInitiateCheckout] = useState(true);
+  const [savingInitiateCheckout, setSavingInitiateCheckout] = useState(false);
 
   // Monitoring state
   const [monitoringLoading, setMonitoringLoading] = useState(false);
@@ -104,25 +134,24 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
-      const { data: enabledData } = await supabase
+      const { data: settings } = await supabase
         .from('admin_settings')
-        .select('value')
-        .eq('key', 'utmify_enabled')
+        .select('key, value')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .in('key', ['utmify_enabled', 'utmify_api_token', 'utmify_send_initiate_checkout']);
       
-      setEnabled(enabledData?.value === 'true');
-
-      const { data: tokenData } = await supabase
-        .from('admin_settings')
-        .select('value')
-        .eq('key', 'utmify_api_token')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (tokenData?.value) {
-        setApiToken(tokenData.value);
-        setIsConfigured(true);
+      if (settings) {
+        const enabledSetting = settings.find(s => s.key === 'utmify_enabled');
+        const tokenSetting = settings.find(s => s.key === 'utmify_api_token');
+        const icSetting = settings.find(s => s.key === 'utmify_send_initiate_checkout');
+        
+        setEnabled(enabledSetting?.value === 'true');
+        setSendInitiateCheckout(icSetting?.value !== 'false'); // Default true
+        
+        if (tokenSetting?.value) {
+          setApiToken(tokenSetting.value);
+          setIsConfigured(true);
+        }
       }
     } catch (error) {
       console.error('Error loading Utmify settings:', error);
@@ -167,8 +196,9 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
   };
 
   const handleSaveToken = async () => {
-    if (!apiToken.trim()) {
-      toast.error('Digite o token da API');
+    const validation = validateUtmifyToken(apiToken);
+    if (!validation.valid) {
+      toast.error(validation.message);
       return;
     }
     
@@ -201,6 +231,31 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
       toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleInitiateCheckoutChange = async (newValue: boolean) => {
+    setSendInitiateCheckout(newValue);
+    setSavingInitiateCheckout(true);
+    
+    try {
+      const { error } = await supabase.rpc('update_user_setting', {
+        setting_key: 'utmify_send_initiate_checkout',
+        setting_value: newValue.toString()
+      });
+      
+      if (error) throw error;
+      
+      toast.success(newValue 
+        ? 'Eventos de checkout iniciado ativados!' 
+        : 'Eventos de checkout iniciado desativados!'
+      );
+    } catch (error) {
+      console.error('Error saving initiate checkout setting:', error);
+      setSendInitiateCheckout(!newValue); // Revert on error
+      toast.error('Erro ao salvar configuração');
+    } finally {
+      setSavingInitiateCheckout(false);
     }
   };
 
@@ -240,7 +295,7 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
 
       const { data: transactions, error } = await supabase
         .from('pix_transactions')
-        .select('id, txid, amount, status, donor_name, product_name, utm_data')
+        .select('id, txid, amount, status, donor_name, product_name, utm_data, user_id')
         .eq('user_id', user.id)
         .gte('created_at', todayStart)
         .in('status', ['generated', 'paid']);
@@ -277,14 +332,12 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
 
       for (const tx of syncStats.transactions) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
           const { error } = await supabase.functions.invoke('utmify-sync', {
             body: {
               txid: tx.txid,
               amount: tx.amount,
               status: tx.status,
-              user_id: user?.id,
+              user_id: tx.user_id, // Use the transaction owner's user_id
               donor_name: tx.donor_name,
               product_name: tx.product_name,
               utm_data: tx.utm_data
@@ -414,8 +467,42 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
             )}
             {isConfigured ? 'Atualizar Token' : 'Salvar e Ativar'}
           </Button>
+
+          {/* InitiateCheckout Toggle - Only show when configured */}
+          {isConfigured && (
+            <div className="flex items-center justify-between p-3 border rounded-lg gap-3 border-dashed">
+              <div className="min-w-0">
+                <Label className="text-sm font-medium">Enviar checkouts iniciados</Label>
+                <p className="text-xs text-muted-foreground">
+                  Envia eventos quando o popup de checkout abre (antes do PIX)
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={sendInitiateCheckout}
+                  onCheckedChange={handleInitiateCheckoutChange}
+                  disabled={savingInitiateCheckout}
+                />
+                {savingInitiateCheckout && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Explanation Alert - Show when configured */}
+      {isConfigured && (
+        <Alert className="bg-blue-500/5 border-blue-500/20">
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertDescription className="text-xs text-muted-foreground">
+            <strong className="text-foreground block mb-1">Entenda as "vendas pendentes" no UTMify</strong>
+            O UTMify mostra o funil completo: <span className="text-yellow-600 font-medium">Checkout Iniciado</span> → <span className="text-orange-600 font-medium">PIX Gerado</span> → <span className="text-green-600 font-medium">Pago</span>.
+            Os eventos de "checkout iniciado" são visitantes que abriram o popup, mesmo sem gerar PIX ou pagar. 
+            Na Furion, você só vê transações reais (PIX gerados e pagos). Se preferir ver apenas transações reais no UTMify, 
+            desative "Enviar checkouts iniciados" acima.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Monitoring Card - Compact */}
       {isConfigured && (
