@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { captureUTMParams, saveUTMParams, getUTMParams, UTMParams } from "@/lib/utm";
@@ -78,12 +78,15 @@ interface OfferData {
 
 const PublicCheckoutSlug = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { initializeWithPixelIds } = usePixel();
+  const { initializeWithPixelIds, trackEvent } = usePixel();
   
   const [offer, setOffer] = useState<OfferData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
+  
+  // Prevent duplicate PageView firing
+  const pageViewFiredRef = useRef(false);
 
   // Capture UTMs immediately
   useEffect(() => {
@@ -147,6 +150,16 @@ const PublicCheckoutSlug = () => {
             if (!pixelError && pixelIds && pixelIds.length > 0) {
               console.log('%c[SLUG PAGE] ✅ Resolved pixel IDs: ' + pixelIds.join(', '), 'background: purple; color: white; font-size: 14px;');
               initializeWithPixelIds(pixelIds);
+              
+              // Fire PageView once after pixel initialization
+              if (!pageViewFiredRef.current) {
+                pageViewFiredRef.current = true;
+                // Small delay to ensure fbq is configured
+                setTimeout(() => {
+                  console.log('%c[SLUG PAGE] 🎯 Firing PageView event', 'background: green; color: white; font-size: 14px;');
+                  trackEvent('PageView');
+                }, 100);
+              }
             } else {
               console.log('%c[SLUG PAGE] ⚠️ No pixel IDs found for offer', 'background: orange; color: black;');
             }
