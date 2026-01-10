@@ -363,7 +363,7 @@ export const DonationPopupInstituto = ({
                     {/* Ícone de som mutado */}
                     <div className="flex justify-center mb-3">
                       <svg 
-                        className="w-12 h-12" 
+                        className="w-12 h-12 animate-pulse" 
                         fill="currentColor" 
                         viewBox="0 0 24 24"
                       >
