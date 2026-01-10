@@ -637,10 +637,10 @@ export function BackupsSection() {
                     size="sm" 
                     onClick={() => handleCreateBackup(false)}
                     disabled={actionLoading}
-                    title="Backup completo com transações PIX dos últimos 30 dias"
+                    title="Backup de configurações (produtos, templates, perfis, taxas). Transações ficam no banco de dados."
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {actionLoading ? 'Criando...' : 'Backup Completo'}
+                    {actionLoading ? 'Criando...' : 'Backup Configurações'}
                   </Button>
                 </div>
               </div>
