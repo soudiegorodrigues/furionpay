@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Heart, X, ArrowLeft, Clock, Copy, Lock } from "lucide-react";
 import institutoBanner from "@/assets/cantinho-banner.webp";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,8 @@ export const DonationPopupInstituto = ({
   offerId,
 }: DonationPopupInstitutoProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [step, setStep] = useState<Step>("select");
   const [pixData, setPixData] = useState<{
     code: string;
@@ -330,19 +332,49 @@ export const DonationPopupInstituto = ({
       <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
-            {/* Vídeo VSL */}
-            <div className="flex justify-center">
+            {/* Player VTurb Style */}
+            <div className="relative flex justify-center rounded-lg overflow-hidden shadow-lg">
               <video 
+                ref={videoRef}
                 src="/videos/vsl.mp4"
-                controls
                 autoPlay
-                muted
+                muted={isMuted}
                 playsInline
-                className="w-full h-auto rounded-lg shadow-lg"
-                poster={institutoBanner}
-              >
-                Seu navegador não suporta vídeos.
-              </video>
+                loop
+                className="w-full h-auto"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+              
+              {/* Overlay - Clique para ouvir */}
+              {isMuted && (
+                <div 
+                  onClick={() => {
+                    setIsMuted(false);
+                    if (videoRef.current) {
+                      videoRef.current.muted = false;
+                    }
+                  }}
+                  className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                >
+                  <div className="bg-[#1e3a5f]/90 rounded-lg px-6 py-4 text-center text-white">
+                    <p className="text-lg font-semibold mb-3">Seu vídeo já começou</p>
+                    
+                    {/* Ícone de som mutado */}
+                    <div className="flex justify-center mb-3">
+                      <svg 
+                        className="w-12 h-12" 
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                        <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    </div>
+                    
+                    <p className="text-base font-medium">Clique para ouvir</p>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Progress Section */}
