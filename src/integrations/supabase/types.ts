@@ -3808,6 +3808,18 @@ export type Database = {
           }
         | {
             Args: {
+              p_end_date?: string
+              p_page?: number
+              p_per_page?: number
+              p_search?: string
+              p_start_date?: string
+              p_status_filter?: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
               p_cursor?: string
               p_end_date?: string
               p_page_size?: number
