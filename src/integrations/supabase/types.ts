@@ -3798,19 +3798,19 @@ export type Database = {
           }
         | {
             Args: {
-              p_date_filter?: string
+              p_date_filter: string
               p_end_date?: string
-              p_page?: number
-              p_per_page?: number
-              p_platform_filter?: string
-              p_search?: string
+              p_page: number
+              p_per_page: number
+              p_platform_filter: string
+              p_search: string
               p_start_date?: string
-              p_status_filter?: string
+              p_status_filter: string
               p_user_id: string
             }
             Returns: {
-              total_count: number
-              total_pages: number
+              pages: number
+              total: number
               transactions: Json
             }[]
           }
