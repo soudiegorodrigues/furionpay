@@ -1417,8 +1417,57 @@ async function checkHighValueIpLimit(
     return { blocked: false }; // Fail-open em caso de exceção
   }
 }
-// ===============================================
 
+// ============= HIGH VALUE SELLER LIMIT =============
+// Para valores >= R$700, só permite 1 PIX não pago por VENDEDOR (userId)
+// Isso evita ataque com rotação de IP/fingerprint.
+async function checkHighValueSellerLimit(
+  userId: string | undefined,
+  amount: number
+): Promise<{ blocked: boolean; reason?: string; count?: number }> {
+  if (amount < HIGH_VALUE_THRESHOLD) {
+    return { blocked: false };
+  }
+
+  if (!userId) {
+    console.log('[HIGH-VALUE-SELLER] No userId provided, skipping seller limit');
+    return { blocked: false };
+  }
+
+  const supabase = getSupabaseClient();
+
+  try {
+    const { count, error } = await supabase
+      .from('pix_transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'generated')
+      .gte('amount', HIGH_VALUE_THRESHOLD);
+
+    if (error) {
+      console.error('[HIGH-VALUE-SELLER] Error checking seller limit:', error);
+      return { blocked: false }; // fail-open
+    }
+
+    if (count && count >= 1) {
+      console.log(`[HIGH-VALUE-SELLER] Seller ${userId.substring(0, 8)}... BLOCKED - already has ${count} unpaid PIX >= R$${HIGH_VALUE_THRESHOLD}`);
+      return {
+        blocked: true,
+        count,
+        reason: `Este usuário já possui ${count} PIX de valor alto (R$${HIGH_VALUE_THRESHOLD}+) não pago. Aguarde o PIX pendente expirar ou ser pago antes de gerar outro.`
+      };
+    }
+
+    console.log(`[HIGH-VALUE-SELLER] Seller ${userId.substring(0, 8)}... allowed - no unpaid high-value PIX`);
+    return { blocked: false, count: count || 0 };
+  } catch (err) {
+    console.error('[HIGH-VALUE-SELLER] Exception:', err);
+    return { blocked: false }; // fail-open
+  }
+}
+// ==================================================
+
+// ===============================================
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -1475,6 +1524,26 @@ serve(async (req) => {
       );
     }
     // =====================================================
+
+    // ============= CHECK HIGH-VALUE SELLER LIMIT =============
+    // Para valores >= R$700, só permite 1 PIX não pago por VENDEDOR (userId)
+    const highValueSellerCheck = await checkHighValueSellerLimit(userId, amount);
+    if (highValueSellerCheck.blocked) {
+      console.log(`[HIGH-VALUE-SELLER] Request blocked. User: ${userId}, Amount: R$${amount}`);
+      try {
+        await logRateLimitEvent(userId, clientIp, 'blocked', 'seller_high_value_limit', highValueSellerCheck.count);
+      } catch (_) {
+        // logging should never block request
+      }
+      return new Response(
+        JSON.stringify({
+          error: 'HIGH_VALUE_SELLER_LIMIT',
+          message: highValueSellerCheck.reason,
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // =========================================================
 
     // ============= CHECK SELLER BYPASS ANTIFRAUDE =============
     // Verifica se o vendedor tem bypass_antifraud ativado pelo admin
