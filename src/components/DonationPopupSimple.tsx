@@ -11,7 +11,6 @@ import { useDeviceFingerprint } from "@/hooks/useDeviceFingerprint";
 import { cn } from "@/lib/utils";
 
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
-import { trackInitiateCheckoutToUtmify } from "@/lib/trackInitiateCheckout";
 
 interface DonationPopupSimpleProps {
   isOpen: boolean;
@@ -80,15 +79,6 @@ export const DonationPopupSimple = ({
       trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Simple',
         currency: 'BRL',
-      });
-      // Also track to UTMify server-side
-      trackInitiateCheckoutToUtmify({
-        userId,
-        offerId,
-        productName: 'Donation Simple',
-        value: selectedAmount || 100,
-        utmParams,
-        popupModel: 'simple',
       });
     }
   }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, selectedAmount]);

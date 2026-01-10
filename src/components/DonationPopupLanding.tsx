@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
-import { trackInitiateCheckoutToUtmify } from "@/lib/trackInitiateCheckout";
 
 interface DonationPopupLandingProps {
   isOpen: boolean;
@@ -96,15 +95,6 @@ export const DonationPopupLanding = ({
       trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Landing',
         currency: 'BRL',
-      });
-      // Also track to UTMify server-side
-      trackInitiateCheckoutToUtmify({
-        userId,
-        offerId,
-        productName: 'Donation Landing',
-        value: calculateTotal(),
-        utmParams,
-        popupModel: 'landing',
       });
     }
   }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams]);

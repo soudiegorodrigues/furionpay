@@ -110,6 +110,3 @@ verify_jwt = false
 
 [functions.chargeback-webhook]
 verify_jwt = false
-
-[functions.track-initiate-checkout]
-verify_jwt = false
