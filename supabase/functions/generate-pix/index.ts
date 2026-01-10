@@ -1000,9 +1000,30 @@ async function callAcquirer(
     return { success: false, error: data.error };
   };
   
+  // Helper function to make fetch with timeout (10 seconds per acquirer call)
+  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000): Promise<Response> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Timeout: ${acquirer} não respondeu em ${timeoutMs / 1000}s`);
+      }
+      throw error;
+    }
+  };
+  
   try {
     if (acquirer === 'inter') {
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
+      const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/generate-pix-inter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1034,7 +1055,7 @@ async function callAcquirer(
     }
     
     if (acquirer === 'ativus') {
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-ativus`, {
+      const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/generate-pix-ativus`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1066,7 +1087,7 @@ async function callAcquirer(
     }
     
     if (acquirer === 'valorion') {
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-valorion`, {
+      const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/generate-pix-valorion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1099,7 +1120,7 @@ async function callAcquirer(
     
     if (acquirer === 'efi') {
       console.log('[EFI] Calling generate-pix-efi...');
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pix-efi`, {
+      const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/generate-pix-efi`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1135,6 +1156,7 @@ async function callAcquirer(
   } catch (err) {
     const responseTime = Date.now() - startTime;
     const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    console.log(`[${acquirer.toUpperCase()}] Request failed after ${responseTime}ms: ${errorMsg}`);
     await logApiEvent(acquirer, 'failure', responseTime, errorMsg);
     return { success: false, error: errorMsg };
   }

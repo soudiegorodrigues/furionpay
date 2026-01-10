@@ -651,17 +651,38 @@ async function getProductNameFromOffer(supabase: any, userId?: string, popupMode
 }
 
 // Make API request with retry logic for Render.com cold starts
+// Added 8-second timeout per request
 async function fetchWithRetry(
   url: string,
   options: RequestInit,
   attempt: number = 1
 ): Promise<{ response: Response; responseTime: number; attempts: number }> {
   const startTime = Date.now();
+  const REQUEST_TIMEOUT = 8000; // 8 seconds timeout
   
   console.log(`[VALORION] Attempt ${attempt}/${RETRY_CONFIG.maxAttempts} - Making request to: ${url}`);
   
   try {
-    const response = await fetch(url, options);
+    // Add timeout with AbortController
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.log(`[VALORION] Attempt ${attempt} - Request timeout after ${REQUEST_TIMEOUT}ms`);
+        throw new Error(`Timeout after ${REQUEST_TIMEOUT}ms`);
+      }
+      throw fetchError;
+    }
+    clearTimeout(timeoutId);
+    
     const responseTime = Date.now() - startTime;
     
     console.log(`[VALORION] Attempt ${attempt} - Response status: ${response.status}, Time: ${responseTime}ms`);
