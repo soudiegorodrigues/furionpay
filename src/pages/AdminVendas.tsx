@@ -236,11 +236,11 @@ const AdminVendas = () => {
         p_page: currentPage,
         p_items_per_page: ITEMS_PER_PAGE,
         p_date_filter: dateFilter,
-        p_start_date: null,
-        p_end_date: null,
         p_status_filter: statusFilter,
-        p_search: debouncedSearch || '',
-        p_platform_filter: platformFilter
+        p_platform_filter: platformFilter,
+        p_search_query: debouncedSearch || '',
+        p_start_date: null,
+        p_end_date: null
       });
 
       if (error) throw error;
