@@ -12,7 +12,15 @@ interface TrackInitiateCheckoutParams {
 
 /**
  * Tracks InitiateCheckout event to UTMify
- * This sends the IC event server-side for proper attribution
+ * 
+ * DISABLED: This function was causing duplicate "Vendas Iniciadas" in UTMify.
+ * The utmify-sync trigger already sends events with status 'waiting_payment' 
+ * when a PIX is generated, which UTMify counts as "Venda Iniciada".
+ * Sending IC here was duplicating that count.
+ * 
+ * The tracking flow is now:
+ * 1. PIX generated → utmify-sync sends status: 'waiting_payment' → "Venda Iniciada"
+ * 2. PIX paid → utmify-sync sends status: 'paid' → "Venda Aprovada"
  */
 export async function trackInitiateCheckoutToUtmify({
   userId,
@@ -22,45 +30,13 @@ export async function trackInitiateCheckoutToUtmify({
   utmParams,
   popupModel,
 }: TrackInitiateCheckoutParams): Promise<void> {
-  // Skip if no userId - UTMify requires user context
-  if (!userId) {
-    console.log('[TRACK-IC] Skipping: No userId provided');
-    return;
-  }
-
-  try {
-    console.log('[TRACK-IC] Sending InitiateCheckout to UTMify', {
-      userId,
-      offerId,
-      productName,
-      value,
-      popupModel,
-    });
-
-    const { data, error } = await supabase.functions.invoke('track-initiate-checkout', {
-      body: {
-        userId,
-        offerId,
-        productName,
-        value,
-        utmParams,
-        popupModel,
-      },
-    });
-
-    if (error) {
-      console.error('[TRACK-IC] Error tracking InitiateCheckout:', error);
-      return;
-    }
-
-    if (data?.skipped) {
-      console.log('[TRACK-IC] Tracking skipped:', data.reason);
-      return;
-    }
-
-    console.log('[TRACK-IC] ✅ InitiateCheckout tracked successfully:', data?.orderId);
-  } catch (err) {
-    console.error('[TRACK-IC] Failed to track InitiateCheckout:', err);
-    // Don't throw - this is a non-critical tracking call
-  }
+  // DISABLED: Tracking is now handled by utmify-sync trigger on pix_transactions
+  // This avoids duplicate "Vendas Iniciadas" in UTMify
+  console.log('[TRACK-IC] Disabled - tracking handled by utmify-sync trigger', {
+    userId,
+    offerId,
+    productName,
+    popupModel,
+  });
+  return;
 }
