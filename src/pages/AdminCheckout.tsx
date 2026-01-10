@@ -66,7 +66,7 @@ const popupModels = [{
   hasDynamicAmount: false
 }, {
   id: "instituto",
-  name: "Instituto",
+  name: "Borboleta",
   description: "Modelo institucional",
   hasDynamicAmount: false
 }, {
