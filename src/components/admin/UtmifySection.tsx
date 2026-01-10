@@ -293,22 +293,33 @@ export function UtmifySection({ initialData }: UtmifySectionProps) {
 
       const todayStart = getTodayStartBrazil();
 
-      const { data: transactions, error } = await supabase
+      // Query 1: PIX gerados hoje (usa created_at)
+      const { data: generatedTx, error: err1 } = await supabase
         .from('pix_transactions')
         .select('id, txid, amount, status, donor_name, product_name, utm_data, user_id')
         .eq('user_id', user.id)
-        .gte('created_at', todayStart)
-        .in('status', ['generated', 'paid']);
+        .eq('status', 'generated')
+        .gte('created_at', todayStart);
 
-      if (error) throw error;
+      // Query 2: PIX pagos hoje (usa paid_at)
+      const { data: paidTx, error: err2 } = await supabase
+        .from('pix_transactions')
+        .select('id, txid, amount, status, donor_name, product_name, utm_data, user_id')
+        .eq('user_id', user.id)
+        .eq('status', 'paid')
+        .gte('paid_at', todayStart);
 
-      const pixGerados = transactions?.filter(t => t.status === 'generated').length || 0;
-      const pixPagos = transactions?.filter(t => t.status === 'paid').length || 0;
+      if (err1) throw err1;
+      if (err2) throw err2;
+
+      const allTransactions = [...(generatedTx || []), ...(paidTx || [])];
+      const pixGerados = generatedTx?.length || 0;
+      const pixPagos = paidTx?.length || 0;
 
       setSyncStats({
         pixGerados,
         pixPagos,
-        transactions: transactions || []
+        transactions: allTransactions
       });
       setShowSyncConfirmDialog(true);
     } catch (error) {
