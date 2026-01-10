@@ -153,13 +153,7 @@ export const DonationPopupLanding = ({
       return;
     }
 
-    // Se não selecionou nenhum boost, mostra upsell
-    if (selectedBoosts.length === 0) {
-      setStep("upsell");
-      return;
-    }
-
-    // Se já tem boost, vai direto pro PIX
+    // Vai direto pro PIX
     handleGeneratePix();
   };
 
