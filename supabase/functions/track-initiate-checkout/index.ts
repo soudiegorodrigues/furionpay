@@ -93,6 +93,24 @@ async function isUtmifyEnabled(supabase: any, userId?: string): Promise<boolean>
   return enabled;
 }
 
+async function isInitiateCheckoutEnabled(supabase: any, userId?: string): Promise<boolean> {
+  if (!userId) {
+    return false;
+  }
+  
+  const { data: icEnabled } = await supabase
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'utmify_send_initiate_checkout')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  // Default to true if not set
+  const enabled = icEnabled?.value !== 'false';
+  console.log('[TRACK-IC] InitiateCheckout enabled for user', userId, ':', enabled);
+  return enabled;
+}
+
 function generateRandomDocument(): string {
   const generateDigits = () => {
     let digits = '';
@@ -181,6 +199,17 @@ serve(async (req) => {
       console.log('[TRACK-IC] ⏱️ Duração:', Date.now() - startTime, 'ms');
       return new Response(
         JSON.stringify({ success: true, skipped: true, reason: 'Utmify disabled' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if InitiateCheckout events are enabled
+    const icEnabled = await isInitiateCheckoutEnabled(supabase, userId);
+    if (!icEnabled) {
+      console.log('[TRACK-IC] ⏭️ PULANDO: Eventos de InitiateCheckout desabilitados para este usuário');
+      console.log('[TRACK-IC] ⏱️ Duração:', Date.now() - startTime, 'ms');
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: 'InitiateCheckout events disabled' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
