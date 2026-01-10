@@ -213,6 +213,33 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
             console.log('%c[PIXEL DEBUG] ✅ PRIORITY: Initializing pixels from URL: ' + pixelIds.join(', '), 'background: green; color: white; font-size: 14px;');
             const pixelConfigs = pixelIds.map(pixelId => ({ pixelId }));
             initializePixels(pixelConfigs, true); // força inicialização
+            
+            // Buscar accessToken do banco para configurar CAPI
+            if (userId) {
+              try {
+                const { data: pixelData } = await supabase.functions.invoke('get-pixel-config', {
+                  body: { userId }
+                });
+                if (pixelData?.pixels && Array.isArray(pixelData.pixels)) {
+                  // Encontrar o primeiro pixel com accessToken
+                  const pixelWithToken = pixelData.pixels.find((p: any) => p.accessToken && pixelIds.includes(p.pixelId));
+                  if (pixelWithToken) {
+                    console.log('%c[PIXEL DEBUG] ✅ CAPI credentials configured for pixel: ' + pixelWithToken.pixelId, 'background: purple; color: white;');
+                    setCapiCredentials(pixelWithToken.pixelId, pixelWithToken.accessToken);
+                  } else {
+                    // Se não encontrou o pixel específico, usar o primeiro com token
+                    const anyPixelWithToken = pixelData.pixels.find((p: any) => p.accessToken);
+                    if (anyPixelWithToken) {
+                      console.log('%c[PIXEL DEBUG] ✅ CAPI credentials configured (fallback): ' + anyPixelWithToken.pixelId, 'background: purple; color: white;');
+                      setCapiCredentials(anyPixelWithToken.pixelId, anyPixelWithToken.accessToken);
+                    }
+                  }
+                }
+              } catch (err) {
+                console.log('[PIXEL DEBUG] Failed to fetch CAPI credentials:', err);
+              }
+            }
+            
             clearTimeout(timeoutId);
             return;
           } else {
@@ -246,6 +273,15 @@ export const MetaPixelProvider = ({ children }: MetaPixelProviderProps) => {
         console.log('Pixel config response:', data);
 
         if (data?.pixels && Array.isArray(data.pixels) && data.pixels.length > 0) {
+          // Configurar CAPI credentials com o primeiro pixel que tem accessToken
+          const pixelWithToken = data.pixels.find((p: any) => p.accessToken);
+          if (pixelWithToken) {
+            console.log('%c[PIXEL DEBUG] ✅ CAPI credentials configured from DB: ' + pixelWithToken.pixelId, 'background: purple; color: white;');
+            setCapiCredentials(pixelWithToken.pixelId, pixelWithToken.accessToken);
+          } else {
+            console.log('%c[PIXEL DEBUG] ⚠️ No pixel with accessToken found - CAPI will not work', 'background: orange; color: black;');
+          }
+          
           initializePixels(data.pixels, false);
         } else {
           setIsLoaded(true);
