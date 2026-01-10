@@ -12,7 +12,6 @@ import pixLogo from "@/assets/pix-logo.png";
 import vakinhaLogo from "@/assets/vakinha-logo.png";
 import vakinhaBanner from "@/assets/vakinha-banner.jpg";
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
-import { trackInitiateCheckoutToUtmify } from "@/lib/trackInitiateCheckout";
 
 interface DonationPopupVakinha3Props {
   isOpen: boolean;
@@ -126,15 +125,6 @@ export const DonationPopupVakinha3 = ({
       trackEvent('InitiateCheckout', {
         content_name: 'Donation Popup Vakinha3',
         currency: 'BRL'
-      });
-      // Also track to UTMify server-side
-      trackInitiateCheckoutToUtmify({
-        userId,
-        offerId,
-        productName: 'Donation Vakinha3',
-        value: selectedAmount || 100,
-        utmParams,
-        popupModel: 'vakinha3',
       });
     }
   }, [isOpen, trackEvent, userId, offerId, utmParams, selectedAmount]);

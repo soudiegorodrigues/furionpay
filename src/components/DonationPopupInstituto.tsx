@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dialog";
 
 import { UTMParams, getSavedUTMParams } from "@/lib/utm";
-import { trackInitiateCheckoutToUtmify } from "@/lib/trackInitiateCheckout";
 
 interface DonationPopupInstitutoProps {
   isOpen: boolean;
@@ -184,15 +183,6 @@ export const DonationPopupInstituto = ({
       trackEventWithCAPI('InitiateCheckout', {
         content_name: 'Donation Popup Instituto',
         currency: 'BRL',
-      });
-      // Also track to UTMify server-side
-      trackInitiateCheckoutToUtmify({
-        userId,
-        offerId,
-        productName: 'Donation Instituto',
-        value: selectedAmount || 50,
-        utmParams,
-        popupModel: 'instituto',
       });
     }
   }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, selectedAmount]);
