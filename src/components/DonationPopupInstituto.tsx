@@ -61,6 +61,7 @@ export const DonationPopupInstituto = ({
 }: DonationPopupInstitutoProps) => {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [customAmount, setCustomAmount] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [step, setStep] = useState<Step>("select");
   const [pixData, setPixData] = useState<{
@@ -434,16 +435,41 @@ export const DonationPopupInstituto = ({
               ))}
             </div>
 
-            {/* Main CTA Button */}
-            <Button 
-              onClick={() => handleGeneratePix(1000)}
-              className="w-full py-6 text-lg font-bold rounded-xl text-white"
-              style={{
-                background: 'linear-gradient(90deg, #E91E8C, #9C27B0)'
-              }}
-            >
-              R$ 1000
-            </Button>
+            {/* Campo Outro Valor */}
+            <div className="space-y-3">
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
+                  R$
+                </span>
+                <input
+                  type="number"
+                  placeholder="Digite outro valor"
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  className="w-full py-4 pl-12 pr-4 text-lg font-semibold rounded-xl border-2 border-[#E91E8C] focus:ring-2 focus:ring-[#E91E8C] focus:border-[#E91E8C] outline-none text-center"
+                  min="1"
+                />
+              </div>
+              
+              <Button 
+                onClick={() => {
+                  const amount = parseFloat(customAmount);
+                  if (amount && amount > 0) {
+                    handleGeneratePix(amount);
+                  }
+                }}
+                disabled={!customAmount || parseFloat(customAmount) <= 0}
+                className="w-full py-6 text-lg font-bold rounded-xl text-white disabled:opacity-50"
+                style={{
+                  background: 'linear-gradient(90deg, #E91E8C, #9C27B0)'
+                }}
+              >
+                {customAmount && parseFloat(customAmount) > 0 
+                  ? `Doar R$ ${parseFloat(customAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                  : "Digite um valor para doar"
+                }
+              </Button>
+            </div>
 
             {/* Social Proof - Apoiadores */}
             <div className="flex items-center justify-center gap-3 pt-4">
