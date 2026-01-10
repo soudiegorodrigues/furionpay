@@ -178,14 +178,8 @@ export const DonationPopupInstituto = ({
       setSelectedAmount(null);
       setTimeLeft(10 * 60);
       setIsPaid(false);
-    } else {
-      // Track InitiateCheckout via CAPI for reliability
-      trackEventWithCAPI('InitiateCheckout', {
-        content_name: 'Donation Popup Instituto',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams, selectedAmount]);
+  }, [isOpen]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -245,14 +239,11 @@ export const DonationPopupInstituto = ({
         return;
       }
 
-      // Track PixGenerated via CAPI for reliability
-      trackEventWithCAPI('PixGenerated', {
+      // Track InitiateCheckout when PIX is generated
+      trackEventWithCAPI('InitiateCheckout', {
         value: amount,
         currency: 'BRL',
         content_name: 'Donation Instituto',
-      }, {
-        external_id: data.transactionId,
-        country: 'br',
       });
 
       setPixData({

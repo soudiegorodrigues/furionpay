@@ -66,14 +66,8 @@ export const DonationPopup = ({
       setPixData(null);
       setCustomAmount("");
       setSelectedBoosts([]);
-    } else {
-      // Track InitiateCheckout via CAPI for reliability
-      trackEventWithCAPI('InitiateCheckout', {
-        content_name: 'Donation Popup',
-        currency: 'BRL',
-      });
     }
-  }, [isOpen, trackEventWithCAPI, userId, offerId, utmParams]);
+  }, [isOpen]);
 
   const baseAmount = parseFloat(customAmount) || 0;
   const boostsTotal = selectedBoosts.reduce((sum, id) => {
@@ -144,6 +138,14 @@ export const DonationPopup = ({
         qrCodeUrl: data.qrCodeUrl,
         transactionId: data.transactionId,
       });
+      
+      // Track InitiateCheckout when PIX is generated
+      trackEventWithCAPI('InitiateCheckout', {
+        value: totalAmount,
+        currency: 'BRL',
+        content_name: 'Donation Popup',
+      });
+      
       setStep("pix");
     } catch (err) {
       console.error('Error:', err);

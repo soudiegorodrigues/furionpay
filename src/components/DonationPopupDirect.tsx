@@ -56,12 +56,6 @@ export const DonationPopupDirect = ({
     if (isOpen && !hasGenerated.current) {
       hasGenerated.current = true;
       generatePix();
-      // Track InitiateCheckout via CAPI for reliability
-      trackEventWithCAPI('InitiateCheckout', {
-        content_name: 'Donation Popup Direct',
-        currency: 'BRL',
-        value: fixedAmount,
-      });
     }
     
     if (!isOpen) {
@@ -166,14 +160,11 @@ export const DonationPopupDirect = ({
         transactionId: data.transactionId,
       });
       
-      // Fire PixGenerated event via CAPI for reliability
-      trackEventWithCAPI('PixGenerated', {
+      // Track InitiateCheckout when PIX is generated
+      trackEventWithCAPI('InitiateCheckout', {
         value: fixedAmount,
         currency: 'BRL',
         content_name: 'Donation Direct',
-      }, {
-        external_id: data.transactionId,
-        country: 'br',
       });
       
       setStep("pix");
