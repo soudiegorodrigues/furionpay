@@ -702,9 +702,21 @@ serve(async (req) => {
     console.log('=== VALORION PIX GENERATION START ===');
     console.log(`[VALORION] Amount: R$${amount}, User: ${userId || 'anonymous'}, HealthCheck: ${healthCheck}, IP: ${clientIp}`);
 
-    if (!amount || amount <= 0) {
+    // Validate amount - must be at least R$ 0.50
+    const parsedAmount = typeof amount === 'number' ? amount : parseFloat(String(amount));
+    
+    if (!parsedAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      console.log(`[VALORION] Invalid amount: ${amount} (parsed: ${parsedAmount})`);
       return new Response(
-        JSON.stringify({ error: 'Valor inválido' }),
+        JSON.stringify({ error: 'Valor inválido', message: 'O valor deve ser um número positivo' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (parsedAmount < 0.50) {
+      console.log(`[VALORION] Amount too low: R$${parsedAmount}`);
+      return new Response(
+        JSON.stringify({ error: 'AMOUNT_TOO_LOW', message: 'Valor mínimo é R$ 0,50' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
