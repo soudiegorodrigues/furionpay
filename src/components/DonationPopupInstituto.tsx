@@ -436,11 +436,11 @@ export const DonationPopupInstituto = ({
               <Button 
                 onClick={() => {
                   const amount = parseFloat(customAmount);
-                  if (amount && amount >= 3) {
+                  if (amount && amount >= 10) {
                     handleGeneratePix(amount);
                   }
                 }}
-                disabled={!customAmount || parseFloat(customAmount) < 3}
+                disabled={!customAmount || parseFloat(customAmount) < 10}
                 className="w-full py-6 text-lg font-bold rounded-xl text-white disabled:opacity-50"
                 style={{
                   background: 'linear-gradient(90deg, #E91E8C, #9C27B0)'
