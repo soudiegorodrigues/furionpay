@@ -217,6 +217,14 @@ const AdminCheckout = () => {
                   placeholder="Filtrar por período"
                 />
                 <Button 
+                  variant={dateRange ? "outline" : "secondary"}
+                  size="sm" 
+                  onClick={() => setDateRange(undefined)}
+                  className="gap-2"
+                >
+                  Todos os tempos
+                </Button>
+                <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={handleRefresh}
@@ -298,7 +306,9 @@ const AdminCheckout = () => {
                       popupStats={popupStats}
                       offerStats={offerStat}
                       onSave={handleSaveOffer} 
-                      onDelete={handleDeleteOffer} 
+                      onDelete={handleDeleteOffer}
+                      onRefresh={handleRefresh}
+                      isRefreshing={isRefetching}
                       isNew={offer.id.startsWith('temp-')} 
                     />
                   );

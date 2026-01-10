@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp } from "lucide-react";
+import { Loader2, Link, Copy, Check, Globe, Save, Package, Activity, Trash2, Edit2, ChevronDown, ChevronUp, X, AlertTriangle, BarChart3, CheckCircle, TrendingUp, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -122,6 +122,8 @@ interface CheckoutOfferCardProps {
   offerStats?: OfferStats;
   onSave: (offer: CheckoutOffer) => Promise<void>;
   onDelete: (offerId: string) => Promise<void>;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   isNew?: boolean;
 }
 
@@ -135,6 +137,8 @@ export const CheckoutOfferCard = ({
   offerStats,
   onSave,
   onDelete,
+  onRefresh,
+  isRefreshing = false,
   isNew = false,
 }: CheckoutOfferCardProps) => {
   // Use offer-specific stats if available, fallback to popup model stats
@@ -355,7 +359,21 @@ export const CheckoutOfferCard = ({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {!isEditing && onRefresh && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRefresh();
+                }}
+                disabled={isRefreshing}
+                title="Atualizar estatísticas"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            )}
             {!isEditing && (
               <>
                 <Button
