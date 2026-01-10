@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import { AdminLayoutWrapper } from "@/components/AdminLayoutWrapper";
 import { DomainGuard } from "@/components/DomainGuard";
+import { PixelDebugOverlay } from "@/components/PixelDebugOverlay";
 import Index from "./pages/Index";
 import AdminAuth from "./pages/AdminAuth";
 import NotFound from "./pages/NotFound";
@@ -62,6 +63,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <MetaPixelProvider>
+          <PixelDebugOverlay />
           <Toaster />
           <Sonner />
           <BrowserRouter>
