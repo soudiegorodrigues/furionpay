@@ -433,7 +433,13 @@ export const DonationPopupInstituto = ({
                 />
               </div>
               
-              <Button 
+              {customAmount && parseFloat(customAmount) > 0 && parseFloat(customAmount) < 10 && (
+                <p className="text-red-500 text-sm text-center font-medium">
+                  Valor mínimo: R$ 10,00
+                </p>
+              )}
+              
+              <Button
                 onClick={() => {
                   const amount = parseFloat(customAmount);
                   if (amount && amount >= 10) {
