@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Package, Plus, FolderPlus, Search, Settings, Image, Folder, X, FolderInput, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, Plus, FolderPlus, Search, Settings, Image, Folder, X, FolderInput, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { PerformanceIndicator } from "@/components/product/PerformanceIndicator";
 
 interface ProductStats {
@@ -291,7 +291,7 @@ export default function AdminProducts() {
     queryKey: ["products-paginated", userId, currentPage, debouncedSearch, activeTab, selectedFolder],
     queryFn: () => fetchProducts(currentPage),
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute cache
+    staleTime: 30 * 1000, // 30 seconds - dados mais frescos
     placeholderData: (previousData) => previousData,
   });
 
@@ -305,7 +305,7 @@ export default function AdminProducts() {
       queryClient.prefetchQuery({
         queryKey: ["products-paginated", userId, currentPage + 1, debouncedSearch, activeTab, selectedFolder],
         queryFn: () => fetchProducts(currentPage + 1),
-        staleTime: 60 * 1000,
+        staleTime: 30 * 1000,
       });
     }
     
@@ -314,7 +314,7 @@ export default function AdminProducts() {
       queryClient.prefetchQuery({
         queryKey: ["products-paginated", userId, currentPage - 1, debouncedSearch, activeTab, selectedFolder],
         queryFn: () => fetchProducts(currentPage - 1),
-        staleTime: 60 * 1000,
+        staleTime: 30 * 1000,
       });
     }
   }, [userId, currentPage, paginatedData, debouncedSearch, activeTab, selectedFolder, queryClient, fetchProducts]);
@@ -333,7 +333,7 @@ export default function AdminProducts() {
       return data as ProductFolder[];
     },
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 30 * 1000, // 30 seconds
   });
 
   // Fetch folder counts using RPC
@@ -471,6 +471,15 @@ export default function AdminProducts() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => refetchProducts()}
+              disabled={isFetchingProducts}
+              title="Atualizar dados"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetchingProducts ? 'animate-spin' : ''}`} />
+            </Button>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
