@@ -284,6 +284,12 @@ export const DonationPopupLanding = ({
                 />
               </div>
 
+              {parseCustomAmount(customAmount) > 0 && parseCustomAmount(customAmount) < 10 && (
+                <p className="text-red-500 text-sm text-center font-medium mb-2">
+                  Valor mínimo: R$ 10,00
+                </p>
+              )}
+
               {/* Amount Grid */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {DONATION_AMOUNTS.map((item) => (
