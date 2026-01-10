@@ -330,13 +330,19 @@ export const DonationPopupInstituto = ({
       <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-10">
         {step === "select" && (
           <div className="space-y-6">
-            {/* Banner */}
+            {/* Vídeo VSL */}
             <div className="flex justify-center">
-              <img 
-                src={institutoBanner} 
-                alt="Cantinho das Borboletas - Doe e Ajude" 
-                className="w-full h-auto object-contain rounded-lg"
-              />
+              <video 
+                src="/videos/vsl.mp4"
+                controls
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-auto rounded-lg shadow-lg"
+                poster={institutoBanner}
+              >
+                Seu navegador não suporta vídeos.
+              </video>
             </div>
             
             {/* Progress Section */}
