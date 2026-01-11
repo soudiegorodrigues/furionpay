@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { 
   Plus, 
   ChevronLeft, 
@@ -19,7 +21,10 @@ import {
   Target,
   DollarSign,
   Settings2,
-  Calendar
+  Calendar,
+  RefreshCw,
+  Filter,
+  X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,6 +44,7 @@ interface BusinessManager {
 interface Product {
   id: string;
   name: string;
+  product_code: string | null;
 }
 
 interface DailyMetric {
@@ -51,6 +57,11 @@ interface DailyMetric {
   revenue: number;
   link: string | null;
   notes: string | null;
+}
+
+interface RevenueData {
+  gross: number;
+  net: number;
 }
 
 const formatCurrency = (value: number) => {
@@ -166,6 +177,15 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
   const [loading, setLoading] = useState(true);
   const [bmDialogOpen, setBmDialogOpen] = useState(false);
   const [editingCell, setEditingCell] = useState<{id: string; field: string} | null>(null);
+  
+  // Filters
+  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
+  const [filterProduct, setFilterProduct] = useState<string>('all');
+  const [filterBm, setFilterBm] = useState<string>('all');
+  
+  // Calculated revenue from pix_transactions
+  const [calculatedRevenue, setCalculatedRevenue] = useState<Record<string, RevenueData>>({});
+  const [revenueLoading, setRevenueLoading] = useState(false);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -189,7 +209,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
         .order('date'),
       supabase
         .from('products')
-        .select('id, name')
+        .select('id, name, product_code')
         .eq('user_id', userId)
         .order('name'),
       supabase
@@ -207,9 +227,95 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
     setLoading(false);
   }, [userId, monthStartStr, monthEndStr]);
 
+  // Fetch revenue from pix_transactions
+  const fetchRevenueForMonth = useCallback(async () => {
+    if (!userId || !products.length || !metrics.length) return;
+    
+    setRevenueLoading(true);
+    
+    // Get all product_codes from products
+    const productCodes = products
+      .map(p => p.product_code)
+      .filter((code): code is string => Boolean(code));
+    
+    if (!productCodes.length) {
+      setRevenueLoading(false);
+      return;
+    }
+    
+    // Fetch all paid transactions for the month
+    const { data: transactions, error } = await supabase
+      .from('pix_transactions')
+      .select('product_code, paid_date_brazil, amount, fee_percentage, fee_fixed')
+      .eq('status', 'paid')
+      .in('product_code', productCodes)
+      .gte('paid_date_brazil', monthStartStr)
+      .lte('paid_date_brazil', monthEndStr);
+    
+    if (error) {
+      console.error('Error fetching revenue:', error);
+      setRevenueLoading(false);
+      return;
+    }
+    
+    // Calculate gross and net revenue per metric
+    const revenueMap: Record<string, RevenueData> = {};
+    
+    metrics.forEach(metric => {
+      const product = products.find(p => p.id === metric.product_id);
+      
+      if (!product?.product_code) {
+        revenueMap[metric.id] = { gross: 0, net: 0 };
+        return;
+      }
+      
+      const dayTransactions = transactions?.filter(tx => 
+        tx.product_code === product.product_code && 
+        tx.paid_date_brazil === metric.date
+      ) || [];
+      
+      let gross = 0;
+      let net = 0;
+      
+      dayTransactions.forEach(tx => {
+        const amount = Number(tx.amount) || 0;
+        const feePercent = Number(tx.fee_percentage) || 0;
+        const feeFixed = Number(tx.fee_fixed) || 0;
+        
+        gross += amount;
+        net += amount - (amount * feePercent / 100) - feeFixed;
+      });
+      
+      revenueMap[metric.id] = { gross, net };
+    });
+    
+    setCalculatedRevenue(revenueMap);
+    setRevenueLoading(false);
+  }, [userId, products, metrics, monthStartStr, monthEndStr]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Fetch revenue when metrics or products change
+  useEffect(() => {
+    if (metrics.length > 0 && products.length > 0) {
+      fetchRevenueForMonth();
+    }
+  }, [metrics, products, fetchRevenueForMonth]);
+
+  // Filtered metrics
+  const filteredMetrics = useMemo(() => {
+    return metrics.filter(metric => {
+      // Filter by date
+      if (filterDate && metric.date !== format(filterDate, 'yyyy-MM-dd')) return false;
+      // Filter by product
+      if (filterProduct !== 'all' && metric.product_id !== filterProduct) return false;
+      // Filter by BM
+      if (filterBm !== 'all' && metric.bm_id !== filterBm) return false;
+      return true;
+    });
+  }, [metrics, filterDate, filterProduct, filterBm]);
 
   const handleAddRow = async (date: Date) => {
     if (!userId) return;
@@ -264,14 +370,28 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
     }
   };
 
-  // Calculate totals
-  const totals = metrics.reduce((acc, m) => ({
-    budget: acc.budget + Number(m.budget || 0),
-    spent: acc.spent + Number(m.spent || 0),
-    revenue: acc.revenue + Number(m.revenue || 0)
-  }), { budget: 0, spent: 0, revenue: 0 });
+  const clearFilters = () => {
+    setFilterDate(undefined);
+    setFilterProduct('all');
+    setFilterBm('all');
+  };
 
-  const roi = totals.spent > 0 ? ((totals.revenue - totals.spent) / totals.spent * 100) : 0;
+  const hasActiveFilters = filterDate || filterProduct !== 'all' || filterBm !== 'all';
+
+  // Calculate totals based on filtered metrics and calculated revenue
+  const totals = useMemo(() => {
+    return filteredMetrics.reduce((acc, m) => {
+      const revenue = calculatedRevenue[m.id] || { gross: 0, net: 0 };
+      return {
+        budget: acc.budget + Number(m.budget || 0),
+        spent: acc.spent + Number(m.spent || 0),
+        gross: acc.gross + revenue.gross,
+        net: acc.net + revenue.net
+      };
+    }, { budget: 0, spent: 0, gross: 0, net: 0 });
+  }, [filteredMetrics, calculatedRevenue]);
+
+  const roi = totals.spent > 0 ? ((totals.net - totals.spent) / totals.spent * 100) : 0;
   const balance = totals.budget - totals.spent;
 
   const getProductName = (productId: string | null) => {
@@ -287,8 +407,8 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
@@ -300,7 +420,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
@@ -325,9 +445,25 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-xs">Faturamento</span>
+              <span className="text-xs">Fat. Bruto</span>
             </div>
-            <p className="text-lg font-bold text-emerald-600">{formatCurrency(totals.revenue)}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-lg font-bold text-emerald-600">{formatCurrency(totals.gross)}</p>
+              {revenueLoading && <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-xs">Fat. Líquido</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <p className="text-lg font-bold text-green-700">{formatCurrency(totals.net)}</p>
+              {revenueLoading && <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </div>
           </CardContent>
         </Card>
         
@@ -347,7 +483,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               {roi >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-              <span className="text-xs">ROI</span>
+              <span className="text-xs">ROI (Líq.)</span>
             </div>
             <p className={`text-lg font-bold ${roi >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
               {roi.toFixed(1)}%
@@ -405,6 +541,85 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
               </Button>
             </div>
           </div>
+          
+          {/* Filters Section */}
+          <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm font-medium">Filtros:</span>
+            </div>
+            
+            {/* Date Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  <Calendar className="h-3.5 w-3.5 mr-2" />
+                  {filterDate ? format(filterDate, 'dd/MM/yy') : 'Todos os dias'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={filterDate}
+                  onSelect={setFilterDate}
+                  locale={ptBR}
+                  disabled={(date) => 
+                    date < monthStart || date > monthEnd
+                  }
+                />
+                {filterDate && (
+                  <div className="p-2 border-t">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => setFilterDate(undefined)}
+                    >
+                      Limpar data
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+            
+            {/* Product Filter */}
+            <Select value={filterProduct} onValueChange={setFilterProduct}>
+              <SelectTrigger className="h-8 w-[180px]">
+                <SelectValue placeholder="Todos os produtos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os produtos</SelectItem>
+                {products.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* BM Filter */}
+            <Select value={filterBm} onValueChange={setFilterBm}>
+              <SelectTrigger className="h-8 w-[150px]">
+                <SelectValue placeholder="Todos os BMs" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os BMs</SelectItem>
+                {bms.map(b => (
+                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {hasActiveFilters && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-muted-foreground"
+                onClick={clearFilters}
+              >
+                <X className="h-3.5 w-3.5 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
         </CardHeader>
         
         <CardContent>
@@ -417,22 +632,26 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
                   <TableHead className="min-w-[120px]">BM</TableHead>
                   <TableHead className="w-28 text-right">Orçamento</TableHead>
                   <TableHead className="w-28 text-right">Gasto</TableHead>
-                  <TableHead className="w-28 text-right">Faturamento</TableHead>
+                  <TableHead className="w-28 text-right">Fat. Bruto</TableHead>
+                  <TableHead className="w-28 text-right">Fat. Líquido</TableHead>
                   <TableHead className="w-20 text-right">ROI</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {metrics.length === 0 ? (
+                {filteredMetrics.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      Nenhum registro neste mês. Clique em "Nova Linha" para começar.
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      {hasActiveFilters 
+                        ? 'Nenhum registro encontrado com os filtros aplicados.'
+                        : 'Nenhum registro neste mês. Clique em "Nova Linha" para começar.'}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  metrics.map((metric) => {
+                  filteredMetrics.map((metric) => {
+                    const revenue = calculatedRevenue[metric.id] || { gross: 0, net: 0 };
                     const metricRoi = Number(metric.spent) > 0 
-                      ? ((Number(metric.revenue) - Number(metric.spent)) / Number(metric.spent) * 100) 
+                      ? ((revenue.net - Number(metric.spent)) / Number(metric.spent) * 100) 
                       : 0;
                     
                     return (
@@ -523,28 +742,20 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
                           )}
                         </TableCell>
                         
+                        {/* Fat. Bruto - Read-only calculated */}
                         <TableCell className="text-right">
-                          {editingCell?.id === metric.id && editingCell?.field === 'revenue' ? (
-                            <Input
-                              type="number"
-                              className="h-8 w-24 text-right text-xs"
-                              defaultValue={metric.revenue}
-                              autoFocus
-                              onBlur={(e) => handleUpdateMetric(metric.id, 'revenue', parseFloat(e.target.value) || 0)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleUpdateMetric(metric.id, 'revenue', parseFloat((e.target as HTMLInputElement).value) || 0);
-                                }
-                              }}
-                            />
-                          ) : (
-                            <span 
-                              className="cursor-pointer hover:bg-muted px-2 py-1 rounded text-xs text-emerald-600"
-                              onClick={() => setEditingCell({ id: metric.id, field: 'revenue' })}
-                            >
-                              {formatCurrency(Number(metric.revenue))}
-                            </span>
-                          )}
+                          <span className="flex items-center justify-end gap-1 text-xs text-emerald-600">
+                            {formatCurrency(revenue.gross)}
+                            <RefreshCw className="h-3 w-3 text-muted-foreground" />
+                          </span>
+                        </TableCell>
+                        
+                        {/* Fat. Líquido - Read-only calculated */}
+                        <TableCell className="text-right">
+                          <span className="flex items-center justify-end gap-1 text-xs text-green-700 font-medium">
+                            {formatCurrency(revenue.net)}
+                            <RefreshCw className="h-3 w-3 text-muted-foreground" />
+                          </span>
                         </TableCell>
                         
                         <TableCell className="text-right">
@@ -569,12 +780,13 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
                 )}
                 
                 {/* Totals Row */}
-                {metrics.length > 0 && (
+                {filteredMetrics.length > 0 && (
                   <TableRow className="bg-muted/50 font-semibold">
                     <TableCell colSpan={3}>TOTAL</TableCell>
                     <TableCell className="text-right">{formatCurrency(totals.budget)}</TableCell>
                     <TableCell className="text-right text-destructive">{formatCurrency(totals.spent)}</TableCell>
-                    <TableCell className="text-right text-emerald-600">{formatCurrency(totals.revenue)}</TableCell>
+                    <TableCell className="text-right text-emerald-600">{formatCurrency(totals.gross)}</TableCell>
+                    <TableCell className="text-right text-green-700">{formatCurrency(totals.net)}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant={roi >= 0 ? "default" : "destructive"}>
                         {roi.toFixed(0)}%
