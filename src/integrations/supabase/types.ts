@@ -1786,6 +1786,7 @@ export type Database = {
           thank_you_url: string | null
           updated_at: string
           user_id: string
+          video_play_overlay_url: string | null
           video_poster_url: string | null
           video_url: string | null
           whatsapp_number: string | null
@@ -1835,6 +1836,7 @@ export type Database = {
           thank_you_url?: string | null
           updated_at?: string
           user_id: string
+          video_play_overlay_url?: string | null
           video_poster_url?: string | null
           video_url?: string | null
           whatsapp_number?: string | null
@@ -1884,6 +1886,7 @@ export type Database = {
           thank_you_url?: string | null
           updated_at?: string
           user_id?: string
+          video_play_overlay_url?: string | null
           video_poster_url?: string | null
           video_url?: string | null
           whatsapp_number?: string | null

@@ -70,6 +70,8 @@ interface CheckoutPreviewMiniProps {
   // New props
   showVideo?: boolean;
   videoUrl?: string;
+  videoPosterUrl?: string;
+  videoPlayOverlayUrl?: string;
   showWhatsappButton?: boolean;
   whatsappNumber?: string;
   banners?: Banner[];
@@ -103,6 +105,8 @@ export function CheckoutPreviewMini({
   },
   showVideo = false,
   videoUrl = "",
+  videoPosterUrl = "",
+  videoPlayOverlayUrl = "",
   showWhatsappButton = false,
   whatsappNumber = "",
   banners = [],
@@ -440,15 +444,33 @@ export function CheckoutPreviewMini({
       {/* Video Preview */}
       {showVideo && videoUrl && (
         <div className="mx-4 mt-4 relative rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+          {videoPosterUrl ? (
+            <img 
+              src={videoPosterUrl} 
+              alt="Video poster" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+          )}
           <div className="relative z-10 flex flex-col items-center gap-2">
-            <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <Play className="h-5 w-5 text-white ml-0.5" />
-            </div>
-            <span className="text-xs text-white/70">Vídeo de Vendas</span>
+            {videoPlayOverlayUrl ? (
+              <img 
+                src={videoPlayOverlayUrl} 
+                alt="Play" 
+                className="max-w-[50%] max-h-[60%] object-contain drop-shadow-lg"
+              />
+            ) : (
+              <div 
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <Play className="h-5 w-5 text-white ml-0.5" />
+              </div>
+            )}
+            {!videoPlayOverlayUrl && (
+              <span className="text-xs text-white/70">Vídeo de Vendas</span>
+            )}
           </div>
         </div>
       )}

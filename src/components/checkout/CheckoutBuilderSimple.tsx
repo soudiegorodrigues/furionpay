@@ -47,6 +47,7 @@ import {
   Zap,
   Link,
   X,
+  Play,
 } from "lucide-react";
 import {
   Dialog,
@@ -94,7 +95,9 @@ const fileInputRef = useRef<HTMLInputElement>(null);
   const popupImageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const videoPosterInputRef = useRef<HTMLInputElement>(null);
+  const videoPlayOverlayInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingVideoPoster, setIsUploadingVideoPoster] = useState(false);
+  const [isUploadingPlayOverlay, setIsUploadingPlayOverlay] = useState(false);
   const [configTab, setConfigTab] = useState("templates");
 
   // States
@@ -123,6 +126,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     videoUrl: "",
     videoType: "url" as "url" | "upload",
     videoPosterUrl: "",
+    videoPlayOverlayUrl: "",
     showTestimonials: false,
     showDiscountPopup: false,
     discountPopupTitle: "Que tal um desconto para comprar agora?",
@@ -267,6 +271,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
         videoUrl: (config as any).video_url || "",
         videoType: ((config as any).video_url?.includes('checkout-videos') ? 'upload' : 'url') as "url" | "upload",
         videoPosterUrl: (config as any).video_poster_url || "",
+        videoPlayOverlayUrl: (config as any).video_play_overlay_url || "",
         showTestimonials: config.show_notifications || false,
         showDiscountPopup: config.show_discount_popup || false,
         discountPopupTitle: config.discount_popup_title || "Que tal um desconto para comprar agora?",
@@ -479,6 +484,61 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     }
   };
 
+  // Handle video play overlay upload (custom play button image)
+  const handlePlayOverlayUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/png', 'image/webp', 'image/svg+xml', 'image/jpeg'];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Formato inválido. Use PNG, WebP, SVG ou JPEG");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    setIsUploadingPlayOverlay(true);
+    try {
+      let uploadBlob: Blob = file;
+      let contentType = file.type;
+      let extension = file.name.split('.').pop() || 'png';
+
+      // Compress if not SVG
+      if (file.type !== 'image/svg+xml') {
+        uploadBlob = await compressImage(file, compressionPresets.product);
+        contentType = 'image/webp';
+        extension = 'webp';
+      }
+
+      const fileName = `${userId}/${productId}-play-overlay.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, uploadBlob, { 
+          upsert: true,
+          contentType
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      const imageUrl = `${publicUrl}?t=${Date.now()}`;
+      setCustomizations(p => ({ ...p, videoPlayOverlayUrl: imageUrl }));
+      toast.success("Ícone de play carregado!");
+    } catch (error) {
+      console.error("Erro ao carregar imagem:", error);
+      toast.error("Erro ao carregar imagem");
+    } finally {
+      setIsUploadingPlayOverlay(false);
+    }
+  };
+
   const saveConfig = async () => {
     setIsSaving(true);
     try {
@@ -510,6 +570,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
         show_video: customizations.showVideo,
         video_url: customizations.videoUrl || null,
         video_poster_url: customizations.videoPosterUrl || null,
+        video_play_overlay_url: customizations.videoPlayOverlayUrl || null,
         show_notifications: customizations.showTestimonials,
         show_whatsapp_button: customizations.showWhatsappButton,
         whatsapp_number: customizations.whatsappNumber || null,
@@ -1084,6 +1145,60 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                             Imagem exibida antes do vídeo ser reproduzido
                           </p>
                         </div>
+
+                        {/* Ícone de Play Personalizado */}
+                        <div className="space-y-2 pt-2 border-t">
+                          <Label className="text-xs font-medium flex items-center gap-2">
+                            <Play className="h-3 w-3" />
+                            Ícone de Play (opcional)
+                          </Label>
+                          <input
+                            ref={videoPlayOverlayInputRef}
+                            type="file"
+                            accept="image/png,image/webp,image/svg+xml,image/jpeg"
+                            onChange={handlePlayOverlayUpload}
+                            className="hidden"
+                          />
+                          
+                          {customizations.videoPlayOverlayUrl ? (
+                            <div className="relative">
+                              <div className="w-full h-20 bg-gray-900 rounded-lg flex items-center justify-center">
+                                <img
+                                  src={customizations.videoPlayOverlayUrl}
+                                  alt="Ícone de play"
+                                  className="max-w-[60%] max-h-[80%] object-contain"
+                                />
+                              </div>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-1 right-1 h-6 w-6 p-0"
+                                onClick={() => setCustomizations(p => ({ ...p, videoPlayOverlayUrl: "" }))}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="w-full h-8 text-xs"
+                              onClick={() => videoPlayOverlayInputRef.current?.click()}
+                              disabled={isUploadingPlayOverlay}
+                            >
+                              {isUploadingPlayOverlay ? (
+                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                              ) : (
+                                <Upload className="h-3 w-3 mr-2" />
+                              )}
+                              {isUploadingPlayOverlay ? "Enviando..." : "Enviar ícone de play"}
+                            </Button>
+                          )}
+                          <p className="text-[10px] text-muted-foreground">
+                            Imagem centralizada sobre o vídeo (substitui o play padrão)
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1318,6 +1433,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                 requiredFields={requiredFields}
                 showVideo={customizations.showVideo}
                 videoUrl={customizations.videoUrl}
+                videoPosterUrl={customizations.videoPosterUrl}
+                videoPlayOverlayUrl={customizations.videoPlayOverlayUrl}
                 showWhatsappButton={customizations.showWhatsappButton}
                 whatsappNumber={customizations.whatsappNumber}
                 banners={banners}
@@ -1359,6 +1476,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                   requiredFields={requiredFields}
                   showVideo={customizations.showVideo}
                   videoUrl={customizations.videoUrl}
+                  videoPosterUrl={customizations.videoPosterUrl}
+                  videoPlayOverlayUrl={customizations.videoPlayOverlayUrl}
                   showWhatsappButton={customizations.showWhatsappButton}
                   whatsappNumber={customizations.whatsappNumber}
                   banners={banners}
