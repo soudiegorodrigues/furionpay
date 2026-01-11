@@ -113,7 +113,7 @@ export function CheckoutTemplatePadrao({
           {config?.video_url ? (
             <CustomVideoPlayer 
               videoUrl={config.video_url}
-              posterUrl={product?.image_url || undefined}
+              posterUrl={(config as any)?.video_poster_url || product?.image_url || undefined}
               className="w-full aspect-video rounded-lg overflow-hidden shadow-lg"
             />
           ) : (
