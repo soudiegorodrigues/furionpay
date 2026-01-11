@@ -1094,58 +1094,6 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                           </div>
                         )}
 
-                        {/* Capa do vídeo (thumbnail) */}
-                        <div className="space-y-2 pt-2 border-t">
-                          <Label className="text-xs font-medium flex items-center gap-2">
-                            <Image className="h-3 w-3" />
-                            Capa do Vídeo (opcional)
-                          </Label>
-                          <input
-                            ref={videoPosterInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleVideoPosterUpload}
-                            className="hidden"
-                          />
-                          
-                          {customizations.videoPosterUrl ? (
-                            <div className="relative">
-                              <img
-                                src={customizations.videoPosterUrl}
-                                alt="Capa do vídeo"
-                                className="w-full h-20 object-cover rounded-lg"
-                              />
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                className="absolute top-1 right-1 h-6 w-6 p-0"
-                                onClick={() => setCustomizations(p => ({ ...p, videoPosterUrl: "" }))}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="w-full h-8 text-xs"
-                              onClick={() => videoPosterInputRef.current?.click()}
-                              disabled={isUploadingVideoPoster}
-                            >
-                              {isUploadingVideoPoster ? (
-                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                              ) : (
-                                <Image className="h-3 w-3 mr-2" />
-                              )}
-                              {isUploadingVideoPoster ? "Enviando..." : "Enviar capa"}
-                            </Button>
-                          )}
-                          <p className="text-[10px] text-muted-foreground">
-                            Imagem exibida antes do vídeo ser reproduzido
-                          </p>
-                        </div>
-
                         {/* Ícone de Play Personalizado */}
                         <div className="space-y-2 pt-2 border-t">
                           <Label className="text-xs font-medium flex items-center gap-2">
