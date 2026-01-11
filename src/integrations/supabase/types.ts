@@ -3596,12 +3596,14 @@ export type Database = {
           payment_section_title: string
           primary_color: string
           product_id: string
+          product_pixels: Json
           require_address: boolean
           require_birthdate: boolean
           require_cpf: boolean
           require_email_confirmation: boolean
           require_phone: boolean
           security_badge_text: string
+          selected_pixel_ids: string[]
           show_banners: boolean
           show_countdown: boolean
           show_discount_popup: boolean
@@ -3611,8 +3613,11 @@ export type Database = {
           show_video: boolean
           show_whatsapp_button: boolean
           template: string
+          template_id: string
           thank_you_url: string
           user_id: string
+          video_play_overlay_url: string
+          video_poster_url: string
           video_url: string
           whatsapp_number: string
         }[]

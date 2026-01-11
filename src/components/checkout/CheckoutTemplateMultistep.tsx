@@ -11,6 +11,7 @@ import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { cn } from "@/lib/utils";
 import { AddressFields } from "./AddressFields";
+import { CustomVideoPlayer } from "./CustomVideoPlayer";
 
 
 type MultiStep = "info" | "contact" | "payment";
@@ -164,6 +165,18 @@ export function CheckoutTemplateMultistep({
       </header>
 
       <main className="container max-w-2xl mx-auto px-4 py-6">
+        {/* Video Section */}
+        {config?.show_video && config?.video_url && (
+          <div className="mb-6">
+            <CustomVideoPlayer 
+              videoUrl={config.video_url}
+              posterUrl={config.video_poster_url || product?.image_url || undefined}
+              playOverlayUrl={config.video_play_overlay_url || undefined}
+              className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg"
+            />
+          </div>
+        )}
+
         {/* Product Summary */}
         <Card className="mb-6 shadow-lg border-0 rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 py-3 px-4">

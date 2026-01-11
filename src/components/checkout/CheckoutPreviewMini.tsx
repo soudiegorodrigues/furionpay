@@ -161,6 +161,36 @@ export function CheckoutPreviewMini({
           </div>
         </div>
 
+        {/* Video Preview */}
+        {showVideo && videoUrl && (
+          <div className="mx-4 mt-4 relative rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center border border-zinc-700">
+            {videoPosterUrl ? (
+              <img 
+                src={videoPosterUrl} 
+                alt="Video poster" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+            )}
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              {videoPlayOverlayUrl ? (
+                <img 
+                  src={videoPlayOverlayUrl} 
+                  alt="Play" 
+                  className="max-w-[50%] max-h-[60%] object-contain drop-shadow-lg"
+                />
+              ) : (
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-emerald-500"
+                >
+                  <Play className="h-5 w-5 text-white ml-0.5" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Product */}
         <div className="p-4">
           <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
@@ -235,6 +265,37 @@ export function CheckoutPreviewMini({
           <h2 className="text-lg font-bold text-gray-800">Finalizar Pedido</h2>
           <p className="text-xs text-gray-500">Preencha seus dados para continuar</p>
         </div>
+
+        {/* Video Preview */}
+        {showVideo && videoUrl && (
+          <div className="mx-4 mt-4 relative rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center shadow-md">
+            {videoPosterUrl ? (
+              <img 
+                src={videoPosterUrl} 
+                alt="Video poster" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+            )}
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              {videoPlayOverlayUrl ? (
+                <img 
+                  src={videoPlayOverlayUrl} 
+                  alt="Play" 
+                  className="max-w-[50%] max-h-[60%] object-contain drop-shadow-lg"
+                />
+              ) : (
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <Play className="h-5 w-5 text-white ml-0.5" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Product Card */}
         <div className="p-4">
@@ -336,6 +397,37 @@ export function CheckoutPreviewMini({
             </div>
           </div>
         </div>
+
+        {/* Video Preview */}
+        {showVideo && videoUrl && (
+          <div className="mx-4 mb-4 relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center shadow-lg">
+            {videoPosterUrl ? (
+              <img 
+                src={videoPosterUrl} 
+                alt="Video poster" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 to-indigo-900" />
+            )}
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              {videoPlayOverlayUrl ? (
+                <img 
+                  src={videoPlayOverlayUrl} 
+                  alt="Play" 
+                  className="max-w-[50%] max-h-[60%] object-contain drop-shadow-lg"
+                />
+              ) : (
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <Play className="h-5 w-5 text-white ml-0.5" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Product Summary */}
         <div className="px-4">
