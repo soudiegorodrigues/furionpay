@@ -12,6 +12,7 @@ import { PixQRCode } from "@/components/PixQRCode";
 import { CheckoutTemplateProps } from "./types";
 import { AddressFields } from "./AddressFields";
 import { BannersCarousel } from "./BannersCarousel";
+import { CustomVideoPlayer } from "./CustomVideoPlayer";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -127,6 +128,18 @@ export function CheckoutTemplateAfilia({
       {config?.show_banners && banners.length > 0 && (
         <div className="container max-w-6xl mx-auto px-4 pt-4">
           <BannersCarousel banners={banners} />
+        </div>
+      )}
+
+      {/* Video Section */}
+      {config?.show_video && config?.video_url && (
+        <div className="container max-w-6xl mx-auto px-4 pt-4">
+          <CustomVideoPlayer 
+            videoUrl={config.video_url}
+            posterUrl={config.video_poster_url || product?.image_url || undefined}
+            playOverlayUrl={config.video_play_overlay_url || undefined}
+            className="w-full aspect-video rounded-xl overflow-hidden shadow-md"
+          />
         </div>
       )}
 
