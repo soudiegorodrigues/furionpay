@@ -265,6 +265,33 @@ export type Database = {
         }
         Relationships: []
       }
+      business_managers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chargebacks: {
         Row: {
           acquirer: string
@@ -1871,6 +1898,66 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "checkout_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_daily_metrics: {
+        Row: {
+          bm_id: string | null
+          budget: number | null
+          created_at: string | null
+          date: string
+          id: string
+          link: string | null
+          notes: string | null
+          product_id: string | null
+          revenue: number | null
+          spent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bm_id?: string | null
+          budget?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          link?: string | null
+          notes?: string | null
+          product_id?: string | null
+          revenue?: number | null
+          spent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bm_id?: string | null
+          budget?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          link?: string | null
+          notes?: string | null
+          product_id?: string | null
+          revenue?: number | null
+          spent?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_daily_metrics_bm_id_fkey"
+            columns: ["bm_id"]
+            isOneToOne: false
+            referencedRelation: "business_managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_daily_metrics_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
