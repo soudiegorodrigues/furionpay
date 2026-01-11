@@ -1,7 +1,6 @@
 import { useState, lazy, Suspense, memo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  TrendingUp, 
   Target, 
   PieChart,
   Wallet,
@@ -18,7 +17,6 @@ import { Card, CardContent } from "@/components/ui/card";
 const FinanceDashboard = lazy(() => import("@/components/finance/FinanceDashboard").then(m => ({ default: m.FinanceDashboard })));
 const FinanceCategories = lazy(() => import("@/components/finance/FinanceCategories").then(m => ({ default: m.FinanceCategories })));
 const FinanceTransactions = lazy(() => import("@/components/finance/FinanceTransactions").then(m => ({ default: m.FinanceTransactions })));
-const FinanceGoals = lazy(() => import("@/components/finance/FinanceGoals").then(m => ({ default: m.FinanceGoals })));
 const FinanceAccounts = lazy(() => import("@/components/finance/FinanceAccounts").then(m => ({ default: m.FinanceAccounts })));
 const FinanceReportGenerator = lazy(() => import("@/components/finance/FinanceReportGenerator").then(m => ({ default: m.FinanceReportGenerator })));
 const FinanceProductMetrics = lazy(() => import("@/components/finance/FinanceProductMetrics").then(m => ({ default: m.FinanceProductMetrics })));
@@ -85,7 +83,7 @@ const AdminGestaoFinanceira = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto">
           <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <PieChart className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -101,10 +99,6 @@ const AdminGestaoFinanceira = () => {
           <TabsTrigger value="categories" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">Categorias</span>
-          </TabsTrigger>
-          <TabsTrigger value="goals" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Metas</span>
           </TabsTrigger>
           <TabsTrigger value="metrics" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <BarChart3 className="h-4 w-4" />
@@ -133,12 +127,6 @@ const AdminGestaoFinanceira = () => {
         <TabsContent value="categories" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
             <FinanceCategories userId={effectiveUserId} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="goals" className="space-y-6">
-          <Suspense fallback={<TabSkeleton />}>
-            <FinanceGoals userId={effectiveUserId} />
           </Suspense>
         </TabsContent>
 
