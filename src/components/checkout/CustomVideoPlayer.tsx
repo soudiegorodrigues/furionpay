@@ -5,6 +5,7 @@ interface CustomVideoPlayerProps {
   videoUrl: string;
   className?: string;
   posterUrl?: string;
+  playOverlayUrl?: string;
 }
 
 /**
@@ -14,7 +15,8 @@ interface CustomVideoPlayerProps {
 export const CustomVideoPlayer = memo(function CustomVideoPlayer({ 
   videoUrl, 
   className, 
-  posterUrl 
+  posterUrl,
+  playOverlayUrl
 }: CustomVideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -90,9 +92,17 @@ export const CustomVideoPlayer = memo(function CustomVideoPlayer({
               className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
               aria-label="Play video"
             >
-              <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-700 hover:scale-105 transition-all">
-                <Play className="h-8 w-8 sm:h-10 sm:w-10 text-white fill-white ml-1" />
-              </div>
+              {playOverlayUrl ? (
+                <img 
+                  src={playOverlayUrl} 
+                  alt="Play" 
+                  className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform"
+                />
+              ) : (
+                <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-700 hover:scale-105 transition-all">
+                  <Play className="h-8 w-8 sm:h-10 sm:w-10 text-white fill-white ml-1" />
+                </div>
+              )}
             </button>
           </>
         ) : (
@@ -138,9 +148,17 @@ export const CustomVideoPlayer = memo(function CustomVideoPlayer({
               className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
               aria-label="Play video"
             >
-              <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-[#1ab7ea] flex items-center justify-center shadow-xl hover:bg-[#139eca] hover:scale-105 transition-all">
-                <Play className="h-8 w-8 sm:h-10 sm:w-10 text-white fill-white ml-1" />
-              </div>
+              {playOverlayUrl ? (
+                <img 
+                  src={playOverlayUrl} 
+                  alt="Play" 
+                  className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform"
+                />
+              ) : (
+                <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-[#1ab7ea] flex items-center justify-center shadow-xl hover:bg-[#139eca] hover:scale-105 transition-all">
+                  <Play className="h-8 w-8 sm:h-10 sm:w-10 text-white fill-white ml-1" />
+                </div>
+              )}
             </button>
           </>
         ) : (
@@ -172,16 +190,24 @@ export const CustomVideoPlayer = memo(function CustomVideoPlayer({
         onPlay={() => setIsPlaying(true)}
       />
       
-      {/* Central Play Button - YouTube Style */}
+      {/* Central Play Button */}
       {!isPlaying && (
         <button
           onClick={handlePlayClick}
           className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
           aria-label="Play video"
         >
-          <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-700 hover:scale-105 transition-all">
-            <Play className="h-8 w-8 sm:h-10 sm:w-10 text-white fill-white ml-1" />
-          </div>
+          {playOverlayUrl ? (
+            <img 
+              src={playOverlayUrl} 
+              alt="Play" 
+              className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-700 hover:scale-105 transition-all">
+              <Play className="h-8 w-8 sm:h-10 sm:w-10 text-white fill-white ml-1" />
+            </div>
+          )}
         </button>
       )}
     </div>
