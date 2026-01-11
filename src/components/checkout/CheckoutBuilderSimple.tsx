@@ -489,9 +489,9 @@ const fileInputRef = useRef<HTMLInputElement>(null);
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/png', 'image/webp', 'image/svg+xml', 'image/jpeg'];
+    const validTypes = ['image/png', 'image/webp', 'image/svg+xml', 'image/jpeg', 'image/gif'];
     if (!validTypes.includes(file.type)) {
-      toast.error("Formato inválido. Use PNG, WebP, SVG ou JPEG");
+      toast.error("Formato inválido. Use PNG, WebP, SVG, JPEG ou GIF");
       return;
     }
 
@@ -506,8 +506,8 @@ const fileInputRef = useRef<HTMLInputElement>(null);
       let contentType = file.type;
       let extension = file.name.split('.').pop() || 'png';
 
-      // Compress if not SVG
-      if (file.type !== 'image/svg+xml') {
+      // Compress if not SVG or GIF (preserve GIF animation)
+      if (file.type !== 'image/svg+xml' && file.type !== 'image/gif') {
         uploadBlob = await compressImage(file, compressionPresets.product);
         contentType = 'image/webp';
         extension = 'webp';
