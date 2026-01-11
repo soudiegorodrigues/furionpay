@@ -1911,6 +1911,7 @@ export type Database = {
           id: string
           link: string | null
           notes: string | null
+          offer_id: string | null
           product_id: string | null
           revenue: number | null
           spent: number | null
@@ -1925,6 +1926,7 @@ export type Database = {
           id?: string
           link?: string | null
           notes?: string | null
+          offer_id?: string | null
           product_id?: string | null
           revenue?: number | null
           spent?: number | null
@@ -1939,6 +1941,7 @@ export type Database = {
           id?: string
           link?: string | null
           notes?: string | null
+          offer_id?: string | null
           product_id?: string | null
           revenue?: number | null
           spent?: number | null
@@ -1951,6 +1954,13 @@ export type Database = {
             columns: ["bm_id"]
             isOneToOne: false
             referencedRelation: "business_managers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_daily_metrics_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_offers"
             referencedColumns: ["id"]
           },
           {

@@ -49,10 +49,18 @@ interface Product {
   product_code: string | null;
 }
 
+interface CheckoutOffer {
+  id: string;
+  name: string;
+  product_name: string | null;
+  popup_model: string | null;
+}
+
 interface DailyMetric {
   id: string;
   date: string;
   product_id: string | null;
+  offer_id: string | null;
   bm_id: string | null;
   budget: number;
   spent: number;
@@ -231,6 +239,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [metrics, setMetrics] = useState<DailyMetric[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [offers, setOffers] = useState<CheckoutOffer[]>([]);
   const [bms, setBms] = useState<BusinessManager[]>([]);
   const [loading, setLoading] = useState(true);
   const [bmDialogOpen, setBmDialogOpen] = useState(false);
@@ -257,7 +266,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
     if (!userId) return;
     setLoading(true);
 
-    const [metricsRes, productsRes, bmsRes] = await Promise.all([
+    const [metricsRes, productsRes, offersRes, bmsRes] = await Promise.all([
       supabase
         .from('product_daily_metrics')
         .select('*')
@@ -271,6 +280,11 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
         .eq('user_id', userId)
         .order('name'),
       supabase
+        .from('checkout_offers')
+        .select('id, name, product_name, popup_model')
+        .eq('user_id', userId)
+        .order('name'),
+      supabase
         .from('business_managers')
         .select('*')
         .eq('user_id', userId)
@@ -280,6 +294,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
 
     if (metricsRes.data) setMetrics(metricsRes.data);
     if (productsRes.data) setProducts(productsRes.data);
+    if (offersRes.data) setOffers(offersRes.data);
     if (bmsRes.data) setBms(bmsRes.data);
     
     setLoading(false);
@@ -287,7 +302,8 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
 
   // Fetch revenue from pix_transactions
   const fetchRevenueForMonth = useCallback(async () => {
-    if (!userId || !products.length || !metrics.length) return;
+    if (!userId || !metrics.length) return;
+    if (!products.length && !offers.length) return;
     
     setRevenueLoading(true);
     
@@ -296,19 +312,18 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
       .map(p => p.product_code)
       .filter((code): code is string => Boolean(code));
     
-    if (!productCodes.length) {
-      setRevenueLoading(false);
-      return;
-    }
+    // Get all offer_ids
+    const offerIds = offers.map(o => o.id);
     
-    // Fetch all paid transactions for the month
-    const { data: transactions, error } = await supabase
+    // Fetch all paid transactions for the month (by product_code or offer_id)
+    let query = supabase
       .from('pix_transactions')
-      .select('product_code, paid_date_brazil, amount, fee_percentage, fee_fixed')
+      .select('product_code, offer_id, paid_date_brazil, amount, fee_percentage, fee_fixed')
       .eq('status', 'paid')
-      .in('product_code', productCodes)
       .gte('paid_date_brazil', monthStartStr)
       .lte('paid_date_brazil', monthEndStr);
+    
+    const { data: transactions, error } = await query;
     
     if (error) {
       console.error('Error fetching revenue:', error);
@@ -320,17 +335,23 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
     const revenueMap: Record<string, RevenueData> = {};
     
     metrics.forEach(metric => {
-      const product = products.find(p => p.id === metric.product_id);
+      let dayTransactions: typeof transactions = [];
       
-      if (!product?.product_code) {
-        revenueMap[metric.id] = { gross: 0, net: 0 };
-        return;
+      // Check if metric has offer_id or product_id
+      if (metric.offer_id) {
+        dayTransactions = transactions?.filter(tx => 
+          tx.offer_id === metric.offer_id && 
+          tx.paid_date_brazil === metric.date
+        ) || [];
+      } else if (metric.product_id) {
+        const product = products.find(p => p.id === metric.product_id);
+        if (product?.product_code) {
+          dayTransactions = transactions?.filter(tx => 
+            tx.product_code === product.product_code && 
+            tx.paid_date_brazil === metric.date
+          ) || [];
+        }
       }
-      
-      const dayTransactions = transactions?.filter(tx => 
-        tx.product_code === product.product_code && 
-        tx.paid_date_brazil === metric.date
-      ) || [];
       
       let gross = 0;
       let net = 0;
@@ -349,7 +370,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
     
     setCalculatedRevenue(revenueMap);
     setRevenueLoading(false);
-  }, [userId, products, metrics, monthStartStr, monthEndStr]);
+  }, [userId, products, offers, metrics, monthStartStr, monthEndStr]);
 
   useEffect(() => {
     fetchData();
@@ -367,8 +388,14 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
     return metrics.filter(metric => {
       // Filter by date
       if (filterDate && metric.date !== format(filterDate, 'yyyy-MM-dd')) return false;
-      // Filter by product
-      if (filterProduct !== 'all' && metric.product_id !== filterProduct) return false;
+      
+      // Filter by product or offer
+      if (filterProduct !== 'all') {
+        const [type, id] = filterProduct.split(':');
+        if (type === 'product' && metric.product_id !== id) return false;
+        if (type === 'offer' && metric.offer_id !== id) return false;
+      }
+      
       // Filter by BM
       if (filterBm !== 'all' && metric.bm_id !== filterBm) return false;
       return true;
@@ -640,16 +667,41 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
               </PopoverContent>
             </Popover>
             
-            {/* Product Filter */}
+            {/* Product/Offer Filter */}
             <Select value={filterProduct} onValueChange={setFilterProduct}>
-              <SelectTrigger className="h-8 w-[180px]">
-                <SelectValue placeholder="Todos os produtos" />
+              <SelectTrigger className="h-8 w-[200px]">
+                <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os produtos</SelectItem>
-                {products.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
+                <SelectItem value="all">Todos</SelectItem>
+                
+                {/* Products Section */}
+                {products.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                      📦 Produtos
+                    </div>
+                    {products.map(p => (
+                      <SelectItem key={`product-${p.id}`} value={`product:${p.id}`}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {/* Offers Section */}
+                {offers.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 mt-1">
+                      🎯 Ofertas (Popups)
+                    </div>
+                    {offers.map(o => (
+                      <SelectItem key={`offer-${o.id}`} value={`offer:${o.id}`}>
+                        {o.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
             
@@ -720,17 +772,56 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
                         
                         <TableCell>
                           <Select
-                            value={metric.product_id || "none"}
-                            onValueChange={(value) => handleUpdateMetric(metric.id, 'product_id', value === "none" ? null : value)}
+                            value={metric.offer_id ? `offer:${metric.offer_id}` : metric.product_id ? `product:${metric.product_id}` : "none"}
+                            onValueChange={(value) => {
+                              if (value === "none") {
+                                handleUpdateMetric(metric.id, 'product_id', null);
+                                handleUpdateMetric(metric.id, 'offer_id', null);
+                              } else {
+                                const [type, id] = value.split(':');
+                                if (type === 'product') {
+                                  handleUpdateMetric(metric.id, 'product_id', id);
+                                  handleUpdateMetric(metric.id, 'offer_id', null);
+                                } else if (type === 'offer') {
+                                  handleUpdateMetric(metric.id, 'offer_id', id);
+                                  handleUpdateMetric(metric.id, 'product_id', null);
+                                }
+                              }
+                            }}
                           >
                             <SelectTrigger className="h-8 text-xs">
                               <SelectValue placeholder="Selecione..." />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Nenhum</SelectItem>
-                              {products.map(p => (
-                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                              ))}
+                              
+                              {/* Products */}
+                              {products.length > 0 && (
+                                <>
+                                  <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted/50">
+                                    📦 Produtos
+                                  </div>
+                                  {products.map(p => (
+                                    <SelectItem key={`product-${p.id}`} value={`product:${p.id}`}>
+                                      {p.name}
+                                    </SelectItem>
+                                  ))}
+                                </>
+                              )}
+                              
+                              {/* Offers */}
+                              {offers.length > 0 && (
+                                <>
+                                  <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted/50 mt-1">
+                                    🎯 Ofertas
+                                  </div>
+                                  {offers.map(o => (
+                                    <SelectItem key={`offer-${o.id}`} value={`offer:${o.id}`}>
+                                      {o.name}
+                                    </SelectItem>
+                                  ))}
+                                </>
+                              )}
                             </SelectContent>
                           </Select>
                         </TableCell>
