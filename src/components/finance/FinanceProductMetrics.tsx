@@ -24,7 +24,9 @@ import {
   Calendar,
   RefreshCw,
   Filter,
-  X
+  X,
+  Pencil,
+  Check
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -75,6 +77,8 @@ const BMManager = memo(({ userId, onClose }: { userId: string; onClose: () => vo
   const [bms, setBms] = useState<BusinessManager[]>([]);
   const [newBmName, setNewBmName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editingBmId, setEditingBmId] = useState<string | null>(null);
+  const [editingBmName, setEditingBmName] = useState("");
 
   const fetchBMs = useCallback(async () => {
     const { data, error } = await supabase
@@ -105,6 +109,24 @@ const BMManager = memo(({ userId, onClose }: { userId: string; onClose: () => vo
     } else {
       toast.success("BM adicionado!");
       setNewBmName("");
+      fetchBMs();
+    }
+  };
+
+  const handleEditBM = async (id: string) => {
+    if (!editingBmName.trim()) return;
+    
+    const { error } = await supabase
+      .from('business_managers')
+      .update({ name: editingBmName.trim() })
+      .eq('id', id);
+    
+    if (error) {
+      toast.error("Erro ao editar BM");
+    } else {
+      toast.success("BM atualizado!");
+      setEditingBmId(null);
+      setEditingBmName("");
       fetchBMs();
     }
   };
@@ -142,15 +164,51 @@ const BMManager = memo(({ userId, onClose }: { userId: string; onClose: () => vo
       <div className="space-y-2 max-h-60 overflow-y-auto">
         {bms.map((bm) => (
           <div key={bm.id} className="flex items-center justify-between p-2 bg-muted rounded-lg">
-            <span className="text-sm">{bm.name}</span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 text-destructive"
-              onClick={() => handleDeleteBM(bm.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {editingBmId === bm.id ? (
+              <div className="flex items-center gap-2 flex-1">
+                <Input
+                  value={editingBmName}
+                  onChange={(e) => setEditingBmName(e.target.value)}
+                  className="h-7 text-sm"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleEditBM(bm.id);
+                    if (e.key === 'Escape') setEditingBmId(null);
+                  }}
+                />
+                <Button size="icon" className="h-7 w-7" onClick={() => handleEditBM(bm.id)}>
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingBmId(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <span className="text-sm">{bm.name}</span>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7"
+                    onClick={() => {
+                      setEditingBmId(bm.id);
+                      setEditingBmName(bm.name);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-destructive"
+                    onClick={() => handleDeleteBM(bm.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         ))}
         {bms.length === 0 && (
