@@ -90,9 +90,11 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingPopupImage, setIsUploadingPopupImage] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const fileInputRef = useRef<HTMLInputElement>(null);
   const popupImageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const videoPosterInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingVideoPoster, setIsUploadingVideoPoster] = useState(false);
   const [configTab, setConfigTab] = useState("templates");
 
   // States
@@ -120,6 +122,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     showVideo: false,
     videoUrl: "",
     videoType: "url" as "url" | "upload",
+    videoPosterUrl: "",
     showTestimonials: false,
     showDiscountPopup: false,
     discountPopupTitle: "Que tal um desconto para comprar agora?",
@@ -263,6 +266,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         showVideo: (config as any).show_video || false,
         videoUrl: (config as any).video_url || "",
         videoType: ((config as any).video_url?.includes('checkout-videos') ? 'upload' : 'url') as "url" | "upload",
+        videoPosterUrl: (config as any).video_poster_url || "",
         showTestimonials: config.show_notifications || false,
         showDiscountPopup: config.show_discount_popup || false,
         discountPopupTitle: config.discount_popup_title || "Que tal um desconto para comprar agora?",
@@ -431,6 +435,50 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
     }
   };
 
+  // Handle video poster upload
+  const handleVideoPosterUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 10MB");
+      return;
+    }
+
+    setIsUploadingVideoPoster(true);
+    try {
+      const compressedBlob = await compressImage(file, compressionPresets.banner);
+      const fileName = `${userId}/${productId}-video-poster.webp`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, compressedBlob, { 
+          upsert: true,
+          contentType: 'image/webp'
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      const imageUrl = `${publicUrl}?t=${Date.now()}`;
+      setCustomizations(p => ({ ...p, videoPosterUrl: imageUrl }));
+      toast.success("Capa do vídeo carregada!");
+    } catch (error) {
+      console.error("Erro ao carregar imagem:", error);
+      toast.error("Erro ao carregar imagem");
+    } finally {
+      setIsUploadingVideoPoster(false);
+    }
+  };
+
   const saveConfig = async () => {
     setIsSaving(true);
     try {
@@ -461,6 +509,7 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
         countdown_text: customizations.countdownText || "🔥 OFERTA EXPIRA EM:",
         show_video: customizations.showVideo,
         video_url: customizations.videoUrl || null,
+        video_poster_url: customizations.videoPosterUrl || null,
         show_notifications: customizations.showTestimonials,
         show_whatsapp_button: customizations.showWhatsappButton,
         whatsapp_number: customizations.whatsappNumber || null,
@@ -983,6 +1032,58 @@ export function CheckoutBuilderSimple({ productId, userId, productName, productP
                             )}
                           </div>
                         )}
+
+                        {/* Capa do vídeo (thumbnail) */}
+                        <div className="space-y-2 pt-2 border-t">
+                          <Label className="text-xs font-medium flex items-center gap-2">
+                            <Image className="h-3 w-3" />
+                            Capa do Vídeo (opcional)
+                          </Label>
+                          <input
+                            ref={videoPosterInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleVideoPosterUpload}
+                            className="hidden"
+                          />
+                          
+                          {customizations.videoPosterUrl ? (
+                            <div className="relative">
+                              <img
+                                src={customizations.videoPosterUrl}
+                                alt="Capa do vídeo"
+                                className="w-full h-20 object-cover rounded-lg"
+                              />
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-1 right-1 h-6 w-6 p-0"
+                                onClick={() => setCustomizations(p => ({ ...p, videoPosterUrl: "" }))}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="w-full h-8 text-xs"
+                              onClick={() => videoPosterInputRef.current?.click()}
+                              disabled={isUploadingVideoPoster}
+                            >
+                              {isUploadingVideoPoster ? (
+                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                              ) : (
+                                <Image className="h-3 w-3 mr-2" />
+                              )}
+                              {isUploadingVideoPoster ? "Enviando..." : "Enviar capa"}
+                            </Button>
+                          )}
+                          <p className="text-[10px] text-muted-foreground">
+                            Imagem exibida antes do vídeo ser reproduzido
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
