@@ -831,7 +831,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
                             value={metric.bm_id || "none"}
                             onValueChange={(value) => handleUpdateMetric(metric.id, 'bm_id', value === "none" ? null : value)}
                           >
-                            <SelectTrigger className="h-8 text-xs">
+                          <SelectTrigger className="h-8 text-xs min-w-[120px]">
                               <SelectValue placeholder="Selecione..." />
                             </SelectTrigger>
                             <SelectContent>
