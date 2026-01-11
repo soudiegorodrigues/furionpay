@@ -171,6 +171,10 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
+  // Use string representations to avoid infinite re-renders
+  const monthStartStr = format(monthStart, 'yyyy-MM-dd');
+  const monthEndStr = format(monthEnd, 'yyyy-MM-dd');
+
   const fetchData = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
@@ -180,8 +184,8 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
         .from('product_daily_metrics')
         .select('*')
         .eq('user_id', userId)
-        .gte('date', format(monthStart, 'yyyy-MM-dd'))
-        .lte('date', format(monthEnd, 'yyyy-MM-dd'))
+        .gte('date', monthStartStr)
+        .lte('date', monthEndStr)
         .order('date'),
       supabase
         .from('products')
@@ -201,7 +205,7 @@ export const FinanceProductMetrics = memo(({ userId }: FinanceProductMetricsProp
     if (bmsRes.data) setBms(bmsRes.data);
     
     setLoading(false);
-  }, [userId, monthStart, monthEnd]);
+  }, [userId, monthStartStr, monthEndStr]);
 
   useEffect(() => {
     fetchData();
