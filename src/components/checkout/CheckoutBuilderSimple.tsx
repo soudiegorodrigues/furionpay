@@ -1103,7 +1103,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
                           <input
                             ref={videoPlayOverlayInputRef}
                             type="file"
-                            accept="image/png,image/webp,image/svg+xml,image/jpeg"
+                            accept="image/png,image/webp,image/svg+xml,image/jpeg,image/gif"
                             onChange={handlePlayOverlayUpload}
                             className="hidden"
                           />
