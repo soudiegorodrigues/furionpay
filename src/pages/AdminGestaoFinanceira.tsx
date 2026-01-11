@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, memo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Target, PieChart, Wallet, Building2 } from "lucide-react";
+import { BarChart3, Target, PieChart, Wallet, Building2 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/AccessDenied";
@@ -17,8 +17,8 @@ const FinanceCategories = lazy(() => import("@/components/finance/FinanceCategor
 const FinanceTransactions = lazy(() => import("@/components/finance/FinanceTransactions").then(m => ({
   default: m.FinanceTransactions
 })));
-const FinanceGoals = lazy(() => import("@/components/finance/FinanceGoals").then(m => ({
-  default: m.FinanceGoals
+const FinanceProductMetrics = lazy(() => import("@/components/finance/FinanceProductMetrics").then(m => ({
+  default: m.FinanceProductMetrics
 })));
 const FinanceAccounts = lazy(() => import("@/components/finance/FinanceAccounts").then(m => ({
   default: m.FinanceAccounts
@@ -102,9 +102,9 @@ const AdminGestaoFinanceira = () => {
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">Categorias</span>
           </TabsTrigger>
-          <TabsTrigger value="goals" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Metas</span>
+          <TabsTrigger value="metrics" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Métricas</span>
           </TabsTrigger>
         </TabsList>
 
@@ -132,9 +132,9 @@ const AdminGestaoFinanceira = () => {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="goals" className="space-y-6">
+        <TabsContent value="metrics" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
-            <FinanceGoals userId={effectiveUserId} />
+            <FinanceProductMetrics userId={effectiveUserId} />
           </Suspense>
         </TabsContent>
       </Tabs>
