@@ -96,7 +96,7 @@ export const CustomVideoPlayer = memo(function CustomVideoPlayer({
                 <img 
                   src={playOverlayUrl} 
                   alt="Play" 
-                  className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform"
+                  className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform bg-transparent"
                 />
               ) : (
                 <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-700 hover:scale-105 transition-all">
@@ -152,7 +152,7 @@ export const CustomVideoPlayer = memo(function CustomVideoPlayer({
                 <img 
                   src={playOverlayUrl} 
                   alt="Play" 
-                  className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform"
+                  className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform bg-transparent"
                 />
               ) : (
                 <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-[#1ab7ea] flex items-center justify-center shadow-xl hover:bg-[#139eca] hover:scale-105 transition-all">
@@ -201,7 +201,7 @@ export const CustomVideoPlayer = memo(function CustomVideoPlayer({
             <img 
               src={playOverlayUrl} 
               alt="Play" 
-              className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform"
+              className="max-w-[60%] max-h-[60%] object-contain drop-shadow-2xl hover:scale-105 transition-transform bg-transparent"
             />
           ) : (
             <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl bg-red-600 flex items-center justify-center shadow-xl hover:bg-red-700 hover:scale-105 transition-all">
